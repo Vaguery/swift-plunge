@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import DequeModule
 
 
 enum PushStack : String, CaseIterable, Comparable & Hashable {
@@ -26,5 +27,13 @@ enum PushStack : String, CaseIterable, Comparable & Hashable {
 
     
     static let allStacks = PushStack.allCases.sorted(by: {$0 < $1})
+    
+    
+    static func emptyStacks() -> [PushStack: Deque<any Pushable>] {
+        PushStack.allStacks.reduce(into: [:]) {
+            $0[$1] = Deque()
+        }
+    }
+
 }
 

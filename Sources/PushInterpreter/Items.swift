@@ -8,21 +8,22 @@
 import Foundation
 
 
-protocol Pushable {
-    associatedtype Item
-    var value: Item { get }
+nonisolated protocol Pushable {
+    associatedtype Sometype
+    var value: Sometype { get }
+    func pretty() -> String
     func prettyHistory() -> String
 }
 
 
-struct Item<T> : Pushable {
+struct Item<T:Equatable> : Pushable {
     let value: T
-    let call: [any Pushable]
+    let call: [Item]
     let isContingent: Bool
     let index: Int
 
     init(_ v:T,
-         _ call:[any Pushable] = [],
+         _ call:[Item] = [],
          isContingent: Bool = false,
          index:Int = 0) {
         self.value = v
@@ -30,7 +31,7 @@ struct Item<T> : Pushable {
         self.isContingent = isContingent
         self.index = index
     }
-    
+        
     func pretty() -> String {
         return "\(value)"
     }
@@ -48,6 +49,49 @@ struct Item<T> : Pushable {
         }
     }
 }
+
+extension Item : Equatable where T:Equatable {
+    static func == (lhs: Item<T>, rhs: Item<T>) -> Bool {
+        return (lhs.value == rhs.value) &&
+        (lhs.call == rhs.call) &&
+        (lhs.index == rhs.index)
+    }
+}
+
+struct Error : Pushable {
+    let value: String
+    let call: [any Pushable]
+
+    init(_ v:String,
+         _ call:[any Pushable] = []) {
+        self.value = v
+        self.call  = call
+    }
+    
+    func pretty() -> String {
+        return "Error: \"\(value)\""
+    }
+    
+    func prettyHistory() -> String {
+        if self.call.isEmpty {
+            return self.pretty()+":()"
+        } else {
+            var result = self.pretty() + ":( "
+            for h in self.call {
+                result += (h.prettyHistory() + " ")
+            }
+            result += " )"
+            return result
+        }
+    }
+}
+
+extension Error : Equatable {
+    static func == (lhs: Error, rhs: Error) -> Bool {
+        return (lhs.value == rhs.value)
+    }
+}
+
 
 struct Code : Pushable {
     let value: [any Pushable]
@@ -82,5 +126,4 @@ struct Code : Pushable {
         }
     }
 }
-
 

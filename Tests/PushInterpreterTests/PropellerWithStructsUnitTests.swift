@@ -8,10 +8,11 @@
 @testable import PropellerWithStructs
 import Testing
 
-struct PropellerWithStructsUnitTests {
+struct StacksTests {
 
-    @Test func example() {
+    @Test func StacksShouldSortWithExecFirst() {
         #expect (PushStack.allStacks[0] == .exec)
+        #expect (PushStack.exec < PushStack.bool)
         #expect (PushStack.allStacks[1] == .bool)
     }
 

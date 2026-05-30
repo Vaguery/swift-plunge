@@ -5,11 +5,14 @@
 //  Created by William Tozier on 5/30/26.
 //
 
+import DequeModule
 import Foundation
+
 
 // Propeller replica language
 
 enum PushInstruction : String, CaseIterable {
+        
     case intAdd, intSubtract, intMultiply, intGT, intGTE, intLT, intLTE, intQuot, intMod, intMax, intMin, intFromBool, intFromChar, intFromString, intInc, intDec, intFromFloat, intDup, intDupTimes, intDupItems, intEmpty, intEq, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup, intDeepDup
     
     case floatAdd, floatSubtract, floatMultiply, floatGT, floatGTE, floatLT, floatLTE, floatQuot, floatMod, floatMax, floatMin, floatFromBool, floatFromChar, floatFromString, floatInc, floatDec, floatDup, floatDupTimes, floatDupItems, floatEmpty, floatEq, floatFlush, floatPop, floatRot, floatShove, floatStackDepth, floatSwap, floatYank, floatYankDup, floatDeepDup, floatCos, floatSin, floatTan, floatFromInt
@@ -45,5 +48,113 @@ enum PushInstruction : String, CaseIterable {
          vecString0, vecString1, vecString2, vecString3, vecString4, vecString5, vecString6, vecString7, vecString8, vecString9,
          vecInt0, vecInt1, vecInt2, vecInt3, vecInt4, vecInt5, vecInt6, vecInt7, vecInt8, vecInt9,
          vecFloat0, vecFloat1, vecFloat2, vecFloat3, vecFloat4, vecFloat5, vecFloat6, vecFloat7, vecFloat8, vecFloat9
+}
+
+typealias PI = PushInstruction
+
+////
+
+
+class Instruction {
+    var name: PushInstruction
+    var parameters: [PushStack]
+    var needs: [PushStack: Int] {
+        var result = [PushStack: Int]()
+        for v in parameters {
+            result[v, default:0] += 1
+        }
+        return result
+    }
+    var collector: [any Pushable] = []
+    var isMissingArgs: Bool = false
+    var transformer: ([any Pushable]) -> [Router]
+    var results: [Router] = []
+    
+    
+    //
+    init(_ label: PushInstruction, takes: [PushStack], fxn: @escaping ([any Pushable]) -> [Router]) {
+        self.name = label
+        self.parameters = takes
+        self.transformer = fxn
+    }
+    
+    
+    func isSatisfied(by interpreter: Interpreter) -> Bool {
+        for (k,v) in self.needs {
+            if (interpreter.stacks[k]?.count ?? 0) < v { return false }
+        }
+        return true
+    }
+    
+    
+    func reset() {
+        self.collector.removeAll()
+        self.results.removeAll()
+        self.isMissingArgs = false
+    }
+    
+    
+    // will not work if isSatisfied == false
+    func gather(from interpreter: Interpreter) {
+        if self.isSatisfied(by: interpreter) {
+            for p in self.parameters {
+                let item = interpreter.stacks[p]?.popFirst()
+                self.collector.append(item!)
+                self.isMissingArgs = false
+            }
+        } else {
+            self.isMissingArgs = true
+        }
+    }
+    
+    
+    func transform(on interpreter: Interpreter) {
+        self.results = self.transformer(self.collector)
+    }
+    
+    
+    func distribute(to interpreter: Interpreter, items: [Router]) {
+        for i in items {
+            interpreter.stacks[i.stack]?.prepend(i.item)
+        }
+    }
+    
+    
+    func act(on interpreter: Interpreter) {
+        self.gather(from: interpreter)
+        if self.isMissingArgs {
+            let mistakes = [Router(.error, Item("« WARNING: \(self.name) missing args»"))]
+            self.distribute(to: interpreter, items: mistakes)
+        } else {
+            transform(on: interpreter)
+            distribute(to: interpreter, items: self.results)
+        }
+        self.reset()
+    }
+}
+
+
+// subclass for instructions that manipulate the Interpreter state more than pop/push
+class DirectInstruction : Instruction {
+    var target: Interpreter? = nil
+    var directModifier: (inout Interpreter, [any Pushable]) -> [Router]
+    
+    init(_ label: PushInstruction, takes: [PushStack], modifier: @escaping (inout Interpreter, [any Pushable]) -> [Router]) {
+        self.directModifier = modifier
+        super.init(label, takes: takes, fxn: {_ in return []})
+    }
+    
+    override func act(on interpreter: Interpreter) {
+        self.gather(from: interpreter)
+        if self.isMissingArgs {
+            let mistakes = [Router(.error, Item("« WARNING: \(self.name) missing args»"))]
+            self.distribute(to: interpreter, items: mistakes)
+        } else {
+            var mutableInterpreter = interpreter
+            self.results = directModifier(&mutableInterpreter, self.collector)
+            distribute(to: interpreter, items: self.results)
+        }
+        self.reset()
+    }
 }
 
