@@ -17,10 +17,10 @@ nonisolated protocol Pushable {
 
 
 struct Item<T:Equatable> : Pushable {
-    let value: T
-    let call: [Item]
-    let isContingent: Bool
-    let index: Int
+    var value: T
+    var call: [any Pushable]
+    var isContingent: Bool
+    var index: Int
 
     init(_ v:T,
          _ call:[Item] = [],
@@ -50,17 +50,10 @@ struct Item<T:Equatable> : Pushable {
     }
 }
 
-extension Item : Equatable where T:Equatable {
-    static func == (lhs: Item<T>, rhs: Item<T>) -> Bool {
-        return (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.index == rhs.index)
-    }
-}
 
 struct Error : Pushable {
     let value: String
-    let call: [any Pushable]
+    var call: [any Pushable]
 
     init(_ v:String,
          _ call:[any Pushable] = []) {

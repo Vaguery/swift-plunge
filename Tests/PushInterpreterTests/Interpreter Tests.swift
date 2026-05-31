@@ -44,6 +44,11 @@ struct InterpreterTests {
         #expect(inty.stacks.keys.sorted() == PushStack.allCases.sorted())
     }
     
+    @Test func newInterpreterHasConstantDictionaryDefined() {
+        #expect(inty.constants.keys.count == 8)
+
+    }
+    
     @Test
     func pushItem() {
         inty.pushItem(Router(.code, Code( [Item<Double>(2.3),

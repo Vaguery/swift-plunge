@@ -23,6 +23,7 @@ struct InterpreterSettings {
 
 
 final class Interpreter {
+    
     static func integrateInstructions(
         fromThese: [PushInstruction:Instruction],
         intoLanguage: inout [PushInstruction:Instruction]) {
@@ -31,13 +32,14 @@ final class Interpreter {
         
     static var language: [PushInstruction: Instruction] {
         var starter:[PushInstruction: Instruction] = [:]
+        
 //        integrateInstructions(fromThese: boolInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: charInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: stringInstructions, intoLanguage: &starter)
@@ -52,9 +54,16 @@ final class Interpreter {
     var stacks: [PushStack: Deque<any Pushable>]
     var counter: Int = 0
     var inputs: [PushInstruction:any Pushable] = [:]
-    var constants: [PushStack:[any Pushable]] = [.int:[], .double:[], .string:[],
-                                             .char:[], .vecInt:[], .vecDouble:[],
-                                             .vecString:[], .vecBool:[]]
+    var constants: [PushStack:[(any Pushable)?]] = [
+        .int:[(any Pushable)?](repeating:nil, count:10),
+        .double:[(any Pushable)?](repeating:nil, count:10),
+        .string:[(any Pushable)?](repeating:nil, count:10),
+        .char:[(any Pushable)?](repeating:nil, count:10),
+        .vecInt:[(any Pushable)?](repeating:nil, count:10),
+        .vecDouble:[(any Pushable)?](repeating:nil, count:10),
+        .vecString:[(any Pushable)?](repeating:nil, count:10),
+        .vecBool:[(any Pushable)?](repeating:nil, count:10)
+    ]
     var config: InterpreterSettings = Interpreter.defaultSettings
     var program: [any Pushable] = []
     var printout: String = ""
@@ -119,35 +128,20 @@ final class Interpreter {
             self.step()
         }
     }
-//    
-//    func setConstantsRandomly() {
-//        for _ in 1...10 {
-//            self.constants[.int]!.append(PushItem.makeInt(RandomCode.randomInt(100)))
-//            
-//            self.constants[.double]!.append(
-//                PushItem.makeDouble(RandomCode.randomDouble(100.0)))
-//            
-//            self.constants[.string]!.append(
-//                PushItem.makeString(RandomCode.randomString(10)))
-//            
-//            self.constants[.char]!.append(
-//                PushItem.makeChar(RandomCode.randomChar()))
-//            
-//            self.constants[.vecInt]!.append(
-//                PushItem.makeVecInt(RandomCode.randomVecInt(100, 10)))
-//            
-//            self.constants[.vecBool]!.append(
-//                PushItem.makeVecBool(RandomCode.randomVecBool(10)))
-//            
-//            self.constants[.vecDouble]!.append(
-//                PushItem.makeVecDouble(RandomCode.randomVecDouble(100.0, 10)))
-//            
-//            self.constants[.vecString]!.append(
-//                PushItem.makeVecString(RandomCode.randomVecString(10)))
-//        }
+
+//    func createEmptyConstantTables() {
+////        self.constants[.int] = [(any Pushable)?](repeating:nil, count:10)
+//        self.constants[.double]!.reserveCapacity(10)
+//        self.constants[.string]!.reserveCapacity(10)
+//        self.constants[.char]!.reserveCapacity(10)
+//        self.constants[.vecInt]!.reserveCapacity(10)
+//        self.constants[.vecBool]!.reserveCapacity(10)
+//        self.constants[.vecDouble]!.reserveCapacity(10)
+//        self.constants[.vecString]!.reserveCapacity(10)
 //    }
 }
-//
+
+
 extension Interpreter {
     
     func pushDefault(_ it: any Pushable) {

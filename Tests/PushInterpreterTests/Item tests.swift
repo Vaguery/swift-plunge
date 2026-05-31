@@ -20,10 +20,19 @@ struct Item_tests {
         #expect(Item<Int>(1) == Item<Int>(1))
         #expect(Item<Int>(1) != Item<Int>(2))
     }
+    
+    @Test func anItemCanBeChanged() {
+        var foo = Item<String>("foo")
+        #expect(foo.call.isEmpty)
+        #expect( type(of: foo.call) == Array<any Pushable>.self)
+        let newHistory = [Item<PI>(.input2)]
+        foo.call = newHistory
+    }
 }
 
 
 struct Code_tests {
+    @MainActor
     @Test
     func codeCallsCreateItems() {
         let stuff:[any Pushable] = [Item<Int>(34), Item<Double>(1.2)]
