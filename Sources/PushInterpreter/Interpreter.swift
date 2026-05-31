@@ -153,14 +153,14 @@ extension Interpreter {
     func pushDefault(_ it: any Pushable) {
         switch it.value {
         case is Bool: self.stacks[.bool]?.prepend(it)
-        case is Int: self.stacks[.int]?.prepend(it)
-        case is Double: self.stacks[.double]?.prepend(it)
-        case is String: self.stacks[.string]?.prepend(it)
         case is Character: self.stacks[.char]?.prepend(it)
-        case is [Int]: self.stacks[.vecInt]?.prepend(it)
-        case is [Double]: self.stacks[.vecDouble]?.prepend(it)
-        case is [String]: self.stacks[.vecString]?.prepend(it)
+        case is Double: self.stacks[.double]?.prepend(it)
+        case is Int: self.stacks[.int]?.prepend(it)
+        case is String: self.stacks[.string]?.prepend(it)
         case is [Bool]: self.stacks[.vecBool]?.prepend(it)
+        case is [Double]: self.stacks[.vecDouble]?.prepend(it)
+        case is [Int]: self.stacks[.vecInt]?.prepend(it)
+        case is [String]: self.stacks[.vecString]?.prepend(it)
         default : self.stacks[.error]?.prepend(it)
         }
     }
