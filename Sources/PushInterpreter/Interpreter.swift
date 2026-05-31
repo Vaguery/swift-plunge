@@ -167,32 +167,14 @@ extension Interpreter {
 }
 
 
-//
-//    
-//    func printState(history:Bool = false) -> String {
-//        var state = ""
-//        for (stack, items) in self.stacks.sorted(by: {$0.0 < $1.0}) {
-//            if items.isEmpty { continue }
-//            state += "\(stack): [ "
-//            for i in items {
-//                state += history ?
-//                "\(i.hist())\n\t" :
-//                "\(i.asString()) "
-//            }
-//            state += "]\n"
-//        }
-//        return state
-//    }
-//}
-//
-//extension Interpreter {
-//    static func printInstructionCoverage() {
-//        print()
-//        print("Instruction Coverage:")
-//        print("Defined: \(Interpreter.language.keys.count)")
-//        print("Planned: \(PushInstruction.allCases.count)")
-//    }
-//}
-//
-//
-//
+extension Interpreter {
+    static func reportInstructionCoverage() -> String {
+        var result = "Instruction Coverage:\n"
+        result += "Defined: \(Interpreter.language.keys.count)\n"
+        result += "Planned: \(PushInstruction.allCases.count)"
+        return result
+    }
+}
+
+
+

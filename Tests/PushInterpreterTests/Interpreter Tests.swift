@@ -171,4 +171,10 @@ struct InterpreterTests {
         #expect(inty.stacks[.exec]!.count == 0)
         #expect(inty.counter == 13)
     }
+    
+    
+    @Test func instructionCoverageTest() {
+        let coverage = Interpreter.reportInstructionCoverage()
+        #expect(coverage != "")
+    }
 }
