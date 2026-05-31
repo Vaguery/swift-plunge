@@ -107,7 +107,7 @@ struct InterpreterTests {
         #expect(inty.stacks[.exec]!.count == 9)
 
         inty.step()
-        #expect(inty.stacks[.float]!.count == 1)
+        #expect(inty.stacks[.double]!.count == 1)
         #expect(inty.stacks[.exec]!.count == 8)
 
         inty.step()
@@ -127,7 +127,7 @@ struct InterpreterTests {
         #expect(inty.stacks[.exec]!.count == 4)
 
         inty.step()
-        #expect(inty.stacks[.vecFloat]!.count == 1)
+        #expect(inty.stacks[.vecDouble]!.count == 1)
         #expect(inty.stacks[.exec]!.count == 3)
 
         inty.step()

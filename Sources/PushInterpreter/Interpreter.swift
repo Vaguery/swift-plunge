@@ -14,7 +14,7 @@ struct InterpreterSettings {
     var stepLimit       : Int = 1000
     var stackCapacity   : Int = 1000
     var maxIntegerSize  : Int = 1_000_000
-    var maxFloatSize    : Double = 1_000_000.0
+    var maxDoubleSize    : Double = 1_000_000.0
     var maxStringLength : Int = 1000
     var maxVectorLength : Int = 1000
     var maxCodePoints   : Int = 1000
@@ -36,7 +36,7 @@ final class Interpreter {
 //        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: floatInstructions, intoLanguage: &starter)
+//        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
@@ -52,8 +52,8 @@ final class Interpreter {
     var stacks: [PushStack: Deque<any Pushable>]
     var counter: Int = 0
     var inputs: [PushInstruction:any Pushable] = [:]
-    var constants: [PushStack:[any Pushable]] = [.int:[], .float:[], .string:[],
-                                             .char:[], .vecInt:[], .vecFloat:[],
+    var constants: [PushStack:[any Pushable]] = [.int:[], .double:[], .string:[],
+                                             .char:[], .vecInt:[], .vecDouble:[],
                                              .vecString:[], .vecBool:[]]
     var config: InterpreterSettings = Interpreter.defaultSettings
     var program: [any Pushable] = []
@@ -124,8 +124,8 @@ final class Interpreter {
 //        for _ in 1...10 {
 //            self.constants[.int]!.append(PushItem.makeInt(RandomCode.randomInt(100)))
 //            
-//            self.constants[.float]!.append(
-//                PushItem.makeFloat(RandomCode.randomFloat(100.0)))
+//            self.constants[.double]!.append(
+//                PushItem.makeDouble(RandomCode.randomDouble(100.0)))
 //            
 //            self.constants[.string]!.append(
 //                PushItem.makeString(RandomCode.randomString(10)))
@@ -139,8 +139,8 @@ final class Interpreter {
 //            self.constants[.vecBool]!.append(
 //                PushItem.makeVecBool(RandomCode.randomVecBool(10)))
 //            
-//            self.constants[.vecFloat]!.append(
-//                PushItem.makeVecFloat(RandomCode.randomVecFloat(100.0, 10)))
+//            self.constants[.vecDouble]!.append(
+//                PushItem.makeVecDouble(RandomCode.randomVecDouble(100.0, 10)))
 //            
 //            self.constants[.vecString]!.append(
 //                PushItem.makeVecString(RandomCode.randomVecString(10)))
@@ -154,11 +154,11 @@ extension Interpreter {
         switch it.value {
         case is Bool: self.stacks[.bool]?.prepend(it)
         case is Int: self.stacks[.int]?.prepend(it)
-        case is Double: self.stacks[.float]?.prepend(it)
+        case is Double: self.stacks[.double]?.prepend(it)
         case is String: self.stacks[.string]?.prepend(it)
         case is Character: self.stacks[.char]?.prepend(it)
         case is [Int]: self.stacks[.vecInt]?.prepend(it)
-        case is [Double]: self.stacks[.vecFloat]?.prepend(it)
+        case is [Double]: self.stacks[.vecDouble]?.prepend(it)
         case is [String]: self.stacks[.vecString]?.prepend(it)
         case is [Bool]: self.stacks[.vecBool]?.prepend(it)
         default : self.stacks[.error]?.prepend(it)

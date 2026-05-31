@@ -10,8 +10,8 @@ import DequeModule
 
 
 enum PushStack : String, CaseIterable, Comparable & Hashable {
-    case bool, int, float, code, exec, char, string
-    case vecBool, vecInt, vecFloat, vecString
+    case bool, int, double, code, exec, char, string
+    case vecBool, vecInt, vecDouble, vecString
     case error
     
     
