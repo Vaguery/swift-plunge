@@ -24,9 +24,8 @@ struct InputInstructionTests {
     
     let inty = Interpreter()
     
-    @MainActor
     @Test func inputsWorksWhenDefined() {
-        inty.inputs[.input3] = Item<Int>(17)
+        inty.inputs[.input3] = IntItem(17)
         
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.input3]!.act(on: inty)
@@ -34,27 +33,26 @@ struct InputInstructionTests {
 
     }
     
-    @MainActor
     @Test func inputsWorksWhenUndefined() {
         
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.input3]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .error) ==
-                "[ Error: \"WARN: no input for input3\" ]")
+                "[ «WARN: no input for input3» ]")
 
     }
     
     
-    @MainActor
     @Test func inputHistoryIsContingent() {
-        inty.inputs[.input2] = Item<Int>(17)
+        inty.inputs[.input2] = IntItem(17)
         Interpreter.language[.input2]!.act(on: inty)
-        let result = inty.stacks[.exec]!.popFirst()! as! Item<Int>
-        #expect(!result.call.isEmpty) // no
+        let result = inty.stacks[.exec]!.popFirst()! as! IntItem
+        #expect(!result.call.isEmpty)
         #expect(result.isContingent == true)
         #expect(result.value == 17)
         #expect(result.index == 0)
+        #expect(result.pretty() == "17")
     }
 
 }

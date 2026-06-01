@@ -65,14 +65,14 @@ class Instruction {
         }
         return result
     }
-    var collector: [any Pushable] = []
+    var collector: [any Item] = []
     var isMissingArgs: Bool = false
-    var transformer: ([any Pushable]) -> [Router]
+    var transformer: ([any Item]) -> [Router]
     var results: [Router] = []
     
     
     //
-    init(_ label: PushInstruction, takes: [PushStack], fxn: @escaping ([any Pushable]) -> [Router]) {
+    init(_ label: PushInstruction, takes: [PushStack], fxn: @escaping ([any Item]) -> [Router]) {
         self.name = label
         self.parameters = takes
         self.transformer = fxn
@@ -123,7 +123,7 @@ class Instruction {
     func act(on interpreter: Interpreter) {
         self.gather(from: interpreter)
         if self.isMissingArgs {
-            let mistakes = [Router(.error, Item("« WARNING: \(self.name) missing args»"))]
+            let mistakes = [Router(.error, ErrorItem("« WARNING: \(self.name) missing args»"))]
             self.distribute(to: interpreter, items: mistakes)
         } else {
             transform(on: interpreter)
@@ -137,9 +137,9 @@ class Instruction {
 // subclass for instructions that manipulate the Interpreter state more than pop/push
 class DirectInstruction : Instruction {
     var target: Interpreter? = nil
-    var directModifier: (inout Interpreter, [any Pushable]) -> [Router]
+    var directModifier: (inout Interpreter, [any Item]) -> [Router]
     
-    init(_ label: PushInstruction, takes: [PushStack], modifier: @escaping (inout Interpreter, [any Pushable]) -> [Router]) {
+    init(_ label: PushInstruction, takes: [PushStack], modifier: @escaping (inout Interpreter, [any Item]) -> [Router]) {
         self.directModifier = modifier
         super.init(label, takes: takes, fxn: {_ in return []})
     }
@@ -147,7 +147,7 @@ class DirectInstruction : Instruction {
     override func act(on interpreter: Interpreter) {
         self.gather(from: interpreter)
         if self.isMissingArgs {
-            let mistakes = [Router(.error, Item("« WARNING: \(self.name) missing args»"))]
+            let mistakes = [Router(.error, ErrorItem("« WARNING: \(self.name) missing args»"))]
             self.distribute(to: interpreter, items: mistakes)
         } else {
             var mutableInterpreter = interpreter

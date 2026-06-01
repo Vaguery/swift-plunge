@@ -9,8 +9,8 @@ import Foundation
 
 struct Router {
     let stack: PushStack
-    let item: any Pushable
-    init(_ stack: PushStack, _ item: any Pushable) {
+    let item: any Item
+    init(_ stack: PushStack, _ item: any Item) {
         self.stack = stack
         self.item = item
     }

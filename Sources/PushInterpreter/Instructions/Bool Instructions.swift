@@ -11,39 +11,49 @@ import DequeModule
 extension Interpreter {
     static let boolInstructions:[PushInstruction : Instruction] =
     
-    [:
-//        .boolNot :
-//            Instruction(
-//                .boolNot,
-//                takes: [.bool],
-//                fxn: {a in
-//                    let (x) = (a[0].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(!x, h:"(\(a[0].hist()) .boolNot)") )]
-//                }),
-//        .boolAnd :
-//            Instruction(
-//                .boolAnd,
-//                takes: [.bool,.bool],
-//                fxn: {a in
-//                    let (x,y) = (a[0].bVal()!, a[1].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x && y, h:"(\(a[1].hist()) \(a[0].hist()) .boolAnd)") )]
-//                }),
-//        .boolOr :
-//            Instruction(
-//                .boolOr,
-//                takes: [.bool,.bool],
-//                fxn: {a in
-//                    let (x,y) = (a[0].bVal()!, a[1].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x || y, h:"(\(a[1].hist()) \(a[0].hist()) .boolOr)") )]
-//                }),
-//        .boolXor :
-//            Instruction(
-//                .boolXor,
-//                takes: [.bool,.bool],
-//                fxn: {a in
-//                    let (x,y) = (a[0].bVal()!, a[1].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x != y, h:"(\(a[1].hist()) \(a[0].hist()) .boolXor)") )]
-//                }),
+    [
+        .boolNot :
+            Instruction(
+                .boolNot,
+                takes: [.bool],
+                fxn: {a in
+                    let (x) = (a[0] as! BoolItem)
+                    return [Router(.bool,
+                                   BoolItem(!x.value, call: [x, InstructionItem(.boolNot)]))]
+                }),
+        .boolAnd :
+            Instruction(
+                .boolAnd,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem(arg1 && arg2, call: [y, x, InstructionItem(.boolAnd)]))
+                    ]
+                }),
+        .boolOr :
+            Instruction(
+                .boolOr,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem(arg1 || arg2, call: [y, x, InstructionItem(.boolOr)]))
+                    ]
+                }),
+        .boolXor :
+            Instruction(
+                .boolXor,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem(arg1 != arg2, call: [y, x, InstructionItem(.boolXor)]))
+                    ]
+                }),
 //        .boolInvertFirstThenAnd :
 //            Instruction(
 //                .boolInvertFirstThenAnd,

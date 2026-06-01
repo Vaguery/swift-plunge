@@ -26,18 +26,18 @@ struct InterpreterTests {
     
     let inty = Interpreter()
     
-    let inputty:[PI: any Pushable] =
-        [.input0 : Item<Int>(10), .input2 : Item<Double>(1.1e17)]
+    let inputty:[PI: any Item] =
+        [.input0 : IntItem(10), .input2 : DoubleItem(1.1e17)]
     
-    let proggy:[any Pushable] =
-        [Item<Int>(6), Item<PI>(.intAdd), Item<Int>(2)]
-    
-    
-    let stacky:[PushStack: [any Pushable]] =
-        [.bool: [Item<Bool>(false)]]
+    let proggy:[any Item] =
+        [IntItem(6), InstructionItem(.intAdd), IntItem(2)]
     
     
-    let fakeAdd = Instruction(.intAdd, takes: [], fxn: {_ in [Router(.error, Error("I haz no stick"))]})
+    let stacky:[PushStack: [any Item]] =
+        [.bool: [BoolItem(false)]]
+    
+    
+    let fakeAdd = Instruction(.intAdd, takes: [], fxn: {_ in [Router(.error, ErrorItem("I haz no stick"))]})
 
 
     @Test func newInterpreterHasReasonableDefaults() {
@@ -51,8 +51,8 @@ struct InterpreterTests {
     
     @Test
     func pushItem() {
-        inty.pushItem(Router(.code, Code( [Item<Double>(2.3),
-                                           Item<[Bool]>([true,false,true]) ] ) ) )
+        inty.pushItem(Router(.code, CodeItem( [DoubleItem(2.3),
+                                           VecBoolItem([true,false,true]) ] ) ) )
         #expect(inty.stacks[.code]!.count == 1)
     }
     
@@ -65,34 +65,34 @@ struct InterpreterTests {
         #expect(inty.counter == 0)
         
         // inputs
-        #expect(inty.inputs[.input0]!.value as! Int == 10)
-        #expect(inty.inputs[.input2]!.value as! Double == 1.1e+17)
+        #expect(inty.inputs[.input0]! is IntItem)
+        #expect(inty.inputs[.input2]! is DoubleItem)
         
         // initial stack values
         #expect(inty.stacks[.bool]!.count == 1)
-        #expect(inty.stacks[.bool]![0].value as! Bool == false)
+        #expect( (inty.stacks[.bool]!.first is BoolItem) )
 
         // initial program
         #expect(inty.program.count == proggy.count)
         #expect(inty.stacks[.exec]!.count == 3)
-        #expect(stackString(inty, .exec) == "[ 6 intAdd 2 ]")
+        #expect(stackString(inty, .exec) == "[ 6 .intAdd 2 ]")
         
         #expect(inty.stacks.count == PushStack.allCases.count)
     }
     
     @Test func steppingPushesMostItems() {
-        let everythingProggy:[any Pushable] =
-            [Item<Int>(6),
-             Item<Bool>(false),
-             Item<Double>(1.23),
-             Item<String>("foo"),
-             Item<Character>(Character("😂")),
-             Item<[String]>(["foo", "bar"]),
-             Item<[Int]>([1,2,3]),
-             Item<[Double]>([1.1, 2.2, 3.3]),
-             Item<[Bool]>([true,false,true]),
-             Code([Item<Int>(777), Item<Int>(888)]),
-             Item<PI>(.intAdd)
+        let everythingProggy:[any Item] =
+            [IntItem(6),
+             BoolItem(false),
+             DoubleItem(1.23),
+             StringItem("foo"),
+             CharItem(Character("😂")),
+             VecStringItem(["foo", "bar"]),
+             VecIntItem([1,2,3]),
+             VecDoubleItem([1.1, 2.2, 3.3]),
+             VecBoolItem([true,false,true]),
+             CodeItem([IntItem(777), IntItem(888)]),
+             InstructionItem(.intAdd)
 
              ]
 
@@ -140,7 +140,7 @@ struct InterpreterTests {
         #expect(inty.stacks[.exec]!.count == 2)
         
         inty.step()
-        #expect(stackString(inty, .exec) == "[ 777 888 intAdd ]")
+        #expect(stackString(inty, .exec) == "[ 777 888 .intAdd ]")
         #expect(inty.stacks[.exec]!.count == 3)
 
         inty.step()
@@ -148,7 +148,7 @@ struct InterpreterTests {
         inty.step()
         
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error) == "[ Error: \"I haz no stick\" ]")
+        #expect(stackString(inty, .error) == "[ «I haz no stick» ]")
         #expect(inty.stacks[.exec]!.count == 0)
 
     }
@@ -156,18 +156,18 @@ struct InterpreterTests {
     
     @Test func runningSeemsOK() {
         
-        let everythingProggy:[any Pushable] =
-        [Item<Int>(6),
-         Item<Bool>(false),
-         Item<Double>(1.23),
-         Item<String>("foo"),
-         Item<Character>(Character("😂")),
-         Item<[String]>(["foo", "bar"]),
-         Item<[Int]>([1,2,3]),
-         Item<[Double]>([1.1, 2.2, 3.3]),
-         Item<[Bool]>([true,false,true]),
-         Code([Item<Int>(777), Item<Int>(888)]),
-         Item<PI>(.intAdd)
+        let everythingProggy:[any Item] =
+        [IntItem(6),
+         BoolItem(false),
+         DoubleItem(1.23),
+         StringItem("foo"),
+         CharItem(Character("😂")),
+         VecStringItem(["foo", "bar"]),
+         VecIntItem([1,2,3]),
+         VecDoubleItem([1.1, 2.2, 3.3]),
+         VecBoolItem([true,false,true]),
+         CodeItem([IntItem(777), IntItem(888)]),
+         InstructionItem(.intAdd)
         ]
         
         inty.behaviors[.intAdd] = fakeAdd

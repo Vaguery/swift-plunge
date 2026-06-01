@@ -27,10 +27,9 @@ struct Router_tests {
     @Test
     @MainActor
     func routingWorks() {
-        let r = Router(PushStack.int, Item(17) )
+        let r = Router(PushStack.int, IntItem(17) )
         inty.pushItem(r)
         #expect(inty.stacks[.int]!.count == 1)
-        #expect(inty.stacks[.int]!.first!.value as! Int == 17)
         #expect(stackString(inty, .int) == "[ 17 ]")
     }
 }

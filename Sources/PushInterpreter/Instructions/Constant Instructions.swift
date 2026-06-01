@@ -31,7 +31,7 @@ extension Interpreter {
                             return [Router(.exec, v)]
                         } else {
                             return [Router(.error,
-                                           Error("WARN: no constant assigned for \(instructionName)"))]
+                                           ErrorItem("WARN: no constant assigned for \(instructionName)"))]
                         }
                     })
             }

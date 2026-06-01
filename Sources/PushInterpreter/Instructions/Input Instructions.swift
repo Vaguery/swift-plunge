@@ -30,12 +30,12 @@ extension Interpreter {
                 takes: [],
                 modifier: { (interpreter, collectedItems) in
                     if var v = interpreter.inputs[instructionName] {
-                        v.call = [Item<PI>(instructionName)]
+                        v.call = [InstructionItem(instructionName)]
                         v.isContingent = true
                         return [Router(.exec, v)]
                     } else {
                         return [Router(.error,
-                                       Error("WARN: no input for \(instructionName)"))]
+                                       ErrorItem("WARN: no input for \(instructionName)"))]
                     }
                 })
         }

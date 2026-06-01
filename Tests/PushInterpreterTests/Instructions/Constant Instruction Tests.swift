@@ -26,8 +26,8 @@ struct ConstantInstructionTests {
     
     @MainActor
     @Test func constantWorksWhenDefined() {
-        inty.constants[.int]![2] = Item<Int>(17)
-        inty.constants[.vecBool]![8] = Item<[Bool]>([false, false, true])
+        inty.constants[.int]![2] = IntItem(17)
+        inty.constants[.vecBool]![8] = VecBoolItem([false, false, true])
         let constantInstruction = Interpreter.language[.int2]
         
         #expect(stackString(inty, .exec) == "[ ]")
@@ -44,16 +44,16 @@ struct ConstantInstructionTests {
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .error) ==
-                "[ Error: \"WARN: no constant assigned for vecBool8\" ]")
+                "[ «WARN: no constant assigned for vecBool8» ]")
 
     }
     
     @MainActor
     @Test func constantHistoryIsNotContingent() {
-        inty.constants[.int]![2] = Item<Int>(17)
+        inty.constants[.int]![2] = IntItem(17)
         Interpreter.language[.int2]!.act(on: inty)
-        let result = inty.stacks[.exec]!.popFirst()! as! Item<Int>
-        #expect(result.call == [])
+        let result = inty.stacks[.exec]!.popFirst()! as! IntItem
+        #expect(result.call.isEmpty)
         #expect(result.isContingent == false)
         #expect(result.value == 17)
     }
