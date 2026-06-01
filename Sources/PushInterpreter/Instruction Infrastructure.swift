@@ -158,3 +158,9 @@ class DirectInstruction : Instruction {
     }
 }
 
+
+extension Instruction {
+    static func netContingency(of items:(any Item)...) -> Bool {
+        return items.map({$0.isContingent}).contains(true)
+    }
+}

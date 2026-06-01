@@ -19,7 +19,10 @@ extension Interpreter {
                 fxn: {a in
                     let (x) = (a[0] as! BoolItem)
                     return [Router(.bool,
-                                   BoolItem(!x.value, call: [x, InstructionItem(.boolNot)]))]
+                                   BoolItem(!x.value,
+                                            call: [x, InstructionItem(.boolNot)],
+                                            isContingent: Instruction.netContingency(of: x)))
+                    ]
                 }),
         .boolAnd :
             Instruction(
@@ -29,7 +32,9 @@ extension Interpreter {
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     let (arg1, arg2) = (x.value, y.value)
                     return [Router(.bool,
-                                   BoolItem(arg1 && arg2, call: [y, x, InstructionItem(.boolAnd)]))
+                                   BoolItem(arg1 && arg2,
+                                            call: [y, x, InstructionItem(.boolAnd)],
+                                            isContingent: Instruction.netContingency(of: x, y)))
                     ]
                 }),
         .boolOr :
@@ -40,7 +45,9 @@ extension Interpreter {
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     let (arg1, arg2) = (x.value, y.value)
                     return [Router(.bool,
-                                   BoolItem(arg1 || arg2, call: [y, x, InstructionItem(.boolOr)]))
+                                   BoolItem(arg1 || arg2,
+                                            call: [y, x, InstructionItem(.boolOr)],
+                                            isContingent: Instruction.netContingency(of: x, y)))
                     ]
                 }),
         .boolXor :
@@ -51,7 +58,9 @@ extension Interpreter {
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     let (arg1, arg2) = (x.value, y.value)
                     return [Router(.bool,
-                                   BoolItem(arg1 != arg2, call: [y, x, InstructionItem(.boolXor)]))
+                                   BoolItem(arg1 != arg2,
+                                            call: [y, x, InstructionItem(.boolXor)],
+                                            isContingent: Instruction.netContingency(of: x, y)))
                     ]
                 }),
 //        .boolInvertFirstThenAnd :
