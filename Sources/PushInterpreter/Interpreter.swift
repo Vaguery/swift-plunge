@@ -34,7 +34,7 @@ final class Interpreter {
         var starter:[PushInstruction: Instruction] = [:]
         
         integrateInstructions(fromThese: boolInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: charInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: charInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)

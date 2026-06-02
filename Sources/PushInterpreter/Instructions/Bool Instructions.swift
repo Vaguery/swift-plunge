@@ -63,38 +63,58 @@ extension Interpreter {
                                             isContingent: Instruction.netContingency(of: x, y)))
                     ]
                 }),
-//        .boolInvertFirstThenAnd :
-//            Instruction(
-//                .boolInvertFirstThenAnd,
-//                takes: [.bool,.bool],
-//                fxn: {a in
-//                    let (x,y) = (a[0].bVal()!, a[1].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(!y && x, h:"(\(a[1].hist()) \(a[0].hist()) .boolInvertFirstThenAnd)") )]
-//                }),
-//        .boolInvertSecondThenAnd :
-//            Instruction(
-//                .boolInvertSecondThenAnd,
-//                takes: [.bool,.bool],
-//                fxn: {a in
-//                    let (x,y) = (a[0].bVal()!, a[1].bVal()!)
-//                    return [Router(.bool, PushItem.makeBool(y && !x, h:"(\(a[1].hist()) \(a[0].hist()) .boolInvertSecondThenAnd)") )]
-//                }),
-//        .boolFromFloat :
-//            Instruction(
-//                .boolFromFloat,
-//                takes: [.float],
-//                fxn: {a in
-//                    let (x) = (a[0].fVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x != 0.0, h:"(\(a[0].hist()) .boolFromFloat)") )]
-//                }),
-//        .boolFromInt :
-//            Instruction(
-//                .boolFromInt,
-//                takes: [.int],
-//                fxn: {a in
-//                    let (x) = (a[0].iVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x != 0, h:"(\(a[0].hist()) .boolFromInt)") )]
-//                }),
+        .boolInvertFirstThenAnd :
+            Instruction(
+                .boolInvertFirstThenAnd,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(!y.value && x.value,
+                                 call: [y, x, InstructionItem(.boolInvertFirstThenAnd)],
+                                 isContingent: Instruction.netContingency(of: x, y)))
+                    ]
+                }),
+        .boolInvertSecondThenAnd :
+            Instruction(
+                .boolInvertSecondThenAnd,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y.value && !x.value,
+                                 call: [y, x, InstructionItem(.boolInvertSecondThenAnd)],
+                                 isContingent: Instruction.netContingency(of: x, y)))
+                    ]
+                }),
+        .boolFromDouble :
+            Instruction(
+                .boolFromDouble,
+                takes: [.double],
+                fxn: {a in
+                    let (x) = (a[0] as! DoubleItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(x.value != 0.0,
+                                 call: [x, InstructionItem(.boolFromDouble)],
+                                 isContingent: Instruction.netContingency(of: x)))
+                    ]
+                }),
+        .boolFromInt :
+            Instruction(
+                .boolFromInt,
+                takes: [.int],
+                fxn: {a in
+                    let (x) = (a[0] as! IntItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(x.value != 0,
+                                 call: [x, InstructionItem(.boolFromInt)],
+                                 isContingent: Instruction.netContingency(of: x)))
+                    ]
+                }),
 
     ]
 

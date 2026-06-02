@@ -9,6 +9,7 @@
 import Testing
 import DequeModule
 
+@Suite
 struct BoolInstructionTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
@@ -88,5 +89,70 @@ struct BoolInstructionTests {
     }
     
 
+    @Test func boolInvertFirstThenAnd() {
+        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(false), BoolItem(true, isContingent: true)])
+        #expect(stackString(inty, .bool) == "[ true false true ]")
+
+        doThis(.boolInvertFirstThenAnd, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolInvertFirstThenAnd, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+    }
+    
+
+    @Test func boolInvertSecondThenAnd() {
+        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(false), BoolItem(true, isContingent: true)])
+        #expect(stackString(inty, .bool) == "[ true false true ]")
+
+        doThis(.boolInvertSecondThenAnd, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolInvertSecondThenAnd, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+    }
+    
+    
+    @Test func boolFromDouble() {
+        inty.stacks[.double]!.prepend(contentsOf: [DoubleItem(0.0), DoubleItem(1.1), DoubleItem(-1.1, isContingent: true)])
+        #expect(stackString(inty, .double) == "[ 0.0 1.1 -1.1 ]")
+
+        doThis(.boolFromDouble, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolFromDouble, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolFromDouble, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true false ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+    }
+    
+    
+    @Test func boolFromInt() {
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(1), IntItem(-1, isContingent: true)])
+        #expect(stackString(inty, .int) == "[ 0 1 -1 ]")
+
+        doThis(.boolFromInt, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolFromInt, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolFromInt, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true false ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+    }
+    
+
+    
     
 }
