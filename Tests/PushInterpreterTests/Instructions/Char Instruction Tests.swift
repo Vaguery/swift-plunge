@@ -55,5 +55,125 @@ struct CharInstructionTests {
     }
     
 
+    @Test func charIsWhitespace() {
+        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("g")), CharItem(Character(" "), isContingent: true), CharItem(Character("\n")), CharItem(Character("\t"))])
+        
+        #expect(stackString(inty, .char) == "[ 'g' ' ' '\n' '\t' ]")
+        
+        doThis(.charIsWhitespace, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charIsWhitespace, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charIsWhitespace, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charIsWhitespace, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+
+    }
     
+    
+    @Test func charIsDigit() {
+        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("2️⃣")), CharItem(Character("७"))])
+        
+        #expect(stackString(inty, .char) == "[ '1' 'q' '2️⃣' '७' ]")
+        
+        doThis(.charIsDigit, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charIsDigit, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charIsDigit, to: inty)
+        #expect(stackString(inty, .bool) == "[ false false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        // note that digits in other languages count!
+        doThis(.charIsDigit, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+
+    }
+    
+    
+    
+    @Test func charIsLetter() {
+        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("-")), CharItem(Character("Й"))])
+        
+        #expect(stackString(inty, .char) == "[ '1' 'q' '-' 'Й' ]")
+        
+        doThis(.charIsLetter, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charIsLetter, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charIsLetter, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        // note that letters in other languages count!
+        doThis(.charIsLetter, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false true true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+
+    }
+
+    
+    @Test func charFromDouble() {
+        inty.stacks[.double]!.prepend(contentsOf: [DoubleItem(0), DoubleItem(1111111.11, isContingent: true), DoubleItem(66.6), DoubleItem(-33)])
+        
+        #expect(stackString(inty, .double) == "[ 0.0 1111111.11 66.6 -33.0 ]")
+        
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+        
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == true)
+        
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ 'b' 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+        
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ 'A' 'b' 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+    }
+    
+    
+    @Test func charFromInt() {
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(1111111, isContingent: true), IntItem(66), IntItem(-33)])
+        
+        #expect(stackString(inty, .int) == "[ 0 1111111 66 -33 ]")
+        
+        doThis(.charFromInt, to: inty)
+        #expect(stackString(inty, .char) == "[ ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+        
+        doThis(.charFromInt, to: inty)
+        #expect(stackString(inty, .char) == "[ 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == true)
+        
+        doThis(.charFromInt, to: inty)
+        #expect(stackString(inty, .char) == "[ 'b' 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+        
+        doThis(.charFromInt, to: inty)
+        #expect(stackString(inty, .char) == "[ 'A' 'b' 'v' ' ' ]")
+        #expect(topItem(inty, .char)!.isContingent == false)
+    }
+
+
 }

@@ -37,49 +37,88 @@ extension Interpreter {
                     return result
                 }
             }),
-//        
-//            .charFromInt : Instruction(
-//                .charFromInt,
-//                takes: [.int],
-//                fxn: {a in
-//                    let (x) = (a[0].iVal()!)
-//                    let c = Character(UnicodeScalar(abs(x % 128))!)
-//                    return [Router(.char, PushItem.makeChar(c, h:"(\(a[0].hist()) .charFromInt)") )]
-//                }),
-//        
-//            .charFromFloat : Instruction(
-//                .charFromFloat,
-//                takes: [.float],
-//                fxn: {a in
-//                    let (x) = (a[0].fVal()!)
-//                    let c = Character(UnicodeScalar(abs(Int(x) % 128))!)
-//                    return [Router(.char, PushItem.makeChar(c, h:"(\(a[0].hist()) .charFromFloat)") )]
-//                }),
-//        
-//            .charIsLetter : Instruction(
-//                .charIsLetter,
-//                takes: [.char],
-//                fxn: {a in
-//                    let (x) = (a[0].cVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x.isLetter, h:"(\(a[0].hist()) .charIsLetter)") )]
-//                }),
-//        
-//            .charIsDigit : Instruction(
-//                .charIsDigit,
-//                takes: [.char],
-//                fxn: {a in
-//                    let (x) = (a[0].cVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x.isWholeNumber, h:"(\(a[0].hist()) .charIsDigit)") )]
-//                }),
-//        
-//            .charIsWhitespace : Instruction(
-//                .charIsWhitespace,
-//                takes: [.char],
-//                fxn: {a in
-//                    let (x) = (a[0].cVal()!)
-//                    return [Router(.bool, PushItem.makeBool(x.isWhitespace, h:"(\(a[0].hist()) .charIsWhitespace)") )]
-//                })
-//        
-//        
+        
+            // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
+            .charFromInt : Instruction(
+                .charFromInt,
+                takes: [.int],
+                fxn: {a in
+                    let (x) = (a[0] as! IntItem)
+                    let c = Character(UnicodeScalar(abs(x.value % 95) + 32)!)
+                    return [Router(
+                                .char,
+                                CharItem(c,
+                                         call:[x, InstructionItem(.charFromInt)],
+                                         isContingent: Instruction.netContingency(of: x)
+                                        )
+                                )
+                    ]
+                }),
+
+            // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
+            .charFromDouble : Instruction(
+                .charFromDouble,
+                takes: [.double],
+                fxn: {a in
+                    let (x) = (a[0] as! DoubleItem)
+                    let c = Character(Unicode.Scalar(abs(Int(x.value) % 95) + 32)!)
+                    return [
+                        Router(
+                            .char,
+                            CharItem(c,
+                                     call:[x, InstructionItem(.charFromDouble)],
+                                     isContingent: Instruction.netContingency(of: x)
+                                    )
+                        )
+                    ]
+                }),
+        
+            .charIsLetter : Instruction(
+                .charIsLetter,
+                takes: [.char],
+                fxn: {a in
+                    let (x) = (a[0] as! CharItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(x.value.isLetter,
+                                     call: [x, InstructionItem(.charIsLetter)],
+                                     isContingent: Instruction.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }),
+        
+            .charIsDigit : Instruction(
+                .charIsDigit,
+                takes: [.char],
+                fxn: {a in
+                    let (x) = (a[0] as! CharItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(x.value.isWholeNumber,
+                                     call: [x, InstructionItem(.charIsDigit)],
+                                     isContingent: Instruction.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }),
+        
+            .charIsWhitespace : Instruction(
+                .charIsWhitespace,
+                takes: [.char],
+                fxn: {a in
+                    let (x) = (a[0] as! CharItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(x.value.isWhitespace,
+                                 call:[x, InstructionItem(.charIsWhitespace)],
+                                 isContingent: Instruction.netContingency(of: x)
+                        ))
+                    ]
+                })
+        
+        
     ]
 }
