@@ -259,49 +259,83 @@ extension Interpreter {
                         ]
                     }
                 ),
-
-//            .intFromBool :
-//                Instruction(
-//                    .intFromBool,
-//                    takes: [.bool],
-//                    fxn: {a in
-//                        let (x) = (a[0].bVal()!)
-//                        return [Router(.int, PushItem.makeInt(x ? 1 : 0, h:"(\(a[0].hist()) .intFromBool)") )]
-//                    }),
             
-//            .intFromChar :
-//                Instruction(
-//                    .intFromChar,
-//                    takes: [.char],
-//                    fxn: {a in
-//                        let (c) = (a[0].cVal()!)
-//                        if let v = c.asciiValue {
-//                            return [Router(.int, PushItem.makeInt(Int(v), h:"(\(a[0].hist()) .intFromChar)") )]
-//                        } else { return [] }
-//                    }),
+                .intFromBool :
+                Instruction(
+                    .intFromBool,
+                    takes: [.bool],
+                    fxn: {a in
+                        let (x) = (a[0] as! BoolItem)
+                        return [
+                            Router(
+                                .int,
+                                IntItem(x.value ? 1 : 0,
+                                        call:[x, InstructionItem(.intFromBool)],
+                                        isContingent: Instruction.netContingency(of: x)
+                                       )
+                            )
+                        ]
+                    }
+                ),
             
-//            .intFromString :
-//                Instruction(
-//                    .intFromString,
-//                    takes: [.string],
-//                    fxn: {a in
-//                        let (x) = (a[0].sVal()!)
-//                        if let c = Int(x) {
-//                            return [Router(.int, PushItem.makeInt(c, h:"(\(a[0].hist()) .intFromString)") )]
-//                        } else {
-//                            return []
-//                        }
-//                    }),
+            .intFromChar :
+                Instruction(
+                    .intFromChar,
+                    takes: [.char],
+                    fxn: {a in
+                        let (c) = (a[0] as! CharItem)
+                        if let v = c.value.asciiValue {
+                            return [
+                                Router(
+                                    .int,
+                                    IntItem(Int(v),
+                                            call: [c, InstructionItem(.intFromChar)],
+                                            isContingent: Instruction.netContingency(of: c)
+                                            )
+                                    )
+                                ]
+                        } else {
+                            return []
+                        }
+                    }
+                ),
             
-//            .intFromFloat :
-//                Instruction(
-//                    .intFromFloat,
-//                    takes: [.float],
-//                    fxn: {a in
-//                        let (x) = (a[0].fVal()!)
-//                        return [Router(.int, PushItem.makeInt(Int(x), h:"(\(a[0].hist()) .intFromFloat)") )]
-//                    }),
+            .intFromString :
+                Instruction(
+                    .intFromString,
+                    takes: [.string],
+                    fxn: {a in
+                        let (s) = (a[0] as! StringItem)
+                        if let v = Int(s.value) {
+                            return [
+                                Router(.int,
+                                       IntItem(v,
+                                               call:[s, InstructionItem(.intFromString)],
+                                               isContingent: Instruction.netContingency(of: s)
+                                               )
+                                       )
+                                ]
+                        } else {
+                            return []
+                        }
+                    }),
             
+            .intFromDouble :
+                Instruction(
+                    .intFromDouble,
+                    takes: [.double],
+                    fxn: {a in
+                        let (x) = (a[0] as! DoubleItem)
+                        return [
+                            Router(.int,
+                                   IntItem(Int(x.value),
+                                           call:[x, InstructionItem(.intFromDouble)],
+                                           isContingent: Instruction.netContingency(of: x)
+                                          )
+                                   )
+                            ]
+                    }
+                ),
         ]
 
 }

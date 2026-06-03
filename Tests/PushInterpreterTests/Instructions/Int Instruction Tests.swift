@@ -280,5 +280,105 @@ struct IntInstructionTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
     
+    @Test func intFromBool() {
+        inty.stacks[.bool]!.prepend(
+            contentsOf: [BoolItem(false), BoolItem(true, isContingent: true),])
+        
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        
+        doThis(.intFromBool, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromBool, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 0 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+    
+    
+    @Test func intFromChar() {
+        inty.stacks[.char]!.prepend(
+            contentsOf: [CharItem(Character("W")),
+                         CharItem(Character("W"), isContingent: true),
+                         CharItem(Character("😍"), isContingent: true)
+                         ])
+        
+        #expect(stackString(inty, .char) == "[ 'W' 'W' '😍' ]")
+        
+        doThis(.intFromChar, to: inty)
+        #expect(stackString(inty, .int) == "[ 87 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromChar, to: inty)
+        #expect(stackString(inty, .int) == "[ 87 87 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+        
+        // not ASCII therefore no result
+        doThis(.intFromChar, to: inty)
+        #expect(stackString(inty, .int) == "[ 87 87 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+    
+    @Test func intFromString() {
+        inty.stacks[.string]!.prepend(
+            contentsOf: [StringItem("-172"),
+                         StringItem("0", isContingent: true),
+                         StringItem("00001"),
+                         StringItem("1_000_000", isContingent: false),
+                         StringItem(" 172"),
+                         StringItem("1 7 2"),
+                         ])
+        
+        #expect(stackString(inty, .string) == "[ \"-172\" \"0\" \"00001\" \"1_000_000\" \" 172\" \"1 7 2\" ]")
+        
+        doThis(.intFromString, to: inty)
+        #expect(stackString(inty, .int) == "[ -172 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromString, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 -172 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+        
+        doThis(.intFromString, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromString, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromString, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+    }
+    
+    
+    @Test func intFromDouble() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(1.23),
+                         DoubleItem(1.2e5, isContingent: true),
+                         DoubleItem(-100.0),
+                         DoubleItem(Double.pi),
+                        ])
+        
+        #expect(stackString(inty, .double) == "[ 1.23 120000.0 -100.0 3.141592653589793 ]")
+        
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ 120000 1 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+        
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ -100 120000 1 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ 3 -100 120000 1 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+    }
     
 }
