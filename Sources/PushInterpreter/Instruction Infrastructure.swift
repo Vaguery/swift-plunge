@@ -13,9 +13,10 @@ import Foundation
 
 enum PushInstruction : String, CaseIterable {
         
-    case intAdd, intSubtract, intMultiply, intGT, intGTE, intLT, intLTE, intQuot, intMod, intMax, intMin, intFromBool, intFromChar, intFromDouble, intFromString, intInc, intDec, intFromDbl, intDup, intDupTimes, intDupItems, intEmpty, intEq, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup, intDeepDup
+    case intAdd, intSubtract, intMultiply, intGT, intGTE, intLT, intLTE, intQuot, intMod, intMax, intMin, intFromBool, intFromChar, intFromDouble, intFromString, intInc, intDec, intFromDbl,
+        intDup, intDupTimes, intDupItems, intEmpty, intEq, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup, intDeepDup
     
-    case doubleAdd, doubleSubtract, doubleMultiply, doubleGT, doubleGTE, doubleLT, doubleLTE, doubleQuot, doubleMod, doubleMax, doubleMin, doubleFromBool, doubleFromChar, doubleFromString, doubleInc, doubleDec, doubleDup, doubleDupTimes, doubleDupItems, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup, doubleDeepDup, doubleCos, doubleSin, doubleTan, doubleFromInt
+    case doubleAdd, doubleSubtract, doubleMultiply, doubleDivide, doubleGT, doubleGTE, doubleLT, doubleLTE, doubleQuot, doubleMod, doubleMax, doubleMin, doubleFromBool, doubleFromChar, doubleFromString, doubleInc, doubleDec, doubleDup, doubleDupTimes, doubleDupItems, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup, doubleDeepDup, doubleCos, doubleSin, doubleTan, doubleFromInt
     
     case boolAnd, boolNot, boolOr, boolXor, boolInvertFirstThenAnd, boolInvertSecondThenAnd, boolFromDouble, boolFromInt, boolDup, boolDupTimes, boolDupItems, boolEmpty, boolEq, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup, boolDeepDup
 

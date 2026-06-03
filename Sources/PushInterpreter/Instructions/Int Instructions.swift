@@ -108,7 +108,7 @@ extension Interpreter {
                             Router(
                                 .int,
                                 IntItem(
-                                    x.value==0 ? 1 : (y.value / x.value),
+                                    x.value == 0 ? 1 : (y.value / x.value),
                                     call: [y, x, InstructionItem(.intQuot)],
                                     isContingent: Instruction.netContingency(of: x, y)
                                 )

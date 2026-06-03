@@ -38,7 +38,7 @@ final class Interpreter {
 //        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
