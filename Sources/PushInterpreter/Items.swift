@@ -128,7 +128,7 @@ struct CodeItem: Item, Equatable, Pretty {
         for i in value {
             result += "\(i.pretty()) "
         }
-        result += " )"
+        result += ")"
         return result
     }
 
