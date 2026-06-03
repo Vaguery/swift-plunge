@@ -41,7 +41,7 @@ final class Interpreter {
 //        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: stringInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: vectorInstructions, intoLanguage: &starter)
         return starter

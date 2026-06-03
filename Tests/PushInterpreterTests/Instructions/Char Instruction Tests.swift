@@ -106,9 +106,9 @@ struct CharInstructionTests {
     
     
     @Test func charIsLetter() {
-        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("-")), CharItem(Character("Й"))])
+        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("-")), CharItem(Character("ϴ"))])
         
-        #expect(stackString(inty, .char) == "[ '1' 'q' '-' 'Й' ]")
+        #expect(stackString(inty, .char) == "[ '1' 'q' '-' 'ϴ' ]")
         
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -124,7 +124,7 @@ struct CharInstructionTests {
         
         // note that letters in other languages count!
         doThis(.charIsLetter, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false true true ]")
+        #expect(stackString(inty, .bool) == "[ true false true false ]")
         #expect(topItem(inty, .bool)!.isContingent == false)
 
     }
