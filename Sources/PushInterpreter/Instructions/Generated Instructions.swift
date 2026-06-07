@@ -1,47 +1,45 @@
-////
-////  GeneratedInstructions.swift
-////  Propeller in Swift
-////
-////  Created by William Tozier on 6/2/26.
-////
 //
-//import DequeModule
+//  GeneratedInstructions.swift
+//  Propeller in Swift
 //
-//extension Interpreter {
+//  Created by William Tozier on 6/2/26.
 //
-//    static var vectorInstructions: [PushInstruction: Instruction] {
-//        let theseStacks : [PushStack] = [ .vecInt, .vecBool, .vecFloat, .vecString ]
-//        var result: [PushInstruction: Instruction] = [:]
-//        
-//        for s in theseStacks {
-//            result.merge(vectorDefinitions(for: s), uniquingKeysWith: { (first, _) in first })
-//        }
-//        
-//        
-//        
-//        return result
-//    }
-//    
-//    static func vectorDefinitions(for stack:PushStack) -> [PushInstruction : Instruction] {
-//        let stackname = stack.rawValue
-//        let stack = PushStack(rawValue: stackname)!
-//        let itemStack = componentStack(stack)
-//        var name : PushInstruction
-//        var inst : Instruction
-//        var result : [PushInstruction : Instruction] = [:]
-//        
-//        func componentStack(_ from:PushStack) -> PushStack {
-//            return switch from {
-//            case PushStack.vecInt: PushStack.int
-//            case PushStack.vecBool: PushStack.bool
-//            case PushStack.vecFloat: PushStack.float
-//            case PushStack.vecString: PushStack.string
-//            default: .error
-//            }
-//        }
-//
-//        
-//        
+
+import DequeModule
+
+extension Interpreter {
+
+    static var vectorInstructions: [PushInstruction: Instruction] {
+        let theseStacks : [PushStack] = [ .vecInt, .vecBool, .vecDouble, .vecString ]
+        var result: [PushInstruction: Instruction] = [:]
+        
+        for s in theseStacks {
+            result.merge(vectorDefinitions(for: s), uniquingKeysWith: { (first, _) in first })
+        }
+        
+        
+        
+        return result
+    }
+    
+    static func vectorDefinitions(for stack:PushStack) -> [PushInstruction : Instruction] {
+        let stackname = stack.rawValue
+        let stack = PushStack(rawValue: stackname)!
+        let itemStack = componentStack(stack)
+        var name : PushInstruction
+        var inst : Instruction
+        var result : [PushInstruction : Instruction] = [:]
+        
+        func componentStack(_ from:PushStack) -> PushStack {
+            return switch from {
+            case PushStack.vecInt: PushStack.int
+            case PushStack.vecBool: PushStack.bool
+            case PushStack.vecDouble: PushStack.double
+            case PushStack.vecString: PushStack.string
+            default: .error
+            }
+        }
+
 //        func newVecItem<T> (from contents: [T]) -> PushItem {
 //            let result = switch contents {
 //            case is [Int]:
@@ -602,109 +600,144 @@
 //                        })
 //        
 //        result[name] = inst
-//
-//            
-//        return result
-//    }
-//}
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//extension Interpreter {
-//    static var combinatorInstructions: [PushInstruction: Instruction] {
-//        let theseStacks : [PushStack] = [ .bool, .int, .float, .char, .string, .code, .exec, .vecInt, .vecBool, .vecFloat, .vecString ]
-//        
-//        var result: [PushInstruction: Instruction] = [:]
-//        
-//        for s in theseStacks {
-//            result.merge(combinators(for: s), uniquingKeysWith: { (first, _) in first })
-//        }
-//        
-//        return result
-//    }
-//    
-//    
-//    static func combinators(for stack:PushStack) -> [PushInstruction : Instruction] {
-//        let type = stack.rawValue
-//        var name : PushInstruction
-//        var inst : Instruction
-//        var result : [PushInstruction : Instruction] = [:]
-//        
-//        name = PushInstruction(rawValue: "\(type)Dup")!
-//        inst = Instruction(
-//            name,
-//            takes: [stack],
-//            fxn: {a in
-//                return [Router(stack, a[0]), Router(stack, a[0])]
-//            })
-//        result[name] = inst
-//        
-//        name = PushInstruction(rawValue: "\(type)Eq")!
-//        inst = Instruction(
-//            name,
-//            takes: [stack, stack],
-//            fxn: {a in
-//                let same = (a[0] == a[1])
-//                let hist = "( \(a[0].hist()) \(a[1].hist()) \(name) )"
-//                return [Router(.bool, PushItem.makeBool(same, h: hist))]
-//            })
-//        result[name] = inst
-//        
-//        
-//        name = PushInstruction(rawValue: "\(type)Swap")!
-//        inst = Instruction(
-//            name,
-//            takes: [stack, stack],
-//            fxn: {a in
-//                return [Router(stack, a[0]), Router(stack, a[1])]
-//            })
-//        result[name] = inst
-//        
-//        
-//        name = PushInstruction(rawValue: "\(type)Pop")!
-//        inst = Instruction(
-//            name,
-//            takes: [stack],
-//            fxn: {_ in return []})
-//        result[name] = inst
-//        
-//        
-//        name = PushInstruction(rawValue: "\(type)StackDepth")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [],
-//            modifier: { (interpreter, collectedItems) in
-//                let c = interpreter.stacks[stack]!.count
-//                return [Router(.int, PushItem.makeInt(c, h: "\(name)()"))]
-//            })
-//        result[name] = inst
-//        
+
+            
+        return result
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+extension Interpreter {
+    static var combinatorInstructions: [PushInstruction: Instruction] {
+        let theseStacks : [PushStack] = [ .bool, .int, .double, .char, .string, .code, .exec, .vecInt, .vecBool, .vecDouble, .vecString ]
+        
+        var result: [PushInstruction: Instruction] = [:]
+        
+        for s in theseStacks {
+            result.merge(combinators(for: s), uniquingKeysWith: { (first, _) in first })
+        }
+        
+        return result
+    }
+    
+    
+    static func combinators(for stack:PushStack) -> [PushInstruction : Instruction] {
+        let type = stack.rawValue
+        var name : PushInstruction
+        var inst : Instruction
+        var result : [PushInstruction : Instruction] = [:]
+        
+        name = PushInstruction(rawValue: "\(type)Dup")!
+        inst = Instruction(
+            name,
+            takes: [stack],
+            fxn: {a in
+                return [Router(stack, a[0]), Router(stack, a[0])]
+            })
+        result[name] = inst
+        
+        // typeEq creates a new item which may be contingent, and
+        // demands multilevel comparison between `Item` instances at
+        // all attribute levels (recursively)
+        //
+        name = PushInstruction(rawValue: "\(type)Eq")!
+        inst = Instruction(
+            name,
+            takes: [stack, stack],
+            fxn: {a in
+                let isSame = a[0].isEqual(to: a[1])
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            isSame,
+                            call: [a[1], a[0], InstructionItem(name)],
+                            isContingent: Instruction.netContingency(of: a[0], a[1])
+                        )
+                    )
+                ]
+            }
+        )
+        
+        result[name] = inst
+        
+        // swap restructures the `type` stack, but does not affect argument state
+        // and therefore has no effect on `call` or `isContingent` _unless the instruction itself_
+        // is contingent.
+        //
+        name = PushInstruction(rawValue: "\(type)Swap")!
+        inst = Instruction(
+            name,
+            takes: [stack, stack],
+            fxn: {a in
+                return [
+                    Router(stack, a[0]), Router(stack, a[1])]
+            })
+        result[name] = inst
+        
+        
+        name = PushInstruction(rawValue: "\(type)Pop")!
+        inst = Instruction(
+            name,
+            takes: [stack],
+            fxn: {_ in return []})
+        result[name] = inst
+        
+        //  'stackDepth` produces a result with `isContingent = true`
+        //
+        name = PushInstruction(rawValue: "\(type)StackDepth")!
+        inst = DirectInstruction(
+            name,
+            takes: [],
+            modifier: { (interpreter, collectedItems) in
+                let c = interpreter.stacks[stack]!.count
+                return [
+                    Router(
+                        .int,
+                        IntItem(c,
+                                call: [InstructionItem(name)],
+                                isContingent: true
+                               )
+                        )
+                ]
+            }
+        )
+        
+        result[name] = inst
+        
 //        name = PushInstruction(rawValue: "\(type)DupTimes")!
 //        inst = DirectInstruction(
 //            name,
 //            takes: [.int],
 //            modifier: { (interpreter, collectedItems) in
-//                let number = max(collectedItems[0].iVal()! ,0)
+//                let howMany = (collectedItems[0] as! IntItem).value
+//                let number = max(howMany ,0)
 //                if let item = interpreter.stacks[stack]!.first {
 //                    interpreter.stacks[stack]!.prepend(contentsOf: repeatElement(item, count: number))
 //                    return []
 //                } else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
+//                    return [
+//                        Router(
+//                            .error,
+//                            ErrorItem("⚠️ \(name) on empty stack")
+//                        )
+//                    ]
 //                }
 //            })
 //        result[name] = inst
@@ -725,38 +758,52 @@
 //                }
 //            })
 //        result[name] = inst
-//        
-//        name = PushInstruction(rawValue: "\(type)Empty")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [],
-//            modifier: { (interpreter, collectedItems) in
-//                let empty = interpreter.stacks[stack]!.isEmpty
-//                return [Router(.bool, PushItem.makeBool(empty, h: "\(name)()"))]
-//            })
-//        result[name] = inst
-//        
-//        name = PushInstruction(rawValue: "\(type)Flush")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [],
-//            modifier: { (interpreter, collectedItems) in
-//                interpreter.stacks[stack]!.removeAll()
-//                return []
-//            })
-//        result[name] = inst
-//        
-//        name = PushInstruction(rawValue: "\(type)Rot")!
-//        inst = Instruction(
-//            name,
-//            takes: [stack, stack, stack],
-//            fxn: {a in
-//                let (x,y,z) = (a[0], a[1], a[2])
-//                return [Router(stack, y), Router(stack, x), Router(stack,z)]
-//            })
-//        result[name] = inst
-//        
-//        
+        
+        name = PushInstruction(rawValue: "\(type)Empty")!
+        inst = DirectInstruction(
+            name,
+            takes: [],
+            modifier: { (interpreter, collectedItems) in
+                let empty = interpreter.stacks[stack]!.isEmpty
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(empty,
+                                 call:[InstructionItem(name)],
+                                 isContingent: true
+                                )
+                    )
+                ]
+            }
+        )
+        result[name] = inst
+        
+        name = PushInstruction(rawValue: "\(type)Flush")!
+        inst = DirectInstruction(
+            name,
+            takes: [],
+            modifier: { (interpreter, collectedItems) in
+                interpreter.stacks[stack]!.removeAll()
+                return []
+            })
+        result[name] = inst
+        
+        // TODO: this will be affected by the instruction's contingency
+        //
+        name = PushInstruction(rawValue: "\(type)Rot")!
+        inst = Instruction(
+            name,
+            takes: [stack, stack, stack],
+            fxn: {a in
+                let (x,y,z) = (a[0], a[1], a[2])
+                return [
+                    Router(stack, y),
+                    Router(stack, x),
+                    Router(stack,z)]
+            })
+        result[name] = inst
+        
+        
 //        name = PushInstruction(rawValue: "\(type)Yank")!
 //        inst = DirectInstruction(
 //            name,
@@ -861,11 +908,11 @@
 //                return [Router(stack, newItem)]
 //            })
 //        result[name] = inst
-//        return result
-//    }
-//}
-//    
-//    
-//
-//
-//
+        return result
+    }
+}
+    
+    
+
+
+

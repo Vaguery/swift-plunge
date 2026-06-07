@@ -181,5 +181,7 @@ struct InterpreterTests {
     @Test func instructionCoverageTest() {
         let coverage = Interpreter.reportInstructionCoverage()
         #expect(coverage != "")
+        // #expect(coverage == "88")
+        // ^^ uncomment for the kludge to report how many are done
     }
 }

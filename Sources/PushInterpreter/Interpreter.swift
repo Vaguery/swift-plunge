@@ -35,7 +35,7 @@ final class Interpreter {
         
         integrateInstructions(fromThese: boolInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: charInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
@@ -43,7 +43,7 @@ final class Interpreter {
 //        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
         integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
 //        integrateInstructions(fromThese: stringInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: vectorInstructions, intoLanguage: &starter)
+        integrateInstructions(fromThese: vectorInstructions, intoLanguage: &starter)
         return starter
     }
     
