@@ -155,4 +155,82 @@ struct CombinatorInstructionTests {
         #expect(stackString(inty, .int) == "[ 11 55 999 ]")
     }
     
+    
+    @Test func doubleDupTimes() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(3),  // should add three
+                         IntItem(-3), // should add none
+                         IntItem(0)   // should add none
+                        ])
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(1.1),
+                        ])
+
+        #expect(stackString(inty, .double) == "[ 1.1 ]")
+        
+        doThis(.doubleDupTimes, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 1.1 ]")
+        
+        doThis(.doubleDupTimes, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 1.1 ]")
+        
+        doThis(.doubleDupTimes, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 1.1 ]")
+    }
+
+    @Test func doubleDupItems() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-3),  // should dup none
+                         IntItem(3),  // should dup 3
+                         IntItem(0)   // should dup none
+                        ])
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(1.1),
+                         DoubleItem(2.22),
+                         DoubleItem(3.333),
+                         DoubleItem(4.4444),
+                        ])
+
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 4.4444 ]")
+        
+        doThis(.doubleDupItems, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 4.4444 ]")
+        
+        doThis(.doubleDupItems, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 1.1 2.22 3.333 4.4444 ]")
+        
+        doThis(.doubleDupItems, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 1.1 2.22 3.333 4.4444 ]")
+    }
+
+    @Test func doubleYank() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-3),IntItem(2),IntItem(17),IntItem(0),IntItem(2),
+                        ])
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(1.1),
+                         DoubleItem(2.22),
+                         DoubleItem(3.333),
+                         DoubleItem(4.4444),
+                        ])
+
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 4.4444 ]")
+        
+        doThis(.doubleYank, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 2.22 3.333 4.4444 ]")
+        
+        doThis(.doubleYank, to: inty)
+        #expect(stackString(inty, .double) == "[ 3.333 1.1 2.22 4.4444 ]")
+        
+        doThis(.doubleYank, to: inty)
+        #expect(stackString(inty, .double) == "[ 4.4444 3.333 1.1 2.22 ]")
+        
+        doThis(.doubleYank, to: inty)
+        #expect(stackString(inty, .double) == "[ 4.4444 3.333 1.1 2.22 ]")
+        
+        doThis(.doubleYank, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 4.4444 3.333 2.22 ]")
+        #expect(topItem(inty, .double)!.isContingent == true )
+    }
+
 }

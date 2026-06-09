@@ -30,6 +30,7 @@ extension Interpreter {
         var inst : Instruction
         var result : [PushInstruction : Instruction] = [:]
         
+        
         func componentStack(_ from:PushStack) -> PushStack {
             return switch from {
             case PushStack.vecInt: PushStack.int
@@ -40,32 +41,13 @@ extension Interpreter {
             }
         }
 
-//        func newVecItem<T> (from contents: [T]) -> PushItem {
-//            let result = switch contents {
-//            case is [Int]:
-//                PushItem.makeVecInt(contents as! [Int])
-//            case is [Double]:
-//                PushItem.makeVecFloat(contents as! [Double])
-//            case is [Bool]:
-//                PushItem.makeVecBool(contents as! [Bool])
-//            case is [String]:
-//                PushItem.makeVecString(contents as! [String])
-//            default:
-//                PushItem.error("FAILED")
-//            }
-//            return result
-//        }
-//        
-//        func dropLast<T>(_ a: [T]) -> [T] {
-//            Array(a.dropLast(1))
-//        }
-//        
 //        name = PushInstruction(rawValue: "\(stackname)ButLast")!
 //        inst = Instruction(
 //                        name,
 //                        takes: [stack],
 //                        fxn: {a in
-//                            let oldVal = a[0].vecVal()
+//                            let vType = typeFromStack[stack]!
+//                            let oldVal = a[0] as? vType
 //                            let newVal = dropLast(oldVal!)
 //                            let result = newVecItem(from: newVal)
 //                            return [Router(stack,result)]
@@ -652,6 +634,7 @@ extension Interpreter {
             })
         result[name] = inst
         
+        
         // typeEq creates a new item which may be contingent, and
         // demands multilevel comparison between `Item` instances at
         // all attribute levels (recursively)
@@ -677,6 +660,7 @@ extension Interpreter {
         
         result[name] = inst
         
+        
         // swap restructures the `type` stack, but does not affect argument state
         // and therefore has no effect on `call` or `isContingent` _unless the instruction itself_
         // is contingent.
@@ -699,8 +683,10 @@ extension Interpreter {
             fxn: {_ in return []})
         result[name] = inst
         
+        
         //  'stackDepth` produces a result with `isContingent = true`
         //
+        
         name = PushInstruction(rawValue: "\(type)StackDepth")!
         inst = DirectInstruction(
             name,
@@ -721,43 +707,65 @@ extension Interpreter {
         
         result[name] = inst
         
-//        name = PushInstruction(rawValue: "\(type)DupTimes")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let howMany = (collectedItems[0] as! IntItem).value
-//                let number = max(howMany ,0)
-//                if let item = interpreter.stacks[stack]!.first {
-//                    interpreter.stacks[stack]!.prepend(contentsOf: repeatElement(item, count: number))
-//                    return []
-//                } else {
-//                    return [
-//                        Router(
-//                            .error,
-//                            ErrorItem("⚠️ \(name) on empty stack")
-//                        )
-//                    ]
-//                }
-//            })
-//        result[name] = inst
-//        
-//        name = PushInstruction(rawValue: "\(type)DupItems")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let number = min( range, max(collectedItems[0].iVal()! ,0))
-//                if interpreter.stacks[stack]!.isEmpty == true {
-//                    return []
-//                } else {
-//                    let duplicates = interpreter.stacks[stack]!.prefix(number)
-//                    interpreter.stacks[stack]!.prepend(contentsOf: duplicates)
-//                    return []
-//                }
-//            })
-//        result[name] = inst
+        
+        
+        //  'DupTimes` introduces some tacit contingency into execution,
+        //  but it's not entirely clear if it is making these results
+        //  contingent in themselves?
+        // TODO: work out details of this contingency definition
+        //
+        
+        name = PushInstruction(rawValue: "\(type)DupTimes")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let howMany = (collectedItems[0] as! IntItem).value
+                let number = max(howMany , 0)
+                var result = [Router]()
+                
+                if let item = interpreter.stacks[stack]!.first {
+                    for _ in 0..<number {
+                        result.append(Router(stack, item))
+                    }
+                    return result
+                } else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("⚠️ \(name) on empty stack")
+                        )
+                    ]
+                }
+            })
+        result[name] = inst
+        
+        //  'DupItems` introduces some tacit contingency into execution,
+        //  but it's not entirely clear if it is making these results
+        //  contingent in themselves?
+        // TODO: work out details of this contingency definition
+        //
+        
+        name = PushInstruction(rawValue: "\(type)DupItems")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let range = interpreter.stacks[stack]!.count - 1
+                let rawIndex = collectedItems[0] as! IntItem
+                let number = min( range, max(rawIndex.value ,0 ))
+                if interpreter.stacks[stack]!.isEmpty == true {
+                    return []
+                } else {
+                    let duplicates = interpreter.stacks[stack]!.prefix(number)
+                    var result = [Router]()
+                    for d in duplicates {
+                        result.append(Router(stack, d))
+                    }
+                    return result.reversed()
+                }
+            })
+        result[name] = inst
         
         name = PushInstruction(rawValue: "\(type)Empty")!
         inst = DirectInstruction(
@@ -804,26 +812,30 @@ extension Interpreter {
         result[name] = inst
         
         
-//        name = PushInstruction(rawValue: "\(type)Yank")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let idxItem = collectedItems[0]
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let idx = max(0,min(idxItem.iVal()!,range))
-//                
-//                guard range > 0 else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
-//                }
-//                let item = interpreter.stacks[stack]!.remove(at: idx)
-//                let itemHist = item.hist()
-//                let idxHist = idxItem.hist()
-//                let newItem = item.updateHistory("( \(itemHist) .\(name)( \(idxHist) )")
-//                return [Router(stack, newItem)]
-//            })
-//        result[name] = inst
-//        
+        //  'yank` produces a result with `isContingent = true`
+        //
+
+        name = PushInstruction(rawValue: "\(type)Yank")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let rawIndex = collectedItems[0] as! IntItem
+                let range = interpreter.stacks[stack]!.count - 1
+                let idx = max(0,min(rawIndex.value,range))
+                
+                guard range > 0 else {
+                    return [Router(.error, ErrorItem("⚠️ \(name) on empty stack"))]
+                }
+                
+                let oldItem = interpreter.stacks[stack]!.remove(at: idx)
+                var newItem = oldItem
+                newItem.call = [oldItem, InstructionItem(name)]
+                newItem.isContingent = true
+                return [Router(stack, newItem)]
+            })
+        result[name] = inst
+        
 //        name = PushInstruction(rawValue: "\(type)Shove")!
 //        inst = DirectInstruction(
 //            name,
