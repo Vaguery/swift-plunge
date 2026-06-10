@@ -9,11 +9,11 @@ import DequeModule
 
 
 extension Interpreter {
-    static let boolInstructions:[PushInstruction : Instruction] =
+    static let boolInstructions:[PushInstruction : Behavior] =
     
     [
         .boolNot :
-            Instruction(
+            Behavior(
                 .boolNot,
                 takes: [.bool],
                 fxn: {a in
