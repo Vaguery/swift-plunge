@@ -53,7 +53,7 @@ extension Interpreter {
 //                            return [Router(stack,result)]
 //                        })
 //        result[name] = inst
-//                    
+//
 //        name = PushInstruction(rawValue: "\(stackname)Concat")!
 //        inst = Instruction(
 //                        name,
@@ -64,8 +64,8 @@ extension Interpreter {
 //                            return [Router(stack,result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)EmptyVector")!
 //        inst = Instruction(
 //                        name,
@@ -76,8 +76,8 @@ extension Interpreter {
 //                            return [Router(.bool,result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Length")!
 //        inst = Instruction(
 //                        name,
@@ -88,8 +88,8 @@ extension Interpreter {
 //                            return [Router(.int,result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Rest")!
 //        inst = Instruction(
 //                        name,
@@ -100,8 +100,8 @@ extension Interpreter {
 //                            return [Router(stack,result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Reverse")!
 //        inst = Instruction(
 //                        name,
@@ -112,8 +112,8 @@ extension Interpreter {
 //                            return [Router(stack,result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Take")!
 //        inst = Instruction(
 //                        name,
@@ -125,10 +125,10 @@ extension Interpreter {
 //                            let result = newVecItem(from: Array(x!.dropLast(idx)))
 //                            return [Router(stack,result)]
 //                        })
-//        
+//
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Drop")!
 //        inst = Instruction(
 //                        name,
@@ -140,9 +140,9 @@ extension Interpreter {
 //                            let result = newVecItem(from: Array(x!.dropFirst(idx)))
 //                            return [Router(stack,result)]
 //                        })
-//        
+//
 //        result[name] = inst
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)Conj")!
 //        inst = Instruction(
 //                        name,
@@ -153,10 +153,10 @@ extension Interpreter {
 //                            let result = newVecItem(from: resultVec)
 //                            return [Router(stack,result)]
 //                        })
-//        
+//
 //        result[name] = inst
-//        
-//                
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Contains")!
 //        inst = Instruction(
 //                        name,
@@ -178,10 +178,10 @@ extension Interpreter {
 //                            }
 //                            return [Router(.bool,PushItem.makeBool(result))]
 //                        })
-//        
+//
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)First")!
 //        inst = Instruction(
 //                        name,
@@ -201,9 +201,9 @@ extension Interpreter {
 //                                return []
 //                            }
 //                        })
-//        
+//
 //        result[name] = inst
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)Last")!
 //        inst = Instruction(
 //                        name,
@@ -223,9 +223,9 @@ extension Interpreter {
 //                                return []
 //                            }
 //                        })
-//        
+//
 //        result[name] = inst
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)Nth")!
 //        inst = Instruction(
 //                        name,
@@ -249,7 +249,7 @@ extension Interpreter {
 //                            }
 //                        })
 //        result[name] = inst
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)IndexOf")!
 //        inst = Instruction(
 //                        name,
@@ -288,8 +288,8 @@ extension Interpreter {
 //                            }
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)OccurrencesOf")!
 //        inst = Instruction(
 //                        name,
@@ -320,7 +320,7 @@ extension Interpreter {
 //                            }
 //                        })
 //        result[name] = inst
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)Remove")!
 //        inst = Instruction(
 //                        name,
@@ -351,8 +351,8 @@ extension Interpreter {
 //                            return [Router(stack, result)]
 //                        })
 //        result[name] = inst
-//        
-//        
+//
+//
 //        name = PushInstruction(rawValue: "\(stackname)Replace")!
 //        inst = Instruction(
 //                        name,
@@ -383,7 +383,7 @@ extension Interpreter {
 //                            return [Router(stack, result)]
 //                        })
 //        result[name] = inst
-//        
+//
 //
 //
 //        name = PushInstruction(rawValue: "\(stackname)ReplaceFirst")!
@@ -432,7 +432,7 @@ extension Interpreter {
 //                            return [Router(stack, result)]
 //                        })
 //        result[name] = inst
-//        
+//
 //
 //        name = PushInstruction(rawValue: "\(stackname)Set")!
 //        inst = Instruction(
@@ -441,7 +441,7 @@ extension Interpreter {
 //                        fxn: {a in
 //                            let (x,y,z) = (a[0].vecVal(), a[1].vectorItemGetter(), a[2].iVal())
 //                            var result: PushItem = PushItem.error("bad \(name)")
-//                            
+//
 //                            if x!.isEmpty == true {
 //                                return [Router(stack, a[0])]
 //                            } else {
@@ -469,7 +469,7 @@ extension Interpreter {
 //                        })
 //        result[name] = inst
 //
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)SubVec")!
 //        inst = Instruction(
 //                        name,
@@ -477,7 +477,7 @@ extension Interpreter {
 //                        fxn: {a in
 //                            let (x,starter,ender) = (a[0].vecVal(), a[1].iVal(), a[2].iVal())
 //                            var result: PushItem = PushItem.error("bad \(name)")
-//                            
+//
 //                            if x!.isEmpty == true {
 //                                return [Router(stack, a[0])]
 //                            } else {
@@ -501,7 +501,7 @@ extension Interpreter {
 //                        })
 //        result[name] = inst
 //
-//        
+//
 //        name = PushInstruction(rawValue: "\(stackname)PushAll")!
 //        inst = Instruction(
 //                        name,
@@ -521,7 +521,7 @@ extension Interpreter {
 //                                }
 //                            }
 //                            return thisResult})
-//        
+//
 //        result[name] = inst
 //
 //
@@ -537,9 +537,9 @@ extension Interpreter {
 //                                return thisResult
 //                            } else {
 //                                thisResult.append(Router(.exec, a[1]))
-//                                
+//
 //                                let chunk = x!.removeFirst()
-//                                
+//
 //                                // push the first vector element to its correct stack
 //                                switch chunk {
 //                                case is Int: thisResult.append(
@@ -558,7 +558,7 @@ extension Interpreter {
 //                                if count > 1 {
 //                                    // push a copy of this instruction to exec
 //                                    thisResult.append(Router(.exec, PushItem.makeInst(name)))
-//                                    
+//
 //                                    // push the remainder of the vector item to exec
 //                                    switch chunk {
 //                                    case is Int: thisResult.append(Router(.exec,
@@ -573,14 +573,14 @@ extension Interpreter {
 //                                        thisResult.append(
 //                                            Router(.error, PushItem.error("BAD THING IN \(name)")))
 //                                    }
-//                                    
+//
 //                                    // push a copy of the top exec item to exwc
 //                                    thisResult.append(Router(.exec, y))
 //                                }
 //                            }
 //                            return thisResult
 //                        })
-//        
+//
 //        result[name] = inst
 
             
@@ -813,7 +813,7 @@ extension Interpreter {
         
         
         //  'yank` produces a result with `isContingent = true`
-        //
+        //  because the item moved is in a new location that's contingent
 
         name = PushInstruction(rawValue: "\(type)Yank")!
         inst = DirectInstruction(
@@ -836,90 +836,95 @@ extension Interpreter {
             })
         result[name] = inst
         
-//        name = PushInstruction(rawValue: "\(type)Shove")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                guard let item = interpreter.stacks[stack]!.popFirst() else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
-//                }
-//                
-//                let idxItem = collectedItems[0]
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let idx = max(0,min(idxItem.iVal()!,range))
-//                let itemHist = item.hist()
-//                let idxHist = idxItem.hist()
-//                let newItem = item.updateHistory("( \(itemHist) .\(name)( \(idxHist) )")
-//                interpreter.stacks[stack]!.insert(newItem, at: idx)
-//                return []
-//            })
-//        result[name] = inst
-//        
-//        
-//        name = PushInstruction(rawValue: "\(type)YankDup")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let idxItem = collectedItems[0]
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let idx = max(0,min(idxItem.iVal()!,range))
-//                
-//                guard range > 0 else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
-//                }
-//                let copy = interpreter.stacks[stack]![idx]
-//                let itemHist = copy.hist()
-//                let idxHist = idxItem.hist()
-//                let newItem = copy.updateHistory("( \(itemHist) .(name)(\(idxHist))")
-//                return [Router(stack, newItem)]
-//            })
-//        result[name] = inst
-//        
-//        
-//        name = PushInstruction(rawValue: "\(type)DeepDup")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let idxItem = collectedItems[0]
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let idx = range - max(0,min(idxItem.iVal()!,range))
-//                // from the "bottom"
-//                
-//                guard range > 0 else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
-//                }
-//                let copy = interpreter.stacks[stack]![idx]
-//                let itemHist = copy.hist()
-//                let idxHist = idxItem.hist()
-//                let newItem = copy.updateHistory("( \(itemHist) .(name)(\(idxHist))")
-//                return [Router(stack, newItem)]
-//            })
-//        result[name] = inst
-//        return result
-//        
-//        name = PushInstruction(rawValue: "\(type)DeepDup")!
-//        inst = DirectInstruction(
-//            name,
-//            takes: [.int],
-//            modifier: { (interpreter, collectedItems) in
-//                let idxItem = collectedItems[0]
-//                let range = interpreter.stacks[stack]!.count - 1
-//                let idx = range - max(0,min(idxItem.iVal()!,range))
-//                // from the "bottom"
-//                
-//                guard range > 0 else {
-//                    return [Router(.error, .makeError("« WARNING \(name) on empty stack »"))]
-//                }
-//                let copy = interpreter.stacks[stack]![idx]
-//                let itemHist = copy.hist()
-//                let idxHist = idxItem.hist()
-//                let newItem = copy.updateHistory("( \(itemHist) .(name)(\(idxHist))")
-//                return [Router(stack, newItem)]
-//            })
-//        result[name] = inst
+        
+        //  'shove` produces a result with `isContingent = true`
+        //  because the item moved is in a new location that's contingent
+
+        name = PushInstruction(rawValue: "\(type)Shove")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                guard let oldItem = interpreter.stacks[stack]!.popFirst() else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("« WARNING \(name) on empty stack »")
+                        )
+                    ]
+                }
+                
+                let indexRaw = collectedItems[0] as! IntItem
+                let range = interpreter.stacks[stack]!.count - 1
+                let idx = max(0,min(indexRaw.value,range))
+                var newItem = oldItem
+                newItem.call = [oldItem, InstructionItem(name)]
+                newItem.isContingent = true
+                interpreter.stacks[stack]!.insert(newItem, at: idx)
+                return []
+            }
+        )
+        result[name] = inst
+        
+        
+        //  'yankdup` produces a result with `isContingent = true`
+        //  because the item moved is in a new location that's contingent
+
+        name = PushInstruction(rawValue: "\(type)YankDup")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let rawIndex = collectedItems[0] as! IntItem
+                let range = interpreter.stacks[stack]!.count - 1
+                let idx = max(0,min(rawIndex.value,range))
+
+                guard range > 0 else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("« WARNING \(name) on empty stack »")
+                        )
+                    ]
+                }
+                let oldItem = interpreter.stacks[stack]![idx]
+                var newItem = oldItem
+                newItem.call = [oldItem, InstructionItem(name)]
+                newItem.isContingent = true
+                return [Router(stack, newItem)]
+            })
+        result[name] = inst
+
+
+        name = PushInstruction(rawValue: "\(type)DeepDup")!
+        inst = DirectInstruction(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let rawIndex = collectedItems[0] as! IntItem
+                let range = interpreter.stacks[stack]!.count - 1
+                let idx = range - max(0,min(rawIndex.value,range))
+                // from the "bottom"
+
+                guard range > 0 else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("« WARNING \(name) on empty stack »")
+                        )
+                    ]
+                }
+                let oldItem = interpreter.stacks[stack]![idx]
+                var newItem = oldItem
+                newItem.call = [oldItem, InstructionItem(name)]
+                newItem.isContingent = true
+                interpreter.stacks[stack]!.insert(newItem, at: idx)
+                return []
+            })
+        result[name] = inst
+        
+        // end of generators
+        
         return result
     }
 }
