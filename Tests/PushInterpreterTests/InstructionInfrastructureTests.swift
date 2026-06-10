@@ -9,10 +9,10 @@
 import Testing
 import DequeModule
 
-struct InstructionInfrastructureTests {
+struct BehaviorInfrastructureTests {
     @Test func contingencyWorks() {
         let arg1 = IntItem(4, isContingent: true)
         let arg2 = IntItem(2, isContingent: false)
-        #expect(Instruction.netContingency(of: arg1, arg2) == true)
+        #expect(Behavior.netContingency(of: arg1, arg2) == true)
     }
 }

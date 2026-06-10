@@ -1,5 +1,5 @@
 //
-//  Bool Instruction Tests.swift
+//  Bool Behavior Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 6/1/26.

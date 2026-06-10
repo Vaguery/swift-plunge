@@ -1,5 +1,5 @@
 //
-//  Bool Instructions.swift
+//  Bool Behaviors.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 5/31/26.
@@ -9,7 +9,7 @@ import DequeModule
 
 
 extension Interpreter {
-    static let boolInstructions:[PushInstruction : Behavior] =
+    static let boolBehaviors:[PushInstruction : Behavior] =
     
     [
         .boolNot :
@@ -21,11 +21,11 @@ extension Interpreter {
                     return [Router(.bool,
                                    BoolItem(!x.value,
                                             call: [x, InstructionItem(.boolNot)],
-                                            isContingent: Instruction.netContingency(of: x)))
+                                            isContingent: Behavior.netContingency(of: x)))
                     ]
                 }),
         .boolAnd :
-            Instruction(
+            Behavior(
                 .boolAnd,
                 takes: [.bool,.bool],
                 fxn: {a in
@@ -34,11 +34,11 @@ extension Interpreter {
                     return [Router(.bool,
                                    BoolItem(arg1 && arg2,
                                             call: [y, x, InstructionItem(.boolAnd)],
-                                            isContingent: Instruction.netContingency(of: x, y)))
+                                            isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         .boolOr :
-            Instruction(
+            Behavior(
                 .boolOr,
                 takes: [.bool,.bool],
                 fxn: {a in
@@ -47,11 +47,11 @@ extension Interpreter {
                     return [Router(.bool,
                                    BoolItem(arg1 || arg2,
                                             call: [y, x, InstructionItem(.boolOr)],
-                                            isContingent: Instruction.netContingency(of: x, y)))
+                                            isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         .boolXor :
-            Instruction(
+            Behavior(
                 .boolXor,
                 takes: [.bool,.bool],
                 fxn: {a in
@@ -60,11 +60,11 @@ extension Interpreter {
                     return [Router(.bool,
                                    BoolItem(arg1 != arg2,
                                             call: [y, x, InstructionItem(.boolXor)],
-                                            isContingent: Instruction.netContingency(of: x, y)))
+                                            isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         .boolInvertFirstThenAnd :
-            Instruction(
+            Behavior(
                 .boolInvertFirstThenAnd,
                 takes: [.bool,.bool],
                 fxn: {a in
@@ -73,11 +73,11 @@ extension Interpreter {
                         .bool,
                         BoolItem(!y.value && x.value,
                                  call: [y, x, InstructionItem(.boolInvertFirstThenAnd)],
-                                 isContingent: Instruction.netContingency(of: x, y)))
+                                 isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         .boolInvertSecondThenAnd :
-            Instruction(
+            Behavior(
                 .boolInvertSecondThenAnd,
                 takes: [.bool,.bool],
                 fxn: {a in
@@ -86,11 +86,11 @@ extension Interpreter {
                         .bool,
                         BoolItem(y.value && !x.value,
                                  call: [y, x, InstructionItem(.boolInvertSecondThenAnd)],
-                                 isContingent: Instruction.netContingency(of: x, y)))
+                                 isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         .boolFromDouble :
-            Instruction(
+            Behavior(
                 .boolFromDouble,
                 takes: [.double],
                 fxn: {a in
@@ -99,11 +99,11 @@ extension Interpreter {
                         .bool,
                         BoolItem(x.value != 0.0,
                                  call: [x, InstructionItem(.boolFromDouble)],
-                                 isContingent: Instruction.netContingency(of: x)))
+                                 isContingent: Behavior.netContingency(of: x)))
                     ]
                 }),
         .boolFromInt :
-            Instruction(
+            Behavior(
                 .boolFromInt,
                 takes: [.int],
                 fxn: {a in
@@ -112,7 +112,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(x.value != 0,
                                  call: [x, InstructionItem(.boolFromInt)],
-                                 isContingent: Instruction.netContingency(of: x)))
+                                 isContingent: Behavior.netContingency(of: x)))
                     ]
                 }),
 

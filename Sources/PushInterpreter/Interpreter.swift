@@ -24,33 +24,33 @@ struct InterpreterSettings {
 
 final class Interpreter {
     
-    static func integrateInstructions(
-        fromThese: [PushInstruction:Instruction],
-        intoLanguage: inout [PushInstruction:Instruction]) {
+    static func integrateBehaviors(
+        fromThese: [PushInstruction:Behavior],
+        intoLanguage: inout [PushInstruction:Behavior]) {
         intoLanguage.merge(fromThese, uniquingKeysWith: { (first, _) in first })
     }
         
-    static var language: [PushInstruction: Instruction] {
-        var starter:[PushInstruction: Instruction] = [:]
+    static var language: [PushInstruction: Behavior] {
+        var starter:[PushInstruction: Behavior] = [:]
         
-        integrateInstructions(fromThese: boolInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: charInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: combinatorInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: constantInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: execInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: doubleInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: inputInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: outputInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: intInstructions, intoLanguage: &starter)
-//        integrateInstructions(fromThese: stringInstructions, intoLanguage: &starter)
-        integrateInstructions(fromThese: vectorInstructions, intoLanguage: &starter)
+        integrateBehaviors(fromThese: boolBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: charBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: combinatorBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: constantBehaviors, intoLanguage: &starter)
+//        integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: inputBehaviors, intoLanguage: &starter)
+//        integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
+//        integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: vectorBehaviors, intoLanguage: &starter)
         return starter
     }
     
     
     static let defaultSettings = InterpreterSettings()
     
-    var behaviors: [PushInstruction: Instruction] = Interpreter.language
+    var behaviors: [PushInstruction: Behavior] = Interpreter.language
     var stacks: [PushStack: Deque<any Item>]
     var counter: Int = 0
     var inputs: [PushInstruction:any Item] = [:]
@@ -163,8 +163,8 @@ extension Interpreter {
 
 
 extension Interpreter {
-    static func reportInstructionCoverage() -> String {
-        var result = "Instruction Coverage:\n"
+    static func reportBehaviorCoverage() -> String {
+        var result = "Behavior Coverage:\n"
         result += "Defined: \(Interpreter.language.keys.count)\n"
         result += "Planned: \(PushInstruction.allCases.count)"
         return result

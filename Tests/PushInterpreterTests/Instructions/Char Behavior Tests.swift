@@ -1,5 +1,5 @@
 //
-//  Char Instruction Tests.swift
+//  Char Behavior Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 6/2/26.

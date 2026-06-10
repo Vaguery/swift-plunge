@@ -1,5 +1,5 @@
 //
-//  Double Instructions.swift
+//  Double Behaviors.swift
 //  Propeller in Swift
 //
 //  Created by William Tozier on 6/2/26.
@@ -11,11 +11,11 @@ import Foundation
 
 extension Interpreter {
             
-    static let doubleInstructions:[PushInstruction : Instruction] =
+    static let doubleBehaviors:[PushInstruction : Behavior] =
         
         [
             .doubleAdd:
-                Instruction(
+                Behavior(
                     .doubleAdd,
                     takes: [.double, .double],
                     fxn: { a in
@@ -26,7 +26,7 @@ extension Interpreter {
                                 DoubleItem(
                                     y.value + x.value,
                                     call: [y, x, InstructionItem(.doubleAdd)],
-                                    isContingent: Instruction.netContingency(of: x, y )
+                                    isContingent: Behavior.netContingency(of: x, y )
                                 )
                             )
                         ]
@@ -34,7 +34,7 @@ extension Interpreter {
                 ),
 
             .doubleQuot:
-                Instruction(
+                Behavior(
                     .doubleQuot,
                     takes: [.double, .double],
                     fxn: { a in
@@ -56,7 +56,7 @@ extension Interpreter {
                                 DoubleItem(
                                     integralQuotient,
                                     call: [y, x, InstructionItem(.doubleQuot)],
-                                    isContingent: Instruction.netContingency( of: x,  y )
+                                    isContingent: Behavior.netContingency( of: x,  y )
                                 )
                             )
                         ]
@@ -64,7 +64,7 @@ extension Interpreter {
                 ),
 
             .doubleMod:
-                Instruction(
+                Behavior(
                     .doubleMod,
                     takes: [.double, .double],
                     fxn: { a in
@@ -85,7 +85,7 @@ extension Interpreter {
                                 DoubleItem(
                                     remainder,
                                     call: [y, x, InstructionItem(.doubleMod)],
-                                    isContingent: Instruction.netContingency( of: x, y )
+                                    isContingent: Behavior.netContingency( of: x, y )
                                 )
                             )
                         ]
@@ -93,7 +93,7 @@ extension Interpreter {
                 ),
 
             .doubleMin:
-                Instruction(
+                Behavior(
                     .doubleMin,
                     takes: [.double, .double],
                     fxn: { a in
@@ -104,7 +104,7 @@ extension Interpreter {
                                 DoubleItem(
                                     min(x.value, y.value),
                                     call: [y, x, InstructionItem(.doubleMin)],
-                                    isContingent: Instruction.netContingency( of: x, y )
+                                    isContingent: Behavior.netContingency( of: x, y )
                                 )
                             )
                         ]
@@ -112,7 +112,7 @@ extension Interpreter {
                 ),
 
             .doubleMax:
-                Instruction(
+                Behavior(
                     .doubleMax,
                     takes: [.double, .double],
                     fxn: { a in
@@ -123,7 +123,7 @@ extension Interpreter {
                                 DoubleItem(
                                     max(x.value, y.value),
                                     call: [y, x, InstructionItem(.doubleMax)],
-                                    isContingent: Instruction.netContingency(of: x, y)
+                                    isContingent: Behavior.netContingency(of: x, y)
                                 )
                             )
                         ]
@@ -131,7 +131,7 @@ extension Interpreter {
                 ),
 
             .doubleSubtract:
-                Instruction(
+                Behavior(
                     .doubleSubtract,
                     takes: [.double, .double],
                     fxn: { a in
@@ -144,7 +144,7 @@ extension Interpreter {
                                     call: [
                                         y, x, InstructionItem(.doubleSubtract),
                                     ],
-                                    isContingent: Instruction.netContingency(
+                                    isContingent: Behavior.netContingency(
                                         of: x, y
                                     )
                                 )
@@ -154,7 +154,7 @@ extension Interpreter {
                 ),
 
             .doubleMultiply:
-                Instruction(
+                Behavior(
                     .doubleMultiply,
                     takes: [.double, .double],
                     fxn: { a in
@@ -167,7 +167,7 @@ extension Interpreter {
                                     call: [
                                         y, x, InstructionItem(.doubleMultiply),
                                     ],
-                                    isContingent: Instruction.netContingency(
+                                    isContingent: Behavior.netContingency(
                                         of: x,y
                                     )
                                 )
@@ -177,7 +177,7 @@ extension Interpreter {
                 ),
 
             .doubleFromInt:
-                Instruction(
+                Behavior(
                     .doubleFromInt,
                     takes: [.int],
                     fxn: { a in
@@ -188,7 +188,7 @@ extension Interpreter {
                                 DoubleItem(
                                     Double(x.value),
                                     call: [x, InstructionItem(.doubleFromInt)],
-                                    isContingent: Instruction.netContingency( of: x )
+                                    isContingent: Behavior.netContingency( of: x )
                                 )
                             )
                         ]
@@ -196,7 +196,7 @@ extension Interpreter {
                 ),
             
         .doubleGT :
-            Instruction(
+            Behavior(
             .doubleGT,
             takes: [.double,.double],
             fxn: {a in
@@ -206,7 +206,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(y > x,
                                  call: [y, x, InstructionItem(.doubleGT)],
-                                 isContingent: Instruction.netContingency(of: x, y)
+                                 isContingent: Behavior.netContingency(of: x, y)
                                 )
                         )
                     ]
@@ -214,7 +214,7 @@ extension Interpreter {
             ),
 
         .doubleGTE :
-            Instruction(
+            Behavior(
             .doubleGTE,
             takes: [.double,.double],
             fxn: {a in
@@ -224,7 +224,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(y >= x,
                                  call: [y, x, InstructionItem(.doubleGTE)],
-                                 isContingent: Instruction.netContingency(of: x, y)
+                                 isContingent: Behavior.netContingency(of: x, y)
                                 )
                         )
                     ]
@@ -232,7 +232,7 @@ extension Interpreter {
             ),
         
         .doubleLTE :
-            Instruction(
+            Behavior(
             .doubleLTE,
             takes: [.double,.double],
             fxn: {a in
@@ -242,7 +242,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(y <= x,
                                  call: [y, x, InstructionItem(.doubleLTE)],
-                                 isContingent: Instruction.netContingency(of: x, y)
+                                 isContingent: Behavior.netContingency(of: x, y)
                                 )
                         )
                     ]
@@ -250,7 +250,7 @@ extension Interpreter {
             ),
 
         .doubleLT :
-            Instruction(
+            Behavior(
             .doubleLT,
             takes: [.double,.double],
             fxn: {a in
@@ -260,7 +260,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(y < x,
                                  call: [y, x, InstructionItem(.doubleLT)],
-                                 isContingent: Instruction.netContingency(of: x, y)
+                                 isContingent: Behavior.netContingency(of: x, y)
                                 )
                         )
                     ]
@@ -268,7 +268,7 @@ extension Interpreter {
             ),
 
         .doubleCos :
-            Instruction(
+            Behavior(
                 .doubleCos,
                 takes: [.double],
                 fxn: {a in
@@ -278,7 +278,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(cos(x.value),
                                        call:[x, InstructionItem(.doubleCos)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -286,7 +286,7 @@ extension Interpreter {
             ),
 
         .doubleSin :
-            Instruction(
+            Behavior(
                 .doubleSin,
                 takes: [.double],
                 fxn: {a in
@@ -296,7 +296,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(sin(x.value),
                                        call:[x, InstructionItem(.doubleSin)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -304,7 +304,7 @@ extension Interpreter {
             ),
 
         .doubleTan :
-            Instruction(
+            Behavior(
                 .doubleTan,
                 takes: [.double],
                 fxn: {a in
@@ -314,7 +314,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(tan(x.value),
                                        call:[x, InstructionItem(.doubleTan)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -322,7 +322,7 @@ extension Interpreter {
             ),
 
         .doubleInc :
-            Instruction(
+            Behavior(
                 .doubleInc,
                 takes: [.double],
                 fxn: {a in
@@ -332,7 +332,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(x.value + 1.0,
                                        call:[x, InstructionItem(.doubleInc)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                       )
                         )
                     ]
@@ -340,7 +340,7 @@ extension Interpreter {
             ),
                 
         .doubleDec :
-            Instruction(
+            Behavior(
                 .doubleDec,
                 takes: [.double],
                 fxn: {a in
@@ -350,7 +350,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(x.value - 1.0,
                                        call:[x, InstructionItem(.doubleDec)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                       )
                         )
                     ]
@@ -358,7 +358,7 @@ extension Interpreter {
             ),
 
         .doubleFromBool :
-            Instruction(
+            Behavior(
                 .doubleFromBool,
                 takes: [.bool],
                 fxn: {a in
@@ -368,7 +368,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(x.value ? 1.0 : 0.0,
                                        call:[x, InstructionItem(.doubleFromBool)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                       )
                         )
                     ]
@@ -377,7 +377,7 @@ extension Interpreter {
             ),
 
         .doubleFromChar :
-            Instruction(
+            Behavior(
                 .doubleFromChar,
                 takes: [.char],
                 fxn: {a in
@@ -388,7 +388,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(num,
                                        call:[x, InstructionItem(.doubleFromChar)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                       )
                         )
                     ]
@@ -396,7 +396,7 @@ extension Interpreter {
             ),
         
         .doubleFromString :
-            Instruction(
+            Behavior(
                 .doubleFromString,
                 takes: [.string],
                 fxn: {a in
@@ -407,7 +407,7 @@ extension Interpreter {
                             .double,
                             DoubleItem(num,
                                        call:[x, InstructionItem(.doubleFromString)],
-                                       isContingent: Instruction.netContingency(of: x)
+                                       isContingent: Behavior.netContingency(of: x)
                                       )
                         )
                     ]

@@ -1,5 +1,5 @@
 //
-//  Char Instructions.swift
+//  Char Behaviors.swift
 //  Propeller in Swift
 //
 //  Created by William Tozier on 6/2/26.
@@ -10,9 +10,9 @@ import DequeModule
 
 extension Interpreter {
     
-    static let charInstructions:[PushInstruction : Instruction] =
+    static let charBehaviors:[PushInstruction : Behavior] =
     [
-        .charAllFromString : Instruction(
+        .charAllFromString : Behavior(
             .charAllFromString,
             takes: [.string],
             fxn: {a in
@@ -30,7 +30,7 @@ extension Interpreter {
                                 .char,
                                 CharItem(chars[idx],
                                          call: [s, InstructionItem(.charAllFromString)],
-                                         isContingent: Instruction.netContingency(of: s),
+                                         isContingent: Behavior.netContingency(of: s),
                                          index: idx)
                             ))
                     }
@@ -39,7 +39,7 @@ extension Interpreter {
             }),
         
             // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
-            .charFromInt : Instruction(
+            .charFromInt : Behavior(
                 .charFromInt,
                 takes: [.int],
                 fxn: {a in
@@ -49,14 +49,14 @@ extension Interpreter {
                                 .char,
                                 CharItem(c,
                                          call:[x, InstructionItem(.charFromInt)],
-                                         isContingent: Instruction.netContingency(of: x)
+                                         isContingent: Behavior.netContingency(of: x)
                                         )
                                 )
                     ]
                 }),
 
             // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
-            .charFromDouble : Instruction(
+            .charFromDouble : Behavior(
                 .charFromDouble,
                 takes: [.double],
                 fxn: {a in
@@ -67,13 +67,13 @@ extension Interpreter {
                             .char,
                             CharItem(c,
                                      call:[x, InstructionItem(.charFromDouble)],
-                                     isContingent: Instruction.netContingency(of: x)
+                                     isContingent: Behavior.netContingency(of: x)
                                     )
                         )
                     ]
                 }),
         
-            .charIsLetter : Instruction(
+            .charIsLetter : Behavior(
                 .charIsLetter,
                 takes: [.char],
                 fxn: {a in
@@ -83,13 +83,13 @@ extension Interpreter {
                             .bool,
                             BoolItem(x.value.isLetter,
                                      call: [x, InstructionItem(.charIsLetter)],
-                                     isContingent: Instruction.netContingency(of: x)
+                                     isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     ]
                 }),
         
-            .charIsDigit : Instruction(
+            .charIsDigit : Behavior(
                 .charIsDigit,
                 takes: [.char],
                 fxn: {a in
@@ -99,13 +99,13 @@ extension Interpreter {
                             .bool,
                             BoolItem(x.value.isWholeNumber,
                                      call: [x, InstructionItem(.charIsDigit)],
-                                     isContingent: Instruction.netContingency(of: x)
+                                     isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     ]
                 }),
         
-            .charIsWhitespace : Instruction(
+            .charIsWhitespace : Behavior(
                 .charIsWhitespace,
                 takes: [.char],
                 fxn: {a in
@@ -114,7 +114,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(x.value.isWhitespace,
                                  call:[x, InstructionItem(.charIsWhitespace)],
-                                 isContingent: Instruction.netContingency(of: x)
+                                 isContingent: Behavior.netContingency(of: x)
                         ))
                     ]
                 })

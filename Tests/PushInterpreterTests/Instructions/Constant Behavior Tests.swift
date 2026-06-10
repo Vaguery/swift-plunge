@@ -1,5 +1,5 @@
 //
-//  Constant Instruction Tests.swift
+//  Constant Behavior Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 5/31/26.
@@ -9,7 +9,7 @@
 import Testing
 import DequeModule
 
-struct ConstantInstructionTests {
+struct ConstantBehaviorTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
         var result = "["

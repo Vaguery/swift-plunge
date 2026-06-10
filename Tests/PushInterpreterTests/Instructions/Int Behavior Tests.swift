@@ -1,5 +1,5 @@
 //
-//  Int Instruction Tests.swift
+//  Int Behavior Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 6/3/26.
@@ -10,7 +10,7 @@ import Testing
 import DequeModule
 
 @Suite
-struct IntInstructionTests {
+struct IntBehaviorTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
         var result = "["

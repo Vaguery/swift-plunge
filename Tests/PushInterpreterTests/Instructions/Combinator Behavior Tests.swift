@@ -1,5 +1,5 @@
 //
-//  Combinator Instruction Tests.swift
+//  Combinator Behavior Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 6/7/26.
@@ -10,7 +10,7 @@ import Testing
 import DequeModule
 
 @Suite
-struct CombinatorInstructionTests {
+struct CombinatorBehaviorTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
         var result = "["

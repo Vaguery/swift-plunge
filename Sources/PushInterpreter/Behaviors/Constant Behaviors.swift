@@ -1,5 +1,5 @@
 //
-//  Constant Instructions.swift
+//  Constant Behaviors.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 5/31/26.
@@ -13,8 +13,8 @@ extension Interpreter {
     // ten for each of:
     //    .int, .double, .string, .char, .vecInt, .vecFloat, .vecString, .vecBool
     
-    static var constantInstructions:[PushInstruction : Instruction] {
-        var result:[PushInstruction : Instruction] = [:]
+    static var constantBehaviors:[PushInstruction : Behavior] {
+        var result:[PushInstruction : Behavior] = [:]
         
         let stacks:[PushStack] = [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
         
@@ -22,7 +22,7 @@ extension Interpreter {
             for i in 0..<10 {
                 let instructionName = PushInstruction(rawValue: "\(stack)\(i)")!
                 result[instructionName] =
-                DirectInstruction(
+                BehaviorWithSideEffects(
                     instructionName,
                     takes: [],
                     modifier: { (interpreter, collectedItems) in

@@ -1,5 +1,5 @@
 //
-//  Exec Instructions.swift
+//  Exec Behaviors.swift
 //  Propeller in Swift
 //
 //  Created by William Tozier on 6/2/26.
@@ -10,7 +10,7 @@ import DequeModule
 
 extension Interpreter {
             
-    static let execInstructions:[PushInstruction : Instruction] =
+    static let execBehaviors:[PushInstruction : Behavior] =
     [:
         
         

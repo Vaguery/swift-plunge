@@ -37,7 +37,7 @@ struct InterpreterTests {
         [.bool: [BoolItem(false)]]
     
     
-    let fakeAdd = Instruction(.intAdd, takes: [], fxn: {_ in [Router(.error, ErrorItem("I haz no stick"))]})
+    let fakeAdd = Behavior(.intAdd, takes: [], fxn: {_ in [Router(.error, ErrorItem("I haz no stick"))]})
 
 
     @Test func newInterpreterHasReasonableDefaults() {
@@ -178,8 +178,8 @@ struct InterpreterTests {
     }
     
     
-    @Test func instructionCoverageTest() {
-        let coverage = Interpreter.reportInstructionCoverage()
+    @Test func behaviorCoverageTest() {
+        let coverage = Interpreter.reportBehaviorCoverage()
         #expect(coverage != "")
 //         #expect(coverage == "88")
 //         ^^ uncomment for the kludge to report how many are done

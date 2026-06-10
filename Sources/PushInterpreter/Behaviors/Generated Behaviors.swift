@@ -1,5 +1,5 @@
 //
-//  GeneratedInstructions.swift
+//  GeneratedBehaviors.swift
 //  Propeller in Swift
 //
 //  Created by William Tozier on 6/2/26.
@@ -9,9 +9,9 @@ import DequeModule
 
 extension Interpreter {
 
-    static var vectorInstructions: [PushInstruction: Instruction] {
+    static var vectorBehaviors: [PushInstruction: Behavior] {
         let theseStacks : [PushStack] = [ .vecInt, .vecBool, .vecDouble, .vecString ]
-        var result: [PushInstruction: Instruction] = [:]
+        var result: [PushInstruction: Behavior] = [:]
         
         for s in theseStacks {
             result.merge(vectorDefinitions(for: s), uniquingKeysWith: { (first, _) in first })
@@ -22,13 +22,13 @@ extension Interpreter {
         return result
     }
     
-    static func vectorDefinitions(for stack:PushStack) -> [PushInstruction : Instruction] {
+    static func vectorDefinitions(for stack:PushStack) -> [PushInstruction : Behavior] {
         let stackname = stack.rawValue
         let stack = PushStack(rawValue: stackname)!
         let itemStack = componentStack(stack)
         var name : PushInstruction
-        var inst : Instruction
-        var result : [PushInstruction : Instruction] = [:]
+        var inst : Behavior
+        var result : [PushInstruction : Behavior] = [:]
         
         
         func componentStack(_ from:PushStack) -> PushStack {
@@ -606,10 +606,10 @@ extension Interpreter {
 
 
 extension Interpreter {
-    static var combinatorInstructions: [PushInstruction: Instruction] {
+    static var combinatorBehaviors: [PushInstruction: Behavior] {
         let theseStacks : [PushStack] = [ .bool, .int, .double, .char, .string, .code, .exec, .vecInt, .vecBool, .vecDouble, .vecString ]
         
-        var result: [PushInstruction: Instruction] = [:]
+        var result: [PushInstruction: Behavior] = [:]
         
         for s in theseStacks {
             result.merge(combinators(for: s), uniquingKeysWith: { (first, _) in first })
@@ -619,14 +619,14 @@ extension Interpreter {
     }
     
     
-    static func combinators(for stack:PushStack) -> [PushInstruction : Instruction] {
+    static func combinators(for stack:PushStack) -> [PushInstruction : Behavior] {
         let type = stack.rawValue
         var name : PushInstruction
-        var inst : Instruction
-        var result : [PushInstruction : Instruction] = [:]
+        var inst : Behavior
+        var result : [PushInstruction : Behavior] = [:]
         
         name = PushInstruction(rawValue: "\(type)Dup")!
-        inst = Instruction(
+        inst = Behavior(
             name,
             takes: [stack],
             fxn: {a in
@@ -640,7 +640,7 @@ extension Interpreter {
         // all attribute levels (recursively)
         //
         name = PushInstruction(rawValue: "\(type)Eq")!
-        inst = Instruction(
+        inst = Behavior(
             name,
             takes: [stack, stack],
             fxn: {a in
@@ -651,7 +651,7 @@ extension Interpreter {
                         BoolItem(
                             isSame,
                             call: [a[1], a[0], InstructionItem(name)],
-                            isContingent: Instruction.netContingency(of: a[0], a[1])
+                            isContingent: Behavior.netContingency(of: a[0], a[1])
                         )
                     )
                 ]
@@ -666,7 +666,7 @@ extension Interpreter {
         // is contingent.
         //
         name = PushInstruction(rawValue: "\(type)Swap")!
-        inst = Instruction(
+        inst = Behavior(
             name,
             takes: [stack, stack],
             fxn: {a in
@@ -677,7 +677,7 @@ extension Interpreter {
         
         
         name = PushInstruction(rawValue: "\(type)Pop")!
-        inst = Instruction(
+        inst = Behavior(
             name,
             takes: [stack],
             fxn: {_ in return []})
@@ -688,7 +688,7 @@ extension Interpreter {
         //
         
         name = PushInstruction(rawValue: "\(type)StackDepth")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [],
             modifier: { (interpreter, collectedItems) in
@@ -716,7 +716,7 @@ extension Interpreter {
         //
         
         name = PushInstruction(rawValue: "\(type)DupTimes")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
@@ -747,7 +747,7 @@ extension Interpreter {
         //
         
         name = PushInstruction(rawValue: "\(type)DupItems")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
@@ -768,7 +768,7 @@ extension Interpreter {
         result[name] = inst
         
         name = PushInstruction(rawValue: "\(type)Empty")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [],
             modifier: { (interpreter, collectedItems) in
@@ -787,7 +787,7 @@ extension Interpreter {
         result[name] = inst
         
         name = PushInstruction(rawValue: "\(type)Flush")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [],
             modifier: { (interpreter, collectedItems) in
@@ -799,7 +799,7 @@ extension Interpreter {
         // TODO: this will be affected by the instruction's contingency
         //
         name = PushInstruction(rawValue: "\(type)Rot")!
-        inst = Instruction(
+        inst = Behavior(
             name,
             takes: [stack, stack, stack],
             fxn: {a in
@@ -816,7 +816,7 @@ extension Interpreter {
         //  because the item moved is in a new location that's contingent
 
         name = PushInstruction(rawValue: "\(type)Yank")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
@@ -841,7 +841,7 @@ extension Interpreter {
         //  because the item moved is in a new location that's contingent
 
         name = PushInstruction(rawValue: "\(type)Shove")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
@@ -871,7 +871,7 @@ extension Interpreter {
         //  because the item moved is in a new location that's contingent
 
         name = PushInstruction(rawValue: "\(type)YankDup")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
@@ -897,7 +897,7 @@ extension Interpreter {
 
 
         name = PushInstruction(rawValue: "\(type)DeepDup")!
-        inst = DirectInstruction(
+        inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in

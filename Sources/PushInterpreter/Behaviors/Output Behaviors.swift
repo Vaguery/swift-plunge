@@ -1,5 +1,5 @@
 ////
-////  Output Instructions.swift
+////  Output Behaviors.swift
 ////  Propeller in Swift
 ////
 ////  Created by William Tozier on 5/17/26.

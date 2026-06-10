@@ -1,5 +1,5 @@
 ////
-////  String Instructions.swift
+////  String Behaviors.swift
 ////  Propeller in Swift
 ////
 ////  Created by William Tozier on 5/9/26.

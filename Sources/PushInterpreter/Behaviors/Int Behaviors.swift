@@ -1,5 +1,5 @@
 //
-//  IntInstructions.swift
+//  Int Behaviors.swift
 //  Propeller in Swift
 //
 //  Created by William Tozier on 6/2/26.
@@ -11,10 +11,10 @@ import DequeModule
 
 extension Interpreter {
             
-    static let intInstructions:[PushInstruction : Instruction] =
+    static let intBehaviors:[PushInstruction : Behavior] =
         [
             .intAdd :
-                Instruction(
+                Behavior(
                     .intAdd,
                     takes: [.int,.int],
                     fxn: {a in
@@ -24,14 +24,14 @@ extension Interpreter {
                                 .int,
                                 IntItem(y.value + x.value,
                                         call:[y, x, InstructionItem(.intAdd)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
                     }),
             
                 .intSubtract :
-                Instruction(
+                Behavior(
                     .intSubtract,
                     takes: [.int,.int],
                     fxn: {a in
@@ -41,14 +41,14 @@ extension Interpreter {
                                 .int,
                                 IntItem(y.value - x.value,
                                         call:[y, x, InstructionItem(.intSubtract)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
                     }),
             
                 .intMultiply :
-                Instruction(
+                Behavior(
                     .intMultiply,
                     takes: [.int,.int],
                     fxn: {a in
@@ -58,14 +58,14 @@ extension Interpreter {
                                 .int,
                                 IntItem(y.value * x.value,
                                         call:[y, x, InstructionItem(.intMultiply)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
                     }),
             
                 .intMax :
-                Instruction(
+                Behavior(
                     .intMax,
                     takes: [.int,.int],
                     fxn: {a in
@@ -75,14 +75,14 @@ extension Interpreter {
                                 .int,
                                 IntItem(max(y.value, x.value),
                                         call:[y, x, InstructionItem(.intMax)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
                     }),
             
                 .intMin :
-                Instruction(
+                Behavior(
                     .intMin,
                     takes: [.int,.int],
                     fxn: {a in
@@ -92,14 +92,14 @@ extension Interpreter {
                                 .int,
                                 IntItem(min(y.value, x.value),
                                         call:[y, x, InstructionItem(.intMin)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
                     }),
             
                 .intQuot :
-                Instruction(
+                Behavior(
                     .intQuot,
                     takes: [.int,.int],
                     fxn: {a in
@@ -110,14 +110,14 @@ extension Interpreter {
                                 IntItem(
                                     x.value == 0 ? 1 : (y.value / x.value),
                                     call: [y, x, InstructionItem(.intQuot)],
-                                    isContingent: Instruction.netContingency(of: x, y)
+                                    isContingent: Behavior.netContingency(of: x, y)
                                 )
                             )
                         ]
                     }),
             
                 .intMod :
-                Instruction(
+                Behavior(
                     .intMod,
                     takes: [.int,.int],
                     fxn: {a in
@@ -127,7 +127,7 @@ extension Interpreter {
                                 .int,
                                 IntItem(x.value==0 ? 1 : (y.value % x.value),
                                         call:[y, x, InstructionItem(.intMod)],
-                                        isContingent: Instruction.netContingency(of: x, y)
+                                        isContingent: Behavior.netContingency(of: x, y)
                                        )
                             )
                         ]
@@ -135,7 +135,7 @@ extension Interpreter {
                 ),
             
                 .intGT :
-                Instruction(
+                Behavior(
                     .intGT,
                     takes: [.int,.int],
                     fxn: {a in
@@ -145,7 +145,7 @@ extension Interpreter {
                                 .bool,
                                 BoolItem(y.value > x.value,
                                          call:[y, x, InstructionItem(.intGT)],
-                                         isContingent: Instruction.netContingency(of: x, y)
+                                         isContingent: Behavior.netContingency(of: x, y)
                                         )
                             )
                         ]
@@ -153,7 +153,7 @@ extension Interpreter {
                 ),
             
                 .intGTE :
-                Instruction(
+                Behavior(
                     .intGTE,
                     takes: [.int,.int],
                     fxn: {a in
@@ -163,7 +163,7 @@ extension Interpreter {
                                 .bool,
                                 BoolItem(y.value >= x.value,
                                          call:[y, x, InstructionItem(.intGTE)],
-                                         isContingent: Instruction.netContingency(of: x, y)
+                                         isContingent: Behavior.netContingency(of: x, y)
                                         )
                             )
                         ]
@@ -171,7 +171,7 @@ extension Interpreter {
                 ),
             
                 .intLTE :
-                Instruction(
+                Behavior(
                     .intLTE,
                     takes: [.int,.int],
                     fxn: {a in
@@ -181,7 +181,7 @@ extension Interpreter {
                                 .bool,
                                 BoolItem(y.value <= x.value,
                                          call:[y, x, InstructionItem(.intLTE)],
-                                         isContingent: Instruction.netContingency(of: x, y)
+                                         isContingent: Behavior.netContingency(of: x, y)
                                         )
                             )
                         ]
@@ -189,7 +189,7 @@ extension Interpreter {
                 ),
             
                 .intLT :
-                Instruction(
+                Behavior(
                     .intLT,
                     takes: [.int,.int],
                     fxn: {a in
@@ -199,7 +199,7 @@ extension Interpreter {
                                 .bool,
                                 BoolItem(y.value < x.value,
                                          call:[y, x, InstructionItem(.intLT)],
-                                         isContingent: Instruction.netContingency(of: x, y)
+                                         isContingent: Behavior.netContingency(of: x, y)
                                         )
                             )
                         ]
@@ -207,7 +207,7 @@ extension Interpreter {
                 ),
             
                 .intEq :
-                Instruction(
+                Behavior(
                     .intEq,
                     takes: [.int,.int],
                     fxn: {a in
@@ -217,7 +217,7 @@ extension Interpreter {
                                 .bool,
                                 BoolItem(y.value == x.value,
                                          call:[y, x, InstructionItem(.intEq)],
-                                         isContingent: Instruction.netContingency(of: x, y)
+                                         isContingent: Behavior.netContingency(of: x, y)
                                         )
                             )
                         ]
@@ -225,7 +225,7 @@ extension Interpreter {
                 ),
             
                 .intInc :
-                Instruction(
+                Behavior(
                     .intInc,
                     takes: [.int],
                     fxn: {a in
@@ -235,7 +235,7 @@ extension Interpreter {
                                 .int,
                                 IntItem(x.value + 1,
                                         call:[x, InstructionItem(.intInc)],
-                                        isContingent: Instruction.netContingency(of: x)
+                                        isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -243,7 +243,7 @@ extension Interpreter {
                 ),
             
                 .intDec :
-                Instruction(
+                Behavior(
                     .intDec,
                     takes: [.int],
                     fxn: {a in
@@ -253,7 +253,7 @@ extension Interpreter {
                                 .int,
                                 IntItem(x.value - 1,
                                         call:[x, InstructionItem(.intDec)],
-                                        isContingent: Instruction.netContingency(of: x)
+                                        isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -261,7 +261,7 @@ extension Interpreter {
                 ),
             
                 .intFromBool :
-                Instruction(
+                Behavior(
                     .intFromBool,
                     takes: [.bool],
                     fxn: {a in
@@ -271,7 +271,7 @@ extension Interpreter {
                                 .int,
                                 IntItem(x.value ? 1 : 0,
                                         call:[x, InstructionItem(.intFromBool)],
-                                        isContingent: Instruction.netContingency(of: x)
+                                        isContingent: Behavior.netContingency(of: x)
                                        )
                             )
                         ]
@@ -279,7 +279,7 @@ extension Interpreter {
                 ),
             
             .intFromChar :
-                Instruction(
+                Behavior(
                     .intFromChar,
                     takes: [.char],
                     fxn: {a in
@@ -290,7 +290,7 @@ extension Interpreter {
                                     .int,
                                     IntItem(Int(v),
                                             call: [c, InstructionItem(.intFromChar)],
-                                            isContingent: Instruction.netContingency(of: c)
+                                            isContingent: Behavior.netContingency(of: c)
                                             )
                                     )
                                 ]
@@ -301,7 +301,7 @@ extension Interpreter {
                 ),
             
             .intFromString :
-                Instruction(
+                Behavior(
                     .intFromString,
                     takes: [.string],
                     fxn: {a in
@@ -311,7 +311,7 @@ extension Interpreter {
                                 Router(.int,
                                        IntItem(v,
                                                call:[s, InstructionItem(.intFromString)],
-                                               isContingent: Instruction.netContingency(of: s)
+                                               isContingent: Behavior.netContingency(of: s)
                                                )
                                        )
                                 ]
@@ -321,7 +321,7 @@ extension Interpreter {
                     }),
             
             .intFromDouble :
-                Instruction(
+                Behavior(
                     .intFromDouble,
                     takes: [.double],
                     fxn: {a in
@@ -330,7 +330,7 @@ extension Interpreter {
                             Router(.int,
                                    IntItem(Int(x.value),
                                            call:[x, InstructionItem(.intFromDouble)],
-                                           isContingent: Instruction.netContingency(of: x)
+                                           isContingent: Behavior.netContingency(of: x)
                                           )
                                    )
                             ]
