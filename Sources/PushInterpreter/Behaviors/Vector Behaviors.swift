@@ -40,20 +40,34 @@ extension Interpreter {
             default: .error
             }
         }
-
+        
+        let typeFromStack:[PushStack:Item.Type] = [PushStack.vecInt : VecIntItem.self, .vecBool : VecBoolItem.self, .vecDouble : VecDoubleItem.self, .vecString : VecStringItem.self]
+        let partFromStack:[PushStack:Item.Type] = [PushStack.vecInt : IntItem.self, .vecBool : BoolItem.self, .vecDouble : DoubleItem.self, .vecString : StringItem.self]
+            
+//
 //        name = PushInstruction(rawValue: "\(stackname)ButLast")!
-//        inst = Instruction(
+//        inst = Behavior(
 //                        name,
 //                        takes: [stack],
 //                        fxn: {a in
-//                            let vType = typeFromStack[stack]!
-//                            let oldVal = a[0] as? vType
-//                            let newVal = dropLast(oldVal!)
-//                            let result = newVecItem(from: newVal)
+//                            var oldItem:Item
+//                            switch stack {
+//                                case .vecBool:
+//                                    oldItem = a[0] as! VecBoolItem
+//                                case .vecDouble:
+//                                    oldItem = a[0] as! VecDoubleItem
+//                                case .vecInt:
+//                                    oldItem = a[0] as! VecIntItem
+//                                case .vecString:
+//                                    oldItem = a[0] as! VecStringItem
+//                                default: fatalError("unexpected vector argument")
+//                            }
+//                            var newItem = oldItem
+//                            newItem.value = oldItem.value.dropLast(1)
 //                            return [Router(stack,result)]
 //                        })
 //        result[name] = inst
-//
+
 //        name = PushInstruction(rawValue: "\(stackname)Concat")!
 //        inst = Instruction(
 //                        name,
