@@ -43,7 +43,7 @@ final class Interpreter {
 //        integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
 //        integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
-        integrateBehaviors(fromThese: vectorBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: vecIntBehaviors, intoLanguage: &starter)
         return starter
     }
     

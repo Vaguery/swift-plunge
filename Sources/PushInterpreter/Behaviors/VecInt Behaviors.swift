@@ -1,85 +1,120 @@
 //
-//  Vector Behaviors.swift
+//  VecInt Behaviors.swift
 //  Propeller in Swift
 //
-//  Created by William Tozier on 6/2/26.
+//  Created by William Tozier on 6/12/26.
 //
 
 import DequeModule
 
 extension Interpreter {
-
-    static var vectorBehaviors: [PushInstruction: Behavior] {
-        let theseStacks : [PushStack] = [ .vecInt, .vecBool, .vecDouble, .vecString ]
-        var result: [PushInstruction: Behavior] = [:]
-        
-        for s in theseStacks {
-            result.merge(vectorDefinitions(for: s), uniquingKeysWith: { (first, _) in first })
-        }
-        
-        
-        
-        return result
-    }
     
-    static func vectorDefinitions(for stack:PushStack) -> [PushInstruction : Behavior] {
-        let stackname = stack.rawValue
-        let stack = PushStack(rawValue: stackname)!
-        let itemStack = componentStack(stack)
-        var name : PushInstruction
-        var inst : Behavior
-        var result : [PushInstruction : Behavior] = [:]
+    static let vecIntBehaviors: [PushInstruction : Behavior] =
+    [
+        // returns a new vecInt with the old value's last element removed
+        // if the argument was empty, an empty vector is pushed
+        .vecIntButLast :
+            Behavior(
+                .vecIntButLast,
+                takes: [.vecInt],
+                fxn: {a in
+                    let (x) = (a[0] as! VecIntItem)
+                    return [
+                        Router(
+                            .vecInt,
+                            VecIntItem(x.value.dropLast(1),
+                                       call:[x, InstructionItem(.vecIntButLast)],
+                                       isContingent: Behavior.netContingency(of: x)
+                                      )
+                        )
+                    ]
+                }
+            ),
         
-        
-        func componentStack(_ from:PushStack) -> PushStack {
-            return switch from {
-            case PushStack.vecInt: PushStack.int
-            case PushStack.vecBool: PushStack.bool
-            case PushStack.vecDouble: PushStack.double
-            case PushStack.vecString: PushStack.string
-            default: .error
-            }
-        }
-        
-        let typeFromStack:[PushStack:Item.Type] = [PushStack.vecInt : VecIntItem.self, .vecBool : VecBoolItem.self, .vecDouble : VecDoubleItem.self, .vecString : VecStringItem.self]
-        let partFromStack:[PushStack:Item.Type] = [PushStack.vecInt : IntItem.self, .vecBool : BoolItem.self, .vecDouble : DoubleItem.self, .vecString : StringItem.self]
-            
-//
-//        name = PushInstruction(rawValue: "\(stackname)ButLast")!
-//        inst = Behavior(
-//                        name,
-//                        takes: [stack],
-//                        fxn: {a in
-//                            var oldItem:Item
-//                            switch stack {
-//                                case .vecBool:
-//                                    oldItem = a[0] as! VecBoolItem
-//                                case .vecDouble:
-//                                    oldItem = a[0] as! VecDoubleItem
-//                                case .vecInt:
-//                                    oldItem = a[0] as! VecIntItem
-//                                case .vecString:
-//                                    oldItem = a[0] as! VecStringItem
-//                                default: fatalError("unexpected vector argument")
-//                            }
-//                            var newItem = oldItem
-//                            newItem.value = oldItem.value.dropLast(1)
-//                            return [Router(stack,result)]
-//                        })
-//        result[name] = inst
+        .vecIntConcat :
+            Behavior(
+                .vecIntConcat,
+                takes: [.vecInt, .vecInt],
+                fxn: {a in
+                    let (x,y) = (a[0] as! VecIntItem, a[1] as! VecIntItem)
+                    return [
+                        Router(
+                            .vecInt,
+                            VecIntItem(y.value + x.value,
+                                       call:[y, x, InstructionItem(.vecIntButLast)],
+                                       isContingent: Behavior.netContingency(of: x, y)
+                                      )
+                        )
+                    ]
+                }
+            ),
 
-//        name = PushInstruction(rawValue: "\(stackname)Concat")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, stack],
-//                        fxn: {a in
-//                            let (x,y) = (a[0].vecVal(), a[1].vecVal())
-//                            let result = newVecItem(from: Array(y! + x!))
-//                            return [Router(stack,result)]
-//                        })
-//        result[name] = inst
-//
-//
+        // TODO: vecIntIterate needs to be carefully checked for contingency propagation
+
+        
+        //        name = PushInstruction(rawValue: "\(stackname)Iterate")!
+        //        inst = Instruction(
+        //                        name,
+        //                        takes: [stack, .exec],
+        //                        fxn: {a in
+        //                            var (x, y) = (a[0].vecVal(), a[1])
+        //                            var thisResult: [Router] = []
+        //                            let count = x!.count
+        //                            if count == 0 {
+        //                                return thisResult
+        //                            } else {
+        //                                thisResult.append(Router(.exec, a[1]))
+        //
+        //                                let chunk = x!.removeFirst()
+        //
+        //                                // push the first vector element to its correct stack
+        //                                switch chunk {
+        //                                case is Int: thisResult.append(
+        //                                    Router(itemStack, PushItem.makeInt(chunk as! Int)))
+        //                                case is Bool: thisResult.append(
+        //                                    Router(itemStack, PushItem.makeBool(chunk as! Bool)))
+        //                                case is Double: thisResult.append(
+        //                                    Router(itemStack, PushItem.makeFloat(chunk as! Double)))
+        //                                case is String: thisResult.append(
+        //                                    Router(itemStack, PushItem.makeString(chunk as! String)))
+        //                                default:
+        //                                    thisResult.append(
+        //                                        Router(.error,
+        //                                               PushItem.error("BAD THING IN \(name)")))
+        //                                }
+        //                                if count > 1 {
+        //                                    // push a copy of this instruction to exec
+        //                                    thisResult.append(Router(.exec, PushItem.makeInst(name)))
+        //
+        //                                    // push the remainder of the vector item to exec
+        //                                    switch chunk {
+        //                                    case is Int: thisResult.append(Router(.exec,
+        //                                                                          PushItem.vecInt(x as! [Int])))
+        //                                    case is Bool: thisResult.append(Router(.exec,
+        //                                                                           PushItem.vecBool(x as! [Bool])))
+        //                                    case is Double: thisResult.append(Router(.exec,
+        //                                                                             PushItem.vecFloat(x as! [Double])))
+        //                                    case is String: thisResult.append(Router(.exec,
+        //                                                                             PushItem.vecString(x as! [String])))
+        //                                    default:
+        //                                        thisResult.append(
+        //                                            Router(.error, PushItem.error("BAD THING IN \(name)")))
+        //                                    }
+        //
+        //                                    // push a copy of the top exec item to exwc
+        //                                    thisResult.append(Router(.exec, y))
+        //                                }
+        //                            }
+        //                            return thisResult
+        //                        })
+        //
+        //        result[name] = inst
+
+        
+    ]
+}
+
+
 //        name = PushInstruction(rawValue: "\(stackname)EmptyVector")!
 //        inst = Instruction(
 //                        name,
@@ -538,68 +573,5 @@ extension Interpreter {
 //
 //        result[name] = inst
 //
-//
-//        name = PushInstruction(rawValue: "\(stackname)Iterate")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, .exec],
-//                        fxn: {a in
-//                            var (x, y) = (a[0].vecVal(), a[1])
-//                            var thisResult: [Router] = []
-//                            let count = x!.count
-//                            if count == 0 {
-//                                return thisResult
-//                            } else {
-//                                thisResult.append(Router(.exec, a[1]))
-//
-//                                let chunk = x!.removeFirst()
-//
-//                                // push the first vector element to its correct stack
-//                                switch chunk {
-//                                case is Int: thisResult.append(
-//                                    Router(itemStack, PushItem.makeInt(chunk as! Int)))
-//                                case is Bool: thisResult.append(
-//                                    Router(itemStack, PushItem.makeBool(chunk as! Bool)))
-//                                case is Double: thisResult.append(
-//                                    Router(itemStack, PushItem.makeFloat(chunk as! Double)))
-//                                case is String: thisResult.append(
-//                                    Router(itemStack, PushItem.makeString(chunk as! String)))
-//                                default:
-//                                    thisResult.append(
-//                                        Router(.error,
-//                                               PushItem.error("BAD THING IN \(name)")))
-//                                }
-//                                if count > 1 {
-//                                    // push a copy of this instruction to exec
-//                                    thisResult.append(Router(.exec, PushItem.makeInst(name)))
-//
-//                                    // push the remainder of the vector item to exec
-//                                    switch chunk {
-//                                    case is Int: thisResult.append(Router(.exec,
-//                                                                          PushItem.vecInt(x as! [Int])))
-//                                    case is Bool: thisResult.append(Router(.exec,
-//                                                                           PushItem.vecBool(x as! [Bool])))
-//                                    case is Double: thisResult.append(Router(.exec,
-//                                                                             PushItem.vecFloat(x as! [Double])))
-//                                    case is String: thisResult.append(Router(.exec,
-//                                                                             PushItem.vecString(x as! [String])))
-//                                    default:
-//                                        thisResult.append(
-//                                            Router(.error, PushItem.error("BAD THING IN \(name)")))
-//                                    }
-//
-//                                    // push a copy of the top exec item to exwc
-//                                    thisResult.append(Router(.exec, y))
-//                                }
-//                            }
-//                            return thisResult
-//                        })
-//
-//        result[name] = inst
 
             
-        return result
-    }
-}
-
-
