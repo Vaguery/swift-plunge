@@ -10,7 +10,7 @@ import DequeModule
 import Testing
 @testable import PropellerWithStructs
 
-
+@Suite @MainActor
 struct PlushyAcceptanceTests {
     
     @Test func simpleOpenCloseWorks()  {

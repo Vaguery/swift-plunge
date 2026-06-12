@@ -9,6 +9,7 @@
 import Testing
 import DequeModule
 
+@Suite @MainActor
 struct BehaviorInfrastructureTests {
     @Test func contingencyWorks() {
         let arg1 = IntItem(4, isContingent: true)

@@ -9,6 +9,7 @@ import DequeModule
 @testable import PropellerWithStructs
 import Testing
 
+@Suite @MainActor
 struct Router_tests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
@@ -21,12 +22,9 @@ struct Router_tests {
         return result
     }
 
-    
     let inty = Interpreter()
     
-    @Test
-    @MainActor
-    func routingWorks() {
+    @Test func routingWorks() {
         let r = Router(PushStack.int, IntItem(17) )
         inty.pushItem(r)
         #expect(inty.stacks[.int]!.count == 1)

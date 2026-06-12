@@ -9,6 +9,7 @@
 import Testing
 import DequeModule
 
+@Suite @MainActor
 struct ConstantBehaviorTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {

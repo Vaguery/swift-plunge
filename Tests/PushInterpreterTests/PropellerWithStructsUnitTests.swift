@@ -8,6 +8,7 @@
 @testable import PropellerWithStructs
 import Testing
 
+@Suite @MainActor
 struct StacksTests {
 
     @Test func StacksShouldSortWithExecFirst() {

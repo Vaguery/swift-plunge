@@ -8,15 +8,16 @@
 @testable import PropellerWithStructs
 import Testing
 
+@Suite @MainActor
 struct Item_tests {
-    @Test
-    func errorTest() {
+    
+    
+    @Test func errorTest() {
         let e = ErrorItem("a bad thing")
         #expect(e.value == "a bad thing")
     }
     
-    @Test
-    func equality() {
+    @Test func equality() {
         #expect(IntItem(1) == IntItem(1))
         #expect(IntItem(1) != IntItem(2))
     }
@@ -30,7 +31,7 @@ struct Item_tests {
     }
 }
 
-
+@MainActor
 struct Code_tests {
     
     @Test

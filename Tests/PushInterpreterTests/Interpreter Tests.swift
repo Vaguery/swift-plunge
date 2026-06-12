@@ -9,7 +9,7 @@ import Testing
 import DequeModule
 
 
-@MainActor
+@Suite @MainActor
 struct InterpreterTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
