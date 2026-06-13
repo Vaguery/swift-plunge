@@ -365,5 +365,63 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
+    
+    @Test func vecIntRemove() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,8,7,6,9]),
+                         VecIntItem([9,9,9,9,9])
+                        ])
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(9),
+                         IntItem(9),
+                         IntItem(-88, isContingent: true)
+                        ])
+        
+        doThis(.vecIntRemove, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 8, 7, 6, 9] [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntRemove, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [8, 7, 6] [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntRemove, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == true)
+    }
+    
+    @Test func vecIntReplace() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,8,7,6,9]),
+                         VecIntItem([9,9,9,9,9])
+                        ])
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(1), IntItem(9),
+                         IntItem(9), IntItem(1),
+                         IntItem(9, isContingent: true), IntItem(9),
+                        ])
+        
+        doThis(.vecIntReplace, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 8, 7, 6, 9] [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntReplace, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [1, 8, 7, 6, 1] [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntReplace, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [9, 9, 9, 9, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == true)
+    }
 
 }

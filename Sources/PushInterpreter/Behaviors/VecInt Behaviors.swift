@@ -337,103 +337,51 @@ extension Interpreter {
                     ]
                 }
             ),
+
         
-//        name = PushInstruction(rawValue: "\(stackname)OccurrencesOf")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, itemStack],
-//                        fxn: {a in
-//                            let (x,y) = (a[0].vecVal(), a[1].vectorItemGetter())
-//                            var result:Int
-//                            if x!.isEmpty == true {
-//                                return [Router(.int, PushItem.makeInt(0))]
-//                            } else {
-//                                switch (x, y) {
-//                                case let (array as [Int], item as Int):
-//                                    result = array.count(where: {$0 == (y as! Int)})
-//                                case let (array as [Double], item as Double):
-//                                    result = array.count(where: {$0 == (y as! Double)})
-//                                case let (array as [Bool], item as Bool):
-//                                    result = array.count(where: {$0 == (y as! Bool)})
-//                                case let (array as [String], item as String):
-//                                    result = array.count(where: {$0 == (y as! String)})
-//                                default:
-//                                    result = -1
-//                                }
-//                            }
-//                            if result >= 0 {
-//                                return [Router(.int, PushItem.makeInt(result))]
-//                            } else {
-//                                return []
-//                            }
-//                        })
-//        result[name] = inst
-//
-//        name = PushInstruction(rawValue: "\(stackname)Remove")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, itemStack],
-//                        fxn: {a in
-//                            let (x,y) = (a[0].vecVal(), a[1].vectorItemGetter())
-//                            var result: PushItem
-//                            if x!.isEmpty == true {
-//                                return [Router(stack, a[0])]
-//                            } else {
-//                                switch (x, y) {
-//                                case var (array as [Int], item as Int):
-//                                    array.removeAll(where: {$0 == (item )})
-//                                    result = PushItem.makeVecInt(array)
-//                                case var (array as [Double], item as Double):
-//                                    array.removeAll(where: {$0 == (item )})
-//                                    result = PushItem.makeVecFloat(array)
-//                                case var (array as [Bool], item as Bool):
-//                                    array.removeAll(where: {$0 == (item )})
-//                                    result = PushItem.makeVecBool(array)
-//                                case var (array as [String], item as String):
-//                                    array.removeAll(where: {$0 == (item )})
-//                                    result = PushItem.makeVecString(array)
-//                                default:
-//                                    result = PushItem.error("bad \(name)")
-//                                }
-//                            }
-//                            return [Router(stack, result)]
-//                        })
-//        result[name] = inst
-//
-//
-//        name = PushInstruction(rawValue: "\(stackname)Replace")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, itemStack, itemStack],
-//                        fxn: {a in
-//                            let (x,y,z) = (a[0].vecVal(), a[1].vectorItemGetter(), a[2].vectorItemGetter())
-//                            var result: PushItem
-//                            if x!.isEmpty == true {
-//                                return [Router(stack, a[0])]
-//                            } else {
-//                                switch (x, y, z) {
-//                                case var (array as [Int], old as Int, new as Int):
-//                                    let updated = array.map {$0 == old ? new : $0 }
-//                                    result = PushItem.makeVecInt(updated)
-//                                case var (array as [Double], old as Double, new as Double):
-//                                    let updated = array.map {$0 == old ? new : $0 }
-//                                    result = PushItem.makeVecFloat(updated)
-//                                case var (array as [Bool], old as Bool, new as Bool):
-//                                    let updated = array.map {$0 == old ? new : $0 }
-//                                    result = PushItem.makeVecBool(updated)
-//                                case var (array as [String], old as String, new as String):
-//                                    let updated = array.map {$0 == old ? new : $0 }
-//                                    result = PushItem.makeVecString(updated)
-//                                default:
-//                                    result = PushItem.error("bad \(name)")
-//                                }
-//                            }
-//                            return [Router(stack, result)]
-//                        })
-//        result[name] = inst
-//
-//
-//
+        .vecIntRemove :
+            Behavior(
+                .vecIntRemove,
+                takes: [.vecInt, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! VecIntItem, a[1] as! IntItem)
+                    var result = x.value
+                    result.removeAll(where: {$0 == (y.value)})
+                    return [
+                        Router(
+                            .vecInt,
+                            VecIntItem(
+                                result,
+                                call:[ x, y, InstructionItem(.vecIntRemove)],
+                                isContingent: Behavior.netContingency(of: x, y)
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .vecIntReplace :
+            Behavior(
+                .vecIntReplace,
+                takes: [.vecInt, .int, .int],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! VecIntItem,
+                                     a[1] as! IntItem,
+                                     a[2] as! IntItem)
+                    let result = x.value.map({$0 == y.value ? z.value : $0})
+                    return [
+                        Router(
+                            .vecInt,
+                            VecIntItem(
+                                result,
+                                call:[ x, z, y, InstructionItem(.vecIntReplace)],
+                                isContingent: Behavior.netContingency(of: x, y, z)
+                            )
+                        )
+                    ]
+                }
+            ),
+
 //        name = PushInstruction(rawValue: "\(stackname)ReplaceFirst")!
 //        inst = Instruction(
 //                        name,
