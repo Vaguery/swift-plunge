@@ -76,7 +76,7 @@ class Behavior {
     func act(on interpreter: Interpreter) {
         self.gather(from: interpreter)
         if self.isMissingArgs {
-            let mistakes = [Router(.error, ErrorItem("« WARNING: \(self.name) missing args»"))]
+            let mistakes = [Router(.error, ErrorItem("\(self.name) missing args"))]
             self.distribute(to: interpreter, items: mistakes)
         } else {
             transform(on: interpreter)
