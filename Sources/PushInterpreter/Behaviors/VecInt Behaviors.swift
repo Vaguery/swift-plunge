@@ -258,71 +258,86 @@ extension Interpreter {
                     }
                 }
             ),
+    
+        .vecIntNth :
+            Behavior(
+                .vecIntNth,
+                takes: [.vecInt, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! VecIntItem, a[1] as! IntItem)
+                    let range = x.value.count
+                    if range == 0 {
+                        return []
+                    } else {
+                        let position = abs(y.value)
+                        let idx = position % range
+                        let result = x.value[idx]
+                        return [
+                            Router(
+                                .int,
+                                IntItem(
+                                    result,
+                                    call:[ x, y, InstructionItem(.vecIntNth)],
+                                    isContingent: Behavior.netContingency(of: x, y)
+                                )
+                            )
+                        ]
+                    }
+                }
+            ),
 
-//        name = PushInstruction(rawValue: "\(stackname)Nth")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, .int],
-//                        fxn: {a in
-//                            let (x,y) = (a[0].vecVal(), a[1].iVal())
-//                            let range = x!.count
-//                            if range == 0 {
-//                                return []
-//                            } else {
-//                                let position = abs(y!)
-//                                let idx = position % range
-//                                let result = switch x![idx] {
-//                                case is Int: PushItem.makeInt(x![idx] as! Int)
-//                                case is Bool: PushItem.makeBool(x![idx] as! Bool)
-//                                case is Double: PushItem.makeFloat(x![idx] as! Double)
-//                                case is String: PushItem.makeString(x![idx] as! String)
-//                                default: PushItem.error("BAD TYPE")
-//                                }
-//                                return [Router(itemStack, result)]
-//                            }
-//                        })
-//        result[name] = inst
-//
-//        name = PushInstruction(rawValue: "\(stackname)IndexOf")!
-//        inst = Instruction(
-//                        name,
-//                        takes: [stack, itemStack],
-//                        fxn: {a in
-//                            let (x,y) = (a[0].vecVal(), a[1].vectorItemGetter())
-//                            var result:Int?
-//                            if x!.isEmpty == true {
-//                                return []
-//                            } else {
-//                                switch (x, y) {
-//                                case let (array as [Int], item as Int):
-//                                    if let idx = array.firstIndex(of: y as! Int) {
-//                                        result = idx
-//                                    }
-//                                case let (array as [Double], item as Double):
-//                                    if let idx = array.firstIndex(of: y as! Double) {
-//                                        result = idx
-//                                    }
-//                                case let (array as [Bool], item as Bool):
-//                                    if let idx = array.firstIndex(of: y as! Bool) {
-//                                        result = idx
-//                                    }
-//                                case let (array as [String], item as String):
-//                                    if let idx = array.firstIndex(of: y as! String) {
-//                                        result = idx
-//                                    }
-//                                default:
-//                                    result = nil
-//                                }
-//                            }
-//                            if let result {
-//                                return [Router(.int, PushItem.makeInt(result))]
-//                            } else {
-//                                return []
-//                            }
-//                        })
-//        result[name] = inst
-//
-//
+        
+        .vecIntIndexOf :
+            Behavior(
+                .vecIntIndexOf,
+                takes: [.vecInt, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! VecIntItem, a[1] as! IntItem)
+                    var result:Int? = nil
+                    if x.value.isEmpty == true {
+                        return []
+                    } else {
+                        if let idx = x.value.firstIndex(of: y.value) {
+                            result = idx
+                        }
+                    }
+                    if result != nil {
+                        return [
+                            Router(
+                                .int,
+                                IntItem(
+                                    result!,
+                                    call:[ x, y, InstructionItem(.vecIntIndexOf)],
+                                    isContingent: Behavior.netContingency(of: x, y)
+                                )
+                            )
+                        ]
+                    } else {
+                        return []
+                    }
+                }
+            ),
+        
+        .vecIntOccurrencesOf :
+            Behavior(
+                .vecIntOccurrencesOf,
+                takes: [.vecInt, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! VecIntItem, a[1] as! IntItem)
+                    let result = x.value.count(where: {$0 == (y.value)})
+                    return [
+                        Router(
+                            .int,
+                            IntItem(
+                                result,
+                                call:[ x, y, InstructionItem(.vecIntOccurrencesOf)],
+                                isContingent: Behavior.netContingency(of: x, y)
+                            )
+                        )
+                    ]
+                }
+            ),
+        
 //        name = PushInstruction(rawValue: "\(stackname)OccurrencesOf")!
 //        inst = Instruction(
 //                        name,

@@ -275,4 +275,95 @@ struct VecIntBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
+    
+    @Test func vecIntNth() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999]),
+                         VecIntItem([9,99,999])
+                        ])
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-3),
+                         IntItem(1),
+                         IntItem(7777, isContingent: true)
+                        ])
+        
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
+        #expect(stackString(inty, .int) == "[ -3 1 7777 ]")
+
+        doThis(.vecIntNth, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 7777 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+                
+        doThis(.vecIntNth, to: inty)
+        #expect(stackString(inty, .int) == "[ 99 7777 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intPop, to: inty)
+        
+        doThis(.vecIntNth, to: inty)
+        #expect(stackString(inty, .int) == "[ 99 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+
+    
+    
+    @Test func vecIntIndexOf() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999]),
+                         VecIntItem([9,99,999])
+                        ])
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-3),
+                         IntItem(99),
+                         IntItem(7777, isContingent: true)
+                        ])
+        
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
+        #expect(stackString(inty, .int) == "[ -3 99 7777 ]")
+
+        doThis(.vecIntIndexOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 99 7777 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+                
+        doThis(.vecIntIndexOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 1 7777 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.vecIntIndexOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 7777 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+    
+    
+    @Test func vecIntOccurrencesOf() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,9,9,9,9]),
+                         VecIntItem([9,9,9,9,9])
+                        ])
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(9),
+                         IntItem(9),
+                         IntItem(-88, isContingent: true)
+                        ])
+        
+        doThis(.vecIntOccurrencesOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 9 -88 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+                
+        doThis(.intPop, to: inty)
+
+        doThis(.vecIntOccurrencesOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 5 -88 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intPop, to: inty)
+
+        doThis(.vecIntOccurrencesOf, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+
 }
