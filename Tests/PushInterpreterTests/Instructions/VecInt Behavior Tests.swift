@@ -71,7 +71,72 @@ struct VecIntBehaviorTests {
         doThis(.vecIntConcat, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 99, 999, 1, 2, 3] ]")
         #expect(topItem(inty, .vecInt).isContingent == true)
-        
     }
     
+    
+    @Test func vecIntIsEmpty() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999], isContingent: true)
+                        ])
+        
+        doThis(.vecIntIsEmpty, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.vecIntIsEmpty, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+    }
+    
+    @Test func vecIntLength() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999], isContingent: true)
+                        ])
+        
+        doThis(.vecIntLength, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+
+        doThis(.vecIntLength, to: inty)
+        #expect(stackString(inty, .int) == "[ 3 0 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+    
+    @Test func vecIntRest() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999], isContingent: true)
+                        ])
+        
+        doThis(.vecIntRest, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+        
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntRest, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [99, 999] ]")
+        #expect(topItem(inty, .vecInt).isContingent == true)
+    }
+    
+    
+    @Test func vecIntReverse() {
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([]),
+                         VecIntItem([9,99,999], isContingent: true)
+                        ])
+        
+        doThis(.vecIntReverse, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")
+        #expect(topItem(inty, .vecInt).isContingent == false)
+        
+        doThis(.vecIntPop, to: inty)
+
+        doThis(.vecIntReverse, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [999, 99, 9] ]")
+        #expect(topItem(inty, .vecInt).isContingent == true)
+    }
+
 }
