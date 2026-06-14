@@ -181,7 +181,7 @@ struct InterpreterTests {
     @Test func behaviorCoverageTest() {
         let coverage = Interpreter.reportBehaviorCoverage()
         #expect(coverage != "")
-//         #expect(coverage == "88")
+//         #expect(coverage == "90128")
 //         ^^ uncomment for the kludge to report how many are done
     }
 }
