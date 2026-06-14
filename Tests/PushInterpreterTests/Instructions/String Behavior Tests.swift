@@ -11,7 +11,7 @@ import DequeModule
 
 @Suite @MainActor
 struct StringBehaviorTests {
-    
+
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
         var result = "["
         let s = interpreter.stacks[stack]!
@@ -31,7 +31,7 @@ struct StringBehaviorTests {
     }
     
     var inty = Interpreter()
-    
+
     
     @Test func stringButLast() {
         inty.stacks[.string]!.prepend(
