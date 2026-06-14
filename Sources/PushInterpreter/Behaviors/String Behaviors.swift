@@ -435,40 +435,60 @@ extension Interpreter {
                 }
             ),
         
-//        .stringNth :
-//            Instruction(
-//                .stringNth,
-//                takes: [.string, .int],
-//                fxn: {a in
-//                    let (x, y) = (a[0].sVal()!, a[1].iVal()!)
-//                    if x.isEmpty {
-//                        return []
-//                    } else {
-//                        let moduloIdx = (max(0,y) % x.count)
-//                        let idx = x.index(x.startIndex, offsetBy: moduloIdx)
-//                        let c = x[idx]
-//                        return [Router(.char,
-//                                       PushItem.makeChar(c,
-//                                                         h : "( \(a[0].hist()) \(a[1].hist()) .stringNth )"))]
-//                    }
-//                }),
+        .stringNth :
+            Behavior(
+                .stringNth,
+                takes: [.string, .int],
+                fxn: {a in
+                    let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
+                    if x.value.isEmpty {
+                        return []
+                    } else {
+                        let moduloIdx = (max(0,y.value) % x.value.count)
+                        let idx = x.value.index(x.value.startIndex, offsetBy: moduloIdx)
+                        let c = x.value[idx]
+                        return [
+                            Router(
+                                .char,
+                                CharItem(
+                                    c,
+                                    call: [ y, x, InstructionItem(.stringNth)],
+                                    isContingent: Behavior.netContingency(of: x, y )
+                                )
+                            )
+                        ]
+                    }
+                }
+            ),
+
+        // produces one substring of one character each for every character in the string
+        // the stack will read the same as the order in the string
+        //
+        .stringParseToChars :
+            Behavior(
+                .stringParseToChars,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    let chars = x.value.reversed().split(separator: "")
+                    var results : [Router] = []
+                    for (idx, c) in chars.enumerated() {
+                        results.append(
+                            Router(
+                                .string,
+                                StringItem(
+                                    String(c),
+                                    call: [ x, InstructionItem(.stringParseToChars)],
+                                    isContingent: Behavior.netContingency(of: x ),
+                                    index: x.value.count - idx - 1
+                                )
+                            )
+                        )
+                    }
+                    return results
+                }
+            ),
 //
-//        
-//        .stringParseToChars :
-//            Instruction(
-//                .stringParseToChars,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    let chars = x.split(separator: "")
-//                    var result:[Router] = []
-//                    for (idx, c) in chars.enumerated() {
-//                        result.append(Router(.string,
-//                                             PushItem.makeString(String(c), h : "( \(a[0].hist()) .stringParseToChars ).\(idx)")))
-//                    }
-//                    return result
-//                }),
-//        
 //        .stringOccurrencesOfChar :
 //            Instruction(
 //                .stringOccurrencesOfChar,

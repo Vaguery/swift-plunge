@@ -469,5 +469,58 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"-222\" \"11\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
+    
+    @Test func stringNth() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(11),
+                         IntItem(2),
+                         IntItem(-222, isContingent: true),
+                         IntItem(22),
+                        ])
+        
+        inty.stacks[.string]!.prepend(
+            contentsOf: [StringItem(""),
+                         StringItem("0123456789"),
+                         StringItem("0123456789"),
+                         StringItem("0123456789", isContingent: true),
+                        ])
+        
+        #expect(stackString(inty, .int) == "[ 11 2 -222 22 ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"0123456789\" \"0123456789\" \"0123456789\" ]")
 
+        doThis(.stringNth, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
+
+        doThis(.stringNth, to: inty)
+        #expect(stackString(inty, .char) == "[ '2' ]")
+        #expect(topItem(inty, .char).isContingent == false)
+
+        doThis(.stringNth, to: inty)
+        #expect(stackString(inty, .char) == "[ '0' '2' ]")
+        #expect(topItem(inty, .char).isContingent == true)
+
+        doThis(.stringNth, to: inty)
+        #expect(stackString(inty, .char) == "[ '2' '0' '2' ]")
+        #expect(topItem(inty, .char).isContingent == true)
+    }
+
+    @Test func stringParseToChars() {
+        inty.stacks[.string]!.prepend(
+            contentsOf: [StringItem(""),
+                         StringItem("01234", isContingent: true),
+                        ])
+        
+        #expect(stackString(inty, .string) == "[ \"\" \"01234\" ]")
+        
+        doThis(.stringParseToChars, to: inty)
+        #expect(stackString(inty, .string) == "[ \"01234\" ]")
+        
+        doThis(.stringParseToChars, to: inty)
+        #expect(stackString(inty, .string) == "[ \"0\" \"1\" \"2\" \"3\" \"4\" ]")
+        #expect(topItem(inty, .string).isContingent == true)
+        #expect(topItem(inty, .string).index == 0)
+        doThis(.stringPop, to: inty)
+        #expect(topItem(inty, .string).index == 1)
+
+    }
 }
