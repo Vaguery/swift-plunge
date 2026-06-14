@@ -15,9 +15,11 @@ protocol Pretty {
 }
 
 protocol Item: Pretty {
+    associatedtype Value
     var call: [any Item] {get set}
     var isContingent: Bool {get set}
     var index: Int {get set}
+    var value: Value {get set}
     
     func isEqual(to other: Item) -> Bool
 }

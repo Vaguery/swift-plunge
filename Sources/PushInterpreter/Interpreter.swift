@@ -40,7 +40,7 @@ final class Interpreter {
 //        integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: inputBehaviors, intoLanguage: &starter)
-//        integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecIntBehaviors, intoLanguage: &starter)
