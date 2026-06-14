@@ -51,8 +51,6 @@ struct CharInstructionTests {
 
         doThis(.charAllFromString, to: inty)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
-
-        
     }
     
 

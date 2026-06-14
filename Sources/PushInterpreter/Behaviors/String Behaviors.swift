@@ -462,7 +462,7 @@ extension Interpreter {
             ),
 
         // produces one substring of one character each for every character in the string
-        // the stack will read the same as the order in the string
+        // the stack will read backwards vs the order in the string
         //
         .stringParseToChars :
             Behavior(
@@ -470,7 +470,7 @@ extension Interpreter {
                 takes: [.string],
                 fxn: {a in
                     let (x) = (a[0] as! StringItem)
-                    let chars = x.value.reversed().split(separator: "")
+                    let chars = x.value.split(separator: "")
                     var results : [Router] = []
                     for (idx, c) in chars.enumerated() {
                         results.append(
@@ -480,7 +480,7 @@ extension Interpreter {
                                     String(c),
                                     call: [ x, InstructionItem(.stringParseToChars)],
                                     isContingent: Behavior.netContingency(of: x ),
-                                    index: x.value.count - idx - 1
+                                    index: idx
                                 )
                             )
                         )
@@ -488,142 +488,305 @@ extension Interpreter {
                     return results
                 }
             ),
-//
-//        .stringOccurrencesOfChar :
-//            Instruction(
-//                .stringOccurrencesOfChar,
-//                takes: [.string, .char],
-//                fxn: {a in
-//                    let (x, y) = (a[0].sVal()!, a[1].cVal()!)
-//                    return [Router(.int,
-//                                   PushItem.makeInt(x.filter({ $0 == y }).count,
-//                                   h : "( \(a[0].hist()) \(a[1].hist()) .stringOccurrencesOfChar )"))]
-//                }),
-//        
-//        .stringRemoveChar :
-//            Instruction(
-//                .stringRemoveChar,
-//                takes: [.string, .char],
-//                fxn: {a in
-//                    let (x, y) = (a[0].sVal()!, a[1].cVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(x.filter({ $0 != y }),
-//                                   h : "( \(a[0].hist()) \(a[1].hist()) .stringRemoveChar )"))]
-//                }),
-//        
-//        .stringReplaceChar :
-//            Instruction(
-//                .stringReplaceChar,
-//                takes: [.string, .char, .char],
-//                fxn: {a in
-//                    let (x, y, z) = (a[0].sVal()!, a[1].cVal()!, a[2].cVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(x.replacing(String(y), with: String(z)),
-//                                   h : "( \(a[0].hist()) \(a[1].hist()) \(a[2].hist()) .stringReplaceChar )"))]
-//                }),
-//        
-//        .stringReplaceFirstChar :
-//            Instruction(
-//                .stringReplaceFirstChar,
-//                takes: [.string, .char, .char],
-//                fxn: {a in
-//                    let (x, y, z) = (a[0].sVal()!, a[1].cVal()!, a[2].cVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(x.replacing(String(y), with: String(z), maxReplacements: 1),
-//                                   h : "( \(a[0].hist()) \(a[1].hist()) \(a[2].hist()) .stringReplaceFirstChar )"))]
-//                }),
-//        
-//        
-//        .stringReplace :
-//            Instruction(
-//                .stringReplace,
-//                takes: [.string, .string, .string],
-//                fxn: {a in
-//                    let (x, y, z) = (a[0].sVal()!, a[1].sVal()!, a[2].sVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(z.replacing(y, with: x),
-//                                   h : "( \(a[2].hist()) \(a[1].hist()) \(a[0].hist()) .stringReplace )"))]
-//                }),
-//        
-//        .stringReplaceFirst :
-//            Instruction(
-//                .stringReplaceFirst,
-//                takes: [.string, .string, .string],
-//                fxn: {a in
-//                    let (x, y, z) = (a[0].sVal()!, a[1].sVal()!, a[2].sVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(z.replacing(y, with: x, maxReplacements: 1),
-//                                   h : "( \(a[2].hist()) \(a[1].hist()) \(a[0].hist()) .stringReplaceFirst )"))]
-//                }),
-//        
-//        .stringRest :
-//            Instruction(
-//                .stringRest,
-//                takes: [.string],
-//                fxn: {a in
-//                    var (x) = (a[0].sVal()!)
-//                    if x.count > 0 {
-//                        x.removeFirst(1)
-//                        return [Router(.string,
-//                                       PushItem.makeString(x, h : "( \(a[0].hist()) .stringRest )"))]
-//                    } else {
-//                        return []
-//                    }
-//                }),
-//
-//        .stringSetChar :
-//            Instruction(
-//                .stringSetChar,
-//                takes: [.string, .int, .char],
-//                fxn: {a in
-//                    var (x, y, z) = (a[0].sVal()!, a[1].iVal()!, a[2].cVal()!)
-//                    if x.isEmpty {
-//                        return [Router(.string, a[0])]
-//                    } else {
-//                        let moduloIdx = (max(0,y) % x.count)
-//                        let idx = x.index(x.startIndex, offsetBy: moduloIdx)
-//                        x.replaceSubrange(idx...idx, with: String(z))
-//                        return [Router(.string,
-//                                       PushItem.makeString(x,
-//                                                         h : "( \(a[0].hist()) \(a[1].hist()) \(a[2].hist()) .stringSetChar )"))]
-//                    }
-//                }),
-//
-//        .stringSplit :
-//            Instruction(
-//                .stringSplit,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    var result:[Router] = []
-//                    let chunks = x.split {$0.isWhitespace }
-//                    for chunk in chunks {
-//                        result.append(Router(.string, PushItem.makeString(String(chunk),h:"so tired")))
-//                    }
-//                    return result
-//                }),
-//
-//        .stringSubstring :
-//            Instruction(
-//                .stringSubstring,
-//                takes: [.string, .int, .int],
-//                fxn: {a in
-//                    let (x,starter,ender) = (a[0].sVal(), a[1].iVal(), a[2].iVal())
-//                    if x!.isEmpty == true {
-//                        return [Router(.string, a[0])]
-//                    } else {
-//                        let range = x!.count-1
-//                        let lhs = min(range,max(0,starter!))
-//                        let start = x!.index(x!.startIndex, offsetBy: lhs)
-//                        let rhs = min(range,max(0,starter!,ender!))
-//                        let end = x!.index(x!.startIndex, offsetBy: rhs)
-//                        let newString = x![start..<end]
-//                        
-//                        return [Router(.string, PushItem.string(String(newString)))]
-//                    }
-//                }),
-//        
-//        
+
+        .stringOccurrencesOfChar :
+            Behavior(
+                .stringOccurrencesOfChar,
+                takes: [.string, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
+                    return [
+                        Router(
+                            .int,
+                            IntItem(
+                                x.value.filter({ $0 == y.value }).count,
+                                call: [ y, x, InstructionItem(.stringOccurrencesOfChar)],
+                                isContingent: Behavior.netContingency(of: x, y ),
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringRemoveChar :
+            Behavior(
+                .stringRemoveChar,
+                takes: [.string, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                x.value.filter({ $0 != y.value }),
+                                call: [ y, x, InstructionItem(.stringRemoveChar)],
+                                isContingent: Behavior.netContingency(of: x, y ),
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        
+        // ( "0123" '2' '.' .stringReplaceChar ) -> "01.3"
+        //
+        .stringReplaceChar :
+            Behavior(
+                .stringReplaceChar,
+                takes: [.string, .char, .char],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! StringItem,
+                                     a[1] as! CharItem,
+                                     a[2] as! CharItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                x.value.replacing(String(z.value), with: String(y.value)),
+                                call: [z, y, x, InstructionItem(.stringRemoveChar)],
+                                isContingent: Behavior.netContingency(of: x, y, z),
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringReplaceFirstChar :
+            Behavior(
+                .stringReplaceFirstChar,
+                takes: [.string, .char, .char],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! StringItem,
+                                     a[1] as! CharItem,
+                                     a[2] as! CharItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                x.value.replacing(String(z.value), with: String(y.value), maxReplacements: 1),
+                                call: [z, y, x, InstructionItem(.stringReplaceFirstChar)],
+                                isContingent: Behavior.netContingency(of: x, y, z),
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        
+        
+        // ("foo" "o" "g" .stringReplace) -> "fgg"
+        //
+        .stringReplace :
+            Behavior(
+                .stringReplace,
+                takes: [.string, .string, .string],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! StringItem, // replacement
+                                     a[1] as! StringItem, // target
+                                     a[2] as! StringItem) // in this context
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                z.value.replacing(y.value, with: x.value),
+                                call: [z, y, x, InstructionItem(.stringReplace)],
+                                isContingent: Behavior.netContingency(of: x, y, z),
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringReplaceFirst :
+            Behavior(
+                .stringReplaceFirst,
+                takes: [.string, .string, .string],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! StringItem, // replacement
+                                     a[1] as! StringItem, // target
+                                     a[2] as! StringItem) // in this context
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                z.value.replacing(y.value, with: x.value, maxReplacements: 1),
+                                call: [z, y, x, InstructionItem(.stringReplace)],
+                                isContingent: Behavior.netContingency(of: x, y, z),
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringRest :
+            Behavior(
+                .stringRest,
+                takes: [.string],
+                fxn: {a in
+                    var (x) = (a[0] as! StringItem)
+                    let result = String(x.value.dropFirst(1))
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                result,
+                                call: [ x, InstructionItem(.stringRest)],
+                                isContingent: Behavior.netContingency(of: x),
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringSetChar :
+            Behavior(
+                .stringSetChar,
+                takes: [.string, .int, .char],
+                fxn: {a in
+                    var (x, y, z) = (a[0] as! StringItem,
+                                     a[1] as! IntItem,
+                                     a[2] as! CharItem)
+                    var result = x.value
+                    if result.count > 0 {
+                        let moduloIdx = (max(0,y.value) % result.count)
+                        let idx = result.index(result.startIndex, offsetBy: moduloIdx)
+                        result.replaceSubrange(idx...idx, with: String(z.value))
+                    }
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                result,
+                                call: [z, y, x, InstructionItem(.stringSetChar)],
+                                isContingent: Behavior.netContingency(of: x,y,z)
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        // returns every substring delimited by whitespace, if any
+        // unlike stringButLast, which always returns a string, this might not return anything
+        //
+        .stringSplit :
+            Behavior(
+                .stringSplit,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    var result = [Router]()
+                    let chunks = x.value.split {$0.isWhitespace }
+                    for (idx, chunk) in chunks.enumerated() {
+                        result.append(
+                            Router(
+                                .string,
+                                StringItem(
+                                    String(chunk),
+                                    call: [x, InstructionItem(.stringSplit)],
+                                    isContingent: Behavior.netContingency(of: x),
+                                    index: idx
+                                )
+                            )
+                        )
+                    }
+                    return result
+                }
+            ),
+
+        .stringSubstring :
+            Behavior(
+                .stringSubstring,
+                takes: [.string, .int, .int],
+                fxn: {a in
+                    let (x,y,z) = (a[0] as! StringItem,
+                                     a[1] as! IntItem,
+                                     a[2] as! IntItem)
+                    
+                    var result = x.value
+                    var slice = Substring(result)
+                    if result.count > 0 {
+                        let range = result.count - 1
+                        let lhs = min(range , max(0 , z.value))
+                        let rhs = min(range , max(0 , z.value , y.value))
+                        let start = result.index(result.startIndex, offsetBy: lhs)
+                        let end = result.index(result.startIndex, offsetBy: rhs)
+                        slice = result[start...end]
+                    }
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                String(slice),
+                                call: [ x, z, y, InstructionItem(.stringSubstring)],
+                                isContingent: Behavior.netContingency(of: x, y, z)
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        // ( "abcd" .stringIterate MOUSE )
+        //
+        // index:        4          3          2                   1          0
+        // reults: ( exec:MOUSE exec:"bcd" exec:.stringIterate exec:MOUSE char:'a' )
+        //
+        // TODO: explain what THE MOUSE is
+        
+        .stringIterate :
+            Behavior(
+                .stringIterate,
+                takes: [.string, .exec],
+                fxn: {a in
+                    let (x, y) = ( a[0] as! StringItem, a[1] )
+                    var results = [Router]()
+                    var workingString = x.value
+                    
+                    var mouseCopy = a[1]
+                    let count = workingString.count
+                    if count > 0 {
+                        mouseCopy.index = 1
+                        results.append( Router( .exec, mouseCopy)) //1
+                        
+                        let item = workingString.removeFirst()
+                        results.append(
+                            Router(
+                                .char,
+                                CharItem(item,
+                                        call: [x, InstructionItem(.stringIterate), y],
+                                        isContingent: Behavior.netContingency(of: x, y),
+                                        index: 0
+                                       )
+                            )
+                        )
+                        if count > 1 {
+                            results.append(
+                                Router(
+                                    .exec,
+                                    InstructionItem(
+                                        .stringIterate,
+                                        call: [x, InstructionItem(.stringIterate), y],
+                                        isContingent: Behavior.netContingency(of: x, y),
+                                        index: 2
+                                    )))
+                            results.append(
+                                Router(.exec,
+                                       StringItem(workingString, // which was changed
+                                                  call: [x, InstructionItem(.stringIterate), y],
+                                                  isContingent: Behavior.netContingency(of: x, y),
+                                                  index: 3
+                                                 )
+                                      )
+                            )
+                            mouseCopy.index = 4
+                            results.append( Router( .exec, mouseCopy )) //4
+                        }
+                    }
+                    return results
+                }
+            ),
+
+             
+        
 //        .stringIterate :
 //            Instruction(
 //                .stringIterate,

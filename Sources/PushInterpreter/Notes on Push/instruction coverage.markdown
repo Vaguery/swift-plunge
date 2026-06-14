@@ -4,21 +4,20 @@ Missing instructions in bold; proposed modifications and additions in the right 
 
 | String now              | VecInt Now               | Proposed                          |
 | s---------------------t | v----------------------t | --------------------------------- |
-| stringButLast           | **vecIntButLast**        | use divide?                       |
-| **stringButFirst**      | **vecIntButFirst**       | use divide?                       |
+| stringButLast           | **vecIntButLast**        | use cut?                          |
 | stringConcat            | vecIntConcat             |                                   |
 | stringConjChar          | vecIntConj               |                                   |
 | stringContains          | **vecIntContainsSubvec** | ND version                        |
 | stringContainsChar      | vecIntContains           | ND version                        |
 | stringDeepDup           | vecIntDeepDup            |                                   |
-| stringDrop              | vecIntDrop               | use divide?                       |
+| stringDrop              | vecIntDrop               | use cut?                          |
 | stringDup               | vecIntDup                |                                   |
 | stringDupItems          | vecIntDupItems           |                                   |
 | stringDupTimes          | vecIntDupTimes           |                                   |
 | stringIsEmpty           | **vecIntIsEmpty**        | ND version                        |
-| **stringEmpty**         | vecIntEmptyVector        |                                   |
+| **stringEmptyString**   | vecIntEmptyVector        |                                   |
 | stringEq                | vecIntEq                 | ND version                        |
-| stringFirst             | vecIntFirst              | use divide?                       |
+| stringFirst             | vecIntFirst              | use cut?                          |
 | stringFlush             | vecIntFlush              |                                   |
 | stringFromBool          |                          |                                   |
 | stringFromChar          |                          |                                   |
@@ -28,28 +27,29 @@ Missing instructions in bold; proposed modifications and additions in the right 
 | stringGTE               | **vecIntGTE**            | ND version                        |
 | stringIndexOfChar       | vecIntIndexOf            | ND version                        |
 | stringIterate           | vecIntIterate            |                                   |
-| stringLast              | vecIntLast               | use divide?                       |
+| stringLast              | vecIntLast               | use cut?                          |
 | stringLength            | vecIntLength             | ND version                        |
 | stringLT                | **vecIntLT**             | ND version                        |
 | stringLTE               | **vecIntLTE**            | ND version                        |
 | stringNth               | vecIntNth                | ND version                        |
 | stringOccurrencesOfChar | vecIntOccurrencesOf      | ND version                        |
-| stringParseToChars      | vecIntPushAll            |                                   |
+| stringParseToChars      | **vecIntAsPieces**       |                                   |
+| charAllFromString       | vecIntPushAll            |                                   |
 | stringPop               | vecIntPop                |                                   |
 | stringRemoveChar        | vecIntRemove             | ND version                        |
 | stringReplace           | **vecIntReplaceSubvec**  |                                   |
 | stringReplaceChar       | vecIntReplace            |                                   |
 | stringReplaceFirstChar  | vecIntReplaceFirst       |                                   |
-| stringRest              | vecIntRest               | use split?                        |
+| stringRest              | vecIntRest               | use cut?                          |
 | stringReverse           | vecIntReverse            |                                   |
 | stringRot               | vecIntRot                |                                   |
 | stringSetChar           | vecIntSet                |                                   |
 | stringShove             | vecIntShove              |                                   |
-| stringSplit             | **vecIntSplit**          |                                   |
+| stringSplit             | **vecIntSplitOnNeg**     |                                   |
 | stringStackDepth        | vecIntStackDepth         |                                   |
 | stringSubstring         | vecIntSubVec             | ND version                        |
 | stringSwap              | vecIntSwap               |                                   |
-| stringTake              | vecIntTake               | use split?                        |
+| stringTake              | vecIntTake               | use cut?                          |
 | stringYank              | vecIntYank               |                                   |
 | stringYankDup           | vecIntYankDup            |                                   |
 |                         |                          | create from N parts               |
@@ -57,4 +57,5 @@ Missing instructions in bold; proposed modifications and additions in the right 
 |                         |                          | create by comparison across types |
 |                         |                          | create from stack                 |
 |                         |                          | create by cycling small vec       |
+|                         |                          | create stringCut/vecIntCut        |
 |                         |                          |                                   |
