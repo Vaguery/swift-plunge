@@ -4,254 +4,437 @@
 ////
 ////  Created by William Tozier on 5/9/26.
 ////
-//
-//import DequeModule
-//
-//
-//extension Interpreter {
-//                
-//    static let stringInstructions:[PushInstruction : Instruction] =
-//       [
-//        .stringButLast :
-//            Instruction(
-//                .stringButLast,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    return [Router(.string, PushItem.makeString(String(x.dropLast(1)), h:"(\(a[0].hist())  .stringButLast)") )]
-//                }),
-//        
-//        .stringConcat :
-//            Instruction(
-//                .stringConcat,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.string, PushItem.makeString(y + x, h:"(\(a[1].hist()) \(a[0].hist()) .stringConcat)") )]
-//                }),
-//        
-//        .stringConjChar :
-//            Instruction(
-//                .stringConjChar,
-//                takes: [.string,.char],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].cVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString("\(x)\(y)",
-//                                   h : "( \(a[0].hist()) \(a[1].hist()) .stringConjChar )"))]
-//                }),
-//        
-//        .stringContains :
-//            Instruction(
-//                .stringContains,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(y.contains(x),
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringContains )"))]
-//                }),
-//        
-//        .stringContainsChar :
-//            Instruction(
-//                .stringContainsChar,
-//                takes: [.string,.char],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].cVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(x.contains(String(y)),
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringContainsChar )"))]
-//                }),
-//        
-//        .stringIndexOfChar :
-//            Instruction(
-//                .stringIndexOfChar,
-//                takes: [.string,.char],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].cVal()!)
-//                    if let idx = x.firstIndex(of: y) {
-//                        let intIdx = x.distance(from: x.startIndex, to: idx)
-//                        return [Router(.int,
-//                                       PushItem.makeInt(intIdx,
-//                                        h : "( \(a[1].hist()) \(a[0].hist()) .stringIndexOfChar )"))]
-//                    } else {
-//                        return []
-//                    }
-//                }),
-//        
-//        .stringDrop :
-//            Instruction(
-//                .stringDrop,
-//                takes: [.string,.int],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].iVal()!)
-//                    let toDrop = max(0,y)
-//                    return [Router(.string,
-//                                   PushItem.makeString(String(x.dropLast(toDrop)),
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringDrop )"))]
-//                }),
-//        
-//        .stringTake :
-//            Instruction(
-//                .stringTake,
-//                takes: [.string,.int],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].iVal()!)
-//                    let toDrop = max(0,y)
-//                    return [Router(.string,
-//                                   PushItem.makeString(String(x.prefix(toDrop)),
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringTake )"))]
-//                }),
-//        
-//        .stringEmptyString :
-//            Instruction(
-//                .stringEmptyString,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(x.isEmpty,
-//                                   h : "( \(a[0].hist()) .stringEmptyString )"))]
-//                }),
-//        
-//        .stringFirst :
-//            Instruction(
-//                .stringFirst,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    if let c = x.first {
-//                        return [Router(.char,
-//                                       PushItem.makeChar(c, h : "( \(a[0].hist()) .stringFirst )"))]
-//                    } else {
-//                        return []
-//                    }
-//                }),
-//        
-//        .stringLast :
-//            Instruction(
-//                .stringLast,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    if let c = x.last {
-//                        return [Router(.char,
-//                                       PushItem.makeChar(c, h : "( \(a[0].hist()) .stringLast )"))]
-//                    } else {
-//                        return []
-//                    }
-//                }),
-//        
-//        .stringLTE :
-//            Instruction(
-//                .stringLTE,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(y <= x,
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringLTE )"))]
-//                }),
-//        
-//        .stringLT :
-//            Instruction(
-//                .stringLT,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(y < x,
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringLT )"))]
-//                }),
-//        
-//        .stringGTE :
-//            Instruction(
-//                .stringGTE,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(y >= x,
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringGTE )"))]
-//                }),
-//        
-//        .stringGT :
-//            Instruction(
-//                .stringGT,
-//                takes: [.string,.string],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal()!, a[1].sVal()!)
-//                    return [Router(.bool,
-//                                   PushItem.makeBool(y > x,
-//                                   h : "( \(a[1].hist()) \(a[0].hist()) .stringGT )"))]
-//                }),
-//        
-//        .stringReverse :
-//            Instruction(
-//                .stringReverse,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString(String(x.reversed()),
-//                                   h : "( \(a[0].hist()) .stringReverse )"))]
-//                }),
-//        
-//        .stringLength :
-//            Instruction(
-//                .stringLength,
-//                takes: [.string],
-//                fxn: {a in
-//                    let (x) = (a[0].sVal()!)
-//                    return [Router(.int,
-//                                   PushItem.makeInt(x.count,
-//                                   h : "( \(a[0].hist()) .stringLength )"))]
-//                }),
-//        
-//        .stringFromBool :
-//            Instruction(
-//                .stringFromBool,
-//                takes: [.bool],
-//                fxn: {a in
-//                    let (x) = (a[0].bVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString("\(x)",
-//                                   h : "( \(a[0].hist()) .stringFromBool )"))]
-//                }),
-//        
-//        .stringFromChar :
-//            Instruction(
-//                .stringFromChar,
-//                takes: [.char],
-//                fxn: {a in
-//                    let (x) = (a[0].cVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString("\(x)",
-//                                   h : "( \(a[0].hist()) .stringFromChar )"))]
-//                }),
-//        
-//        .stringFromFloat :
-//            Instruction(
-//                .stringFromFloat,
-//                takes: [.float],
-//                fxn: {a in
-//                    let (x) = (a[0].fVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString("\(x)",
-//                                   h : "( \(a[0].hist()) .stringFromFloat )"))]
-//                }),
-//        
-//        .stringFromInt :
-//            Instruction(
-//                .stringFromInt,
-//                takes: [.int],
-//                fxn: {a in
-//                    let (x) = (a[0].iVal()!)
-//                    return [Router(.string,
-//                                   PushItem.makeString("\(x)",
-//                                   h : "( \(a[0].hist()) .stringFromInt )"))]
-//                }),
-//        
+
+import DequeModule
+
+
+extension Interpreter {
+                
+    static let stringBehaviors:[PushInstruction : Behavior] =
+       [
+        
+        .stringButLast :
+            Behavior(
+                .stringButLast,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                String(x.value.dropLast(1)),
+                                call:[x, InstructionItem(.stringButLast)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringConcat :
+            Behavior(
+                .stringConcat,
+                takes: [.string, .string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                y.value + x.value,
+                                call:[y, x, InstructionItem(.stringConcat)],
+                                isContingent: Behavior.netContingency(of: x,y )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringConjChar :
+            Behavior(
+                .stringConjChar,
+                takes: [.string, .char],
+                fxn: {a in
+                    let (y,x) = (a[0] as! StringItem, a[1] as! CharItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                y.value + String(x.value),
+                                call:[y, x, InstructionItem(.stringConjChar)],
+                                isContingent: Behavior.netContingency(of: x,y )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringContains :
+            Behavior(
+                .stringContains,
+                takes: [.string, .string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                y.value.contains(x.value),
+                                call:[y, x, InstructionItem(.stringContains)],
+                                isContingent: Behavior.netContingency(of: x,y )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringContainsChar :
+            Behavior(
+                .stringContainsChar,
+                takes: [.string, .char],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! CharItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                x.value.contains(y.value),
+                                call:[y, x, InstructionItem(.stringContainsChar)],
+                                isContingent: Behavior.netContingency(of: x,y )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringIndexOfChar :
+            Behavior(
+                .stringIndexOfChar,
+                takes: [.string, .char],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! CharItem)
+                    if let idx = x.value.firstIndex(of: y.value) {
+                        let intIdx = x.value.distance(from: x.value.startIndex, to: idx)
+                        return [
+                            Router(
+                                .int,
+                                IntItem(
+                                    intIdx,
+                                    call: [y, x, InstructionItem(.stringIndexOfChar)],
+                                    isContingent: Behavior.netContingency(of: x,y )
+                                    )
+                                )
+                            ]
+                    } else {
+                        return []  // not found
+                    }
+                }
+            ),
+
+        // the IntItem value is truncated at 0 before use as an index
+        //
+        .stringDrop :
+            Behavior(
+                .stringDrop,
+                takes: [.string, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! IntItem)
+                    let toDrop = max(0,y.value)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                String(x.value.dropLast(toDrop)),
+                                call: [y, x, InstructionItem(.stringDrop)],
+                                isContingent: Behavior.netContingency(of: x,y )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        
+        // the IntItem value is truncated at 0 before use as an index
+        //
+        .stringTake :
+            Behavior(
+                .stringTake,
+                takes: [.string, .int],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! IntItem)
+                    let toTake = max(0,y.value)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                String(x.value.prefix(toTake)),
+                                call: [y, x, InstructionItem(.stringTake)],
+                                isContingent: Behavior.netContingency(of: x, y )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringIsEmpty :
+            Behavior(
+                .stringIsEmpty,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                x.value.isEmpty,
+                                call: [x, InstructionItem(.stringIsEmpty)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringFirst :
+            Behavior(
+                .stringFirst,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    if let c = x.value.first {
+                        return [
+                            Router(
+                                .char,
+                                CharItem(
+                                    c,
+                                    call: [x, InstructionItem(.stringFirst)],
+                                    isContingent: Behavior.netContingency(of: x )
+                                    )
+                                )
+                            ]
+                    } else {
+                        return []  // empty string
+                    }
+                }
+            ),
+
+    
+        .stringLast :
+            Behavior(
+                .stringLast,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    if let c = x.value.last {
+                        return [
+                            Router(
+                                .char,
+                                CharItem(
+                                    c,
+                                    call: [x, InstructionItem(.stringLast)],
+                                    isContingent: Behavior.netContingency(of: x )
+                                    )
+                                )
+                            ]
+                    } else {
+                        return []  // empty string
+                    }
+                }
+            ),
+
+        .stringLTE :
+            Behavior(
+                .stringLTE,
+                takes: [.string,.string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                y <= x,
+                                call: [y, x, InstructionItem(.stringLTE)],
+                                isContingent: Behavior.netContingency(of: x, y )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringLT :
+            Behavior(
+                .stringLT,
+                takes: [.string,.string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                y < x,
+                                call: [y, x, InstructionItem(.stringLT)],
+                                isContingent: Behavior.netContingency(of: x, y )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+    
+        .stringGT :
+            Behavior(
+                .stringGT,
+                takes: [.string,.string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                y > x,
+                                call: [y, x, InstructionItem(.stringGT)],
+                                isContingent: Behavior.netContingency(of: x, y )
+                            )
+                        )
+                    ]
+                }
+            ),
+
+        .stringGTE :
+            Behavior(
+                .stringGTE,
+                takes: [.string,.string],
+                fxn: {a in
+                    let (x,y) = (a[0] as! StringItem, a[1] as! StringItem)
+                    return [
+                        Router(
+                            .bool,
+                            BoolItem(
+                                y >= x,
+                                call: [y, x, InstructionItem(.stringGTE)],
+                                isContingent: Behavior.netContingency(of: x, y )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        
+        .stringReverse :
+            Behavior(
+                .stringReverse,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                String(x.value.reversed() ),
+                                call: [ x, InstructionItem(.stringReverse)],
+                                isContingent: Behavior.netContingency(of: x, )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringLength :
+            Behavior(
+                .stringLength,
+                takes: [.string],
+                fxn: {a in
+                    let (x) = (a[0] as! StringItem)
+                    return [
+                        Router(
+                            .int,
+                            IntItem(
+                                x.value.count,
+                                call: [ x, InstructionItem(.stringLength)],
+                                isContingent: Behavior.netContingency(of: x, )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringFromBool :
+            Behavior(
+                .stringFromBool,
+                takes: [.bool],
+                fxn: {a in
+                    let (x) = (a[0] as! BoolItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                "\(x.value)",
+                                call: [ x, InstructionItem(.stringFromBool)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringFromChar :
+            Behavior(
+                .stringFromChar,
+                takes: [.char],
+                fxn: {a in
+                    let (x) = (a[0] as! CharItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                "\(x.value)",
+                                call: [ x, InstructionItem(.stringFromChar)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringFromDouble :
+            Behavior(
+                .stringFromDouble,
+                takes: [.double],
+                fxn: {a in
+                    let (x) = (a[0] as! DoubleItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                "\(x.value)",
+                                call: [ x, InstructionItem(.stringFromDouble)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
+        .stringFromInt :
+            Behavior(
+                .stringFromInt,
+                takes: [.int],
+                fxn: {a in
+                    let (x) = (a[0] as! IntItem)
+                    return [
+                        Router(
+                            .string,
+                            StringItem(
+                                "\(x.value)",
+                                call: [ x, InstructionItem(.stringFromInt)],
+                                isContingent: Behavior.netContingency(of: x )
+                            )
+                        )
+                    ]
+                }
+            ),
+        
 //        .stringNth :
 //            Instruction(
 //                .stringNth,
@@ -454,6 +637,6 @@
 //        
 //        
 //        
-//
-//        ]
-//}
+
+        ]
+}
