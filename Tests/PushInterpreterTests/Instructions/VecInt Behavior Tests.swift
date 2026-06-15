@@ -324,15 +324,19 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .int) == "[ -3 99 7777 ]")
 
         doThis(.vecIntIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 99 7777 ]")
+        #expect(stackString(inty, .int) == "[ -1 99 7777 ]")
         #expect(topItem(inty, .int).isContingent == false)
-                
+        
+        doThis(.intPop, to: inty)
+
         doThis(.vecIntIndexOf, to: inty)
         #expect(stackString(inty, .int) == "[ 1 7777 ]")
         #expect(topItem(inty, .int).isContingent == false)
         
+        doThis(.intPop, to: inty)
+
         doThis(.vecIntIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 7777 ]")
+        #expect(stackString(inty, .int) == "[ -1 ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
     

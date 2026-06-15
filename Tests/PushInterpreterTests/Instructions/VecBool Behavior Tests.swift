@@ -335,14 +335,14 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .bool) == "[ true false false ]")
 
         doThis(.vecBoolIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ ]") // returns nothing
+        #expect(stackString(inty, .int) == "[ -1 ]") // returns -1
                 
         doThis(.vecBoolIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .int) == "[ 0 -1 ]")
         #expect(topItem(inty, .int).isContingent == false)
         
         doThis(.vecBoolIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 0 ]")
+        #expect(stackString(inty, .int) == "[ 1 0 -1 ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
     

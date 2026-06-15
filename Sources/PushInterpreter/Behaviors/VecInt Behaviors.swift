@@ -294,27 +294,21 @@ extension Interpreter {
                 fxn: {a in
                     let (x,y) = (a[0] as! VecIntItem, a[1] as! IntItem)
                     var result:Int? = nil
-                    if x.value.isEmpty == true {
-                        return []
+                    if let idx = x.value.firstIndex(of: y.value) {
+                        result = idx
                     } else {
-                        if let idx = x.value.firstIndex(of: y.value) {
-                            result = idx
-                        }
+                        result = -1
                     }
-                    if result != nil {
-                        return [
-                            Router(
-                                .int,
-                                IntItem(
-                                    result!,
-                                    call:[ x, y, InstructionItem(.vecIntIndexOf)],
-                                    isContingent: Behavior.netContingency(of: x, y)
-                                )
+                    return [
+                        Router(
+                            .int,
+                            IntItem(
+                                result!,
+                                call:[ x, y, InstructionItem(.vecIntIndexOf)],
+                                isContingent: Behavior.netContingency(of: x, y)
                             )
-                        ]
-                    } else {
-                        return []
-                    }
+                        )
+                    ]
                 }
             ),
         

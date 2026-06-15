@@ -44,7 +44,7 @@ final class Interpreter {
         integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecBoolBehaviors, intoLanguage: &starter)
-//        integrateBehaviors(fromThese: vecDoubleBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: vecDoubleBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecIntBehaviors, intoLanguage: &starter)
 //        integrateBehaviors(fromThese: vecStringBehaviors, intoLanguage: &starter)
         return starter
