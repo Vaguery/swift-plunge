@@ -37,7 +37,7 @@ final class Interpreter {
         integrateBehaviors(fromThese: charBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: combinatorBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: constantBehaviors, intoLanguage: &starter)
-//        integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: inputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)

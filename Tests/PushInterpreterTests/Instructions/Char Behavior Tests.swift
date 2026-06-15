@@ -10,7 +10,7 @@ import Testing
 import DequeModule
 
 @Suite @MainActor
-struct CharInstructionTests {
+struct CharBehaviorTests {
     
     func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
         var result = "["

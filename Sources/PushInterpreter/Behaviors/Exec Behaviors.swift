@@ -11,7 +11,7 @@ import DequeModule
 extension Interpreter {
             
     static let execBehaviors:[PushInstruction : Behavior] =
-    [:
+    [
         
         
         // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L335-L343
@@ -135,67 +135,113 @@ extension Interpreter {
 //                    // in original code, (exec_if A B) will keep A & discard B if true, else keep B & discard A
 //                }),
 //        
-//        .execK :
-//            Instruction(
-//                .execK,
-//                takes: [.exec, .exec],
-//                fxn: {a in
-//                    let (x, y) = (a[0], a[1])
-//                    return [Router(.exec, a[0].updateHistory("( .execK \(a[0].hist()) \(a[1].hist()) )"))]
-//                }),
-//        
-//        .execY :
-//            Instruction(
-//                .execY,
-//                takes: [.exec],
-//                fxn: {a in
-//                    let (x) = (a[0])
-//                    return [Router(.exec, PushItem.codeblock(
-//                            [PushItem.makeInst(.execY), a[0]])),
-//                            Router(.exec, a[0])]
-//                }),
-//        
-//        .execS :
-//            Instruction(
-//                .execS,
-//                takes: [.exec, .exec, .exec],
-//                fxn: {a in
-//                    let (x,y,z) = (a[0], a[1], a[2])
-//                    return [Router(.exec,
-//                                   PushItem.codeblock(
-//                                        [a[1], a[2]])),
-//                            Router(.exec, a[2]),
-//                            Router(.exec, a[0])
-//                            ]
-//                }),
-//
-//        .execWhen :
-//            Instruction(
-//                .execWhen,
-//                takes: [.bool, .exec],
-//                fxn: {a in
-//                    let (x, y) = (a[0].bVal()!, a[1])
-//                    if x {
-//                        return [Router(.exec, a[1].updateHistory("( \(a[0].hist()) .execWhen \(a[1].hist()) ))"))]
-//                    } else {
-//                        return []
-//                    }
-//                    // in original code, (execWhen A) will keep A if true, discard it
-//                }),
-//        
-//        .execWhile :
-//            Instruction(
-//                .execWhile,
-//                takes: [.bool, .exec],
-//                fxn: {a in
-//                    let (x, y) = (a[0].bVal()!, a[1])
-//                    if x {
-//                        return [Router(.exec,PushItem.makeInst(.execWhile)),
-//                                       Router(.exec, a[1].updateHistory("(\(a[0].hist()) .execWhile \(y.hist()) )"))]
-//                    } else {
-//                        return []
-//                    }
-//                }),
+        .execK :
+            Behavior(
+                .execK,
+                takes: [.exec, .exec],
+                fxn: {a in
+                    var (x, y) = (a[0], a[1])
+                    x.call = [InstructionItem(.execK), x, y]
+                    return [
+                        Router(.exec, x)
+                    ]
+                }
+            ),
+        
+        .execY :
+            Behavior(
+                .execY,
+                takes: [.exec],
+                fxn: {a in
+                    let (x) = (a[0])
+                    var results = [Router]()
+                    results.append(
+                        Router(
+                            .exec,
+                            CodeItem(
+                                [ InstructionItem(.execY), a[0] ]
+                            )
+                        )
+                    )
+                    results.append(
+                        Router(.exec, a[0])
+                        )
+                    return results
+                }
+            ),
+        
+        .execS :
+            Behavior(
+                .execS,
+                takes: [.exec, .exec, .exec],
+                fxn: {a in
+                    var (x,y,z) = (a[0], a[1], a[2])
+                    var results = [Router]()
+                    
+                    results.append(
+                        Router(.exec,
+                            CodeItem(
+                                [a[1], a[2]],
+                                call: [InstructionItem(.execS), z, y, x],
+                                isContingent: Behavior.netContingency(of: x,y,z),
+                                index: 2
+                                ))
+                        )
+                    results.append(Router(.exec,z))
+                    results.append(Router(.exec, x))
+                    return results
+                }
+            ),
+
+        .execWhen :
+            Behavior(
+                .execWhen,
+                takes: [.bool, .exec],
+                fxn: {a in
+                    var (x, y) = (a[0] as! BoolItem, a[1])
+                    var results = [Router]()
+                    
+                    if x.value {
+                        y.call = [x, InstructionItem(.execWhen), y]
+                        y.isContingent = Behavior.netContingency(of: x, y )
+                        results.append(
+                            Router(.exec,y)
+                            )
+                    }
+                    return results
+                }
+            ),
+        
+        
+        .execWhile :
+            Behavior(
+                .execWhile,
+                takes: [.bool, .exec],
+                fxn: {a in
+                    var (x, y) = (a[0] as! BoolItem, a[1])
+                    var results = [Router]()
+                    let c = Behavior.netContingency(of: x, y )
+                    
+                    if x.value {
+                        y.call = [x, InstructionItem(.execWhile), y]
+                        y.isContingent = c
+                        y.index = 2
+                        var yCopy = y
+                        
+                        results.append(Router(.exec, y))
+                        results.append(Router(.exec,
+                                              InstructionItem(
+                                                .execWhile,
+                                                call: y.call,
+                                                isContingent: c,
+                                                index: 1
+                                              )))
+                        yCopy.index = 0
+                        results.append(Router(.exec, yCopy))
+                    }
+                    return results
+                }
+            ),
 
 
         ]
