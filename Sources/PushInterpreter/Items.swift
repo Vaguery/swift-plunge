@@ -21,11 +21,11 @@ protocol Item: Pretty {
     var index: Int {get set}
     var value: Value {get set}
     
-    func isEqual(to other: Item) -> Bool
+    func isEqual(to other: any Item) -> Bool
 }
 
 extension Item where Self: Equatable {
-    func isEqual(to other: Item) -> Bool {
+    func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
     }

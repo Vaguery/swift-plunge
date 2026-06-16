@@ -7,7 +7,7 @@
 
 
 struct Individual {
-    let program: Item
+    let program: any Item
     let constants: [any Item]
 
 }

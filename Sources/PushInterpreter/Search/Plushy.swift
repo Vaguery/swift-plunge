@@ -12,8 +12,8 @@ enum PlushyControl {
 
 struct Plushy {
         
-    static func plushy2push(_  stuff: inout [Any], level:Int = 0) -> [Item] {
-        var result:[Item] = []
+    static func plushy2push(_  stuff: inout [Any], level:Int = 0) -> [any Item] {
+        var result:[any Item] = []
         
         let extraOpens: [PushInstruction: Int] = [.execDup :1, .execDupTimes :1, .execDupItems :0, .execEq :0, .execPop :1, .execRot :3, .execShove :1, .execSwap :2, .execYank :0, .execYankDup :0, .execDeepDup :0, .execPrint :1, .execIf  :2, .execWhen :1, .execWhile :1, .execDoWhile :1, .execDoRange :1, .execDoCount :1, .execDoTimes :1, .execK :2, .execS :3, .execY :1, .stringIterate :1, .vecBoolIterate :1, .vecStringIterate :1, .vecIntIterate :1, .vecDoubleIterate :1, ]
         var pending:[PlushyControl] = []

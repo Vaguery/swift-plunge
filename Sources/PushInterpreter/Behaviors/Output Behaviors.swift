@@ -12,7 +12,7 @@ extension Interpreter {
     
     
     static var outputBehaviors:[PushInstruction : Behavior] {
-        var result:[PushInstruction : Behavior] =
+        let result:[PushInstruction : Behavior] =
         [
             .printNewline:
                 BehaviorWithSideEffects(
