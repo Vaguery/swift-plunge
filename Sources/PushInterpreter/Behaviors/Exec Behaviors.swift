@@ -15,32 +15,44 @@ extension Interpreter {
         
         
         // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L335-L343
-        
-        
-//        .execDoWhile :
-//            Instruction(
-//                .execDoWhile,
-//                takes: [.exec, .bool],
-//                fxn: {a in
-//                    let (item, decider) = (a[0], a[1] as! BoolItem)
-//                    var results: [any Item] = []
-//                    if !decider.value { return [] }
-//                    results.append(a[0])
-//                    results.append(InstructionItem(.execWhile))
-//                    results.append(a[0])
-//                    return [
-//                        Router(
-//                            .exec,
-//                            CodeItem(results,
-//                                    call: [InstructionItem(.execDoWhile), item, decider],
-//                                    isContingent: Instruction.netContingency(of: item, decider)
-//                                    )
-//                        )
-//                    ]
-//                }),
+        //  "`:exec-do*while` pops the top of the `:exec` stack. It builds and pushes a continuation to the `:exec` stack which is `'([item] :exec-while [item])` (_Note_ the instruction is `:exec-while` in the continuation form)."
 
-//        
-//        
+        
+        .execDoWhile :
+            Behavior(
+                .execDoWhile,
+                takes: [.bool, .exec],
+                fxn: {a in
+                    var (x, y) = (a[0] as! BoolItem, a[1])
+                    
+                    var yCopy = y
+                    yCopy.isContingent = true
+                    yCopy.index = 2
+                    yCopy.call = [x, InstructionItem(.execDoWhile), y]
+                    
+                    var results = [Router(.exec, yCopy)]
+
+                    if x.value {
+                       results.append(
+                            Router(
+                                .exec,
+                                InstructionItem(.execWhile,
+                                call: [x, InstructionItem(.execDoWhile), y],
+                                isContingent: true,
+                                index:1 )))
+                        var yCopy2 = y
+                        yCopy2.isContingent = true
+                        yCopy2.index = 0
+                        yCopy2.call = [x, InstructionItem(.execDoWhile), y]
+
+                        results.append(Router(.exec, yCopy2))
+                    }
+                    return results
+                }
+            ),
+
+        
+        
 //        // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L13-L32
 //        
 //        .execDoCount :
@@ -121,20 +133,22 @@ extension Interpreter {
 //                    }
 //                    return [Router(.exec, PushItem.makeCode(results)) ]
 //                }),
-//
-//        
-//        
-//        .execIf :
-//            Instruction(
-//                .execIf,
-//                takes: [.bool, .exec, .exec],
-//                fxn: {a in
-//                    let (x, y, z) = (a[0].bVal()!, a[1], a[2])
-//                    let result = x ? y : z
-//                    return [Router(.exec, result.updateHistory("( \(a[0].hist()) .execIf) \(y.hist()) \(z.hist()) )"))]
-//                    // in original code, (exec_if A B) will keep A & discard B if true, else keep B & discard A
-//                }),
-//        
+
+        
+        
+        .execIf :
+            Behavior(
+                .execIf,
+                takes: [.bool, .exec, .exec],
+                fxn: {a in
+                    let (x, y, z) = (a[0] as! BoolItem, a[1], a[2])
+                    var result = x.value ? y : z
+                    result.isContingent = true
+                    result.call = [InstructionItem(.execIf), y, z]
+                    return [ Router(.exec, result) ]
+                }
+            ),
+        
         .execK :
             Behavior(
                 .execK,
@@ -212,36 +226,70 @@ extension Interpreter {
                 }
             ),
         
-        
         .execWhile :
             Behavior(
                 .execWhile,
                 takes: [.bool, .exec],
                 fxn: {a in
                     var (x, y) = (a[0] as! BoolItem, a[1])
-                    var results = [Router]()
-                    let c = Behavior.netContingency(of: x, y )
                     
+                    var results = [Router]()
+
                     if x.value {
-                        y.call = [x, InstructionItem(.execWhile), y]
-                        y.isContingent = c
-                        y.index = 2
                         var yCopy = y
-                        
-                        results.append(Router(.exec, y))
-                        results.append(Router(.exec,
-                                              InstructionItem(
-                                                .execWhile,
-                                                call: y.call,
-                                                isContingent: c,
-                                                index: 1
-                                              )))
-                        yCopy.index = 0
+                        yCopy.isContingent = true
+                        yCopy.index = 2
+                        yCopy.call = [x, InstructionItem(.execDoWhile), y]
                         results.append(Router(.exec, yCopy))
+                       
+                        results.append(
+                            Router(
+                                .exec,
+                                InstructionItem(.execWhile,
+                                call: [x, InstructionItem(.execDoWhile), y],
+                                isContingent: true,
+                                index:1 )))
+                        
+                        var yCopy2 = y
+                        yCopy2.isContingent = true
+                        yCopy2.index = 0
+                        yCopy2.call = [x, InstructionItem(.execDoWhile), y]
+
+                        results.append(Router(.exec, yCopy2))
                     }
                     return results
                 }
             ),
+
+//        .execWhile :
+//            Behavior(
+//                .execWhile,
+//                takes: [.bool, .exec],
+//                fxn: {a in
+//                    var (x, y) = (a[0] as! BoolItem, a[1])
+//                    var results = [Router]()
+//                    let c = Behavior.netContingency(of: x, y )
+//                    
+//                    if x.value {
+//                        y.call = [x, InstructionItem(.execWhile), y]
+//                        y.isContingent = c
+//                        y.index = 2
+//                        var yCopy = y
+//                        
+//                        results.append(Router(.exec, y))
+//                        results.append(Router(.exec,
+//                                              InstructionItem(
+//                                                .execWhile,
+//                                                call: y.call,
+//                                                isContingent: c,
+//                                                index: 1
+//                                              )))
+//                        yCopy.index = 0
+//                        results.append(Router(.exec, yCopy))
+//                    }
+//                    return results
+//                }
+//            ),
 
 
         ]
