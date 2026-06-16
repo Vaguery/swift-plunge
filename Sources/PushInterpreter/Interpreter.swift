@@ -169,7 +169,11 @@ extension Interpreter {
     static func reportBehaviorCoverage() -> String {
         var result = "Behavior Coverage:\n"
         result += "Defined: \(Interpreter.language.keys.count)\n"
-        result += "Planned: \(PushInstruction.allCases.count)"
+        result += "Planned: \(PushInstruction.allCases.count)\n"
+        let done = Set(Interpreter.language.keys)
+        let needed = Set(PushInstruction.allCases)
+        let missing = needed.subtracting(done)
+        result += "Missing: \(missing)\n"
         return result
     }
 }

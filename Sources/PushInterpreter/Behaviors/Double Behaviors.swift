@@ -62,6 +62,30 @@ extension Interpreter {
                         ]
                     }
                 ),
+            
+            .doubleDivide:
+                Behavior(
+                    .doubleDivide,
+                    takes: [.double, .double],
+                    fxn: { a in
+                        let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+                        
+                        var quotient: Double = 1.0
+                        if !x.value.isZero {
+                            quotient = (y.value / x.value)
+                        }
+                        return [
+                            Router(
+                                .double,
+                                DoubleItem(
+                                    quotient,
+                                    call: [y, x, InstructionItem(.doubleDivide)],
+                                    isContingent: Behavior.netContingency( of: x,  y )
+                                )
+                            )
+                        ]
+                    }
+                ),
 
             .doubleMod:
                 Behavior(

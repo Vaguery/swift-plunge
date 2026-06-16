@@ -48,6 +48,25 @@ struct DoubleBehaviorTests {
         #expect(topItem(inty, .double).isContingent == true)
     }
     
+    @Test func doubleDivide() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0), DoubleItem(7.0),
+                         DoubleItem(3.0, isContingent: true), DoubleItem(-6.0)
+                        ])
+        
+        #expect(stackString(inty, .double) == "[ 0.0 7.0 3.0 -6.0 ]")
+
+        doThis(.doubleDivide, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.0 3.0 -6.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
+
+        doThis(.doublePop, to: inty)
+        
+        doThis(.doubleDivide, to: inty)
+        #expect(stackString(inty, .double) == "[ -2.0 ]")
+        #expect(topItem(inty, .double).isContingent == true)
+    }
+    
     
     @Test func doubleQuot() {
         inty.stacks[.double]!.prepend(
