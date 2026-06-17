@@ -12,31 +12,6 @@ extension Interpreter {
     
     static let charBehaviors:[PushInstruction : Behavior] =
     [
-        .charAllFromString : Behavior(
-            .charAllFromString,
-            takes: [.string],
-            fxn: {a in
-                let (s) = (a[0] as! StringItem)
-                
-                var results = [Router]()
-                if s.value.count > 0 {
-                    let chars = Array(s.value)
-                    for (idx,char) in chars.enumerated() {
-                        results.append(
-                            Router(
-                                .char,
-                                CharItem(char,
-                                         call: [s, InstructionItem(.charAllFromString)],
-                                         isContingent: Behavior.netContingency(of: s),
-                                         index: idx
-                                        )
-                            )
-                        )
-                    }
-                }
-                return results
-            }
-        ),
         
             // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
             .charFromInt : Behavior(

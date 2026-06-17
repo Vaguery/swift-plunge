@@ -32,28 +32,6 @@ struct CharBehaviorTests {
     
     var inty = Interpreter()
     
-    @Test func charAllFromString() {
-        inty.stacks[.string]!.prepend(StringItem("", isContingent: false))
-        inty.stacks[.string]!.prepend(StringItem("fizz"))
-        inty.stacks[.string]!.prepend(StringItem("bar", isContingent: true))
-        
-        #expect(stackString(inty, .string) == "[ \"bar\" \"fizz\" \"\" ]")
-
-        doThis(.charAllFromString, to: inty)
-        #expect(stackString(inty, .char) == "[ 'r' 'a' 'b' ]")
-        #expect(topItem(inty, .char)!.isContingent == true)
-        #expect(topItem(inty, .char)!.index == 2)
-
-        doThis(.charAllFromString, to: inty)
-        #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
-        #expect(topItem(inty, .char)!.isContingent == false)
-        #expect(topItem(inty, .char)!.index == 3)
-
-        doThis(.charAllFromString, to: inty)
-        #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
-    }
-    
-
     @Test func charIsWhitespace() {
         inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("g")), CharItem(Character(" "), isContingent: true), CharItem(Character("\n")), CharItem(Character("\t"))])
         

@@ -36,7 +36,7 @@ enum PushInstruction : String, CaseIterable {
     case charEq
     
     // char conversion
-    case charAllFromString, charFromDouble, charFromInt
+    case charFromDouble, charFromInt
     
     // char combinators
     case charDeepDup, charDup, charDupItems, charDupTimes, charEmpty, charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
@@ -115,7 +115,7 @@ enum PushInstruction : String, CaseIterable {
     case stringEq, stringGT, stringGTE, stringLT, stringLTE
     
     // string conversion
-    case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToChars
+    case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToLetters, stringPushAllChars
     
     // string combinators
     case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup

@@ -504,7 +504,7 @@ struct StringBehaviorTests {
         #expect(topItem(inty, .char).isContingent == true)
     }
 
-    @Test func stringParseToChars() {
+    @Test func stringParseToLetters() {
         inty.stacks[.string]!.prepend(
             contentsOf: [StringItem(""),
                          StringItem("01234", isContingent: true),
@@ -512,10 +512,10 @@ struct StringBehaviorTests {
         
         #expect(stackString(inty, .string) == "[ \"\" \"01234\" ]")
         
-        doThis(.stringParseToChars, to: inty)
+        doThis(.stringParseToLetters, to: inty)
         #expect(stackString(inty, .string) == "[ \"01234\" ]")
         
-        doThis(.stringParseToChars, to: inty)
+        doThis(.stringParseToLetters, to: inty)
         #expect(stackString(inty, .string) == "[ \"4\" \"3\" \"2\" \"1\" \"0\" ]")
         #expect(topItem(inty, .string).isContingent == true)
         #expect(topItem(inty, .string).index == 4)
@@ -1051,4 +1051,28 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .exec) == "[ ]")
     }
+    
+    @Test func stringPushAllChars() {
+        inty.stacks[.string]!.prepend(StringItem("", isContingent: false))
+        inty.stacks[.string]!.prepend(StringItem("fizz"))
+        inty.stacks[.string]!.prepend(StringItem("bar", isContingent: true))
+        
+        #expect(stackString(inty, .string) == "[ \"bar\" \"fizz\" \"\" ]")
+
+        doThis(.stringPushAllChars, to: inty)
+        #expect(stackString(inty, .char) == "[ 'r' 'a' 'b' ]")
+        #expect(topItem(inty, .char).isContingent == true)
+        #expect(topItem(inty, .char).index == 2)
+
+        doThis(.stringPushAllChars, to: inty)
+        #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
+        #expect(topItem(inty, .char).isContingent == false)
+        #expect(topItem(inty, .char).index == 3)
+
+        doThis(.stringPushAllChars, to: inty)
+        #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
+    }
+    
+
+
 }

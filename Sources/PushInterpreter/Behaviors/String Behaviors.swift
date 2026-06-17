@@ -464,9 +464,9 @@ extension Interpreter {
         // produces one substring of one character each for every character in the string
         // the stack will read backwards vs the order in the string
         //
-        .stringParseToChars :
+        .stringParseToLetters :
             Behavior(
-                .stringParseToChars,
+                .stringParseToLetters,
                 takes: [.string],
                 fxn: {a in
                     let (x) = (a[0] as! StringItem)
@@ -478,7 +478,7 @@ extension Interpreter {
                                 .string,
                                 StringItem(
                                     String(c),
-                                    call: [ x, InstructionItem(.stringParseToChars)],
+                                    call: [ x, InstructionItem(.stringParseToLetters)],
                                     isContingent: Behavior.netContingency(of: x ),
                                     index: idx
                                 )
@@ -785,41 +785,33 @@ extension Interpreter {
                 }
             ),
 
-             
-        
-//        .stringIterate :
-//            Instruction(
-//                .stringIterate,
-//                takes: [.string, .exec],
-//                fxn: {a in
-//                    let (x,y) = (a[0].sVal(), a[1])
-//                    var thisResult: [Router] = []
-//                    
-//                    let count = x!.count
-//                    if count == 0 {
-//                        return thisResult
-//                    } else {
-//                        thisResult.append(Router(.exec, a[1]))
-//                        
-//                        let char1 = x!.first
-//                        let remains = x!.dropFirst(1)
-//                        thisResult.append(Router(.char, PushItem.char(char1!)))
-//                        
-//                        if count > 1 {
-//                            thisResult.append(Router(.exec, PushItem.makeInst(.stringIterate)))
-//                            thisResult.append(Router(.exec, PushItem.makeString(String(remains))))
-//                            thisResult.append(Router(.exec, a[1]))
-//                        }
-//                    }
-//                    return thisResult
-//                }),
-//
-//
-//
-//        
-//        
-//        
-//        
+        .stringPushAllChars : Behavior(
+            .stringPushAllChars,
+            takes: [.string],
+            fxn: {a in
+                let (s) = (a[0] as! StringItem)
+                
+                var results = [Router]()
+                if s.value.count > 0 {
+                    let chars = Array(s.value)
+                    for (idx,char) in chars.enumerated() {
+                        results.append(
+                            Router(
+                                .char,
+                                CharItem(char,
+                                         call: [s, InstructionItem(.stringPushAllChars)],
+                                         isContingent: Behavior.netContingency(of: s),
+                                         index: idx
+                                        )
+                            )
+                        )
+                    }
+                }
+                return results
+            }
+        ),
+            
+
 
         ]
 }
