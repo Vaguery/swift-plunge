@@ -16,7 +16,7 @@ enum PushInstruction : String, CaseIterable {
     
     // BOOL instructions
     //
-    case boolAnd, boolNand, boolNot, boolNotP, boolNotPandQ, boolNotQ, boolNor, boolOr, boolP, boolPandNotQ, boolPcondQ, boolQ, boolQcondP, boolXnor, boolXor
+    case boolAnd, boolNand, boolNor, boolNot, boolNotP, boolNotPandQ, boolNotQ, boolOr, boolP, boolPandNotQ, boolPcondQ, boolQ, boolQcondP, boolXnor, boolXor
     
     // bool comparison
     case boolEq
@@ -107,6 +107,7 @@ enum PushInstruction : String, CaseIterable {
     //
     case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
     
+    
     // STRING instructions
     //
     case stringButLast, stringConcat, stringConjChar, stringContains, stringContainsChar, stringDrop, stringFirst, stringIndexOfChar, stringIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringOccurrencesOfChar, stringRemoveChar, stringReplace, stringReplaceChar, stringReplaceFirst, stringReplaceFirstChar, stringRest, stringReverse, stringSetChar, stringSplit, stringSubstring, stringTake
@@ -119,7 +120,6 @@ enum PushInstruction : String, CaseIterable {
     
     // string combinators
     case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
-    
     
 
     
