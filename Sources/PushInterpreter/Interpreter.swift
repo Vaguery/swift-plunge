@@ -133,16 +133,6 @@ final class Interpreter {
         }
     }
 
-//    func createEmptyConstantTables() {
-////        self.constants[.int] = [(any Pushable)?](repeating:nil, count:10)
-//        self.constants[.double]!.reserveCapacity(10)
-//        self.constants[.string]!.reserveCapacity(10)
-//        self.constants[.char]!.reserveCapacity(10)
-//        self.constants[.vecInt]!.reserveCapacity(10)
-//        self.constants[.vecBool]!.reserveCapacity(10)
-//        self.constants[.vecDouble]!.reserveCapacity(10)
-//        self.constants[.vecString]!.reserveCapacity(10)
-//    }
 }
 
 
