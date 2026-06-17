@@ -16,9 +16,9 @@ Some missing and improved names for Boolean 2-input functions.
 |  1  0  0  0   | boolAnd      | boolAnd                 |
 |  1  0  0  1   | boolXnor     |                         |
 |  1  0  1  0   | boolQ        |                         |
-|  1  0  1  1   | boolQcondP   |                         |
+|  1  0  1  1   | boolIfQThenP |                         |
 |  1  1  0  0   | boolP        |                         |
-|  1  1  0  1   | boolPcondQ   |                         |
+|  1  1  0  1   | boolIfPThenQ |                         |
 |  1  1  1  0   | boolOr       | boolOr                  |
 |  1  1  1  1   |              | true                    |
 

@@ -225,7 +225,7 @@ struct BoolInstructionTests {
         doThis(.boolPop, to: inty)
     }
     
-    @Test func boolPcondQ() {
+    @Test func boolIfPThenQ() {
         inty.stacks[.bool]!.prepend(contentsOf: [
             BoolItem(true), BoolItem(true),
             BoolItem(true), BoolItem(false),
@@ -234,28 +234,28 @@ struct BoolInstructionTests {
         ])
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
-        doThis(.boolPcondQ, to: inty)
+        doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolPcondQ, to: inty)
+        doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolPcondQ, to: inty)
+        doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolPcondQ, to: inty)
+        doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
         doThis(.boolPop, to: inty)
     }
     
-    @Test func boolQcondP() {
+    @Test func boolIfQThenP() {
         inty.stacks[.bool]!.prepend(contentsOf: [
             BoolItem(true), BoolItem(true),
             BoolItem(true), BoolItem(false),
@@ -264,22 +264,22 @@ struct BoolInstructionTests {
         ])
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
-        doThis(.boolQcondP, to: inty)
+        doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolQcondP, to: inty)
+        doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolQcondP, to: inty)
+        doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
         doThis(.boolPop, to: inty)
 
-        doThis(.boolQcondP, to: inty)
+        doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
         doThis(.boolPop, to: inty)

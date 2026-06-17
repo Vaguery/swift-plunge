@@ -165,30 +165,30 @@ extension Interpreter {
                     ]
                 }),
         
-        .boolQcondP :
+        .boolIfQThenP :
             Behavior(
-                .boolQcondP,
+                .boolIfQThenP,
                 takes: [.bool,.bool],
                 fxn: {a in
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     return [Router(
                         .bool,
                         BoolItem(!x.value || y.value,
-                                 call: [y, x, InstructionItem(.boolQcondP)],
+                                 call: [y, x, InstructionItem(.boolIfQThenP)],
                                  isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
         
-        .boolPcondQ :
+        .boolIfPThenQ :
             Behavior(
-                .boolPcondQ,
+                .boolIfPThenQ,
                 takes: [.bool,.bool],
                 fxn: {a in
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     return [Router(
                         .bool,
                         BoolItem(x.value || !y.value,
-                                 call: [y, x, InstructionItem(.boolPcondQ)],
+                                 call: [y, x, InstructionItem(.boolIfPThenQ)],
                                  isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
