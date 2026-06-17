@@ -163,7 +163,7 @@ extension Interpreter {
         let done = Set(Interpreter.language.keys)
         let needed = Set(PushInstruction.allCases)
         let missing = needed.subtracting(done)
-        result += "Missing: \(missing)\n"
+        result += "Missing:\n\(missing)\n"
         return result
     }
 }

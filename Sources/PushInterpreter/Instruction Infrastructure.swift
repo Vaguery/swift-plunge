@@ -14,19 +14,46 @@ import Foundation
 enum PushInstruction : String, CaseIterable {
     
     
-    // INT instructions
+    // BOOL instructions
     //
-    case intAdd, intDec, intInc, intMax, intMin, intMod, intMultiply, intQuot, intSubtract
+    case boolAnd, boolInvertFirstThenAnd, boolInvertSecondThenAnd, boolNot, boolOr, boolXor
     
-    // int comparison
-    case intEq, intGT, intGTE, intLT, intLTE
+    // bool comparison
+    case boolEq
     
-    // int conversion
-    case intFromBool, intFromChar, intFromDouble, intFromString
+    // bool conversion
+    case boolFromDouble, boolFromInt
     
-    // int combinators
-    case intDeepDup, intDup, intDupItems, intDupTimes, intEmpty, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
+    // bool combinators
+    case boolDeepDup, boolDup, boolDupItems, boolDupTimes, boolEmpty, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup
+
+
+    // CHAR instructions
+    //
+    case charIsDigit, charIsLetter, charIsWhitespace
     
+    // char comparison
+    case charEq
+    
+    // char conversion
+    case charAllFromString, charFromDouble, charFromInt
+    
+    // char combinators
+    case charDeepDup, charDup, charDupItems, charDupTimes, charEmpty, charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
+
+
+    // CODE instructions
+    //
+    case codeAppend
+    
+    // code comparison
+    case codeEq
+
+    // code conversion
+
+    // code combinators
+    case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
+
     
     // DOUBLE instructions
     //
@@ -41,49 +68,6 @@ enum PushInstruction : String, CaseIterable {
     // double combinators
     case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
     
-    
-    // BOOL instructions
-    //
-    case boolAnd, boolInvertFirstThenAnd, boolInvertSecondThenAnd, boolNot, boolOr, boolXor
-    
-    // bool comparison
-    case boolEq
-    
-    // bool conversion
-    case boolFromDouble, boolFromInt
-    
-    // bool combinators
-    case boolDeepDup, boolDup, boolDupItems, boolDupTimes, boolEmpty, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup
-
-    
-    
-    // CHAR instructions
-    //
-    case charAllFromString, charIsDigit, charIsLetter, charIsWhitespace
-    
-    // char comparison
-    case charEq
-    
-    // char conversion
-    case charFromDouble, charFromInt
-    
-    // char combinators
-    case charDeepDup, charDup, charDupItems, charDupTimes, charEmpty, charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
-
-    
-    
-    // CODE instructions
-    //
-    case codeAppend
-    
-    // code comparison
-    case codeEq
-
-    // code conversion
-
-    // code combinators
-    case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
-
 
     // EXEC instructions
     //
@@ -103,13 +87,41 @@ enum PushInstruction : String, CaseIterable {
     //
     case input0, input1, input2, input3, input4, input5, input6, input7, input8, input9
 
+ 
     
+    // INT instructions
+    //
+    case intAdd, intDec, intInc, intMax, intMin, intMod, intMultiply, intQuot, intSubtract
+    
+    // int comparison
+    case intEq, intGT, intGTE, intLT, intLTE
+    
+    // int conversion
+    case intFromBool, intFromChar, intFromDouble, intFromString
+    
+    // int combinators
+    case intDeepDup, intDup, intDupItems, intDupTimes, intEmpty, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
+
 
     // PRINT instructions
     //
     case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
     
+    // STRING instructions
+    //
+    case stringButLast, stringConcat, stringConjChar, stringContains, stringContainsChar, stringDrop, stringFirst, stringIndexOfChar, stringIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringOccurrencesOfChar, stringRemoveChar, stringReplace, stringReplaceChar, stringReplaceFirst, stringReplaceFirstChar, stringRest, stringReverse, stringSetChar, stringSplit, stringSubstring, stringTake
     
+    // string comparison
+    case stringEq, stringGT, stringGTE, stringLT, stringLTE
+    
+    // string conversion
+    case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToChars
+    
+    // string combinators
+    case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
+    
+    
+
     
     // VECBOOL instructions
     //
@@ -167,20 +179,6 @@ enum PushInstruction : String, CaseIterable {
     // vecString combinators
     case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringEmpty, vecStringFlush, vecStringPop, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup
 
-    
-    
-    // STRING instructions
-    //
-    case stringButLast, stringConcat, stringConjChar, stringContains, stringContainsChar, stringDrop, stringFirst, stringIndexOfChar, stringIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringOccurrencesOfChar, stringRemoveChar, stringReplace, stringReplaceChar, stringReplaceFirst, stringReplaceFirstChar, stringRest, stringReverse, stringSetChar, stringSplit, stringSubstring, stringTake
-    
-    // string comparison
-    case stringEq, stringGT, stringGTE, stringLT, stringLTE
-    
-    // string conversion
-    case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToChars
-    
-    // string combinators
-    case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
     
     
     // CONSTANTS
