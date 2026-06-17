@@ -2,6 +2,29 @@
 
 Missing instructions in bold; proposed modifications and additions in the right column.
 
+New instructions added here:
+- `vec???ButLast`
+- `vec???ContainsSubvec`
+- `vec???IsEmpty`
+- `vec???GT`
+- `vec???GTE`
+- `vec???LT`
+- `vec???LTE`
+- `stringEmptyString`
+- `vec???As???s`
+- `vec???replaceSubvec`
+- `vec???SplitOn???`
+- `stringFromNChars`
+- `vec???FromN???s`
+- `vec???FromRepeat`
+- `vec???From???`
+- `vec???cyclingSubvec`
+- `stringCut`
+- `vec???cut`
+
+Nondestructive versions:
+- several, but they may be pissible to work through using an interpreter behavior toggle
+```
 | String now              | VecInt Now               | Proposed                          |
 | s---------------------t | v----------------------t | --------------------------------- |
 | stringButLast           | **vecIntButLast**        | use cut?                          |
@@ -53,9 +76,10 @@ Missing instructions in bold; proposed modifications and additions in the right 
 | stringYank              | vecIntYank               |                                   |
 | stringYankDup           | vecIntYankDup            |                                   |
 |                         |                          | create from N parts               |
-|                         |                          | create as N repeats               |
+|                         |                          | create as N copies                |
 |                         |                          | create by comparison across types |
 |                         |                          | create from stack                 |
 |                         |                          | create by cycling small vec       |
 |                         |                          | create stringCut/vecIntCut        |
 |                         |                          |                                   |
+`

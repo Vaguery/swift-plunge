@@ -1,6 +1,6 @@
 # Boolean Instruction Names
 
-```
+
 Some missing and improved names for Boolean 2-input functions.
 
 | 00 01 10 11 | instruction  | in Propeller            |
@@ -16,9 +16,9 @@ Some missing and improved names for Boolean 2-input functions.
 | 0  0  0  1  | boolAnd      | boolAnd                 |
 | 1  0  0  1  | boolXnor     |                         |
 | 0  1  0  1  | boolQ        |                         |
-| 1  1  0  1  | boolQ->P     |                         |
+| 1  1  0  1  | boolQcondP   |                         |
 | 0  0  1  1  | boolP        |                         |
-| 1  0  1  1  | boolP->Q     |                         |
+| 1  0  1  1  | boolPcondQ   |                         |
 | 0  1  1  1  | boolOr       | boolOr                  |
 | 1  1  1  1  |              | true                    |
-```
+
