@@ -33,7 +33,7 @@ enum PushInstruction : String, CaseIterable {
     case charIsDigit, charIsLetter, charIsWhitespace
     
     // char comparison
-    case charEq
+    case charEq, charGT, charGTE, charLT, charLTE
     
     // char conversion
     case charFromDouble, charFromInt
@@ -60,13 +60,13 @@ enum PushInstruction : String, CaseIterable {
     case doubleAdd, doubleCos, doubleDec, doubleDivide, doubleInc, doubleMax, doubleMin, doubleMod, doubleMultiply, doubleQuot, doubleSin, doubleSubtract, doubleTan
     
     // double comparison
-    case doubleGT, doubleGTE, doubleLT, doubleLTE
+    case doubleEq, doubleGT, doubleGTE, doubleLT, doubleLTE
     
     // double conversion
     case doubleFromBool, doubleFromChar, doubleFromString, doubleFromInt
     
     // double combinators
-    case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
+    case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleEmpty, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
     
 
     // EXEC instructions

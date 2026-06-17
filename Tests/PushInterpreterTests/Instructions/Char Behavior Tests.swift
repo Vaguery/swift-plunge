@@ -81,6 +81,107 @@ struct CharBehaviorTests {
     }
     
     
+    @Test func charGT() {
+        inty.stacks[.char]!.prepend(contentsOf: [
+            CharItem(Character("g")),
+            CharItem(Character("d"), isContingent: true),
+            CharItem(Character("b")),
+            CharItem(Character("x")),
+            CharItem(Character("-")),
+            CharItem(Character("-")),
+        ])
+        
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '-' '-' ]")
+        
+        doThis(.charGT, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charGT, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charGT, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+    }
+    
+    @Test func charGTE() {
+        inty.stacks[.char]!.prepend(contentsOf: [
+            CharItem(Character("g")),
+            CharItem(Character("d"), isContingent: true),
+            CharItem(Character("b")),
+            CharItem(Character("x")),
+            CharItem(Character("-")),
+            CharItem(Character("-")),
+        ])
+        
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '-' '-' ]")
+        
+        doThis(.charGTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charGTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charGTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ true true false ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+    }
+    
+    @Test func charLT() {
+        inty.stacks[.char]!.prepend(contentsOf: [
+            CharItem(Character("g")),
+            CharItem(Character("d"), isContingent: true),
+            CharItem(Character("b")),
+            CharItem(Character("x")),
+            CharItem(Character("-")),
+            CharItem(Character("-")),
+        ])
+        
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '-' '-' ]")
+        
+        doThis(.charLT, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charLT, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charLT, to: inty)
+        #expect(stackString(inty, .bool) == "[ false false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+    }
+    
+    @Test func charLTE() {
+        inty.stacks[.char]!.prepend(contentsOf: [
+            CharItem(Character("g")),
+            CharItem(Character("d"), isContingent: true),
+            CharItem(Character("b")),
+            CharItem(Character("x")),
+            CharItem(Character("-")),
+            CharItem(Character("-")),
+        ])
+        
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '-' '-' ]")
+        
+        doThis(.charLTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool)!.isContingent == true)
+        
+        doThis(.charLTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+        
+        doThis(.charLTE, to: inty)
+        #expect(stackString(inty, .bool) == "[ true false true ]")
+        #expect(topItem(inty, .bool)!.isContingent == false)
+    }
+    
+    
     
     @Test func charIsLetter() {
         inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("-")), CharItem(Character("ϴ"))])

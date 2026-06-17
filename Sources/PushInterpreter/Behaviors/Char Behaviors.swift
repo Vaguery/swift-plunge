@@ -92,7 +92,63 @@ extension Interpreter {
                                  isContingent: Behavior.netContingency(of: x)
                         ))
                     ]
-                })
+                }),
+        
+            .charGT : Behavior(
+                .charGT,
+                takes: [.char, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y > x,
+                                 call:[y, x, InstructionItem(.charGT)],
+                                 isContingent: Behavior.netContingency(of: x,y)
+                        ))
+                    ]
+                }),
+        
+            .charGTE : Behavior(
+                .charGTE,
+                takes: [.char, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y >= x,
+                                 call:[y, x, InstructionItem(.charGT)],
+                                 isContingent: Behavior.netContingency(of: x,y)
+                        ))
+                    ]
+                }),
+        
+            .charLT : Behavior(
+                .charLT,
+                takes: [.char, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y < x,
+                                 call:[y, x, InstructionItem(.charLT)],
+                                 isContingent: Behavior.netContingency(of: x,y)
+                        ))
+                    ]
+                }),
+        
+            .charLTE : Behavior(
+                .charLTE,
+                takes: [.char, .char],
+                fxn: {a in
+                    let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y <= x,
+                                 call:[y, x, InstructionItem(.charLTE)],
+                                 isContingent: Behavior.netContingency(of: x,y)
+                        ))
+                    ]
+                }),
         
         
     ]
