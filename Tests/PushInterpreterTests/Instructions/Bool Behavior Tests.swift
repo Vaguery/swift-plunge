@@ -43,77 +43,430 @@ struct BoolInstructionTests {
 
     }
     
-
     @Test func boolAnd() {
-        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(true), BoolItem(false, isContingent: true)])
-        #expect(stackString(inty, .bool) == "[ true true false ]")
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
         doThis(.boolAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
+        doThis(.boolAnd, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolAnd, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolNand() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolNand, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNand, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNand, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNand, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolNotP() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolNotP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolNotQ() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
     }
     
 
     @Test func boolOr() {
-        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(false), BoolItem(false), BoolItem(true, isContingent: true)])
-        #expect(stackString(inty, .bool) == "[ false false true ]")
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolOr, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
         doThis(.boolOr, to: inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(topItem(inty, .bool).isContingent == true)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
+        doThis(.boolOr, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolOr, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+
+    }
+
+    @Test func boolNor() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolNor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolPcondQ() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolPcondQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolPcondQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolPcondQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolPcondQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolQcondP() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolQcondP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQcondP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQcondP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQcondP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolP() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolP, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolQ() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
+    }
+    
+    @Test func boolXnor() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+
+        doThis(.boolXnor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolXnor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolXnor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolXnor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
     }
     
 
     @Test func boolXor() {
-        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(true), BoolItem(true, isContingent: true)])
-        #expect(stackString(inty, .bool) == "[ true true true ]")
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolXor, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
         doThis(.boolXor, to: inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolXor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolXor, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
 
     }
     
 
-    @Test func boolInvertFirstThenAnd() {
-        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(false), BoolItem(true, isContingent: true)])
-        #expect(stackString(inty, .bool) == "[ true false true ]")
+    @Test func boolNotPandQ() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
-        doThis(.boolInvertFirstThenAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ true true ]")
+        doThis(.boolNotPandQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
-        doThis(.boolInvertFirstThenAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
+        doThis(.boolNotPandQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotPandQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolNotPandQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
     }
     
 
-    @Test func boolInvertSecondThenAnd() {
-        inty.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(false), BoolItem(true, isContingent: true)])
-        #expect(stackString(inty, .bool) == "[ true false true ]")
+    @Test func boolPandNotQ() {
+        inty.stacks[.bool]!.prepend(contentsOf: [
+            BoolItem(true), BoolItem(true),
+            BoolItem(true), BoolItem(false),
+            BoolItem(false), BoolItem(true),
+            BoolItem(false), BoolItem(false , isContingent: true),
+        ])
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
-        doThis(.boolInvertSecondThenAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true ]")
+        doThis(.boolPandNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
 
-        doThis(.boolInvertSecondThenAnd, to: inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
+        doThis(.boolPandNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolPandNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == true)
+        #expect(topItem(inty, .bool).isContingent == false)
+        doThis(.boolPop, to: inty)
+
+        doThis(.boolPandNotQ, to: inty)
+        #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        doThis(.boolPop, to: inty)
     }
     
     

@@ -24,6 +24,7 @@ extension Interpreter {
                                             isContingent: Behavior.netContingency(of: x)))
                     ]
                 }),
+        
         .boolAnd :
             Behavior(
                 .boolAnd,
@@ -37,6 +38,21 @@ extension Interpreter {
                                             isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
+        
+        .boolNand :
+            Behavior(
+                .boolNand,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem( !(arg1 && arg2),
+                                            call: [y, x, InstructionItem(.boolNand)],
+                                            isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
         .boolOr :
             Behavior(
                 .boolOr,
@@ -50,6 +66,21 @@ extension Interpreter {
                                             isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
+        
+        .boolNor :
+            Behavior(
+                .boolOr,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem(!(arg1 || arg2),
+                                            call: [y, x, InstructionItem(.boolOr)],
+                                            isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
         .boolXor :
             Behavior(
                 .boolXor,
@@ -63,32 +94,134 @@ extension Interpreter {
                                             isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
-        .boolInvertFirstThenAnd :
+        
+        .boolXnor :
             Behavior(
-                .boolInvertFirstThenAnd,
+                .boolXnor,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    let (arg1, arg2) = (x.value, y.value)
+                    return [Router(.bool,
+                                   BoolItem( arg1 == arg2,
+                                            call: [y, x, InstructionItem(.boolXnor)],
+                                            isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolNotPandQ :
+            Behavior(
+                .boolNotPandQ,
                 takes: [.bool,.bool],
                 fxn: {a in
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     return [Router(
                         .bool,
                         BoolItem(!y.value && x.value,
-                                 call: [y, x, InstructionItem(.boolInvertFirstThenAnd)],
+                                 call: [y, x, InstructionItem(.boolNotPandQ)],
                                  isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
-        .boolInvertSecondThenAnd :
+        
+        .boolPandNotQ :
             Behavior(
-                .boolInvertSecondThenAnd,
+                .boolPandNotQ,
                 takes: [.bool,.bool],
                 fxn: {a in
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     return [Router(
                         .bool,
                         BoolItem(y.value && !x.value,
-                                 call: [y, x, InstructionItem(.boolInvertSecondThenAnd)],
+                                 call: [y, x, InstructionItem(.boolPandNotQ)],
                                  isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),
+        
+        .boolNotP :
+            Behavior(
+                .boolNotP,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(!y.value,
+                                 call: [y, x, InstructionItem(.boolNotP)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolNotQ :
+            Behavior(
+                .boolNotQ,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(!x.value,
+                                 call: [y, x, InstructionItem(.boolNotQ)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolQcondP :
+            Behavior(
+                .boolQcondP,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(!x.value || y.value,
+                                 call: [y, x, InstructionItem(.boolQcondP)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolPcondQ :
+            Behavior(
+                .boolPcondQ,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(x.value || !y.value,
+                                 call: [y, x, InstructionItem(.boolPcondQ)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolP :
+            Behavior(
+                .boolP,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(y.value,
+                                 call: [y, x, InstructionItem(.boolP)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        .boolQ :
+            Behavior(
+                .boolQ,
+                takes: [.bool,.bool],
+                fxn: {a in
+                    let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
+                    return [Router(
+                        .bool,
+                        BoolItem(x.value,
+                                 call: [y, x, InstructionItem(.boolQ)],
+                                 isContingent: Behavior.netContingency(of: x, y)))
+                    ]
+                }),
+        
+        
         .boolFromDouble :
             Behavior(
                 .boolFromDouble,

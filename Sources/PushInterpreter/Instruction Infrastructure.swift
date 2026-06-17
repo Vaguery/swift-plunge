@@ -16,7 +16,7 @@ enum PushInstruction : String, CaseIterable {
     
     // BOOL instructions
     //
-    case boolAnd, boolInvertFirstThenAnd, boolInvertSecondThenAnd, boolNot, boolOr, boolXor
+    case boolAnd, boolNand, boolNot, boolNotP, boolNotPandQ, boolNotQ, boolNor, boolOr, boolP, boolPandNotQ, boolPcondQ, boolQ, boolQcondP, boolXnor, boolXor
     
     // bool comparison
     case boolEq
