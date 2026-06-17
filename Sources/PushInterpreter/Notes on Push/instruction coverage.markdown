@@ -82,4 +82,4 @@ Nondestructive versions:
 |                         |                          | create by cycling small vec       |
 |                         |                          | create stringCut/vecIntCut        |
 |                         |                          |                                   |
-`
+```
