@@ -16,7 +16,7 @@ enum PushInstruction : String, CaseIterable {
     
     // INT instructions
     //
-    case intAdd, intSubtract, intMultiply, intQuot, intMod, intMax, intMin, intInc, intDec
+    case intAdd, intDec, intInc, intMax, intMin, intMod, intMultiply, intQuot, intSubtract
     
     // int comparison
     case intEq, intGT, intGTE, intLT, intLTE
@@ -25,12 +25,12 @@ enum PushInstruction : String, CaseIterable {
     case intFromBool, intFromChar, intFromDouble, intFromString
     
     // int combinators
-    case intDup, intDupTimes, intDupItems, intEmpty, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup, intDeepDup
+    case intDeepDup, intDup, intDupItems, intDupTimes, intEmpty, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
     
     
     // DOUBLE instructions
     //
-    case doubleAdd, doubleSubtract, doubleMultiply, doubleDivide, doubleQuot, doubleMod, doubleMax, doubleMin,  doubleInc, doubleDec, doubleCos, doubleSin, doubleTan
+    case doubleAdd, doubleCos, doubleDec, doubleDivide, doubleInc, doubleMax, doubleMin, doubleMod, doubleMultiply, doubleQuot, doubleSin, doubleSubtract, doubleTan
     
     // double comparison
     case doubleGT, doubleGTE, doubleLT, doubleLTE
@@ -39,12 +39,12 @@ enum PushInstruction : String, CaseIterable {
     case doubleFromBool, doubleFromChar, doubleFromString, doubleFromInt
     
     // double combinators
-    case doubleDup, doubleDupTimes, doubleDupItems, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup, doubleDeepDup
+    case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleEmpty, doubleEq, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
     
     
     // BOOL instructions
     //
-    case boolAnd, boolNot, boolOr, boolXor, boolInvertFirstThenAnd, boolInvertSecondThenAnd
+    case boolAnd, boolInvertFirstThenAnd, boolInvertSecondThenAnd, boolNot, boolOr, boolXor
     
     // bool comparison
     case boolEq
@@ -53,13 +53,13 @@ enum PushInstruction : String, CaseIterable {
     case boolFromDouble, boolFromInt
     
     // bool combinators
-    case boolDup, boolDupTimes, boolDupItems, boolEmpty, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup, boolDeepDup
+    case boolDeepDup, boolDup, boolDupItems, boolDupTimes, boolEmpty, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup
 
     
     
     // CHAR instructions
     //
-    case charIsLetter, charIsDigit, charIsWhitespace, charAllFromString
+    case charAllFromString, charIsDigit, charIsLetter, charIsWhitespace
     
     // char comparison
     case charEq
@@ -68,7 +68,7 @@ enum PushInstruction : String, CaseIterable {
     case charFromDouble, charFromInt
     
     // char combinators
-    case charDup, charDupTimes, charDupItems, charEmpty,  charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup, charDeepDup
+    case charDeepDup, charDup, charDupItems, charDupTimes, charEmpty, charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
 
     
     
@@ -82,12 +82,12 @@ enum PushInstruction : String, CaseIterable {
     // code conversion
 
     // code combinators
-    case codeDup, codeDupTimes, codeDupItems, codeEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup, codeDeepDup
+    case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
 
 
     // EXEC instructions
     //
-    case execDoRange, execDoCount, execDoTimes, execIf, execWhen, execWhile, execDoWhile, execK, execS, execY
+    case execDoCount, execDoRange, execDoTimes, execDoWhile, execIf, execK, execS, execWhen, execWhile, execY
     
     // exec comparison
     case execEq
@@ -95,7 +95,7 @@ enum PushInstruction : String, CaseIterable {
     // exec conversion
     
     // exec combinators
-    case execDup, execDupTimes, execDupItems, execEmpty, execFlush, execPop, execRot, execShove, execStackDepth, execSwap, execYank, execYankDup, execDeepDup
+    case execDeepDup, execDup, execDupItems, execDupTimes, execEmpty, execFlush, execPop, execRot, execShove, execStackDepth, execSwap, execYank, execYankDup
     
     
     
@@ -107,13 +107,13 @@ enum PushInstruction : String, CaseIterable {
 
     // PRINT instructions
     //
-    case printNewline, boolPrint, charPrint, stringPrint, intPrint, doublePrint, codePrint, execPrint, vecBoolPrint, vecIntPrint, vecDoublePrint, vecStringPrint
+    case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
     
     
     
     // VECBOOL instructions
     //
-    case vecBoolConcat, vecBoolConj, vecBoolContains, vecBoolIsEmpty, vecBoolFirst, vecBoolIndexOf, vecBoolIterate, vecBoolLast, vecBoolLength, vecBoolNth, vecBoolOccurrencesOf, vecBoolRemove, vecBoolReplace, vecBoolReplaceFirst, vecBoolRest, vecBoolReverse, vecBoolSet, vecBoolSubVec, vecBoolTake, vecBoolDrop, vecBoolButLast
+    case vecBoolButLast, vecBoolConcat, vecBoolConj, vecBoolContains, vecBoolDrop, vecBoolFirst, vecBoolIndexOf, vecBoolIsEmpty, vecBoolIterate, vecBoolLast, vecBoolLength, vecBoolNth, vecBoolOccurrencesOf, vecBoolRemove, vecBoolReplace, vecBoolReplaceFirst, vecBoolRest, vecBoolReverse, vecBoolSet, vecBoolSubVec, vecBoolTake
     
     // vecBool comparison
     case vecBoolEq
@@ -122,12 +122,12 @@ enum PushInstruction : String, CaseIterable {
     case vecBoolPushAll
     
     // vecBool combinators
-    case vecBoolDup, vecBoolDupTimes, vecBoolDupItems, vecBoolEmpty,  vecBoolFlush, vecBoolPop, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup, vecBoolDeepDup
+    case vecBoolDeepDup, vecBoolDup, vecBoolDupItems, vecBoolDupTimes, vecBoolEmpty, vecBoolFlush, vecBoolPop, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup
         
     
     // VECDOUBLE instructions
     //
-    case  vecDoubleButLast, vecDoubleConcat, vecDoubleConj, vecDoubleContains, vecDoubleIsEmpty, vecDoubleFirst, vecDoubleIndexOf, vecDoubleIterate, vecDoubleLast, vecDoubleLength, vecDoubleNth, vecDoubleOccurrencesOf,  vecDoubleRemove, vecDoubleReplace, vecDoubleReplaceFirst, vecDoubleRest, vecDoubleReverse, vecDoubleSet, vecDoubleSubVec, vecDoubleTake, vecDoubleDrop
+    case vecDoubleButLast, vecDoubleConcat, vecDoubleConj, vecDoubleContains, vecDoubleDrop, vecDoubleFirst, vecDoubleIndexOf, vecDoubleIsEmpty, vecDoubleIterate, vecDoubleLast, vecDoubleLength, vecDoubleNth, vecDoubleOccurrencesOf, vecDoubleRemove, vecDoubleReplace, vecDoubleReplaceFirst, vecDoubleRest, vecDoubleReverse, vecDoubleSet, vecDoubleSubVec, vecDoubleTake
     
     // vecDouble comparison
     case vecDoubleEq
@@ -136,13 +136,13 @@ enum PushInstruction : String, CaseIterable {
     case vecDoublePushAll
     
     // vecDouble combinators
-    case vecDoubleDup, vecDoubleDupTimes, vecDoubleDupItems, vecDoubleEmpty, vecDoubleFlush, vecDoublePop, vecDoubleRot, vecDoubleShove, vecDoubleStackDepth, vecDoubleSwap, vecDoubleYank, vecDoubleYankDup, vecDoubleDeepDup
+    case vecDoubleDeepDup, vecDoubleDup, vecDoubleDupItems, vecDoubleDupTimes, vecDoubleEmpty, vecDoubleFlush, vecDoublePop, vecDoubleRot, vecDoubleShove, vecDoubleStackDepth, vecDoubleSwap, vecDoubleYank, vecDoubleYankDup
 
     
     
     // VECINT instructions
     //
-    case  vecIntButLast, vecIntConcat, vecIntConj, vecIntContains, vecIntIsEmpty, vecIntFirst, vecIntIndexOf, vecIntIterate, vecIntLast, vecIntLength, vecIntNth, vecIntOccurrencesOf,  vecIntRemove, vecIntReplace, vecIntReplaceFirst, vecIntRest, vecIntReverse, vecIntSet, vecIntSubVec, vecIntTake, vecIntDrop
+    case vecIntButLast, vecIntConcat, vecIntConj, vecIntContains, vecIntDrop, vecIntFirst, vecIntIndexOf, vecIntIsEmpty, vecIntIterate, vecIntLast, vecIntLength, vecIntNth, vecIntOccurrencesOf, vecIntRemove, vecIntReplace, vecIntReplaceFirst, vecIntRest, vecIntReverse, vecIntSet, vecIntSubVec, vecIntTake
 
     // vecInt comparison
     case vecIntEq
@@ -151,12 +151,12 @@ enum PushInstruction : String, CaseIterable {
     case vecIntPushAll
     
     // vecInt combinators
-    case vecIntDup, vecIntDupTimes, vecIntDupItems, vecIntEmpty, vecIntFlush, vecIntPop, vecIntRot, vecIntShove, vecIntStackDepth, vecIntSwap, vecIntYank, vecIntYankDup, vecIntDeepDup
+    case vecIntDeepDup, vecIntDup, vecIntDupItems, vecIntDupTimes, vecIntEmpty, vecIntFlush, vecIntPop, vecIntRot, vecIntShove, vecIntStackDepth, vecIntSwap, vecIntYank, vecIntYankDup
 
     
     // VECSTRING instructions
     //
-    case  vecStringButLast, vecStringConcat, vecStringConj, vecStringContains, vecStringIsEmpty, vecStringFirst, vecStringIndexOf, vecStringIterate, vecStringLast, vecStringLength, vecStringNth, vecStringOccurrencesOf,  vecStringRemove, vecStringReplace, vecStringReplaceFirst, vecStringRest, vecStringReverse, vecStringSet, vecStringSubVec, vecStringTake, vecStringDrop
+    case vecStringButLast, vecStringConcat, vecStringConj, vecStringContains, vecStringDrop, vecStringFirst, vecStringIndexOf, vecStringIsEmpty, vecStringIterate, vecStringLast, vecStringLength, vecStringNth, vecStringOccurrencesOf, vecStringRemove, vecStringReplace, vecStringReplaceFirst, vecStringRest, vecStringReverse, vecStringSet, vecStringSubVec, vecStringTake
     
     // vecString comparison
     case vecStringEq
@@ -165,13 +165,13 @@ enum PushInstruction : String, CaseIterable {
     case vecStringPushAll
     
     // vecString combinators
-    case vecStringDup, vecStringDupTimes, vecStringDupItems, vecStringEmpty, vecStringFlush, vecStringPop, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup, vecStringDeepDup
+    case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringEmpty, vecStringFlush, vecStringPop, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup
 
     
     
     // STRING instructions
     //
-    case stringButLast, stringConcat, stringConjChar, stringContains, stringContainsChar, stringDrop, stringIsEmpty, stringFirst, stringIndexOfChar, stringIterate, stringLast, stringLength, stringNth, stringOccurrencesOfChar, stringRemoveChar, stringReplace, stringReplaceChar, stringReplaceFirst, stringReplaceFirstChar, stringRest, stringReverse, stringSetChar, stringSplit, stringSubstring, stringTake
+    case stringButLast, stringConcat, stringConjChar, stringContains, stringContainsChar, stringDrop, stringFirst, stringIndexOfChar, stringIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringOccurrencesOfChar, stringRemoveChar, stringReplace, stringReplaceChar, stringReplaceFirst, stringReplaceFirstChar, stringRest, stringReverse, stringSetChar, stringSplit, stringSubstring, stringTake
     
     // string comparison
     case stringEq, stringGT, stringGTE, stringLT, stringLTE
@@ -180,7 +180,7 @@ enum PushInstruction : String, CaseIterable {
     case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToChars
     
     // string combinators
-    case stringDup, stringDupTimes, stringDupItems, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup, stringDeepDup, stringEmpty
+    case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
     
     
     // CONSTANTS
@@ -188,14 +188,14 @@ enum PushInstruction : String, CaseIterable {
     // char constants
     case char0, char1, char2, char3, char4, char5, char6, char7, char8, char9
     
-    // string constants
-    case string0, string1, string2, string3, string4, string5, string6, string7, string8, string9
-    
-    // int constants
-    case int0, int1, int2, int3, int4, int5, int6, int7, int8, int9
-    
     // double constants
     case double0, double1, double2, double3, double4, double5, double6, double7, double8, double9
+
+    // int constants
+    case int0, int1, int2, int3, int4, int5, int6, int7, int8, int9
+
+    // string constants
+    case string0, string1, string2, string3, string4, string5, string6, string7, string8, string9
     
     // vecBool constants
     case vecBool0, vecBool1, vecBool2, vecBool3, vecBool4, vecBool5, vecBool6, vecBool7, vecBool8, vecBool9
