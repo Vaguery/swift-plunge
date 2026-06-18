@@ -1,5 +1,5 @@
 //
-//  Instructions.swift
+//  Behavior.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 5/30/26.
