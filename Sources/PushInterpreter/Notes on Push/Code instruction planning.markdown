@@ -64,3 +64,33 @@ Code in propeller and Clojush/Klapaucius
 |                  |                 |             | codeLiftSubtree           |
 |                  |                 |             | codeFlattenSubtree        |
 |                  |                 |             |                           |
+
+
+This feels like a reasonable collection:
+
+- codeAppend: concatenate the values of two `.code` args
+- codeContainer: find a target `.code` item in another's tree, and if so return its parent
+- codeContains: `true` if a target `.code` item is present in another's tree
+- codeCutAtGap: convert `.code` argument to a flat Plushy, count points and gaps, and cut where indexed by an `.int`; repair both pieces with `Open` and `Close` as needed at the ends, then return
+- codeCutRoot: cut the root of a `.code` item where indexed by an `'.int`
+- codeDepth: maximum steps from root to leaf
+- codeFlatten: flatten then entire tree of a `.code` item in post-order traversal
+- codeFlattenPoint: find the indexed point in the tree and flatten that
+- codeFlattenRange: find two indexed gaps in the tree, and flatten every container with one end overlapping that range; do not flatten containers that are entirely inside or outside the range
+- codeGather: take two `.code` items and put them into a new one
+- codeIf: pop two `.code` arguments, and send the correct one to `.exec` based on a `.bool`
+- codeIndexOfPoint: if a `.code` item's contents can be found in the tree of another, return the position as an `.int` index of the point it's first found
+- codeInsertAtGap: insert a second `.code` item into the tree of another, at an `.int`-indexed gap between points
+- codeIsEmpty: `true` if empty
+- codeIteratePoints: standard `iterate` but using every point in turn
+- codeIterateRoot: standard `iterate` using root elements only
+- codeLengthPoints: count of points in entire tree
+- codeLengthRoot: count of points in the root
+- codeNthPoint: return the indexed point
+- codeNthRoot: return the indexed root element
+- codeRemovePoint: delete the entire point (subtree) at the indexed location
+- codeReplaceAllPoints: every place a given subtree is found in a larger tree, replace as indeicated
+- codeReplaceFirstPoint: as above, but first location only (in point order)
+- codeWidth: total number of leaves in the tree
+- codeWrapRoot: insert `Open` and `Close` marks around a root element of the tree and rebuild
+- codeWrapPoints: pick two indexed gaps; insert an `Open` at the first and a `Close` at the second, and rebuild
