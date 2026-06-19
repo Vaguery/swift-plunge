@@ -45,7 +45,7 @@ enum PushInstruction : String, CaseIterable {
     // CODE instructions
     // wherever a tree ordering is needed, it is PostOrder unless specifically mentioned
     //
-    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeFlatten, codeFlattenPoint, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthRoot, codeNth, codeNthPoint, codePoints, codeRemovePoint, codeReplaceAllPoint, codeReplaceFirstPoint, codeSwapPoints, codeWidth, codeWrap, codeWrapPoints
+    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeFlatten, codeFlattenPoint, codeGatherRange, codeIf, codeIndexOfPoint, codeInsertAtGap, codeIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthRoot, codeNth, codeNthPoint, codePoints, codeRemovePoint, codeReplaceAllPoint, codeReplaceFirstPoint, codeSwapPoints, codeWidth, codeWrap, codeWrapPoints
     
     // code comparison
     case codeEq

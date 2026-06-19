@@ -23,7 +23,6 @@ struct InterpreterTests {
     }
 
     
-    
     let inty = Interpreter()
     
     let inputty:[PI: any Item] =
@@ -178,10 +177,11 @@ struct InterpreterTests {
     }
     
     
-    @Test func behaviorCoverageTest() {
+    
+    @Test(.disabled("run manually to see the coverage"))
+    func behaviorCoverageTest() {
         let coverage = Interpreter.reportBehaviorCoverage()
         #expect(coverage != "")
-//         #expect(coverage == "90128")
-//         ^^ uncomment for the kludge to report how many are done
+         #expect(coverage == "90128")
     }
 }
