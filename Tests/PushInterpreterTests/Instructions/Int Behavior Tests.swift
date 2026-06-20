@@ -75,6 +75,17 @@ struct IntBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
     
+    @Test func `intMultiply doesn't overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(Int.max - 1), IntItem(Int.max - 1)]
+        )
+        
+        doThis(.intMultiply, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow")  )
+
+    }
+    
     @Test func intMax() {
         inty.stacks[.int]!.prepend(
             contentsOf: [IntItem(9), IntItem(11), IntItem(-7, isContingent: true)])

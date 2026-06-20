@@ -123,6 +123,7 @@ struct Recorder_Tests {
         
         #expect(inty.recorders["topInt"]!.dataAsAnyArray.count == 9)
         #expect(inty.recorders["topInt"]!.dataAsAnyArray as! [Int?] == [nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), nil, nil, Optional(-11)])
+        
         #expect(inty.recorders["secondInt"]!.dataAsAnyArray.count == 9)
         #expect(inty.recorders["secondInt"]!.dataAsAnyArray as! [Int?] == [nil, nil, nil, Optional(3), Optional(3), Optional(4), nil, nil, nil])
     }

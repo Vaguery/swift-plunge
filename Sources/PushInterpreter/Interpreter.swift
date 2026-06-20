@@ -13,8 +13,8 @@ struct InterpreterSettings {
     // https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     var stepLimit       : Int    = 1000
     var stackCapacity   : Int    = 1000
-    var maxIntegerSize  : Int    = 1_000_000
-    var maxDoubleSize   : Double = 1_000_000.0
+    var maxIntegerSize  : Int    = 1_000_000_000
+    var maxDoubleSize   : Double = 1_000_000_000.0
     var maxStringLength : Int    = 1000
     var maxVectorLength : Int    = 1000
     var maxCodePoints   : Int    = 1000

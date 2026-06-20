@@ -53,16 +53,32 @@ extension Interpreter {
                     takes: [.int,.int],
                     fxn: {a in
                         let (x,y) = (a[0] as! IntItem, a[1] as! IntItem)
-                        return [
-                            Router(
-                                .int,
-                                IntItem(y.value * x.value,
-                                        call:[y, x, InstructionItem(.intMultiply)],
-                                        isContingent: Behavior.netContingency(of: x, y)
-                                       )
-                            )
-                        ]
-                    }),
+                        
+                        let (result, hasOverflowed) = y.value.multipliedReportingOverflow(by: x.value)
+
+                        if hasOverflowed {
+                            return [
+                                Router(
+                                    .error,
+                                    ErrorItem("Overflow in .intMultiply: \(y.value) * \(x.value)",
+                                            call:[y, x, InstructionItem(.intMultiply)],
+                                            isContingent: Behavior.netContingency(of: x, y)
+                                           )
+                                )
+                            ]
+                        } else {
+                            return [
+                                Router(
+                                    .int,
+                                    IntItem(y.value * x.value,
+                                            call:[y, x, InstructionItem(.intMultiply)],
+                                            isContingent: Behavior.netContingency(of: x, y)
+                                           )
+                                )
+                            ]
+                        }
+                    }
+                ),
             
                 .intMax :
                 Behavior(

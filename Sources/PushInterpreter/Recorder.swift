@@ -7,8 +7,6 @@
 
 import Foundation
 
-
-
 /// A  `Recorder` observes and reports the behavior of some aspect of an `Interpreter`
 /// at runtime, keeping an array of `data` at each observed step. Intended to be used as an
 /// internal attribute of a specific `Interpreter`, and loaded with a closure that copies the

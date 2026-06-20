@@ -94,3 +94,15 @@ This feels like a reasonable collection:
 - codeWidth: total number of leaves in the tree
 - codeWrapRoot: insert `Open` and `Close` marks around a root element of the tree and rebuild
 - codeWrapPoints: pick two indexed gaps; insert an `Open` at the first and a `Close` at the second, and rebuild
+
+- codeFuncFrom_Crux: takes an item of the specified type and an `.int`, looks at its history (aka 
+"crux"), and removes the indexed leaf from that tree. The result is pushed as a new `.code` item
+- codeFuncFromBoolCrux
+- codeFuncFromCharCrux
+- codeFuncFromCodeCrux
+- codeFuncFromDoubleCrux
+- codeFuncFromIntCrux
+- codeFuncFromStringCrux
+
+- codeToCrux: takes a single `.code` item and rewrites it so that the internal structure is stored in post-order "runnable" mode
+
