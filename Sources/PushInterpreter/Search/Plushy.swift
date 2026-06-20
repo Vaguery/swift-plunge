@@ -15,7 +15,35 @@ struct Plushy {
     static func plushy2push(_  stuff: inout [Any], level:Int = 0) -> [any Item] {
         var result:[any Item] = []
         
-        let extraOpens: [PushInstruction: Int] = [.execDup :1, .execDupTimes :1, .execDupItems :0, .execEq :0, .execPop :1, .execRot :3, .execShove :1, .execSwap :2, .execYank :0, .execYankDup :0, .execDeepDup :0, .execPrint :1, .execIf  :2, .execWhen :1, .execWhile :1, .execDoWhile :1, .execDoRange :1, .execDoCount :1, .execDoTimes :1, .execK :2, .execS :3, .execY :1, .stringIterate :1, .vecBoolIterate :1, .vecStringIterate :1, .vecIntIterate :1, .vecDoubleIterate :1, ]
+        let extraOpens: [PushInstruction: Int] = [
+            .execDeepDup : 0,
+            .execDoCount : 1,
+            .execDoRange : 1,
+            .execDoTimes : 1,
+            .execDoWhile : 1,
+            .execDup : 1,
+            .execDupItems : 0,
+            .execDupTimes : 1,
+            .execEq : 0,
+            .execIf : 2,
+            .execK : 2,
+            .execPop : 1,
+            .execPrint : 1,
+            .execRot : 3,
+            .execS : 3,
+            .execShove : 1,
+            .execSwap : 2,
+            .execWhen : 1,
+            .execWhile : 1,
+            .execY : 1,
+            .execYank : 0,
+            .execYankDup : 0,
+            .stringIterate : 1,
+            .vecBoolIterate : 1,
+            .vecDoubleIterate : 1,
+            .vecIntIterate : 1,
+            .vecStringIterate : 1,
+        ]
         var pending:[PlushyControl] = []
         
         
