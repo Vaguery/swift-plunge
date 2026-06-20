@@ -77,7 +77,6 @@ struct Recorder_Tests {
 
     
     @Test func recorderHandlesNil() {
-
         inty.recorders[topInt.name] = AnyRecorder(topInt)
         inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
                  stacks: [.int: []],
@@ -128,7 +127,43 @@ struct Recorder_Tests {
         #expect(inty.recorders["secondInt"]!.dataAsAnyArray as! [Int?] == [nil, nil, nil, Optional(3), Optional(3), Optional(4), nil, nil, nil])
     }
 
-    @Test func recorderIsResetCorrectly() {
+    
+    @Test func `recorder reports all the data taking into account arguments`() {
+        inty.recorders[topInt.name] = AnyRecorder(topInt)
+        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+                 stacks: [.int: []],
+                 program: [
+                    BoolItem(false), BoolItem(true), IntItem(3),
+                    InstructionItem(.input0),
+                    InstructionItem(.input1),
+                    InstructionItem(.intAdd),
+                    InstructionItem(.intSwap)
+                ])
+        inty.run(stepLimit: 100)
+        #expect(stackString(inty, .int) == "[ 3 -7 ]")
+        #expect(inty.counter == 9)
+        
+        let report1 = inty.recorders["topInt"]!.reportAll(steps:9) as! [Int?]
+        #expect(report1.count == 9)
+        #expect(report1 == [nil, nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), Optional(-7), Optional(3)])
+        
+        let report2 = inty.recorders["topInt"]!.reportAll(steps:11, fillWithLast: true) as! [Int?]
+        #expect(report2.count == 11)
+        #expect(report2 == [nil, nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), Optional(-7), Optional(3), Optional(3), Optional(3), ] )
+        
+        let report3 = inty.recorders["topInt"]!.reportAll(steps:1000, fillWithLast: false) as! [Int?]
+        #expect(report3.count == 9)
+        #expect(report3 == [nil, nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), Optional(-7), Optional(3)])
+        
+        let report4 = inty.recorders["topInt"]!.reportAll(steps: 3) as! [Int?]
+        #expect(report4.count == 9)
+        #expect(report4 == [nil, nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), Optional(-7), Optional(3)])
+        
+        let report5 = inty.recorders["topInt"]!.reportAll(steps: 3, trim: true) as! [Int?]
+        #expect(report5.count == 3)
+        #expect(report5 == [nil, nil, Optional(3), ])
     }
 
+    
 }
+ 

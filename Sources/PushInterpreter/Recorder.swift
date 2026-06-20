@@ -73,6 +73,10 @@ struct AnyRecorder: AnyRecorderProtocol {
     mutating func reset() { _box.reset() }
     var dataAsAnyArray: [Any?] { _box.dataAsAnyArray }
     
+    func reportAll(steps: Int, fillWithLast: Bool = true, trim: Bool = false) -> [Any?] {
+        _box.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
+    }
+        
     init<T>(_ concrete: Recorder<T>) {
         self._box = RecorderBox(concrete)
     }
@@ -85,6 +89,7 @@ private protocol AnyRecorderBox: AnyObject {
     func record(interpreter: Interpreter)
     func reset()
     var dataAsAnyArray: [Any?] { get }
+    func reportAll(steps:Int, fillWithLast:Bool, trim:Bool) -> [Any?]
 }
 
 // Box around a Recorder, permitting interaction indirectly
@@ -95,8 +100,17 @@ private final class RecorderBox<T>: AnyRecorderBox {
     func record(interpreter: Interpreter) { base.record(interpreter: interpreter) }
     func reset() { base.reset() }
     var dataAsAnyArray: [Any?] { base.data.map { $0 } }
+    
+    func reportAll(
+        steps:Int,
+        fillWithLast:Bool = true,
+        trim:Bool = false) -> [Any?] {
+        base.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
+    }
+
 
     init(_ base: Recorder<T>) {
         self.base = base
     }
 }
+
