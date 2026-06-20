@@ -71,18 +71,30 @@ final class Interpreter {
     var config: InterpreterSettings = Interpreter.defaultSettings
     var program: [any Item] = []
     var printout: String = ""
+    // Use AnyRecorder for type erasure of Recorder generic type
+    var recorders: [String: AnyRecorder] = [:]
+    var recorderNames: [String] {
+        recorders.keys.sorted()
+    }
     
     init(stacks: [PushStack : Deque<any Item>] = PushStack.emptyStacks()) {
         self.stacks = stacks
+    }
+    
+    init(program: [any Item]) {
+        self.stacks = PushStack.emptyStacks()
+        self.counter = 0
+        self.recorders = [:]
     }
         
     func pushItem(_ item: Router) {
         self.stacks[item.stack]?.prepend(item.item)
     }
     
-    func load(inputs: [PushInstruction:any Item],
-              stacks initial: [PushStack: [any Item]],
-              program: [any Item]) {
+    func load(inputs: [PushInstruction:any Item] = [:],
+              stacks initial: [PushStack: [any Item]] = [:],
+              program: [any Item] = [],
+              recorders: [AnyRecorder] = []) {
         // settings reset
         self.counter = 0
         
@@ -100,9 +112,17 @@ final class Interpreter {
         // program to run
         self.program = program
         self.stacks[.exec]!.prepend(contentsOf: program)
+        
+        for r in recorders {
+            self.recorders[r.name] = r
+        }
     }
     
-    
+    func record() {
+        for key in recorders.keys {
+            recorders[key]?.record(interpreter: self)
+        }
+    }
     
     func step() {
         if counter < config.stepLimit && !stacks[.exec]!.isEmpty {
@@ -117,6 +137,7 @@ final class Interpreter {
                 self.pushDefault(nextItem!)
             }
         }
+        self.record()
         self.counter += 1
         // catch thrown errors from instructions
         // enforce config size limits
@@ -133,7 +154,21 @@ final class Interpreter {
             self.step()
         }
     }
-
+    
+    func run(stepLimit: Int = Interpreter.defaultSettings.stepLimit) {
+        while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
+            self.step()
+        }
+    }
+    
+    func reset() {
+        self.counter = 0
+        self.stacks = PushStack.emptyStacks()
+        for r in self.recorders.keys {
+            recorders[r]!.reset()
+        }
+    }
+    
 }
 
 
@@ -168,6 +203,4 @@ extension Interpreter {
         return result
     }
 }
-
-
 

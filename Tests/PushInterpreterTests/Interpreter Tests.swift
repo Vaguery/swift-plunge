@@ -176,6 +176,47 @@ struct InterpreterTests {
         #expect(inty.counter == 13)
     }
     
+    @Test func resettingWorks() {
+        let topInt = Recorder<Int>(
+            "topInt",
+            instrumentation: {interpreter in
+                guard interpreter.stacks[.int]!.count > 0 else {return nil}
+                guard let top = interpreter.stacks[.int]!.first else {return nil}
+                return (top as! IntItem).value
+            })
+        
+        let prog:[any Item] = [
+            BoolItem(false), BoolItem(true), IntItem(3),
+            InstructionItem(.input0),
+            InstructionItem(.input1),
+            InstructionItem(.intAdd),
+            InstructionItem(.intSwap)
+        ]
+        
+        inty.recorders[topInt.name] = AnyRecorder(topInt)
+        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+                 stacks: [.int: []],
+                 program: prog)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(inty.recorderNames == ["topInt"])
+        
+        inty.run(stepLimit: 100)
+        #expect(stackString(inty, .int) == "[ 3 -7 ]")
+        #expect(inty.counter == 9)
+        
+        #expect(inty.recorders["topInt"]!.dataAsAnyArray.count == 9)
+        #expect(inty.recorders["topInt"]!.dataAsAnyArray as! [Int?] == [
+            nil, nil, Optional(3), Optional(3), Optional(4), Optional(4), Optional(-11), Optional(-7), Optional(3),
+        ])
+
+        inty.reset()
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(inty.program == prog)
+        #expect(inty.counter == 0)
+        #expect(inty.recorders["topInt"]!.dataAsAnyArray.count == 0)
+        #expect(inty.recorders["topInt"]!.dataAsAnyArray as! [Int?] == [] )
+    }
+    
     
     
     @Test(.disabled("run manually to see the coverage"))
