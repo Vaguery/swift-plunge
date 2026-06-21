@@ -69,14 +69,14 @@ extension Interpreter {
         
         .boolNor :
             Behavior(
-                .boolOr,
+                .boolNor,
                 takes: [.bool,.bool],
                 fxn: {a in
                     let (x,y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                     let (arg1, arg2) = (x.value, y.value)
                     return [Router(.bool,
                                    BoolItem(!(arg1 || arg2),
-                                            call: [y, x, InstructionItem(.boolOr)],
+                                            call: [y, x, InstructionItem(.boolNor)],
                                             isContingent: Behavior.netContingency(of: x, y)))
                     ]
                 }),

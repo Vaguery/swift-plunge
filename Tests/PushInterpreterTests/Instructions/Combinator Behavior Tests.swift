@@ -177,6 +177,23 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 1.1 ]")
     }
+    
+    @Test func `doubleDupTimes does not overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(3_000_000_000),
+                        ])
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(1.1),
+                        ])
+        inty.config.stackCapacity = 7
+        
+        #expect(stackString(inty, .double) == "[ 1.1 ]")
+        
+        doThis(.doubleDupTimes, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.1 ]")
+        #expect(stackString(inty, .error) == "[ «⚠️ doubleDupTimes overflow: 3000000000 items attempted» ]")
+    }
+
 
     @Test func doubleDupItems() {
         inty.stacks[.int]!.prepend(

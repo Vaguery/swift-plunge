@@ -115,22 +115,39 @@ extension Interpreter {
         //  'DupTimes` introduces some tacit contingency into execution,
         //  but it's not entirely clear if it is making these results
         //  contingent in themselves?
-        // TODO: work out details of this contingency definition
+        //  TODO: work out details of this contingency definition
         //
+        
+        //
+        // \(type)DupTimes consumes an .int and tries to make that many
+        // copies of the top .type item and push them _all at once_ to the
+        // stack, which is ridiculous for large counts. Now it will read
+        // Interpreter.config.stackCapacity and fail entirely if its action
+        // would overflow the stack.
         
         name = PushInstruction(rawValue: "\(type)DupTimes")!
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
+                
+                let allowedMax = interpreter.config.stackCapacity
                 let howMany = (collectedItems[0] as! IntItem).value
-                let number = max(howMany , 0)
+                let rawNumber = max(howMany , 0)
+                let allowed = min(rawNumber, allowedMax)
+                let overflow = (rawNumber - allowed)
+                
                 var result = [Router]()
                 
                 if let item = interpreter.stacks[stack]!.first {
-                    for _ in 0..<number {
-                        result.append(Router(stack, item))
+                    if overflow > 0 {
+                        result.append(Router(.error, ErrorItem("⚠️ \(type)DupTimes overflow: \(rawNumber) items attempted")))
+                    } else {
+                        for _ in 0..<allowed {
+                            result.append(Router(stack, item))
+                        }
                     }
+                    
                     return result
                 } else {
                     return [
