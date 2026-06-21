@@ -46,6 +46,16 @@ struct IntBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
     
+    @Test func `intAdd handles overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(1000), IntItem(Int.max)
+                        ])
+        
+        doThis(.intAdd, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        
+        #expect(stackString(inty, .error) == "[ «Overflow in .intAdd: 9223372036854775807 + 1000» ]")
+    }
     
     @Test func intSubtract() {
         inty.stacks[.int]!.prepend(
@@ -60,6 +70,18 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ -9 ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
+    
+    @Test func `intSubtract handles overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(1000), IntItem(-Int.max)
+                        ])
+        
+        doThis(.intSubtract, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        
+        #expect(stackString(inty, .error) == "[ «Overflow in .intSubtract: -9223372036854775807 - 1000» ]")
+    }
+
     
     @Test func intMultiply() {
         inty.stacks[.int]!.prepend(
@@ -83,7 +105,6 @@ struct IntBehaviorTests {
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow")  )
-
     }
     
     @Test func intMax() {
@@ -135,10 +156,32 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 0 -1 ]")
         
         doThis(.intQuot, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(topItem(inty, .error).isContingent == true)
     }
+    
+    @Test func `intQuot doesn't overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-1), IntItem(Int.min)]
+        )
+        
+        doThis(.intQuot, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow")  )
+    }
+    
+    
+    @Test func `intQuot doesn't divide by zero`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(0), IntItem(999)]
+        )
+        
+        doThis(.intQuot, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error) == "" )
+    }
+
+
     
     @Test func intMod() {
         inty.stacks[.int]!.prepend(
@@ -160,9 +203,29 @@ struct IntBehaviorTests {
         
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ 1 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-
     }
+    
+    @Test func `intMod doesn't overflow`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-1), IntItem(Int.min)]
+        )
+        
+        doThis(.intMod, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error) == "[ «Overflow in .intMod: -9223372036854775808 % -1» ]"   )
+    }
+    
+    
+    @Test func `intMod doesn't divide by zero`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(0), IntItem(999)]
+        )
+        
+        doThis(.intMod, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error) == "[ «Overflow in .intMod: 999 % 0» ]"   )
+    }
+
     
     @Test func intGT() {
         inty.stacks[.int]!.prepend(
