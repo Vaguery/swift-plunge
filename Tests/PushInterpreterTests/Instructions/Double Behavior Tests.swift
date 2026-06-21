@@ -48,6 +48,25 @@ struct DoubleBehaviorTests {
         #expect(topItem(inty, .double).isContingent == true)
     }
     
+    @Test func `doubleAdd records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(Double.greatestFiniteMagnitude), DoubleItem(Double.greatestFiniteMagnitude)
+                        ])
+                
+        doThis(.doubleAdd, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleAdd:"))
+        
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(55), DoubleItem(1.0/0.0)
+                        ])
+                
+        doThis(.doubleAdd, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleAdd:"))
+
+    }
+    
     @Test func doubleDivide() {
         inty.stacks[.double]!.prepend(
             contentsOf: [DoubleItem(0.0), DoubleItem(7.0),
@@ -57,14 +76,24 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 0.0 7.0 3.0 -6.0 ]")
 
         doThis(.doubleDivide, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.0 3.0 -6.0 ]")
-        #expect(topItem(inty, .double).isContingent == false)
+        #expect(stackString(inty, .double) == "[ 3.0 -6.0 ]")
 
         doThis(.doublePop, to: inty)
         
         doThis(.doubleDivide, to: inty)
-        #expect(stackString(inty, .double) == "[ -2.0 ]")
-        #expect(topItem(inty, .double).isContingent == true)
+        #expect(stackString(inty, .double) == "[ -6.0 ]")
+    }
+    
+    
+    @Test func `doubleDivide records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0), DoubleItem(33)
+                        ])
+        
+        doThis(.doubleDivide, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleDivide:"))
+        
     }
     
     
@@ -98,12 +127,19 @@ struct DoubleBehaviorTests {
         inty.stacks[.double]!.prepend(contentsOf: [DoubleItem(0.0)])
 
         #expect(stackString(inty, .double) == "[ 0.0 -8.0 ]")
-
-        doThis(.doubleQuot, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.0 ]")
-        #expect(topItem(inty, .double).isContingent == true)
     }
     
+    
+    @Test func `doubleQuot records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0), DoubleItem(33)
+                        ])
+        
+        doThis(.doubleQuot, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleQuot:"))
+    }
+
     
     
     @Test func doubleMod() {
@@ -124,16 +160,20 @@ struct DoubleBehaviorTests {
         inty.stacks[.double]!.append(contentsOf: [DoubleItem(21.0), DoubleItem(17.0)])
         
         #expect(stackString(inty, .double) == "[ -0.0 21.0 17.0 ]")
-
-        doThis(.doubleMod, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.0 17.0 ]")
-        #expect(topItem(inty, .double).isContingent == true)
+    }
+    
+    
+    
+    @Test func `doubleMod records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0), DoubleItem(33)
+                        ])
         
         doThis(.doubleMod, to: inty)
-        #expect(stackString(inty, .double) == "[ 0.0 ]")
-        #expect(topItem(inty, .double).isContingent == true)
-
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleMod:"))
     }
+
 
     @Test func doubleMin() {
         inty.stacks[.double]!.prepend(
@@ -182,6 +222,19 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ -7.25 ]")
         #expect(topItem(inty, .double).isContingent == true)
     }
+   
+    
+    @Test func `doubleSubtract records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(Double.greatestFiniteMagnitude), DoubleItem(-Double.greatestFiniteMagnitude)
+                        ])
+        
+        doThis(.doubleSubtract, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleSubtract:"))
+    }
+
+    
 
     @Test func doubleMultiply() {
         inty.stacks[.double]!.prepend(
@@ -198,6 +251,17 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ -86.328125 ]")
         #expect(topItem(inty, .double).isContingent == true)
     }
+    
+    @Test func `doubleMultiply records overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(Double.greatestFiniteMagnitude), DoubleItem(-Double.greatestFiniteMagnitude)
+                        ])
+        
+        doThis(.doubleMultiply, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("«Overflow in .doubleMultiply:"))
+    }
+
 
     @Test func doubleFromInt() {
         inty.stacks[.int]!.prepend(
@@ -422,6 +486,16 @@ struct DoubleBehaviorTests {
         #expect(topItem(inty, .double).isContingent == false)
     }
     
+    @Test func `doubleInc handles overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0 / 0.0)])
+                
+        doThis(.doubleInc, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains( "Overflow in .doubleInc") )
+        
+    }
+
     @Test func doubleDec() {
         inty.stacks[.double]!.prepend(
             contentsOf: [DoubleItem(0.0, isContingent: true)])
@@ -441,6 +515,18 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 8.0 -1.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
     }
+    
+    
+    @Test func `doubleDec handles overflows`() {
+        inty.stacks[.double]!.prepend(
+            contentsOf: [DoubleItem(0.0 / 0.0)])
+                
+        doThis(.doubleDec, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains( "Overflow in .doubleDec") )
+        
+    }
+
     
     @Test func doubleFromChar() {
         inty.stacks[.char]!.prepend(

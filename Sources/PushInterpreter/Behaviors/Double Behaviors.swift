@@ -20,46 +20,68 @@ extension Interpreter {
                     takes: [.double, .double],
                     fxn: { a in
                         let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                        return [
-                            Router(
-                                .double,
-                                DoubleItem(
-                                    y.value + x.value,
-                                    call: [y, x, InstructionItem(.doubleAdd)],
-                                    isContingent: Behavior.netContingency(of: x, y )
+                        
+                        let result = y.value + x.value
+                        if result.isInfinite || result.isNaN {
+                            return [
+                                Router(
+                                    .error,
+                                    ErrorItem(
+                                        "Overflow in .doubleAdd: \(y.value) + \(x.value)",
+                                        call: [y, x, InstructionItem(.doubleAdd)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
                                 )
-                            )
-                        ]
+                            ]
+                        } else {
+                            return [
+                                Router(
+                                    .double,
+                                    DoubleItem(
+                                        result,
+                                        call: [y, x, InstructionItem(.doubleAdd)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
+                                )
+                            ]
+
+                        }
                     }
                 ),
-
+            
             .doubleQuot:
                 Behavior(
                     .doubleQuot,
                     takes: [.double, .double],
                     fxn: { a in
                         let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                        var integralQuotient: Double
-
-                        if x.value.isZero {
-                            integralQuotient = 1.0
-                        } else {
-                            integralQuotient =
-                                (y.value
-                                    - y.value.truncatingRemainder(
-                                        dividingBy: x.value
-                                    )) / x.value
-                        }
-                        return [
-                            Router(
-                                .double,
-                                DoubleItem(
-                                    integralQuotient,
-                                    call: [y, x, InstructionItem(.doubleQuot)],
-                                    isContingent: Behavior.netContingency( of: x,  y )
+                        
+                        var result = (y.value -
+                                      y.value.truncatingRemainder(dividingBy: x.value)) / x.value
+                        if result.isInfinite || result.isNaN {
+                            return [
+                                Router(
+                                    .error,
+                                    ErrorItem(
+                                        "Overflow in .doubleQuot: \(y.value) // \(x.value)",
+                                        call: [y, x, InstructionItem(.doubleQuot)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
                                 )
-                            )
-                        ]
+                            ]
+                        } else {
+                            return [
+                                Router(
+                                    .double,
+                                    DoubleItem(
+                                        result,
+                                        call: [y, x, InstructionItem(.doubleQuot)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
+                                )
+                            ]
+
+                        }
                     }
                 ),
             
@@ -70,49 +92,66 @@ extension Interpreter {
                     fxn: { a in
                         let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                         
-                        var quotient: Double = 1.0
-                        if !x.value.isZero {
-                            quotient = (y.value / x.value)
-                        }
-                        return [
-                            Router(
-                                .double,
-                                DoubleItem(
-                                    quotient,
-                                    call: [y, x, InstructionItem(.doubleDivide)],
-                                    isContingent: Behavior.netContingency( of: x,  y )
+                        var result = (y.value / x.value)
+                        if result.isInfinite || result.isNaN {
+                            return [
+                                Router(
+                                    .error,
+                                    ErrorItem(
+                                        "Overflow in .doubleDivide: \(y.value) / \(x.value)",
+                                        call: [y, x, InstructionItem(.doubleDivide)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
                                 )
-                            )
-                        ]
+                            ]
+                        } else {
+                            return [
+                                Router(
+                                    .double,
+                                    DoubleItem(
+                                        result,
+                                        call: [y, x, InstructionItem(.doubleDivide)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
+                                )
+                            ]
+
+                        }
                     }
                 ),
-
+            
             .doubleMod:
                 Behavior(
                     .doubleMod,
                     takes: [.double, .double],
                     fxn: { a in
                         let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                        var remainder: Double
-
-                        if x.value.isZero {
-                            remainder = 1.0
-                        } else {
-                            remainder =
-                                (y.value.truncatingRemainder(
-                                    dividingBy: x.value
-                                ))
-                        }
-                        return [
-                            Router(
-                                .double,
-                                DoubleItem(
-                                    remainder,
-                                    call: [y, x, InstructionItem(.doubleMod)],
-                                    isContingent: Behavior.netContingency( of: x, y )
+                        
+                        var result = ( y.value.truncatingRemainder(dividingBy: x.value) )
+                        if result.isInfinite || result.isNaN {
+                            return [
+                                Router(
+                                    .error,
+                                    ErrorItem(
+                                        "Overflow in .doubleMod: \(y.value) % \(x.value)",
+                                        call: [y, x, InstructionItem(.doubleMod)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
                                 )
-                            )
-                        ]
+                            ]
+                        } else {
+                            return [
+                                Router(
+                                    .double,
+                                    DoubleItem(
+                                        result,
+                                        call: [y, x, InstructionItem(.doubleMod)],
+                                        isContingent: Behavior.netContingency(of: x, y )
+                                    )
+                                )
+                            ]
+
+                        }
                     }
                 ),
 
@@ -154,51 +193,76 @@ extension Interpreter {
                     }
                 ),
 
-            .doubleSubtract:
-                Behavior(
-                    .doubleSubtract,
-                    takes: [.double, .double],
-                    fxn: { a in
-                        let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+        .doubleSubtract:
+            Behavior(
+                .doubleSubtract,
+                takes: [.double, .double],
+                fxn: { a in
+                    let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+                    
+                    let result = y.value - x.value
+                    if result.isInfinite || result.isNaN {
+                        return [
+                            Router(
+                                .error,
+                                ErrorItem(
+                                    "Overflow in .doubleSubtract: \(y.value) - \(x.value)",
+                                    call: [y, x, InstructionItem(.doubleSubtract)],
+                                    isContingent: Behavior.netContingency(of: x, y )
+                                )
+                            )
+                        ]
+                    } else {
                         return [
                             Router(
                                 .double,
                                 DoubleItem(
-                                    y.value - x.value,
-                                    call: [
-                                        y, x, InstructionItem(.doubleSubtract),
-                                    ],
-                                    isContingent: Behavior.netContingency(
-                                        of: x, y
-                                    )
+                                    result,
+                                    call: [y, x, InstructionItem(.doubleSubtract)],
+                                    isContingent: Behavior.netContingency(of: x, y )
                                 )
                             )
                         ]
-                    }
-                ),
 
-            .doubleMultiply:
-                Behavior(
-                    .doubleMultiply,
-                    takes: [.double, .double],
-                    fxn: { a in
-                        let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+                    }
+                }
+            ),
+
+
+        .doubleMultiply:
+            Behavior(
+                .doubleMultiply,
+                takes: [.double, .double],
+                fxn: { a in
+                    let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+                    
+                    let result = y.value * x.value
+                    if result.isInfinite || result.isNaN {
+                        return [
+                            Router(
+                                .error,
+                                ErrorItem(
+                                    "Overflow in .doubleMultiply: \(y.value) * \(x.value)",
+                                    call: [y, x, InstructionItem(.doubleMultiply)],
+                                    isContingent: Behavior.netContingency(of: x, y )
+                                )
+                            )
+                        ]
+                    } else {
                         return [
                             Router(
                                 .double,
                                 DoubleItem(
-                                    y.value * x.value,
-                                    call: [
-                                        y, x, InstructionItem(.doubleMultiply),
-                                    ],
-                                    isContingent: Behavior.netContingency(
-                                        of: x,y
-                                    )
+                                    result,
+                                    call: [y, x, InstructionItem(.doubleMultiply)],
+                                    isContingent: Behavior.netContingency(of: x, y )
                                 )
                             )
                         ]
+
                     }
-                ),
+                }
+            ),
 
             .doubleFromInt:
                 Behavior(
@@ -351,33 +415,64 @@ extension Interpreter {
                 takes: [.double],
                 fxn: {a in
                     let (x) = (a[0] as! DoubleItem)
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(x.value + 1.0,
-                                       call:[x, InstructionItem(.doubleInc)],
-                                       isContingent: Behavior.netContingency(of: x)
-                                      )
-                        )
-                    ]
+                    let result = x.value + 1.0
+                    
+                    if result.isInfinite || result.isNaN {
+                        return [
+                            Router(
+                                .error,
+                                ErrorItem(
+                                    "Overflow in .doubleInc: \(x.value) + 1.0",
+                                    call: [ x, InstructionItem(.doubleInc)],
+                                    isContingent: Behavior.netContingency(of: x )
+                                )
+                            )
+                        ]
+                    } else {
+                        return [
+                            Router(
+                                .double,
+                                DoubleItem(result,
+                                           call:[x, InstructionItem(.doubleInc)],
+                                           isContingent: Behavior.netContingency(of: x)
+                                          )
+                            )
+                        ]
+                    }
                 }
             ),
-                
+               
+            
         .doubleDec :
             Behavior(
                 .doubleDec,
                 takes: [.double],
                 fxn: {a in
                     let (x) = (a[0] as! DoubleItem)
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(x.value - 1.0,
-                                       call:[x, InstructionItem(.doubleDec)],
-                                       isContingent: Behavior.netContingency(of: x)
-                                      )
-                        )
-                    ]
+                    let result = x.value - 1.0
+                    
+                    if result.isInfinite || result.isNaN {
+                        return [
+                            Router(
+                                .error,
+                                ErrorItem(
+                                    "Overflow in .doubleDec: \(x.value) - 1.0",
+                                    call: [ x, InstructionItem(.doubleDec)],
+                                    isContingent: Behavior.netContingency(of: x )
+                                )
+                            )
+                        ]
+                    } else {
+                        return [
+                            Router(
+                                .double,
+                                DoubleItem(result,
+                                           call:[x, InstructionItem(.doubleDec)],
+                                           isContingent: Behavior.netContingency(of: x)
+                                          )
+                            )
+                        ]
+                    }
                 }
             ),
 

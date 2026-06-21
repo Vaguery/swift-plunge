@@ -178,7 +178,7 @@ struct IntBehaviorTests {
         
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error) == "" )
+        #expect(stackString(inty, .error).contains("Overflow in .intQuot") )
     }
 
 
@@ -202,7 +202,7 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 0 -1 ]")
         
         doThis(.intMod, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(stackString(inty, .int) == "[ ]")
     }
     
     @Test func `intMod doesn't overflow`() {
@@ -344,15 +344,54 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 10 38 ]")
         #expect(topItem(inty, .int).isContingent == false)
         
+        doThis(.intPop, to: inty)
+
         // mix in contingency
-        doThis(.intAdd, to: inty)
-        #expect(stackString(inty, .int) == "[ 48 ]")
+        #expect(stackString(inty, .int) == "[ 38 ]")
         #expect(topItem(inty, .int).isContingent == true)
         
         doThis(.intInc, to: inty)
-        #expect(stackString(inty, .int) == "[ 49 ]")
+        #expect(stackString(inty, .int) == "[ 39 ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
+    
+    @Test func `intInc handles overflows`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(Int.max)])
+                
+        doThis(.intInc, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intInc")  )
+    }
+    
+    @Test func intDec() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(9), IntItem(38, isContingent: true),])
+        
+        #expect(stackString(inty, .int) == "[ 9 38 ]")
+        
+        doThis(.intDec, to: inty)
+        #expect(stackString(inty, .int) == "[ 8 38 ]")
+        #expect(topItem(inty, .int).isContingent == false)
+        
+        doThis(.intPop, to: inty)
+        
+        // mix in contingency
+        doThis(.intDec, to: inty)
+        #expect(stackString(inty, .int) == "[ 37 ]")
+        #expect(topItem(inty, .int).isContingent == true)
+    }
+    
+    @Test func `intDec handles overflows`() {
+        inty.stacks[.int]!.prepend(
+            contentsOf: [IntItem(-Int.max)])
+                
+        doThis(.intDec, to: inty)
+        doThis(.intDec, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intDec")  )
+    }
+
     
     @Test func intFromBool() {
         inty.stacks[.bool]!.prepend(

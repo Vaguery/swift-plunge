@@ -330,15 +330,29 @@ extension Interpreter {
             takes: [.int],
             fxn: {a in
                 let (x) = (a[0] as! IntItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(x.value + 1,
-                                call:[x, InstructionItem(.intInc)],
-                                isContingent: Behavior.netContingency(of: x)
-                               )
-                    )
-                ]
+                let (result, hasOverflowed) = x.value.addingReportingOverflow(1)
+                
+                if hasOverflowed {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("Overflow in .intInc: \(x.value) + 1»",
+                                      call:[ x, InstructionItem(.intInc)],
+                                      isContingent: Behavior.netContingency(of: x)
+                                     )
+                        )
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .int,
+                            IntItem(result,
+                                    call:[x, InstructionItem(.intInc)],
+                                    isContingent: Behavior.netContingency(of: x)
+                                   )
+                        )
+                    ]
+                }
             }
         ),
     
@@ -348,18 +362,32 @@ extension Interpreter {
             takes: [.int],
             fxn: {a in
                 let (x) = (a[0] as! IntItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(x.value - 1,
-                                call:[x, InstructionItem(.intDec)],
-                                isContingent: Behavior.netContingency(of: x)
-                               )
-                    )
-                ]
+                let (result, hasOverflowed) = x.value.subtractingReportingOverflow(1)
+                
+                if hasOverflowed {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem("Overflow in .intDec: \(x.value) - 1»",
+                                      call:[ x, InstructionItem(.intDec)],
+                                      isContingent: Behavior.netContingency(of: x)
+                                     )
+                        )
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .int,
+                            IntItem(result,
+                                    call:[x, InstructionItem(.intDec)],
+                                    isContingent: Behavior.netContingency(of: x)
+                                   )
+                        )
+                    ]
+                }
             }
         ),
-    
+
         .intFromBool :
         Behavior(
             .intFromBool,
