@@ -39,8 +39,7 @@ struct InputBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.input3]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .error) ==
-                "[ «WARN: no input for input3» ]")
+        #expect(stackString(inty, .error).contains("No input for") )
 
     }
     

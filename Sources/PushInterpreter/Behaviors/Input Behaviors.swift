@@ -28,7 +28,7 @@ extension Interpreter {
                         return [Router(.exec, v)]
                     } else {
                         return [Router(.error,
-                                       ErrorItem("WARN: no input for \(instructionName)"))]
+                                       ErrorItem("No input for \(instructionName)"))]
                     }
                 })
         }

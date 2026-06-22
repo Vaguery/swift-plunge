@@ -100,7 +100,7 @@ class BehaviorWithSideEffects : Behavior {
     override func act(on interpreter: Interpreter) {
         self.gather(from: interpreter)
         if self.isMissingArgs {
-            let mistakes = [Router(.error, ErrorItem("« WARNING: \(self.name) missing args»"))]
+            let mistakes = [Router(.error, ErrorItem("\(self.name) missing args"))]
             self.distribute(to: interpreter, items: mistakes)
         } else {
             var mutableInterpreter = interpreter
