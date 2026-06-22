@@ -5,8 +5,11 @@
 //  Created by William Tozier on 5/30/26.
 //
 
+import DequeModule
 @testable import PropellerWithStructs
 import Testing
+
+
 
 @Suite @MainActor
 struct Item_tests {
@@ -30,6 +33,58 @@ struct Item_tests {
         foo.call = newHistory
     }
 }
+
+@Suite @MainActor
+struct History_tests {
+
+    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
+        var result = "["
+        let s = interpreter.stacks[stack]!
+        for item in s {
+            result += " \(item.pretty() )"
+        }
+        result += " ]"
+        return result
+    }
+
+    func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> any Item {
+        interpreter.stacks[stack]!.first!
+    }
+
+    func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
+        Interpreter.language[instruction]!.act(on: interpreter)
+    }
+
+    var inty = Interpreter()
+
+    
+//    @Test func extractingEntireCrux() {
+//        var littleGenome:[Any] = [
+//            1,
+//            PlushyControl.open, 2, 3, PlushyControl.close, //  code
+//            PushInstruction.intAdd,
+//            PlushyControl.open, 4, InstructionItem(.input0),PlushyControl.close, // code
+//            PushInstruction.intSubtract,
+//            PushInstruction.intMultiply,
+//            PushInstruction.input1,
+//            PushInstruction.intSubtract
+//        ]
+//
+//        let littleProgram = Plushy.plushy2push(&littleGenome)
+//        #expect(CodeItem(littleProgram).pretty() == "( 1 ( 2 3 ) .intAdd ( 4 ) .intSubtract .intMultiply .input1 .intSubtract )")
+//
+//        inty.load(inputs:[.input0:IntItem(99), .input1:IntItem(777)], program: littleProgram)
+//        inty.run(stepLimit: 100)
+//        #expect(stackString(inty, .int) == "[ -776 ]")
+//
+//        let answer = topItem(inty, .int)
+//
+//        #expect(CodeItem(answer.call).pretty() == "( 1 777 .intSubtract )")
+//        #expect(answer.crux() == [])
+//
+//    }
+}
+
 
 @MainActor
 struct Code_tests {
