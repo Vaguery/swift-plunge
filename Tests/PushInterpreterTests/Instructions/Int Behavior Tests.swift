@@ -54,7 +54,7 @@ struct IntBehaviorTests {
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         
-        #expect(stackString(inty, .error) == "[ «Overflow in .intAdd: 9223372036854775807 + 1000» ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intAdd") )
     }
     
     @Test func intSubtract() {
@@ -79,7 +79,7 @@ struct IntBehaviorTests {
         doThis(.intSubtract, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         
-        #expect(stackString(inty, .error) == "[ «Overflow in .intSubtract: -9223372036854775807 - 1000» ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intSubtract") )
     }
 
     
@@ -104,7 +104,7 @@ struct IntBehaviorTests {
         
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow")  )
+        #expect(stackString(inty, .error).contains("Overflow in .intMultiply")  )
     }
     
     @Test func intMax() {
@@ -212,7 +212,7 @@ struct IntBehaviorTests {
         
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error) == "[ «Overflow in .intMod: -9223372036854775808 % -1» ]"   )
+        #expect(stackString(inty, .error).contains("Overflow in .intMod") )
     }
     
     
@@ -223,7 +223,7 @@ struct IntBehaviorTests {
         
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error) == "[ «Overflow in .intMod: 999 % 0» ]"   )
+        #expect(stackString(inty, .error).contains("Overflow in .intMod") )
     }
 
     

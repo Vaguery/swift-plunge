@@ -141,7 +141,7 @@ extension Interpreter {
                 
                 if let item = interpreter.stacks[stack]!.first {
                     if overflow > 0 {
-                        result.append(Router(.error, ErrorItem("⚠️ \(type)DupTimes overflow: \(rawNumber) items attempted")))
+                        result.append(Router(.error, ErrorItem("\(type)DupTimes overflow: \(rawNumber) items attempted")))
                     } else {
                         for _ in 0..<allowed {
                             result.append(Router(stack, item))
@@ -153,7 +153,7 @@ extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("⚠️ \(name) on empty stack")
+                            ErrorItem("\(name) on empty stack")
                         )
                     ]
                 }
@@ -245,7 +245,7 @@ extension Interpreter {
                 let idx = max(0,min(rawIndex.value,range))
                 
                 guard range > 0 else {
-                    return [Router(.error, ErrorItem("⚠️ \(name) on empty stack"))]
+                    return [Router(.error, ErrorItem("\(name) on empty stack"))]
                 }
                 
                 let oldItem = interpreter.stacks[stack]!.remove(at: idx)
@@ -269,7 +269,7 @@ extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("« WARNING \(name) on empty stack »")
+                            ErrorItem("\(name) on empty stack")
                         )
                     ]
                 }
@@ -303,7 +303,7 @@ extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("« WARNING \(name) on empty stack »")
+                            ErrorItem("\(name) on empty stack")
                         )
                     ]
                 }
@@ -330,7 +330,7 @@ extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("« WARNING \(name) on empty stack »")
+                            ErrorItem("\(name) on empty stack")
                         )
                     ]
                 }

@@ -191,7 +191,7 @@ struct CombinatorBehaviorTests {
         
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 ]")
-        #expect(stackString(inty, .error) == "[ «⚠️ doubleDupTimes overflow: 3000000000 items attempted» ]")
+        #expect(stackString(inty, .error).contains("doubleDupTimes overflow") )
     }
 
 

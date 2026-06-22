@@ -55,7 +55,7 @@ struct DoubleBehaviorTests {
                 
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleAdd:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleAdd:"))
         
         inty.stacks[.double]!.prepend(
             contentsOf: [DoubleItem(55), DoubleItem(1.0/0.0)
@@ -63,7 +63,7 @@ struct DoubleBehaviorTests {
                 
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleAdd:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleAdd:"))
 
     }
     
@@ -92,7 +92,7 @@ struct DoubleBehaviorTests {
         
         doThis(.doubleDivide, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleDivide:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleDivide:"))
         
     }
     
@@ -137,7 +137,7 @@ struct DoubleBehaviorTests {
         
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleQuot:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleQuot:"))
     }
 
     
@@ -171,7 +171,7 @@ struct DoubleBehaviorTests {
         
         doThis(.doubleMod, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleMod:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleMod:"))
     }
 
 
@@ -231,7 +231,7 @@ struct DoubleBehaviorTests {
         
         doThis(.doubleSubtract, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleSubtract:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleSubtract:"))
     }
 
     
@@ -259,7 +259,7 @@ struct DoubleBehaviorTests {
         
         doThis(.doubleMultiply, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("«Overflow in .doubleMultiply:"))
+        #expect(stackString(inty, .error).contains("Overflow in .doubleMultiply"))
     }
 
 

@@ -389,6 +389,6 @@ struct ErrorItem: Item, Equatable {
     }
     
     func pretty() -> String {
-        "«\(value)»"
+        "« ‼️ \(value) »"
     }
 }

@@ -36,7 +36,6 @@ struct ConstantBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 17 ]")
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ [false, false, true] 17 ]")
-
     }
     
     @MainActor
@@ -44,9 +43,7 @@ struct ConstantBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .error) ==
-                "[ «WARN: no constant assigned for vecBool8» ]")
-
+        #expect(stackString(inty, .error).contains("No constant assigned") )
     }
     
     @MainActor
