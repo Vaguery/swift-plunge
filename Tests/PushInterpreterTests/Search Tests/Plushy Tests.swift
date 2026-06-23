@@ -15,7 +15,7 @@ struct PlushyTests {
 
     @Test func plushyWorksForExplicitItems() {
         var p = [1, IntItem(2), DoubleItem(3)] as [Any]
-        let prog = Plushy.plushy2push( &p )
+        let prog = Plushy.plushy2push( p )
 
         #expect(prog[0] is IntItem)
         #expect(prog[1] is IntItem)
@@ -24,7 +24,7 @@ struct PlushyTests {
 
     @Test func plushyWorksForCodeAndPlushyControls() {
         var p = [CodeItem([IntItem(7), BoolItem(false)]), PlushyControl.open, DoubleItem(1.23)] as [Any]
-        let prog = Plushy.plushy2push( &p )
+        let prog = Plushy.plushy2push( p )
 
         #expect(prog.count == 2)
         #expect(CodeItem(prog).pretty() == "( ( 7 false ) ( 1.23 ) )")
@@ -32,7 +32,7 @@ struct PlushyTests {
 
     @Test func plushyWorksForInstructionsInBothForms() {
         var p = [PushInstruction.intAdd, InstructionItem(.boolNand), PushInstruction.execDoCount, DoubleItem(1.23)] as [Any]
-        let prog = Plushy.plushy2push( &p )
+        let prog = Plushy.plushy2push( p )
 
         #expect(prog.count == 4)
         #expect(CodeItem(prog).pretty() == "( .intAdd .boolNand .execDoCount ( 1.23 ) )")
@@ -51,7 +51,7 @@ struct PlushyTests {
             StringItem("implicit"),
         ] as [Any]
 
-        let prog = Plushy.plushy2push( &p )
+        let prog = Plushy.plushy2push( p )
 
         #expect(prog.count == 4)
         #expect(CodeItem(prog).pretty() == "( .execDup ( \"explicit\" ) .execDup ( \"implicit\" ) )")

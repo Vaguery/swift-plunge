@@ -11,8 +11,14 @@ enum PlushyControl {
 }
 
 struct Plushy {
-        
-    static func plushy2push(_  stuff: inout [Any], level:Int = 0) -> [any Item] {
+
+    static func plushy2push(_  stuff: [Any]) -> [any Item] {
+        var workingCopy = stuff
+        return destructivePlushy2push(&workingCopy)
+    }
+
+
+    private static func destructivePlushy2push(_  stuff: inout [Any], level:Int = 0) -> [any Item] {
         var result:[any Item] = []
         
         let extraOpens: [PushInstruction: Int] = [
@@ -139,7 +145,7 @@ struct Plushy {
 
             case is PlushyControl:
                 if thing as! PlushyControl == PlushyControl.open {
-                    let parsedThing = plushy2push(&stuff, level: level + 1)
+                    let parsedThing = destructivePlushy2push(&stuff, level: level + 1)
                     result.append(CodeItem(parsedThing))
                     if pending.count > 0 {
                         pending.remove(at: 0)
