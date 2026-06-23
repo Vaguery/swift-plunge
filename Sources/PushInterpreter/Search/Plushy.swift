@@ -45,7 +45,27 @@ struct Plushy {
             .vecStringIterate : 1,
         ]
         var pending:[PlushyControl] = []
-        
+
+        func implicitBranch(_ stuff: inout [Any], key: PushInstruction) {
+            if let opens = extraOpens[key] {
+                switch opens {
+                case 1:
+                    stuff.insert(PlushyControl.open, at:0)
+                case 2:
+                    pending.append(PlushyControl.open)
+                    stuff.insert(PlushyControl.open, at:0)
+                case 3:
+                    pending.append(PlushyControl.open)
+                    pending.append(PlushyControl.open)
+
+                    stuff.insert(PlushyControl.open, at:0)
+                default:
+                    return
+                }
+            }
+
+        }
+
         
         while !stuff.isEmpty {
             let thing = stuff.remove(at: 0)
@@ -54,50 +74,69 @@ struct Plushy {
             case is Int:
                 let parsedThing = IntItem(thing as! Int)
                 result.append(parsedThing)
+            case is IntItem:
+                result.append(thing as! IntItem)
+
             case is Double:
                 let parsedThing = DoubleItem(thing as! Double)
                 result.append(parsedThing)
+            case is DoubleItem:
+                result.append(thing as! DoubleItem)
+
             case is Bool:
                 let parsedThing = BoolItem(thing as! Bool)
                 result.append(parsedThing)
+            case is BoolItem:
+                result.append(thing as! BoolItem)
+
             case is String:
                 let parsedThing = StringItem(thing as! String)
                 result.append(parsedThing)
+            case is StringItem:
+                result.append(thing as! StringItem)
+
             case is Character:
                 let parsedThing = CharItem(thing as! Character)
                 result.append(parsedThing)
+            case is CharItem:
+                result.append(thing as! CharItem)
+
             case is [Int]:
                 let parsedThing = VecIntItem(thing as! [Int])
                 result.append(parsedThing)
+            case is VecIntItem:
+                result.append(thing as! VecIntItem)
+
             case is [Bool]:
                 let parsedThing = VecBoolItem(thing as! [Bool])
                 result.append(parsedThing)
+            case is VecBoolItem:
+                result.append(thing as! VecBoolItem)
+
             case is [Double]:
                 let parsedThing = VecDoubleItem(thing as! [Double])
                 result.append(parsedThing)
+            case is VecDoubleItem:
+                result.append(thing as! VecDoubleItem)
+
             case is [String]:
                 let parsedThing = VecStringItem(thing as! [String])
                 result.append(parsedThing)
+            case is VecStringItem:
+                result.append(thing as! VecStringItem)
+
             case is PushInstruction:
                 let parsedThing = InstructionItem(thing as! PushInstruction)
                 result.append(parsedThing)
                 let key = parsedThing.value
-                if let opens = extraOpens[key] {
-                    switch opens {
-                    case 1:
-                        stuff.insert(PlushyControl.open, at:0)
-                    case 2:
-                        pending.append(PlushyControl.open)
-                        stuff.insert(PlushyControl.open, at:0)
-                    case 3:
-                        pending.append(PlushyControl.open)
-                        pending.append(PlushyControl.open)
-                        
-                        stuff.insert(PlushyControl.open, at:0)
-                    default:
-                        continue
-                    }
-                }
+
+                implicitBranch(&stuff, key: key)
+            case is InstructionItem:
+                let parsedThing = thing as! InstructionItem
+                result.append(parsedThing)
+                implicitBranch(&stuff, key: parsedThing.value)
+
+
             case is PlushyControl:
                 if thing as! PlushyControl == PlushyControl.open {
                     let parsedThing = plushy2push(&stuff, level: level + 1)
@@ -111,9 +150,13 @@ struct Plushy {
                         return result
                     }
                 }
+            case is CodeItem:
+                result.append(thing as! CodeItem)
+
             default:
                 break
             }
+
         }
         return result
     }

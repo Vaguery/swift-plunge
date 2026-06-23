@@ -33,6 +33,13 @@ extension Item where Self: Equatable {
 
 
 
+
+
+
+
+
+//  global == definition to help compare items that aren't the same exact type
+//
 func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     // Arrays must have the same count to be equal
     guard lhs.count == rhs.count else { return false }
@@ -43,10 +50,16 @@ func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     }
 }
 
-//
-//
-//
-//
+
+
+
+
+
+
+
+
+
+
 // creating structs for each PushType
 
 struct BoolItem: Item, Equatable, Pretty {
