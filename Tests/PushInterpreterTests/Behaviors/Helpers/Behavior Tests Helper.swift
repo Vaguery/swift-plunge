@@ -57,6 +57,17 @@ public func probeItemOnStack(_ interpreter: Interpreter,
 // MARK: Bool stack setups
 
 @MainActor
+    public func loadBools(_ inty: Interpreter,
+                          bools: [Bool],
+                          contingent: [Int] = [] ) {
+        var newStack = bools.map({BoolItem($0)})
+        for idx in contingent {
+            newStack[idx].isContingent = true
+        }
+        inty.stacks[.bool]!.prepend(contentsOf: newStack)
+    }
+
+@MainActor
     //8 boolean values pushed to [.bool]
     public func intyBool8(_ inty: Interpreter) {
         inty.stacks[.bool]!.prepend(contentsOf: [

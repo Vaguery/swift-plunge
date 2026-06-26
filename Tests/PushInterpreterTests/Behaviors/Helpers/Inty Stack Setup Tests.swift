@@ -15,30 +15,26 @@ struct IntyStackSetupTests {
 
     let inty = Interpreter()
 
-// MARK: intyBool setup tests
+    // MARK: loadBools tests
 
-    @Test func `intyBool8 setup`() {
-        intyBool8(inty)
-        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
+    @Test func `loadBools setup`() {
+        loadBools(inty, bools: [])
+        #expect(stackString(inty, .bool) == "[ ]")
     }
 
-    @Test func `intyBoolF setup`() {
-        intyBoolF(inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
+    @Test func `loadBools loads bools`() {
+        loadBools(inty, bools: [false, true])
+        #expect(stackString(inty, .bool) == "[ false true ]")
     }
 
-    @Test func `intyBoolT setup`() {
-        intyBoolT(inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
+    @Test func `loadBools sets contingency`() {
+        loadBools(inty, bools: [false, true], contingent: [1])
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(probeItemOnStack(inty,.bool,index:0)!.isContingent == false)
+        #expect(probeItemOnStack(inty,.bool,index:1)!.isContingent == true)
     }
 
-
-    // MARK: intyChar setup tests
-
-    @Test func `intyChar6 setup`() {
-        intyChar6(inty)
-        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '-' '-' ]")
-    }
+    // MARK: loadChars tests
 
     @Test func `loadChars setup`() {
         loadChars(inty, chars: [])
@@ -69,7 +65,7 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .code) == "[ ( 4 false ) ( 4 false ) ( 4 false ) ( 4 false ) ( 5 false ) ( 4 true ) ]")
     }
 
-    // MARK: intyDouble setup tests
+    // MARK: loadDoubles tests
 
     @Test func `intyDouble3 setup`() {
         intyDouble3(inty)

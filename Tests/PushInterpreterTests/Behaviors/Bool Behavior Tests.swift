@@ -15,7 +15,9 @@ struct BoolBehaviorTests {
     let inty = Interpreter()
 
     @Test func boolAnd() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -39,7 +41,7 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolFromDouble() {
-        intyDouble3(inty)
+        loadDoubles(inty, doubles: [ 0.0, 1.1, -1.1 ], contingent: [2])
 
         doThis(.boolFromDouble, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -71,7 +73,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolIfPThenQ() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -95,7 +99,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolIfQThenP() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -119,7 +125,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNand() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNand, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -143,7 +151,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNor() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -167,7 +177,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNot() {
-        intyBoolF(inty)
+        loadBools(inty, bools: [false], contingent: [0])
+
+        #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.boolNot, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
@@ -179,7 +191,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNotP() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -203,7 +217,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNotPandQ() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotPandQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -227,7 +243,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolNotQ() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -251,7 +269,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolOr() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolOr, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -276,7 +296,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolP() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -300,7 +322,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolPandNotQ() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolPandNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
@@ -324,7 +348,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolQ() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -348,7 +374,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolXnor() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolXnor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
@@ -372,7 +400,9 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolXor() {
-        intyBool8(inty)
+        loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
+
+        #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolXor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
