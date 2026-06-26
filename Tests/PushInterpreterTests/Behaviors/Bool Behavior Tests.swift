@@ -16,24 +16,23 @@ struct BoolBehaviorTests {
 
     @Test func boolAnd() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
-        doThis(.boolPop, to: inty)
 
+        doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
-        doThis(.boolPop, to: inty)
 
+        doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
-        doThis(.boolPop, to: inty)
 
+        doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
@@ -42,6 +41,7 @@ struct BoolBehaviorTests {
 
     @Test func boolFromDouble() {
         loadDoubles(inty, doubles: [ 0.0, 1.1, -1.1 ], contingent: [2])
+        #expect(stackString(inty, .double) == "[ 0.0 1.1 -1.1 ]")
 
         doThis(.boolFromDouble, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -57,7 +57,8 @@ struct BoolBehaviorTests {
     }
 
     @Test func boolFromInt() {
-        intyInt3(inty)
+        loadInts(inty, ints: [0, 1, -1], contingent: [2])
+        #expect(stackString(inty, .int) == "[ 0 1 -1 ]")
 
         doThis(.boolFromInt, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -74,7 +75,6 @@ struct BoolBehaviorTests {
 
     @Test func boolIfPThenQ() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolIfPThenQ, to: inty)
@@ -100,7 +100,6 @@ struct BoolBehaviorTests {
 
     @Test func boolIfQThenP() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolIfQThenP, to: inty)
@@ -126,7 +125,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNand() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNand, to: inty)
@@ -152,7 +150,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNor() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNor, to: inty)
@@ -178,7 +175,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNot() {
         loadBools(inty, bools: [false], contingent: [0])
-
         #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.boolNot, to: inty)
@@ -192,7 +188,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNotP() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotP, to: inty)
@@ -218,7 +213,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNotPandQ() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotPandQ, to: inty)
@@ -244,7 +238,6 @@ struct BoolBehaviorTests {
 
     @Test func boolNotQ() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolNotQ, to: inty)
@@ -270,7 +263,6 @@ struct BoolBehaviorTests {
 
     @Test func boolOr() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolOr, to: inty)
@@ -297,7 +289,6 @@ struct BoolBehaviorTests {
 
     @Test func boolP() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolP, to: inty)
@@ -323,7 +314,6 @@ struct BoolBehaviorTests {
 
     @Test func boolPandNotQ() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolPandNotQ, to: inty)
@@ -349,7 +339,6 @@ struct BoolBehaviorTests {
 
     @Test func boolQ() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolQ, to: inty)
@@ -375,7 +364,6 @@ struct BoolBehaviorTests {
 
     @Test func boolXnor() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolXnor, to: inty)
@@ -401,7 +389,6 @@ struct BoolBehaviorTests {
 
     @Test func boolXor() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false], contingent: [7])
-
         #expect(stackString(inty, .bool) == "[ true true true false false true false false ]")
 
         doThis(.boolXor, to: inty)
@@ -423,7 +410,6 @@ struct BoolBehaviorTests {
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
         doThis(.boolPop, to: inty)
-
     }
 
 }

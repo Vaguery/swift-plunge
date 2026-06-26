@@ -15,7 +15,7 @@ struct CombinatorBehaviorTests {
     let inty = Interpreter()
 
     @Test func boolEmpty() {
-        intyBoolE(inty)
+        loadBools(inty, bools: [])
         #expect(stackString(inty, .bool) == "[ ]")
 
         doThis(.boolEmpty, to: inty)
@@ -45,8 +45,8 @@ struct CombinatorBehaviorTests {
 
     // contingency
     @Test func doubleDeepDup() {
-        intyInt5(inty)
-        intyDouble4(inty)
+//        intyInt5(inty)
+//        intyDouble4(inty)
 
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 1111111.11 66.6 -33.0 -33.0 ]")
@@ -67,8 +67,8 @@ struct CombinatorBehaviorTests {
 
     // contingency
     @Test func doubleDupItems() {
-        intyInt3(inty)
-        intyDouble4(inty)
+//        intyInt3(inty)
+//        intyDouble4(inty)
 
         doThis(.doubleDupItems, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 1111111.11 66.6 -33.0 ]")
@@ -82,8 +82,8 @@ struct CombinatorBehaviorTests {
 
     // contingency
     @Test func doubleDupTimes() {
-        intyInt3(inty)
-        intyDouble4(inty)
+//        intyInt3(inty)
+//        intyDouble4(inty)
 
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 1111111.11 66.6 -33.0 ]")
@@ -114,7 +114,7 @@ struct CombinatorBehaviorTests {
 
     // contingency
     @Test func doubleShove() {
-        intyInt5(inty)
+//        intyInt5(inty)
         loadDoubles(inty, doubles: [1.1, 2.22, 3.333, 4.4444])
 
 

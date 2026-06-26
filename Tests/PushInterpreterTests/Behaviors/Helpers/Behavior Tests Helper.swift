@@ -54,7 +54,7 @@ public func probeItemOnStack(_ interpreter: Interpreter,
 // Common stacks setups
 //
 
-// MARK: Bool stack setups
+// MARK: Bool stack setup
 
 @MainActor
     public func loadBools(_ inty: Interpreter,
@@ -67,47 +67,8 @@ public func probeItemOnStack(_ interpreter: Interpreter,
         inty.stacks[.bool]!.prepend(contentsOf: newStack)
     }
 
-@MainActor
-    //8 boolean values pushed to [.bool]
-    public func intyBool8(_ inty: Interpreter) {
-        inty.stacks[.bool]!.prepend(contentsOf: [
-            BoolItem(true), BoolItem(true),
-            BoolItem(true), BoolItem(false),
-            BoolItem(false), BoolItem(true),
-            BoolItem(false), BoolItem(false, isContingent: true),
-    ])
-}
 
-@MainActor
-    // boolean empty
-    public func intyBoolE(_ inty: Interpreter) { }
-
-@MainActor
-    // boolean false
-    public func intyBoolF(_ inty: Interpreter) {
-        inty.stacks[.bool]!.prepend(BoolItem(false, isContingent: true))
-}
-
-@MainActor
-    // boolean true
-    public func intyBoolT(_ inty: Interpreter) {
-        inty.stacks[.bool]!.prepend(BoolItem(true, isContingent: true))
-}
-
-// MARK: Char stack setups
-
-@MainActor
-    // 6 characters
-    public func intyChar6(_ inty: Interpreter) {
-            inty.stacks[.char]!.prepend(contentsOf: [
-                CharItem(Character("g")),
-                CharItem(Character("d"), isContingent: true),
-                CharItem(Character("b")),
-                CharItem(Character("x")),
-                CharItem(Character("-")),
-                CharItem(Character("-")),
-            ])
-}
+// MARK: Char stack setup
 
 @MainActor
     public func loadChars(_ inty: Interpreter,
@@ -149,19 +110,7 @@ public func probeItemOnStack(_ interpreter: Interpreter,
         )
 }
 
-// MARK: Double stack setups
-
-@MainActor
-    // 3 doubles
-    public func intyDouble3(_ inty: Interpreter) {
-        inty.stacks[.double]!.prepend(contentsOf: [DoubleItem(0.0), DoubleItem(1.1), DoubleItem(-1.1, isContingent: true)])
-}
-
-@MainActor
-    // 4 doubles
-    public func intyDouble4(_ inty: Interpreter) {
-        inty.stacks[.double]!.prepend(contentsOf: [DoubleItem(0), DoubleItem(1111111.11, isContingent: true), DoubleItem(66.6), DoubleItem(-33)])
-    }
+// MARK: Double stack setup
 
 @MainActor
     public func loadDoubles(_ inty: Interpreter,
@@ -174,26 +123,18 @@ public func probeItemOnStack(_ interpreter: Interpreter,
         inty.stacks[.double]!.prepend(contentsOf: newStack)
     }
 
-// MARK: Int stack setups
+// MARK: Integer stack setup
 
 @MainActor
-    // 3 integers
-    public func intyInt3(_ inty: Interpreter) {
-        inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(2), IntItem(-2, isContingent: true)])
-}
+    public func loadInts(_ inty: Interpreter,
+                            ints: [Int],
+                            contingent: [Int] = [] ) {
+        var newStack = ints.map({IntItem($0)})
+        for idx in contingent {
+            newStack[idx].isContingent = true
+        }
+        inty.stacks[.int]!.prepend(contentsOf: newStack)
+    }
 
-@MainActor
-    // 4 integers
-    public func intyInt4(_ inty: Interpreter) {
-        inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(1111111, isContingent: true), IntItem(66), IntItem(-33)])
-}
-
-@MainActor
-    // 5 integers
-    public func intyInt5(_ inty: Interpreter) {
-        inty.stacks[.int]!.prepend(
-            contentsOf: [IntItem(-3),IntItem(2),IntItem(17),IntItem(0),IntItem(2),])
-
-}
 
 

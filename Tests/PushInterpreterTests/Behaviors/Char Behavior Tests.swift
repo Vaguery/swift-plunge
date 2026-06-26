@@ -15,47 +15,50 @@ struct CharBehaviorTests {
     let inty = Interpreter()
 
     @Test func charFromDouble() {
-        intyDouble4(inty)
+        loadDoubles(inty, doubles: [0,21,31,91.5], contingent: [1])
+        #expect(stackString(inty, .double) == "[ 0.0 21.0 31.0 91.5 ]")
 
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
         
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == true)
         
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ 'b' 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
         
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ 'A' 'b' 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
     }
 
     @Test func charFromInt() {
-        intyInt4(inty)
+        loadInts(inty, ints: [0,21,31,91], contingent: [1])
+        #expect(stackString(inty, .int) == "[ 0 21 31 91 ]")
 
         doThis(.charFromInt, to: inty)
         #expect(stackString(inty, .char) == "[ ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
         
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == true)
         
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ 'b' 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
         
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ 'A' 'b' 'v' ' ' ]")
+        #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
     }
 
     @Test func charGT() {
-        intyChar6(inty)
+        loadChars(inty, chars: ["g","d","b","x","&","&"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -71,7 +74,8 @@ struct CharBehaviorTests {
     }
 
     @Test func charGTE() {
-        intyChar6(inty)
+        loadChars(inty, chars: ["g","d","b","x","&","&"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -87,8 +91,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charIsDigit() {
-        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("2️⃣")), CharItem(Character("७"))])
-
+        loadChars(inty, chars: ["1","q","2️⃣","७"], contingent: [1])
         #expect(stackString(inty, .char) == "[ '1' 'q' '2️⃣' '७' ]")
 
         doThis(.charIsDigit, to: inty)
@@ -107,12 +110,10 @@ struct CharBehaviorTests {
         doThis(.charIsDigit, to: inty)
         #expect(stackString(inty, .bool) == "[ true false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-
     }
 
     @Test func charIsLetter() {
-        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("1")), CharItem(Character("q"), isContingent: true), CharItem(Character("-")), CharItem(Character("ϴ"))])
-
+        loadChars(inty, chars: ["1", "q", "-", "ϴ"], contingent: [1])
         #expect(stackString(inty, .char) == "[ '1' 'q' '-' 'ϴ' ]")
 
         doThis(.charIsLetter, to: inty)
@@ -131,12 +132,10 @@ struct CharBehaviorTests {
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-
     }
 
     @Test func charIsWhitespace() {
-        inty.stacks[.char]!.prepend(contentsOf: [CharItem(Character("g")), CharItem(Character(" "), isContingent: true), CharItem(Character("\n")), CharItem(Character("\t"))])
-
+        loadChars(inty, chars: ["g", " ", "\n", "\t"], contingent: [1])
         #expect(stackString(inty, .char) == "[ 'g' ' ' '\n' '\t' ]")
 
         doThis(.charIsWhitespace, to: inty)
@@ -157,7 +156,8 @@ struct CharBehaviorTests {
     }
 
     @Test func charLT() {
-        intyChar6(inty)
+        loadChars(inty, chars: ["g","d","b","x","&","&"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charLT, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
@@ -173,7 +173,8 @@ struct CharBehaviorTests {
     }
 
     @Test func charLTE() {
-        intyChar6(inty)
+        loadChars(inty, chars: ["g","d","b","x","&","&"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
@@ -187,6 +188,5 @@ struct CharBehaviorTests {
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
     }
-
 
 }

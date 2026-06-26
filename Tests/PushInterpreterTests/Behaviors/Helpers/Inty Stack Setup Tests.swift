@@ -53,7 +53,7 @@ struct IntyStackSetupTests {
         #expect(probeItemOnStack(inty,.char,index:1)!.isContingent == true)
     }
 
-    // MARK: intyCode setup tests
+    // MARK: intyCode setup tests [OLD STYLE]
 
     @Test func `intyCode4 setup`() {
         intyCode4(inty)
@@ -66,16 +66,6 @@ struct IntyStackSetupTests {
     }
 
     // MARK: loadDoubles tests
-
-    @Test func `intyDouble3 setup`() {
-        intyDouble3(inty)
-        #expect(stackString(inty, .double) == "[ 0.0 1.1 -1.1 ]")
-    }
-
-    @Test func `intyDouble4 setup`() {
-        intyDouble4(inty)
-        #expect(stackString(inty, .double) == "[ 0.0 1111111.11 66.6 -33.0 ]")
-    }
 
     @Test func `loadDoubles setup`() {
         loadDoubles(inty, doubles: [])
@@ -90,26 +80,27 @@ struct IntyStackSetupTests {
     @Test func `loadDoubles sets contingency`() {
         loadDoubles(inty, doubles: [2, 3.4, 5.67], contingent: [1])
         #expect(stackString(inty, .double) == "[ 2.0 3.4 5.67 ]")
-
         #expect(probeItemOnStack(inty,.double,index:0)!.isContingent == false)
         #expect(probeItemOnStack(inty,.double,index:1)!.isContingent == true)
     }
 
-    // MARK: intyInt setup tests
+    // MARK: loadInts tests
 
-    @Test func `intyInt3 setup`() {
-        intyInt3(inty)
-        #expect(stackString(inty, .int) == "[ 0 2 -2 ]")
+    @Test func `loadInts setup`() {
+        loadInts(inty, ints: [])
+        #expect(stackString(inty, .int) == "[ ]")
     }
 
-    @Test func `intyInt4 setup`() {
-        intyInt4(inty)
-        #expect(stackString(inty, .int) == "[ 0 1111111 66 -33 ]")
+    @Test func `loadInts loads ints`() {
+        loadInts(inty, ints: [2, 3, 5])
+        #expect(stackString(inty, .int) == "[ 2 3 5 ]")
     }
 
-    @Test func `intyInt5 setup`() {
-        intyInt5(inty)
-        #expect(stackString(inty, .int) == "[ -3 2 17 0 2 ]")
+    @Test func `loadInts sets contingency`() {
+        loadInts(inty, ints: [2, 3, 5], contingent: [1])
+        #expect(stackString(inty, .int) == "[ 2 3 5 ]")
+        #expect(probeItemOnStack(inty,.int,index:0)!.isContingent == false)
+        #expect(probeItemOnStack(inty,.int,index:1)!.isContingent == true)
     }
 
 }
