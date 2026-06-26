@@ -11,18 +11,7 @@ import DequeModule
 
 @Suite @MainActor
 struct InterpreterTests {
-    
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
-        var result = "["
-        let s = interpreter.stacks[stack]!
-        for item in s {
-            result += " \(item.pretty() )"
-        }
-        result += " ]"
-        return result
-    }
 
-    
     let inty = Interpreter()
     
     let inputty:[PI: any Item] =

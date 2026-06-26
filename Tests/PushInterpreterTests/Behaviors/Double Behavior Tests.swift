@@ -11,27 +11,9 @@ import DequeModule
 
 @Suite @MainActor
 struct DoubleBehaviorTests {
-    
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
-        var result = "["
-        let s = interpreter.stacks[stack]!
-        for item in s {
-            result += " \(item.pretty() )"
-        }
-        result += " ]"
-        return result
-    }
-    
-    func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> any Item {
-        interpreter.stacks[stack]!.first!
-    }
 
-    func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
-        Interpreter.language[instruction]!.act(on: interpreter)
-    }
-    
-    var inty = Interpreter()
-    
+    let inty = Interpreter()
+
     @Test func doubleAdd() {
         inty.stacks[.double]!.prepend(
             contentsOf: [DoubleItem(3.25), DoubleItem(4.25), DoubleItem(-6.25, isContingent: true)])

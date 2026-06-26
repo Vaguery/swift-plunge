@@ -12,18 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct InputBehaviorTests {
     
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
-        var result = "["
-        let s = interpreter.stacks[stack]!
-        for item in s {
-            result += " \(item.pretty() )"
-        }
-        result += " ]"
-        return result
-    }
-
-    
-    let inty = Interpreter()
+   let inty = Interpreter()
     
     @Test func inputsWorksWhenDefined() {
         inty.inputs[.input3] = IntItem(17)

@@ -13,24 +13,6 @@ import DequeModule
 @Suite @MainActor
 struct OutputBehaviorTests {
     
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
-        var result = "["
-        let s = interpreter.stacks[stack]!
-        for item in s {
-            result += " \(item.pretty() )"
-        }
-        result += " ]"
-        return result
-    }
-    
-    func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> (any Item)? {
-        interpreter.stacks[stack]!.first
-    }
-
-    func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
-        Interpreter.language[instruction]!.act(on: interpreter)
-    }
-    
     var inty = Interpreter()
 
     @Test func printNewline() {
