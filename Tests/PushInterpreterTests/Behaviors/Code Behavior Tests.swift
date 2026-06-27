@@ -16,7 +16,8 @@ struct CodeBehaviorTests {
 
     @Test func codeAppend() {
         intyCode4(inty)
-        
+        #expect(stackString(inty, .code) == "[ ( 4 ) ( 8.8 ) ( '-' ) ( ) ]")
+
         doThis(.codeAppend, to: inty)
         #expect(stackString(inty, .code) == "[ ( 8.8 4 ) ( '-' ) ( ) ]")
         #expect(topItem(inty, .code).isContingent == false)

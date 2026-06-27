@@ -25,7 +25,7 @@ import Testing
     }
 
 @MainActor
-    public func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> any Item {
+    public func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> (any Item) {
         return interpreter.stacks[stack]!.first!
     }
 
@@ -135,6 +135,7 @@ public func probeItemOnStack(_ interpreter: Interpreter,
         }
         inty.stacks[.int]!.prepend(contentsOf: newStack)
     }
+
 
 
 
