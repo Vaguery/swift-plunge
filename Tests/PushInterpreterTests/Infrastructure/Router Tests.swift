@@ -10,7 +10,7 @@ import DequeModule
 import Testing
 
 @Suite @MainActor
-struct Router_tests {
+struct RouterTests {
 
     let inty = Interpreter()
     

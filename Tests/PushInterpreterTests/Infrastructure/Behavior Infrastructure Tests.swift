@@ -1,5 +1,5 @@
 //
-//  InstructionInfrastructureTests.swift
+//  Behavior Infrastructure Tests.swift
 //  PropellerWithStructs
 //
 //  Created by William Tozier on 6/1/26.
