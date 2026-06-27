@@ -45,7 +45,7 @@ struct CombinatorBehaviorTests {
     }
 
     @Test func doubleDeepDup() {
-        loadInts(inty, ints: [2,10,0,-4,4])
+        loadInts(inty, ints: [2, 10, 0, -4, 4])
         loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4])
         #expect(stackString(inty, .int) == "[ 2 10 0 -4 4 ]")
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")

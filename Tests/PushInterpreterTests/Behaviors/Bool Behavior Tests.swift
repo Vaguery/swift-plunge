@@ -180,6 +180,7 @@ struct BoolBehaviorTests {
         doThis(.boolNot, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+
         doThis(.boolNot, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == true)
@@ -335,6 +336,19 @@ struct BoolBehaviorTests {
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
         doThis(.boolPop, to: inty)
+    }
+
+    @Test func boolPop() {
+        loadBools(inty, bools: [false, true], contingent: [0])
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+
+        doThis(.boolPop, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.boolPop, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
     }
 
     @Test func boolQ() {

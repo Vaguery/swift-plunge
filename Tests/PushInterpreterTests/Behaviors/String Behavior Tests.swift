@@ -39,8 +39,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"abc\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
-    
-    
+
     @Test func stringConcat() {
         loadStrings(inty, strings: ["", "", "abcd", "123"], contingent: [2])
         #expect(stackString(inty, .string) == "[ \"\" \"\" \"abcd\" \"123\" ]")
@@ -57,8 +56,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"123abcd\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
-    
-    
+
     @Test func stringConjChar() {
         loadChars(inty, chars: ["w", "•"], contingent:[1])
         loadStrings(inty, strings: ["", "abcd"])
@@ -105,8 +103,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .bool).isContingent == false)
     }
-    
-    
+
     @Test func stringContainsChar() {
         loadChars(inty, chars: ["x", "b"])
         loadStrings(inty, strings: ["", "abcd"], contingent:[1])
@@ -151,7 +148,6 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .int).isContingent == true)
     }
-    
     
     @Test func stringDrop() {
         loadInts(inty, ints: [3, 0, 4, -14, 99])
