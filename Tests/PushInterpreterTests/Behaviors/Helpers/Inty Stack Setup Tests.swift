@@ -103,4 +103,23 @@ struct IntyStackSetupTests {
         #expect(probeItemOnStack(inty,.int,index:1)!.isContingent == true)
     }
 
+    // MARK: loadStrings tests
+
+    @Test func `loadStrings setup`() {
+        loadStrings(inty, strings: [])
+        #expect(stackString(inty, .string) == "[ ]")
+    }
+
+    @Test func `loadStrings loads ints`() {
+        loadStrings(inty, strings: ["2", "purple", "(ツ)"])
+        #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
+    }
+
+    @Test func `loadStrings sets contingency`() {
+        loadStrings(inty, strings: ["2", "purple", "(ツ)"], contingent: [1])
+        #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
+        #expect(probeItemOnStack(inty,.string,index:0)!.isContingent == false)
+        #expect(probeItemOnStack(inty,.string,index:1)!.isContingent == true)
+    }
+
 }

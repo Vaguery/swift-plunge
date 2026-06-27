@@ -137,5 +137,18 @@ public func probeItemOnStack(_ interpreter: Interpreter,
     }
 
 
+// MARK: String stack setup
+
+@MainActor
+    public func loadStrings(_ inty: Interpreter,
+                            strings: [String],
+                            contingent: [Int] = [] ) {
+        var newStack = strings.map({StringItem($0)})
+        for idx in contingent {
+            newStack[idx].isContingent = true
+        }
+        inty.stacks[.string]!.prepend(contentsOf: newStack)
+    }
+
 
 
