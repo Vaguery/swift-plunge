@@ -11,16 +11,6 @@ import Testing
 
 @Suite @MainActor
 struct Recorder_Tests {
-    
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
-        var result = "["
-        let s = interpreter.stacks[stack]!
-        for item in s {
-            result += " \(item.pretty() )"
-        }
-        result += " ]"
-        return result
-    }
 
     let inty = Interpreter()
     
