@@ -7,6 +7,9 @@
 
 import DequeModule
 
+//case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeFlatten, codeFlattenPoint, codeFlattenRange, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
+
+
 
 extension Interpreter {
     
