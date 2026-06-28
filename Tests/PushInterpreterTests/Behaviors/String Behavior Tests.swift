@@ -372,165 +372,164 @@ struct StringBehaviorTests {
     }
     
     @Test func stringFromBool() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(false),
-                         BoolItem(true, isContingent: true)
-                        ])
-        
+        loadBools(inty, bools: [false, true], contingent: [1])
+        #expect(stackString(inty, .bool) == "[ false true ]")
+        #expect(stackString(inty, .string) == "[ ]")
+
         doThis(.stringFromBool, to: inty)
+        #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .string) == "[ \"false\" ]")
-        
+        #expect(topItem(inty, .string).isContingent == false)
+
         doThis(.stringFromBool, to: inty)
+        #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"true\" \"false\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
     
     @Test func stringFromChar() {
-        inty.stacks[.char]!.prepend(
-            contentsOf: [CharItem(Character("x")),
-                         CharItem(Character("-"), isContingent: true)
-                        ])
-        
+        loadChars(inty, chars: ["x", "-"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ 'x' '-' ]")
+        #expect(stackString(inty, .string) == "[ ]")
+
         doThis(.stringFromChar, to: inty)
+        #expect(stackString(inty, .char) == "[ '-' ]")
         #expect(stackString(inty, .string) == "[ \"x\" ]")
-        
+        #expect(topItem(inty, .string).isContingent == false)
+
         doThis(.stringFromChar, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"-\" \"x\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
     
     @Test func stringFromDouble() {
-        inty.stacks[.double]!.prepend(
-            contentsOf: [DoubleItem(1.11),
-                         DoubleItem(2.2, isContingent: true)
-                        ])
-        
+        loadDoubles(inty, doubles: [1.1, 2.2], contingent: [1])
+        #expect(stackString(inty, .double) == "[ 1.1 2.2 ]")
+        #expect(stackString(inty, .string) == "[ ]")
+
         doThis(.stringFromDouble, to: inty)
-        #expect(stackString(inty, .string) == "[ \"1.11\" ]")
+        #expect(stackString(inty, .double) == "[ 2.2 ]")
+        #expect(stackString(inty, .string) == "[ \"1.1\" ]")
         #expect(topItem(inty, .string).isContingent == false)
 
         doThis(.stringFromDouble, to: inty)
-        #expect(stackString(inty, .string) == "[ \"2.2\" \"1.11\" ]")
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .string) == "[ \"2.2\" \"1.1\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
     
     @Test func stringFromInt() {
-        inty.stacks[.int]!.prepend(
-            contentsOf: [IntItem(11),
-                         IntItem(-222, isContingent: true)
-                        ])
-        
+        loadInts(inty, ints: [11, -222], contingent: [1])
+        #expect(stackString(inty, .int) == "[ 11 -222 ]")
+        #expect(stackString(inty, .string) == "[ ]")
+
         doThis(.stringFromInt, to: inty)
+        #expect(stackString(inty, .int) == "[ -222 ]")
         #expect(stackString(inty, .string) == "[ \"11\" ]")
         #expect(topItem(inty, .string).isContingent == false)
 
         doThis(.stringFromInt, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"-222\" \"11\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
     
     @Test func stringNth() {
-        inty.stacks[.int]!.prepend(
-            contentsOf: [IntItem(11),
-                         IntItem(2),
-                         IntItem(-222, isContingent: true),
-                         IntItem(22),
-                        ])
-        
-        inty.stacks[.string]!.prepend(
-            contentsOf: [StringItem(""),
-                         StringItem("0123456789"),
-                         StringItem("0123456789"),
-                         StringItem("0123456789", isContingent: true),
-                        ])
-        
+        loadInts(inty, ints: [11, 2, -222, 22], contingent: [2])
+        loadStrings(inty, strings: ["", "abcdefghi", "abcdefghi", "abcdefghi"], contingent: [3])
+        #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .int) == "[ 11 2 -222 22 ]")
-        #expect(stackString(inty, .string) == "[ \"\" \"0123456789\" \"0123456789\" \"0123456789\" ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"abcdefghi\" \"abcdefghi\" \"abcdefghi\" ]")
 
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 2 -222 22 ]")
+        #expect(stackString(inty, .string) == "[ \"abcdefghi\" \"abcdefghi\" \"abcdefghi\" ]")
 
         doThis(.stringNth, to: inty)
-        #expect(stackString(inty, .char) == "[ '2' ]")
+        #expect(stackString(inty, .char) == "[ 'c' ]")
+        #expect(stackString(inty, .int) == "[ -222 22 ]")
+        #expect(stackString(inty, .string) == "[ \"abcdefghi\" \"abcdefghi\" ]")
         #expect(topItem(inty, .char).isContingent == false)
 
         doThis(.stringNth, to: inty)
-        #expect(stackString(inty, .char) == "[ '0' '2' ]")
+        #expect(stackString(inty, .char) == "[ 'a' 'c' ]")
+        #expect(stackString(inty, .int) == "[ 22 ]")
+        #expect(stackString(inty, .string) == "[ \"abcdefghi\" ]")
         #expect(topItem(inty, .char).isContingent == true)
 
         doThis(.stringNth, to: inty)
-        #expect(stackString(inty, .char) == "[ '2' '0' '2' ]")
+        #expect(stackString(inty, .char) == "[ 'e' 'a' 'c' ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .char).isContingent == true)
     }
 
     @Test func stringParseToLetters() {
-        inty.stacks[.string]!.prepend(
-            contentsOf: [StringItem(""),
-                         StringItem("01234", isContingent: true),
-                        ])
-        
-        #expect(stackString(inty, .string) == "[ \"\" \"01234\" ]")
-        
-        doThis(.stringParseToLetters, to: inty)
-        #expect(stackString(inty, .string) == "[ \"01234\" ]")
-        
-        doThis(.stringParseToLetters, to: inty)
-        #expect(stackString(inty, .string) == "[ \"4\" \"3\" \"2\" \"1\" \"0\" ]")
-        #expect(topItem(inty, .string).isContingent == true)
-        #expect(topItem(inty, .string).index == 4)
-        doThis(.stringPop, to: inty)
-        #expect(topItem(inty, .string).index == 3)
+        loadStrings(inty, strings: ["", "live"], contingent: [1])
+        #expect(stackString(inty, .string) == "[ \"\" \"live\" ]")
 
+        doThis(.stringParseToLetters, to: inty)
+        #expect(stackString(inty, .string) == "[ \"live\" ]")
+
+        doThis(.stringParseToLetters, to: inty)
+        #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
+        #expect(topItem(inty, .string).index == 3)
+        #expect(topItem(inty, .string).isContingent == true)
+
+        doThis(.stringPop, to: inty)
+        #expect(topItem(inty, .string).index == 2)
+        #expect(topItem(inty, .string).isContingent == true)
     }
 
     @Test func stringOccurrencesOfChar() {
-        inty.stacks[.string]!.prepend(
-            contentsOf: [StringItem(""),
-                         StringItem("00 11 22", isContingent: true),
-                         StringItem("00 11 22"),
-                        ])
-        inty.stacks[.char]!.prepend(
-            contentsOf: [CharItem(Character("2")),
-                         CharItem(Character("2")),
-                         CharItem(Character(" ")),
-                        ])
-        
+        loadChars(inty, chars: [" ","o","f"])
+        loadStrings(inty, strings: ["", "boo", "bee"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ ' ' 'o' 'f' ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
+
         doThis(.stringOccurrencesOfChar, to: inty)
+        #expect(stackString(inty, .char) == "[ 'o' 'f' ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .string) == "[ \"boo\" \"bee\" ]")
         #expect(topItem(inty, .int).isContingent == false)
 
         doThis(.stringOccurrencesOfChar, to: inty)
+        #expect(stackString(inty, .char) == "[ 'f' ]")
         #expect(stackString(inty, .int) == "[ 2 0 ]")
+        #expect(stackString(inty, .string) == "[ \"bee\" ]")
         #expect(topItem(inty, .int).isContingent == true)
 
         doThis(.stringOccurrencesOfChar, to: inty)
-        #expect(stackString(inty, .int) == "[ 2 2 0 ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 0 2 0 ]")
+        #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .int).isContingent == false)
     }
 
     @Test func stringRemoveChar() {
-        inty.stacks[.string]!.prepend(
-            contentsOf: [StringItem(""),
-                         StringItem("00 11 22", isContingent: true),
-                        ])
-        inty.stacks[.char]!.prepend(
-            contentsOf: [CharItem(Character("2")),
-                         CharItem(Character("2")),
-                         CharItem(Character(" ")),
-                        ])
-        
+        loadChars(inty, chars: [" ","o","b"])
+        loadStrings(inty, strings: ["", "boo", "bee"], contingent: [1])
+        #expect(stackString(inty, .char) == "[ ' ' 'o' 'b' ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
+
         doThis(.stringRemoveChar, to: inty)
-        #expect(stackString(inty, .string) == "[ \"\" \"00 11 22\" ]")
+        #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
         #expect(topItem(inty, .string).isContingent == false)
         
         doThis(.stringPop, to: inty)
 
         doThis(.stringRemoveChar, to: inty)
-        #expect(stackString(inty, .string) == "[ \"00 11 \" ]")
+        #expect(stackString(inty, .char) == "[ 'b' ]")
+        #expect(stackString(inty, .string) == "[ \"b\" \"bee\" ]")
         #expect(topItem(inty, .string).isContingent == true)
 
         doThis(.stringRemoveChar, to: inty)
-        #expect(stackString(inty, .string) == "[ \"0011\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .string) == "[ \"\" \"bee\" ]")
         #expect(topItem(inty, .string).isContingent == true)
     }
 
