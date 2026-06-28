@@ -13,7 +13,193 @@ import DequeModule
 struct ExecBehaviorTests {
 
     var inty = Interpreter()
-    
+
+    @Test func `execDoCount doesn't loop if the index < 1`() {
+        loadInts(inty, ints: [0])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+
+        doThis(.execDoCount, to: inty)
+        #expect(stackString(inty, .exec) == "[ 0 false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+
+    @Test func `execDoCount creates an execDoRange continuation when counter > 0`() {
+        loadInts(inty, ints: [3456])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 3456 ]")
+
+        doThis(.execDoCount, to: inty)
+        #expect(stackString(inty, .exec) == "[ 0 3456 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 3456 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 3456 0 ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 0 false 1 3456 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+    }
+
+    @Test func `execDoRange doesn't loop if the counters are the same`() {
+        loadInts(inty, ints: [3, 4])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 3 4 ]")
+
+        doThis(.execDoRange, to: inty)
+        #expect(stackString(inty, .exec) == "[ 4 false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+
+
+    @Test func `execDoRange loops if the start and end are different by 2+`() {
+        loadInts(inty, ints: [4, 7])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 4 7 ]")
+
+        doThis(.execDoRange, to: inty)
+        #expect(stackString(inty, .exec) == "[ 7 false 6 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ false 6 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 7 ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 6 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 4 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 6 false 5 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ false 5 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 5 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 4 .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ .execDoRange false ]")
+        #expect(stackString(inty, .int) == "[ 4 5 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 5 false ]")
+        #expect(stackString(inty, .int) == "[ 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        #expect(stackString(inty, .bool) == "[ false false false ]")
+    }
+
+    @Test func `execDoTimes doesn't loop if the counter is not positive`() {
+        loadInts(inty, ints: [-5, 0])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ -5 0 ]")
+
+        doThis(.execDoTimes, to: inty)
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+
+        doThis(.execDoTimes, to: inty)
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+    @Test func `execDoTimes loops if the counter is positive`() {
+        loadInts(inty, ints: [33])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .int) == "[ 33 ]")
+
+        doThis(.execDoTimes, to: inty)
+        #expect(stackString(inty, .exec) == "[ ( false 32 .execDoTimes false ) ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ false 32 .execDoTimes false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 32 .execDoTimes false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ .execDoTimes false ]")
+        #expect(stackString(inty, .int) == "[ 32 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ ( false 31 .execDoTimes false ) ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+    }
+
     @Test func `execWhile doesn't act if a false is found`() {
         inty.stacks[.bool]!.prepend(
             contentsOf: [BoolItem(false), BoolItem(true, isContingent: true), BoolItem(false)])

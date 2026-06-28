@@ -54,85 +54,133 @@ extension Interpreter {
         
         
 //        // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L13-L32
-//        
-//        .execDoCount :
-//            Instruction(
-//                .execDoCount,
-//                takes: [.exec, .int],
-//                fxn: {a in
-//                    let (item, counter) = (a[0], a[1].iVal()!)
-//                    var results: [PushItem] = []
-//                    if counter > 1 {
-//                        results.append(PushItem.makeInt(0))
-//                        results.append(a[1])
-//                        results.append(PushItem.makeInst(.execDoRange))
-//                        results.append(a[0])
-//                    } else {
-//                        results.append(a[1])
-//                        results.append(a[0])
-//                    }
-//                    return [Router(.exec, PushItem.makeCode(results)) ]
-//                }),
 //
-//        
+
+        .execDoCount :
+            Behavior(
+                .execDoCount,
+                takes: [.int, .exec],
+                fxn: {a in
+                    var (x, y) = (a[0] as! IntItem, a[1])
+
+                    var results = [Router]()
+                    let counter = x.value
+
+                    if counter < 1 {
+                        results = [
+                            Router(.exec, y),
+                            Router(.exec, x)
+                        ]
+                    } else {
+                        y.index = 3
+
+                        var newInstruction = InstructionItem(.execDoRange)
+                        newInstruction.call = [x, InstructionItem(.execDoCount), y]
+                        newInstruction.isContingent = Behavior.netContingency(of: x,y)
+                        newInstruction.index = 2
+
+                        x.index = 1
+
+                        var newEndPoint = IntItem(0)
+                        newEndPoint.call = [x, InstructionItem(.execDoCount), y]
+                        newEndPoint.isContingent = Behavior.netContingency(of: x,y)
+                        newEndPoint.index = 0
+
+                        results = [
+                            Router(.exec, y),                // index = 3
+                            Router(.exec, newInstruction),   // index = 2
+                            Router(.exec, x),                // index = 1
+                            Router(.exec, newEndPoint)       // index = 0
+                        ]
+                    }
+                    return results
+                }),
+
+        
 //        // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L183-L203
-//        
-//        .execDoTimes :
-//            Instruction(
-//                .execDoTimes,
-//                takes: [.exec, .int],
-//                fxn: {a in
-//                    let (item, counter) = (a[0], a[1].iVal()!)
-//                    var results: [PushItem] = []
-//                    if counter < 1 {
-//                        return [Router(.exec, a[0]) ]
-//                    } else {
-//                        results.append(a[0])
-//                        results.append(PushItem.makeInt(counter - 1))
-//                        results.append(PushItem.makeInst(.execDoTimes))
-//                        results.append(a[0])
-//                        return [Router(.exec, PushItem.makeCode(results)) ]
-//                    }
-//                }),
-//
-//        
-//        
+
+        .execDoTimes :
+            Behavior(
+                .execDoTimes,
+                takes: [.int, .exec],
+                fxn: {a in
+                    let (x,y) = (a[0], a[1])
+                    let counter = (x as! IntItem).value
+                    var yCopy = y
+                    yCopy.isContingent = Behavior.netContingency(of: x,y)
+                    yCopy.call = [x, InstructionItem(.execDoTimes), y]
+
+                    var results = [Router]()
+
+                    if counter < 1 {
+                        yCopy.index = 0
+                        results = [Router(.exec, yCopy)]
+                    } else {
+                        var newCounter = IntItem(counter - 1)
+                        newCounter.isContingent = Behavior.netContingency(of: x,y)
+                        newCounter.call = [x, InstructionItem(.execDoTimes), y]
+                        newCounter.index = 1
+
+                        var newInstruction = InstructionItem(.execDoTimes)
+                        newInstruction.isContingent = Behavior.netContingency(of: x,y)
+                        newInstruction.call = [x, InstructionItem(.execDoTimes), y]
+                        newInstruction.index = 2
+                        
+                        yCopy.index = 3
+                        results.append(
+                            Router(.exec, CodeItem( [y, newCounter, newInstruction, yCopy]))
+                            )
+                    }
+                    return results
+                }),
+
+        
+        
 //        // using my own code as an example from: https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L83-L112
-//        
-//        .execDoRange :
-//            Instruction(
-//                .execDoRange,
-//                takes: [.exec, .int, .int],
-//                fxn: {a in
-//                    let (item, end, start) = (a[0], a[1].iVal()!, a[2].iVal()!)
-//                    var results: [PushItem] = []
-//                    if (end - start) > 1 {
-//                        results.append(a[2])
-//                        results.append(a[0])
-//                        results.append(PushItem.makeInt(start+1))
-//                        results.append(a[1])
-//                        results.append(PushItem.makeInst(.execDoRange))
-//                        results.append(a[0])
-//                    } else if (start - end) > 1 {
-//                        results.append(a[2])
-//                        results.append(a[0])
-//                        results.append(PushItem.makeInt(start-1))
-//                        results.append(a[1])
-//                        results.append(PushItem.makeInst(.execDoRange))
-//                        results.append(a[0])
-//                    } else {
-//                        if start < end {
-//                            results.append(PushItem.makeInt(end-1))
-//                        } else if start > end {
-//                            results.append(PushItem.makeInt(end+1))
-//                        } else {
-//                            results.append(a[1])
-//                        }
-//                        results.append(a[0])
-//
-//                    }
-//                    return [Router(.exec, PushItem.makeCode(results)) ]
-//                }),
+
+            .execDoRange :
+                Behavior(
+                    .execDoRange,
+                    takes: [.int, .int, .exec],
+                    fxn: {a in
+                        var (x,y,z) = (a[0], a[1], a[2])
+                        let end = (x as! IntItem).value
+                        let start = (y as! IntItem).value
+                        var zCopy = z
+                        zCopy.isContingent = Behavior.netContingency(of: x,y,z)
+                        zCopy.call = [y, x, InstructionItem(.execDoRange), z]
+
+                        var results = [Router]()
+
+                        if abs(start - end) <= 1 {
+                            zCopy.index = 1
+                            results = [Router(.exec, zCopy), Router(.exec, y)]
+                        } else {
+                            let direction = start < end ? 1 : -1
+                            var newCounter = IntItem(start + direction)
+                            newCounter.isContingent = Behavior.netContingency(of: x,y,z)
+                            newCounter.call = [y, x, InstructionItem(.execDoRange), z]
+                            newCounter.index = 2
+
+                            var newInstruction = InstructionItem(.execDoRange)
+                            newInstruction.isContingent = Behavior.netContingency(of: x,y,z)
+                            newInstruction.call = [y, x, InstructionItem(.execDoRange), z]
+                            newInstruction.index = 4
+
+                            z.index = 1
+                            x.index = 3
+                            zCopy.index = 5
+                            results = [
+                                Router(.exec, zCopy),           // index = 5
+                                Router(.exec, newInstruction),  // index = 4
+                                Router(.exec, x),               // index = 3
+                                Router(.exec, newCounter),      // index = 2
+                                Router(.exec, z),               // index = 1
+                                Router(.exec, y)                // index = 0
+                                ]
+                        }
+                        return results
+                    }),
 
         
         
@@ -260,37 +308,6 @@ extension Interpreter {
                     return results
                 }
             ),
-
-//        .execWhile :
-//            Behavior(
-//                .execWhile,
-//                takes: [.bool, .exec],
-//                fxn: {a in
-//                    var (x, y) = (a[0] as! BoolItem, a[1])
-//                    var results = [Router]()
-//                    let c = Behavior.netContingency(of: x, y )
-//                    
-//                    if x.value {
-//                        y.call = [x, InstructionItem(.execWhile), y]
-//                        y.isContingent = c
-//                        y.index = 2
-//                        var yCopy = y
-//                        
-//                        results.append(Router(.exec, y))
-//                        results.append(Router(.exec,
-//                                              InstructionItem(
-//                                                .execWhile,
-//                                                call: y.call,
-//                                                isContingent: c,
-//                                                index: 1
-//                                              )))
-//                        yCopy.index = 0
-//                        results.append(Router(.exec, yCopy))
-//                    }
-//                    return results
-//                }
-//            ),
-
 
         ]
 }
