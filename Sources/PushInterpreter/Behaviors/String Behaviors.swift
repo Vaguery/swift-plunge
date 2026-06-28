@@ -865,7 +865,7 @@ extension Interpreter {
         )
 
     static let stringBehaviors:[PushInstruction : Behavior] =
-       [
+        [
         .stringButLast : stringButLast_Behavior,
         .stringConcat : stringConcat_Behavior,
         .stringConjChar : stringConjChar_Behavior,
@@ -901,5 +901,5 @@ extension Interpreter {
         .stringSplit : stringSplit_Behavior,
         .stringSubstring : stringSubstring_Behavior,
         .stringTake : stringTake_Behavior,
-    ]
+        ]
 }
