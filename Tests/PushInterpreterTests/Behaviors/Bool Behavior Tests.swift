@@ -348,7 +348,7 @@ struct BoolBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == false)
 
         doThis(.boolPop, to: inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .bool) == "[ ]")
     }
 
     @Test func boolQ() {
