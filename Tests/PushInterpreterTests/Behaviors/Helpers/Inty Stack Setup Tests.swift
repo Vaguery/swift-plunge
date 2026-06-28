@@ -12,7 +12,7 @@ import DequeModule
 
 @MainActor
 struct IntyStackSetupTests {
-
+    
     let inty = Interpreter()
 
     // MARK: loadBools tests
@@ -120,6 +120,7 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
         #expect(probeItemOnStack(inty,.string,index:0)!.isContingent == false)
         #expect(probeItemOnStack(inty,.string,index:1)!.isContingent == true)
+    }
     // MARK: loadCode tests
 
     @Test func `loadCode setup`() {
@@ -153,3 +154,4 @@ struct IntyStackSetupTests {
     }
 
 }
+
