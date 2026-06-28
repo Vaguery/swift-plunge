@@ -120,6 +120,36 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
         #expect(probeItemOnStack(inty,.string,index:0)!.isContingent == false)
         #expect(probeItemOnStack(inty,.string,index:1)!.isContingent == true)
+    // MARK: loadCode tests
+
+    @Test func `loadCode setup`() {
+        loadCode(inty, code: [])
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+    @Test func `loadCode loads code items`() {
+        loadCode(inty, code: [1, 2.2, false, CodeItem([IntItem(2)]) ])
+        #expect(stackString(inty, .code) == "[ ( 1 ) ( 2.2 ) ( false ) ( 2 ) ]")
+    }
+
+    @Test func `loadCode sets contingency`() {
+        loadCode(inty, code: [1, 2.2, "foo", ["a","b"]], contingent: [1])
+        #expect(stackString(inty, .code) ==
+                "[ ( 1 ) ( 2.2 ) ( \"foo\" ) ( [\"a\", \"b\"] ) ]")
+        #expect(probeItemOnStack(inty, .code, index:0)!.isContingent == false)
+        #expect(probeItemOnStack(inty, .code, index:1)!.isContingent == true)
+    }
+
+    @Test func `loadCode works on nested CodeItems`() {
+        loadCode(inty, code: [ [ 1, false, [2, 3.4, [5.6, true] ] ] ] )
+        #expect(stackString(inty, .code) ==
+                "[ ( 1 false ( 2 3.4 ( 5.6 true ) ) ) ]")
+    }
+
+    @Test func `loadCode works on empty CodeItems`() {
+        loadCode(inty, code: [ [], CodeItem([]) ] )
+        #expect(stackString(inty, .code) ==
+                "[ ( [] ) ( ) ]")
     }
 
 }

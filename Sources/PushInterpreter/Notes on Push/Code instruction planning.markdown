@@ -72,7 +72,7 @@ This feels like a reasonable collection:
 - codeContainer: find a target `.code` item in another's tree, and if so return its parent
 - codeContains: `true` if a target `.code` item is present in another's tree
 - codeCutAtGap: convert `.code` argument to a flat Plushy, count points and gaps, and cut where indexed by an `.int`; repair both pieces with `Open` and `Close` as needed at the ends, then return
-- codeCutRoot: cut the root of a `.code` item where indexed by an `'.int`
+- codeCutRootAtGap: cut the root of a `.code` item where indexed by an `'.int`
 - codeDepth: maximum steps from root to leaf
 - codeFlatten: flatten then entire tree of a `.code` item in post-order traversal
 - codeFlattenPoint: find the indexed point in the tree and flatten that

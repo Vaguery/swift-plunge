@@ -73,9 +73,10 @@ struct Plushy {
         }
 
         
-        while !stuff.isEmpty {
-            let thing = stuff.remove(at: 0)
-            
+        while stuff.isEmpty ==  false {
+
+            var thing = stuff.remove(at: 0)
+
             switch thing {
             case is Int:
                 let parsedThing = IntItem(thing as! Int)
@@ -135,13 +136,12 @@ struct Plushy {
                 let parsedThing = InstructionItem(thing as! PushInstruction)
                 result.append(parsedThing)
                 let key = parsedThing.value
-
                 implicitBranch(&stuff, key: key)
+
             case is InstructionItem:
                 let parsedThing = thing as! InstructionItem
                 result.append(parsedThing)
                 implicitBranch(&stuff, key: parsedThing.value)
-
 
             case is PlushyControl:
                 if thing as! PlushyControl == PlushyControl.open {
@@ -159,6 +159,11 @@ struct Plushy {
             case is CodeItem:
                 result.append(thing as! CodeItem)
 
+            case is [Any]:
+                var thingCopy = thing as! [Any]
+                let parsedThing = destructivePlushy2push(&thingCopy, level: level + 1)
+                result.append(CodeItem(parsedThing))
+
             default:
                 break
             }
@@ -167,3 +172,4 @@ struct Plushy {
         return result
     }
 }
+
