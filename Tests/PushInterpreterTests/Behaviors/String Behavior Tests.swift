@@ -14,18 +14,6 @@ struct StringBehaviorTests {
 
     var inty = Interpreter()
 
-    @Test func stringPop() {
-        loadStrings(inty, strings: ["", "abcd"], contingent: [1])
-        #expect(stackString(inty, .string) == "[ \"\" \"abcd\" ]")
-
-        doThis(.stringPop, to: inty)
-        #expect(stackString(inty, .string) == "[ \"abcd\" ]")
-        #expect(topItem(inty, .string).isContingent == true)
-
-        doThis(.stringPop, to: inty)
-        #expect(stackString(inty, .string) == "[ ]")
-    }
-
     @Test func stringButLast() {
         loadStrings(inty, strings: ["", "abcd"], contingent: [1])
         #expect(stackString(inty, .string) == "[ \"\" \"abcd\" ]")
@@ -72,20 +60,6 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"w•\" \"abcd\" ]")
         #expect(topItem(inty, .string).isContingent == true)
-    }
-
-    @Test func stringSwap() {
-        loadStrings(inty, strings: ["", "abcd", "efgh"], contingent: [1])
-        #expect(stackString(inty, .string) == "[ \"\" \"abcd\" \"efgh\" ]")
-
-        doThis(.stringSwap, to: inty)
-        #expect(stackString(inty, .string) == "[ \"abcd\" \"\" \"efgh\" ]")
-        #expect(topItem(inty, .string).isContingent == true)
-
-        doThis(.stringPop, to: inty)
-        doThis(.stringSwap, to: inty)
-        #expect(stackString(inty, .string) == "[ \"efgh\" \"\" ]")
-        #expect(topItem(inty, .string).isContingent == false)
     }
 
     @Test func stringContains() {

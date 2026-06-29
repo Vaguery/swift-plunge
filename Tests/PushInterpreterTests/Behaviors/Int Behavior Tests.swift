@@ -64,26 +64,6 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .error).contains("Overflow in .intDec")  )
     }
 
-    @Test func intEq() {
-        loadInts(inty, ints: [9, 38, 4, -4, -7, -7], contingent: [2])
-        #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
-
-       doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
-
-        doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
-        #expect(stackString(inty, .bool) == "[ false false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
-
-        doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ true false false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
-    }
-
     @Test func intFromBool() {
         loadBools(inty, bools: [false, true], contingent: [1])
         #expect(stackString(inty, .bool) == "[ false true ]")

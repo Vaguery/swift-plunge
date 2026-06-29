@@ -53,6 +53,9 @@ public func probeItemOnStack(_ interpreter: Interpreter,
 //
 // Common stacks setups
 //
+// TODO: contants stacks setup
+// TODO: inputs stacks setup
+// TODO: exec stacks setup
 
 // MARK: Bool stack setup
 
@@ -122,34 +125,6 @@ public func probeItemOnStack(_ interpreter: Interpreter,
         }
         inty.stacks[.code]!.prepend(contentsOf: newStack)
     }
-
-// MARK: Code stack setups (OLD STYLE)
-
-@MainActor
-    // 4 Mixed CodeItems
-    public func intyCode4(_ inty: Interpreter) {
-        inty.stacks[.code]!.prepend(
-            contentsOf: [CodeItem([IntItem(4)]),
-                         CodeItem([DoubleItem(8.8)]),
-                         CodeItem([CharItem(Character("-"))], isContingent: true),
-                         CodeItem([]),
-                        ]
-        )
-}
-
-@MainActor
-    // 6 CodeItems of (int, bool)
-    public func intyCode6IB(_ inty: Interpreter) {
-        inty.stacks[.code]!.prepend(
-            contentsOf: [CodeItem([IntItem(4),BoolItem(false)], isContingent: true),
-                         CodeItem([IntItem(4),BoolItem(false)], isContingent: true),
-                         CodeItem([IntItem(4),BoolItem(false)], isContingent: true),
-                         CodeItem([IntItem(4),BoolItem(false)], isContingent: false),
-                         CodeItem([IntItem(5),BoolItem(false)], isContingent: false),
-                         CodeItem([IntItem(4),BoolItem(true)], isContingent: false),
-                        ]
-        )
-}
 
 // MARK: Double stack setup
 

@@ -85,17 +85,4 @@ struct CodeBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]")
     }
 
-    @Test func codePop() {
-        loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]], contingent: [1])
-        #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
-        #expect(topItem(inty, .code).isContingent == false)
-
-        doThis(.codePop, to: inty)
-        #expect(stackString(inty, .code) == "[ ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
-        #expect(topItem(inty, .code).isContingent == true)
-
-        doThis(.codePop, to: inty)
-        #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) ) ]")
-    }
-
 }

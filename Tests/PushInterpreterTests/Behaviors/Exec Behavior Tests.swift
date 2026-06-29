@@ -14,20 +14,6 @@ struct ExecBehaviorTests {
 
     var inty = Interpreter()
 
-    @Test func `execDoCount doesn't loop if the index < 1`() {
-        loadInts(inty, ints: [0])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [BoolItem(false)])
-
-        #expect(stackString(inty, .exec) == "[ false ]")
-        #expect(stackString(inty, .int) == "[ 0 ]")
-
-        doThis(.execDoCount, to: inty)
-        #expect(stackString(inty, .exec) == "[ 0 false ]")
-        #expect(stackString(inty, .int) == "[ ]")
-    }
-
-
     @Test func `execDoCount creates an execDoRange continuation when counter > 0`() {
         loadInts(inty, ints: [3456])
         inty.stacks[.exec]!.prepend(
@@ -58,6 +44,19 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
     }
 
+    @Test func `execDoCount doesn't loop if the index < 1`() {
+        loadInts(inty, ints: [0])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [BoolItem(false)])
+
+        #expect(stackString(inty, .exec) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+
+        doThis(.execDoCount, to: inty)
+        #expect(stackString(inty, .exec) == "[ 0 false ]")
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
     @Test func `execDoRange doesn't loop if the counters are the same`() {
         loadInts(inty, ints: [3, 4])
         inty.stacks[.exec]!.prepend(
@@ -70,8 +69,6 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 4 false ]")
         #expect(stackString(inty, .int) == "[ ]")
     }
-
-
 
     @Test func `execDoRange loops if the start and end are different by 2+`() {
         loadInts(inty, ints: [4, 7])
@@ -200,45 +197,26 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]")
     }
 
-    @Test func `execWhile doesn't act if a false is found`() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(false), BoolItem(true, isContingent: true), BoolItem(false)])
+    @Test func `execDoWhile acts once even if a false is found`() {
+        loadBools(inty, bools: [false, true, false], contingent: [1])
         inty.stacks[.exec]!.prepend(
             contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
-        
+
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ false true false ]")
 
-        doThis(.execWhile, to: inty)
-        #expect(stackString(inty, .exec) == "[ 33 22 ]")
-        #expect(stackString(inty, .bool) == "[ true false ]")
-    }
-    
-    @Test func `execWhile pushes several items back to .exec when true is found`() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(true), BoolItem(true, isContingent: true), BoolItem(false)])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
-        
+        doThis(.execDoWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
-        #expect(stackString(inty, .bool) == "[ true true false ]")
-        
-        doThis(.execWhile, to: inty)
-        #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 0)
+        #expect(topItem(inty, .exec).index == 2)
         #expect(topItem(inty, .exec).isContingent == true)
-        #expect(inty.stacks[.exec]![1].index == 1)
-        #expect(inty.stacks[.exec]![2].index == 2)
     }
 
-    
     @Test func `execDoWhile is a lot like execWhile when a true is found`() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(true), BoolItem(true, isContingent: true), BoolItem(false)])
+        loadBools(inty, bools: [true, true, false], contingent: [1])
         inty.stacks[.exec]!.prepend(
             contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
-        
+
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true true false ]")
 
@@ -269,26 +247,54 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
     }
 
-    @Test func `execDoWhile acts once even if a false is found`() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(false), BoolItem(true, isContingent: true), BoolItem(false)])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
-        
-        #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
-        #expect(stackString(inty, .bool) == "[ false true false ]")
-        
-        doThis(.execDoWhile, to: inty)
-        #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
-        #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 2)
+    @Test func execIf() {
+        loadBools(inty, bools: [true])
+        inty.stacks[.exec]!.prepend(IntItem(44))
+        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
+
+        #expect(stackString(inty, .exec) == "[ 3.4 44 ]")
+
+        doThis(.execIf, to: inty)
+        #expect(stackString(inty, .exec) == "[ 3.4 ]")
+        #expect(topItem(inty, .exec).isContingent == true)
+
+        doThis(.execFlush, to: inty)
+
+        inty.stacks[.bool]!.prepend(BoolItem(false, isContingent: false))
+        inty.stacks[.exec]!.prepend(IntItem(44))
+        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
+
+        doThis(.execIf, to: inty)
+        #expect(stackString(inty, .exec) == "[ 44 ]")
         #expect(topItem(inty, .exec).isContingent == true)
     }
-    
-    
+
+    @Test func execK() {
+        inty.stacks[.exec]!.prepend(IntItem(44))
+        inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
+        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
+
+        #expect(stackString(inty, .exec) == "[ 3.4 true 44 ]")
+
+        doThis(.execK, to: inty)
+        #expect(stackString(inty, .exec) == "[ 3.4 44 ]")
+    }
+
+    @Test func execS() {
+        inty.stacks[.exec]!.prepend(IntItem(44))
+        inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
+        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
+
+        #expect(stackString(inty, .exec) == "[ 3.4 true 44 ]")
+
+        doThis(.execS, to: inty)
+        #expect(stackString(inty, .exec) == "[ 3.4 44 ( true 44 ) ]")
+        #expect(topItem(inty, .exec).isContingent == false)
+        #expect(inty.stacks[.exec]![2].isContingent == true)
+    }
+
     @Test func execWhen() {
-        inty.stacks[.bool]!.prepend(
-            contentsOf: [BoolItem(true, isContingent: true), BoolItem(false)])
+        loadBools(inty, bools: [true, false], contingent: [0])
         inty.stacks[.exec]!.prepend(
             contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
         
@@ -306,52 +312,36 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
     }
 
-    @Test func execIf() {
-        inty.stacks[.bool]!.prepend(BoolItem(true, isContingent: false))
-        inty.stacks[.exec]!.prepend(IntItem(44))
-        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
-        
-        #expect(stackString(inty, .exec) == "[ 3.4 44 ]")
-        
-        doThis(.execIf, to: inty)
-        #expect(stackString(inty, .exec) == "[ 3.4 ]")
-        #expect(topItem(inty, .exec).isContingent == true)
+    @Test func `execWhile doesn't act if a false is found`() {
+        loadBools(inty, bools: [false, true, false], contingent: [1])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
 
-        doThis(.execFlush, to: inty)
-        
-        inty.stacks[.bool]!.prepend(BoolItem(false, isContingent: false))
-        inty.stacks[.exec]!.prepend(IntItem(44))
-        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
+        #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
+        #expect(stackString(inty, .bool) == "[ false true false ]")
 
-        doThis(.execIf, to: inty)
-        #expect(stackString(inty, .exec) == "[ 44 ]")
+        doThis(.execWhile, to: inty)
+        #expect(stackString(inty, .exec) == "[ 33 22 ]")
+        #expect(stackString(inty, .bool) == "[ true false ]")
+    }
+
+    @Test func `execWhile pushes several items back to .exec when true is found`() {
+        loadBools(inty, bools: [true, true, false], contingent: [1])
+        inty.stacks[.exec]!.prepend(
+            contentsOf: [IntItem(44), IntItem(33), IntItem(22)])
+
+        #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
+        #expect(stackString(inty, .bool) == "[ true true false ]")
+
+        doThis(.execWhile, to: inty)
+        #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
+        #expect(stackString(inty, .bool) == "[ true false ]")
+        #expect(topItem(inty, .exec).index == 0)
         #expect(topItem(inty, .exec).isContingent == true)
+        #expect(inty.stacks[.exec]![1].index == 1)
+        #expect(inty.stacks[.exec]![2].index == 2)
     }
-    
-    @Test func execS() {
-        inty.stacks[.exec]!.prepend(IntItem(44))
-        inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
-        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
-        
-        #expect(stackString(inty, .exec) == "[ 3.4 true 44 ]")
-        
-        doThis(.execS, to: inty)
-        #expect(stackString(inty, .exec) == "[ 3.4 44 ( true 44 ) ]")
-        #expect(topItem(inty, .exec).isContingent == false)
-        #expect(inty.stacks[.exec]![2].isContingent == true)
-    }
-    
-    @Test func execK() {
-        inty.stacks[.exec]!.prepend(IntItem(44))
-        inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
-        inty.stacks[.exec]!.prepend(DoubleItem(3.4))
-        
-        #expect(stackString(inty, .exec) == "[ 3.4 true 44 ]")
-        
-        doThis(.execK, to: inty)
-        #expect(stackString(inty, .exec) == "[ 3.4 44 ]")
-    }
-    
+
     @Test func execY() {
         inty.stacks[.exec]!.prepend(IntItem(44))
         inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))

@@ -119,29 +119,49 @@ struct CombinatorBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
+    @Test func intEq() {
+        loadInts(inty, ints: [9, 38, 4, -4, -7, -7], contingent: [2])
+        #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
+
+        doThis(.intEq, to: inty)
+        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+
+        doThis(.intEq, to: inty)
+        #expect(stackString(inty, .int) == "[ -7 -7 ]")
+        #expect(stackString(inty, .bool) == "[ false false ]")
+        #expect(topItem(inty, .bool).isContingent == true)
+
+        doThis(.intEq, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ true false false ]")
+        #expect(topItem(inty, .bool).isContingent == false)
+    }
+
     @Test func `combinator Eq works`() {
 
         //MARK: verify there isn't a bug in this. I can't get consistent results
 
-//        intyCode6IB(inty)
-//        #expect(stackString(inty, .code) == "[ ( 4 false ) ( 4 false ) ( 4 false ) ( 4 false ) ( 5 false ) ( 4 true ) ]")
-//        loadCode(inty, code: [ [1, false], [1, false], [5, true]], contingent: [1])
-//        #expect(stackString(inty, .code) == "[ ( 1 false ) ( 1 false ) ( 5 true ) ]")
-//
-//        loadInts(inty, ints: [3,3,4])
-//        doThis(.intEq, to: inty)
-//        #expect(stackString(inty, .bool) == "[ true ]")
-//        #expect(stackString(inty, .int) == "[ 4 ]")
-//        #expect(topItem(inty, .bool).isContingent == true)
-//
-//        doThis(.intEq, to: inty)
-//        #expect(stackString(inty, .bool) == "[ false true ]")
-//        #expect(stackString(inty, .int) == "[ ]")
-//        #expect(topItem(inty, .bool).isContingent == true)
+        //        intyCode6IB(inty)
+        //        #expect(stackString(inty, .code) == "[ ( 4 false ) ( 4 false ) ( 4 false ) ( 4 false ) ( 5 false ) ( 4 true ) ]")
+        //        loadCode(inty, code: [ [1, false], [1, false], [5, true]], contingent: [1])
+        //        #expect(stackString(inty, .code) == "[ ( 1 false ) ( 1 false ) ( 5 true ) ]")
+        //
+        //        loadInts(inty, ints: [3,3,4])
+        //        doThis(.intEq, to: inty)
+        //        #expect(stackString(inty, .bool) == "[ true ]")
+        //        #expect(stackString(inty, .int) == "[ 4 ]")
+        //        #expect(topItem(inty, .bool).isContingent == true)
+        //
+        //        doThis(.intEq, to: inty)
+        //        #expect(stackString(inty, .bool) == "[ false true ]")
+        //        #expect(stackString(inty, .int) == "[ ]")
+        //        #expect(topItem(inty, .bool).isContingent == true)
 
-//        doThis(.codeEq, to: inty)
-//        #expect(stackString(inty, .bool) == "[ false false true ]")
-//        #expect(topItem(inty, .bool).isContingent == false)
+        //        doThis(.codeEq, to: inty)
+        //        #expect(stackString(inty, .bool) == "[ false false true ]")
+        //        #expect(topItem(inty, .bool).isContingent == false)
     }
 
     @Test func `combinator Flush works`() {
@@ -150,7 +170,7 @@ struct CombinatorBehaviorTests {
 
         doThis(.intFlush, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-     }
+    }
 
     @Test func `combinator Pop works`() {
         loadInts(inty, ints: [11, 22], contingent: [1])
@@ -234,6 +254,20 @@ struct CombinatorBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
+    @Test func stringSwap() {
+        loadStrings(inty, strings: ["", "abcd", "efgh"], contingent: [1])
+        #expect(stackString(inty, .string) == "[ \"\" \"abcd\" \"efgh\" ]")
+
+        doThis(.stringSwap, to: inty)
+        #expect(stackString(inty, .string) == "[ \"abcd\" \"\" \"efgh\" ]")
+        #expect(topItem(inty, .string).isContingent == true)
+
+        doThis(.stringPop, to: inty)
+        doThis(.stringSwap, to: inty)
+        #expect(stackString(inty, .string) == "[ \"efgh\" \"\" ]")
+        #expect(topItem(inty, .string).isContingent == false)
+    }
+
     // contingency
     @Test func `combinator Yank works`() {
         loadInts(inty, ints: [-3, 2, 17, 0, 2])
@@ -281,9 +315,5 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .double) == "[ 2.2 4.4 4.4 2.2 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
     }
-
-
-
-
 
 }

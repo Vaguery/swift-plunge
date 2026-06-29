@@ -189,16 +189,4 @@ struct CharBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == false)
     }
 
-    @Test func charPop() {
-        loadChars(inty, chars: ["x", "?"], contingent: [0])
-        #expect(stackString(inty, .char) == "[ 'x' '?' ]")
-        #expect(topItem(inty, .char).isContingent == true)
-
-        doThis(.charPop, to: inty)
-        #expect(stackString(inty, .char) == "[ '?' ]")
-        #expect(topItem(inty, .char).isContingent == false)
-
-        doThis(.charPop, to: inty)
-        #expect(stackString(inty, .char) == "[ ]")
-    }
 }

@@ -53,18 +53,6 @@ struct IntyStackSetupTests {
         #expect(probeItemOnStack(inty,.char,index:1)!.isContingent == true)
     }
 
-    // MARK: intyCode setup tests [OLD STYLE]
-
-    @Test func `intyCode4 setup`() {
-        intyCode4(inty)
-        #expect(stackString(inty, .code) == "[ ( 4 ) ( 8.8 ) ( '-' ) ( ) ]")
-    }
-
-    @Test func `intyCode6IB setup`() {
-        intyCode6IB(inty)
-        #expect(stackString(inty, .code) == "[ ( 4 false ) ( 4 false ) ( 4 false ) ( 4 false ) ( 5 false ) ( 4 true ) ]")
-    }
-
     // MARK: loadDoubles tests
 
     @Test func `loadDoubles setup`() {

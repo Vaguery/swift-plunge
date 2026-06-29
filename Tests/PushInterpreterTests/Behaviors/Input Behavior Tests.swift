@@ -13,27 +13,8 @@ import DequeModule
 struct InputBehaviorTests {
     
    let inty = Interpreter()
-    
-    @Test func inputsWorksWhenDefined() {
-        inty.inputs[.input3] = IntItem(17)
-        
-        #expect(stackString(inty, .exec) == "[ ]")
-        Interpreter.language[.input3]!.act(on: inty)
-        #expect(stackString(inty, .exec) == "[ 17 ]")
 
-    }
-    
-    @Test func inputsWorksWhenUndefined() {
-        
-        #expect(stackString(inty, .exec) == "[ ]")
-        Interpreter.language[.input3]!.act(on: inty)
-        #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .error).contains("No input for") )
-
-    }
-    
-    
-    @Test func inputHistoryIsContingent() {
+    @Test func `input history is contingent`() {
         inty.inputs[.input2] = IntItem(17)
         Interpreter.language[.input2]!.act(on: inty)
         let result = inty.stacks[.exec]!.popFirst()! as! IntItem
@@ -44,4 +25,19 @@ struct InputBehaviorTests {
         #expect(result.pretty() == "17")
     }
 
+    @Test func `inputs works when defined`() {
+        inty.inputs[.input3] = IntItem(17)
+        
+        #expect(stackString(inty, .exec) == "[ ]")
+        Interpreter.language[.input3]!.act(on: inty)
+        #expect(stackString(inty, .exec) == "[ 17 ]")
+    }
+    
+    @Test func `inputs works when undefined`() {
+
+        #expect(stackString(inty, .exec) == "[ ]")
+        Interpreter.language[.input3]!.act(on: inty)
+        #expect(stackString(inty, .exec) == "[ ]")
+        #expect(stackString(inty, .error).contains("No input for") )
+    }
 }
