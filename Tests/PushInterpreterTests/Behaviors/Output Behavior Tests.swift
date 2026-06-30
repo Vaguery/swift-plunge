@@ -15,16 +15,6 @@ struct OutputBehaviorTests {
     
     var inty = Interpreter()
 
-    @Test func printNewline() {
-        inty.load(inputs: [:],
-                  stacks: [:],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-        
-        doThis(.printNewline, to: inty)
-        #expect(inty.printout == "\n")
-    }
-    
     @Test func boolPrint() {
         inty.load(inputs: [:],
                   stacks: [.bool: [BoolItem(false)]],
@@ -44,7 +34,35 @@ struct OutputBehaviorTests {
         doThis(.charPrint, to: inty)
         #expect(inty.printout == "'x'\n")
     }
-    
+
+    @Test func codePrint() {
+        inty.load(inputs: [:],
+                  stacks: [.code: [CodeItem([
+                    VecStringItem(["foo", "bar"]),
+                    DoubleItem(3.14),
+                    CodeItem([
+                        BoolItem(false),
+                        IntItem(1964)
+                    ])
+                  ])
+                  ]],
+                  program: [])
+        #expect(inty.printout.isEmpty)
+
+        doThis(.codePrint, to: inty)
+        #expect(inty.printout == "( [\"foo\", \"bar\"] 3.14 ( false 1964 ) )\n")
+    }
+
+    @Test func doublePrint() {
+        inty.load(inputs: [:],
+                  stacks: [.double: [DoubleItem(3.14)]],
+                  program: [])
+        #expect(inty.printout.isEmpty)
+
+        doThis(.doublePrint, to: inty)
+        #expect(inty.printout == "3.14\n")
+    }
+
     @Test func execPrint() {
         inty.load(inputs: [:],
                   stacks: [.exec: [CharItem(Character("x"))]],
@@ -54,17 +72,7 @@ struct OutputBehaviorTests {
         doThis(.execPrint, to: inty)
         #expect(inty.printout == "'x'\n")
     }
-    
-    @Test func doublePrint() {
-        inty.load(inputs: [:],
-                  stacks: [.double: [DoubleItem(3.14)]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-        
-        doThis(.doublePrint, to: inty)
-        #expect(inty.printout == "3.14\n")
-    }
-    
+
     @Test func intPrint() {
         inty.load(inputs: [:],
                   stacks: [.int: [IntItem(1964)]],
@@ -74,7 +82,17 @@ struct OutputBehaviorTests {
         doThis(.intPrint, to: inty)
         #expect(inty.printout == "1964\n")
     }
-    
+
+    @Test func printNewline() {
+        inty.load(inputs: [:],
+                  stacks: [:],
+                  program: [])
+        #expect(inty.printout.isEmpty)
+
+        doThis(.printNewline, to: inty)
+        #expect(inty.printout == "\n")
+    }
+
     @Test func stringPrint() {
         inty.load(inputs: [:],
                   stacks: [.string: [StringItem("purple")]],
@@ -124,23 +142,4 @@ struct OutputBehaviorTests {
         doThis(.vecStringPrint, to: inty)
         #expect(inty.printout == "[\"foo\", \"bar\"]\n")
     }
-    
-    @Test func codePrint() {
-        inty.load(inputs: [:],
-                  stacks: [.code: [CodeItem([
-                    VecStringItem(["foo", "bar"]),
-                    DoubleItem(3.14),
-                    CodeItem([
-                        BoolItem(false),
-                        IntItem(1964)
-                    ])
-                  ])
-                  ]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-        
-        doThis(.codePrint, to: inty)
-        #expect(inty.printout == "( [\"foo\", \"bar\"] 3.14 ( false 1964 ) )\n")
-    }
-    
 }

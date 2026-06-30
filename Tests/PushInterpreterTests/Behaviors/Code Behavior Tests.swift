@@ -15,22 +15,21 @@ struct CodeBehaviorTests {
     let inty = Interpreter()
 
     @Test func codeAppend() {
-        intyCode4(inty)
-        #expect(stackString(inty, .code) == "[ ( 4 ) ( 8.8 ) ( '-' ) ( ) ]")
+        loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]], contingent: [1])
+        #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
 
         doThis(.codeAppend, to: inty)
-        #expect(stackString(inty, .code) == "[ ( 8.8 4 ) ( '-' ) ( ) ]")
-        #expect(topItem(inty, .code).isContingent == false)
-        
-        doThis(.codeAppend, to: inty)
-        #expect(stackString(inty, .code) == "[ ( '-' 8.8 4 ) ( ) ]")
+        #expect(stackString(inty, .code) == "[ ( false 2 1 ) ( \"abc\" ( false 1.1 ) ) ]")
         #expect(topItem(inty, .code).isContingent == true)
-        
+
         doThis(.codeAppend, to: inty)
-        #expect(stackString(inty, .code) == "[ ( '-' 8.8 4 ) ]")
+        #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
+        #expect(topItem(inty, .code).isContingent == true)
+
+        doThis(.codeAppend, to: inty)
+        #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
         #expect(topItem(inty, .code).isContingent == true)
     }
-
 
     @Test func `codeLengthRoot only measures in the code root`() {
         loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]] )
@@ -85,4 +84,5 @@ struct CodeBehaviorTests {
         doThis(.codeIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
     }
+
 }
