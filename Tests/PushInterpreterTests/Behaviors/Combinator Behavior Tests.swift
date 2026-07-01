@@ -182,7 +182,6 @@ struct CombinatorBehaviorTests {
     }
 
     @Test func `combinator Rot works`() {
-        //MARK: why does this work?
 
         loadInts(inty, ints: [11, 55, 999], contingent: [1])
         #expect(stackString(inty, .int) == "[ 11 55 999 ]")
