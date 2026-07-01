@@ -121,6 +121,19 @@ struct DoubleBehaviorTests {
         
     }
 
+    @Test func doubleFromBool() {
+        loadBools(inty, bools: [false, true], contingent: [1])
+        #expect(stackString(inty, .bool) == "[ false true ]")
+
+        doThis(.doubleFromBool, to: inty)
+        #expect(stackString(inty, .double) == "[ 0.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
+
+        doThis(.doubleFromBool, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.0 0.0 ]")
+        #expect(topItem(inty, .double).isContingent == true)
+    }
+
     @Test func doubleFromChar() {
         loadChars(inty, chars: ["g", "😉", "\n"], contingent: [1])
         #expect(stackString(inty, .char) == "[ 'g' '😉' '\("\n")' ]")
@@ -153,6 +166,31 @@ struct DoubleBehaviorTests {
         doThis(.doubleFromInt, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 14000.0 -11.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+    }
+
+    @Test func doubleFromString() {
+        loadStrings(inty, strings: ["-172", "0", "00001", "1_000_000", " 172", "1 7 2"], contingent:    [1])
+        #expect(stackString(inty, .string) == "[ \"-172\" \"0\" \"00001\" \"1_000_000\" \" 172\" \"1 7 2\" ]")
+
+        doThis(.doubleFromString, to: inty)
+        #expect(stackString(inty, .double) == "[ -172.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
+
+        doThis(.doubleFromString, to: inty)
+        #expect(stackString(inty, .double) == "[ 0.0 -172.0 ]")
+        #expect(topItem(inty, .double).isContingent == true)
+
+        doThis(.doubleFromString, to: inty)
+        #expect(stackString(inty, .double) == "[ 1.0 0.0 -172.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
+
+        doThis(.doubleFromString, to: inty)
+        #expect(stackString(inty, .double) == "[ 0.0 1.0 0.0 -172.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
+
+        doThis(.doubleFromString, to: inty)
+        #expect(stackString(inty, .double) == "[ 0.0 0.0 1.0 0.0 -172.0 ]")
+        #expect(topItem(inty, .double).isContingent == false)
     }
 
     @Test func doubleGT() {

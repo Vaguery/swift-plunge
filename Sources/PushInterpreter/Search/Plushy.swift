@@ -75,7 +75,7 @@ struct Plushy {
         
         while stuff.isEmpty ==  false {
 
-            var thing = stuff.remove(at: 0)
+            let thing = stuff.remove(at: 0)
 
             switch thing {
             case is Int:

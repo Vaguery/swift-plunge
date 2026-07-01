@@ -327,25 +327,6 @@ extension Interpreter {
             }
         )
 
-    static let intEq_Behavior =
-        Behavior(
-            .intEq,
-            takes: [.int, .int],
-            fxn: { a in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value == x.value,
-                            call: [y, x, InstructionItem(.intEq)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
-                    )
-                ]
-            }
-        )
-
     static let intInc_Behavior =
         Behavior(
             .intInc,
@@ -503,7 +484,6 @@ extension Interpreter {
         [
             .intAdd : intAdd_Behavior,
             .intDec : intDec_Behavior,
-            .intEq : intEq_Behavior,
             .intFromBool : intFromBool_Behavior,
             .intFromChar : intFromChar_Behavior,
             .intFromDouble : intFromDouble_Behavior,

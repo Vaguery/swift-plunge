@@ -15,7 +15,7 @@ struct CodableTests {
 
     @Test(.disabled("until we add Codable conformance to Item")) func `a [any Item] array can be encoded and decoded`() {
         var p = [1, IntItem(2), DoubleItem(3)] as [Any]
-        let prog = Plushy.plushy2push( p )
+        _ = Plushy.plushy2push( p )
 
 
     }
