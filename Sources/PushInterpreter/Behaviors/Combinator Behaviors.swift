@@ -35,9 +35,6 @@ extension Interpreter {
         return result
     }
 
-
-
-
     static func dupCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -56,9 +53,6 @@ extension Interpreter {
         )
         result[name] = inst
     }
-
-
-
 
     // typeEq creates a new item which may be contingent, and
     // demands multilevel comparison between `Item` instances at
@@ -96,9 +90,6 @@ extension Interpreter {
         result[name] = inst
     }
 
-
-
-
     // swap restructures the `type` stack, but does not affect argument state
     // and therefore has no effect on `call` or `isContingent` _unless the instruction itself_
     // is contingent.
@@ -124,9 +115,6 @@ extension Interpreter {
         result[name] = inst
     }
 
-
-
-
     static func popCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -143,9 +131,6 @@ extension Interpreter {
         )
         result[name] = inst
     }
-
-
-
 
     //  'stackDepth` produces a result with `isContingent = true`
     //
@@ -177,9 +162,6 @@ extension Interpreter {
         )
         result[name] = inst
     }
-
-
-
 
     //  'DupTimes` introduces some tacit contingency into execution,
     //  but it's not entirely clear if it is making these results
@@ -328,10 +310,16 @@ extension Interpreter {
             }
         )
         result[name] = inst
+    }
 
-// MARK: Is this missing it's header? Not showing up on the dictionary
-        // TODO: this will be affected by the instruction's contingency
-        //
+    static func rotCombinator_Behavior(
+        for stack: PushStack,
+        into result: inout [PushInstruction: Behavior]
+    ) {
+        let type = stack.rawValue
+        var name: PushInstruction
+        var inst: Behavior
+
         name = PushInstruction(rawValue: "\(type)Rot")!
         inst = Behavior(
             name,
@@ -499,19 +487,20 @@ extension Interpreter {
     {
         var result: [PushInstruction: Behavior] = [:]
 
-        dupCombinator_Behavior(for: stack, into: &result)
-        eqCombinator_Behavior(for: stack, into: &result)
-        swapCombinator_Behavior(for: stack, into: &result)
-        popCombinator_Behavior(for: stack, into: &result)
-        stackDepthCombinator_Behavior(for: stack, into: &result)
-        dupTimesCombinator_Behavior(for: stack, into: &result)
-        dupItemsCombinator_Behavior(for: stack, into: &result)
-        emptyCombinator_Behavior(for: stack, into: &result)
-        flushCombinator_Behavior(for: stack, into: &result)
-        yankCombinator_Behavior(for: stack, into: &result)
-        shoveCombinator_Behavior(for: stack, into: &result)
-        yankDupCombinator_Behavior(for: stack, into: &result)
         deepDupCombinator_Behavior(for: stack, into: &result)
+        dupCombinator_Behavior(for: stack, into: &result)
+        dupItemsCombinator_Behavior(for: stack, into: &result)
+        dupTimesCombinator_Behavior(for: stack, into: &result)
+        emptyCombinator_Behavior(for: stack, into: &result)
+        eqCombinator_Behavior(for: stack, into: &result)
+        flushCombinator_Behavior(for: stack, into: &result)
+        popCombinator_Behavior(for: stack, into: &result)
+        rotCombinator_Behavior(for: stack, into: &result)
+        shoveCombinator_Behavior(for: stack, into: &result)
+        stackDepthCombinator_Behavior(for: stack, into: &result)
+        swapCombinator_Behavior(for: stack, into: &result)
+        yankCombinator_Behavior(for: stack, into: &result)
+        yankDupCombinator_Behavior(for: stack, into: &result)
 
         return result
     }
