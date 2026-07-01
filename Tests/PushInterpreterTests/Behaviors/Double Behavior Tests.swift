@@ -100,16 +100,16 @@ struct DoubleBehaviorTests {
     }
 
     @Test func doubleDivide() {
-        loadDoubles(inty, doubles: [0.0, 7.0, 3.0, -6.0], contingent: [2])
-        #expect(stackString(inty, .double) == "[ 0.0 7.0 3.0 -6.0 ]")
+        loadDoubles(inty, doubles: [7.0, 0.0, 3.0, -6.0], contingent: [2])
+        #expect(stackString(inty, .double) == "[ 7.0 0.0 3.0 -6.0 ]")
 
         doThis(.doubleDivide, to: inty)
-        #expect(stackString(inty, .double) == "[ 3.0 -6.0 ]")
+        #expect(stackString(inty, .double) == "[ 0.0 3.0 -6.0 ]")
 
         doThis(.doublePop, to: inty)
         
         doThis(.doubleDivide, to: inty)
-        #expect(stackString(inty, .double) == "[ -6.0 ]")
+        #expect(stackString(inty, .double) == "[ -2.0 ]")
     }
     
     @Test func `doubleDivide records overflows`() {
