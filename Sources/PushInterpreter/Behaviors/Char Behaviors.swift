@@ -10,27 +10,6 @@ import DequeModule
 extension Interpreter {
 
     // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
-    static let charFromInt_Behavior =
-        Behavior(
-            .charFromInt,
-            takes: [.int],
-            fxn: { a in
-                let (x) = (a[0] as! IntItem)
-                let c = Character(UnicodeScalar(abs(x.value % 95) + 32)!)
-                return [
-                    Router(
-                        .char,
-                        CharItem(
-                            c,
-                            call: [x, InstructionItem(.charFromInt)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
-                    )
-                ]
-            }
-        )
-
-    // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
     static let charFromDouble_behavior =
         Behavior(
             .charFromDouble,
@@ -51,56 +30,20 @@ extension Interpreter {
             }
         )
 
-    static let charIsLetter_Behavior =
+    // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
+    static let charFromInt_Behavior =
         Behavior(
-            .charIsLetter,
-            takes: [.char],
+            .charFromInt,
+            takes: [.int],
             fxn: { a in
-                let (x) = (a[0] as! CharItem)
+                let (x) = (a[0] as! IntItem)
+                let c = Character(UnicodeScalar(abs(x.value % 95) + 32)!)
                 return [
                     Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isLetter,
-                            call: [x, InstructionItem(.charIsLetter)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
-                    )
-                ]
-            }
-        )
-
-    static let charIsDigit_Behavior =
-        Behavior(
-            .charIsDigit,
-            takes: [.char],
-            fxn: { a in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isWholeNumber,
-                            call: [x, InstructionItem(.charIsDigit)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
-                    )
-                ]
-            }
-        )
-
-    static let charIsWhitespace_Behavior =
-        Behavior(
-            .charIsWhitespace,
-            takes: [.char],
-            fxn: { a in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isWhitespace,
-                            call: [x, InstructionItem(.charIsWhitespace)],
+                        .char,
+                        CharItem(
+                            c,
+                            call: [x, InstructionItem(.charFromInt)],
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -140,6 +83,63 @@ extension Interpreter {
                             y >= x,
                             call: [y, x, InstructionItem(.charGT)],
                             isContingent: Behavior.netContingency(of: x, y)
+                        )
+                    )
+                ]
+            }
+        )
+
+    static let charIsDigit_Behavior =
+        Behavior(
+            .charIsDigit,
+            takes: [.char],
+            fxn: { a in
+                let (x) = (a[0] as! CharItem)
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            x.value.isWholeNumber,
+                            call: [x, InstructionItem(.charIsDigit)],
+                            isContingent: Behavior.netContingency(of: x)
+                        )
+                    )
+                ]
+            }
+        )
+
+    static let charIsLetter_Behavior =
+        Behavior(
+            .charIsLetter,
+            takes: [.char],
+            fxn: { a in
+                let (x) = (a[0] as! CharItem)
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            x.value.isLetter,
+                            call: [x, InstructionItem(.charIsLetter)],
+                            isContingent: Behavior.netContingency(of: x)
+                        )
+                    )
+                ]
+            }
+        )
+
+    static let charIsWhitespace_Behavior =
+        Behavior(
+            .charIsWhitespace,
+            takes: [.char],
+            fxn: { a in
+                let (x) = (a[0] as! CharItem)
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            x.value.isWhitespace,
+                            call: [x, InstructionItem(.charIsWhitespace)],
+                            isContingent: Behavior.netContingency(of: x)
                         )
                     )
                 ]
