@@ -126,7 +126,7 @@ struct Stress_Tests {
             case 6: return VecDoubleItem(randomVecDouble(100_000.0,20))
             case 7: return VecStringItem(randomVecString(20))
             case 8...10:
-                var plush = RandomCode.randomPlushy(Int.random(in: 1..<20))
+                let plush = RandomCode.randomPlushy(Int.random(in: 1..<20))
                 return CodeItem(Plushy.plushy2push(plush))
             default: return InstructionItem(randomInstruction())
             }
@@ -165,8 +165,8 @@ struct Stress_Tests {
         let start = Date.now
 
         for i in (1...100_000) {
-            var p1 = RandomCode.randomPlushy(100)
-        
+            let p1 = RandomCode.randomPlushy(100)
+
             let program = Plushy.plushy2push(p1)
                         
             inty.load(program: program)
