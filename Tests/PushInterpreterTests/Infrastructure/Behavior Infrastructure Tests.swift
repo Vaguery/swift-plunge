@@ -18,7 +18,7 @@ struct BehaviorInfrastructureTests {
         #expect(Behavior.netContingency(of: arg1, arg2) == true)
     }
     
-    @Test func eachInstructionInLanguageHasMatchingNameInBehavior() {
+    @Test func `each Instruction in Language has Matching Name in Behavior`() {
         for (instruction, behavior) in Interpreter.language {
             #expect(instruction.rawValue == behavior.name.rawValue)
         }

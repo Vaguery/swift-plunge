@@ -207,7 +207,7 @@ struct InterpreterTests {
     }
     
     
-    
+//    @Test
     @Test(.disabled("run manually to see the coverage"))
     func behaviorCoverageTest() {
         let coverage = Interpreter.reportBehaviorCoverage()
