@@ -75,22 +75,6 @@ extension Interpreter {
         }
     )
 
-    static let codeIsEmpty_Behavior =
-    Behavior(
-        .codeIsEmpty,
-        takes: [.code],
-        fxn: {a in
-            let (x) = (a[0] as! CodeItem)
-            let result =
-                BoolItem(
-                    x.value.isEmpty,
-                    call: [x, InstructionItem(.codeIsEmpty)],
-                    isContingent: Behavior.netContingency(of: x)
-                    )
-            return [ Router( .bool, result) ]
-        }
-    )
-
     static let execQuote_Behavior =
     Behavior(
         .execQuote,
@@ -184,11 +168,5 @@ extension Interpreter {
         .intQuote : intQuote_Behavior,
         .stringQuote : stringQuote_Behavior,
 
-    static let codeBehaviors: [PushInstruction: Behavior] =
-        [
-            .codeAppend: codeAppend_Behavior,
-            .codeIsEmpty: codeIsEmpty_Behavior,
-            .codeLengthRoot: codeLengthRoot_Behavior,
-            .codeWrapRoot: codeWrapRoot_Behavior,
-        ]
+    ]
 }

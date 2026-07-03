@@ -85,23 +85,6 @@ struct CodeBehaviorTests {
         #expect(stackString(inty, .code) == "[ ( ( 1 ( 2.2 [3] ) ) ) ]")
     }
 
-    @Test func `codeIsEmpty works with empty code`() {
-        loadCode(inty, code: [CodeItem([]) ] )
-        #expect(stackString(inty, .code) == "[ ( ) ]")
-
-        doThis(.codeIsEmpty, to: inty)
-        #expect(stackString(inty, .bool) == "[ true ]")
-    }
-
-    @Test func `codeIsEmpty works with non-empty code`() {
-        loadCode(inty, code: [ 1 ] )
-        #expect(stackString(inty, .code) == "[ ( 1 ) ]")
-
-        doThis(.codeIsEmpty, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
-    }
-
-
     @Test func execQuote() {
         inty.stacks[.exec]!.prepend(IntItem(44))
         inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
