@@ -123,13 +123,26 @@ final class Interpreter {
             recorders[key]?.record(interpreter: self)
         }
     }
-    
+
+    func unwrapCodeItem(code:CodeItem) {
+        let items = code.value
+        var result = [any Item]()
+
+        for idx in (0..<items.count) {
+            var copy = items[idx]
+            copy.call = [code]
+            copy.index = idx
+            copy.isContingent = Behavior.netContingency(of: code, copy)
+            result.append(copy)
+        }
+        self.stacks[.exec]!.prepend(contentsOf: result)
+    }
+
     func step() {
         if counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             let nextItem = stacks[.exec]!.popFirst()
             if nextItem is CodeItem {
-                let items = (nextItem as! CodeItem).value
-                self.stacks[.exec]!.prepend(contentsOf: items)
+                unwrapCodeItem(code: nextItem as! CodeItem)
             } else if nextItem is InstructionItem {
                 let action = (nextItem as! InstructionItem).value
                 self.behaviors[action]!.act(on: self)
@@ -142,7 +155,7 @@ final class Interpreter {
         // catch thrown errors from instructions
         // enforce config size limits
     }
-    
+
     func run(inputs: [PushInstruction:any Item],
              stacks initial: [PushStack: [any Item]],
              program: [any Item],
