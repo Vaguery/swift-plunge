@@ -76,6 +76,31 @@ extension Interpreter {
         }
     )
 
+    static let execQuote_Behavior =
+    Behavior(
+        .execQuote,
+        takes: [.exec],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [InstructionItem(.execQuote), x]
+            return [ Router(.code, result) ]
+        }
+    )
+
+    static let intQuote_Behavior =
+    Behavior(
+        .intQuote,
+        takes: [.int],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [x, InstructionItem(.intQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
 
 
     static let codeBehaviors:[PushInstruction : Behavior] =
@@ -84,6 +109,8 @@ extension Interpreter {
         .codeIsEmpty : codeIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
+        .execQuote : execQuote_Behavior,
+        .intQuote : intQuote_Behavior,
 
     ]
 }

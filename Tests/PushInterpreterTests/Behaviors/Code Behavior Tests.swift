@@ -95,15 +95,15 @@ struct CodeBehaviorTests {
 
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
-        #expect(topItem(inty, .code)!.isContingent == false)
+        #expect(topItem(inty, .code).isContingent == false)
 
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( true ) ( ( ) ) ]")
-        #expect(topItem(inty, .code)!.isContingent == true)
+        #expect(topItem(inty, .code).isContingent == true)
 
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 44 ) ( true ) ( ( ) ) ]")
-        #expect(topItem(inty, .code)!.isContingent == false)
+        #expect(topItem(inty, .code).isContingent == false)
     }
 
 
@@ -115,11 +115,11 @@ struct CodeBehaviorTests {
 
         doThis(.intQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 55 ) ]")
-        #expect(topItem(inty, .code)!.isContingent == true)
+        #expect(topItem(inty, .code).isContingent == true)
 
         doThis(.intQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 44 ) ( 55 ) ]")
-        #expect(topItem(inty, .code)!.isContingent == false)
+        #expect(topItem(inty, .code).isContingent == false)
 
     }
 
