@@ -51,6 +51,7 @@ enum PushInstruction : String, CaseIterable {
     case codeEq
 
     // code conversion
+    case execQuote, intQuote, boolQuote, charQuote, stringQuote, doubleQuote
 
     // code combinators
     case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
