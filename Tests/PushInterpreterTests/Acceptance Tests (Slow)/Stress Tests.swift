@@ -152,7 +152,7 @@ struct Stress_Tests {
     
     }
 
-    @Test func setRandomConstants() {
+    @Test func `set random constants works`() {
         RandomCode.setRandomConstants(in: inty)
         #expect(inty.constants[.int]!.count == 10)
         #expect(inty.constants[.int]!.compactMap({ $0 }).count == 10)
