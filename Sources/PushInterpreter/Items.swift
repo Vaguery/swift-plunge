@@ -32,6 +32,19 @@ extension Item where Self: Equatable {
 }
 
 
+extension Item {
+    func crux() -> [any Item] {
+        var result = [any Item]()
+        if self.call.isEmpty {
+            result.append(self)
+        } else {
+            for item in self.call {
+                result.append(contentsOf: item.crux())
+            }
+        }
+        return result
+    }
+}
 
 
 
