@@ -202,7 +202,7 @@ extension Interpreter {
                 let (x, y, z) = (a[0] as! BoolItem, a[1], a[2])
                 var result = x.value ? y : z
                 result.isContingent = true
-                result.call = [InstructionItem(.execIf), y, z]
+                result.call = [x, InstructionItem(.execIf), y, z]
                 return [Router(.exec, result)]
             }
         )

@@ -108,8 +108,7 @@ struct CodeBehaviorTests {
 
 
     @Test func intQuote() {
-        inty.stacks[.int]!.prepend(IntItem(44))
-        inty.stacks[.int]!.prepend(IntItem(55, isContingent: true))
+        loadInts(inty, ints: [55, 44], contingent: [0])
 
         #expect(stackString(inty, .int) == "[ 55 44 ]")
 
@@ -120,7 +119,62 @@ struct CodeBehaviorTests {
         doThis(.intQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 44 ) ( 55 ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+    }
 
+    @Test func doubleQuote() {
+        loadDoubles(inty, doubles: [1.1, 2.2], contingent: [0])
+
+        #expect(stackString(inty, .double) == "[ 1.1 2.2 ]")
+
+        doThis(.doubleQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 1.1 ) ]")
+        #expect(topItem(inty, .code).isContingent == true)
+
+        doThis(.doubleQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 2.2 ) ( 1.1 ) ]")
+        #expect(topItem(inty, .code).isContingent == false)
+    }
+
+    @Test func boolQuote() {
+        loadBools(inty, bools: [true , false], contingent: [0])
+
+        #expect(stackString(inty, .bool) == "[ true false ]")
+
+        doThis(.boolQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( true ) ]")
+        #expect(topItem(inty, .code).isContingent == true)
+
+        doThis(.boolQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( false ) ( true ) ]")
+        #expect(topItem(inty, .code).isContingent == false)
+    }
+
+    @Test func charQuote() {
+        loadChars(inty, chars: ["a" , "b"], contingent: [0])
+
+        #expect(stackString(inty, .char) == "[ 'a' 'b' ]")
+
+        doThis(.charQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 'a' ) ]")
+        #expect(topItem(inty, .code).isContingent == true)
+
+        doThis(.charQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 'b' ) ( 'a' ) ]")
+        #expect(topItem(inty, .code).isContingent == false)
+    }
+
+    @Test func stringQuote() {
+        loadStrings(inty, strings: ["aaa" , "bcd"], contingent: [0])
+
+        #expect(stackString(inty, .string) == "[ \"aaa\" \"bcd\" ]")
+
+        doThis(.stringQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( \"aaa\" ) ]")
+        #expect(topItem(inty, .code).isContingent == true)
+
+        doThis(.stringQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( \"bcd\" ) ( \"aaa\" ) ]")
+        #expect(topItem(inty, .code).isContingent == false)
     }
 
 }

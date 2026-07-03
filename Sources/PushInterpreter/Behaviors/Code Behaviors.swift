@@ -89,6 +89,7 @@ extension Interpreter {
         }
     )
 
+
     static let intQuote_Behavior =
     Behavior(
         .intQuote,
@@ -102,15 +103,71 @@ extension Interpreter {
         }
     )
 
+    static let boolQuote_Behavior =
+    Behavior(
+        .boolQuote,
+        takes: [.bool],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [x, InstructionItem(.boolQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
+
+    static let stringQuote_Behavior =
+    Behavior(
+        .stringQuote,
+        takes: [.string],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [x, InstructionItem(.stringQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
+
+    static let charQuote_Behavior =
+    Behavior(
+        .charQuote,
+        takes: [.char],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [x, InstructionItem(.charQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
+
+    static let doubleQuote_Behavior =
+    Behavior(
+        .doubleQuote,
+        takes: [.double],
+        fxn: {a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x )
+            result.call = [x, InstructionItem(.doubleQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
+
 
     static let codeBehaviors:[PushInstruction : Behavior] =
     [
+        .boolQuote : boolQuote_Behavior,
+        .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,
         .codeIsEmpty : codeIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
+        .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
         .intQuote : intQuote_Behavior,
+        .stringQuote : stringQuote_Behavior,
 
     ]
 }

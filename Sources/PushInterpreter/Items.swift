@@ -35,8 +35,13 @@ extension Item where Self: Equatable {
 extension Item {
     func crux() -> [any Item] {
         var result = [any Item]()
+
         if self.call.isEmpty {
             result.append(self)
+        } else if self.index > 0 && self.call[0] is CodeItem {
+            let idx = self.index
+            let motherBlock = self.call[0] as! CodeItem
+            result.append(motherBlock.value[idx])
         } else {
             for item in self.call {
                 result.append(contentsOf: item.crux())
