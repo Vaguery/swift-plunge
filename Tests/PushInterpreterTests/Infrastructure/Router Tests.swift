@@ -14,7 +14,7 @@ struct RouterTests {
 
     let inty = Interpreter()
     
-    @Test func routingWorks() {
+    @Test func `routing works`() {
         let r = Router(PushStack.int, IntItem(17) )
         inty.pushItem(r)
         #expect(inty.stacks[.int]!.count == 1)

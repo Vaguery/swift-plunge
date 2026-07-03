@@ -28,17 +28,17 @@ struct InterpreterTests {
     let fakeAdd = Behavior(.intAdd, takes: [], fxn: {_ in [Router(.error, ErrorItem("I haz no stick"))]})
 
 
-    @Test func newInterpreterHasReasonableDefaults() {
+    @Test func `new interpreter has reasonable defaults`() {
         #expect(inty.stacks.keys.sorted() == PushStack.allCases.sorted())
     }
     
-    @Test func newInterpreterHasConstantDictionaryDefined() {
+    @Test func `new interpreter has constant dictionary defined`() {
         #expect(inty.constants.keys.count == 8)
 
     }
     
     @Test
-    func pushItem() {
+    func `push item works`() {
         inty.pushItem(Router(.code, CodeItem( [DoubleItem(2.3),
                                            VecBoolItem([true,false,true]) ] ) ) )
         #expect(inty.stacks[.code]!.count == 1)
@@ -46,7 +46,7 @@ struct InterpreterTests {
     
     
     @Test
-    func loadWorks() {
+    func `interpreter load works`() {
         inty.load(inputs: inputty, stacks: stacky, program: proggy)
         
         // counter
@@ -68,7 +68,7 @@ struct InterpreterTests {
         #expect(inty.stacks.count == PushStack.allCases.count)
     }
     
-    @Test func steppingPushesMostItems() {
+    @Test func `stepping pushes most items`() {
         let everythingProggy:[any Item] =
             [IntItem(6),
              BoolItem(false),
@@ -142,8 +142,8 @@ struct InterpreterTests {
     }
 
     
-    @Test func runningSeemsOK() {
-        
+    @Test func `running seems ok`() {
+
         let everythingProggy:[any Item] =
         [IntItem(6),
          BoolItem(false),
@@ -165,7 +165,7 @@ struct InterpreterTests {
         #expect(inty.counter == 13)
     }
     
-    @Test func resettingWorks() {
+    @Test func `resetting works`() {
         let topInt = Recorder<Int>(
             "topInt",
             instrumentation: {interpreter in

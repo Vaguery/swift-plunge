@@ -72,7 +72,7 @@ struct History_tests {
 struct Code_tests {
     
     @Test
-    func codeCallsCreateItems() {
+    func `code calls create items`() {
         let stuff:[any Item] = [IntItem(34), DoubleItem(1.2)]
         let codey1 = CodeItem( stuff )
         let codey2 = CodeItem( stuff )

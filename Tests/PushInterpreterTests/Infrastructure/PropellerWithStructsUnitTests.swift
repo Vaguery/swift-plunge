@@ -11,7 +11,7 @@ import Testing
 @Suite @MainActor
 struct StacksTests {
 
-    @Test func StacksShouldSortWithExecFirst() {
+    @Test func `stacks should sort with exec first`() {
         #expect (PushStack.allStacks[0] == .exec)
         #expect (PushStack.exec < PushStack.bool)
         #expect (PushStack.allStacks[1] == .bool)

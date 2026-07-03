@@ -13,7 +13,7 @@ import Testing
 @Suite @MainActor
 struct PlushyTests {
 
-    @Test func plushyWorksForExplicitItems() {
+    @Test func `plushy works for explicit items`() {
         let p = [1, IntItem(2), DoubleItem(3)] as [Any]
         let prog = Plushy.plushy2push( p )
 
@@ -22,7 +22,7 @@ struct PlushyTests {
         #expect(prog[2] is DoubleItem)
     }
 
-    @Test func plushyWorksForCodeAndPlushyControls() {
+    @Test func `plushy works for code and plushy controls`() {
         let p = [CodeItem([IntItem(7), BoolItem(false)]), PlushyControl.open, DoubleItem(1.23)] as [Any]
         let prog = Plushy.plushy2push( p )
 
@@ -30,7 +30,7 @@ struct PlushyTests {
         #expect(CodeItem(prog).pretty() == "( ( 7 false ) ( 1.23 ) )")
     }
 
-    @Test func plushyWorksForInstructionsInBothForms() {
+    @Test func `plushy works for instructions in both forms`() {
         let p = [PushInstruction.intAdd, InstructionItem(.boolNand), PushInstruction.execDoCount, DoubleItem(1.23)] as [Any]
         let prog = Plushy.plushy2push( p )
 
