@@ -368,4 +368,17 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ( .execY 1 ) true 44 ]")
         #expect(stackString(inty, .int) == "[ 1 1 ]")
     }
+
+    @Test func `execEq works with inputs (bug fix)`() {
+        inty.stacks[.exec]!.prepend(InstructionItem(.input0))
+        inty.stacks[.exec]!.prepend(InstructionItem(.input0))
+        inty.stacks[.exec]!.prepend(InstructionItem(.execEq))
+
+        #expect(stackString(inty, .exec) == "[ .execEq .input0 .input0 ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ true ]")
+    }
+
 }

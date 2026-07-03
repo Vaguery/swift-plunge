@@ -93,6 +93,8 @@ struct CruxTests {
 
     }
 
+    // TODO: bug fix for crux() trees passing through both CodeItem and co-arity>1 steps
+    //
     @Test(.disabled("waiting for bug fix in code block handling in crux->push"))
     func `crux can work through contingent code`() {
         let treeProg = [
