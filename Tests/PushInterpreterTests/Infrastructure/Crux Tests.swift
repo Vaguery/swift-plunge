@@ -93,7 +93,8 @@ struct CruxTests {
 
     }
 
-    @Test(.disabled("waiting for bug fix in code block handling in crux->push")) func `crux can work through contingent code`() {
+    @Test(.disabled("waiting for bug fix in code block handling in crux->push"))
+    func `crux can work through contingent code`() {
         let treeProg = [
             false,
             PushInstruction.execIf,
