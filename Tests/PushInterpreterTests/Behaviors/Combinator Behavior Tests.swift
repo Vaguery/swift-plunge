@@ -119,7 +119,7 @@ struct CombinatorBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
-    @Test func intEq() {
+    @Test func `combinator Eq works`() {
         loadInts(inty, ints: [9, 38, 4, -4, -7, -7], contingent: [2])
         #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
 
@@ -137,31 +137,6 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true false false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-    }
-
-    @Test func `combinator Eq works`() {
-
-        //MARK: verify there isn't a bug in this. I can't get consistent results
-
-        //        intyCode6IB(inty)
-        //        #expect(stackString(inty, .code) == "[ ( 4 false ) ( 4 false ) ( 4 false ) ( 4 false ) ( 5 false ) ( 4 true ) ]")
-        //        loadCode(inty, code: [ [1, false], [1, false], [5, true]], contingent: [1])
-        //        #expect(stackString(inty, .code) == "[ ( 1 false ) ( 1 false ) ( 5 true ) ]")
-        //
-        //        loadInts(inty, ints: [3,3,4])
-        //        doThis(.intEq, to: inty)
-        //        #expect(stackString(inty, .bool) == "[ true ]")
-        //        #expect(stackString(inty, .int) == "[ 4 ]")
-        //        #expect(topItem(inty, .bool).isContingent == true)
-        //
-        //        doThis(.intEq, to: inty)
-        //        #expect(stackString(inty, .bool) == "[ false true ]")
-        //        #expect(stackString(inty, .int) == "[ ]")
-        //        #expect(topItem(inty, .bool).isContingent == true)
-
-        //        doThis(.codeEq, to: inty)
-        //        #expect(stackString(inty, .bool) == "[ false false true ]")
-        //        #expect(topItem(inty, .bool).isContingent == false)
     }
 
     @Test func `combinator Flush works`() {
@@ -251,9 +226,7 @@ struct CombinatorBehaviorTests {
         doThis(.intSwap, to: inty)
         #expect(stackString(inty, .int) == "[ 22 11 ]")
         #expect(topItem(inty, .int).isContingent == true)
-    }
 
-    @Test func stringSwap() {
         loadStrings(inty, strings: ["", "abcd", "efgh"], contingent: [1])
         #expect(stackString(inty, .string) == "[ \"\" \"abcd\" \"efgh\" ]")
 

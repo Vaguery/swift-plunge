@@ -53,9 +53,9 @@ public func probeItemOnStack(_ interpreter: Interpreter,
 //
 // Common stacks setups
 //
-// TODO: contants stacks setup
-// TODO: inputs stacks setup
-// TODO: exec stacks setup
+// TODO: contants stacks setup?
+// TODO: inputs stacks setup?
+// TODO: exec stacks setup?
 
 // MARK: Bool stack setup
 

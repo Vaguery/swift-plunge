@@ -31,12 +31,12 @@ struct RecorderTests {
         })
 
     
-    @Test func recorderInitializes() {
+    @Test func `recorder initializes`() {
         #expect(topInt.name == "topInt")
         #expect(topInt.data == [])
     }
     
-    @Test mutating func recorderCanRecord() {
+    @Test mutating func `recorder can record`() {
         topInt.record(interpreter: inty)
         #expect(topInt.data == [nil])
 
@@ -45,7 +45,7 @@ struct RecorderTests {
         #expect(topInt.data == [nil, Optional(1)])
     }
     
-    @Test func recorderRecords() {
+    @Test func `recorder records`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
         inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
                  stacks: [.int: [IntItem(1), IntItem(2), IntItem(3)]],
@@ -66,7 +66,7 @@ struct RecorderTests {
     }
 
     
-    @Test func recorderHandlesNil() {
+    @Test func `recorder handles nil`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
         inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
                  stacks: [.int: []],
@@ -91,7 +91,7 @@ struct RecorderTests {
     
     
     
-    @Test func multipleRecorders() {
+    @Test func `multiple recorders`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
         inty.recorders[secondInt.name] = AnyRecorder(secondInt)
         

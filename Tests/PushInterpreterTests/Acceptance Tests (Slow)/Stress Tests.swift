@@ -126,7 +126,7 @@ struct Stress_Tests {
             case 6: return VecDoubleItem(randomVecDouble(100_000.0,20))
             case 7: return VecStringItem(randomVecString(20))
             case 8...10:
-                var plush = RandomCode.randomPlushy(Int.random(in: 1..<20))
+                let plush = RandomCode.randomPlushy(Int.random(in: 1..<20))
                 return CodeItem(Plushy.plushy2push(plush))
             default: return InstructionItem(randomInstruction())
             }
@@ -152,7 +152,7 @@ struct Stress_Tests {
     
     }
 
-    @Test func setRandomConstants() {
+    @Test func `set random constants works`() {
         RandomCode.setRandomConstants(in: inty)
         #expect(inty.constants[.int]!.count == 10)
         #expect(inty.constants[.int]!.compactMap({ $0 }).count == 10)
