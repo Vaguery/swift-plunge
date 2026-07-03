@@ -85,4 +85,42 @@ struct CodeBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]")
     }
 
+
+    @Test func execQuote() {
+        inty.stacks[.exec]!.prepend(IntItem(44))
+        inty.stacks[.exec]!.prepend(BoolItem(true, isContingent: true))
+        inty.stacks[.exec]!.prepend(CodeItem([]))
+
+        #expect(stackString(inty, .exec) == "[ ( ) true 44 ]")
+
+        doThis(.execQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
+        #expect(topItem(inty, .code)!.isContingent == false)
+
+        doThis(.execQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( true ) ( ( ) ) ]")
+        #expect(topItem(inty, .code)!.isContingent == true)
+
+        doThis(.execQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 44 ) ( true ) ( ( ) ) ]")
+        #expect(topItem(inty, .code)!.isContingent == false)
+    }
+
+
+    @Test func intQuote() {
+        inty.stacks[.int]!.prepend(IntItem(44))
+        inty.stacks[.int]!.prepend(IntItem(55, isContingent: true))
+
+        #expect(stackString(inty, .int) == "[ 55 44 ]")
+
+        doThis(.intQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 55 ) ]")
+        #expect(topItem(inty, .code)!.isContingent == true)
+
+        doThis(.intQuote, to: inty)
+        #expect(stackString(inty, .code) == "[ ( 44 ) ( 55 ) ]")
+        #expect(topItem(inty, .code)!.isContingent == false)
+
+    }
+
 }
