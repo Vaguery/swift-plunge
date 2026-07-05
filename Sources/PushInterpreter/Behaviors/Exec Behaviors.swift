@@ -19,9 +19,9 @@ extension Interpreter {
                 var (x, y) = (a[0] as! BoolItem, a[1])
 
                 var yCopy = y
-                yCopy.isContingent = true
+                yCopy.isContingent = x.isContingent
                 yCopy.index = 2
-                yCopy.call = [x, InstructionItem(.execDoWhile), y]
+                yCopy.call = [x, InstructionItem(.execDoWhile)]
 
                 var results = [Router(.exec, yCopy)]
 
@@ -31,16 +31,16 @@ extension Interpreter {
                             .exec,
                             InstructionItem(
                                 .execWhile,
-                                call: [x, InstructionItem(.execDoWhile), y],
-                                isContingent: true,
+                                call: [x, InstructionItem(.execDoWhile)],
+                                isContingent: x.isContingent,
                                 index: 1
                             )
                         )
                     )
                     var yCopy2 = y
-                    yCopy2.isContingent = true
+                    yCopy2.isContingent = Behavior.netContingency(of:x,y)
                     yCopy2.index = 0
-                    yCopy2.call = [x, InstructionItem(.execDoWhile), y]
+                    yCopy2.call = [x, InstructionItem(.execDoWhile)]
 
                     results.append(Router(.exec, yCopy2))
                 }
@@ -70,7 +70,7 @@ extension Interpreter {
                     y.index = 3
 
                     var newInstruction = InstructionItem(.execDoRange)
-                    newInstruction.call = [x, InstructionItem(.execDoCount), y]
+                    newInstruction.call = [x, InstructionItem(.execDoCount)]
                     newInstruction.isContingent = Behavior.netContingency(
                         of: x,
                         y
@@ -80,8 +80,8 @@ extension Interpreter {
                     x.index = 1
 
                     var newEndPoint = IntItem(0)
-                    newEndPoint.call = [x, InstructionItem(.execDoCount), y]
-                    newEndPoint.isContingent = Behavior.netContingency(of: x, y)
+                    newEndPoint.call = [x, InstructionItem(.execDoCount)]
+                    newEndPoint.isContingent = Behavior.netContingency(of: x)
                     newEndPoint.index = 0
 
                     results = [
@@ -101,11 +101,11 @@ extension Interpreter {
             .execDoTimes,
             takes: [.int, .exec],
             fxn: { a in
-                let (x, y) = (a[0], a[1])
-                let counter = (x as! IntItem).value
-                var yCopy = y
-                yCopy.isContingent = Behavior.netContingency(of: x, y)
-                yCopy.call = [x, InstructionItem(.execDoTimes), y]
+                let (intArg, execArg) = (a[0], a[1])
+                let counter = (intArg as! IntItem).value
+                var yCopy = execArg
+                yCopy.isContingent = Behavior.netContingency(of: intArg, execArg)
+                yCopy.call = [intArg, InstructionItem(.execDoTimes)]
 
                 var results = [Router]()
 
@@ -114,23 +114,24 @@ extension Interpreter {
                     results = [Router(.exec, yCopy)]
                 } else {
                     var newCounter = IntItem(counter - 1)
-                    newCounter.isContingent = Behavior.netContingency(of: x, y)
-                    newCounter.call = [x, InstructionItem(.execDoTimes), y]
+                    newCounter.isContingent =
+                        Behavior.netContingency(of: intArg, execArg)
+                    newCounter.call =
+                        [intArg, InstructionItem(.execDoTimes)]
                     newCounter.index = 1
 
                     var newInstruction = InstructionItem(.execDoTimes)
-                    newInstruction.isContingent = Behavior.netContingency(
-                        of: x,
-                        y
-                    )
-                    newInstruction.call = [x, InstructionItem(.execDoTimes), y]
+                    newInstruction.isContingent =
+                        Behavior.netContingency( of: intArg, execArg )
+                    newInstruction.call =
+                        [intArg, InstructionItem(.execDoTimes)]
                     newInstruction.index = 2
 
                     yCopy.index = 3
                     results.append(
                         Router(
                             .exec,
-                            CodeItem([y, newCounter, newInstruction, yCopy])
+                            CodeItem([execArg, newCounter, newInstruction, yCopy])
                         )
                     )
                 }
@@ -148,8 +149,8 @@ extension Interpreter {
                 let end = (x as! IntItem).value
                 let start = (y as! IntItem).value
                 var zCopy = z
-                zCopy.isContingent = Behavior.netContingency(of: x, y, z)
-                zCopy.call = [y, x, InstructionItem(.execDoRange), z]
+                zCopy.isContingent = Behavior.netContingency(of: x, y)
+                zCopy.call = [y, x, InstructionItem(.execDoRange)]
 
                 var results = [Router]()
 
@@ -161,20 +162,18 @@ extension Interpreter {
                     var newCounter = IntItem(start + direction)
                     newCounter.isContingent = Behavior.netContingency(
                         of: x,
-                        y,
-                        z
+                        y
                     )
-                    newCounter.call = [y, x, InstructionItem(.execDoRange), z]
+                    newCounter.call = [y, x, InstructionItem(.execDoRange)]
                     newCounter.index = 2
 
                     var newInstruction = InstructionItem(.execDoRange)
                     newInstruction.isContingent = Behavior.netContingency(
                         of: x,
-                        y,
-                        z
+                        y
                     )
                     newInstruction.call = [
-                        y, x, InstructionItem(.execDoRange), z,
+                        y, x, InstructionItem(.execDoRange)
                     ]
                     newInstruction.index = 4
 
@@ -201,7 +200,7 @@ extension Interpreter {
             fxn: { a in
                 let (x, y, z) = (a[0] as! BoolItem, a[1], a[2])
                 var result = x.value ? y : z
-                result.isContingent = true
+                result.isContingent = x.isContingent
                 result.call = [x, InstructionItem(.execIf), y, z]
                 return [Router(.exec, result)]
             }
@@ -297,7 +296,7 @@ extension Interpreter {
 
                 if x.value {
                     var yCopy = y
-                    yCopy.isContingent = true
+                    yCopy.isContingent = x.isContingent
                     yCopy.index = 2
                     yCopy.call = [x, InstructionItem(.execDoWhile), y]
                     results.append(Router(.exec, yCopy))
@@ -308,14 +307,14 @@ extension Interpreter {
                             InstructionItem(
                                 .execWhile,
                                 call: [x, InstructionItem(.execDoWhile), y],
-                                isContingent: true,
+                                isContingent: x.isContingent,
                                 index: 1
                             )
                         )
                     )
 
                     var yCopy2 = y
-                    yCopy2.isContingent = true
+                    yCopy2.isContingent = x.isContingent
                     yCopy2.index = 0
                     yCopy2.call = [x, InstructionItem(.execDoWhile), y]
 

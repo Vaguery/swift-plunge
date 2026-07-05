@@ -130,8 +130,6 @@ final class Interpreter {
 
         for idx in (0..<items.count) {
             var copy = items[idx]
-            copy.call = [code]
-            copy.index = idx
             copy.isContingent = Behavior.netContingency(of: code, copy)
             result.append(copy)
         }

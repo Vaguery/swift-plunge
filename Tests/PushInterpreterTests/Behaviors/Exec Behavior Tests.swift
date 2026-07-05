@@ -209,7 +209,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .exec).index == 2)
-        #expect(topItem(inty, .exec).isContingent == true)
+        #expect(topItem(inty, .exec).isContingent == false)
     }
 
     @Test func `execDoWhile is a lot like execWhile when a true is found`() {
@@ -224,7 +224,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .exec).index == 0)
-        #expect(topItem(inty, .exec).isContingent == true)
+        #expect(topItem(inty, .exec).isContingent == false)
         #expect(inty.stacks[.exec]![1].index == 1)
         #expect(inty.stacks[.exec]![2].index == 2)
 
@@ -256,7 +256,7 @@ struct ExecBehaviorTests {
 
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ 3.4 ]")
-        #expect(topItem(inty, .exec).isContingent == true)
+        #expect(topItem(inty, .exec).isContingent == false)
 
         doThis(.execFlush, to: inty)
 
@@ -266,7 +266,7 @@ struct ExecBehaviorTests {
 
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 ]")
-        #expect(topItem(inty, .exec).isContingent == true)
+        #expect(topItem(inty, .exec).isContingent == false)
     }
 
     @Test func execK() {
@@ -337,7 +337,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .exec).index == 0)
-        #expect(topItem(inty, .exec).isContingent == true)
+        #expect(topItem(inty, .exec).isContingent == false)
         #expect(inty.stacks[.exec]![1].index == 1)
         #expect(inty.stacks[.exec]![2].index == 2)
     }

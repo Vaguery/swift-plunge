@@ -165,15 +165,16 @@ struct Stress_Tests {
         let start = Date.now
 
         for i in (1...100_000) {
-            let p1 = RandomCode.randomPlushy(100)
+            let p1 = RandomCode.randomPlushy(300)
 
             let program = Plushy.plushy2push(p1)
                         
             inty.load(program: program)
-            print(i, program)
+            print(i, "\n")
+            print(program)
             RandomCode.setRandomConstants(in: inty)
             
-            inty.run(stepLimit: 1000)
+            inty.run(stepLimit: 5000)
         }
         #expect( start.timeIntervalSinceNow.magnitude == 10)
     }
