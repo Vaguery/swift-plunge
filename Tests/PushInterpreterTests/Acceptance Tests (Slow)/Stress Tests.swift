@@ -114,7 +114,9 @@ struct Stress_Tests {
             }
             return result
         }
-        
+
+        // TODO: pass in argument for biasing types sampled
+        //
         @MainActor static func randomPushItem() -> any Item {
             switch Int.random(in: 0..<30) {
             case 0: return IntItem(randomInt(100_000))
@@ -150,6 +152,8 @@ struct Stress_Tests {
             }
         }
 
+        // TODO: pass in argument for biasing types sampled
+        //
         @MainActor
         static func setRandomInputs(in interpreter: Interpreter) {
             for k in interpreter.inputs.keys {
@@ -169,7 +173,7 @@ struct Stress_Tests {
     func `random programs produce legible cruxes`() {
 
 
-        let p1 = RandomCode.randomPlushy(200)
+        let p1 = RandomCode.randomPlushy(2000)
         let program = Plushy.plushy2push(p1)
 
         inty.load(program: program)
@@ -186,6 +190,9 @@ struct Stress_Tests {
         var priorCrux = ""
 
         for step in 0...5000 {
+            if inty.stacks[.exec]!.isEmpty {
+                break
+            }
             inty.step()
             if inty.stacks[.int]!.count > 0 {
                 let thisItem = probeItemOnStack(inty, .int, index: 0)
@@ -198,7 +205,8 @@ struct Stress_Tests {
                 }
             }
         }
-        print("\nErrors : ", inty.stacks[.error]!.count)
+        print("\nCounter : ", inty.counter)
+        print("Errors : ", inty.stacks[.error]!.count)
         print("Missing : ", inty.stacks[.error]!.count(where: { item in
             let val = (item as! ErrorItem).value
             return val.contains("missing") }))
