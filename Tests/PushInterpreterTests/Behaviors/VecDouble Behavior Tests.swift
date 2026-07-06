@@ -159,17 +159,17 @@ struct VecDoubleBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
-    @Test func vecDoubleIsEmpty() {
+    @Test func vecDoubleItemIsEmpty() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
                          VecDoubleItem([9,99,999], isContingent: true)
                         ])
         
-        doThis(.vecDoubleIsEmpty, to: inty)
+        doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
 
-        doThis(.vecDoubleIsEmpty, to: inty)
+        doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
     }

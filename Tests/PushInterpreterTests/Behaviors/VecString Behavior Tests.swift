@@ -165,11 +165,11 @@ struct VecStringBehaviorTests {
                          VecStringItem(["a","b"], isContingent: true)
                         ])
         
-        doThis(.vecStringIsEmpty, to: inty)
+        doThis(.vecStringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
 
-        doThis(.vecStringIsEmpty, to: inty)
+        doThis(.vecStringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
     }

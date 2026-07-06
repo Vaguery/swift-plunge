@@ -275,18 +275,18 @@ struct StringBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
     
-    @Test func stringIsEmpty() {
+    @Test func stringItemIsEmpty() {
         loadStrings(inty, strings: ["", "abcdefghij"], contingent: [1])
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghij\" ]")
 
-        doThis(.stringIsEmpty, to: inty)
+        doThis(.stringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .string) == "[ \"abcdefghij\" ]")
         #expect(topItem(inty, .bool).isContingent == false)
         #expect(topItem(inty, .string).isContingent == true)
 
 
-        doThis(.stringIsEmpty, to: inty)
+        doThis(.stringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .bool).isContingent == true)

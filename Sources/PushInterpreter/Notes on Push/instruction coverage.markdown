@@ -5,7 +5,7 @@ Missing instructions in bold; proposed modifications and additions in the right 
 New instructions added here:
 - `vec???ButLast`
 - `vec???ContainsSubvec`
-- `vec???IsEmpty`
+- `vec???ItemIsEmpty`
 - `vec???GT`
 - `vec???GTE`
 - `vec???LT`
@@ -37,7 +37,7 @@ Nondestructive versions:
 | stringDup               | vecIntDup                |                                   |
 | stringDupItems          | vecIntDupItems           |                                   |
 | stringDupTimes          | vecIntDupTimes           |                                   |
-| stringIsEmpty           | **vecIntIsEmpty**        | ND version                        |
+| stringItemIsEmpty       | **vecIntItemIsEmpty**    | ND version                        |
 | **stringEmptyString**   | vecIntEmptyVector        |                                   |
 | stringEq                | vecIntEq                 | ND version                        |
 | stringFirst             | vecIntFirst              | use cut?                          |

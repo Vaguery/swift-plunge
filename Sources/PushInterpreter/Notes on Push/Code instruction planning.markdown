@@ -38,7 +38,7 @@ Code in propeller and Clojush/Klapaucius
 | code_nth         | code-nth        |             | codeNth                   |
 |                  | code-nth!       |             |                           |
 | code_nthcdr      | code-rest       |             | codeCut                   |
-| code_null        | code-null?      |             | codeIsEmpty               |
+| code_null        | code-null?      |             | codeItemIsEmpty           |
 | code_size        | code-size       |             | codeTreeSize              |
 |                  | code-points     |             | codePointSize             |
 | code_extract     | code-extract    |             | codeNthPoint              |
@@ -81,7 +81,7 @@ This feels like a reasonable collection:
 - codeIf: pop two `.code` arguments, and send the correct one to `.exec` based on a `.bool`
 - codeIndexOfPoint: if a `.code` item's contents can be found in the tree of another, return the position as an `.int` index of the point it's first found
 - codeInsertAtGap: insert a second `.code` item into the tree of another, at an `.int`-indexed gap between points
-- codeIsEmpty: `true` if empty
+- codeItemIsEmpty: `true` if empty
 - codeIteratePoints: standard `iterate` but using every point in turn
 - codeIterateRoot: standard `iterate` using root elements only
 - codeLengthPoints: count of points in entire tree

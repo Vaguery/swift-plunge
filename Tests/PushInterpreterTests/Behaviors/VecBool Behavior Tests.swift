@@ -167,17 +167,17 @@ struct VecBoolBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
-    @Test func vecBoolIsEmpty() {
+    @Test func vecBoolItemIsEmpty() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false], isContingent: true)
                         ])
         
-        doThis(.vecBoolIsEmpty, to: inty)
+        doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
 
-        doThis(.vecBoolIsEmpty, to: inty)
+        doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
     }

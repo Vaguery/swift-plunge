@@ -49,9 +49,9 @@ extension Interpreter {
                 }
             ),
 
-        .vecBoolIsEmpty :
+        .vecBoolItemIsEmpty :
             Behavior(
-                .vecBoolIsEmpty,
+                .vecBoolItemIsEmpty,
                 takes: [.vecBool],
                 fxn: {a in
                     let (x) = (a[0] as! VecBoolItem)
@@ -60,7 +60,7 @@ extension Interpreter {
                             .bool,
                             BoolItem(
                                 x.value.isEmpty,
-                                call:[ x, InstructionItem(.vecBoolIsEmpty)],
+                                call:[ x, InstructionItem(.vecBoolItemIsEmpty)],
                                 isContingent: Behavior.netContingency(of: x)
                             )
                         )

@@ -177,9 +177,9 @@ extension Interpreter {
             }
         )
 
-    static let stringIsEmpty_Behavior =
+    static let stringItemIsEmpty_Behavior =
         Behavior(
-            .stringIsEmpty,
+            .stringItemIsEmpty,
             takes: [.string],
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
@@ -188,7 +188,7 @@ extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: [x, InstructionItem(.stringIsEmpty)],
+                            call: [x, InstructionItem(.stringItemIsEmpty)],
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -880,7 +880,7 @@ extension Interpreter {
         .stringGT : stringGT_Behavior,
         .stringGTE : stringGTE_Behavior,
         .stringIndexOfChar : stringIndexOfChar_Behavior,
-        .stringIsEmpty : stringIsEmpty_Behavior,
+        .stringItemIsEmpty : stringItemIsEmpty_Behavior,
         .stringIterate : stringIterate_Behavior,
         .stringLast : stringLast_Behavior,
         .stringLength : stringLength_Behavior,

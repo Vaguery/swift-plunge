@@ -110,11 +110,11 @@ struct CombinatorBehaviorTests {
         loadBools(inty, bools: [])
         #expect(stackString(inty, .bool) == "[ ]")
 
-        doThis(.boolEmpty, to: inty)
+        doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
 
-        doThis(.boolEmpty, to: inty)
+        doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
     }

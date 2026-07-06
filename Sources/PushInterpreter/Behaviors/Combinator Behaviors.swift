@@ -190,7 +190,7 @@ extension Interpreter {
         result[name] = inst
     }
 
-    static func emptyCombinator_Behavior(
+    static func stackIsEmptyCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -198,7 +198,7 @@ extension Interpreter {
         var name: PushInstruction
         var inst: Behavior
 
-        name = PushInstruction(rawValue: "\(type)Empty")!
+        name = PushInstruction(rawValue: "\(type)StackIsEmpty")!
         inst = BehaviorWithSideEffects(
             name,
             takes: [],
@@ -490,7 +490,7 @@ extension Interpreter {
         dupCombinator_Behavior(for: stack, into: &result)
         dupItemsCombinator_Behavior(for: stack, into: &result)
         dupTimesCombinator_Behavior(for: stack, into: &result)
-        emptyCombinator_Behavior(for: stack, into: &result)
+        stackIsEmptyCombinator_Behavior(for: stack, into: &result)
         eqCombinator_Behavior(for: stack, into: &result)
         flushCombinator_Behavior(for: stack, into: &result)
         popCombinator_Behavior(for: stack, into: &result)

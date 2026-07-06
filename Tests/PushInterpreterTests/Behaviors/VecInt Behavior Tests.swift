@@ -165,17 +165,17 @@ struct VecIntBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
-    @Test func vecIntIsEmpty() {
+    @Test func vecIntItemIsEmpty() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
                          VecIntItem([9,99,999], isContingent: true)
                         ])
         
-        doThis(.vecIntIsEmpty, to: inty)
+        doThis(.vecIntItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
 
-        doThis(.vecIntIsEmpty, to: inty)
+        doThis(.vecIntItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
     }

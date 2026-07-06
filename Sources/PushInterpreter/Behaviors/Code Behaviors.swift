@@ -27,16 +27,16 @@ extension Interpreter {
             }
         )
 
-    static let codeIsEmpty_Behavior =
+    static let codeItemIsEmpty_Behavior =
         Behavior(
-            .codeIsEmpty,
+            .codeItemIsEmpty,
             takes: [.code],
             fxn: { a in
                 let (x) = (a[0] as! CodeItem)
                 let result =
                     BoolItem(
                         x.value.isEmpty,
-                        call: [x, InstructionItem(.codeIsEmpty)],
+                        call: [x, InstructionItem(.codeItemIsEmpty)],
                         isContingent: Behavior.netContingency(of: x)
                     )
                 return [Router(.bool, result)]
@@ -160,7 +160,7 @@ extension Interpreter {
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,
-        .codeIsEmpty : codeIsEmpty_Behavior,
+        .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
