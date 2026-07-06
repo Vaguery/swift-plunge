@@ -26,8 +26,8 @@ extension Interpreter {
                     instructionName,
                     takes: [],
                     modifier: { (interpreter, collectedItems) in
-                        if let v = interpreter.constants[stack]?[i] {
-                            // stored constants should be Item, not raw values
+                        if var v = interpreter.constants[stack]?[i] {
+                            v.call = [InstructionItem(instructionName)]
                             return [Router(.exec, v)]
                         } else {
                             return [Router(.error,

@@ -534,7 +534,7 @@ extension Interpreter {
                             Router(
                                 .string,
                                 StringItem(item,
-                                        call: [x, InstructionItem(.vecStringIterate), y],
+                                        call: [x, InstructionItem(.vecStringIterate)],
                                         isContingent: Behavior.netContingency(of: x, y),
                                         index: 0
                                        )
@@ -546,14 +546,14 @@ extension Interpreter {
                                     .exec,
                                     InstructionItem(
                                         .vecStringIterate,
-                                        call: [x, InstructionItem(.vecStringIterate), y],
+                                        call: [x, InstructionItem(.vecStringIterate)],
                                         isContingent: Behavior.netContingency(of: x, y),
                                         index: 2
                                     )))
                             results.append(
                                 Router(.exec,
                                        VecStringItem(workingVector, // which was changed
-                                                  call: [x, InstructionItem(.vecStringIterate), y],
+                                                  call: [x, InstructionItem(.vecStringIterate)],
                                                   isContingent: Behavior.netContingency(of: x, y),
                                                   index: 3
                                                  )

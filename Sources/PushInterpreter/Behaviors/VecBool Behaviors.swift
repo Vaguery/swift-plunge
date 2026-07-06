@@ -534,7 +534,7 @@ extension Interpreter {
                             Router(
                                 .bool,
                                 BoolItem(item,
-                                        call: [x, InstructionItem(.vecBoolIterate), y],
+                                        call: [x, InstructionItem(.vecBoolIterate)],
                                         isContingent: Behavior.netContingency(of: x, y),
                                         index: 0
                                        )
@@ -546,14 +546,14 @@ extension Interpreter {
                                     .exec,
                                     InstructionItem(
                                         .vecBoolIterate,
-                                        call: [x, InstructionItem(.vecBoolIterate), y],
+                                        call: [x, InstructionItem(.vecBoolIterate)],
                                         isContingent: Behavior.netContingency(of: x, y),
                                         index: 2
                                     )))
                             results.append(
                                 Router(.exec,
                                        VecBoolItem(workingVector, // which was changed
-                                                  call: [x, InstructionItem(.vecBoolIterate), y],
+                                                  call: [x, InstructionItem(.vecBoolIterate)],
                                                   isContingent: Behavior.netContingency(of: x, y),
                                                   index: 3
                                                  )
