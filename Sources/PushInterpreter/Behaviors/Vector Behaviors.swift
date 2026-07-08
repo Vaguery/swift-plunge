@@ -664,4 +664,514 @@ extension Interpreter {
             }
         )
     }
+
+    /// Language assignments
+
+
+
+    // returns a new vecBool with the old value's last element removed
+    // if the argument was empty, an empty vector is pushed
+    static let vecBoolButLast_Behavior =
+        butLastBehavior(.vecBoolButLast, making: VecBoolItem.self)
+
+    static let vecBoolConcat_Behavior =
+        concatBehavior(.vecBoolConcat, making: VecBoolItem.self)
+
+    static let vecBoolItemIsEmpty_Behavior =
+        itemIsEmptyBehavior(.vecBoolItemIsEmpty, making: VecBoolItem.self)
+
+    static let vecBoolLength_Behavior =
+        lengthBehavior(.vecBoolLength, making: VecBoolItem.self)
+
+    static let vecBoolRest_Behavior =
+        restBehavior(.vecBoolRest, making: VecBoolItem.self)
+
+    static let vecBoolReverse_Behavior =
+        reverseBehavior(.vecBoolReverse, making: VecBoolItem.self)
+
+    static let vecBoolTake_Behavior =
+        takeBehavior(.vecBoolTake, making: VecBoolItem.self)
+
+    static let vecBoolDrop_Behavior =
+        dropBehavior(.vecBoolDrop, making: VecBoolItem.self)
+
+    static let vecBoolConj_Behavior =
+        conjBehavior(.vecBoolConj, making: VecBoolItem.self)
+
+    static let vecBoolContains_Behavior =
+        containsBehavior(.vecBoolContains, making: VecBoolItem.self)
+
+    static let vecBoolFirst_Behavior =
+        firstBehavior(.vecBoolFirst, making: VecBoolItem.self)
+
+    static let vecBoolLast_Behavior =
+        lastBehavior(.vecBoolLast, making: VecBoolItem.self)
+
+    static let vecBoolNth_Behavior =
+        nthBehavior(.vecBoolNth, making: VecBoolItem.self)
+
+    static let vecBoolIndexOf_Behavior =
+        indexOfBehavior(.vecBoolIndexOf, making: VecBoolItem.self)
+
+    static let vecBoolOccurrencesOf_Behavior =
+        occurrencesOfBehavior(.vecBoolOccurrencesOf, making: VecBoolItem.self)
+
+    static let vecBoolRemove_Behavior =
+        removeBehavior(.vecBoolRemove, making: VecBoolItem.self)
+
+    // ( [1,2,3] 2 9 .vecBoolReplace)
+    //
+    // replace every occurrence of 2 in the argument (above) with 9
+    //
+    static let vecBoolReplace_Behavior =
+        replaceBehavior(.vecBoolReplace, making: VecBoolItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecBoolReplaceFirst)
+    //
+    // replace the first occurrence of 1 in the argument (above) with 9
+    //
+    static let vecBoolReplaceFirst_Behavior =
+        replaceFirstBehavior(.vecBoolReplaceFirst, making: VecBoolItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecBoolSet)
+    //
+    // replace the element at position 1 in the argument (above) with 9
+    //
+    static let vecBoolSet_Behavior =
+        setBehavior(.vecBoolSet, making: VecBoolItem.self)
+
+    // ( [1,1,2,3] 1 2 .vecBoolSubVec)
+    //
+    // return a stretch of the original vector from positions 1...2
+    // if idx1 is negative, make it zero
+    // if idx2 < idx1, return an empty vector
+    //
+    static let vecBoolSubVec_Behavior =
+        subVecBehavior(.vecBoolSubVec, making: VecBoolItem.self)
+
+    // ( [1,1,2,3] .vecBoolPushAll)
+    //
+    // return every item on the argument (in reverse order)
+    // routing them to the correct stack
+    //
+    static let vecBoolPushAll_Behavior =
+        pushAllBehavior(.vecBoolPushAll, making: VecBoolItem.self)
+
+    // ( [1,1,2,3] .vecBoolIterate MOUSE )
+    //
+    //               4          3            2                   1         0
+    // reults: ( exec:MOUSE exec:remains exec:.vecBoolIterate exec:MOUSE int:CHEESE )
+    //
+    static let vecBoolIterate_Behavior =
+        iterateBehavior(.vecBoolIterate, making: VecBoolItem.self)
+
+
+    static let vecBoolBehaviors: [PushInstruction : Behavior] =
+    [
+        .vecBoolButLast : vecBoolButLast_Behavior,
+        .vecBoolConcat : vecBoolConcat_Behavior,
+        .vecBoolConj : vecBoolConj_Behavior,
+        .vecBoolContains : vecBoolContains_Behavior,
+        .vecBoolDrop : vecBoolDrop_Behavior,
+        .vecBoolFirst : vecBoolFirst_Behavior,
+        .vecBoolIndexOf : vecBoolIndexOf_Behavior,
+        .vecBoolItemIsEmpty : vecBoolItemIsEmpty_Behavior,
+        .vecBoolIterate : vecBoolIterate_Behavior,
+        .vecBoolLast : vecBoolLast_Behavior,
+        .vecBoolLength : vecBoolLength_Behavior,
+        .vecBoolNth : vecBoolNth_Behavior,
+        .vecBoolOccurrencesOf : vecBoolOccurrencesOf_Behavior,
+        .vecBoolPushAll : vecBoolPushAll_Behavior,
+        .vecBoolRemove : vecBoolRemove_Behavior,
+        .vecBoolReplace : vecBoolReplace_Behavior,
+        .vecBoolReplaceFirst : vecBoolReplaceFirst_Behavior,
+        .vecBoolRest : vecBoolRest_Behavior,
+        .vecBoolReverse : vecBoolReverse_Behavior,
+        .vecBoolSet : vecBoolSet_Behavior,
+        .vecBoolSubVec : vecBoolSubVec_Behavior,
+        .vecBoolTake : vecBoolTake_Behavior,
+    ]
+
+
+    // returns a new vecDouble with the old value's last element removed
+    // if the argument was empty, an empty vector is pushed
+    static let vecDoubleButLast_Behavior =
+        butLastBehavior(.vecDoubleButLast, making: VecDoubleItem.self)
+
+    static let vecDoubleConcat_Behavior =
+        concatBehavior(.vecDoubleConcat, making: VecDoubleItem.self)
+
+    static let vecDoubleItemIsEmpty_Behavior =
+        itemIsEmptyBehavior(.vecDoubleItemIsEmpty, making: VecDoubleItem.self)
+
+    static let vecDoubleLength_Behavior =
+        lengthBehavior(.vecDoubleLength, making: VecDoubleItem.self)
+
+    static let vecDoubleRest_Behavior =
+        restBehavior(.vecDoubleRest, making: VecDoubleItem.self)
+
+    static let vecDoubleReverse_Behavior =
+        reverseBehavior(.vecDoubleReverse, making: VecDoubleItem.self)
+
+    static let vecDoubleTake_Behavior =
+        takeBehavior(.vecDoubleTake, making: VecDoubleItem.self)
+
+    static let vecDoubleDrop_Behavior =
+        dropBehavior(.vecDoubleDrop, making: VecDoubleItem.self)
+
+    static let vecDoubleConj_Behavior =
+        conjBehavior(.vecDoubleConj, making: VecDoubleItem.self)
+
+    static let vecDoubleContains_Behavior =
+        containsBehavior(.vecDoubleContains, making: VecDoubleItem.self)
+
+    static let vecDoubleFirst_Behavior =
+        firstBehavior(.vecDoubleFirst, making: VecDoubleItem.self)
+
+    static let vecDoubleLast_Behavior =
+        lastBehavior(.vecDoubleLast, making: VecDoubleItem.self)
+
+    static let vecDoubleNth_Behavior =
+        nthBehavior(.vecDoubleNth, making: VecDoubleItem.self)
+
+    static let vecDoubleIndexOf_Behavior =
+        indexOfBehavior(.vecDoubleIndexOf, making: VecDoubleItem.self)
+
+    static let vecDoubleOccurrencesOf_Behavior =
+        occurrencesOfBehavior(.vecDoubleOccurrencesOf, making: VecDoubleItem.self)
+
+    static let vecDoubleRemove_Behavior =
+        removeBehavior(.vecDoubleRemove, making: VecDoubleItem.self)
+
+    // ( [1,2,3] 2 9 .vecDoubleReplace)
+    //
+    // replace every occurrence of 2 in the argument (above) with 9
+    //
+    static let vecDoubleReplace_Behavior =
+        replaceBehavior(.vecDoubleReplace, making: VecDoubleItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecDoubleReplaceFirst)
+    //
+    // replace the first occurrence of 1 in the argument (above) with 9
+    //
+    static let vecDoubleReplaceFirst_Behavior =
+        replaceFirstBehavior(.vecDoubleReplaceFirst, making: VecDoubleItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecDoubleSet)
+    //
+    // replace the element at position 1 in the argument (above) with 9
+    //
+    static let vecDoubleSet_Behavior =
+        setBehavior(.vecDoubleSet, making: VecDoubleItem.self)
+
+    // ( [1,1,2,3] 1 2 .vecDoubleSubVec)
+    //
+    // return a stretch of the original vector from positions 1...2
+    // if idx1 is negative, make it zero
+    // if idx2 < idx1, return an empty vector
+    //
+    static let vecDoubleSubVec_Behavior =
+        subVecBehavior(.vecDoubleSubVec, making: VecDoubleItem.self)
+
+    // ( [1,1,2,3] .vecDoublePushAll)
+    //
+    // return every item on the argument (in reverse order)
+    // routing them to the correct stack
+    //
+    static let vecDoublePushAll_Behavior =
+        pushAllBehavior(.vecDoublePushAll, making: VecDoubleItem.self)
+
+    // ( [1,1,2,3] .vecDoubleIterate MOUSE )
+    //
+    //               4          3            2                   1         0
+    // reults: ( exec:MOUSE exec:remains exec:.vecDoubleIterate exec:MOUSE int:CHEESE )
+    //
+    static let vecDoubleIterate_Behavior =
+        iterateBehavior(.vecDoubleIterate, making: VecDoubleItem.self)
+
+    static let vecDoubleBehaviors: [PushInstruction : Behavior] =
+    [
+        .vecDoubleButLast : vecDoubleButLast_Behavior,
+        .vecDoubleConcat : vecDoubleConcat_Behavior,
+        .vecDoubleConj : vecDoubleConj_Behavior,
+        .vecDoubleContains : vecDoubleContains_Behavior,
+        .vecDoubleDrop : vecDoubleDrop_Behavior,
+        .vecDoubleFirst : vecDoubleFirst_Behavior,
+        .vecDoubleIndexOf : vecDoubleIndexOf_Behavior,
+        .vecDoubleItemIsEmpty : vecDoubleItemIsEmpty_Behavior,
+        .vecDoubleIterate : vecDoubleIterate_Behavior,
+        .vecDoubleLast : vecDoubleLast_Behavior,
+        .vecDoubleLength : vecDoubleLength_Behavior,
+        .vecDoubleNth : vecDoubleNth_Behavior,
+        .vecDoubleOccurrencesOf : vecDoubleOccurrencesOf_Behavior,
+        .vecDoublePushAll : vecDoublePushAll_Behavior,
+        .vecDoubleRemove : vecDoubleRemove_Behavior,
+        .vecDoubleReplace : vecDoubleReplace_Behavior,
+        .vecDoubleReplaceFirst : vecDoubleReplaceFirst_Behavior,
+        .vecDoubleRest : vecDoubleRest_Behavior,
+        .vecDoubleReverse : vecDoubleReverse_Behavior,
+        .vecDoubleSet : vecDoubleSet_Behavior,
+        .vecDoubleSubVec : vecDoubleSubVec_Behavior,
+        .vecDoubleTake : vecDoubleTake_Behavior,
+    ]
+
+
+
+    // returns a new vecInt with the old value's last element removed
+    // if the argument was empty, an empty vector is pushed
+    //
+    static let vecIntButLast_Behavior =
+        butLastBehavior(.vecIntButLast, making: VecIntItem.self)
+
+    static let vecIntConcat_Behavior =
+        concatBehavior(.vecIntConcat, making: VecIntItem.self)
+
+    static let vecIntItemIsEmpty_Behavior =
+        itemIsEmptyBehavior(.vecIntItemIsEmpty, making: VecIntItem.self)
+
+    static let vecIntLength_Behavior =
+        lengthBehavior(.vecIntLength, making: VecIntItem.self)
+
+    static let vecIntRest_Behavior =
+        restBehavior(.vecIntRest, making: VecIntItem.self)
+
+    static let vecIntReverse_Behavior =
+        reverseBehavior(.vecIntReverse, making: VecIntItem.self)
+
+    static let vecIntTake_Behavior =
+        takeBehavior(.vecIntTake, making: VecIntItem.self)
+
+    static let vecIntDrop_Behavior =
+        dropBehavior(.vecIntDrop, making: VecIntItem.self)
+
+    static let vecIntConj_Behavior =
+        conjBehavior(.vecIntConj, making: VecIntItem.self)
+
+    static let vecIntContains_Behavior =
+        containsBehavior(.vecIntContains, making: VecIntItem.self)
+
+    static let vecIntFirst_Behavior =
+        firstBehavior(.vecIntFirst, making: VecIntItem.self)
+
+    static let vecIntLast_Behavior =
+        lastBehavior(.vecIntLast, making: VecIntItem.self)
+
+    static let vecIntNth_Behavior =
+        nthBehavior(.vecIntNth, making: VecIntItem.self)
+
+    static let vecIntIndexOf_Behavior =
+        indexOfBehavior(.vecIntIndexOf, making: VecIntItem.self)
+
+    static let vecIntOccurrencesOf_Behavior =
+        occurrencesOfBehavior(.vecIntOccurrencesOf, making: VecIntItem.self)
+
+    static let vecIntRemove_Behavior =
+        removeBehavior(.vecIntRemove, making: VecIntItem.self)
+
+    // ( [1,2,3] 2 9 .vecIntReplace)
+    //
+    // replace every occurrence of 2 in the argument (above) with 9
+    //
+    static let vecIntReplace_Behavior =
+        replaceBehavior(.vecIntReplace, making: VecIntItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecIntReplaceFirst)
+    //
+    // replace the first occurrence of 1 in the argument (above) with 9
+    //
+    static let vecIntReplaceFirst_Behavior =
+        replaceFirstBehavior(.vecIntReplaceFirst, making: VecIntItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecIntSet)
+    //
+    // replace the element at position 1 in the argument (above) with 9
+    //
+    static let vecIntSet_Behavior =
+        setBehavior(.vecIntSet, making: VecIntItem.self)
+
+    // ( [1,1,2,3] 1 2 .vecIntSubVec)
+    //
+    // return a stretch of the original vector from positions 1...2
+    // if idx1 is negative, make it zero
+    // if idx2 < idx1, return an empty vector
+    //
+    static let vecIntSubVec_Behavior =
+        subVecBehavior(.vecIntSubVec, making: VecIntItem.self)
+
+    // ( [1,1,2,3] .vecIntPushAll)
+    //
+    // return every item on the argument (in reverse order)
+    // routing them to the correct stack
+    //
+    static let vecIntPushAll_Behavior =
+        pushAllBehavior(.vecIntPushAll, making: VecIntItem.self)
+
+    // ( [1,1,2,3] .vecIntIterate MOUSE )
+    //
+    //               4          3            2                   1         0
+    // reults: ( exec:MOUSE exec:remains exec:.vecIntIterate exec:MOUSE int:CHEESE )
+    //
+    static let vecIntIterate_Behavior =
+        iterateBehavior(.vecIntIterate, making: VecIntItem.self)
+
+
+    static let vecIntBehaviors: [PushInstruction : Behavior] =
+    [
+        .vecIntButLast : vecIntButLast_Behavior,
+        .vecIntConcat : vecIntConcat_Behavior,
+        .vecIntConj : vecIntConj_Behavior,
+        .vecIntContains : vecIntContains_Behavior,
+        .vecIntDrop : vecIntDrop_Behavior,
+        .vecIntFirst : vecIntFirst_Behavior,
+        .vecIntIndexOf : vecIntIndexOf_Behavior,
+        .vecIntItemIsEmpty : vecIntItemIsEmpty_Behavior,
+        .vecIntIterate : vecIntIterate_Behavior,
+        .vecIntLast : vecIntLast_Behavior,
+        .vecIntLength : vecIntLength_Behavior,
+        .vecIntNth : vecIntNth_Behavior,
+        .vecIntOccurrencesOf : vecIntOccurrencesOf_Behavior,
+        .vecIntPushAll : vecIntPushAll_Behavior,
+        .vecIntRemove : vecIntRemove_Behavior,
+        .vecIntReplace : vecIntReplace_Behavior,
+        .vecIntReplaceFirst : vecIntReplaceFirst_Behavior,
+        .vecIntRest : vecIntRest_Behavior,
+        .vecIntReverse : vecIntReverse_Behavior,
+        .vecIntSet : vecIntSet_Behavior,
+        .vecIntSubVec : vecIntSubVec_Behavior,
+        .vecIntTake : vecIntTake_Behavior,
+    ]
+
+
+
+
+
+
+    // returns a new vecString with the old value's last element removed
+    // if the argument was empty, an empty vector is pushed
+    //
+    static let vecStringButLast_Behavior =
+        butLastBehavior(.vecStringButLast, making: VecStringItem.self)
+
+    static let vecStringConcat_Behavior =
+        concatBehavior(.vecStringConcat, making: VecStringItem.self)
+
+    static let vecStringItemIsEmpty_Behavior =
+        itemIsEmptyBehavior(.vecStringItemIsEmpty, making: VecStringItem.self)
+
+    static let vecStringLength_Behavior =
+        lengthBehavior(.vecStringLength, making: VecStringItem.self)
+
+    static let vecStringRest_Behavior =
+        restBehavior(.vecStringRest, making: VecStringItem.self)
+
+    static let vecStringReverse_Behavior =
+        reverseBehavior(.vecStringReverse, making: VecStringItem.self)
+
+    static let vecStringTake_Behavior =
+        takeBehavior(.vecStringTake, making: VecStringItem.self)
+
+    static let vecStringDrop_Behavior =
+        dropBehavior(.vecStringDrop, making: VecStringItem.self)
+
+    static let vecStringConj_Behavior =
+        conjBehavior(.vecStringConj, making: VecStringItem.self)
+
+    static let vecStringContains_Behavior =
+        containsBehavior(.vecStringContains, making: VecStringItem.self)
+
+    static let vecStringFirst_Behavior =
+        firstBehavior(.vecStringFirst, making: VecStringItem.self)
+
+    static let vecStringLast_Behavior =
+        lastBehavior(.vecStringLast, making: VecStringItem.self)
+
+    static let vecStringNth_Behavior =
+        nthBehavior(.vecStringNth, making: VecStringItem.self)
+
+    static let vecStringIndexOf_Behavior =
+        indexOfBehavior(.vecStringIndexOf, making: VecStringItem.self)
+
+    static let vecStringOccurrencesOf_Behavior =
+        occurrencesOfBehavior(.vecStringOccurrencesOf, making: VecStringItem.self)
+
+    static let vecStringRemove_Behavior =
+        removeBehavior(.vecStringRemove, making: VecStringItem.self)
+
+    // ( [1,2,3] 2 9 .vecStringReplace)
+    //
+    // replace every occurrence of 2 in the argument (above) with 9
+    //
+    static let vecStringReplace_Behavior =
+        replaceBehavior(.vecStringReplace, making: VecStringItem.self)
+
+    // ( [1,1,2,3] 1 9 .vecStringReplaceFirst)
+    //
+    // replace the first occurrence of 1 in the argument (above) with 9
+    //
+    static let vecStringReplaceFirst_Behavior =
+        replaceFirstBehavior(.vecStringReplaceFirst, making: VecStringItem.self)
+
+    // ( ["a","b","c"] 1 "foo" .vecStringSet)
+    //
+    // replace the element at position 1 in the argument (above) with "foo"
+    //
+    static let vecStringSet_Behavior =
+        setBehavior(.vecStringSet, making: VecStringItem.self)
+
+    // ( [1,1,2,3] 1 2 .vecStringSubVec)
+    //
+    // return a stretch of the original vector from positions 1...2
+    // if idx1 is negative, make it zero
+    // if idx2 < idx1, return an empty vector
+    //
+    static let vecStringSubVec_Behavior =
+        subVecBehavior(.vecStringSubVec, making: VecStringItem.self)
+
+    // ( [1,1,2,3] .vecStringPushAll)
+    //
+    // return every item on the argument (in reverse order)
+    // routing them to the correct stack
+    //
+    static let vecStringPushAll_Behavior =
+        pushAllBehavior(.vecStringPushAll, making: VecStringItem.self)
+
+    // ( [1,1,2,3] .vecStringIterate MOUSE )
+    //
+    //               4          3            2                   1         0
+    // reults: ( exec:MOUSE exec:remains exec:.vecStringIterate exec:MOUSE int:CHEESE )
+    //
+    static let vecStringIterate_Behavior =
+        iterateBehavior(.vecStringIterate, making: VecStringItem.self)
+
+
+
+    static let vecStringBehaviors: [PushInstruction : Behavior] =
+    [
+        .vecStringButLast : vecStringButLast_Behavior,
+        .vecStringConcat : vecStringConcat_Behavior,
+        .vecStringConj : vecStringConj_Behavior,
+        .vecStringContains : vecStringContains_Behavior,
+        .vecStringDrop : vecStringDrop_Behavior,
+        .vecStringFirst : vecStringFirst_Behavior,
+        .vecStringIndexOf : vecStringIndexOf_Behavior,
+        .vecStringItemIsEmpty : vecStringItemIsEmpty_Behavior,
+        .vecStringIterate : vecStringIterate_Behavior,
+        .vecStringLast : vecStringLast_Behavior,
+        .vecStringLength : vecStringLength_Behavior,
+        .vecStringNth : vecStringNth_Behavior,
+        .vecStringOccurrencesOf : vecStringOccurrencesOf_Behavior,
+        .vecStringPushAll : vecStringPushAll_Behavior,
+        .vecStringRemove : vecStringRemove_Behavior,
+        .vecStringReplace : vecStringReplace_Behavior,
+        .vecStringReplaceFirst : vecStringReplaceFirst_Behavior,
+        .vecStringRest : vecStringRest_Behavior,
+        .vecStringReverse : vecStringReverse_Behavior,
+        .vecStringSet : vecStringSet_Behavior,
+        .vecStringSubVec : vecStringSubVec_Behavior,
+        .vecStringTake : vecStringTake_Behavior,
+    ]
+
 }
+
+
+
