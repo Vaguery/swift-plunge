@@ -317,7 +317,7 @@ struct IntBehaviorTests {
 
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intMod") )
+        #expect(stackString(inty, .error).contains("Divide by zero .intMod") )
     }
 
     @Test func `intMod handles overflow`() {
@@ -378,7 +378,7 @@ struct IntBehaviorTests {
 
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intQuot") )
+        #expect(stackString(inty, .error).contains("Divide by zero .intQuot") )
     }
 
     @Test func `intQuot handles overflow`() {

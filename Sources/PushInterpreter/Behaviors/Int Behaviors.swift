@@ -167,23 +167,25 @@ extension Interpreter {
                     by: x.value
                 )
 
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intQuot: \(y.value) / \(x.value)",
-                                call: [y, x, InstructionItem(.intQuot)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
-                        )
-                    ]
-                } else if x.value == 0 {
+                // check the zero divisor first: dividedReportingOverflow(by: 0)
+                // also reports overflow, so this must precede the overflow branch
+                if x.value == 0 {
                     return [
                         Router(
                             .error,
                             ErrorItem(
                                 "Divide by zero .intQuot: \(y.value) / \(x.value)",
+                                call: [y, x, InstructionItem(.intQuot)],
+                                isContingent: Behavior.netContingency(of: x, y)
+                            )
+                        )
+                    ]
+                } else if hasOverflowed {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .intQuot: \(y.value) / \(x.value)",
                                 call: [y, x, InstructionItem(.intQuot)],
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
@@ -214,23 +216,25 @@ extension Interpreter {
                 let (result, hasOverflowed) = y.value
                     .remainderReportingOverflow(dividingBy: x.value)
 
-                if hasOverflowed {
+                // check the zero divisor first: remainderReportingOverflow(dividingBy: 0)
+                // also reports overflow, so this must precede the overflow branch
+                if x.value == 0 {
                     return [
                         Router(
                             .error,
                             ErrorItem(
-                                "Overflow in .intMod: \(y.value) % \(x.value)",
+                                "Divide by zero .intMod: \(y.value) % \(x.value)",
                                 call: [y, x, InstructionItem(.intMod)],
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     ]
-                } else if x.value == 0 {
+                } else if hasOverflowed {
                     return [
                         Router(
                             .error,
                             ErrorItem(
-                                "Divide by zero .intQuot: \(y.value) % \(x.value)",
+                                "Overflow in .intMod: \(y.value) % \(x.value)",
                                 call: [y, x, InstructionItem(.intMod)],
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
