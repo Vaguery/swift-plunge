@@ -37,3 +37,35 @@ enum PushStack : String, CaseIterable, Comparable & Hashable {
 
 }
 
+
+extension PushStack {
+
+    /// `.exec` is (for now) the only heterogeneous stack: it interleaves
+    /// instructions, code, and literals awaiting execution, so it holds
+    /// `any Item`. Every other stack is homogeneous — including `.error`, which
+    /// holds only `ErrorItem` — which is the invariant that makes the
+    /// `a[i] as! XItem` casts scattered through the Behaviors safe.
+    var isHeterogeneous: Bool {
+        self == .exec
+    }
+
+    /// Whether `item` is a valid element for this stack. `.exec` accepts
+    /// anything; every other stack accepts only its matching Item type.
+    func accepts(_ item: any Item) -> Bool {
+        switch self {
+        case .bool:      return item is BoolItem
+        case .int:       return item is IntItem
+        case .double:    return item is DoubleItem
+        case .char:      return item is CharItem
+        case .string:    return item is StringItem
+        case .code:      return item is CodeItem
+        case .vecBool:   return item is VecBoolItem
+        case .vecInt:    return item is VecIntItem
+        case .vecDouble: return item is VecDoubleItem
+        case .vecString: return item is VecStringItem
+        case .error:     return item is ErrorItem
+        case .exec:      return true
+        }
+    }
+}
+
