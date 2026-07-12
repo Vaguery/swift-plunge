@@ -154,7 +154,10 @@ extension Interpreter {
 
                 var results = [Router]()
 
-                if abs(start - end) <= 1 {
+                // start - end can overflow, and abs traps on Int.min; when the
+                // subtraction overflows the two are far apart (not the base case)
+                let (difference, tooFarApart) = start.subtractingReportingOverflow(end)
+                if !tooFarApart && difference.magnitude <= 1 {
                     zCopy.index = 1
                     results = [Router(.exec, zCopy), Router(.exec, y)]
                 } else {

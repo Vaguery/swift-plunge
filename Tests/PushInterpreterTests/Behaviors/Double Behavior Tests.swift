@@ -193,6 +193,37 @@ struct DoubleBehaviorTests {
         #expect(topItem(inty, .double).isContingent == false)
     }
 
+    @Test func `doubleFromString rejects non-finite strings`() {
+        // "inf"/"nan"/"1e400" parse to non-finite doubles; reject them so they
+        // cannot poison later numeric behaviors (e.g. .intFromDouble)
+        loadStrings(inty, strings: ["inf", "nan", "1e400"])
+
+        doThis(.doubleFromString, to: inty)   // "inf"
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .doubleFromString"))
+
+        doThis(.doubleFromString, to: inty)   // "nan"
+        #expect(stackString(inty, .double) == "[ ]")
+
+        doThis(.doubleFromString, to: inty)   // "1e400"
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .doubleFromString"))
+    }
+
+    @Test func `trig behaviors handle non-finite input`() {
+        // cos/sin/tan of an infinite double are NaN; route to .error rather
+        // than pushing a poison value onto the double stack
+        loadDoubles(inty, doubles: [Double.infinity])
+        doThis(.doubleTan, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .doubleTan"))
+
+        loadDoubles(inty, doubles: [Double.infinity])
+        doThis(.doubleCos, to: inty)
+        #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .doubleCos"))
+    }
+
     @Test func doubleGT() {
         loadDoubles(
             inty,

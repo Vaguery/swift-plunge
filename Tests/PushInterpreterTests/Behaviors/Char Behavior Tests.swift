@@ -35,6 +35,20 @@ struct CharBehaviorTests {
         #expect(topItem(inty, .char).isContingent == false)
     }
 
+    @Test func `charFromDouble handles non-finite and out-of-range doubles`() {
+        // an infinite double would trap Int(_:); route it to .error instead
+        loadDoubles(inty, doubles: [Double.infinity])
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+
+        // a finite double beyond Int's range would also trap
+        loadDoubles(inty, doubles: [1e40])
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+    }
+
     @Test func charFromInt() {
         loadInts(inty, ints: [0,21,31,91], contingent: [1])
         #expect(stackString(inty, .int) == "[ 0 21 31 91 ]")

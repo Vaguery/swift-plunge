@@ -467,6 +467,24 @@ extension Interpreter {
             takes: [.double],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
+
+                // Int(x.value) traps on non-finite or out-of-Int-range doubles
+                guard x.value.isFinite,
+                    x.value >= Double(Int.min),
+                    x.value < Double(Int.max)
+                else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .intFromDouble: \(x.value) → Int",
+                                call: [x, InstructionItem(.intFromDouble)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
+
                 return [
                     Router(
                         .int,

@@ -16,6 +16,25 @@ extension Interpreter {
             takes: [.double],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
+
+                // Int(x.value) traps on non-finite or out-of-Int-range doubles,
+                // so guard the conversion before reducing modulo 95
+                guard x.value.isFinite,
+                    x.value >= Double(Int.min),
+                    x.value < Double(Int.max)
+                else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .charFromDouble: \(x.value) → Int",
+                                call: [x, InstructionItem(.charFromDouble)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
+
                 let c = Character(Unicode.Scalar(abs(Int(x.value) % 95) + 32)!)
                 return [
                     Router(

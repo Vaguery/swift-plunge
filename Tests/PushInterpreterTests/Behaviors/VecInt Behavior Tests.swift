@@ -348,6 +348,26 @@ struct VecIntBehaviorTests {
         #expect(topItem(inty, .int).isContingent == true)
     }
 
+    @Test func `vecIntNth handles Int.min index without trapping`() {
+        // abs(Int.min) traps; .magnitude does not. magnitude(Int.min) % 3 == 2
+        loadInts(inty, ints: [Int.min])
+        inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([9, 99, 999])])
+
+        doThis(.vecIntNth, to: inty)
+        #expect(stackString(inty, .int) == "[ 999 ]")
+    }
+
+    @Test func `vecIntSet handles Int.min index without trapping`() {
+        // position is popped first (top), replacement second.
+        // magnitude(Int.min) % 5 == 3
+        loadInts(inty, ints: [Int.min, 42])
+        inty.stacks[.vecInt]!.prepend(
+            contentsOf: [VecIntItem([9, 99, 999, 9999, 99999])])
+
+        doThis(.vecIntSet, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [9, 99, 999, 42, 99999] ]")
+    }
+
     @Test func vecIntOccurrencesOf() {
         loadInts(inty, ints: [9, 9, -99], contingent: [2])
         inty.stacks[.vecInt]!.prepend(

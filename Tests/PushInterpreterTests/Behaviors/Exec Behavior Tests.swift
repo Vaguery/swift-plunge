@@ -70,6 +70,17 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
     }
 
+    @Test func `execDoRange handles extreme bounds without trapping`() {
+        // start - end overflows (and abs would trap on Int.min); the guard must
+        // treat the counters as far apart and take the looping branch, not crash
+        loadInts(inty, ints: [Int.min, Int.max])   // end = Int.min, start = Int.max
+        inty.stacks[.exec]!.prepend(contentsOf: [BoolItem(false)])
+
+        doThis(.execDoRange, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .exec).contains(".execDoRange"))
+    }
+
     @Test func `execDoRange loops if the start and end are different by 2+`() {
         loadInts(inty, ints: [4, 7])
         inty.stacks[.exec]!.prepend(

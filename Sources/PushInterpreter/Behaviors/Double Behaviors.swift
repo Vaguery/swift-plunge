@@ -361,16 +361,30 @@ extension Interpreter {
             takes: [.double],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            cos(x.value),
-                            call: [x, InstructionItem(.doubleCos)],
-                            isContingent: Behavior.netContingency(of: x)
+                let result = cos(x.value)
+                if result.isInfinite || result.isNaN {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .doubleCos: cos(\(x.value))",
+                                call: [x, InstructionItem(.doubleCos)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
                         )
-                    )
-                ]
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .double,
+                            DoubleItem(
+                                result,
+                                call: [x, InstructionItem(.doubleCos)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
             }
         )
 
@@ -380,16 +394,30 @@ extension Interpreter {
             takes: [.double],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            sin(x.value),
-                            call: [x, InstructionItem(.doubleSin)],
-                            isContingent: Behavior.netContingency(of: x)
+                let result = sin(x.value)
+                if result.isInfinite || result.isNaN {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .doubleSin: sin(\(x.value))",
+                                call: [x, InstructionItem(.doubleSin)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
                         )
-                    )
-                ]
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .double,
+                            DoubleItem(
+                                result,
+                                call: [x, InstructionItem(.doubleSin)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
             }
         )
 
@@ -399,16 +427,30 @@ extension Interpreter {
             takes: [.double],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            tan(x.value),
-                            call: [x, InstructionItem(.doubleTan)],
-                            isContingent: Behavior.netContingency(of: x)
+                let result = tan(x.value)
+                if result.isInfinite || result.isNaN {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .doubleTan: tan(\(x.value))",
+                                call: [x, InstructionItem(.doubleTan)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
                         )
-                    )
-                ]
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .double,
+                            DoubleItem(
+                                result,
+                                call: [x, InstructionItem(.doubleTan)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
             }
         )
 
@@ -527,16 +569,31 @@ extension Interpreter {
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
                 let num = Double(x.value) ?? 0.0
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            num,
-                            call: [x, InstructionItem(.doubleFromString)],
-                            isContingent: Behavior.netContingency(of: x)
+                // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;
+                // reject them here so they cannot poison later numeric behaviors
+                if num.isInfinite || num.isNaN {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Overflow in .doubleFromString: \"\(x.value)\"",
+                                call: [x, InstructionItem(.doubleFromString)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
                         )
-                    )
-                ]
+                    ]
+                } else {
+                    return [
+                        Router(
+                            .double,
+                            DoubleItem(
+                                num,
+                                call: [x, InstructionItem(.doubleFromString)],
+                                isContingent: Behavior.netContingency(of: x)
+                            )
+                        )
+                    ]
+                }
             }
         )
 

@@ -357,8 +357,9 @@ extension Interpreter {
                 if range == 0 {
                     return []
                 } else {
-                    let position = abs(y.value)
-                    let idx = position % range
+                    // .magnitude (a UInt) avoids abs(Int.min) trapping;
+                    // reducing modulo range keeps the wrapped-index semantics
+                    let idx = Int(y.value.magnitude % UInt(range))
                     let result = x.value[idx]
                     return [
                         Router(
@@ -511,7 +512,8 @@ extension Interpreter {
                 let (x, y, z) = (a[0] as! V, a[1] as! IntItem, a[2] as! V.Scalar)
                 var result = x.value
                 if result.count > 0 {
-                    let idx = abs(y.value) % (result.count)
+                    // .magnitude (a UInt) avoids abs(Int.min) trapping
+                    let idx = Int(y.value.magnitude % UInt(result.count))
                     result[idx] = z.value
                 }
                 return [

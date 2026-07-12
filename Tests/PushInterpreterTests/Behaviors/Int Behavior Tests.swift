@@ -117,6 +117,25 @@ struct IntBehaviorTests {
 
     }
 
+    @Test func `intFromDouble handles non-finite and out-of-range doubles`() {
+        // an infinite double would trap Int(_:); route it to .error instead
+        loadDoubles(inty, doubles: [Double.infinity])
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+
+        // a finite double beyond Int's range would also trap
+        loadDoubles(inty, doubles: [-1e40])
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+
+        // NaN as well
+        loadDoubles(inty, doubles: [Double.nan])
+        doThis(.intFromDouble, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
     @Test func intFromString() {
         loadStrings(inty, strings: ["-172", "0", "00001", "1_000_000", " 172", "1 7 2"], contingent:    [1])
         #expect(stackString(inty, .string) == "[ \"-172\" \"0\" \"00001\" \"1_000_000\" \" 172\" \"1 7 2\" ]")
