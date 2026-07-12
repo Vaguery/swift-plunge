@@ -37,8 +37,10 @@ struct Recorder<T> {
     func reportAll(steps:Int, fillWithLast:Bool = true, trim:Bool = false) -> [T?] {
         let readings = data.count
         if readings < steps {
-            if fillWithLast {
-                let padding = Array(repeating: data.last!, count: steps - readings)
+            // `data.last` is nil only when nothing was recorded; with no last
+            // reading to repeat, fall through and return whatever data exists
+            if fillWithLast, let last = data.last {
+                let padding = Array(repeating: last, count: steps - readings)
                 return data + padding
             }
         }

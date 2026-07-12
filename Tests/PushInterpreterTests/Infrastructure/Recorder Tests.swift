@@ -35,6 +35,15 @@ struct RecorderTests {
         #expect(topInt.name == "topInt")
         #expect(topInt.data == [])
     }
+
+    @Test func `reportAll on an empty recorder does not crash`() {
+        // nothing recorded: fillWithLast has no last reading to repeat, and
+        // must not force-unwrap data.last
+        #expect(topInt.data.isEmpty)
+        #expect(topInt.reportAll(steps: 5, fillWithLast: true) == [])
+        #expect(topInt.reportAll(steps: 5, fillWithLast: false) == [])
+        #expect(topInt.reportAll(steps: 0) == [])
+    }
     
     @Test mutating func `recorder can record`() {
         topInt.record(interpreter: inty)

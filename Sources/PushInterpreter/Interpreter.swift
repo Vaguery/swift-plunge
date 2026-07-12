@@ -166,7 +166,16 @@ final class Interpreter {
                 unwrapCodeItem(code: nextItem as! CodeItem)
             } else if nextItem is InstructionItem {
                 let action = (nextItem as! InstructionItem).value
-                self.behaviors[action]!.act(on: self)
+                if let behavior = self.behaviors[action] {
+                    behavior.act(on: self)
+                } else {
+                    // an enumerated instruction with no registered behavior
+                    // (e.g. planned-but-unimplemented) must not crash the loop
+                    self.push(
+                        ErrorItem("\(action) is an unknown instruction"),
+                        to: .error
+                    )
+                }
             } else {
                 self.pushDefault(nextItem!)
             }
