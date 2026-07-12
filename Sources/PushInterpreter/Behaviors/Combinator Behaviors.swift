@@ -65,6 +65,7 @@ extension Interpreter {
                 var newItem = oldItem
                 newItem.call = [oldItem, InstructionItem(name)]
                 newItem.isContingent = true
+                interpreter.requireAccepts(newItem, on: stack)
                 interpreter.stacks[stack]!.insert(newItem, at: idx)
                 return []
             }
@@ -347,6 +348,7 @@ extension Interpreter {
                 var newItem = oldItem
                 newItem.call = [oldItem, InstructionItem(name)]
                 newItem.isContingent = true
+                interpreter.requireAccepts(newItem, on: stack)
                 interpreter.stacks[stack]!.insert(newItem, at: idx)
                 return []
             }

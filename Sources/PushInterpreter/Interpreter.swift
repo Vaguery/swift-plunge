@@ -93,12 +93,20 @@ final class Interpreter {
     /// Trap immediately rather than corrupt the stack and defer the failure to
     /// some later `as!` in an unrelated Behavior.
     func push(_ item: any Item, to stack: PushStack) {
+        self.requireAccepts(item, on: stack)
+        self.stacks[stack]?.prepend(item)
+    }
+
+    /// Enforces the homogeneity invariant for any stack write. Every stack
+    /// except `.exec` accepts a single Item type, so a rejected item can only
+    /// mean a mis-tagged `Router` (or mis-typed setup) — a programming bug that
+    /// should trap at its source, not corrupt the stack for a later `as!`.
+    func requireAccepts(_ item: any Item, on stack: PushStack) {
         guard stack.accepts(item) else {
             fatalError(
                 "Type mismatch: \(type(of: item)) pushed to .\(stack) stack"
             )
         }
-        self.stacks[stack]?.prepend(item)
     }
 
     func pushItem(_ item: Router) {
@@ -120,6 +128,7 @@ final class Interpreter {
         // initial stack items if any
         self.stacks = PushStack.emptyStacks()
         for (stack, items) in initial {
+            for item in items { self.requireAccepts(item, on: stack) }
             self.stacks[stack]!.prepend(contentsOf: items)
         }
         
