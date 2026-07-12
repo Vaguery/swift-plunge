@@ -68,7 +68,7 @@ class Behavior {
     
     func distribute(to interpreter: Interpreter, items: [Router]) {
         for i in items {
-            interpreter.stacks[i.stack]?.prepend(i.item)
+            interpreter.push(i.item, to: i.stack)
         }
     }
     

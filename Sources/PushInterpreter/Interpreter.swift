@@ -87,8 +87,22 @@ final class Interpreter {
         self.recorders = [:]
     }
         
+    /// The single validated entry point for pushing an item onto a stack.
+    /// Every stack except `.exec` is homogeneous, so pushing an item a stack
+    /// does not accept can only mean a mis-tagged `Router` (a programming bug).
+    /// Trap immediately rather than corrupt the stack and defer the failure to
+    /// some later `as!` in an unrelated Behavior.
+    func push(_ item: any Item, to stack: PushStack) {
+        guard stack.accepts(item) else {
+            fatalError(
+                "Type mismatch: \(type(of: item)) pushed to .\(stack) stack"
+            )
+        }
+        self.stacks[stack]?.prepend(item)
+    }
+
     func pushItem(_ item: Router) {
-        self.stacks[item.stack]?.prepend(item.item)
+        self.push(item.item, to: item.stack)
     }
     
     func load(inputs: [PushInstruction:any Item] = [:],
@@ -187,16 +201,16 @@ extension Interpreter {
     
     func pushDefault(_ it: any Item) {
         switch it {
-        case is BoolItem: self.stacks[.bool]?.prepend(it)
-        case is CharItem: self.stacks[.char]?.prepend(it)
-        case is DoubleItem: self.stacks[.double]?.prepend(it)
-        case is IntItem: self.stacks[.int]?.prepend(it)
-        case is StringItem: self.stacks[.string]?.prepend(it)
-        case is VecBoolItem: self.stacks[.vecBool]?.prepend(it)
-        case is VecDoubleItem: self.stacks[.vecDouble]?.prepend(it)
-        case is VecIntItem: self.stacks[.vecInt]?.prepend(it)
-        case is VecStringItem: self.stacks[.vecString]?.prepend(it)
-        default : self.stacks[.error]?.prepend(it)
+        case is BoolItem: self.push(it, to: .bool)
+        case is CharItem: self.push(it, to: .char)
+        case is DoubleItem: self.push(it, to: .double)
+        case is IntItem: self.push(it, to: .int)
+        case is StringItem: self.push(it, to: .string)
+        case is VecBoolItem: self.push(it, to: .vecBool)
+        case is VecDoubleItem: self.push(it, to: .vecDouble)
+        case is VecIntItem: self.push(it, to: .vecInt)
+        case is VecStringItem: self.push(it, to: .vecString)
+        default : self.push(it, to: .error)
         }
     }
 }
