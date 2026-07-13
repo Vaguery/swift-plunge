@@ -20,8 +20,21 @@ nonisolated protocol Item: Pretty, Sendable {
     var isContingent: Bool {get set}
     var index: Int {get set}
     var value: Value {get set}
-    
+
+    /// A recursive memory-proxy: the total primitive content this item holds,
+    /// summed through nesting (a vector's elements, a string's characters, a
+    /// code block's leaves). Scalars weigh 1. Container types store it, computed
+    /// once at construction. Declared here (not only in an extension) so it
+    /// dispatches correctly through `any Item`.
+    var weight: Int {get}
+
     func isEqual(to other: any Item) -> Bool
+}
+
+nonisolated extension Item {
+    // Default for scalar items (Bool, Int, Double, Char, Instruction, Error):
+    // one unit each. Container types override with a stored, memoized weight.
+    var weight: Int { 1 }
 }
 
 nonisolated extension Item where Self: Equatable {
@@ -149,12 +162,17 @@ nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// because `value` is never mutated after construction.
     let flatSize: Int
 
+    /// Recursive content weight: the sum of the weights of everything this block
+    /// holds, at every level. Reuses each child's already-stored weight.
+    let weight: Int
+
     init(_ value: [any Item], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
         self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
+        self.weight = value.reduce(0) { $0 + $1.weight }
     }
 
     static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
@@ -275,12 +293,14 @@ nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+    let weight: Int
+
     init(_ value: String, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.weight = value.utf8.count
     }
     
     static func == (lhs: StringItem, rhs: StringItem) -> Bool {
@@ -305,12 +325,14 @@ nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+    let weight: Int
+
     init(_ value: [Bool], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.weight = value.count
     }
     
     static func == (lhs: VecBoolItem, rhs: VecBoolItem) -> Bool {
@@ -332,12 +354,14 @@ nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+    let weight: Int
+
     init(_ value: [Double], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.weight = value.count
     }
     
     static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
@@ -358,12 +382,14 @@ nonisolated struct VecIntItem: Item, Equatable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+    let weight: Int
+
     init(_ value: [Int], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.weight = value.count
     }
     
     static func == (lhs: VecIntItem, rhs: VecIntItem) -> Bool {
@@ -385,12 +411,17 @@ nonisolated struct VecStringItem: Item, Equatable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+
+    /// Total characters across all contained strings — the "total characters"
+    /// measure that a plain element count would miss. O(element count) once.
+    let weight: Int
+
     init(_ value: [String], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
     
     static func == (lhs: VecStringItem, rhs: VecStringItem) -> Bool {

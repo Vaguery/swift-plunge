@@ -50,6 +50,11 @@ nonisolated extension Interpreter {
         if let code = item as? CodeItem, code.flatSize > config.maxCodePoints {
             return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
         }
+        // The recursive backstop: catches nested content the per-dimension caps
+        // above miss (a vector of long strings, code whose leaves are large).
+        if item.weight > config.maxItemWeight {
+            return "item weight \(item.weight) exceeds maxItemWeight \(config.maxItemWeight)"
+        }
         return nil
     }
 }

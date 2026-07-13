@@ -33,6 +33,37 @@ struct SizeLimitsTests {
         #expect(CodeItem([CodeItem([CodeItem([IntItem(9)])])]).flatSize == 1)
     }
 
+    // MARK: Item.weight
+
+    @Test func `scalars weigh one`() {
+        #expect(IntItem(999).weight == 1)
+        #expect(BoolItem(true).weight == 1)
+        #expect(DoubleItem(3.14).weight == 1)
+        #expect(CharItem("x").weight == 1)
+        #expect(InstructionItem(.intAdd).weight == 1)
+    }
+
+    @Test func `string weight is its byte count`() {
+        #expect(StringItem("hello").weight == 5)
+        #expect(StringItem("").weight == 0)
+    }
+
+    @Test func `vector weight is element count, but total chars for vecString`() {
+        #expect(VecIntItem([1, 2, 3, 4]).weight == 4)
+        #expect(VecBoolItem([true, false]).weight == 2)
+        // total characters across the strings, not the count of strings
+        #expect(VecStringItem(["ab", "cde", ""]).weight == 5)
+    }
+
+    @Test func `code weight sums its contents recursively`() {
+        let code = CodeItem([
+            IntItem(1),                       // 1
+            VecStringItem(["abcd"]),          // 4
+            CodeItem([StringItem("xyz")]),    // 3
+        ])
+        #expect(code.weight == 8)
+    }
+
     // MARK: push-boundary enforcement
 
     @Test func `an oversized vector is refused and reported to error`() {
@@ -81,6 +112,43 @@ struct SizeLimitsTests {
         #expect((inty.stacks[.vecInt]!.first as? VecIntItem)?.value == [9, 9])
         #expect((inty.stacks[.int]!.first as? IntItem)?.value == 42)
         #expect(inty.stacks[.error]!.count == 1)
+    }
+
+    // MARK: recursive weight cap (the nested-content backstop)
+
+    // The hole from the worst-case analysis: a vector of long strings passes the
+    // element-count cap but is caught by the recursive weight cap.
+    @Test func `a vector of long strings passes the count cap but fails on weight`() {
+        inty.config.maxVectorLength = 10   // count is fine: only 3 strings
+        inty.config.maxItemWeight = 12
+        let bomb = VecStringItem(["aaaaa", "bbbbb", "ccccc"]) // count 3, weight 15
+
+        #expect(inty.overflow(of: bomb) != nil) // flagged despite small count
+        inty.push(bomb, to: .vecString)
+        #expect(inty.stacks[.vecString]!.isEmpty)
+        #expect(stackString(inty, .error).contains("maxItemWeight"))
+    }
+
+    @Test func `code whose leaves are large is caught by weight, not flatSize`() {
+        inty.config.maxCodePoints = 10     // only 2 leaves: flatSize fine
+        inty.config.maxItemWeight = 8
+        let code = CodeItem([VecIntItem([1, 2, 3, 4, 5]), VecIntItem([6, 7, 8, 9, 10])]) // weight 10
+
+        inty.push(code, to: .code)
+        #expect(inty.stacks[.code]!.isEmpty)
+        #expect(stackString(inty, .error).contains("maxItemWeight"))
+    }
+
+    // MARK: stack-depth cap
+
+    @Test func `a push onto a full stack is refused`() {
+        inty.config.maxStackDepth = 3
+        for n in 0..<3 { inty.push(IntItem(n), to: .int) }
+        #expect(inty.stacks[.int]!.count == 3)
+
+        inty.push(IntItem(99), to: .int) // over depth
+        #expect(inty.stacks[.int]!.count == 3)
+        #expect(stackString(inty, .error).contains("maxStackDepth"))
     }
 
     // MARK: exemptions

@@ -15,11 +15,16 @@ nonisolated struct InterpreterSettings: Sendable, Codable {
     // checked (…ReportingOverflow) arithmetic and Double behaviors reject
     // non-finite results, so neither can trap or grow memory unbounded.
     var stepLimit       : Int = 1_000
-    var maxStackDepth    : Int = 10_000
+    var maxStackDepth   : Int = 10_000
     var maxStringLength : Int = 1_000
     var maxVectorLength : Int = 1_000
     var maxCodePoints   : Int = 1_000
     var maxCodeDepth    : Int = 1_000
+    // Total recursive content (Item.weight) allowed in a single pushed item.
+    // Supplements the per-dimension caps above to bound nested content — a
+    // vector of long strings, or code whose leaves are large — that the
+    // count-only caps cannot see.
+    var maxItemWeight   : Int = 100_000
 }
 
 
@@ -92,13 +97,22 @@ nonisolated final class Interpreter {
     /// Trap immediately rather than corrupt the stack and defer the failure to
     /// some later `as!` in an unrelated Behavior.
     func push(_ item: any Item, to stack: PushStack) {
-        // Refuse an oversized item at the push boundary: the item that would
-        // overflow is replaced by an ErrorItem on .error, but the surrounding
-        // instruction's other results push normally. .error (and the planned
-        // .memory) are exempt so overflow reports can always land.
-        if stack.enforcesSizeLimits, let message = self.overflow(of: item) {
-            self.stacks[.error]?.prepend(ErrorItem(message))
-            return
+        // Refuse an oversized push at the boundary: an item too large by itself,
+        // or one that would exceed the stack's depth, is replaced by an
+        // ErrorItem on .error while the surrounding instruction's other results
+        // push normally. .error (and the planned .memory) are exempt so overflow
+        // reports can always land.
+        if stack.enforcesSizeLimits {
+            if let message = self.overflow(of: item) {
+                self.stacks[.error]?.prepend(ErrorItem(message))
+                return
+            }
+            if (self.stacks[stack]?.count ?? 0) >= config.maxStackDepth {
+                self.stacks[.error]?.prepend(
+                    ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)")
+                )
+                return
+            }
         }
         self.requireAccepts(item, on: stack)
         self.stacks[stack]?.prepend(item)
