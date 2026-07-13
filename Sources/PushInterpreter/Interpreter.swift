@@ -10,15 +10,16 @@ import Foundation
 
 
 nonisolated struct InterpreterSettings: Sendable, Codable {
-    // https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
-    var stepLimit       : Int    = 1_000
-    var stackCapacity   : Int    = 5_000
-    var maxIntegerSize  : Int    = 1_000_000_000
-    var maxDoubleSize   : Double = 1_000_000_000.0
-    var maxStringLength : Int    = 1_000
-    var maxVectorLength : Int    = 1_000
-    var maxCodePoints   : Int    = 1_000
-    var maxCodeDepth    : Int    = 1_000
+    // Loosely after https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
+    // Numeric magnitude caps are intentionally omitted: Int behaviors use
+    // checked (…ReportingOverflow) arithmetic and Double behaviors reject
+    // non-finite results, so neither can trap or grow memory unbounded.
+    var stepLimit       : Int = 1_000
+    var maxStackDepth    : Int = 10_000
+    var maxStringLength : Int = 1_000
+    var maxVectorLength : Int = 1_000
+    var maxCodePoints   : Int = 1_000
+    var maxCodeDepth    : Int = 1_000
 }
 
 

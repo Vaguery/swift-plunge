@@ -34,15 +34,18 @@ nonisolated extension Interpreter {
 
     /// Reports why an item is too large to push, or `nil` if it is within limits.
     ///
-    /// Only two kinds of item can grow without bound during execution — vectors
-    /// (via repeat/concat inside loops) and code (via `exec`/`code` combinators
-    /// and recursion) — so only those are checked. A single oversized value is
-    /// refused at the push boundary; the instruction's other results are
-    /// unaffected. Stack depth and numeric magnitude are intentionally not
+    /// Only the kinds of item that can grow without bound during execution are
+    /// checked — vectors (repeat/concat inside loops), strings (concat/repeat),
+    /// and code (`exec`/`code` combinators and recursion). A single oversized
+    /// value is refused at the push boundary; the instruction's other results
+    /// are unaffected. Stack depth and numeric magnitude are intentionally not
     /// limited here.
     func overflow(of item: any Item) -> String? {
         if let length = vectorLength(of: item), length > config.maxVectorLength {
             return "vector length \(length) exceeds maxVectorLength \(config.maxVectorLength)"
+        }
+        if let string = item as? StringItem, string.value.count > config.maxStringLength {
+            return "string length \(string.value.count) exceeds maxStringLength \(config.maxStringLength)"
         }
         if let code = item as? CodeItem, code.flatSize > config.maxCodePoints {
             return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"

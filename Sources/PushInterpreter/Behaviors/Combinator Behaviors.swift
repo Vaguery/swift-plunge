@@ -131,7 +131,7 @@ nonisolated extension Interpreter {
     // \(type)DupTimes consumes an .int and tries to make that many
     // copies of the top .type item and push them _all at once_ to the
     // stack, which is ridiculous for large counts. Now it will read
-    // Interpreter.config.stackCapacity and fail entirely if its action
+    // Interpreter.config.maxStackDepth and fail entirely if its action
     // would overflow the stack.
     //  'DupTimes` introduces some tacit contingency into execution,
     //  but it's not entirely clear if it is making these results
@@ -153,7 +153,7 @@ nonisolated extension Interpreter {
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
 
-                let allowedMax = interpreter.config.stackCapacity
+                let allowedMax = interpreter.config.maxStackDepth
                 let howMany = (collectedItems[0] as! IntItem).value
                 let rawNumber = max(howMany, 0)
                 let allowed = min(rawNumber, allowedMax)

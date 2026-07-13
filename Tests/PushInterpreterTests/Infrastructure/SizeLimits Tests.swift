@@ -52,6 +52,15 @@ struct SizeLimitsTests {
         #expect(inty.stacks[.error]!.isEmpty)
     }
 
+    @Test func `an oversized string is refused and reported to error`() {
+        inty.config.maxStringLength = 4
+        inty.push(StringItem("toolong"), to: .string)
+
+        #expect(inty.stacks[.string]!.isEmpty)
+        #expect(inty.stacks[.error]!.count == 1)
+        #expect(stackString(inty, .error).contains("maxStringLength"))
+    }
+
     @Test func `an oversized code item is refused and reported to error`() {
         inty.config.maxCodePoints = 2
         inty.push(CodeItem([IntItem(1), IntItem(2), IntItem(3)]), to: .code)
