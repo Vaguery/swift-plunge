@@ -9,7 +9,7 @@ import DequeModule
 
 //case codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeFlatten, codeFlattenPoint, codeFlattenRange, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeIteratePoints, codeIterateRoot, codeLengthPoints, , codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapPoints
 
-extension Interpreter {
+nonisolated extension Interpreter {
 
     static let codeAppend_Behavior =
         Behavior(

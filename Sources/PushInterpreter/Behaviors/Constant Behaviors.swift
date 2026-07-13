@@ -8,7 +8,7 @@
 import DequeModule
 
 
-extension Interpreter {
+nonisolated extension Interpreter {
     
     // ten for each of:
     //    .int, .double, .string, .char, .vecInt, .vecFloat, .vecString, .vecBool

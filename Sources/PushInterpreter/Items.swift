@@ -10,11 +10,11 @@ import Foundation
 
 // building up the protocol infrastructure
 
-protocol Pretty {
+nonisolated protocol Pretty {
     func pretty() -> String
 }
 
-protocol Item: Pretty {
+nonisolated protocol Item: Pretty, Sendable {
     associatedtype Value
     var call: [any Item] {get set}
     var isContingent: Bool {get set}
@@ -24,7 +24,7 @@ protocol Item: Pretty {
     func isEqual(to other: any Item) -> Bool
 }
 
-extension Item where Self: Equatable {
+nonisolated extension Item where Self: Equatable {
     func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
@@ -32,7 +32,7 @@ extension Item where Self: Equatable {
 }
 
 
-extension Item {
+nonisolated extension Item {
     func crux() -> [any Item] {
         var result = [any Item]()
 
@@ -58,7 +58,7 @@ extension Item {
 
 //  global == definition to help compare items that aren't the same exact type
 //
-func == (lhs: [any Item], rhs: [any Item]) -> Bool {
+nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     // Arrays must have the same count to be equal
     guard lhs.count == rhs.count else { return false }
     
@@ -80,7 +80,7 @@ func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 
 // creating structs for each PushType
 
-struct BoolItem: Item, Equatable, Pretty {
+nonisolated struct BoolItem: Item, Equatable, Pretty {
     var value: Bool
     var call: [any Item]
     var isContingent: Bool
@@ -105,7 +105,7 @@ struct BoolItem: Item, Equatable, Pretty {
     }
 }
 
-struct CharItem: Item, Equatable, Comparable, Pretty {
+nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     var value: Character
     var call: [any Item]
     var isContingent: Bool
@@ -136,7 +136,7 @@ struct CharItem: Item, Equatable, Comparable, Pretty {
 }
 
 
-struct CodeItem: Item, Equatable, Pretty {
+nonisolated struct CodeItem: Item, Equatable, Pretty {
     var value: [any Item]
     var call: [any Item]
     var isContingent: Bool
@@ -169,7 +169,7 @@ struct CodeItem: Item, Equatable, Pretty {
 }
 
 
-struct DoubleItem: Item, Equatable, Comparable, Pretty {
+nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     var value: Double
     var call: [any Item]
     var isContingent: Bool
@@ -199,7 +199,7 @@ struct DoubleItem: Item, Equatable, Comparable, Pretty {
 }
 
 
-struct InstructionItem: Item, Equatable, Comparable, Pretty {
+nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     var value: PushInstruction
     var call: [any Item]
     var isContingent: Bool
@@ -231,7 +231,7 @@ struct InstructionItem: Item, Equatable, Comparable, Pretty {
 
 
 
-struct IntItem: Item, Equatable, Comparable, Pretty {
+nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     var value: Int
     var call: [any Item]
     var isContingent: Bool
@@ -262,7 +262,7 @@ struct IntItem: Item, Equatable, Comparable, Pretty {
 
 
 
-struct StringItem: Item, Equatable, Comparable, Pretty {
+nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     var value: String
     var call: [any Item]
     var isContingent: Bool
@@ -292,7 +292,7 @@ struct StringItem: Item, Equatable, Comparable, Pretty {
 }
 
 
-struct VecBoolItem: Item, Equatable, Pretty {
+nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     var value: [Bool]
     var call: [any Item]
     var isContingent: Bool
@@ -319,7 +319,7 @@ struct VecBoolItem: Item, Equatable, Pretty {
 
 
 
-struct VecDoubleItem: Item, Equatable, Pretty {
+nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     var value: [Double]
     var call: [any Item]
     var isContingent: Bool
@@ -345,7 +345,7 @@ struct VecDoubleItem: Item, Equatable, Pretty {
 }
 
 
-struct VecIntItem: Item, Equatable, Pretty {
+nonisolated struct VecIntItem: Item, Equatable, Pretty {
     var value: [Int]
     var call: [any Item]
     var isContingent: Bool
@@ -372,7 +372,7 @@ struct VecIntItem: Item, Equatable, Pretty {
 
 
 
-struct VecStringItem: Item, Equatable, Pretty {
+nonisolated struct VecStringItem: Item, Equatable, Pretty {
     var value: [String]
     var call: [any Item]
     var isContingent: Bool
@@ -399,7 +399,7 @@ struct VecStringItem: Item, Equatable, Pretty {
 
 
 
-struct ErrorItem: Item, Equatable {
+nonisolated struct ErrorItem: Item, Equatable {
     var value: String
     var call: [any Item]
     var isContingent: Bool

@@ -7,7 +7,7 @@
 
 import DequeModule
 
-extension Interpreter {
+nonisolated extension Interpreter {
 
     static let stringButLast_Behavior =
         Behavior(

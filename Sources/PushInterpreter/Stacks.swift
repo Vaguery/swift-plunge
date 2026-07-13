@@ -9,7 +9,7 @@ import Foundation
 import DequeModule
 
 
-enum PushStack : String, CaseIterable, Comparable & Hashable {
+nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
     case error
@@ -38,7 +38,7 @@ enum PushStack : String, CaseIterable, Comparable & Hashable {
 }
 
 
-extension PushStack {
+nonisolated extension PushStack {
 
     /// `.exec` is (for now) the only heterogeneous stack: it interleaves
     /// instructions, code, and literals awaiting execution, so it holds

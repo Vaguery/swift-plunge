@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Router {
+nonisolated struct Router: Sendable {
     let stack: PushStack
     let item: any Item
     init(_ stack: PushStack, _ item: any Item) {

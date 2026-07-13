@@ -8,7 +8,7 @@
 import DequeModule
 import Foundation
 
-extension Interpreter {
+nonisolated extension Interpreter {
 
     static let doubleAdd_Behavior =
         Behavior(

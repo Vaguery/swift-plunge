@@ -12,7 +12,7 @@ import Foundation
 /// internal attribute of a specific `Interpreter`, and loaded with a closure that copies the
 /// top or second item of some particular stack in each step the interpreter makes.
 ///
-struct Recorder<T> {
+nonisolated struct Recorder<T> {
         
     let name: String
     var data: [T?] = []
@@ -56,7 +56,7 @@ struct Recorder<T> {
 
 // wrapper Protocol to enable construction of [Recorder<Any>] arrays
 //
-protocol AnyRecorderProtocol {
+nonisolated protocol AnyRecorderProtocol {
     var name: String { get }
     mutating func record(interpreter: Interpreter)
     mutating func reset()
@@ -65,7 +65,7 @@ protocol AnyRecorderProtocol {
 
 // struct that holds any Recorder<T> recorder, compatible with [Recorder<T>] array
 //
-struct AnyRecorder: AnyRecorderProtocol {
+nonisolated struct AnyRecorder: AnyRecorderProtocol {
     private var _box: AnyRecorderBox
     
     var name: String { _box.name }
@@ -84,7 +84,7 @@ struct AnyRecorder: AnyRecorderProtocol {
 
 // wrapper Protocol for individual Recorder items
 //
-private protocol AnyRecorderBox: AnyObject {
+nonisolated private protocol AnyRecorderBox: AnyObject {
     var name: String { get }
     func record(interpreter: Interpreter)
     func reset()
@@ -94,7 +94,7 @@ private protocol AnyRecorderBox: AnyObject {
 
 // Box around a Recorder, permitting interaction indirectly
 //
-private final class RecorderBox<T>: AnyRecorderBox {
+nonisolated private final class RecorderBox<T>: AnyRecorderBox {
     var base: Recorder<T>
     var name: String { base.name }
     func record(interpreter: Interpreter) { base.record(interpreter: interpreter) }

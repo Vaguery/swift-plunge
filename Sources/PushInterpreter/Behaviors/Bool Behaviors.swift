@@ -7,7 +7,7 @@
 
 import DequeModule
 
-extension Interpreter {
+nonisolated extension Interpreter {
 
     static let boolAnd_Behavior =
         Behavior(

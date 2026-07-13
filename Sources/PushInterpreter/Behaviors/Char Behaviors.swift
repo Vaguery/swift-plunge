@@ -7,7 +7,7 @@
 
 import DequeModule
 
-extension Interpreter {
+nonisolated extension Interpreter {
 
     // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
     static let charFromDouble_behavior =

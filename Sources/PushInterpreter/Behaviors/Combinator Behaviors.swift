@@ -7,7 +7,7 @@
 
 import DequeModule
 
-extension Interpreter {
+nonisolated extension Interpreter {
     static var combinatorBehaviors: [PushInstruction: Behavior] {
         let theseStacks: [PushStack] = [
             .bool,
@@ -40,7 +40,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DeepDup")!
@@ -78,7 +78,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Dup")!
@@ -101,7 +101,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DupItems")!
@@ -144,7 +144,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DupTimes")!
@@ -196,7 +196,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackIsEmpty")!
@@ -229,7 +229,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Eq")!
@@ -261,7 +261,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Flush")!
@@ -281,7 +281,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Pop")!
@@ -298,7 +298,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Rot")!
@@ -325,7 +325,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Shove")!
@@ -363,7 +363,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackDepth")!
@@ -396,7 +396,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Swap")!
@@ -420,7 +420,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Yank")!
@@ -454,7 +454,7 @@ extension Interpreter {
         into result: inout [PushInstruction: Behavior]
     ) {
         let type = stack.rawValue
-        var name: PushInstruction
+        let name: PushInstruction
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)YankDup")!

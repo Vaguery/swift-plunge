@@ -9,7 +9,7 @@ import DequeModule
 import Foundation
 
 
-struct InterpreterSettings {
+nonisolated struct InterpreterSettings: Sendable {
     // https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     var stepLimit       : Int    = 1_000
     var stackCapacity   : Int    = 5_000
@@ -22,7 +22,7 @@ struct InterpreterSettings {
 }
 
 
-final class Interpreter {
+nonisolated final class Interpreter {
     
     static func integrateBehaviors(
         fromThese: [PushInstruction:Behavior],
@@ -30,9 +30,12 @@ final class Interpreter {
         intoLanguage.merge(fromThese, uniquingKeysWith: { (first, _) in first })
     }
         
-    static var language: [PushInstruction: Behavior] {
+    /// Built exactly once, on first access, and shared by every `Interpreter`.
+    /// Safe to share because `Behavior`s hold no per-invocation mutable state
+    /// (see `Behavior.act`); this replaces the former per-instance rebuild.
+    static let language: [PushInstruction: Behavior] = {
         var starter:[PushInstruction: Behavior] = [:]
-        
+
         integrateBehaviors(fromThese: boolBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: charBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: combinatorBehaviors, intoLanguage: &starter)
@@ -49,7 +52,7 @@ final class Interpreter {
         integrateBehaviors(fromThese: vecIntBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecStringBehaviors, intoLanguage: &starter)
         return starter
-    }
+    }()
     
     
     static let defaultSettings = InterpreterSettings()
@@ -215,7 +218,7 @@ final class Interpreter {
 }
 
 
-extension Interpreter {
+nonisolated extension Interpreter {
     
     func pushDefault(_ it: any Item) {
         switch it {
@@ -234,7 +237,7 @@ extension Interpreter {
 }
 
 
-extension Interpreter {
+nonisolated extension Interpreter {
     static func reportBehaviorCoverage() -> String {
         var result = "Behavior Coverage:\n"
         result += "Defined: \(Interpreter.language.keys.count)\n"
