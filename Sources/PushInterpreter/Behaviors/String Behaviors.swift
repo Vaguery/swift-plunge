@@ -474,7 +474,10 @@ nonisolated extension Interpreter {
             takes: [.string],
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
-                let chars = x.value.split(separator: "")
+                // one element per Character (grapheme) — deterministic, unlike
+                // `split(separator: "")`, whose empty-separator overload
+                // resolution is unstable across Foundation / module contexts
+                let chars = Array(x.value)
                 var results: [Router] = []
                 for (idx, c) in chars.enumerated() {
                     results.append(
