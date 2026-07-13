@@ -108,35 +108,53 @@ actor Runner {
 
     // MARK: Evaluation
 
-    /// Evaluates the requested pairings concurrently, returning results in the
-    /// same order as the input. Unknown ids yield an `unresolved` result rather
-    /// than an error, so one bad reference never fails the batch.
+    /// Evaluates the requested pairings against this Runner's pools, concurrently
+    /// and in request order. Unknown ids yield an `unresolved` result rather than
+    /// an error, so one bad reference never fails the batch.
     func evaluate(pairings: [Pairing]) async -> [CaseResult] {
-        let configuration = self.configuration
-        let resolved = pairings.map { pairing in
-            (pairing, individuals[pairing.individual], trainingCases[pairing.trainingCase])
-        }
+        await evaluatePairings(
+            pairings,
+            individuals: individuals,
+            trainingCases: trainingCases,
+            configuration: configuration
+        )
+    }
+}
 
-        return await withTaskGroup(of: (Int, CaseResult).self) { group in
-            for (index, entry) in resolved.enumerated() {
-                let (pairing, individual, trainingCase) = entry
-                group.addTask {
-                    guard let individual, let trainingCase else {
-                        return (index, CaseResult.unresolved(pairing))
-                    }
-                    return (index, evaluateOne(
-                        individual: individual,
-                        trainingCase: trainingCase,
-                        configuration: configuration
-                    ))
+
+/// The shared fan-out: resolve each pairing against the given pools and evaluate
+/// the resolved ones concurrently over fresh interpreters, preserving input
+/// order. Unknown ids become `unresolved` results. Used by both the stateful
+/// `Runner` actor and the stateless `evaluate(request:)` entry point.
+nonisolated func evaluatePairings(
+    _ pairings: [Pairing],
+    individuals: [String: Individual],
+    trainingCases: [String: TrainingCase],
+    configuration: RunnerConfiguration
+) async -> [CaseResult] {
+    let resolved = pairings.map { pairing in
+        (pairing, individuals[pairing.individual], trainingCases[pairing.trainingCase])
+    }
+
+    return await withTaskGroup(of: (Int, CaseResult).self) { group in
+        for (index, entry) in resolved.enumerated() {
+            let (pairing, individual, trainingCase) = entry
+            group.addTask {
+                guard let individual, let trainingCase else {
+                    return (index, CaseResult.unresolved(pairing))
                 }
+                return (index, evaluateOne(
+                    individual: individual,
+                    trainingCase: trainingCase,
+                    configuration: configuration
+                ))
             }
-
-            var ordered = [CaseResult?](repeating: nil, count: resolved.count)
-            for await (index, result) in group {
-                ordered[index] = result
-            }
-            return ordered.compactMap { $0 }
         }
+
+        var ordered = [CaseResult?](repeating: nil, count: resolved.count)
+        for await (index, result) in group {
+            ordered[index] = result
+        }
+        return ordered.compactMap { $0 }
     }
 }
