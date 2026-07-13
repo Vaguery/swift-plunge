@@ -4,7 +4,7 @@ A self-contained interpreter for the [Push](https://faculty.hampshire.edu/lspect
 programming language, written in Swift.
 
 This independednt package can produce and exercise an interpreter instance,
-suitable for the mdoern version of the Push language defined here,
+suitable for the modern version of the Push language defined here,
 and is intended to be semi-independent from any particular search frameworks.
 
 ## Design
