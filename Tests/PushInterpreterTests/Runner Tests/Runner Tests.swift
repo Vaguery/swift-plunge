@@ -26,7 +26,7 @@ struct RunnerTests {
         // input0 + int0  →  5 + 10 = 15
         let individual = Individual(
             id: "add",
-            genome: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
+            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
             constants: [.int0: IntItem(10)]
         )
         let trainingCase = TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])
@@ -57,7 +57,7 @@ struct RunnerTests {
         let individuals = (0..<3).map { n in
             Individual(
                 id: "i\(n)",
-                genome: [InstructionItem(.int0)],
+                program: [InstructionItem(.int0)],
                 constants: [.int0: IntItem(n * 100)]
             )
         }
@@ -90,7 +90,7 @@ struct RunnerTests {
         let runner = Runner(configuration: config)
         let individual = Individual(
             id: "add",
-            genome: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
+            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
             constants: [.int0: IntItem(10)]
         )
         await runner.register(individuals: [individual])
@@ -102,7 +102,7 @@ struct RunnerTests {
 
     @Test func `pools report their counts`() async {
         let runner = Runner()
-        await runner.register(individuals: [Individual(id: "a", genome: [])])
+        await runner.register(individuals: [Individual(id: "a", program: [])])
         await runner.register(trainingCases: [TrainingCase(id: "x"), TrainingCase(id: "y")])
         #expect(await runner.individualCount == 1)
         #expect(await runner.trainingCaseCount == 2)

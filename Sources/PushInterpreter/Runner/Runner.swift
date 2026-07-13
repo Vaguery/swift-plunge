@@ -29,7 +29,7 @@ nonisolated func evaluateOne(
     interpreter.load(
         inputs: trainingCase.inputs,
         constants: individual.constants,
-        program: individual.genome,
+        program: individual.program,
         recorders: configuration.recorders.map(AnyRecorder.init)
     )
     interpreter.run()

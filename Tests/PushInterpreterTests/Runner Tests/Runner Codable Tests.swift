@@ -27,7 +27,7 @@ struct RunnerCodableTests {
     @Test func `Individual round-trips through JSON`() throws {
         let individual = Individual(
             id: "add",
-            genome: [
+            program: [
                 InstructionItem(.input0),
                 InstructionItem(.int0),
                 InstructionItem(.intAdd),
@@ -38,7 +38,7 @@ struct RunnerCodableTests {
         let restored = try roundTrip(individual)
 
         #expect(restored.id == "add")
-        #expect(restored.genome == individual.genome)
+        #expect(restored.program == individual.program)
         #expect(sameBindings(restored.constants, individual.constants))
     }
 
@@ -91,7 +91,7 @@ struct RunnerCodableTests {
     @Test func `a decoded individual and case evaluate correctly`() async throws {
         let individual = Individual(
             id: "add",
-            genome: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
+            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
             constants: [.int0: IntItem(10)]
         )
         let trainingCase = TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])
