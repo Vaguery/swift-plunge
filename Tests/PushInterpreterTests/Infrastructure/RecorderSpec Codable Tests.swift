@@ -22,7 +22,7 @@ struct RecorderSpecCodableTests {
     @Test(arguments: [
         RecorderTarget.top(.int),
         RecorderTarget.second(.vecDouble),
-        RecorderTarget.constant(.double, 3),
+        RecorderTarget.constant(.double3),
         RecorderTarget.count(.error),
         RecorderTarget.isEmpty(.exec),
         RecorderTarget.printout,
@@ -43,7 +43,7 @@ struct RecorderSpecCodableTests {
     @Test func `a batch of specs round-trips as an array`() throws {
         let specs = [
             RecorderSpec("topInt", observing: .top(.int)),
-            RecorderSpec("const2", observing: .constant(.string, 2)),
+            RecorderSpec("const2", observing: .constant(.string2)),
             RecorderSpec("out", observing: .printout),
         ]
         #expect(try roundTrip(specs) == specs)

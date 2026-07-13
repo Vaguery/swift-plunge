@@ -32,9 +32,11 @@ struct InterpreterTests {
         #expect(inty.stacks.keys.sorted() == PushStack.allCases.sorted())
     }
     
-    @Test func `new interpreter has constant dictionary defined`() {
-        #expect(inty.constants.keys.count == 8)
-
+    @Test func `new interpreter starts with no constants assigned`() {
+        // Constants are keyed by instruction token (like inputs), so a fresh
+        // interpreter has none until they are bound; unassigned tokens read nil.
+        #expect(inty.constants.isEmpty)
+        #expect(inty.constants[.int2] == nil)
     }
     
     @Test

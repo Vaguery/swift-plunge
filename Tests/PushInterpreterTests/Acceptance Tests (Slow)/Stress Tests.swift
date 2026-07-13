@@ -138,15 +138,16 @@ struct Stress_Tests {
         }
         
         @MainActor static func setRandomConstants(in interpreter: Interpreter) {
+            func token(_ name: String) -> PushInstruction { PushInstruction(rawValue: name)! }
             for i in (0..<10) {
-                interpreter.constants[.int]![i] = IntItem(randomInt(100_000))
-                interpreter.constants[.double]![i] = DoubleItem(randomDouble(100_000.0))
-                interpreter.constants[.string]![i] = StringItem(randomString(20))
-                interpreter.constants[.char]![i] = CharItem(randomChar())
-                interpreter.constants[.vecInt]![i] = VecIntItem(randomVecInt(100_000,20))
-                interpreter.constants[.vecDouble]![i] = VecDoubleItem(randomVecDouble(100_000.0,20))
-                interpreter.constants[.vecString]![i] = VecStringItem(randomVecString(20))
-                interpreter.constants[.vecBool]![i] = VecBoolItem(randomVecBool(20))
+                interpreter.constants[token("int\(i)")] = IntItem(randomInt(100_000))
+                interpreter.constants[token("double\(i)")] = DoubleItem(randomDouble(100_000.0))
+                interpreter.constants[token("string\(i)")] = StringItem(randomString(20))
+                interpreter.constants[token("char\(i)")] = CharItem(randomChar())
+                interpreter.constants[token("vecInt\(i)")] = VecIntItem(randomVecInt(100_000,20))
+                interpreter.constants[token("vecDouble\(i)")] = VecDoubleItem(randomVecDouble(100_000.0,20))
+                interpreter.constants[token("vecString\(i)")] = VecStringItem(randomVecString(20))
+                interpreter.constants[token("vecBool\(i)")] = VecBoolItem(randomVecBool(20))
                 let inputName = "input\(i)"
                 let input = PushInstruction(rawValue: inputName)!
                 // TODO: add a random Item generator
@@ -167,8 +168,9 @@ struct Stress_Tests {
 
     @Test func `set random constants works`() {
         RandomCode.setRandomConstants(in: inty)
-        #expect(inty.constants[.int]!.count == 10)
-        #expect(inty.constants[.int]!.compactMap({ $0 }).count == 10)
+        // eight constant-bearing types, ten slots each
+        #expect(inty.constants.count == 80)
+        #expect((0..<10).allSatisfy { inty.constants[PushInstruction(rawValue: "int\($0)")!] != nil })
     }
 
     @Test(.disabled(if: Stress_Tests.disabledTests))

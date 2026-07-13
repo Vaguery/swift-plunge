@@ -26,7 +26,7 @@ nonisolated extension Interpreter {
                     instructionName,
                     takes: [],
                     modifier: { (interpreter, collectedItems) in
-                        if var v = interpreter.constants[stack]?[i] {
+                        if var v = interpreter.constants[instructionName] {
                             v.call = [InstructionItem(instructionName)]
                             return [Router(.exec, v)]
                         } else {

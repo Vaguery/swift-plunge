@@ -24,11 +24,15 @@ nonisolated enum ItemKind: String, Codable, Sendable {
 ///
 /// Transport `[any Item]` as `program.map(AnyItem.init)` and recover it as
 /// `decoded.map(\.item)`.
-nonisolated struct AnyItem: Codable, Sendable {
+nonisolated struct AnyItem: Codable, Sendable, Equatable {
     let item: any Item
 
     init(_ item: any Item) {
         self.item = item
+    }
+
+    static func == (lhs: AnyItem, rhs: AnyItem) -> Bool {
+        lhs.item.isEqual(to: rhs.item)
     }
 
     private enum CodingKeys: String, CodingKey {

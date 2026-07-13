@@ -61,16 +61,11 @@ nonisolated final class Interpreter {
     var stacks: [PushStack: Deque<any Item>]
     var counter: Int = 0
     var inputs: [PushInstruction:any Item] = [:]
-    var constants: [PushStack:[(any Item)?]] = [
-        .int       : [IntItem?](repeating:nil, count:10),
-        .double    : [DoubleItem?](repeating:nil, count:10),
-        .string    : [StringItem?](repeating:nil, count:10),
-        .char      : [CharItem?](repeating:nil, count:10),
-        .vecInt    : [VecIntItem?](repeating:nil, count:10),
-        .vecDouble : [VecDoubleItem?](repeating:nil, count:10),
-        .vecString : [VecStringItem?](repeating:nil, count:10),
-        .vecBool   : [VecBoolItem?](repeating:nil, count:10)
-    ]
+    // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
+    // symmetric with `inputs`. A missing key means the constant is unassigned;
+    // the constant behavior emits an ErrorItem for that case at runtime, so no
+    // pre-seeding of nil slots is needed.
+    var constants: [PushInstruction: any Item] = [:]
     var config: InterpreterSettings = Interpreter.defaultSettings
     var program: [any Item] = []
     var printout: String = ""
@@ -117,17 +112,19 @@ nonisolated final class Interpreter {
     }
     
     func load(inputs: [PushInstruction:any Item] = [:],
+              constants: [PushInstruction:any Item] = [:],
               stacks initial: [PushStack: [any Item]] = [:],
               program: [any Item] = [],
               recorders: [AnyRecorder] = []) {
         // settings reset
         self.counter = 0
-        
-        // inputs
+
+        // inputs and constants (both keyed by instruction token)
         for (key,value) in inputs {
             self.inputs[key] = value
         }
-        
+        loadConstants(constants)
+
         // initial stack items if any
         self.stacks = PushStack.emptyStacks()
         for (stack, items) in initial {

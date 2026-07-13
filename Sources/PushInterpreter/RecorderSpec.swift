@@ -25,8 +25,9 @@ nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case top(PushStack)
     /// The second item of a stack, or `nil` when it holds fewer than two items.
     case second(PushStack)
-    /// A bound constant slot, or `nil` when the slot is unset or out of range.
-    case constant(PushStack, Int)
+    /// A bound constant, by its instruction token (e.g. `.int3`), or `nil` when
+    /// that constant is unassigned.
+    case constant(PushInstruction)
     /// The number of items currently on a stack (`Int`).
     case count(PushStack)
     /// Whether a stack is currently empty (`Bool`).
@@ -35,6 +36,24 @@ nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case printout
     /// The interpreter's step counter (`Int`).
     case counter
+}
+
+
+nonisolated extension RecorderTarget {
+    /// The natural value type a target collects, used to repackage a recorder's
+    /// type-erased data into a typed `RecordedTrace`.
+    enum ValueKind: Sendable {
+        case item, int, string, bool
+    }
+
+    var valueKind: ValueKind {
+        switch self {
+        case .top, .second, .constant: .item
+        case .count, .counter: .int
+        case .printout: .string
+        case .isEmpty: .bool
+        }
+    }
 }
 
 
@@ -67,12 +86,9 @@ nonisolated extension AnyRecorder {
                 else { return nil }
                 return items[1]
             })
-        case .constant(let stack, let index):
+        case .constant(let instruction):
             self.init(Recorder<any Item>(name) { interpreter in
-                guard let slots = interpreter.constants[stack],
-                      slots.indices.contains(index)
-                else { return nil }
-                return slots[index]
+                interpreter.constants[instruction]
             })
         case .count(let stack):
             self.init(Recorder<Int>(name) { interpreter in
