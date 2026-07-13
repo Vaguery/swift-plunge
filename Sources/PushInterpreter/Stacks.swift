@@ -9,7 +9,7 @@ import Foundation
 import DequeModule
 
 
-nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable {
+nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable, Codable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
     case error
