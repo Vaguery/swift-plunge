@@ -5,7 +5,7 @@
 //  Created by William Tozier on 6/2/26.
 //
 
-@testable import PropellerWithStructs
+@testable import PushInterpreter
 import Testing
 import DequeModule
 

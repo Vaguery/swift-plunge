@@ -6,7 +6,7 @@
 //
 
 import DequeModule
-@testable import PropellerWithStructs
+@testable import PushInterpreter
 import Testing
 
 //

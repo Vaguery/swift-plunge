@@ -6,7 +6,7 @@
 //
 // verify interpreter setup works as expected
 
-@testable import PropellerWithStructs
+@testable import PushInterpreter
 import Testing
 import DequeModule
 

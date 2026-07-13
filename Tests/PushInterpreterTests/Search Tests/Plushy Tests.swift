@@ -8,7 +8,7 @@
 
 import DequeModule
 import Testing
-@testable import PropellerWithStructs
+@testable import PushInterpreter
 
 @Suite @MainActor
 struct PlushyTests {

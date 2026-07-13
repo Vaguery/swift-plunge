@@ -76,7 +76,11 @@ nonisolated extension Interpreter {
                     Router(
                         .bool,
                         BoolItem(
-                            y.value.contains(x.value),
+                            // `firstRange(of:)` is stdlib and deterministic
+                            // (empty substring ⇒ contained); plain `.contains`
+                            // resolved to different overloads across Foundation
+                            // / module contexts once this code left the app target.
+                            y.value.firstRange(of: x.value) != nil,
                             call: [y, x, InstructionItem(.stringContains)],
                             isContingent: Behavior.netContingency(of: x, y)
                         )

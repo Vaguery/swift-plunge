@@ -8,7 +8,7 @@
 //  .error, which holds only ErrorItem) accepts a single Item type.
 //
 
-@testable import PropellerWithStructs
+@testable import PushInterpreter
 import Testing
 import DequeModule
 

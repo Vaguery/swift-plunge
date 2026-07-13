@@ -87,7 +87,9 @@ nonisolated class Behavior: @unchecked Sendable {
 
 
 // subclass for behaviors that manipulate the Interpreter state more than pop/push
-nonisolated class BehaviorWithSideEffects : Behavior {
+nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
+    // restated from Behavior: this subclass adds a stored `let directModifier`,
+    // which is itself `@Sendable` and immutable, so the type stays safe to share.
     let directModifier: @Sendable (inout Interpreter, [any Item]) -> [Router]
 
     init(_ label: PushInstruction, takes: [PushStack], modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]) {
