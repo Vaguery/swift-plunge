@@ -91,6 +91,14 @@ nonisolated final class Interpreter {
     /// Trap immediately rather than corrupt the stack and defer the failure to
     /// some later `as!` in an unrelated Behavior.
     func push(_ item: any Item, to stack: PushStack) {
+        // Refuse an oversized item at the push boundary: the item that would
+        // overflow is replaced by an ErrorItem on .error, but the surrounding
+        // instruction's other results push normally. .error (and the planned
+        // .memory) are exempt so overflow reports can always land.
+        if stack.enforcesSizeLimits, let message = self.overflow(of: item) {
+            self.stacks[.error]?.prepend(ErrorItem(message))
+            return
+        }
         self.requireAccepts(item, on: stack)
         self.stacks[stack]?.prepend(item)
     }

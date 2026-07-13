@@ -141,12 +141,20 @@ nonisolated struct CodeItem: Item, Equatable, Pretty {
     var call: [any Item]
     var isContingent: Bool
     var index: Int
-    
+
+    /// The number of items in this code's fully flattened `.value`: every
+    /// non-code item counts as one, and a nested `CodeItem` contributes its own
+    /// `flatSize` (its contents), recursively — so `[1, [2, 3]]` is 3 and an
+    /// empty or empty-nested block contributes nothing. Computed once here
+    /// because `value` is never mutated after construction.
+    let flatSize: Int
+
     init(_ value: [any Item], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
+        self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
     }
 
     static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
