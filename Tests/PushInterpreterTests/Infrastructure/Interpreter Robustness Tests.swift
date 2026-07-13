@@ -1,6 +1,6 @@
 //
 //  Interpreter Robustness Tests.swift
-//  PropellerWithStructs
+//  PushInterpreterTests
 //
 //  Coverage + edge-case tests supporting Proposal A:
 //   - every registered Behavior runs its transform through the validated push

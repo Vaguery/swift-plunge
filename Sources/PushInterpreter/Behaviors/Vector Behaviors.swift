@@ -1,6 +1,6 @@
 //
 //  Vector Behaviors.swift
-//  Propeller in Swift
+//  PushInterpreter
 //
 //  Created by William Tozier on 7/8/26.
 //

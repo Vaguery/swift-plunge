@@ -1,6 +1,6 @@
 //
 //  Crux Tests.swift
-//  PropellerWithStructs
+//  PushInterpreterTests
 //
 //  Created by William Tozier on 6/23/26.
 //

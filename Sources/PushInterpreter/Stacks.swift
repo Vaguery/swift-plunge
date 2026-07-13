@@ -1,6 +1,6 @@
 //
 //  Stacks.swift
-//  PropellerWithStructs
+//  PushInterpreter
 //
 //  Created by William Tozier on 5/30/26.
 //

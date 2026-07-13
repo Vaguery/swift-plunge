@@ -1,6 +1,6 @@
 //
 //  Constant Behaviors.swift
-//  PropellerWithStructs
+//  PushInterpreter
 //
 //  Created by William Tozier on 5/31/26.
 //

@@ -1,6 +1,6 @@
 //
 //  OutputInstructionTests.swift
-//  PropellerWithStructs
+//  PushInterpreterTests
 //
 //  Created by William Tozier on 6/14/26.
 //

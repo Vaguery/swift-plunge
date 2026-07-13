@@ -1,6 +1,6 @@
 //
 //  Int Behavior Tests.swift
-//  PropellerWithStructs
+//  PushInterpreterTests
 //
 //  Created by William Tozier on 6/3/26.
 //

@@ -1,6 +1,6 @@
 //
 //  PushStack Type Tests.swift
-//  PropellerWithStructs
+//  PushInterpreterTests
 //
 //  Tests for the PushStack type-acceptance predicate (Proposal A, Piece 1).
 //  These pin down the homogeneity invariant that the Behaviors' force-casts

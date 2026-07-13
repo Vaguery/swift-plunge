@@ -1,6 +1,6 @@
 //
 //  Inty Stack Setup Tests.swift
-//  PropellerWithStructsUnitTests
+//  PushInterpreterTests
 //
 //  Created by Barbara Tozier on 6/25/26.
 //

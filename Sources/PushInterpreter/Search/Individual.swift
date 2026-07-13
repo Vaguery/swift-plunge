@@ -1,6 +1,6 @@
 //
 //  Individual.swift
-//  PropellerWithStructs
+//  PushInterpreter
 //
 //  Created by William Tozier on 6/3/26.
 //

@@ -1,6 +1,6 @@
 //
 //  Combinator Behaviors.swift
-//  PropellerWithStructs
+//  PushInterpreter
 //
 //  Created by William Tozier on 6/11/26.
 //
