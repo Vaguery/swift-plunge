@@ -14,7 +14,9 @@ import Testing
 @Suite @MainActor
 struct Stress_Tests {
     
-    static let disabledTests = true
+    // nonisolated so the `.disabled(if:)` trait can read it from the @Test
+    // macro's Sendable context under Swift 6 language mode
+    nonisolated static let disabledTests = true
     
     var inty = Interpreter()
     

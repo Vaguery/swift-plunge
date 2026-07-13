@@ -29,5 +29,12 @@ let package = Package(
                 .product(name: "DequeModule", package: "swift-collections"),
             ]
         ),
+        .testTarget(
+            name: "PushInterpreterTests",
+            dependencies: [
+                "PushInterpreter",
+                .product(name: "DequeModule", package: "swift-collections"),
+            ]
+        ),
     ]
 )

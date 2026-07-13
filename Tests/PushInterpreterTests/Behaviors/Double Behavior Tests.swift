@@ -48,7 +48,10 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains(""))
+        // args exhausted on the third add → a missing-args error. (Was
+        // `.contains("")`, a trivially-true placeholder whose overload
+        // resolved differently once tests moved to the Swift 6 package.)
+        #expect(stackString(inty, .error).contains("doubleAdd missing args"))
 
     }
 
