@@ -11,7 +11,7 @@ import Foundation
 
 // Propeller replica language
 
-nonisolated enum PushInstruction : String, CaseIterable {
+nonisolated enum PushInstruction : String, CaseIterable, Codable {
     
     
     // BOOL instructions
