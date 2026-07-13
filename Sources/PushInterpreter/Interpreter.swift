@@ -9,7 +9,7 @@ import DequeModule
 import Foundation
 
 
-nonisolated struct InterpreterSettings: Sendable {
+nonisolated struct InterpreterSettings: Sendable, Codable {
     // https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     var stepLimit       : Int    = 1_000
     var stackCapacity   : Int    = 5_000

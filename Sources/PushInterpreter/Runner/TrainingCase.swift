@@ -20,3 +20,28 @@ nonisolated struct TrainingCase: Identifiable, Sendable {
         self.inputs = inputs
     }
 }
+
+
+extension TrainingCase: Codable {
+    // `inputs` holds `any Item`, so it bridges through AnyItem as an
+    // instruction-keyed map.
+    private enum CodingKeys: String, CodingKey {
+        case id, inputs
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            id: try container.decode(String.self, forKey: .id),
+            inputs: ItemBindingCoding.decode(
+                try container.decode([String: AnyItem].self, forKey: .inputs)
+            )
+        )
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(ItemBindingCoding.encode(inputs), forKey: .inputs)
+    }
+}

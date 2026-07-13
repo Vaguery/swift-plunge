@@ -11,7 +11,7 @@
 /// `unresolved` is `true` when the pairing referenced an unknown individual or
 /// training-case id; the Runner reports the miss rather than trapping, so a bad
 /// reference degrades one result instead of the whole batch.
-nonisolated struct CaseResult: Sendable {
+nonisolated struct CaseResult: Sendable, Codable {
     let individual: String
     let trainingCase: String
     let traces: [String: RecordedTrace]
