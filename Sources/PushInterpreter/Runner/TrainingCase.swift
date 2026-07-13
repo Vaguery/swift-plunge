@@ -11,11 +11,11 @@
 /// Expected outputs and the reduction of observations to an error are the search
 /// process's concern, not the Runner's — the Runner returns raw observations and
 /// lets the caller score them.
-nonisolated struct TrainingCase: Identifiable, Sendable {
-    let id: String
-    let inputs: [PushInstruction: any Item]
+public nonisolated struct TrainingCase: Identifiable, Sendable {
+    public let id: String
+    public let inputs: [PushInstruction: any Item]
 
-    init(id: String, inputs: [PushInstruction: any Item] = [:]) {
+    public init(id: String, inputs: [PushInstruction: any Item] = [:]) {
         self.id = id
         self.inputs = inputs
     }
@@ -29,7 +29,7 @@ extension TrainingCase: Codable {
         case id, inputs
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             id: try container.decode(String.self, forKey: .id),
@@ -39,7 +39,7 @@ extension TrainingCase: Codable {
         )
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(ItemBindingCoding.encode(inputs), forKey: .inputs)

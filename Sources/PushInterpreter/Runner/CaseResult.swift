@@ -11,13 +11,13 @@
 /// `unresolved` is `true` when the pairing referenced an unknown individual or
 /// training-case id; the Runner reports the miss rather than trapping, so a bad
 /// reference degrades one result instead of the whole batch.
-nonisolated struct CaseResult: Sendable, Codable {
-    let individual: String
-    let trainingCase: String
-    let traces: [String: RecordedTrace]
-    let unresolved: Bool
+public nonisolated struct CaseResult: Sendable, Codable {
+    public let individual: String
+    public let trainingCase: String
+    public let traces: [String: RecordedTrace]
+    public let unresolved: Bool
 
-    init(individual: String,
+    public init(individual: String,
          trainingCase: String,
          traces: [String: RecordedTrace] = [:],
          unresolved: Bool = false) {
@@ -27,7 +27,7 @@ nonisolated struct CaseResult: Sendable, Codable {
         self.unresolved = unresolved
     }
 
-    static func unresolved(_ pairing: Pairing) -> CaseResult {
+    public static func unresolved(_ pairing: Pairing) -> CaseResult {
         CaseResult(
             individual: pairing.individual,
             trainingCase: pairing.trainingCase,

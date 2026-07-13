@@ -60,32 +60,32 @@ nonisolated func evaluateOne(
 /// runs *off* the actor, in child tasks that each build and discard their own
 /// `Interpreter`; nothing mutable crosses a task boundary, so the fan-out is
 /// data-race-free by construction.
-actor Runner {
+public actor Runner {
     private var configuration: RunnerConfiguration
     private var individuals: [String: Individual] = [:]
     private var trainingCases: [String: TrainingCase] = [:]
 
-    init(configuration: RunnerConfiguration = RunnerConfiguration()) {
+    public init(configuration: RunnerConfiguration = RunnerConfiguration()) {
         self.configuration = configuration
     }
 
     // MARK: Configuration (interaction modes 3 & 4)
 
-    func configure(_ configuration: RunnerConfiguration) {
+    public func configure(_ configuration: RunnerConfiguration) {
         self.configuration = configuration
     }
 
-    var currentConfiguration: RunnerConfiguration { configuration }
+    public var currentConfiguration: RunnerConfiguration { configuration }
 
     // MARK: Language introspection (interaction modes 1 & 2)
 
     /// Every instruction the language defines. Static, so `nonisolated`.
-    nonisolated var instructionNames: [String] {
+    public nonisolated var instructionNames: [String] {
         Interpreter.language.keys.map(\.rawValue).sorted()
     }
 
     /// Instructions currently active: defined and not disabled by the config.
-    var activeInstructionNames: [String] {
+    public var activeInstructionNames: [String] {
         let disabled = configuration.disabledBehaviors
         return Interpreter.language.keys
             .filter { !disabled.contains($0) }
@@ -95,23 +95,23 @@ actor Runner {
 
     // MARK: Pools (interaction modes 5 & 6)
 
-    func register(individuals newOnes: [Individual]) {
+    public func register(individuals newOnes: [Individual]) {
         for individual in newOnes { individuals[individual.id] = individual }
     }
 
-    func register(trainingCases newOnes: [TrainingCase]) {
+    public func register(trainingCases newOnes: [TrainingCase]) {
         for trainingCase in newOnes { trainingCases[trainingCase.id] = trainingCase }
     }
 
-    var individualCount: Int { individuals.count }
-    var trainingCaseCount: Int { trainingCases.count }
+    public var individualCount: Int { individuals.count }
+    public var trainingCaseCount: Int { trainingCases.count }
 
     // MARK: Evaluation
 
     /// Evaluates the requested pairings against this Runner's pools, concurrently
     /// and in request order. Unknown ids yield an `unresolved` result rather than
     /// an error, so one bad reference never fails the batch.
-    func evaluate(pairings: [Pairing]) async -> [CaseResult] {
+    public func evaluate(pairings: [Pairing]) async -> [CaseResult] {
         await evaluatePairings(
             pairings,
             individuals: individuals,

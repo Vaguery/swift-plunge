@@ -12,11 +12,11 @@
 /// generates the full individual×case grid itself. Lexicase selection and
 /// down-sampling depend on evaluating deliberate, often sparse, subsets of
 /// pairings.
-nonisolated struct Pairing: Sendable, Hashable, Codable {
-    let individual: String
-    let trainingCase: String
+public nonisolated struct Pairing: Sendable, Hashable, Codable {
+    public let individual: String
+    public let trainingCase: String
 
-    init(individual: String, trainingCase: String) {
+    public init(individual: String, trainingCase: String) {
         self.individual = individual
         self.trainingCase = trainingCase
     }

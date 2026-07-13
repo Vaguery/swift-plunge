@@ -10,12 +10,12 @@
 ///
 /// Sent once and reused across many pairings, so the per-request payload stays
 /// just the pairings themselves.
-nonisolated struct RunnerConfiguration: Sendable, Codable {
-    var settings: InterpreterSettings
-    var recorders: [RecorderSpec]
-    var disabledBehaviors: Set<PushInstruction>
+public nonisolated struct RunnerConfiguration: Sendable, Codable {
+    public var settings: InterpreterSettings
+    public var recorders: [RecorderSpec]
+    public var disabledBehaviors: Set<PushInstruction>
 
-    init(settings: InterpreterSettings = InterpreterSettings(),
+    public init(settings: InterpreterSettings = InterpreterSettings(),
          recorders: [RecorderSpec] = [],
          disabledBehaviors: Set<PushInstruction> = []) {
         self.settings = settings

@@ -10,11 +10,11 @@ import Foundation
 
 // building up the protocol infrastructure
 
-nonisolated protocol Pretty {
+public nonisolated protocol Pretty {
     func pretty() -> String
 }
 
-nonisolated protocol Item: Pretty, Sendable {
+public nonisolated protocol Item: Pretty, Sendable {
     associatedtype Value
     var call: [any Item] {get set}
     var isContingent: Bool {get set}
@@ -34,11 +34,11 @@ nonisolated protocol Item: Pretty, Sendable {
 nonisolated extension Item {
     // Default for scalar items (Bool, Int, Double, Char, Instruction, Error):
     // one unit each. Container types override with a stored, memoized weight.
-    var weight: Int { 1 }
+    public var weight: Int { 1 }
 }
 
 nonisolated extension Item where Self: Equatable {
-    func isEqual(to other: any Item) -> Bool {
+    public func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
     }
@@ -46,7 +46,7 @@ nonisolated extension Item where Self: Equatable {
 
 
 nonisolated extension Item {
-    func crux() -> [any Item] {
+    public func crux() -> [any Item] {
         var result = [any Item]()
 
         if self.call.isEmpty {
@@ -71,7 +71,7 @@ nonisolated extension Item {
 
 //  global == definition to help compare items that aren't the same exact type
 //
-nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
+public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     // Arrays must have the same count to be equal
     guard lhs.count == rhs.count else { return false }
     
@@ -93,80 +93,80 @@ nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 
 // creating structs for each PushType
 
-nonisolated struct BoolItem: Item, Equatable, Pretty {
-    var value: Bool
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct BoolItem: Item, Equatable, Pretty {
+    public var value: Bool
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: Bool, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: Bool, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
+    public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
-nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
-    var value: Character
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
+    public var value: Character
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: Character, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: Character, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: CharItem, rhs: CharItem) -> Bool {
+    public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    static func < (lhs: CharItem, rhs: CharItem) -> Bool {
+    public static func < (lhs: CharItem, rhs: CharItem) -> Bool {
         lhs.value < rhs.value
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "'\(value)'"
     }
 
 }
 
 
-nonisolated struct CodeItem: Item, Equatable, Pretty {
-    var value: [any Item]
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct CodeItem: Item, Equatable, Pretty {
+    public var value: [any Item]
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
 
     /// The number of items in this code's fully flattened `.value`: every
     /// non-code item counts as one, and a nested `CodeItem` contributes its own
     /// `flatSize` (its contents), recursively — so `[1, [2, 3]]` is 3 and an
     /// empty or empty-nested block contributes nothing. Computed once here
     /// because `value` is never mutated after construction.
-    let flatSize: Int
+    public let flatSize: Int
 
     /// Recursive content weight: the sum of the weights of everything this block
     /// holds, at every level. Reuses each child's already-stored weight.
-    let weight: Int
+    public let weight: Int
 
-    init(_ value: [any Item], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: [any Item], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -175,14 +175,14 @@ nonisolated struct CodeItem: Item, Equatable, Pretty {
         self.weight = value.reduce(0) { $0 + $1.weight }
     }
 
-    static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
+    public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         var result = "( "
         for i in value {
             result += "\(i.pretty()) "
@@ -195,61 +195,61 @@ nonisolated struct CodeItem: Item, Equatable, Pretty {
 }
 
 
-nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
-    var value: Double
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
+    public var value: Double
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: Double, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: Double, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
+    public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    static func < (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
+    public static func < (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
         lhs.value < rhs.value
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
-nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
-    var value: PushInstruction
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
+    public var value: PushInstruction
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: PushInstruction, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: PushInstruction, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
+    public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    static func < (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
+    public static func < (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
         lhs.value.rawValue < rhs.value.rawValue
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         ".\(value)"
     }
 
@@ -257,45 +257,45 @@ nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
 
 
 
-nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
-    var value: Int
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
+    public var value: Int
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: Int, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: Int, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: IntItem, rhs: IntItem) -> Bool {
+    public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    static func < (lhs: IntItem, rhs: IntItem) -> Bool {
+    public static func < (lhs: IntItem, rhs: IntItem) -> Bool {
         lhs.value < rhs.value
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
 
-nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
-    var value: String
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
-    let weight: Int
+public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
+    public var value: String
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
+    public let weight: Int
 
-    init(_ value: String, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: String, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -303,31 +303,31 @@ nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
         self.weight = value.utf8.count
     }
     
-    static func == (lhs: StringItem, rhs: StringItem) -> Bool {
+    public static func == (lhs: StringItem, rhs: StringItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    static func < (lhs: StringItem, rhs: StringItem) -> Bool {
+    public static func < (lhs: StringItem, rhs: StringItem) -> Bool {
         lhs.value < rhs.value
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\"\(value)\""
     }
 }
 
 
-nonisolated struct VecBoolItem: Item, Equatable, Pretty {
-    var value: [Bool]
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
-    let weight: Int
+public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
+    public var value: [Bool]
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
+    public let weight: Int
 
-    init(_ value: [Bool], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: [Bool], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -335,28 +335,28 @@ nonisolated struct VecBoolItem: Item, Equatable, Pretty {
         self.weight = value.count
     }
     
-    static func == (lhs: VecBoolItem, rhs: VecBoolItem) -> Bool {
+    public static func == (lhs: VecBoolItem, rhs: VecBoolItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
 
-nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
-    var value: [Double]
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
-    let weight: Int
+public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
+    public var value: [Double]
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
+    public let weight: Int
 
-    init(_ value: [Double], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: [Double], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -364,27 +364,27 @@ nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
         self.weight = value.count
     }
     
-    static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
+    public static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
-nonisolated struct VecIntItem: Item, Equatable, Pretty {
-    var value: [Int]
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
-    let weight: Int
+public nonisolated struct VecIntItem: Item, Equatable, Pretty {
+    public var value: [Int]
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
+    public let weight: Int
 
-    init(_ value: [Int], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: [Int], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -392,31 +392,31 @@ nonisolated struct VecIntItem: Item, Equatable, Pretty {
         self.weight = value.count
     }
     
-    static func == (lhs: VecIntItem, rhs: VecIntItem) -> Bool {
+    public static func == (lhs: VecIntItem, rhs: VecIntItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
 
-nonisolated struct VecStringItem: Item, Equatable, Pretty {
-    var value: [String]
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct VecStringItem: Item, Equatable, Pretty {
+    public var value: [String]
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
 
     /// Total characters across all contained strings — the "total characters"
     /// measure that a plain element count would miss. O(element count) once.
-    let weight: Int
+    public let weight: Int
 
-    init(_ value: [String], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: [String], call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
@@ -424,41 +424,41 @@ nonisolated struct VecStringItem: Item, Equatable, Pretty {
         self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
     
-    static func == (lhs: VecStringItem, rhs: VecStringItem) -> Bool {
+    public static func == (lhs: VecStringItem, rhs: VecStringItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "\(value)"
     }
 }
 
 
 
-nonisolated struct ErrorItem: Item, Equatable {
-    var value: String
-    var call: [any Item]
-    var isContingent: Bool
-    var index: Int
+public nonisolated struct ErrorItem: Item, Equatable {
+    public var value: String
+    public var call: [any Item]
+    public var isContingent: Bool
+    public var index: Int
     
-    init(_ value: String, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
+    public init(_ value: String, call: [any Item] = [], isContingent: Bool =  false, index: Int = 0) {
         self.value = value
         self.call = call
         self.isContingent = isContingent
         self.index = index
     }
     
-    static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
+    public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
         (lhs.value == rhs.value) &&
         (lhs.call == rhs.call) &&
         (lhs.isContingent == rhs.isContingent) &&
         (lhs.index == rhs.index)
     }
     
-    func pretty() -> String {
+    public func pretty() -> String {
         "« ‼️ \(value) »"
     }
 }

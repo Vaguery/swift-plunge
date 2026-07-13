@@ -24,14 +24,14 @@ nonisolated enum ItemKind: String, Codable, Sendable {
 ///
 /// Transport `[any Item]` as `program.map(AnyItem.init)` and recover it as
 /// `decoded.map(\.item)`.
-nonisolated struct AnyItem: Codable, Sendable, Equatable {
-    let item: any Item
+public nonisolated struct AnyItem: Codable, Sendable, Equatable {
+    public let item: any Item
 
-    init(_ item: any Item) {
+    public init(_ item: any Item) {
         self.item = item
     }
 
-    static func == (lhs: AnyItem, rhs: AnyItem) -> Bool {
+    public static func == (lhs: AnyItem, rhs: AnyItem) -> Bool {
         lhs.item.isEqual(to: rhs.item)
     }
 
@@ -39,7 +39,7 @@ nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case type, value
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let kind = try container.decode(ItemKind.self, forKey: .type)
         switch kind {
@@ -78,7 +78,7 @@ nonisolated struct AnyItem: Codable, Sendable, Equatable {
         }
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch item {
         case let concrete as BoolItem:

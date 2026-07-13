@@ -16,12 +16,12 @@
 ///
 /// Constants are keyed by their instruction token (e.g. `.int3`), so they can be
 /// optimized independently of the program's structure.
-nonisolated struct Individual: Identifiable, Sendable {
-    let id: String
-    let program: [any Item]
-    let constants: [PushInstruction: any Item]
+public nonisolated struct Individual: Identifiable, Sendable {
+    public let id: String
+    public let program: [any Item]
+    public let constants: [PushInstruction: any Item]
 
-    init(id: String,
+    public init(id: String,
          program: [any Item],
          constants: [PushInstruction: any Item] = [:]) {
         self.id = id
@@ -38,7 +38,7 @@ extension Individual: Codable {
         case id, program, constants
     }
 
-    init(from decoder: any Decoder) throws {
+    public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             id: try container.decode(String.self, forKey: .id),
@@ -49,7 +49,7 @@ extension Individual: Codable {
         )
     }
 
-    func encode(to encoder: any Encoder) throws {
+    public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(program.map(AnyItem.init), forKey: .program)

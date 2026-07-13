@@ -10,9 +10,9 @@ enum PlushyControl {
     case close
 }
 
-struct Plushy {
+public struct Plushy {
 
-    static func plushy2push(_  stuff: [Any]) -> [any Item] {
+    public static func plushy2push(_  stuff: [Any]) -> [any Item] {
         var workingCopy = stuff
         return destructivePlushy2push(&workingCopy)
     }

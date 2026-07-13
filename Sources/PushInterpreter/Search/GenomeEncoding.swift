@@ -15,7 +15,7 @@
 /// - `plushy`: the linear Plushy encoding (`Plushy.plushy2push`), the only one
 ///   implemented today.
 /// - `forestGenome`, `bb9`: TODO — placeholder schemes, not yet implemented.
-nonisolated enum GenomeEncoding: String, Sendable, Codable, Hashable, CaseIterable {
+public nonisolated enum GenomeEncoding: String, Sendable, Codable, Hashable, CaseIterable {
     case plushy
     case forestGenome
     case bb9
@@ -24,7 +24,7 @@ nonisolated enum GenomeEncoding: String, Sendable, Codable, Hashable, CaseIterab
     ///
     /// The `[Any]` input mirrors the current `Plushy` token stream; the eventual
     /// `ForestGenome`/`BB9` representations may refine it when they land.
-    func translate(_ genome: [Any]) -> [any Item] {
+    public func translate(_ genome: [Any]) -> [any Item] {
         switch self {
         case .plushy:
             Plushy.plushy2push(genome)

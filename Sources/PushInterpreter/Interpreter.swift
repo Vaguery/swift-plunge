@@ -9,22 +9,24 @@ import DequeModule
 import Foundation
 
 
-nonisolated struct InterpreterSettings: Sendable, Codable {
+public nonisolated struct InterpreterSettings: Sendable, Codable {
+    public init() {}
+
     // Loosely after https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     // Numeric magnitude caps are intentionally omitted: Int behaviors use
     // checked (…ReportingOverflow) arithmetic and Double behaviors reject
     // non-finite results, so neither can trap or grow memory unbounded.
-    var stepLimit       : Int = 1_000
-    var maxStackDepth   : Int = 10_000
-    var maxStringLength : Int = 1_000
-    var maxVectorLength : Int = 1_000
-    var maxCodePoints   : Int = 1_000
-    var maxCodeDepth    : Int = 1_000
+    public var stepLimit       : Int = 1_000
+    public var maxStackDepth   : Int = 10_000
+    public var maxStringLength : Int = 1_000
+    public var maxVectorLength : Int = 1_000
+    public var maxCodePoints   : Int = 1_000
+    public var maxCodeDepth    : Int = 1_000
     // Total recursive content (Item.weight) allowed in a single pushed item.
     // Supplements the per-dimension caps above to bound nested content — a
     // vector of long strings, or code whose leaves are large — that the
     // count-only caps cannot see.
-    var maxItemWeight   : Int = 100_000
+    public var maxItemWeight   : Int = 100_000
 }
 
 

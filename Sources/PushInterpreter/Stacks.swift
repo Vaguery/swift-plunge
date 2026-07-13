@@ -9,13 +9,13 @@ import Foundation
 import DequeModule
 
 
-nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable, Codable {
+public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable, Codable, Sendable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
     case error
-    
-    
-    static func < (lhs: PushStack, rhs: PushStack) -> Bool {
+
+
+    public static func < (lhs: PushStack, rhs: PushStack) -> Bool {
         if lhs == .exec {
             return true
         } else if rhs == .exec {

@@ -20,7 +20,7 @@
 /// `call` provenance (`crux`) for downstream analysis. Scalar targets that have
 /// no underlying item (`count`, `isEmpty`, `printout`, `counter`) collect their
 /// natural value type.
-nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
+public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// The top item of a stack, or `nil` when the stack is empty.
     case top(PushStack)
     /// The second item of a stack, or `nil` when it holds fewer than two items.
@@ -56,11 +56,11 @@ nonisolated extension RecorderTarget {
 
 /// A named `RecorderTarget`. The name identifies the collected data in an
 /// `Interpreter`'s `recorders` dictionary and in the reported results.
-nonisolated struct RecorderSpec: Sendable, Hashable, Codable {
-    let name: String
-    let target: RecorderTarget
+public nonisolated struct RecorderSpec: Sendable, Hashable, Codable {
+    public let name: String
+    public let target: RecorderTarget
 
-    init(_ name: String, observing target: RecorderTarget) {
+    public init(_ name: String, observing target: RecorderTarget) {
         self.name = name
         self.target = target
     }

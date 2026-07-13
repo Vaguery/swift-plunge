@@ -12,7 +12,7 @@
 /// `AnyItem`, retaining its `call` provenance (`crux`) — while scalar targets
 /// keep their natural value. A `nil` element is a step where the observed
 /// position held nothing.
-nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
+public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     case items([AnyItem?])
     case ints([Int?])
     case strings([String?])
