@@ -25,9 +25,6 @@ nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case top(PushStack)
     /// The second item of a stack, or `nil` when it holds fewer than two items.
     case second(PushStack)
-    /// A bound constant, by its instruction token (e.g. `.int3`), or `nil` when
-    /// that constant is unassigned.
-    case constant(PushInstruction)
     /// The number of items currently on a stack (`Int`).
     case count(PushStack)
     /// Whether a stack is currently empty (`Bool`).
@@ -48,7 +45,7 @@ nonisolated extension RecorderTarget {
 
     var valueKind: ValueKind {
         switch self {
-        case .top, .second, .constant: .item
+        case .top, .second: .item
         case .count, .counter: .int
         case .printout: .string
         case .isEmpty: .bool
@@ -85,10 +82,6 @@ nonisolated extension AnyRecorder {
                 guard let items = interpreter.stacks[stack], items.count > 1
                 else { return nil }
                 return items[1]
-            })
-        case .constant(let instruction):
-            self.init(Recorder<any Item>(name) { interpreter in
-                interpreter.constants[instruction]
             })
         case .count(let stack):
             self.init(Recorder<Int>(name) { interpreter in
