@@ -101,6 +101,10 @@ struct Stress_Tests {
         let windowSize = 100
         let amplifyWorst = 2            // hill-climb the N slowest explored cases
         let amplifyAttempts = 40        // mutations per amplified case
+        let simplifyAttempts = 300      // chunk-deletions per case
+        let simplifyPatience = 50       // stop after this many failed deletions in a row
+        let amplifyCapSeconds = 10.0    // wall-clock budget per amplify run (bounds slow candidates)
+        let simplifyCapSeconds = 2.0    // a candidate still running past this is "still pathological"
         let slowFloorSeconds = 10.0
         let slowdownThreshold = 10.0
 
@@ -135,11 +139,18 @@ struct Stress_Tests {
                 configuration: RunnerConfiguration(settings: settings)
             )
         }
-        func profileOf(_ request: EvaluationRequest) -> RunProfile {
+        func profileOf(_ request: EvaluationRequest, maxSeconds: Double = .infinity) -> RunProfile {
             let ind = request.individuals[0], tc = request.trainingCases[0]
             let interp = buildInterpreter(program: ind.program, constants: ind.constants,
                                           inputs: tc.inputs, settings: request.configuration.settings)
-            return profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize)
+            return profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize, maxSeconds: maxSeconds)
+        }
+        // Amplify prefers a slower run; when two saturate the time cap, the bigger
+        // peak stack (a faster/larger blow-up) breaks the tie.
+        func isWorse(_ a: RunProfile, than b: RunProfile) -> Bool {
+            if a.totalSeconds > b.totalSeconds + 0.05 { return true }
+            if a.totalSeconds >= b.totalSeconds - 0.05 { return a.peakStackItems > b.peakStackItems }
+            return false
         }
 
         var durations: [Double] = []
@@ -196,29 +207,63 @@ struct Stress_Tests {
             }
         }
 
-        // ── AMPLIFY: hill-climb the slowest explored cases to make them worse ──
-        var amplified: [String] = []
+        // ── AMPLIFY then SIMPLIFY the slowest explored cases ──────────────────
+        var findings: [String] = []
         for (base, baseProfile) in explored.sorted(by: { $0.profile.totalSeconds > $1.profile.totalSeconds }).prefix(amplifyWorst) {
-            var bestProgram = base.individuals[0].program
-            var bestScore = baseProfile.totalSeconds
-            var bestProfile = baseProfile
+            let caseId = base.individuals[0].id
+            let originalSize = base.individuals[0].program.count
+
+            // AMPLIFY: hill-climb mutations to intensify the symptom (accept-if-worse),
+            // each run bounded by the wall-clock cap so a slow candidate stops early.
+            var worstProgram = base.individuals[0].program
+            var worstProfile = baseProfile
             for i in 0..<amplifyAttempts {
-                let candidateId = "\(base.individuals[0].id)-amp\(i)"
-                let candidate = requestLike(base, id: candidateId, program: mutate(program: bestProgram),
+                let candidateId = "\(caseId)-amp\(i)"
+                let candidate = requestLike(base, id: candidateId, program: mutate(program: worstProgram),
                                             settings: amplifySettings)
                 try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
-                let p = profileOf(candidate)
+                let p = profileOf(candidate, maxSeconds: amplifyCapSeconds)
                 if p.hitInvariant { invariantIds.append(p.id) }               // a mutation that broke an invariant is a find
-                if p.totalSeconds > bestScore && !p.hitInvariant {            // accept-if-worse
-                    bestScore = p.totalSeconds; bestProgram = candidate.individuals[0].program; bestProfile = p
-                } else if !p.hitInvariant {
-                    try? FileManager.default.removeItem(at: reproURL(candidateId))
+                if !p.hitInvariant && isWorse(p, than: worstProfile) {
+                    worstProfile = p; worstProgram = candidate.individuals[0].program
                 }
+                try? FileManager.default.removeItem(at: reproURL(candidateId))
             }
-            let ampId = "\(base.individuals[0].id)-amplified"
-            try reproEncoder.encode(requestLike(base, id: ampId, program: bestProgram, settings: amplifySettings)).write(to: reproURL(ampId))
-            try profileEncoder.encode(bestProfile).write(to: profileURL(ampId))
-            amplified.append("\(ampId): \(baseProfile.totalSeconds)s → \(bestScore)s  [\(bestProfile.verdict)]")
+            let worstScore = worstProfile.totalSeconds
+            let amplifiedSize = worstProgram.count
+
+            // SIMPLIFY: delete chunks while the pathology persists, narrowing to a
+            // minimal example of just the problem and the pieces that set it up.
+            // A candidate that still runs past the (small) cap — or still trips a
+            // size limit / invariant — is "still pathological", so a proven-slow
+            // candidate stops at the cap instead of running to completion.
+            var simplest = worstProgram
+            var noProgress = 0, j = 0
+            while j < simplifyAttempts && simplest.count > 1 && noProgress < simplifyPatience {
+                let candidateId = "\(caseId)-simp\(j)"; j += 1
+                let candidate = requestLike(base, id: candidateId, program: removeRandomChunk(simplest),
+                                            settings: amplifySettings)
+                try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
+                let p = profileOf(candidate, maxSeconds: simplifyCapSeconds)
+                if p.hitInvariant { invariantIds.append(p.id) }
+                if p.capped || p.hitSizeLimit || p.hitInvariant {   // still pathological
+                    simplest = candidate.individuals[0].program; noProgress = 0
+                } else {
+                    noProgress += 1
+                }
+                try? FileManager.default.removeItem(at: reproURL(candidateId))
+            }
+
+            // Re-profile the minimal case more fully (the simplify cap truncates it)
+            // and save it with its reproduction.
+            let finalId = "\(caseId)-minimal"
+            let minimalRequest = requestLike(base, id: finalId, program: simplest, settings: amplifySettings)
+            let minimalProfile = profileOf(minimalRequest, maxSeconds: amplifyCapSeconds)
+            try reproEncoder.encode(minimalRequest).write(to: reproURL(finalId))
+            try profileEncoder.encode(minimalProfile).write(to: profileURL(finalId))
+            findings.append("\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) items, "
+                + "\(baseProfile.totalSeconds)s→\(worstScore)s→\(minimalProfile.totalSeconds)s, "
+                + "peak \(minimalProfile.peakStackItems)  [\(minimalProfile.verdict)]")
         }
 
         // ── report ───────────────────────────────────────────────────────────
@@ -233,8 +278,8 @@ struct Stress_Tests {
         collected        : \(collected.count)
         invariants       : \(invariantIds.count) \(invariantIds)
         capture dir      : \(dir.path)
-        amplified:
-        \(amplified.map { "  " + $0 }.joined(separator: "\n"))
+        amplified → simplified (orig→amp→min items, orig→amp→min seconds):
+        \(findings.map { "  " + $0 }.joined(separator: "\n"))
         ──────────────────────────────────────────────
         """)
 
