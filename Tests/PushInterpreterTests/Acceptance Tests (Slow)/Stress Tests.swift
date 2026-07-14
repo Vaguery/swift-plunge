@@ -93,20 +93,20 @@ struct Stress_Tests {
     //
     // Knobs are tiny so it runs in CI. For the manual sweep, crank exploreCases and
     // programItems way up (and `.disabled` it) so the size limits actually fire.
-    @Test(.disabled(if: Stress_Tests.disabledTests))
+    @Test//(.disabled(if: Stress_Tests.disabledTests))
     func `random programs run`() async throws {
-        let exploreCases = 100
-        let batchSize = 100
-        let programItems = 300
-        let windowSize = 100
-        let amplifyWorst = 2            // hill-climb the N slowest explored cases
-        let amplifyAttempts = 40        // mutations per amplified case
-        let simplifyAttempts = 300      // chunk-deletions per case
-        let simplifyPatience = 50       // stop after this many failed deletions in a row
-        let amplifyCapSeconds = 10.0    // wall-clock budget per amplify run (bounds slow candidates)
-        let simplifyCapSeconds = 2.0    // a candidate still running past this is "still pathological"
-        let slowFloorSeconds = 10.0
-        let slowdownThreshold = 10.0
+        let exploreCases = 100         // random programs generated and profiled in the explore phase
+        let batchSize = 100            // explore cases run concurrently per batch (bounds concurrency and leftover-on-crash files)
+        let programItems = 300         // Plushy tokens per random genome (larger ⇒ bigger, more complex programs)
+        let windowSize = 100           // interpreter steps per profiling window (the timing/attribution granularity)
+        let amplifyWorst = 2           // hill-climb the N slowest explored cases
+        let amplifyAttempts = 40       // mutations per amplified case
+        let simplifyAttempts = 300     // chunk-deletions per case
+        let simplifyPatience = 50      // stop after this many failed deletions in a row
+        let amplifyCapSeconds = 10.0   // wall-clock budget per amplify run (bounds slow candidates)
+        let simplifyCapSeconds = 2.0   // a candidate still running past this is "still pathological"
+        let slowFloorSeconds = 10.0    // an explore case is collected as a suspect if it runs longer than this
+        let slowdownThreshold = 10.0   // ...or if its per-window time grows by more than this factor over the run
 
         // EXPLORE runs under the real production limits. AMPLIFY runs under
         // deliberately RELAXED limits, so the hill-climb can push a symptom past
