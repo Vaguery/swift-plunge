@@ -93,16 +93,30 @@ struct Stress_Tests {
     //
     // Knobs are tiny so it runs in CI. For the manual sweep, crank exploreCases and
     // programItems way up (and `.disabled` it) so the size limits actually fire.
-    @Test func `random programs run`() async throws {
+    @Test(.disabled(if: Stress_Tests.disabledTests))
+    func `random programs run`() async throws {
         let exploreCases = 100
         let batchSize = 100
         let programItems = 300
-        let stepLimit = 5_000
         let windowSize = 100
         let amplifyWorst = 2            // hill-climb the N slowest explored cases
         let amplifyAttempts = 40        // mutations per amplified case
         let slowFloorSeconds = 10.0
         let slowdownThreshold = 10.0
+
+        // EXPLORE runs under the real production limits. AMPLIFY runs under
+        // deliberately RELAXED limits, so the hill-climb can push a symptom past
+        // where the default caps bound it and expose the *unbounded* pathology
+        // (the true crux blow-up). A case that OOMs under these is itself a find —
+        // its reproduction was written to disk before it ran. Crank for the sweep.
+        var exploreSettings = InterpreterSettings()
+        exploreSettings.stepLimit = 5_000
+        var amplifySettings = InterpreterSettings()
+        amplifySettings.stepLimit = 50_000
+        amplifySettings.maxStackDepth = 100_000
+        amplifySettings.maxItemWeight = 10_000_000
+        amplifySettings.maxVectorLength = 100_000
+        amplifySettings.maxCodePoints = 100_000
 
         let dir = FileManager.default.temporaryDirectory.appending(path: "push-fuzz")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -112,18 +126,19 @@ struct Stress_Tests {
         func reproURL(_ id: String) -> URL { dir.appending(path: "\(id).json") }
         func profileURL(_ id: String) -> URL { dir.appending(path: "\(id).profile.json") }
 
-        func requestLike(_ base: EvaluationRequest, id: String, program: [any Item]) -> EvaluationRequest {
+        func requestLike(_ base: EvaluationRequest, id: String, program: [any Item],
+                         settings: InterpreterSettings) -> EvaluationRequest {
             EvaluationRequest(
                 individuals: [Individual(id: id, program: program, constants: base.individuals[0].constants)],
                 trainingCases: [TrainingCase(id: id, inputs: base.trainingCases[0].inputs)],
                 pairings: [Pairing(individual: id, trainingCase: id)],
-                configuration: base.configuration
+                configuration: RunnerConfiguration(settings: settings)
             )
         }
         func profileOf(_ request: EvaluationRequest) -> RunProfile {
             let ind = request.individuals[0], tc = request.trainingCases[0]
             let interp = buildInterpreter(program: ind.program, constants: ind.constants,
-                                          inputs: tc.inputs, stepLimit: stepLimit)
+                                          inputs: tc.inputs, settings: request.configuration.settings)
             return profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize)
         }
 
@@ -146,7 +161,7 @@ struct Stress_Tests {
                     individuals: [Individual(id: id, program: program, constants: temp.constants)],
                     trainingCases: [TrainingCase(id: id, inputs: temp.inputs)],
                     pairings: [Pairing(individual: id, trainingCase: id)],
-                    configuration: RunnerConfiguration()
+                    configuration: RunnerConfiguration(settings: exploreSettings)
                 )
                 try reproEncoder.encode(r).write(to: reproURL(id))   // persist before run
                 requests.append(r)
@@ -157,7 +172,7 @@ struct Stress_Tests {
                     group.addTask {
                         let ind = r.individuals[0], tc = r.trainingCases[0]
                         let interp = buildInterpreter(program: ind.program, constants: ind.constants,
-                                                      inputs: tc.inputs, stepLimit: stepLimit)
+                                                      inputs: tc.inputs, settings: r.configuration.settings)
                         return (r, profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize))
                     }
                 }
@@ -189,7 +204,8 @@ struct Stress_Tests {
             var bestProfile = baseProfile
             for i in 0..<amplifyAttempts {
                 let candidateId = "\(base.individuals[0].id)-amp\(i)"
-                let candidate = requestLike(base, id: candidateId, program: mutate(program: bestProgram))
+                let candidate = requestLike(base, id: candidateId, program: mutate(program: bestProgram),
+                                            settings: amplifySettings)
                 try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
                 let p = profileOf(candidate)
                 if p.hitInvariant { invariantIds.append(p.id) }               // a mutation that broke an invariant is a find
@@ -200,7 +216,7 @@ struct Stress_Tests {
                 }
             }
             let ampId = "\(base.individuals[0].id)-amplified"
-            try reproEncoder.encode(requestLike(base, id: ampId, program: bestProgram)).write(to: reproURL(ampId))
+            try reproEncoder.encode(requestLike(base, id: ampId, program: bestProgram, settings: amplifySettings)).write(to: reproURL(ampId))
             try profileEncoder.encode(bestProfile).write(to: profileURL(ampId))
             amplified.append("\(ampId): \(baseProfile.totalSeconds)s → \(bestScore)s  [\(bestProfile.verdict)]")
         }
@@ -234,7 +250,8 @@ struct Stress_Tests {
         let dir = FileManager.default.temporaryDirectory.appending(path: "push-fuzz")
         let request = try JSONDecoder().decode(EvaluationRequest.self, from: Data(contentsOf: dir.appending(path: "\(id).json")))
         let ind = request.individuals[0], tc = request.trainingCases[0]
-        let interp = buildInterpreter(program: ind.program, constants: ind.constants, inputs: tc.inputs, stepLimit: 5_000)
+        let interp = buildInterpreter(program: ind.program, constants: ind.constants, inputs: tc.inputs,
+                                      settings: request.configuration.settings)
         let profile = profiledRun(id: id, interpreter: interp, windowSize: 100)
 
         print("verdict:", profile.verdict)

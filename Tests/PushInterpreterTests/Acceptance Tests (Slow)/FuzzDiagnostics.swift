@@ -77,15 +77,15 @@ func fuzzSeconds(_ d: Duration) -> Double {
     return Double(s) + Double(atto) * 1e-18
 }
 
-/// Builds a loaded interpreter for one case. Test-only.
+/// Builds a loaded interpreter for one case under the given settings. Test-only.
 func buildInterpreter(
     program: [any Item],
     constants: [PushInstruction: any Item],
     inputs: [PushInstruction: any Item],
-    stepLimit: Int
+    settings: InterpreterSettings
 ) -> Interpreter {
     let interpreter = Interpreter()
-    interpreter.config.stepLimit = stepLimit
+    interpreter.config = settings
     interpreter.load(inputs: inputs, constants: constants, program: program)
     return interpreter
 }
