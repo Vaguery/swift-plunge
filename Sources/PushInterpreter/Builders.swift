@@ -51,6 +51,25 @@ public nonisolated func bindings(
 }
 
 
+/// Merges several instruction-keyed item maps into one, with later maps winning
+/// on key conflicts (sequential overwrite). Lets a caller compose a constants or
+/// inputs set from partial pieces — e.g. a shared base overlaid with per-run
+/// overrides — without caring which slots each piece fills.
+///
+/// ```swift
+/// let constants = merged(sharedConstants, bindings([.int0: 42]))  // .int0 overrides
+/// ```
+public nonisolated func merged(
+    _ maps: [PushInstruction: any Item]...
+) -> [PushInstruction: any Item] {
+    var result: [PushInstruction: any Item] = [:]
+    for map in maps {
+        for (instruction, item) in map { result[instruction] = item }
+    }
+    return result
+}
+
+
 /// A result builder for programs, so a `[any Item]` can be written as a block of
 /// bare literals and instructions rather than wrapped `Item` values.
 ///
