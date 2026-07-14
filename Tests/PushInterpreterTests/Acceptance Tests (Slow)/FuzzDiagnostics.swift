@@ -108,6 +108,88 @@ nonisolated struct RunProfile: Codable, Sendable {
     }
 }
 
+/// Total leaf count of a program, expanding nested code blocks. A program that
+/// has simplified down to a single big code block has `count == 1` but many
+/// leaves — this makes the real size explicit so the report isn't misread.
+nonisolated func programLeafCount(_ items: [any Item]) -> Int {
+    items.reduce(0) { $0 + (($1 as? CodeItem).map { programLeafCount($0.value) } ?? 1) }
+}
+
+/// Renders a program as pretty() tokens wrapped to `width`, expanding nested
+/// code blocks into `(` … `)` tokens so even a single large block breaks across
+/// lines. Continuation lines are indented. For pasting into a chat or issue —
+/// note the program alone omits the inputs/constants (those are in the JSON).
+nonisolated func renderProgram(_ program: [any Item], width: Int = 96, indent: String = "       ") -> String {
+    func tokens(_ items: [any Item]) -> [String] {
+        var out: [String] = []
+        for item in items {
+            if let code = item as? CodeItem {
+                out.append("(")
+                out.append(contentsOf: tokens(code.value))
+                out.append(")")
+            } else {
+                out.append(item.pretty())
+            }
+        }
+        return out
+    }
+    var lines: [String] = []
+    var line = indent
+    for tok in tokens(program) {
+        if line != indent && line.count + 1 + tok.count > width {
+            lines.append(line)
+            line = indent
+        }
+        line += (line == indent ? "" : " ") + tok
+    }
+    if line != indent { lines.append(line) }
+    return lines.isEmpty ? "\(indent)(empty)" : lines.joined(separator: "\n")
+}
+
+/// Every instruction token a program mentions, recursing into code blocks.
+nonisolated func referencedInstructions(_ items: [any Item]) -> Set<PushInstruction> {
+    var out: Set<PushInstruction> = []
+    for item in items {
+        if let instr = item as? InstructionItem { out.insert(instr.value) }
+        else if let code = item as? CodeItem { out.formUnion(referencedInstructions(code.value)) }
+    }
+    return out
+}
+
+/// The transitive set of instruction tokens a program depends on: those it
+/// mentions directly, plus (recursively) those mentioned by any code-valued
+/// binding it reaches. This is what surfaces a payload hidden in an input — the
+/// program names `.input2`, whose bound code names `.char5`, and so on.
+nonisolated func referencedClosure(program: [any Item], bindings: [PushInstruction: any Item]) -> Set<PushInstruction> {
+    var seen = referencedInstructions(program)
+    var frontier = seen
+    while !frontier.isEmpty {
+        var next: Set<PushInstruction> = []
+        for name in frontier {
+            guard let value = bindings[name] else { continue }
+            // Treat the bound value as a one-item program: a code block expands to
+            // its leaves, an instruction-valued binding (an input alias) to itself.
+            for instr in referencedInstructions([value]) where !seen.contains(instr) {
+                next.insert(instr); seen.insert(instr)
+            }
+        }
+        frontier = next
+    }
+    return seen
+}
+
+/// Renders `names` (sorted) that have a binding, as `.name = value` lines. Code
+/// values are wrapped like a program; scalars use pretty().
+nonisolated func renderBindings(_ names: Set<PushInstruction>, from bindings: [PushInstruction: any Item], indent: String = "       ") -> [String] {
+    names.sorted { $0.rawValue < $1.rawValue }.compactMap { name in
+        guard let item = bindings[name] else { return nil }
+        if item is CodeItem {
+            return "\(indent).\(name) =\n" + renderProgram([item], indent: indent + "  ")
+        }
+        return "\(indent).\(name) = \(item.pretty())"
+    }
+}
+
 /// Duration → seconds as a Double.
 nonisolated func fuzzSeconds(_ d: Duration) -> Double {
     let (s, atto) = d.components

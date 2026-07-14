@@ -93,11 +93,11 @@ struct Stress_Tests {
     //
     // Knobs are tiny so it runs in CI. For the manual sweep, crank exploreCases and
     // programItems way up (and `.disabled` it) so the size limits actually fire.
-    @Test//(.disabled(if: Stress_Tests.disabledTests))
+    @Test(.disabled(if: Stress_Tests.disabledTests))
     func `random programs run`() async throws {
         let seed: UInt64 = 20_260_714  // fixed & logged so any run reproduces exactly; change to explore new programs
         fuzzRNG = SeededRNG(seed: seed)
-        let exploreCases = 40         // random programs generated and profiled in the explore phase
+        let exploreCases = 200        // random programs generated and profiled in the explore phase
         let batchSize = 20             // explore cases run concurrently per batch; suspects are refined after each batch, so smaller ⇒ sooner feedback
         let programItems = 300         // Plushy tokens per random genome (larger ⇒ bigger, more complex programs)
         let windowSize = 100           // interpreter steps per profiling window (the timing/attribution granularity)
@@ -211,13 +211,27 @@ struct Stress_Tests {
             let minimalProfile = profileOf(minimalRequest, maxSeconds: amplifyCapSeconds)
             try? reproEncoder.encode(minimalRequest).write(to: reproURL(finalId))
             try? profileEncoder.encode(minimalProfile).write(to: profileURL(finalId))
-            // Render the minimal program as space-joined pretty() so it can be
-            // pasted straight into a chat/issue without opening the saved JSON.
-            let pasteable = simplest.map { $0.pretty() }.joined(separator: " ")
-            return "\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) items, "
+            // Report sizes as top-level count AND leaf count: a program often
+            // simplifies to a single code block (count 1) holding many leaves.
+            let leaves = programLeafCount(simplest)
+            var report = "\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) top-level "
+                + "(\(leaves) leaves), "
                 + "\(baseProfile.totalSeconds)s→\(worstProfile.totalSeconds)s→\(minimalProfile.totalSeconds)s, "
                 + "peak \(minimalProfile.peakStackItems)  [\(minimalProfile.verdict)]"
-                + "\n     program: \(pasteable)"
+                + "\n     program [\(finalId)]:\n"
+                + renderProgram(simplest)
+
+            // Surface the inputs/constants the program actually reaches (including
+            // code-valued inputs that carry the real payload). Without these the
+            // program alone can't be understood or reproduced.
+            let bindings = base.individuals[0].constants
+                .merging(base.trainingCases[0].inputs) { c, _ in c }
+            let referenced = referencedClosure(program: simplest, bindings: bindings)
+            let bindingLines = renderBindings(referenced, from: bindings)
+            if !bindingLines.isEmpty {
+                report += "\n     inputs & constants (referenced):\n" + bindingLines.joined(separator: "\n")
+            }
+            return report
         }
 
         // ── EXPLORE, refining each distinct problem the moment it appears ─────
@@ -298,7 +312,7 @@ struct Stress_Tests {
                     log("  ⚠️  new problem in \(p.id) [\(culprit)]: \(p.verdict) — refining…")
                     let finding = refine(r, p)
                     findings.append(finding)
-                    log("     ↳ \(finding)")
+                    log("     ↳ \(finding)\n")   // trailing blank line separates one problem from the next
                 }
             }
             log("  …explored \(next)/\(exploreCases): \(suspectCount) suspects, \(refinedProblems.count) distinct problems, \(invariantIds.count) invariants")
