@@ -16,7 +16,7 @@ import Foundation
 
 /// One window of a profiled run: how long a block of steps took, what ran, and
 /// how big the stacks were at the end.
-struct WindowSample: Codable, Sendable {
+nonisolated struct WindowSample: Codable, Sendable {
     let firstStep: Int
     let steps: Int
     let seconds: Double
@@ -26,7 +26,7 @@ struct WindowSample: Codable, Sendable {
 
 /// The per-run diagnostic record ("profileRun"), serialized beside a
 /// reproduction for offline study.
-struct RunProfile: Codable, Sendable {
+nonisolated struct RunProfile: Codable, Sendable {
     let id: String
     let totalSteps: Int
     let exhausted: Bool          // program ran out (vs. hit the step limit)
@@ -75,13 +75,13 @@ struct RunProfile: Codable, Sendable {
 }
 
 /// Duration → seconds as a Double.
-func fuzzSeconds(_ d: Duration) -> Double {
+nonisolated func fuzzSeconds(_ d: Duration) -> Double {
     let (s, atto) = d.components
     return Double(s) + Double(atto) * 1e-18
 }
 
 /// Builds a loaded interpreter for one case under the given settings. Test-only.
-func buildInterpreter(
+nonisolated func buildInterpreter(
     program: [any Item],
     constants: [PushInstruction: any Item],
     inputs: [PushInstruction: any Item],
@@ -98,7 +98,7 @@ func buildInterpreter(
 /// growth — duplicating segments raises the frequency of loop/recursion
 /// instructions, which is exactly what worsens the crux blow-up — and capped so
 /// the result stays loadable.
-func mutate(program: [any Item]) -> [any Item] {
+nonisolated func mutate(program: [any Item]) -> [any Item] {
     guard !program.isEmpty else { return [InstructionItem(RandomCode.randomInstruction())] }
     var p = program
     switch Int.random(in: 0..<10) {
@@ -122,7 +122,7 @@ func mutate(program: [any Item]) -> [any Item] {
 /// auto-simplification. Amplified programs are highly repetitive (grown by
 /// duplication), so chunk deletion peels off the redundant copies quickly and
 /// converges toward the minimal core that still exhibits the pathology.
-func removeRandomChunk(_ program: [any Item]) -> [any Item] {
+nonisolated func removeRandomChunk(_ program: [any Item]) -> [any Item] {
     guard program.count > 1 else { return program }
     let start = Int.random(in: 0..<program.count)
     let length = Int.random(in: 1...max(1, min(program.count - start, program.count / 3)))
@@ -141,7 +141,7 @@ func removeRandomChunk(_ program: [any Item]) -> [any Item] {
 /// (blowing-up) run — including one that stays cheap for a long prefix and only
 /// then decelerates. Simplify/amplify use it to avoid running a proven-slow
 /// candidate to completion.
-func profiledRun(id: String, interpreter: Interpreter, windowSize: Int, maxSeconds: Double = .infinity) -> RunProfile {
+nonisolated func profiledRun(id: String, interpreter: Interpreter, windowSize: Int, maxSeconds: Double = .infinity) -> RunProfile {
     let clock = ContinuousClock()
     let runStart = clock.now
     var windows: [WindowSample] = []
