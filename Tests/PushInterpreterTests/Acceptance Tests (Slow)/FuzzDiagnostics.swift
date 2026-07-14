@@ -63,14 +63,20 @@ nonisolated struct RunProfile: Codable, Sendable {
     /// A one-line qualitative diagnosis.
     var verdict: String {
         if hitInvariant { return "INVARIANT violation" }
-        guard slowdownRatio > 10 || capped else { return "ok" }
-        let mode = itemGrowth > 3
-            ? String(format: "stack items grew %.1fx (count-driven, peak %d)", itemGrowth, peakStackItems)
-            : "stack items ~flat (per-item / provenance-driven)"
-        return String(
-            format: "progressive slowdown %.0fx%@; %@; slowest window dominated by %@",
-            slowdownRatio, capped ? " (capped)" : "", mode, slowestWindowCulprit
-        )
+        if slowdownRatio > 10 || capped {
+            let mode = itemGrowth > 3
+                ? String(format: "stack items grew %.1fx (count-driven, peak %d)", itemGrowth, peakStackItems)
+                : "stack items ~flat (per-item / provenance-driven)"
+            return String(
+                format: "progressive slowdown %.0fx%@; %@; slowest window dominated by %@",
+                slowdownRatio, capped ? " (capped)" : "", mode, slowestWindowCulprit
+            )
+        }
+        if hitSizeLimit {
+            return String(format: "hits a size limit; peak stack %d, dominated by %@",
+                          peakStackItems, slowestWindowCulprit)
+        }
+        return "ok"
     }
 }
 

@@ -96,10 +96,9 @@ struct Stress_Tests {
     @Test//(.disabled(if: Stress_Tests.disabledTests))
     func `random programs run`() async throws {
         let exploreCases = 100         // random programs generated and profiled in the explore phase
-        let batchSize = 100            // explore cases run concurrently per batch (bounds concurrency and leftover-on-crash files)
+        let batchSize = 20             // explore cases run concurrently per batch; suspects are refined after each batch, so smaller ⇒ sooner feedback
         let programItems = 300         // Plushy tokens per random genome (larger ⇒ bigger, more complex programs)
         let windowSize = 100           // interpreter steps per profiling window (the timing/attribution granularity)
-        let amplifyWorst = 2           // hill-climb the N slowest explored cases
         let amplifyAttempts = 40       // mutations per amplified case
         let simplifyAttempts = 300     // chunk-deletions per case
         let simplifyPatience = 50      // stop after this many failed deletions in a row
@@ -155,11 +154,66 @@ struct Stress_Tests {
 
         var durations: [Double] = []
         var invariantIds: [String] = []
-        var collected: [String] = []
         var sizeLimitHits = 0
-        var explored: [(request: EvaluationRequest, profile: RunProfile)] = []
+        var suspectCount = 0
+        var refinedProblems: Set<String> = []   // dedup by dominant culprit: each distinct problem is refined once
+        var findings: [String] = []
 
-        // ── EXPLORE ──────────────────────────────────────────────────────────
+        // Force-flush so progress is visible in Xcode's console during the long run.
+        func log(_ message: String) { print(message); fflush(stdout) }
+
+        // Refine one suspect the moment it appears: amplify it (hill-climb to
+        // intensify the symptom), then simplify (delete chunks while the pathology
+        // persists), save the minimal example, and return a one-line finding.
+        func refine(_ base: EvaluationRequest, _ baseProfile: RunProfile) -> String {
+            let caseId = base.individuals[0].id
+            let originalSize = base.individuals[0].program.count
+
+            var worstProgram = base.individuals[0].program
+            var worstProfile = baseProfile
+            for i in 0..<amplifyAttempts {
+                let candidateId = "\(caseId)-amp\(i)"
+                let candidate = requestLike(base, id: candidateId, program: mutate(program: worstProgram),
+                                            settings: amplifySettings)
+                try? reproEncoder.encode(candidate).write(to: reproURL(candidateId))
+                let p = profileOf(candidate, maxSeconds: amplifyCapSeconds)
+                if p.hitInvariant { invariantIds.append(p.id) }
+                if !p.hitInvariant && isWorse(p, than: worstProfile) {
+                    worstProfile = p; worstProgram = candidate.individuals[0].program
+                }
+                try? FileManager.default.removeItem(at: reproURL(candidateId))
+            }
+            let amplifiedSize = worstProgram.count
+
+            var simplest = worstProgram
+            var noProgress = 0, j = 0
+            while j < simplifyAttempts && simplest.count > 1 && noProgress < simplifyPatience {
+                let candidateId = "\(caseId)-simp\(j)"; j += 1
+                let candidate = requestLike(base, id: candidateId, program: removeRandomChunk(simplest),
+                                            settings: amplifySettings)
+                try? reproEncoder.encode(candidate).write(to: reproURL(candidateId))
+                let p = profileOf(candidate, maxSeconds: simplifyCapSeconds)
+                if p.hitInvariant { invariantIds.append(p.id) }
+                if p.capped || p.hitSizeLimit || p.hitInvariant {   // still pathological
+                    simplest = candidate.individuals[0].program; noProgress = 0
+                } else {
+                    noProgress += 1
+                }
+                try? FileManager.default.removeItem(at: reproURL(candidateId))
+            }
+
+            let finalId = "\(caseId)-minimal"
+            let minimalRequest = requestLike(base, id: finalId, program: simplest, settings: amplifySettings)
+            let minimalProfile = profileOf(minimalRequest, maxSeconds: amplifyCapSeconds)
+            try? reproEncoder.encode(minimalRequest).write(to: reproURL(finalId))
+            try? profileEncoder.encode(minimalProfile).write(to: profileURL(finalId))
+            return "\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) items, "
+                + "\(baseProfile.totalSeconds)s→\(worstProfile.totalSeconds)s→\(minimalProfile.totalSeconds)s, "
+                + "peak \(minimalProfile.peakStackItems)  [\(minimalProfile.verdict)]"
+        }
+
+        // ── EXPLORE, refining each distinct problem the moment it appears ─────
+        log("fuzzing up to \(exploreCases) random programs of \(programItems) tokens (explore stepLimit \(exploreSettings.stepLimit))…")
         var next = 0
         while next < exploreCases {
             let batch = min(batchSize, exploreCases - next)
@@ -196,89 +250,42 @@ struct Stress_Tests {
                 durations.append(p.totalSeconds)
                 if p.hitSizeLimit { sizeLimitHits += 1 }
                 if p.hitInvariant { invariantIds.append(p.id) }
-                let slow = p.totalSeconds > slowFloorSeconds || p.slowdownRatio > slowdownThreshold
-                if p.hitInvariant || slow {
-                    collected.append(p.id)
-                    try? profileEncoder.encode(p).write(to: profileURL(p.id))
-                } else {
-                    try? FileManager.default.removeItem(at: reproURL(p.id))
+
+                let suspect = p.hitInvariant || p.hitSizeLimit
+                    || p.totalSeconds > slowFloorSeconds || p.slowdownRatio > slowdownThreshold
+                guard suspect else {
+                    try? FileManager.default.removeItem(at: reproURL(p.id))   // healthy: discard
+                    continue
                 }
-                explored.append((r, p))
+                suspectCount += 1
+                try? profileEncoder.encode(p).write(to: profileURL(p.id))     // keep the raw suspect
+
+                // Refine the first example of each distinct problem, immediately.
+                let culprit = p.hitInvariant ? "INVARIANT" : p.slowestWindowCulprit
+                if refinedProblems.insert(culprit).inserted {
+                    log("  ⚠️  new problem in \(p.id) [\(culprit)]: \(p.verdict) — refining…")
+                    let finding = refine(r, p)
+                    findings.append(finding)
+                    log("     ↳ \(finding)")
+                }
             }
+            log("  …explored \(next)/\(exploreCases): \(suspectCount) suspects, \(refinedProblems.count) distinct problems, \(invariantIds.count) invariants")
         }
 
-        // ── AMPLIFY then SIMPLIFY the slowest explored cases ──────────────────
-        var findings: [String] = []
-        for (base, baseProfile) in explored.sorted(by: { $0.profile.totalSeconds > $1.profile.totalSeconds }).prefix(amplifyWorst) {
-            let caseId = base.individuals[0].id
-            let originalSize = base.individuals[0].program.count
-
-            // AMPLIFY: hill-climb mutations to intensify the symptom (accept-if-worse),
-            // each run bounded by the wall-clock cap so a slow candidate stops early.
-            var worstProgram = base.individuals[0].program
-            var worstProfile = baseProfile
-            for i in 0..<amplifyAttempts {
-                let candidateId = "\(caseId)-amp\(i)"
-                let candidate = requestLike(base, id: candidateId, program: mutate(program: worstProgram),
-                                            settings: amplifySettings)
-                try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
-                let p = profileOf(candidate, maxSeconds: amplifyCapSeconds)
-                if p.hitInvariant { invariantIds.append(p.id) }               // a mutation that broke an invariant is a find
-                if !p.hitInvariant && isWorse(p, than: worstProfile) {
-                    worstProfile = p; worstProgram = candidate.individuals[0].program
-                }
-                try? FileManager.default.removeItem(at: reproURL(candidateId))
-            }
-            let worstScore = worstProfile.totalSeconds
-            let amplifiedSize = worstProgram.count
-
-            // SIMPLIFY: delete chunks while the pathology persists, narrowing to a
-            // minimal example of just the problem and the pieces that set it up.
-            // A candidate that still runs past the (small) cap — or still trips a
-            // size limit / invariant — is "still pathological", so a proven-slow
-            // candidate stops at the cap instead of running to completion.
-            var simplest = worstProgram
-            var noProgress = 0, j = 0
-            while j < simplifyAttempts && simplest.count > 1 && noProgress < simplifyPatience {
-                let candidateId = "\(caseId)-simp\(j)"; j += 1
-                let candidate = requestLike(base, id: candidateId, program: removeRandomChunk(simplest),
-                                            settings: amplifySettings)
-                try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
-                let p = profileOf(candidate, maxSeconds: simplifyCapSeconds)
-                if p.hitInvariant { invariantIds.append(p.id) }
-                if p.capped || p.hitSizeLimit || p.hitInvariant {   // still pathological
-                    simplest = candidate.individuals[0].program; noProgress = 0
-                } else {
-                    noProgress += 1
-                }
-                try? FileManager.default.removeItem(at: reproURL(candidateId))
-            }
-
-            // Re-profile the minimal case more fully (the simplify cap truncates it)
-            // and save it with its reproduction.
-            let finalId = "\(caseId)-minimal"
-            let minimalRequest = requestLike(base, id: finalId, program: simplest, settings: amplifySettings)
-            let minimalProfile = profileOf(minimalRequest, maxSeconds: amplifyCapSeconds)
-            try reproEncoder.encode(minimalRequest).write(to: reproURL(finalId))
-            try profileEncoder.encode(minimalProfile).write(to: profileURL(finalId))
-            findings.append("\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) items, "
-                + "\(baseProfile.totalSeconds)s→\(worstScore)s→\(minimalProfile.totalSeconds)s, "
-                + "peak \(minimalProfile.peakStackItems)  [\(minimalProfile.verdict)]")
-        }
-
-        // ── report ───────────────────────────────────────────────────────────
+        // ── summary ──────────────────────────────────────────────────────────
         let mean = durations.reduce(0, +) / Double(max(durations.count, 1))
         let sd = (durations.map { ($0 - mean) * ($0 - mean) }.reduce(0, +) / Double(max(durations.count, 1))).squareRoot()
-        print("""
+        log("""
 
         ── fuzz summary ──────────────────────────────
-        explored         : \(exploreCases)
+        explored         : \(next)
         per-case seconds : mean \(mean), sd \(sd), max \(durations.max() ?? 0)
         size limits hit  : \(sizeLimitHits)
-        collected        : \(collected.count)
+        suspects         : \(suspectCount)
+        distinct problems: \(refinedProblems.count)
         invariants       : \(invariantIds.count) \(invariantIds)
         capture dir      : \(dir.path)
-        amplified → simplified (orig→amp→min items, orig→amp→min seconds):
+        minimal examples (orig→amp→min items, orig→amp→min seconds):
         \(findings.map { "  " + $0 }.joined(separator: "\n"))
         ──────────────────────────────────────────────
         """)
