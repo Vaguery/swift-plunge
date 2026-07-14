@@ -211,9 +211,13 @@ struct Stress_Tests {
             let minimalProfile = profileOf(minimalRequest, maxSeconds: amplifyCapSeconds)
             try? reproEncoder.encode(minimalRequest).write(to: reproURL(finalId))
             try? profileEncoder.encode(minimalProfile).write(to: profileURL(finalId))
+            // Render the minimal program as space-joined pretty() so it can be
+            // pasted straight into a chat/issue without opening the saved JSON.
+            let pasteable = simplest.map { $0.pretty() }.joined(separator: " ")
             return "\(finalId): \(originalSize)→\(amplifiedSize)→\(simplest.count) items, "
                 + "\(baseProfile.totalSeconds)s→\(worstProfile.totalSeconds)s→\(minimalProfile.totalSeconds)s, "
                 + "peak \(minimalProfile.peakStackItems)  [\(minimalProfile.verdict)]"
+                + "\n     program: \(pasteable)"
         }
 
         // ── EXPLORE, refining each distinct problem the moment it appears ─────
