@@ -16,15 +16,20 @@ public nonisolated struct CaseResult: Sendable, Codable {
     public let trainingCase: String
     public let traces: [String: RecordedTrace]
     public let unresolved: Bool
+    /// Wall-clock time the evaluation's run took. `.zero` for an unresolved
+    /// pairing. Lets a caller flag pathologically slow cases.
+    public let duration: Duration
 
     public init(individual: String,
          trainingCase: String,
          traces: [String: RecordedTrace] = [:],
-         unresolved: Bool = false) {
+         unresolved: Bool = false,
+         duration: Duration = .zero) {
         self.individual = individual
         self.trainingCase = trainingCase
         self.traces = traces
         self.unresolved = unresolved
+        self.duration = duration
     }
 
     public static func unresolved(_ pairing: Pairing) -> CaseResult {

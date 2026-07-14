@@ -73,24 +73,176 @@ struct Stress_Tests {
     }
 
 
-    @Test(.disabled(if: Stress_Tests.disabledTests))
-    func `random programs run`() {
-        let start = Date.now
+    // construct a huge number of random programs,
+    // execute them "to completion"
+    // assert that nothing has crashed or timed out
+    // if naything does crash or time out, print a useable cut-and-pastable
+    // version of the program and the settings
+    // which can be used to explore how it crashed
+    //
 
-        for i in (1...100_000) {
-            let p1 = RandomCode.randomPlushy(300)
+    // Two phases. EXPLORE random programs broadly; then AMPLIFY the worst hits by
+    // mutating them to intensify the symptom (a hill-climb that keeps a variant
+    // only when it runs *slower*), which localizes a problem far better than one
+    // random sighting. Every run is profiled window-by-window (see FuzzDiagnostics)
+    // so a program that *decelerates* — per-step cost climbing, the crux/provenance
+    // blow-up — is told apart from one that is merely long, and the responsible
+    // instructions are named. Each case is written to disk as replayable JSON before
+    // it runs (surviving a hard OOM/trap), with a `.profile.json` beside the kept
+    // ones. A mis-typed push records an INVARIANT marker this asserts never appears.
+    //
+    // Knobs are tiny so it runs in CI. For the manual sweep, crank exploreCases and
+    // programItems way up (and `.disabled` it) so the size limits actually fire.
+    @Test func `random programs run`() async throws {
+        let exploreCases = 100
+        let batchSize = 100
+        let programItems = 300
+        let stepLimit = 5_000
+        let windowSize = 100
+        let amplifyWorst = 2            // hill-climb the N slowest explored cases
+        let amplifyAttempts = 40        // mutations per amplified case
+        let slowFloorSeconds = 10.0
+        let slowdownThreshold = 10.0
 
-            let program = Plushy.plushy2push(p1)
-                        
-            inty.load(program: program)
-            print(i, "\n")
-            print(program)
-            RandomCode.setRandomConstants(in: inty)
-            RandomCode.setRandomInputs(in: inty)
+        let dir = FileManager.default.temporaryDirectory.appending(path: "push-fuzz")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let reproEncoder = JSONEncoder()
+        let profileEncoder = JSONEncoder()
+        profileEncoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        func reproURL(_ id: String) -> URL { dir.appending(path: "\(id).json") }
+        func profileURL(_ id: String) -> URL { dir.appending(path: "\(id).profile.json") }
 
-            inty.run(stepLimit: 5000)
+        func requestLike(_ base: EvaluationRequest, id: String, program: [any Item]) -> EvaluationRequest {
+            EvaluationRequest(
+                individuals: [Individual(id: id, program: program, constants: base.individuals[0].constants)],
+                trainingCases: [TrainingCase(id: id, inputs: base.trainingCases[0].inputs)],
+                pairings: [Pairing(individual: id, trainingCase: id)],
+                configuration: base.configuration
+            )
         }
-        #expect( start.timeIntervalSinceNow.magnitude == 10)
+        func profileOf(_ request: EvaluationRequest) -> RunProfile {
+            let ind = request.individuals[0], tc = request.trainingCases[0]
+            let interp = buildInterpreter(program: ind.program, constants: ind.constants,
+                                          inputs: tc.inputs, stepLimit: stepLimit)
+            return profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize)
+        }
+
+        var durations: [Double] = []
+        var invariantIds: [String] = []
+        var collected: [String] = []
+        var sizeLimitHits = 0
+        var explored: [(request: EvaluationRequest, profile: RunProfile)] = []
+
+        // ── EXPLORE ──────────────────────────────────────────────────────────
+        var next = 0
+        while next < exploreCases {
+            let batch = min(batchSize, exploreCases - next)
+            var requests: [EvaluationRequest] = []
+            for _ in 0..<batch {
+                let id = "fuzz-\(next)"; next += 1
+                let temp = Interpreter(); RandomCode.setRandomConstants(in: temp)
+                let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
+                let r = EvaluationRequest(
+                    individuals: [Individual(id: id, program: program, constants: temp.constants)],
+                    trainingCases: [TrainingCase(id: id, inputs: temp.inputs)],
+                    pairings: [Pairing(individual: id, trainingCase: id)],
+                    configuration: RunnerConfiguration()
+                )
+                try reproEncoder.encode(r).write(to: reproURL(id))   // persist before run
+                requests.append(r)
+            }
+
+            let results = await withTaskGroup(of: (EvaluationRequest, RunProfile).self) { group in
+                for r in requests {
+                    group.addTask {
+                        let ind = r.individuals[0], tc = r.trainingCases[0]
+                        let interp = buildInterpreter(program: ind.program, constants: ind.constants,
+                                                      inputs: tc.inputs, stepLimit: stepLimit)
+                        return (r, profiledRun(id: ind.id, interpreter: interp, windowSize: windowSize))
+                    }
+                }
+                var out: [(EvaluationRequest, RunProfile)] = []
+                for await pair in group { out.append(pair) }
+                return out
+            }
+
+            for (r, p) in results {
+                durations.append(p.totalSeconds)
+                if p.hitSizeLimit { sizeLimitHits += 1 }
+                if p.hitInvariant { invariantIds.append(p.id) }
+                let slow = p.totalSeconds > slowFloorSeconds || p.slowdownRatio > slowdownThreshold
+                if p.hitInvariant || slow {
+                    collected.append(p.id)
+                    try? profileEncoder.encode(p).write(to: profileURL(p.id))
+                } else {
+                    try? FileManager.default.removeItem(at: reproURL(p.id))
+                }
+                explored.append((r, p))
+            }
+        }
+
+        // ── AMPLIFY: hill-climb the slowest explored cases to make them worse ──
+        var amplified: [String] = []
+        for (base, baseProfile) in explored.sorted(by: { $0.profile.totalSeconds > $1.profile.totalSeconds }).prefix(amplifyWorst) {
+            var bestProgram = base.individuals[0].program
+            var bestScore = baseProfile.totalSeconds
+            var bestProfile = baseProfile
+            for i in 0..<amplifyAttempts {
+                let candidateId = "\(base.individuals[0].id)-amp\(i)"
+                let candidate = requestLike(base, id: candidateId, program: mutate(program: bestProgram))
+                try reproEncoder.encode(candidate).write(to: reproURL(candidateId))   // persist before run
+                let p = profileOf(candidate)
+                if p.hitInvariant { invariantIds.append(p.id) }               // a mutation that broke an invariant is a find
+                if p.totalSeconds > bestScore && !p.hitInvariant {            // accept-if-worse
+                    bestScore = p.totalSeconds; bestProgram = candidate.individuals[0].program; bestProfile = p
+                } else if !p.hitInvariant {
+                    try? FileManager.default.removeItem(at: reproURL(candidateId))
+                }
+            }
+            let ampId = "\(base.individuals[0].id)-amplified"
+            try reproEncoder.encode(requestLike(base, id: ampId, program: bestProgram)).write(to: reproURL(ampId))
+            try profileEncoder.encode(bestProfile).write(to: profileURL(ampId))
+            amplified.append("\(ampId): \(baseProfile.totalSeconds)s → \(bestScore)s  [\(bestProfile.verdict)]")
+        }
+
+        // ── report ───────────────────────────────────────────────────────────
+        let mean = durations.reduce(0, +) / Double(max(durations.count, 1))
+        let sd = (durations.map { ($0 - mean) * ($0 - mean) }.reduce(0, +) / Double(max(durations.count, 1))).squareRoot()
+        print("""
+
+        ── fuzz summary ──────────────────────────────
+        explored         : \(exploreCases)
+        per-case seconds : mean \(mean), sd \(sd), max \(durations.max() ?? 0)
+        size limits hit  : \(sizeLimitHits)
+        collected        : \(collected.count)
+        invariants       : \(invariantIds.count) \(invariantIds)
+        capture dir      : \(dir.path)
+        amplified:
+        \(amplified.map { "  " + $0 }.joined(separator: "\n"))
+        ──────────────────────────────────────────────
+        """)
+
+        #expect(invariantIds.isEmpty)   // regression guard
+    }
+
+    // Re-runs a captured reproduction (a `fuzz-*.json` the fuzzer left behind, or
+    // an amplified one) with full window profiling, and prints the diagnosis and
+    // the slow windows. Point `id` at the case you want to study, then re-enable.
+    @Test(.disabled("point at a captured reproduction to study it"))
+    func `replay a captured fuzz case`() async throws {
+        let id = "fuzz-0"
+        let dir = FileManager.default.temporaryDirectory.appending(path: "push-fuzz")
+        let request = try JSONDecoder().decode(EvaluationRequest.self, from: Data(contentsOf: dir.appending(path: "\(id).json")))
+        let ind = request.individuals[0], tc = request.trainingCases[0]
+        let interp = buildInterpreter(program: ind.program, constants: ind.constants, inputs: tc.inputs, stepLimit: 5_000)
+        let profile = profiledRun(id: id, interpreter: interp, windowSize: 100)
+
+        print("verdict:", profile.verdict)
+        print("steps \(profile.totalSteps), \(profile.totalSeconds)s, errors \(profile.errorCount), slowdown \(profile.slowdownRatio)x")
+        let typical = profile.totalSeconds / Double(max(profile.windows.count, 1))
+        for w in profile.windows where w.seconds > typical * 3 {
+            print("  slow window @\(w.firstStep): \(w.seconds)s items=\(w.stackItemsAtEnd) top=\(w.topInstructions)")
+        }
     }
 
     @Test(.disabled(if: Stress_Tests.disabledTests))

@@ -151,6 +151,17 @@ struct SizeLimitsTests {
         #expect(stackString(inty, .error).contains("maxStackDepth"))
     }
 
+    // MARK: invariant violations (a mis-typed push, formerly a fatalError)
+
+    @Test func `a mis-typed push is refused with an invariant marker, not a trap`() {
+        inty.push(StringItem("x"), to: .int) // .int accepts only IntItem
+
+        #expect(inty.stacks[.int]!.isEmpty)
+        #expect(stackString(inty, .error).contains(Interpreter.invariantMarker))
+        // the invariant is preserved: nothing wrong-typed reached .int
+        #expect(inty.stacks[.error]!.count == 1)
+    }
+
     // MARK: exemptions
 
     @Test func `error stack is exempt from size limits`() {

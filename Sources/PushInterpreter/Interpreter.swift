@@ -116,20 +116,31 @@ nonisolated final class Interpreter {
                 return
             }
         }
-        self.requireAccepts(item, on: stack)
+        guard self.requireAccepts(item, on: stack) else { return }
         self.stacks[stack]?.prepend(item)
     }
 
     /// Enforces the homogeneity invariant for any stack write. Every stack
     /// except `.exec` accepts a single Item type, so a rejected item can only
-    /// mean a mis-tagged `Router` (or mis-typed setup) — a programming bug that
-    /// should trap at its source, not corrupt the stack for a later `as!`.
-    func requireAccepts(_ item: any Item, on stack: PushStack) {
+    /// mean a mis-tagged `Router` or mis-typed setup — a bug, not normal input.
+    ///
+    /// Rather than trap (which would abort the whole process — a DoS for a Runner
+    /// on untrusted programs, and impossible to attribute while fuzzing), it
+    /// records a distinctive `INVARIANT:` ErrorItem and returns `false` so the
+    /// caller skips the bad push. Refusing the push *preserves* the homogeneity
+    /// invariant, so the `as!` casts throughout the Behaviors stay safe. Fuzzers
+    /// and regression tests assert no `INVARIANT:` marker ever appears.
+    static let invariantMarker = "INVARIANT:"
+
+    @discardableResult
+    func requireAccepts(_ item: any Item, on stack: PushStack) -> Bool {
         guard stack.accepts(item) else {
-            fatalError(
-                "Type mismatch: \(type(of: item)) pushed to .\(stack) stack"
+            self.stacks[.error]?.prepend(
+                ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack")
             )
+            return false
         }
+        return true
     }
 
     func pushItem(_ item: Router) {
@@ -153,8 +164,8 @@ nonisolated final class Interpreter {
         // initial stack items if any
         self.stacks = PushStack.emptyStacks()
         for (stack, items) in initial {
-            for item in items { self.requireAccepts(item, on: stack) }
-            self.stacks[stack]!.prepend(contentsOf: items)
+            let accepted = items.filter { self.requireAccepts($0, on: stack) }
+            self.stacks[stack]!.prepend(contentsOf: accepted)
         }
         
         // program to run

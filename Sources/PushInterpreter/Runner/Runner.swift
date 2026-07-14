@@ -32,7 +32,10 @@ nonisolated func evaluateOne(
         program: individual.program,
         recorders: configuration.recorders.map(AnyRecorder.init)
     )
+    let clock = ContinuousClock()
+    let started = clock.now
     interpreter.run()
+    let duration = clock.now - started
 
     var traces: [String: RecordedTrace] = [:]
     for spec in configuration.recorders {
@@ -44,7 +47,8 @@ nonisolated func evaluateOne(
     return CaseResult(
         individual: individual.id,
         trainingCase: trainingCase.id,
-        traces: traces
+        traces: traces,
+        duration: duration
     )
 }
 
