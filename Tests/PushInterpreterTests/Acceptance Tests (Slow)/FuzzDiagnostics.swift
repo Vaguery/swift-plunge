@@ -57,7 +57,10 @@ nonisolated struct RunProfile: Codable, Sendable {
     let hitSizeLimit: Bool
     let peakStackItems: Int      // largest total item count seen — a cheap structural
                                  // blow-up signal; growing linearly ⇒ a replicating loop
+    let runawayMessage: String?  // the RUNAWAY: marker if the guard stopped the run early
     let windows: [WindowSample]
+
+    var hitRunaway: Bool { runawayMessage != nil }
 
     /// Peak window time / first window time. >1 means the run got slower.
     var slowdownRatio: Double {
@@ -87,6 +90,7 @@ nonisolated struct RunProfile: Codable, Sendable {
     /// A one-line qualitative diagnosis.
     var verdict: String {
         if hitInvariant { return "INVARIANT violation" }
+        if let runawayMessage { return "runaway guard stopped it — \(runawayMessage)" }
         if slowdownRatio > 10 || capped {
             let mode = itemGrowth > 3
                 ? String(format: "stack items grew %.1fx (count-driven, peak %d)", itemGrowth, peakStackItems)
@@ -219,6 +223,7 @@ nonisolated func profiledRun(id: String, interpreter: Interpreter, windowSize: I
     let hitInvariant = errorValues.contains { $0.contains(Interpreter.invariantMarker) }
     let sizeMarkers = ["maxVectorLength", "maxStringLength", "maxCodePoints", "maxItemWeight", "maxStackDepth"]
     let hitSizeLimit = errorValues.contains { value in sizeMarkers.contains { value.contains($0) } }
+    let runawayMessage = errorValues.first { $0.hasPrefix(Interpreter.runawayMarker) }
 
     return RunProfile(
         id: id,
@@ -230,6 +235,7 @@ nonisolated func profiledRun(id: String, interpreter: Interpreter, windowSize: I
         hitInvariant: hitInvariant,
         hitSizeLimit: hitSizeLimit,
         peakStackItems: peakStackItems,
+        runawayMessage: runawayMessage,
         windows: windows
     )
 }

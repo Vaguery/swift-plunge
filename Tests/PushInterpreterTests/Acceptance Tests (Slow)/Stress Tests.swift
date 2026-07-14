@@ -158,6 +158,8 @@ struct Stress_Tests {
         var invariantIds: [String] = []
         var sizeLimitHits = 0
         var suspectCount = 0
+        var runawayCount = 0                     // programs the runaway guard stopped early
+        var runawayExamples: [String] = []       // a few kept for inspection
         var refinedProblems: Set<String> = []   // dedup by dominant culprit: each distinct problem is refined once
         var findings: [String] = []
 
@@ -263,6 +265,20 @@ struct Stress_Tests {
                 if p.hitSizeLimit { sizeLimitHits += 1 }
                 if p.hitInvariant { invariantIds.append(p.id) }
 
+                // The runaway guard already contained these, so they're no longer
+                // "slow" suspects to refine — but tally them and keep a few examples,
+                // since they're exactly the count-driven loops we care about.
+                if p.hitRunaway {
+                    runawayCount += 1
+                    if runawayExamples.count < 5 {
+                        runawayExamples.append("\(p.id): \(p.runawayMessage ?? "")")
+                        try? profileEncoder.encode(p).write(to: profileURL(p.id))   // keep for study
+                    } else {
+                        try? FileManager.default.removeItem(at: reproURL(p.id))
+                    }
+                    continue
+                }
+
                 let suspect = p.hitInvariant || p.hitSizeLimit
                     || p.totalSeconds > slowFloorSeconds || p.slowdownRatio > slowdownThreshold
                 guard suspect else {
@@ -293,6 +309,7 @@ struct Stress_Tests {
         explored         : \(next)
         per-case seconds : mean \(mean), sd \(sd), max \(durations.max() ?? 0)
         size limits hit  : \(sizeLimitHits)
+        runaways stopped : \(runawayCount)\(runawayExamples.isEmpty ? "" : "\n" + runawayExamples.map { "  " + $0 }.joined(separator: "\n"))
         suspects         : \(suspectCount)
         distinct problems: \(refinedProblems.count)
         invariants       : \(invariantIds.count) \(invariantIds)
