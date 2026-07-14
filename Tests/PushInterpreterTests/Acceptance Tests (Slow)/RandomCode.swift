@@ -13,36 +13,42 @@ import Foundation
 
 nonisolated enum RandomCode {
 
+    // A STABLE instruction pool: `Dictionary.keys` iterates in a per-process
+    // random order, so drawing from it (even with a seeded RNG) is not
+    // reproducible. Sorting by rawValue fixes the order.
+    static let allInstructions: [PushInstruction] =
+        Interpreter.language.keys.sorted { $0.rawValue < $1.rawValue }
+
     static func randomInstruction() -> PushInstruction {
-        Interpreter.language.keys.randomElement()!
+        allInstructions.randomElement(using: &fuzzRNG)!
     }
 
     static func randomInt(_ scale: Int) -> Int {
-        Int.random(in: -scale...scale)
+        Int.random(in: -scale...scale, using: &fuzzRNG)
     }
 
     static func randomDouble(_ scale: Double) -> Double {
-        Double.random(in: -scale...scale)
+        Double.random(in: -scale...scale, using: &fuzzRNG)
     }
 
     static func randomChar() -> Character {
         let choices = "     abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        return choices.randomElement()!
+        return choices.randomElement(using: &fuzzRNG)!
     }
 
     static func randomString(_ len: Int) -> String {
         let choices = "     abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         var result = ""
-        let length = Int.random(in: 1...len)
+        let length = Int.random(in: 1...len, using: &fuzzRNG)
         for _ in 1...length {
-            result.append(choices.randomElement()!)
+            result.append(choices.randomElement(using: &fuzzRNG)!)
         }
         return result
     }
 
     static func randomVecString(_ len: Int) -> [String] {
         var result = [String]()
-        let length = Int.random(in: 1...len)
+        let length = Int.random(in: 1...len, using: &fuzzRNG)
         for _ in 1...length {
             result.append(randomString(len))
         }
@@ -51,7 +57,7 @@ nonisolated enum RandomCode {
 
     static func randomVecInt(_ scale: Int, _ len: Int) -> [Int] {
         var result = [Int]()
-        let length = Int.random(in: 1...len)
+        let length = Int.random(in: 1...len, using: &fuzzRNG)
         for _ in 1...length {
             result.append(randomInt(scale))
         }
@@ -60,7 +66,7 @@ nonisolated enum RandomCode {
 
     static func randomVecDouble(_ scale: Double, _ len: Int) -> [Double] {
         var result = [Double]()
-        let length = Int.random(in: 1...len)
+        let length = Int.random(in: 1...len, using: &fuzzRNG)
         for _ in 0..<length {
             result.append(randomDouble(scale))
         }
@@ -69,26 +75,26 @@ nonisolated enum RandomCode {
 
     static func randomVecBool(_ len: Int) -> [Bool] {
         var result = [Bool]()
-        let length = Int.random(in: 1...len)
+        let length = Int.random(in: 1...len, using: &fuzzRNG)
         for _ in 0..<length {
-            result.append(Bool.random())
+            result.append(Bool.random(using: &fuzzRNG))
         }
         return result
     }
 
     static func randomConstant() -> PushInstruction {
         let stacks: [PushStack] = [.char, .double, .int, .string, .vecBool, .vecInt, .vecDouble, .vecString]
-        let stack = stacks.randomElement()!
-        return PushInstruction(rawValue: ("\(stack)\(Int.random(in: 0..<10))"))!
+        let stack = stacks.randomElement(using: &fuzzRNG)!
+        return PushInstruction(rawValue: ("\(stack)\(Int.random(in: 0..<10, using: &fuzzRNG))"))!
     }
 
     static func randomInput(_ range: Int = 10) -> PushInstruction {
-        let name = "input\(Int.random(in: 0..<range))"
+        let name = "input\(Int.random(in: 0..<range, using: &fuzzRNG))"
         return PushInstruction(rawValue: name)!
     }
 
     static func randomGenomeStuff() -> Any {
-        return switch Int.random(in: 0..<20) {
+        return switch Int.random(in: 0..<20, using: &fuzzRNG) {
         case 0: PlushyControl.close
         case 1: PlushyControl.open
         case 2...6: randomInput()
@@ -109,7 +115,7 @@ nonisolated enum RandomCode {
 
     // TODO: pass in argument for biasing types sampled
     static func randomPushItem() -> any Item {
-        switch Int.random(in: 0..<30) {
+        switch Int.random(in: 0..<30, using: &fuzzRNG) {
         case 0: return IntItem(randomInt(100_000))
         case 1: return DoubleItem(randomDouble(100_000.0))
         case 2: return StringItem(randomString(20))
@@ -119,9 +125,9 @@ nonisolated enum RandomCode {
         case 6: return VecDoubleItem(randomVecDouble(100_000.0, 20))
         case 7: return VecStringItem(randomVecString(20))
         case 8...10:
-            let plush = RandomCode.randomPlushy(Int.random(in: 1..<20))
+            let plush = RandomCode.randomPlushy(Int.random(in: 1..<20, using: &fuzzRNG))
             return CodeItem(Plushy.plushy2push(plush))
-        case 11...20: return InstructionItem(PushInstruction(rawValue: "input\(Int.random(in: 0..<10))")!)
+        case 11...20: return InstructionItem(PushInstruction(rawValue: "input\(Int.random(in: 0..<10, using: &fuzzRNG))")!)
         default: return InstructionItem(randomInstruction())
         }
     }

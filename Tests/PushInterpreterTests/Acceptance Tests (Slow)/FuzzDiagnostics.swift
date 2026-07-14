@@ -14,6 +14,26 @@
 import Foundation
 @testable import PushInterpreter
 
+/// A deterministic RNG (SplitMix64) so a fuzz run reproduces exactly from its
+/// seed. Every random choice in the fuzzer — program generation, mutation,
+/// chunk deletion — draws from the shared `fuzzRNG`.
+struct SeededRNG: RandomNumberGenerator {
+    private var state: UInt64
+    init(seed: UInt64) { state = seed }
+    mutating func next() -> UInt64 {
+        state &+= 0x9E37_79B9_7F4A_7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
+        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
+        return z ^ (z >> 31)
+    }
+}
+
+/// The fuzzer's shared RNG. Only ever used on the test's MainActor timeline
+/// (request-building and refine — never inside the concurrent explore tasks,
+/// which do no random draws), so a single global is safe. Reseeded by the test.
+nonisolated(unsafe) var fuzzRNG = SeededRNG(seed: 0)
+
 /// One window of a profiled run: how long a block of steps took, what ran, and
 /// how big the stacks were at the end.
 nonisolated struct WindowSample: Codable, Sendable {
@@ -54,10 +74,14 @@ nonisolated struct RunProfile: Codable, Sendable {
         return Double(last) / Double(first)
     }
 
-    /// The instruction dominating the slowest window — the qualitative suspect.
-    var slowestWindowCulprit: String {
-        windows.max(by: { $0.seconds < $1.seconds })?
-            .topInstructions.max(by: { $0.value < $1.value })?.key ?? "—"
+    /// The instruction dominating the window where the stack grew largest — the
+    /// qualitative suspect. Chosen structurally (by stack size, with a key
+    /// tie-break) rather than by wall-clock, so it's deterministic for a seed.
+    var dominantCulprit: String {
+        windows.max(by: { $0.stackItemsAtEnd < $1.stackItemsAtEnd })?
+            .topInstructions
+            .sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+            .first?.key ?? "—"
     }
 
     /// A one-line qualitative diagnosis.
@@ -69,12 +93,12 @@ nonisolated struct RunProfile: Codable, Sendable {
                 : "stack items ~flat (per-item / provenance-driven)"
             return String(
                 format: "progressive slowdown %.0fx%@; %@; slowest window dominated by %@",
-                slowdownRatio, capped ? " (capped)" : "", mode, slowestWindowCulprit
+                slowdownRatio, capped ? " (capped)" : "", mode, dominantCulprit
             )
         }
         if hitSizeLimit {
             return String(format: "hits a size limit; peak stack %d, dominated by %@",
-                          peakStackItems, slowestWindowCulprit)
+                          peakStackItems, dominantCulprit)
         }
         return "ok"
     }
@@ -107,19 +131,19 @@ nonisolated func buildInterpreter(
 nonisolated func mutate(program: [any Item]) -> [any Item] {
     guard !program.isEmpty else { return [InstructionItem(RandomCode.randomInstruction())] }
     var p = program
-    switch Int.random(in: 0..<10) {
+    switch Int.random(in: 0..<10, using: &fuzzRNG) {
     case 0...3:  // duplicate a random contiguous segment (amplifies repetition)
-        let start = Int.random(in: 0..<p.count)
-        let length = Int.random(in: 1...(p.count - start))
+        let start = Int.random(in: 0..<p.count, using: &fuzzRNG)
+        let length = Int.random(in: 1...(p.count - start), using: &fuzzRNG)
         p.insert(contentsOf: Array(p[start..<(start + length)]), at: start + length)
     case 4...5:  // duplicate the whole program
         p += p
     case 6...7:  // insert a random item
-        p.insert(RandomCode.randomPushItem(), at: Int.random(in: 0...p.count))
+        p.insert(RandomCode.randomPushItem(), at: Int.random(in: 0...p.count, using: &fuzzRNG))
     case 8:      // replace a random item
-        p[Int.random(in: 0..<p.count)] = RandomCode.randomPushItem()
+        p[Int.random(in: 0..<p.count, using: &fuzzRNG)] = RandomCode.randomPushItem()
     default:     // occasional shrink, for variety
-        p.remove(at: Int.random(in: 0..<p.count))
+        p.remove(at: Int.random(in: 0..<p.count, using: &fuzzRNG))
     }
     return p.count > 20_000 ? Array(p.prefix(20_000)) : p
 }
@@ -130,8 +154,8 @@ nonisolated func mutate(program: [any Item]) -> [any Item] {
 /// converges toward the minimal core that still exhibits the pathology.
 nonisolated func removeRandomChunk(_ program: [any Item]) -> [any Item] {
     guard program.count > 1 else { return program }
-    let start = Int.random(in: 0..<program.count)
-    let length = Int.random(in: 1...max(1, min(program.count - start, program.count / 3)))
+    let start = Int.random(in: 0..<program.count, using: &fuzzRNG)
+    let length = Int.random(in: 1...max(1, min(program.count - start, program.count / 3)), using: &fuzzRNG)
     var p = program
     p.removeSubrange(start..<(start + length))
     return p

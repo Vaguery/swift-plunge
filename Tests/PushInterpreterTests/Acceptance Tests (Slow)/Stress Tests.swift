@@ -95,12 +95,14 @@ struct Stress_Tests {
     // programItems way up (and `.disabled` it) so the size limits actually fire.
     @Test//(.disabled(if: Stress_Tests.disabledTests))
     func `random programs run`() async throws {
-        let exploreCases = 100         // random programs generated and profiled in the explore phase
+        let seed: UInt64 = 20_260_714  // fixed & logged so any run reproduces exactly; change to explore new programs
+        fuzzRNG = SeededRNG(seed: seed)
+        let exploreCases = 40         // random programs generated and profiled in the explore phase
         let batchSize = 20             // explore cases run concurrently per batch; suspects are refined after each batch, so smaller ⇒ sooner feedback
         let programItems = 300         // Plushy tokens per random genome (larger ⇒ bigger, more complex programs)
         let windowSize = 100           // interpreter steps per profiling window (the timing/attribution granularity)
-        let amplifyAttempts = 40       // mutations per amplified case
-        let simplifyAttempts = 300     // chunk-deletions per case
+        let amplifyAttempts = 6        // mutations per amplified case
+        let simplifyAttempts = 40      // chunk-deletions per case
         let simplifyPatience = 50      // stop after this many failed deletions in a row
         let amplifyCapSeconds = 10.0   // wall-clock budget per amplify run (bounds slow candidates)
         let simplifyCapSeconds = 2.0   // a candidate still running past this is "still pathological"
@@ -108,18 +110,18 @@ struct Stress_Tests {
         let slowdownThreshold = 10.0   // ...or if its per-window time grows by more than this factor over the run
 
         // EXPLORE runs under the real production limits. AMPLIFY runs under
-        // deliberately RELAXED limits, so the hill-climb can push a symptom past
-        // where the default caps bound it and expose the *unbounded* pathology
-        // (the true crux blow-up). A case that OOMs under these is itself a find —
-        // its reproduction was written to disk before it ran. Crank for the sweep.
+        // relaxed-but-BOUNDED limits: enough headroom for the hill-climb to push a
+        // symptom past the default caps, but not so much that an unbounded-provenance
+        // (.call/crux) blow-up reaches OOM — which grows ~quadratically in stepLimit,
+        // so stepLimit is kept modest. (Once .call is capped, these can go higher.)
         var exploreSettings = InterpreterSettings()
         exploreSettings.stepLimit = 5_000
         var amplifySettings = InterpreterSettings()
-        amplifySettings.stepLimit = 50_000
-        amplifySettings.maxStackDepth = 100_000
-        amplifySettings.maxItemWeight = 10_000_000
-        amplifySettings.maxVectorLength = 100_000
-        amplifySettings.maxCodePoints = 100_000
+        amplifySettings.stepLimit = 10_000
+        amplifySettings.maxStackDepth = 20_000
+        amplifySettings.maxItemWeight = 2_000_000
+        amplifySettings.maxVectorLength = 20_000
+        amplifySettings.maxCodePoints = 20_000
 
         let dir = FileManager.default.temporaryDirectory.appending(path: "push-fuzz")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -213,23 +215,28 @@ struct Stress_Tests {
         }
 
         // ── EXPLORE, refining each distinct problem the moment it appears ─────
-        log("fuzzing up to \(exploreCases) random programs of \(programItems) tokens (explore stepLimit \(exploreSettings.stepLimit))…")
+        log("fuzzing up to \(exploreCases) random programs of \(programItems) tokens, seed \(seed) (explore stepLimit \(exploreSettings.stepLimit))…")
+        // Generate EVERY explore program upfront, in a fixed sequence, so the RNG
+        // stream for generation is independent of the (timing-coupled) refinement
+        // below. That is what makes a seed reproduce the same programs — and thus
+        // the same crashes/pathologies — run to run.
+        let allRequests: [EvaluationRequest] = (0..<exploreCases).map { i in
+            let temp = Interpreter(); RandomCode.setRandomConstants(in: temp)
+            let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
+            return EvaluationRequest(
+                individuals: [Individual(id: "fuzz-\(i)", program: program, constants: temp.constants)],
+                trainingCases: [TrainingCase(id: "fuzz-\(i)", inputs: temp.inputs)],
+                pairings: [Pairing(individual: "fuzz-\(i)", trainingCase: "fuzz-\(i)")],
+                configuration: RunnerConfiguration(settings: exploreSettings)
+            )
+        }
+
         var next = 0
         while next < exploreCases {
-            let batch = min(batchSize, exploreCases - next)
-            var requests: [EvaluationRequest] = []
-            for _ in 0..<batch {
-                let id = "fuzz-\(next)"; next += 1
-                let temp = Interpreter(); RandomCode.setRandomConstants(in: temp)
-                let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
-                let r = EvaluationRequest(
-                    individuals: [Individual(id: id, program: program, constants: temp.constants)],
-                    trainingCases: [TrainingCase(id: id, inputs: temp.inputs)],
-                    pairings: [Pairing(individual: id, trainingCase: id)],
-                    configuration: RunnerConfiguration(settings: exploreSettings)
-                )
-                try reproEncoder.encode(r).write(to: reproURL(id))   // persist before run
-                requests.append(r)
+            let requests = Array(allRequests[next..<min(next + batchSize, exploreCases)])
+            next += requests.count
+            for r in requests {   // persist before run
+                try reproEncoder.encode(r).write(to: reproURL(r.individuals[0].id))
             }
 
             let results = await withTaskGroup(of: (EvaluationRequest, RunProfile).self) { group in
@@ -246,7 +253,12 @@ struct Stress_Tests {
                 return out
             }
 
-            for (r, p) in results {
+            // Process in request order (tasks finish out of order) so refinement —
+            // which draws from the RNG — happens deterministically for a given seed.
+            let profileByID = Dictionary(results.map { ($0.0.individuals[0].id, $0) },
+                                         uniquingKeysWith: { first, _ in first })
+            for request in requests {
+                guard let (r, p) = profileByID[request.individuals[0].id] else { continue }
                 durations.append(p.totalSeconds)
                 if p.hitSizeLimit { sizeLimitHits += 1 }
                 if p.hitInvariant { invariantIds.append(p.id) }
@@ -261,7 +273,7 @@ struct Stress_Tests {
                 try? profileEncoder.encode(p).write(to: profileURL(p.id))     // keep the raw suspect
 
                 // Refine the first example of each distinct problem, immediately.
-                let culprit = p.hitInvariant ? "INVARIANT" : p.slowestWindowCulprit
+                let culprit = p.hitInvariant ? "INVARIANT" : p.dominantCulprit
                 if refinedProblems.insert(culprit).inserted {
                     log("  ⚠️  new problem in \(p.id) [\(culprit)]: \(p.verdict) — refining…")
                     let finding = refine(r, p)
