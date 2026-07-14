@@ -27,6 +27,12 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // vector of long strings, or code whose leaves are large — that the
     // count-only caps cannot see.
     public var maxItemWeight   : Int = 100_000
+    // When a stack fills faster than the size caps would catch, watch for the
+    // signature of a runaway loop (a stack piling repeats or cycling a short
+    // period, *and* a looping instruction pending on `.exec`) and stop the run
+    // early with a `RUNAWAY:` marker. Diagnoses the cause rather than blindly
+    // truncating; see `Interpreter.enforceRunawayGuard`.
+    public var runawayGuardEnabled = true
 }
 
 
@@ -68,6 +74,9 @@ nonisolated final class Interpreter {
     var behaviors: [PushInstruction: Behavior] = Interpreter.language
     var stacks: [PushStack: Deque<any Item>]
     var counter: Int = 0
+    // Step at which the runaway guard last examined the stacks; -1 means never.
+    // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
+    var lastRunawayCheck = -1
     var inputs: [PushInstruction:any Item] = [:]
     // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
@@ -154,6 +163,7 @@ nonisolated final class Interpreter {
               recorders: [AnyRecorder] = []) {
         // settings reset
         self.counter = 0
+        self.lastRunawayCheck = -1
 
         // inputs and constants (both keyed by instruction token)
         for (key,value) in inputs {
@@ -218,6 +228,7 @@ nonisolated final class Interpreter {
         }
         self.record()
         self.counter += 1
+        self.enforceRunawayGuard()   // stop early on a confirmed runaway loop
         // catch thrown errors from instructions
         // enforce config size limits
     }
@@ -242,6 +253,7 @@ nonisolated final class Interpreter {
     
     func reset() {
         self.counter = 0
+        self.lastRunawayCheck = -1
         self.stacks = PushStack.emptyStacks()
         for r in self.recorders.keys {
             recorders[r]!.reset()
