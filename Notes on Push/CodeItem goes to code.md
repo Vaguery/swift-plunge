@@ -192,23 +192,31 @@ true the item is unwrapped and executed, if false the item goes back to `.code`.
 the pieces already here — push `.codeDo` when the bool is true, replace the block otherwise — which is a
 good sign the decomposition is right.
 
+## What `.codeDo` records: nothing — and it *erases*
+
+Settled, and it is law 1, not law 5. `.codeDo` is combinatory:
+
+- The **block's** `call` is erased. The block is consumed and its history goes with it.
+- Each **content** keeps the `call` it already had, untouched, and is exposed as though it had been
+  sitting there all along — unchanged from the time it went in.
+
+Being inside a block leaves no mark. That is not a special case for `.codeDo`; it is provenance law 1b
+(`Items.swift`), which this made explicit: a block may be restructured, concatenated and duplicated, but
+it never changes the `.value` of what it holds, so containment contributes nothing to an item's history.
+`unwrapCodeItem` already behaves this way today by dropping the wrapper's `call`; `.codeDo` inherits the
+behaviour along with the code, and also inherits the contingency propagation
+(`copy.isContingent = netContingency(of: code, copy)`), which is the only other thing that function does.
+
+Worth noting what the erasure means: after `( 1 2 ) ( 3 ) .codeAppend .codeDo`, the contents `1 2 3` do
+**not** record `.codeAppend`. That is correct — `1` was always `1`; it did not come from an append. The
+block's construction history mattered while the block was a value on `.code`, and stops mattering the
+moment the block stops existing.
+
+(Law 5's `popItems` does not apply, and the reason it cannot is instructive: law 5 assumes its results
+*come to rest* on a stack where a later reader can find them. `.exec` items do not rest — they execute.
+Popping N exec items to "surface" one leaves it about to run, not sitting there to be read.)
+
 ## Still open
-
-- **What does `.codeDo` record?** There is a real tension here and I do not want to guess.
-
-  By law 1 it records nothing: it moves items out of a block onto `.exec` without changing any value, and
-  the items it spreads already carry their own `call`, so a crux reaches them through their own history.
-  That is also what makes the change fix the current unwrap leak.
-
-  But law 5 says a Behavior putting several results on one stack records the discard that surfaces each —
-  and `.codeDo` puts N items on `.exec`. Applying it would give a block's k-th item the crux
-  `<block> .codeDo k .execPopItems`. The snag: law 5 assumes results *come to rest* on that stack, and
-  `.exec` items do not rest — they execute. Popping N exec items to "surface" one leaves it about to run,
-  not sitting there to be read.
-
-  So: does an item that came out of a block get its provenance *through* the block (`.codeDo` +
-  `popItems`), or does it keep the history it already had? The two disagree, and the answer decides
-  whether `.codeDo` is combinatory or generative.
 
 - **The search layer.** 22 of the 24 unimplemented behaviors are `code*`, so at first the exec module
   carries the whole load of consuming code. This is less of a problem than it looks: `.codeIterate` is

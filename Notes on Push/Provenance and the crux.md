@@ -297,6 +297,44 @@ intact instead of unwrapping it onto `.exec` (and `.exec` instructions take thei
   recorded `call` is already dead code today), and an `.input` bound to a code block currently loses its
   `[.input1]` provenance the moment it unwraps.
 
+## A known leak: vector elements have no provenance of their own
+
+`CodeItem.value` is `[any Item]`, so a block's contents keep their own `call` — which is what law 1b
+rests on: an item goes into a block and comes out unchanged, history intact.
+
+Vectors do not work that way. `VecIntItem.value` is `[Int]`, `VecBoolItem.value` is `[Bool]`, and so on —
+**raw Swift values, not Items**. An element has no `call` and no `crux`. The drain is visible in one line
+of `conjBehavior`:
+
+```swift
+result.append(y.value)                        // the Item is destructured to a raw value here…
+call: [x, y, InstructionItem(instruction)],   // …but `y`, the Item, is recorded on the VECTOR
+```
+
+So it is worth being precise about what is actually lost, because it is narrower than it first looks:
+
+- **The obligation still holds.** The element's history survives in the *vector's* `call`, so
+  `crux(element)` — `crux(vec) .vecIntPushAll k .intPopItems` — transitively contains it and reproduces
+  the value. The round-trip sweep confirms this across every vector behavior.
+- **What is lost is addressability.** An element has no individual identity, so "where did element 3 come
+  from?" cannot be asked of the element; it can only be answered by reading the whole vector's history.
+  A code block's element can answer for itself. A vector's cannot.
+
+Two consequences worth keeping in view:
+
+- **Every element's crux drags the whole vector's history.** A vector built by N conjs has an O(N) chain,
+  and each element pulled back out inherits all of it — where a block's element carries only its own.
+  Honest, but it is why vectors press on the `maxCallWeight` budget harder than blocks do.
+- **It blocks the planned crux-to-function work for vectors.** Extracting an item's crux into a `CodeItem`,
+  and currying it by removing a leaf, works cleanly for a block's contents. For a vector element the
+  "crux of this element" is unavoidably the whole vector's construction plus a `PushAll`/`PopItems`
+  selector, which is not the subroutine anyone wanted.
+
+Fixing it means `VecIntItem.value: [IntItem]` and friends — which costs boxing per element, a wider wire
+format (`AnyItem` currently encodes a vector as `[Int]`), and a pass over every vector behavior. Not now,
+but it is a real gap in the paradigm rather than an implementation detail: it is the one place where
+containment destroys history, and law 1b says containment should not.
+
 ## Future work noted along the way
 
 - **A `contingencySources` instruction set**, sibling to `PushInstruction.iterators`. Contingency splits

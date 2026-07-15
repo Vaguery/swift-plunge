@@ -32,6 +32,17 @@ public nonisolated protocol Pretty {
 //     shove, the exec combinators (execK, execS, execIf), and every body copy
 //     or re-pushed continuation token an iteration emits.
 //
+//  1b. CONTAINMENT in a CodeItem is free the same way. A block may be
+//     restructured, concatenated, duplicated and taken apart again, but by
+//     convention it never changes the `.value` of what it holds — so an item
+//     that goes into a block and comes back out is the item that went in, and
+//     the block contributes nothing to its history. Unwrapping therefore drops
+//     the *block's* `call` and leaves each content's own `call` untouched,
+//     exposing them as though they had been sitting there all along. This is
+//     what `unwrapCodeItem` does today, and what the planned `.codeDo` will do
+//     once unwrapping becomes an instruction a program asks for rather than
+//     something the interpreter does on sight.
+//
 //  2. Relocation ACROSS stacks is not free: `.intQuote` moves a value from
 //     `.int` to `.code`, and a crux omitting it would leave an int where a code
 //     item belongs. These record `call = [args…, InstructionItem(name)]`.
