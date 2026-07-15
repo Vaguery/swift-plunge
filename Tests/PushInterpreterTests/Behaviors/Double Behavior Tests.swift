@@ -21,10 +21,12 @@ struct DoubleBehaviorTests {
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ 7.5 -6.25 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 4.25 3.25 .doubleAdd )")
         
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ 1.25 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -6.25 7.5 .doubleAdd )")
     }
     
     @Test func `doubleAdd records overflows`() {
@@ -62,6 +64,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleCos, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleCos )")
 
         loadDoubles(inty, doubles: [Double.pi], contingent: [0])
         #expect(stackString(inty, .double) == "[ 3.141592653589793 1.0 ]")
@@ -69,6 +72,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleCos, to: inty)
         #expect(stackString(inty, .double) == "[ -1.0 1.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 3.141592653589793 .doubleCos )")
 
         loadDoubles(inty, doubles: [-2.0 * Double.pi])
         #expect(stackString(inty, .double) == "[ -6.283185307179586 -1.0 1.0 ]")
@@ -76,6 +80,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleCos, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 -1.0 1.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( -6.283185307179586 .doubleCos )")
     }
 
     @Test func doubleDec() {
@@ -85,6 +90,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleDec, to: inty)
         #expect(stackString(inty, .double) == "[ -1.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleDec )")
 
         loadDoubles(inty, doubles: [9])
         #expect(stackString(inty, .double) == "[ 9.0 -1.0 ]")
@@ -92,6 +98,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleDec, to: inty)
         #expect(stackString(inty, .double) == "[ 8.0 -1.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 9.0 .doubleDec )")
     }
 
     @Test func `doubleDec handles overflows`() {
@@ -131,10 +138,12 @@ struct DoubleBehaviorTests {
         doThis(.doubleFromBool, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( false .doubleFromBool )")
 
         doThis(.doubleFromBool, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 0.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( true .doubleFromBool )")
     }
 
     @Test func doubleFromChar() {
@@ -144,14 +153,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleFromChar, to: inty)
         #expect(stackString(inty, .double) == "[ 103.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 'g' .doubleFromChar )")
 
         doThis(.doubleFromChar, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 103.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( '😉' .doubleFromChar )")
 
         doThis(.doubleFromChar, to: inty)
         #expect(stackString(inty, .double) == "[ 10.0 0.0 103.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( '\n' .doubleFromChar )")
     }
 
     @Test func doubleFromInt() {
@@ -161,14 +173,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleFromInt, to: inty)
         #expect(stackString(inty, .double) == "[ -11.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( -11 .doubleFromInt )")
 
         doThis(.doubleFromInt, to: inty)
         #expect(stackString(inty, .double) == "[ 14000.0 -11.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 14000 .doubleFromInt )")
 
         doThis(.doubleFromInt, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 14000.0 -11.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 0 .doubleFromInt )")
     }
 
     @Test func doubleFromString() {
@@ -178,22 +193,27 @@ struct DoubleBehaviorTests {
         doThis(.doubleFromString, to: inty)
         #expect(stackString(inty, .double) == "[ -172.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( \"-172\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 -172.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( \"0\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 0.0 -172.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( \"00001\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 1.0 0.0 -172.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( \"1_000_000\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 0.0 1.0 0.0 -172.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( \" 172\" .doubleFromString )")
     }
 
     @Test func `doubleFromString rejects non-finite strings`() {
@@ -238,14 +258,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGT )")
 
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGT )")
 
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGT )")
     }
 
     @Test func doubleGTE() {
@@ -260,14 +283,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGTE )")
 
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGTE )")
 
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGTE )")
     }
 
     @Test func doubleInc() {
@@ -277,6 +303,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleInc, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleInc )")
 
         loadDoubles(inty, doubles: [0])
         #expect(stackString(inty, .double) == "[ 0.0 1.0 ]")
@@ -284,6 +311,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleInc, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 1.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleInc )")
     }
 
     @Test func `doubleInc handles overflows`() {
@@ -308,14 +336,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLT )")
 
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLT )")
 
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLT )")
     }
 
     @Test func doubleLTE() {
@@ -329,14 +360,17 @@ struct DoubleBehaviorTests {
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLTE )")
 
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLTE )")
 
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLTE )")
     }
 
     @Test func doubleMax() {
@@ -346,11 +380,13 @@ struct DoubleBehaviorTests {
         doThis(.doubleMax, to: inty)
         #expect(stackString(inty, .double) == "[ 4.25 -6.25 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 4.25 3.25 .doubleMax )")
 
 
         doThis(.doubleMax, to: inty)
         #expect(stackString(inty, .double) == "[ 4.25 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -6.25 4.25 .doubleMax )")
     }
 
     @Test func doubleMin() {
@@ -360,11 +396,13 @@ struct DoubleBehaviorTests {
         doThis(.doubleMin, to: inty)
         #expect(stackString(inty, .double) == "[ 3.25 -6.25 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 4.25 3.25 .doubleMin )")
 
 
         doThis(.doubleMin, to: inty)
         #expect(stackString(inty, .double) == "[ -6.25 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -6.25 3.25 .doubleMin )")
     }
 
     @Test func doubleMod() {
@@ -374,10 +412,12 @@ struct DoubleBehaviorTests {
         doThis(.doubleMod, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 -20.0 21.0 17.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 11.0 5.0 .doubleMod )")
 
         doThis(.doubleMod, to: inty)
         #expect(stackString(inty, .double) == "[ -0.0 21.0 17.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -20.0 1.0 .doubleMod )")
 
         doThis(.doubleMod, to: inty)
         #expect(stackString(inty, .double) == "[ 17.0 ]")
@@ -399,11 +439,13 @@ struct DoubleBehaviorTests {
         doThis(.doubleMultiply, to: inty)
         #expect(stackString(inty, .double) == "[ 13.8125 -6.25 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 4.25 3.25 .doubleMultiply )")
 
 
         doThis(.doubleMultiply, to: inty)
         #expect(stackString(inty, .double) == "[ -86.328125 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -6.25 13.8125 .doubleMultiply )")
     }
 
     @Test func `doubleMultiply records overflows`() {
@@ -421,18 +463,22 @@ struct DoubleBehaviorTests {
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ 2.0 -20.0 21.0 17.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 10.0 5.0 .doubleQuot )")
 
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ -10.0 21.0 17.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -20.0 2.0 .doubleQuot )")
 
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ -2.0 17.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 21.0 -10.0 .doubleQuot )")
         
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ -8.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 17.0 -2.0 .doubleQuot )")
 
         loadDoubles(inty, doubles: [0])
         #expect(stackString(inty, .double) == "[ 0.0 -8.0 ]")
@@ -454,6 +500,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleSin, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleSin )")
 
         loadDoubles(inty, doubles: [Double.pi / 2.0], contingent: [0])
         #expect(stackString(inty, .double) == "[ 1.5707963267948966 0.0 ]")
@@ -461,6 +508,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleSin, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 0.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 1.5707963267948966 .doubleSin )")
 
         loadDoubles(inty, doubles: [-3.0 * Double.pi / 2.0])
         #expect(stackString(inty, .double) == "[ -4.71238898038469 1.0 0.0 ]")
@@ -468,6 +516,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleSin, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 1.0 0.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( -4.71238898038469 .doubleSin )")
     }
 
     @Test func doubleSubtract() {
@@ -477,10 +526,12 @@ struct DoubleBehaviorTests {
         doThis(.doubleSubtract, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 -6.25 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 4.25 3.25 .doubleSubtract )")
 
         doThis(.doubleSubtract, to: inty)
         #expect(stackString(inty, .double) == "[ -7.25 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( -6.25 1.0 .doubleSubtract )")
     }
 
     @Test func `doubleSubtract records overflows`() {
@@ -498,6 +549,7 @@ struct DoubleBehaviorTests {
         doThis(.doubleTan, to: inty)
         #expect(stackString(inty, .double) == "[ 0.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( 0.0 .doubleTan )")
         
         loadDoubles(inty, doubles: [1.0])
 
@@ -506,5 +558,6 @@ struct DoubleBehaviorTests {
         doThis(.doubleTan, to: inty)
         #expect(stackString(inty, .double) == "[ 1.557407724654902 0.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( 1.0 .doubleTan )")
     }
 }

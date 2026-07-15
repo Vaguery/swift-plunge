@@ -24,18 +24,21 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleButLast )")
 
         doThis(.vecDoublePop, to: inty)
         
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 2.0] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] .vecDoubleButLast )")
         
         doThis(.vecDoublePop, to: inty)
         
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] .vecDoubleButLast )")
     }
     
     @Test func vecDoubleConcat() {
@@ -48,10 +51,12 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] [] .vecDoubleConcat )")
         
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0, 1.0, 2.0, 3.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] [1.0, 2.0, 3.0] .vecDoubleConcat )")
     }
 
     @Test func vecDoubleConj() {
@@ -64,16 +69,19 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleConj, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [-3.0] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3.0 .vecDoubleConj )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleConj, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0, 0.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 0.0 .vecDoubleConj )")
 
         doThis(.vecDoubleConj, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0, 0.0, 1.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0, 0.0] 1.0 .vecDoubleConj )")
     }
 
     @Test func vecDoubleContains() {
@@ -90,14 +98,17 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleContains, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( [] -3.0 .vecDoubleContains )")
 
         doThis(.vecDoubleContains, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 9.0 .vecDoubleContains )")
 
         doThis(.vecDoubleContains, to: inty)
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 7777.0 .vecDoubleContains )")
     }
 
     @Test func vecDoubleDrop() {
@@ -110,16 +121,19 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleDrop, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3 .vecDoubleDrop )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleDrop, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 0 .vecDoubleDrop )")
 
         doThis(.vecDoubleDrop, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 1 .vecDoubleDrop )")
     }
 
     @Test func vecDoubleFirst() {
@@ -134,6 +148,7 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleFirst, to: inty)
         #expect(stackString(inty, .double) == "[ 9.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] .vecDoubleFirst )")
     }
 
     @Test func vecDoubleIndexOf() {
@@ -153,10 +168,12 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleIndexOf, to: inty)
         #expect(stackString(inty, .int) == "[ 1 -1 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 99.0 .vecDoubleIndexOf )")
 
         doThis(.vecDoubleIndexOf, to: inty)
         #expect(stackString(inty, .int) == "[ -1 1 -1 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 7777.0 .vecDoubleIndexOf )")
     }
 
     @Test func vecDoubleItemIsEmpty() {
@@ -168,10 +185,12 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( [] .vecDoubleItemIsEmpty )")
 
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] .vecDoubleItemIsEmpty )")
     }
 
     @Test func `vecDoubleIterate records provenance only for its derived results`() {
@@ -303,6 +322,7 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleLast, to: inty)
         #expect(stackString(inty, .double) == "[ 999.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] .vecDoubleLast )")
     }
 
     @Test func vecDoubleLength() {
@@ -314,10 +334,12 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( [] .vecDoubleLength )")
 
         doThis(.vecDoubleLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] .vecDoubleLength )")
     }
     
     @Test func vecDoubleNth() {
@@ -337,10 +359,12 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleNth, to: inty)
         #expect(stackString(inty, .double) == "[ 99.0 ]")
         #expect(topItem(inty, .double).isContingent == false)
+        #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] 1 .vecDoubleNth )")
 
         doThis(.vecDoubleNth, to: inty)
         #expect(stackString(inty, .double) == "[ 9.0 99.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] 7776 .vecDoubleNth )")
     }
 
     @Test func vecDoubleOccurrencesOf() {
@@ -354,14 +378,17 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleOccurrencesOf, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( [] 9.0 .vecDoubleOccurrencesOf )")
 
         doThis(.vecDoubleOccurrencesOf, to: inty)
         #expect(stackString(inty, .int) == "[ 5 0 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 .vecDoubleOccurrencesOf )")
 
         doThis(.vecDoubleOccurrencesOf, to: inty)
         #expect(stackString(inty, .int) == "[ 0 5 0 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -99.0 .vecDoubleOccurrencesOf )")
     }
 
     @Test func vecDoublePushAll() {
@@ -376,6 +403,7 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoublePushAll, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 22.0 333.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
+        #expect(callString(topItem(inty, .double)) == "( [1.0, 22.0, 333.0] .vecDoublePushAll )")
         doThis(.doublePop, to: inty)
         // Elements are reversed before pushing, so element 0 lands on top and
         // needs no discard; the one below it is surfaced by popping that.
@@ -394,18 +422,21 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleRemove, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 .vecDoubleRemove )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleRemove, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [8.0, 7.0, 6.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 9.0 .vecDoubleRemove )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleRemove, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -99.0 .vecDoubleRemove )")
     }
 
     @Test func vecDoubleReplace() {
@@ -419,18 +450,21 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleReplace, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1.0 .vecDoubleReplace )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReplace, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 8.0, 7.0, 6.0, 1.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 9.0 1.0 .vecDoubleReplace )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReplace, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [2.0, 2.0, 2.0, 2.0, 2.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 2.0 .vecDoubleReplace )")
     }
 
     @Test func vecDoubleReplaceFirst() {
@@ -449,18 +483,21 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleReplaceFirst, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1.0 .vecDoubleReplaceFirst )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReplaceFirst, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 9.0 1.0 .vecDoubleReplaceFirst )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReplaceFirst, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [3.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 3.0 .vecDoubleReplaceFirst )")
     }
 
     @Test func vecDoubleRest() {
@@ -472,12 +509,14 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleRest, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleRest )")
         
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleRest, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] .vecDoubleRest )")
     }
     
     @Test func vecDoubleReverse() {
@@ -489,12 +528,14 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleReverse, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleReverse )")
         
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReverse, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [999.0, 99.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] .vecDoubleReverse )")
     }
 
     @Test func vecDoubleSet() {
@@ -510,18 +551,21 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleSet, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1 .vecDoubleSet )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleSet, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 3.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 3.0 2222 .vecDoubleSet )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleSet, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 9.0, -1.0, 9.0, 9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -1.0 2 .vecDoubleSet )")
     }
 
     @Test func vecDoubleSubVec() {
@@ -536,24 +580,28 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleSubVec, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9 1 .vecDoubleSubVec )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleSubVec, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [7.0, 6.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 2 3 .vecDoubleSubVec )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleSubVec, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -1 2 .vecDoubleSubVec )")
 
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleSubVec, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [11.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 11.0, 111.0, 1111.0] 1 1 .vecDoubleSubVec )")
     }
 
     @Test func vecDoubleTake() {
@@ -566,16 +614,19 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3 .vecDoubleTake )")
         
         doThis(.vecDoublePop, to: inty)
         
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == false)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 99 .vecDoubleTake )")
         
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0] ]")
         #expect(topItem(inty, .vecDouble).isContingent == true)
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 1 .vecDoubleTake )")
     }
 
 }

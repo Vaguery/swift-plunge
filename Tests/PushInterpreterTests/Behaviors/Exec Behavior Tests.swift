@@ -227,6 +227,7 @@ struct ExecBehaviorTests {
         // provenance (law 1). It used to be tagged `index: 2`.
         #expect(topItem(inty, .exec).call.isEmpty)
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
     }
 
     @Test func `execDoWhile is a lot like execWhile when a true is found`() {
@@ -241,6 +242,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
         // All three results are combinatory — two body copies and a freshly
         // minted continuation token — so none records provenance. They used to
         // be tagged `index:` 0, 1, 2.
@@ -255,6 +257,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .exec).isContingent == true)
+        #expect(callString(topItem(inty, .exec)) == "( )")
 
         inty.step()
         #expect(stackString(inty, .exec) == "[ .execWhile 44 33 22 ]")
@@ -275,6 +278,7 @@ struct ExecBehaviorTests {
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ 3.4 ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
 
         doThis(.execFlush, to: inty)
 
@@ -285,6 +289,7 @@ struct ExecBehaviorTests {
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
     }
 
     @Test func execK() {
@@ -311,6 +316,7 @@ struct ExecBehaviorTests {
         doThis(.execS, to: inty)
         #expect(stackString(inty, .exec) == "[ 3.4 44 true 44 ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
         #expect(inty.stacks[.exec]![2].isContingent == true)
     }
 
@@ -325,11 +331,13 @@ struct ExecBehaviorTests {
         doThis(.execWhen, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
         #expect(topItem(inty, .exec).isContingent == true)
+        #expect(callString(topItem(inty, .exec)) == "( )")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.execWhen, to: inty)
         #expect(stackString(inty, .exec) == "[ 33 22 ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
         #expect(stackString(inty, .bool) == "[ ]")
     }
 
@@ -358,6 +366,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .exec).isContingent == false)
+        #expect(callString(topItem(inty, .exec)) == "( )")
         // Combinatory results record no provenance (laws 1 and 4). These used to
         // be tagged `index:` 0, 1, 2.
         #expect(inty.stacks[.exec]!.prefix(3).allSatisfy { $0.call.isEmpty })

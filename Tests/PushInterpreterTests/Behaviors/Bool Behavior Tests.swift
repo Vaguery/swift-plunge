@@ -21,21 +21,25 @@ struct BoolBehaviorTests {
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolAnd )")
 
         doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolAnd )")
 
         doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolAnd )")
 
         doThis(.boolPop, to: inty)
         doThis(.boolAnd, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolAnd )")
         doThis(.boolPop, to: inty)
     }
 
@@ -46,14 +50,17 @@ struct BoolBehaviorTests {
         doThis(.boolFromDouble, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 0.0 .boolFromDouble )")
 
         doThis(.boolFromDouble, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 1.1 .boolFromDouble )")
 
         doThis(.boolFromDouble, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -1.1 .boolFromDouble )")
     }
 
     @Test func boolFromInt() {
@@ -63,14 +70,17 @@ struct BoolBehaviorTests {
         doThis(.boolFromInt, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 0 .boolFromInt )")
 
         doThis(.boolFromInt, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 1 .boolFromInt )")
 
         doThis(.boolFromInt, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -1 .boolFromInt )")
     }
 
     @Test func boolIfPThenQ() {
@@ -80,21 +90,25 @@ struct BoolBehaviorTests {
         doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolIfPThenQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolIfPThenQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolIfPThenQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfPThenQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolIfPThenQ )")
         doThis(.boolPop, to: inty)
     }
 
@@ -105,21 +119,25 @@ struct BoolBehaviorTests {
         doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolIfQThenP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolIfQThenP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolIfQThenP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolIfQThenP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolIfQThenP )")
         doThis(.boolPop, to: inty)
     }
 
@@ -130,21 +148,25 @@ struct BoolBehaviorTests {
         doThis(.boolNand, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolNand )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNand, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolNand )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNand, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolNand )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNand, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolNand )")
         doThis(.boolPop, to: inty)
     }
 
@@ -155,21 +177,25 @@ struct BoolBehaviorTests {
         doThis(.boolNor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolNor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolNor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolNor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolNor )")
         doThis(.boolPop, to: inty)
     }
 
@@ -180,10 +206,12 @@ struct BoolBehaviorTests {
         doThis(.boolNot, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false .boolNot )")
 
         doThis(.boolNot, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( true .boolNot )")
 
     }
 
@@ -194,21 +222,25 @@ struct BoolBehaviorTests {
         doThis(.boolNotP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolNotP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolNotP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolNotP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolNotP )")
         doThis(.boolPop, to: inty)
     }
 
@@ -219,21 +251,25 @@ struct BoolBehaviorTests {
         doThis(.boolNotPandQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolNotPandQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotPandQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolNotPandQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotPandQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolNotPandQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotPandQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolNotPandQ )")
         doThis(.boolPop, to: inty)
     }
 
@@ -244,21 +280,25 @@ struct BoolBehaviorTests {
         doThis(.boolNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolNotQ )")
         doThis(.boolPop, to: inty)
     }
 
@@ -269,21 +309,25 @@ struct BoolBehaviorTests {
         doThis(.boolOr, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolOr )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolOr, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolOr )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolOr, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolOr )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolOr, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolOr )")
         doThis(.boolPop, to: inty)
 
     }
@@ -295,21 +339,25 @@ struct BoolBehaviorTests {
         doThis(.boolP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolP )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolP, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolP )")
         doThis(.boolPop, to: inty)
     }
 
@@ -320,21 +368,25 @@ struct BoolBehaviorTests {
         doThis(.boolPandNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolPandNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolPandNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolPandNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolPandNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolPandNotQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolPandNotQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolPandNotQ )")
         doThis(.boolPop, to: inty)
     }
 
@@ -345,21 +397,25 @@ struct BoolBehaviorTests {
         doThis(.boolQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolQ )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolQ, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolQ )")
         doThis(.boolPop, to: inty)
     }
 
@@ -370,21 +426,25 @@ struct BoolBehaviorTests {
         doThis(.boolXnor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolXnor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXnor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolXnor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXnor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolXnor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXnor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolXnor )")
         doThis(.boolPop, to: inty)
     }
 
@@ -395,21 +455,25 @@ struct BoolBehaviorTests {
         doThis(.boolXor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true true .boolXor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( false true .boolXor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == true)
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( true false .boolXor )")
         doThis(.boolPop, to: inty)
 
         doThis(.boolXor, to: inty)
         #expect(topItem(inty, .bool).value as! Bool == false)
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( false false .boolXor )")
         doThis(.boolPop, to: inty)
     }
 

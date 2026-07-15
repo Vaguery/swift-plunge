@@ -23,6 +23,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        #expect(callString(topItem(inty, .double)) == "( )")
 
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 2.2 2.2 3.3 4.4 ]")
@@ -34,14 +35,17 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 2.2 2.2 3.3 4.4 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
 
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 2.2 2.2 3.3 4.4 4.4 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
 
         doThis(.doubleDeepDup, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 2.2 2.2 2.2 3.3 4.4 4.4 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
     @Test func `combinator Dup works`() {
@@ -63,6 +67,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDupItems, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        #expect(callString(topItem(inty, .double)) == "( )")
 
         doThis(.doubleDupItems, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
@@ -73,6 +78,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDupItems, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
     // contingency
@@ -88,10 +94,12 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        #expect(callString(topItem(inty, .double)) == "( )")
 
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
     // contingency
@@ -113,10 +121,12 @@ struct CombinatorBehaviorTests {
         doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( )")
 
         doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( )")
     }
 
     @Test func `combinator Eq works`() {
@@ -127,16 +137,19 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intEq )")
 
         doThis(.intEq, to: inty)
         #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intEq )")
 
         doThis(.intEq, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true false false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intEq )")
     }
 
     @Test func `combinator Flush works`() {
@@ -154,6 +167,7 @@ struct CombinatorBehaviorTests {
         doThis(.intPop, to: inty)
         #expect(stackString(inty, .int) == "[ 22 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
     }
 
     @Test func `combinator Rot works`() {
@@ -164,14 +178,17 @@ struct CombinatorBehaviorTests {
         doThis(.intRot, to: inty)
         #expect(stackString(inty, .int) == "[ 999 11 55 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intRot, to: inty)
         #expect(stackString(inty, .int) == "[ 55 999 11 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intRot, to: inty)
         #expect(stackString(inty, .int) == "[ 11 55 999 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
     }
 
@@ -202,6 +219,7 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
     // contingency
@@ -212,20 +230,24 @@ struct CombinatorBehaviorTests {
         doThis(.intStackDepth, to: inty)
         #expect(stackString(inty, .int) == "[ 2 11 22 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intStackDepth, to: inty)
         #expect(stackString(inty, .int) == "[ 3 2 11 22 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
     }
 
     @Test func `combinator Swap works`() {
         loadInts(inty, ints: [11, 22], contingent: [1])
         #expect(stackString(inty, .int) == "[ 11 22 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intSwap, to: inty)
         #expect(stackString(inty, .int) == "[ 22 11 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         loadStrings(inty, strings: ["", "abcd", "efgh"], contingent: [1])
         #expect(stackString(inty, .string) == "[ \"\" \"abcd\" \"efgh\" ]")
@@ -233,11 +255,13 @@ struct CombinatorBehaviorTests {
         doThis(.stringSwap, to: inty)
         #expect(stackString(inty, .string) == "[ \"abcd\" \"\" \"efgh\" ]")
         #expect(topItem(inty, .string).isContingent == true)
+        #expect(callString(topItem(inty, .string)) == "( )")
 
         doThis(.stringPop, to: inty)
         doThis(.stringSwap, to: inty)
         #expect(stackString(inty, .string) == "[ \"efgh\" \"\" ]")
         #expect(topItem(inty, .string).isContingent == false)
+        #expect(callString(topItem(inty, .string)) == "( )")
     }
 
     // contingency
@@ -262,6 +286,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleYank, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 4.4 3.3 2.2 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
     // contingency
@@ -286,6 +311,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleYankDup, to: inty)
         #expect(stackString(inty, .double) == "[ 2.2 4.4 4.4 2.2 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == true )
+        #expect(callString(topItem(inty, .double)) == "( )")
     }
 
 }

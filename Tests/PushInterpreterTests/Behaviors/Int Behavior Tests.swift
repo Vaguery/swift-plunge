@@ -21,11 +21,13 @@ struct IntBehaviorTests {
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ 20 7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 11 9 .intAdd )")
 
         
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ 27 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 7 20 .intAdd )")
     }
     
     @Test func `intAdd handles overflow`() {
@@ -45,14 +47,17 @@ struct IntBehaviorTests {
         doThis(.intDec, to: inty)
         #expect(stackString(inty, .int) == "[ 8 38 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 9 .intDec )")
 
         doThis(.intPop, to: inty)
         #expect(stackString(inty, .int) == "[ 38 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intDec, to: inty)
         #expect(stackString(inty, .int) == "[ 37 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 38 .intDec )")
     }
 
     @Test func `intDec handles overflow`() {
@@ -71,10 +76,12 @@ struct IntBehaviorTests {
         doThis(.intFromBool, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( false .intFromBool )")
 
         doThis(.intFromBool, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( true .intFromBool )")
     }
 
     @Test func intFromChar() {
@@ -84,15 +91,18 @@ struct IntBehaviorTests {
         doThis(.intFromChar, to: inty)
         #expect(stackString(inty, .int) == "[ 87 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
 
         doThis(.intFromChar, to: inty)
         #expect(stackString(inty, .int) == "[ 87 87 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
 
         // not ASCII therefore no result
         doThis(.intFromChar, to: inty)
         #expect(stackString(inty, .int) == "[ 87 87 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
     }
 
     @Test func intFromDouble() {
@@ -102,18 +112,22 @@ struct IntBehaviorTests {
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ 1 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 1.23 .intFromDouble )")
 
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ 120000 1 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 120000.0 .intFromDouble )")
 
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ -100 120000 1 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( -100.0 .intFromDouble )")
 
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ 3 -100 120000 1 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 3.141592653589793 .intFromDouble )")
 
     }
 
@@ -143,22 +157,27 @@ struct IntBehaviorTests {
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ -172 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( \"-172\" .intFromString )")
 
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 0 -172 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( \"0\" .intFromString )")
 
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
 
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
 
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
     }
 
     @Test func intGT() {
@@ -169,16 +188,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGT )")
 
         doThis(.intGT, to: inty)
         #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGT )")
 
         doThis(.intGT, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGT )")
     }
 
     @Test func intGTE() {
@@ -189,16 +211,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGTE )")
 
         doThis(.intGTE, to: inty)
         #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGTE )")
 
         doThis(.intGTE, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGTE )")
     }
 
     @Test func intInc() {
@@ -208,14 +233,17 @@ struct IntBehaviorTests {
         doThis(.intInc, to: inty)
         #expect(stackString(inty, .int) == "[ 10 38 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 9 .intInc )")
 
         doThis(.intPop, to: inty)
         #expect(stackString(inty, .int) == "[ 38 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( )")
 
         doThis(.intInc, to: inty)
         #expect(stackString(inty, .int) == "[ 39 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 38 .intInc )")
     }
 
     @Test func `intInc handles overflow`() {
@@ -235,16 +263,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLT )")
 
         doThis(.intLT, to: inty)
         #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLT )")
 
         doThis(.intLT, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLT )")
     }
 
     @Test func intLTE() {
@@ -255,16 +286,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLTE )")
 
         doThis(.intLTE, to: inty)
         #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLTE )")
 
         doThis(.intLTE, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLTE )")
     }
 
     @Test func intMax() {
@@ -274,11 +308,13 @@ struct IntBehaviorTests {
         doThis(.intMax, to: inty)
         #expect(stackString(inty, .int) == "[ 11 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 11 9 .intMax )")
 
 
         doThis(.intMax, to: inty)
         #expect(stackString(inty, .int) == "[ 11 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( -7 11 .intMax )")
     }
 
     @Test func intMin() {
@@ -288,11 +324,13 @@ struct IntBehaviorTests {
         doThis(.intMin, to: inty)
         #expect(stackString(inty, .int) == "[ 9 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 11 9 .intMin )")
 
 
         doThis(.intMin, to: inty)
         #expect(stackString(inty, .int) == "[ -7 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( -7 9 .intMin )")
     }
 
     @Test func intMod() {
@@ -302,10 +340,12 @@ struct IntBehaviorTests {
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 37 9 .intMod )")
 
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ 0 -7 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( 0 1 .intMod )")
 
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
@@ -336,10 +376,12 @@ struct IntBehaviorTests {
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ 99 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 11 9 .intMultiply )")
 
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ -693 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( -7 99 .intMultiply )")
     }
 
     @Test func `intMultiply handles overflow`() {
@@ -358,11 +400,13 @@ struct IntBehaviorTests {
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ 4 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 37 9 .intQuot )")
 
 
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ -1 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( -7 4 .intQuot )")
 
         loadInts(inty,ints: [0])
         #expect(stackString(inty, .int) == "[ 0 -1 ]")
@@ -370,6 +414,7 @@ struct IntBehaviorTests {
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(topItem(inty, .error).isContingent == true)
+        #expect(callString(topItem(inty, .error)) == "( -1 0 .intQuot )")
     }
 
     @Test func `intQuot doesn't divide by zero`() {
@@ -397,10 +442,12 @@ struct IntBehaviorTests {
         doThis(.intSubtract, to: inty)
         #expect(stackString(inty, .int) == "[ 2 -7 ]")
         #expect(topItem(inty, .int).isContingent == false)
+        #expect(callString(topItem(inty, .int)) == "( 11 9 .intSubtract )")
 
         doThis(.intSubtract, to: inty)
         #expect(stackString(inty, .int) == "[ -9 ]")
         #expect(topItem(inty, .int).isContingent == true)
+        #expect(callString(topItem(inty, .int)) == "( -7 2 .intSubtract )")
     }
     
     @Test func `intSubtract handles overflow`() {

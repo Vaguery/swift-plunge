@@ -21,11 +21,13 @@ struct CharBehaviorTests {
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
+        #expect(callString(topItem(inty, .char)) == "( 0.0 .charFromDouble )")
         
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == true)
-        
+        #expect(callString(topItem(inty, .char)) == "( 21.0 .charFromDouble )")
+
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
@@ -33,6 +35,7 @@ struct CharBehaviorTests {
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
+        #expect(callString(topItem(inty, .char)) == "( 91.5 .charFromDouble )")
     }
 
     @Test func `charFromDouble handles non-finite and out-of-range doubles`() {
@@ -56,6 +59,7 @@ struct CharBehaviorTests {
         doThis(.charFromInt, to: inty)
         #expect(stackString(inty, .char) == "[ ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
+        #expect(callString(topItem(inty, .char)) == "( 0 .charFromInt )")
         
         doThis(.charFromInt, to: inty)
         #expect(stackString(inty, .char) == "[ '5' ' ' ]")
@@ -68,6 +72,7 @@ struct CharBehaviorTests {
         doThis(.charFromInt, to: inty)
         #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
         #expect(topItem(inty, .char).isContingent == false)
+        #expect(callString(topItem(inty, .char)) == "( 91 .charFromInt )")
     }
 
     @Test func charGT() {
@@ -77,14 +82,17 @@ struct CharBehaviorTests {
         doThis(.charGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'd' 'g' .charGT )")
 
         doThis(.charGT, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'x' 'b' .charGT )")
 
         doThis(.charGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '&' '&' .charGT )")
     }
 
     @Test func charGTE() {
@@ -94,14 +102,17 @@ struct CharBehaviorTests {
         doThis(.charGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'd' 'g' .charGTE )")
 
         doThis(.charGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'x' 'b' .charGTE )")
 
         doThis(.charGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '&' '&' .charGTE )")
     }
 
     @Test func charIsDigit() {
@@ -111,19 +122,23 @@ struct CharBehaviorTests {
         doThis(.charIsDigit, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '1' .charIsDigit )")
 
         doThis(.charIsDigit, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'q' .charIsDigit )")
 
         doThis(.charIsDigit, to: inty)
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '2️⃣' .charIsDigit )")
 
         // note that digits in other languages count!
         doThis(.charIsDigit, to: inty)
         #expect(stackString(inty, .bool) == "[ true false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '७' .charIsDigit )")
     }
 
     @Test func charIsLetter() {
@@ -133,19 +148,23 @@ struct CharBehaviorTests {
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '1' .charIsLetter )")
 
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'q' .charIsLetter )")
 
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '-' .charIsLetter )")
 
         // note that letters in other languages count!
         doThis(.charIsLetter, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'ϴ' .charIsLetter )")
     }
 
     @Test func charIsWhitespace() {
@@ -155,18 +174,22 @@ struct CharBehaviorTests {
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'g' .charIsWhitespace )")
 
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( ' ' .charIsWhitespace )")
 
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '\n' .charIsWhitespace )")
 
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ true true true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '\t' .charIsWhitespace )")
     }
 
     @Test func charLT() {
@@ -176,14 +199,17 @@ struct CharBehaviorTests {
         doThis(.charLT, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'd' 'g' .charLT )")
 
         doThis(.charLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'x' 'b' .charLT )")
 
         doThis(.charLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '&' '&' .charLT )")
     }
 
     @Test func charLTE() {
@@ -193,14 +219,17 @@ struct CharBehaviorTests {
         doThis(.charLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == true)
+        #expect(callString(topItem(inty, .bool)) == "( 'd' 'g' .charLTE )")
 
         doThis(.charLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( 'x' 'b' .charLTE )")
 
         doThis(.charLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
+        #expect(callString(topItem(inty, .bool)) == "( '&' '&' .charLTE )")
     }
 
 }

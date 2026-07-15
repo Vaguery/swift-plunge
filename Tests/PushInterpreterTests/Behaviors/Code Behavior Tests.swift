@@ -21,14 +21,17 @@ struct CodeBehaviorTests {
         doThis(.codeAppend, to: inty)
         #expect(stackString(inty, .code) == "[ ( false 2 1 ) ( \"abc\" ( false 1.1 ) ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( ( false 2 ) ( 1 ) .codeAppend )")
 
         doThis(.codeAppend, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeAppend )")
 
         doThis(.codeAppend, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeAppend )")
     }
 
     @Test func `codeItemIsEmpty works with empty code`() {
@@ -95,14 +98,17 @@ struct CodeBehaviorTests {
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( .execQuote ( ) )")
 
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( true ) ( ( ) ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( .execQuote true )")
 
         doThis(.execQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 44 ) ( true ) ( ( ) ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( .execQuote 44 )")
     }
 
 
@@ -114,10 +120,12 @@ struct CodeBehaviorTests {
         doThis(.intQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 55 ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( 55 .intQuote )")
 
         doThis(.intQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 44 ) ( 55 ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( 44 .intQuote )")
     }
 
     @Test func doubleQuote() {
@@ -128,10 +136,12 @@ struct CodeBehaviorTests {
         doThis(.doubleQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1.1 ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( 1.1 .doubleQuote )")
 
         doThis(.doubleQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 2.2 ) ( 1.1 ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( 2.2 .doubleQuote )")
     }
 
     @Test func boolQuote() {
@@ -142,10 +152,12 @@ struct CodeBehaviorTests {
         doThis(.boolQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( true ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( true .boolQuote )")
 
         doThis(.boolQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( false ) ( true ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( false .boolQuote )")
     }
 
     @Test func charQuote() {
@@ -156,10 +168,12 @@ struct CodeBehaviorTests {
         doThis(.charQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 'a' ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( 'a' .charQuote )")
 
         doThis(.charQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( 'b' ) ( 'a' ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( 'b' .charQuote )")
     }
 
     @Test func stringQuote() {
@@ -170,10 +184,12 @@ struct CodeBehaviorTests {
         doThis(.stringQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"aaa\" ) ]")
         #expect(topItem(inty, .code).isContingent == true)
+        #expect(callString(topItem(inty, .code)) == "( \"aaa\" .stringQuote )")
 
         doThis(.stringQuote, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"bcd\" ) ( \"aaa\" ) ]")
         #expect(topItem(inty, .code).isContingent == false)
+        #expect(callString(topItem(inty, .code)) == "( \"bcd\" .stringQuote )")
     }
 
 }
