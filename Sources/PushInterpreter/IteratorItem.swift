@@ -36,17 +36,22 @@ import Foundation
 /// `Int.max`, adding 1 a thousand times errors at a different step than adding
 /// 1000 does. Accepted deliberately.
 ///
-/// **To revisit** (see "Notes on Push/Provenance and the crux.md"):
-/// - Counting down and striding by an increment need no new field — `offset` is
-///   a signed running total and `steppedCall(from:by:)` takes any step. A `step`
-///   field would record *structure* ("333 passes of +3" vs "999 passes of +1"),
-///   which the net offset cannot distinguish and which the explanatory goal may
-///   want. Non-additive stepping (a doubling loop) genuinely cannot be expressed
-///   by an offset and would need an operation field.
-/// - `crux()` never emits an `IteratorItem` — it expands to ordinary items — so
-///   "a crux is runnable code" holds by construction. What should happen if one
-///   nonetheless reaches a running program is unsettled; today it is refused and
-///   marked. That question gets sharper once `CodeItem`s reach `.code` intact.
+/// **This is the provenance-only core of a type that is planned to become
+/// first-class** — its own stack, its own combinators — as it is in the earlier
+/// interpreter this comes from, where making it first-class made the language
+/// markedly more evolvable. The `exec` instructions that produce iterators will
+/// change so the first-class item is popped and pushed as part of the
+/// transaction. Until then `PushStack.defaultStack(for:)` returns nil for it,
+/// meaning "does not come to rest anywhere yet"; callers should skip what has no
+/// resting stack rather than build around the gap. Wants to follow the CodeItem
+/// `.exec`→`.code` change. See "Notes on Push/Provenance and the crux.md".
+///
+/// **Also to revisit:** counting down and striding by an increment need no new
+/// field — `offset` is a signed running total and `steppedCall(from:by:)` takes
+/// any step. A `step` field would record *structure* ("333 passes of +3" vs
+/// "999 passes of +1"), which the net offset cannot distinguish and which the
+/// explanatory goal may want. Non-additive stepping (a doubling loop) genuinely
+/// cannot be expressed by an offset and would need an operation field.
 public nonisolated struct IteratorItem: Item, Pretty {
     /// The offset from `base`; negative for a descending loop.
     public var value: Int
@@ -91,11 +96,13 @@ public nonisolated struct IteratorItem: Item, Pretty {
 
     // Hand-written rather than synthesized: `base` is an existential, so
     // `IteratorItem` cannot be `Equatable` and pick up the shared default.
+    //
+    // Value equality, like every other Item (see "Equality is about values" in
+    // Items.swift) — and this node's value is the pair, since "y0 + 3" and
+    // "y1 + 3" describe different numbers.
     public func isEqual(to other: any Item) -> Bool {
         guard let other = other as? IteratorItem else { return false }
-        return value == other.value
-            && isContingent == other.isContingent
-            && base.isEqual(to: other.base)
+        return value == other.value && base.isEqual(to: other.base)
     }
 
     public func pretty() -> String {

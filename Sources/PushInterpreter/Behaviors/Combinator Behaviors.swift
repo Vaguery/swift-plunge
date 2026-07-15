@@ -213,7 +213,12 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             empty,
-                            call: [InstructionItem(name)],
+                            // Provenance law 4b (Items.swift): this reads
+                            // transient execution state, not arguments, so it
+                            // records nothing and is its own literal crux.
+                            // Naming the instruction would reconstruct to
+                            // whatever some *other* stack happened to hold.
+                            call: [],
                             isContingent: true
                         )
                     )
@@ -414,7 +419,12 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             c,
-                            call: [InstructionItem(name)],
+                            // Provenance law 4b (Items.swift): a reading of
+                            // transient execution state records nothing — the
+                            // literal count is its own crux, where the
+                            // instruction name would reconstruct to whatever
+                            // some other stack happened to hold.
+                            call: [],
                             isContingent: true
                         )
                     )

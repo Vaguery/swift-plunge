@@ -36,6 +36,20 @@ public func probeItemOnStack(_ interpreter: Interpreter,
     return interpreter.stacks[stack]![index]
 }
 
+/// The literal `call` a Behavior recorded on a result, rendered as readable Push
+/// source: `( 'b' 'a' .charGTE )`. An empty record reads `( )`.
+///
+/// One level only, and deliberately so — this is the record the Behavior wrote,
+/// not the recursive reconstruction. Use it to pin what a Behavior *says*;
+/// `crux()` round-tripping (see the Crux Round-Trip acceptance tests) is what
+/// checks that what it says is *true*. The two catch different things: a unit
+/// test written by reading the code will happily transcribe a wrong instruction
+/// name, which only re-running the reconstruction can expose.
+@MainActor
+public func callString(_ item: any Item) -> String {
+    CodeItem(item.call).pretty()
+}
+
 @MainActor
     public func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
         Interpreter.language[instruction]!.act(on: interpreter)

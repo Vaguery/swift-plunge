@@ -1,0 +1,392 @@
+//
+//  Crux RoundTrip Tests.swift
+//  PushInterpreterTests
+//
+//  Created by William Tozier on 7/15/26.
+//
+//  The crux's one obligation, checked by actually doing it:
+//
+//      running an item's crux on a fresh interpreter reproduces that item's
+//      value, on that item's stack.
+//
+//  The per-Behavior unit tests assert the literal `call` each Behavior records.
+//  That pins against regression, but it cannot tell you the record is *true* —
+//  an expectation written by reading the code transcribes whatever the code says,
+//  bug and all. That is not hypothetical: `charGTE` recorded `.charGT`,
+//  `stringReplaceChar` recorded a two-argument instruction for a three-argument
+//  behavior, and `stringReplaceFirst` recorded the replace-all instruction. Only
+//  re-running the reconstruction catches that class.
+//
+//  So this file re-runs it. Slow, and deliberately so — it sweeps the whole
+//  language, which means new instructions are covered the day they are added.
+//
+
+import DequeModule
+import Foundation
+import Testing
+@testable import PushInterpreter
+
+
+// MARK: - The shared check
+
+/// Whether an item's claim is one the current `CodeItem` model cannot honour, so
+/// checking it would only re-find a gap that is already understood and pinned by
+/// `CruxRoundTripTests.knownGapsPendingCodeItemChange`.
+///
+/// Two shapes, both fixed when the Interpreter starts pushing a `CodeItem` on
+/// `.exec` to `.code` intact:
+///
+/// - **The crux leans on `execEq`**, whose `call` is postfix (inherited from the
+///   shared `eqCombinator`) where `.exec` arguments need prefix. Any crux quoting
+///   it is contaminated regardless of what else it does.
+/// - **The item is a code block.** A block can only reach `.code` by being quoted;
+///   a bare one in a program unwraps onto `.exec` instead. So a block whose crux
+///   does not go through a `*Quote` cannot land where it belongs — e.g. an
+///   `.input` bound to a block has crux `( .input3 )`, which scatters.
+@MainActor
+func blockedByCodeItemModel(_ item: any Item) -> Bool {
+    let crux = item.crux()
+    let names = crux.compactMap { ($0 as? InstructionItem)?.value }
+    if names.contains(where: CruxRoundTripTests.knownGapsPendingCodeItemChange.contains) {
+        return true
+    }
+    if item is CodeItem, !names.contains(where: { $0.rawValue.hasSuffix("Quote") }) {
+        return true
+    }
+    return false
+}
+
+
+/// One item's provenance claim, checked by doing what it claims.
+///
+/// Returns nil when the claim holds or when there is nothing to check:
+/// an empty `call` is a literal, and a literal reproduces itself trivially;
+/// an item with no resting stack is an instruction token or (for now) an
+/// `IteratorItem`, neither of which comes to rest anywhere to be compared.
+@MainActor
+func brokenClaim(
+    about item: any Item,
+    inputs: [PushInstruction: any Item],
+    constants: [PushInstruction: any Item],
+    settings: InterpreterSettings
+) -> String? {
+    guard !item.call.isEmpty else { return nil }
+    guard let resting = PushStack.defaultStack(for: item) else { return nil }
+
+    let crux = item.crux()
+    let redo = Interpreter()
+    redo.config = settings
+    redo.load(inputs: inputs, constants: constants, program: crux)
+    redo.run(stepLimit: settings.stepLimit)
+
+    guard let reproduced = redo.stacks[resting]!.first else {
+        return "crux produced nothing on .\(resting)"
+    }
+    guard reproduced.pretty() == item.pretty() else {
+        return "crux produced \(reproduced.pretty()), wanted \(item.pretty())"
+    }
+    // Idempotence: re-running a reconstruction must reconstruct the same way,
+    // or the crux is not a fixed point and "the crux" is not well defined.
+    let again = CodeItem(reproduced.crux()).pretty()
+    guard again == CodeItem(crux).pretty() else {
+        return "crux is not a fixed point: re-running it yields \(again)"
+    }
+    return nil
+}
+
+
+@Suite @MainActor
+struct CruxRoundTripTests {
+
+
+    /// Deterministic, plausible arguments for a stack. Small non-negative ints
+    /// because so many behaviors read one as an index or a count; strings with a
+    /// space in them so `stringSplit` has something to do.
+    func synthetic(for stack: PushStack, _ n: Int) -> (any Item)? {
+        switch stack {
+        case .bool:      BoolItem(n % 2 == 0)
+        case .int:       IntItem(n + 1)
+        case .double:    DoubleItem(Double(n) + 1.5)
+        case .char:      CharItem(Character(UnicodeScalar(97 + UInt8(n % 26))))
+        case .string:    StringItem(["ab cd", "ef", "ghi jk"][n % 3])
+        case .code:      CodeItem([IntItem(n + 1), IntItem(n + 2)])
+        case .exec:      IntItem(n + 100)
+        case .vecBool:   VecBoolItem([true, false, true])
+        case .vecInt:    VecIntItem([n + 1, n + 2, n + 3])
+        case .vecDouble: VecDoubleItem([1.5, 2.5, 3.5])
+        case .vecString: VecStringItem(["pq", "rs", "tu"])
+        case .error:     nil   // never seeded; never checked
+        }
+    }
+
+    /// Bindings every `.inputN` / typed constant resolves to, so behaviors that
+    /// read them produce a value rather than an ErrorItem — and so a crux naming
+    /// `.input3` can be re-run against the same binding.
+    var bindings: (inputs: [PushInstruction: any Item], constants: [PushInstruction: any Item]) {
+        var inputs: [PushInstruction: any Item] = [:]
+        for i in 0..<10 {
+            inputs[PushInstruction(rawValue: "input\(i)")!] = IntItem(i * 11)
+        }
+        var constants: [PushInstruction: any Item] = [:]
+        for stack in [PushStack.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool] {
+            for i in 0..<10 {
+                if let name = PushInstruction(rawValue: "\(stack)\(i)"),
+                   let value = synthetic(for: stack, i) {
+                    constants[name] = value
+                }
+            }
+        }
+        return (inputs, constants)
+    }
+
+    /// A fresh interpreter with every stack seeded several deep. Generous on
+    /// purpose: combinators peek below their arguments, and a behavior that
+    /// cannot gather its arguments produces only an ErrorItem, which tests
+    /// nothing.
+    func seeded(depth: Int = 4) -> Interpreter {
+        let inty = Interpreter()
+        let (inputs, constants) = bindings
+        var initial: [PushStack: [any Item]] = [:]
+        for stack in PushStack.allStacks where stack != .error {
+            initial[stack] = (0..<depth).compactMap { synthetic(for: stack, $0) }
+        }
+        inty.load(inputs: inputs, constants: constants, stacks: initial)
+        return inty
+    }
+
+    /// Runs `crux` on a clean interpreter (same bindings) and returns whatever
+    /// comes to rest on `stack`.
+    func reproduce(_ crux: [any Item], on stack: PushStack) -> (any Item)? {
+        let redo = Interpreter()
+        let (inputs, constants) = bindings
+        redo.config.stepLimit = 10_000
+        redo.load(inputs: inputs, constants: constants, program: crux)
+        redo.run(stepLimit: 10_000)
+        return redo.stacks[stack]!.first
+    }
+
+    /// Every item a behavior left behind that makes a provenance claim worth
+    /// checking: it records a `call`, and it has a stack to come to rest on.
+    ///
+    /// Skipping `defaultStack == nil` skips instruction tokens (which execute
+    /// rather than land) and `IteratorItem` (provenance-only for now — it is
+    /// planned to become a first-class type with its own stack, and this sweep
+    /// should pick it up automatically when it does).
+    func claimsWorthChecking(in inty: Interpreter) -> [(item: any Item, stack: PushStack)] {
+        var found: [(any Item, PushStack)] = []
+        for stack in PushStack.allStacks where stack != .error {
+            for item in inty.stacks[stack]! {
+                guard !item.call.isEmpty,
+                      let resting = PushStack.defaultStack(for: item)
+                else { continue }
+                found.append((item, resting))
+            }
+        }
+        return found
+    }
+
+
+    /// Behaviors whose crux provably cannot round-trip **while the Interpreter
+    /// unwraps a `CodeItem` on `.exec` instead of pushing it to `.code` intact**.
+    /// Pinned as an exact set rather than skipped, so the gap can neither grow
+    /// silently nor stay closed-but-listed: this test fails either way.
+    ///
+    /// Two causes, both fixed by that planned change:
+    ///
+    /// - **A bare code block is not its own crux.** `crux()` returns `[self]` for
+    ///   an empty `call`, and for every scalar that literal reproduces the value.
+    ///   Not for a `CodeItem`: a block in a program unwraps onto `.exec` and its
+    ///   contents scatter to their own stacks, so it never reaches `.code`, and
+    ///   `( 2 3 ) ( 1 2 ) .codeAppend` finds `.code` empty. (Real programs mostly
+    ///   dodge this because their code items come from `.intQuote`, which does
+    ///   land on `.code` — the existing `CruxTests` pass for exactly that reason.
+    ///   Seeding bare blocks is what exposes it.) Worth noting this is the one
+    ///   hole in the elision backstop too: eliding a `CodeItem`'s call currently
+    ///   makes it unreproducible.
+    ///
+    /// - **`.exec` arguments are consumed from ahead, so their crux is prefix.**
+    ///   `execEq` inherits the shared `eqCombinator`'s postfix
+    ///   `[y, x, .execEq]`, which is right for the other ten stacks and wrong
+    ///   here: `101 100 .execEq` lets the literals fall to `.int` before `execEq`
+    ///   runs. `execQuote` gets this right today with a deliberate prefix
+    ///   `[.execQuote, x]`. A prefix `call` alone would not fix `execEq` anyway —
+    ///   a multi-item argument crux would need bracketing, and the bracket would
+    ///   itself unwrap. After the change, exec instructions take their arguments
+    ///   from `.code`, and postfix becomes correct.
+    static let knownGapsPendingCodeItemChange: Set<PushInstruction> = [
+        .codeAppend, .codeEq, .codeItemIsEmpty, .codeWrapRoot,   // bare block ≠ its own crux
+        .execEq,                                                 // exec args are prefix
+    ]
+
+
+    /// The sweep. Every registered behavior, driven with synthetic arguments;
+    /// every resulting provenance claim re-run and checked.
+    ///
+    /// `pretty()` is the comparison rather than `==` deliberately: `==` compares
+    /// `call` too, and a reproduced item legitimately carries different
+    /// provenance from the original. The claim is about the *value*.
+    @Test func `every behavior's recorded provenance reproduces its value`() {
+        var checked = 0
+        var behaviorsWithClaims = 0
+        var broken: Set<PushInstruction> = []
+        var detail: [String] = []
+
+        for name in Interpreter.language.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            let inty = seeded()
+            Interpreter.language[name]!.act(on: inty)
+
+            let claims = claimsWorthChecking(in: inty)
+            if !claims.isEmpty { behaviorsWithClaims += 1 }
+
+            for (item, resting) in claims {
+                checked += 1
+                let crux = item.crux()
+                let reproduced = reproduce(crux, on: resting)
+                if reproduced?.pretty() != item.pretty() {
+                    broken.insert(name)
+                    detail.append(
+                        """
+                        .\(name) → \(resting) item \(item.pretty())
+                            crux: \(CodeItem(crux).pretty())
+                            reproduced: \(reproduced?.pretty() ?? "nothing")
+                        """
+                    )
+                }
+            }
+        }
+
+        print("crux round-trip: \(checked) claims across \(behaviorsWithClaims) behaviors "
+              + "(of \(Interpreter.language.count) registered); \(broken.count) behaviors failed")
+
+        let unexpected = broken.subtracting(Self.knownGapsPendingCodeItemChange)
+        let fixed = Self.knownGapsPendingCodeItemChange.subtracting(broken)
+
+        for line in detail where unexpected.contains(where: { line.hasPrefix(".\($0) ") }) {
+            print(line)
+        }
+
+        let unexpectedNames = unexpected.map(\.rawValue).sorted().joined(separator: ", ")
+        let fixedNames = fixed.map(\.rawValue).sorted().joined(separator: ", ")
+        #expect(unexpected.isEmpty,
+                "these record provenance that does not reproduce their value: \(unexpectedNames)")
+        #expect(fixed.isEmpty,
+                "these now round-trip — has the CodeItem change landed? remove them from knownGapsPendingCodeItemChange: \(fixedNames)")
+        // Guards the sweep itself: if seeding silently stopped satisfying
+        // behaviors, the checks above would pass while testing nothing.
+        #expect(checked > 300, "sweep only checked \(checked) claims — is the seeding still working?")
+    }
+}
+
+
+/// The same obligation, but against whole random programs rather than one
+/// behavior at a time.
+///
+/// The per-behavior sweep drives each instruction once, in isolation, from clean
+/// synthetic arguments. Real programs are where provenance actually gets hard:
+/// values pass through loops, combinators shuffle them between positions, code
+/// blocks are rearranged and duplicated, and an item's history ends up woven from
+/// dozens of instructions that ran nowhere near each other. This runs programs to
+/// completion and then asks every survivor on every stack to prove its history.
+///
+/// Architecturally a sibling of `Stress_Tests.random programs run`: same seeded
+/// RNG (logged, so any run reproduces exactly), same replayable-JSON-on-failure
+/// approach. What differs is what it watches for. The fuzzer watches for
+/// overflows, errors, and blow-ups; this watches for provenance that lies.
+@Suite @MainActor
+struct CruxFuzzTests {
+
+    // nonisolated so the `.disabled(if:)` trait can read it from the @Test
+    // macro's Sendable context under Swift 6 language mode
+    //
+    // ENABLED, unlike its `Stress_Tests` siblings, which are off by default
+    // because a meaningful run takes a minute or more. This one gets ~21k
+    // provenance claims out of 60 programs in ~2s — cheap for the only check that
+    // can catch provenance which lies. Set true to skip it.
+    nonisolated static let disabledTests = false
+
+    /// Replaces the old `random programs produce legible cruxes`, which printed
+    /// cruxes for a human to eyeball and asserted nothing.
+    @Test(.disabled(if: CruxFuzzTests.disabledTests))
+    func `every item a random program leaves has a runnable crux`() {
+        let seed: UInt64 = 20_260_715   // fixed & logged so any run reproduces exactly
+        fuzzRNG = SeededRNG(seed: seed)
+        let cases = 60            // random programs generated
+        let programItems = 150    // Plushy tokens per random genome
+
+        var settings = InterpreterSettings()
+        settings.stepLimit = 3_000
+
+        let dir = FileManager.default.temporaryDirectory.appending(path: "push-crux-fuzz")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let encoder = JSONEncoder()
+
+        func log(_ message: String) { print(message); fflush(stdout) }
+
+        var itemsChecked = 0
+        var skipped = 0
+        var programsWithClaims = 0
+        var findings: [String] = []
+
+        for caseIndex in 0..<cases {
+            let caseId = "crux-\(caseIndex)"
+            let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
+
+            let inty = Interpreter()
+            inty.config = settings
+            inty.load(program: program)
+            RandomCode.setRandomInputs(in: inty)
+            RandomCode.setRandomConstants(in: inty)
+            let inputs = inty.inputs
+            let constants = inty.constants
+            inty.run(stepLimit: settings.stepLimit)
+
+            var claimsHere = 0
+            var brokenHere: [String] = []
+            for stack in PushStack.allStacks where stack != .error {
+                for item in inty.stacks[stack]! {
+                    guard !item.call.isEmpty,
+                          PushStack.defaultStack(for: item) != nil
+                    else { continue }
+                    guard !blockedByCodeItemModel(item) else { skipped += 1; continue }
+                    claimsHere += 1
+                    itemsChecked += 1
+                    if let why = brokenClaim(
+                        about: item, inputs: inputs, constants: constants, settings: settings
+                    ) {
+                        brokenHere.append("  .\(stack) \(item.pretty()): \(why)\n     crux: \(CodeItem(item.crux()).pretty())")
+                    }
+                }
+            }
+            if claimsHere > 0 { programsWithClaims += 1 }
+
+            if !brokenHere.isEmpty {
+                // Written to disk before reporting, so a case survives even if a
+                // later one takes the process down.
+                let individual = Individual(id: caseId, program: program, constants: constants)
+                let request = EvaluationRequest(
+                    individuals: [individual],
+                    trainingCases: [TrainingCase(id: caseId, inputs: inputs)],
+                    pairings: [Pairing(individual: caseId, trainingCase: caseId)],
+                    configuration: RunnerConfiguration(settings: settings)
+                )
+                let url = dir.appending(path: "\(caseId).json")
+                try? encoder.encode(request).write(to: url)
+                findings.append(
+                    "\(caseId): \(brokenHere.count) of \(claimsHere) claims broken → \(url.path)\n"
+                    + brokenHere.prefix(5).joined(separator: "\n")
+                )
+            }
+        }
+
+        log("crux fuzz (seed \(seed)): \(itemsChecked) claims across "
+            + "\(programsWithClaims)/\(cases) programs; \(findings.count) programs with broken claims "
+            + "(\(skipped) skipped, blocked on the CodeItem model)")
+        for finding in findings.prefix(10) { log(finding) }
+        if findings.count > 10 { log("… and \(findings.count - 10) more") }
+
+        #expect(findings.isEmpty, "\(findings.count) random programs left items whose crux does not reproduce them")
+        // Guards the test itself: a generator change that stopped producing
+        // provenance would make the check above vacuous.
+        #expect(itemsChecked > 100, "only \(itemsChecked) claims checked — is the generator still producing provenance?")
+    }
+}

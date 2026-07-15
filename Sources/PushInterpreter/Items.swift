@@ -43,6 +43,15 @@ public nonisolated protocol Pretty {
 //
 //  4. A freshly minted instruction token records nothing. Its crux is itself.
 //
+//  4b. A result read from transient EXECUTION state rather than from arguments
+//     records nothing either — its crux is the literal value it observed.
+//     `.boolStackDepth` reported 4 because `.bool` happened to be 4 deep;
+//     re-running `.boolStackDepth` says nothing about that, but the literal `4`
+//     reproduces it exactly. (Contrast `.input3` and `.int7`, which read the
+//     *environment*: those bindings outlive the run and are re-supplied when a
+//     crux is re-run, so naming them reproduces the value and they do record.)
+//     The test is whether re-running the name would find the same world.
+//
 //  5. When a Behavior puts SEVERAL results on ONE stack, each result records the
 //     discard that surfaces it, right there in its own `call`:
 //
@@ -125,7 +134,37 @@ nonisolated extension Item {
     }
 }
 
+// MARK: - Equality is about values
+//
+// An Item's `==` compares its `value` and nothing else. Not `call`, not
+// `isContingent`: those describe how the item came to be and where it sits, not
+// what it is. `5` computed as `2 3 .intAdd` equals `5` computed as `1 4 .intAdd`,
+// and equals a literal `5`.
+//
+// This matters in two places:
+//
+//  - `.xEq` (Combinator Behaviors) compares with `isEqual(to:)`, so the language's
+//    equality is this equality. Comparing provenance there made `5 == 5` false
+//    whenever the fives were derived differently, which also made an `.xEq`
+//    result impossible to reconstruct — a re-run necessarily builds its operands
+//    by a different route than the original did.
+//
+//  - `Comparable`. `<` compares `value` alone, so an `==` that compared more than
+//    `value` contradicted it: two items both holding 5 were simultaneously
+//    not-less, not-equal and not-greater, which is not a strict total order.
+//    Value-only equality is what makes `==` and `<` agree.
+//
+// **Language quirk to explore later:** Push has no `===`. Items are immutable, so
+// "the identical object" cannot arise in the literal sense — but a *deep*
+// identity (same value AND same history) does arise, most obviously when `.xDup`
+// copies an item's whole call tree onto its duplicate. There is currently no way
+// for a program to ask that question, and no instruction that answers it.
+// Whether the language wants one is open.
+
 nonisolated extension Item where Self: Equatable {
+    /// Value equality, reached across the `any Item` existential. This is the
+    /// language's equality — `.xEq` is built on it — so it deliberately ignores
+    /// provenance and contingency. See the note above.
     public func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
@@ -196,9 +235,7 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
     }
     
     public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -226,9 +263,7 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     }
     
     public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public static func < (lhs: CharItem, rhs: CharItem) -> Bool {
@@ -275,9 +310,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     }
 
     public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -313,9 +346,7 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     }
     
     public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public static func < (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
@@ -348,9 +379,7 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     }
     
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public static func < (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
@@ -385,9 +414,7 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     }
     
     public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public static func < (lhs: IntItem, rhs: IntItem) -> Bool {
@@ -423,9 +450,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     }
     
     public static func == (lhs: StringItem, rhs: StringItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public static func < (lhs: StringItem, rhs: StringItem) -> Bool {
@@ -460,9 +485,7 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     }
     
     public static func == (lhs: VecBoolItem, rhs: VecBoolItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -494,9 +517,7 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     }
     
     public static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -527,9 +548,7 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     }
     
     public static func == (lhs: VecIntItem, rhs: VecIntItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -564,9 +583,7 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     }
     
     public static func == (lhs: VecStringItem, rhs: VecStringItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {
@@ -596,9 +613,7 @@ public nonisolated struct ErrorItem: Item, Equatable {
     }
     
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
-        (lhs.value == rhs.value) &&
-        (lhs.call == rhs.call) &&
-        (lhs.isContingent == rhs.isContingent)
+        lhs.value == rhs.value
     }
     
     public func pretty() -> String {

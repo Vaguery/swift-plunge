@@ -185,34 +185,26 @@ That needs an operation field (add vs. multiply, or a general step instruction),
 `crux()` emits that operation instead of a hard-coded `.intAdd`. Worth designing only when a
 multiplicative iterator actually exists in the language.
 
-### To revisit: an IteratorItem inside a running program
+### Planned: lifting IteratorItem to a first-class type
 
-The stated goal is that a crux is *runnable code*, which raises the obvious question about a node whose
-whole design is to be provenance-only.
+**This is a decision, not an open question.** `IteratorItem` is intended to become a proper Push type —
+its own stack, its own combinators, the full treatment. It arrives here from an earlier interpreter
+project, where it was introduced for exactly the reason it is introduced here, and where making it
+first-class **made the language markedly more evolvable**. The `exec` instructions that produce
+iterators will change so the first-class item is popped and pushed as part of the transaction.
 
-**Today the invariant holds by construction, not by luck:** `crux()` never emits an `IteratorItem` — it
-expands to `base.crux() + [offset, .intAdd]`, all ordinary items — so no crux can contain one, and no
+What exists today is the provenance-only core of that type, and it is deliberately a placeholder:
+`PushStack.defaultStack(for:)` returns **nil** for it, meaning "this does not come to rest anywhere
+yet." That nil is the right answer for now, and things that consume it (the crux round-trip sweep, for
+instance) should simply skip what has no resting stack rather than build around the gap.
+
+Note the crux obligation is *already* satisfied and will stay satisfied either way: `crux()` never emits
+an `IteratorItem` — it expands to `base.crux() + [offset, .intAdd]`, all ordinary items — so no
 reconstruction can encounter one. Nothing in the language constructs one either; only `steppedCall`
-does, and only into a `call`.
+does, and only into a `call`. Today a stray one on `.exec` would be popped, find no resting stack, and
+be refused with an `INVARIANT:` marker. That is placeholder behaviour, not the intended semantics.
 
-But `IteratorItem` *is* an `Item`, so nothing at the type level stops one being placed in a program by
-hand or by a future instruction. If that happened: `defaultStack(for:)` returns nil, so `pushDefault`
-routes it to `.error`, where `requireAccepts` rejects it and records an `INVARIANT:` marker. It is
-caught and named rather than silently corrupting a stack — which is the current, deliberate answer:
-**it is not runnable, and it says so loudly.** `.exec` accepts any item, so it is not self-policing
-there; it would be caught one step later when popped.
-
-The open question is whether that should change. Two coherent positions:
-
-- **Stay provenance-only.** An `IteratorItem` in a program is a bug, and the `INVARIANT:` marker is the
-  right response. Simplest, and matches the current tests.
-- **Give it runtime semantics** — evaluate to `base + offset` on the appropriate stack, making it a
-  legitimate (if unusual) literal. This would make the type fully first-class and would matter if
-  `IteratorItem` ever wanted to appear in a crux directly rather than expanding.
-
-This gets sharper after the CodeItem change: once a `CodeItem` reaches `.code` intact rather than
-unwrapping, an `IteratorItem` could ride inside a code block and travel further before being noticed.
-Worth settling then.
+Sequencing: this wants to come after the CodeItem change, which is itself the next task.
 
 ## The backstop
 
@@ -229,6 +221,55 @@ That asymmetry is what makes an aggressive budget safe.
 
 It is deliberately *not* an error: unlike `overflow(of:)`, which refuses the push and emits an
 `ErrorItem`, elision pushes the item normally and merely forgets where it came from.
+
+## What checking the law actually found
+
+Two acceptance tests check the obligation by *doing* it (`Crux RoundTrip Tests.swift`): one sweeps every
+registered Behavior with synthetic arguments; one runs random programs to completion and asks every
+survivor on every stack to prove its history. Between them they check ~21k provenance claims. This is
+the only kind of test that can catch a `call` that *lies* — a unit test written by reading the code
+transcribes whatever the code says, bug and all, which is exactly how `charGTE` came to record `.charGT`.
+
+They immediately found two things worth recording.
+
+**Every `StackDepth`/`StackIsEmpty` recorded a lie** (22 behaviors). They take no arguments; their value
+comes from transient execution state. `.boolStackDepth` reported 4 because `.bool` happened to be 4
+deep, but the crux `( .boolStackDepth )` re-runs on an empty interpreter and reproduces `0`. They now
+record nothing, so the crux is the literal `4` — which reproduces exactly. That is law 4b, and the line
+it draws is worth keeping in mind: `.input3` and `.int7` also read state, but *environment* state that
+is re-supplied when a crux is re-run, so naming them does reproduce the value. The test is whether
+re-running the name would find the same world.
+
+**Every `xEq` compared provenance rather than value.** `eqCombinator` compares with `isEqual(to:)`,
+which routed to `==`, which compared `value && call && isContingent`. So `2 3 .intAdd  1 4 .intAdd
+.intEq` was **false** while `5 5 .intEq` was **true**. This also made `Comparable` incoherent — `<`
+compares `value` alone, so two items both holding 5 were simultaneously not-less, not-equal and
+not-greater, which is not a strict total order. `==` is now value-only, which fixes both at once. See
+"Equality is about values" in `Items.swift`, including the open question about a *deep* identity
+(`.xDup` copies an item's whole call tree onto its duplicate, so same-value-same-history does arise —
+Push just has no way to ask).
+
+Notably, the entire 450-test suite passed unchanged when `==` stopped comparing provenance. Nothing
+relied on it. That is why it survived.
+
+### Known gaps, pinned
+
+Five behaviors provably cannot round-trip until the CodeItem change lands, and they are pinned as an
+exact set (`knownGapsPendingCodeItemChange`) that fails if it grows *or* if it silently closes:
+
+- `codeAppend`, `codeEq`, `codeItemIsEmpty`, `codeWrapRoot` — **a bare code block is not its own crux.**
+  The corollary above ("a literal always reproduces the value") holds for every scalar and fails for
+  `CodeItem`: a block in a program unwraps onto `.exec` and scatters, so it never reaches `.code`. Real
+  programs mostly dodge this because their blocks come from `.intQuote`, which does land on `.code` —
+  which is why the original `CruxTests` pass. This is also the one hole in the elision backstop: eliding
+  a `CodeItem`'s call currently makes it unreproducible.
+- `execEq` — **`.exec` arguments are consumed from ahead, so their crux is prefix, not postfix.** It
+  inherits the shared `eqCombinator`'s postfix order, right for the other ten stacks and wrong here.
+  `execQuote` gets this right today with a deliberate prefix `[.execQuote, x]`. After the change, exec
+  instructions take arguments from `.code` and postfix becomes correct.
+
+The fuzzer independently confirms the first: an `.input` bound to a code block has crux `( .input3 )`,
+which scatters instead of landing on `.code`.
 
 ## Growth that remains, by design
 
