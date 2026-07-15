@@ -112,6 +112,7 @@ struct CombinatorBehaviorTests {
         doThis(.doubleDupTimes, to: inty)
         #expect(stackString(inty, .double) == "[ 1.1 ]")
         #expect(stackString(inty, .error).contains("doubleDupTimes overflow") )
+        #expect(callString(topItem(inty, .error)) == "( )")
     }
 
     @Test func `combinator Empty works`() {

@@ -291,6 +291,21 @@ intact instead of unwrapping it onto `.exec` (and `.exec` instructions take thei
   recorded `call` is already dead code today), and an `.input` bound to a code block currently loses its
   `[.input1]` provenance the moment it unwraps.
 
+## Future work noted along the way
+
+- **A `contingencySources` instruction set**, sibling to `PushInstruction.iterators`. Contingency splits
+  into sources (the ten `.inputN`, plus `DeepDup`/`Shove`/`Yank`/`YankDup`/`StackDepth`/`StackIsEmpty`
+  for every stack, which set it regardless of their arguments) and propagators (everything else, via
+  `netContingency`). The set is nearly but not exactly law 4b's group — see the TODO on
+  `InstructionSets.swift` for the two questions to settle first, including the long-standing open one
+  about whether `DupItems`/`DupTimes` make their results contingent in themselves.
+- **Error provenance is inconsistent.** Int and Double error branches record their arguments, so an
+  error's crux reproduces the error — genuinely useful. But `.inputN`/`.intN` "not bound" errors record
+  nothing, even though the *success* path of the same instruction records `[.inputN]`. Both satisfy the
+  obligation (an `ErrorItem` literal reproduces itself), so this is about explanatory value, not
+  correctness. The combinators' "on empty stack" errors and the shared "missing args" error correctly
+  record nothing — they are law 4b, dependent on transient stack state.
+
 ## Deliberately not addressed
 
 - `vecXPushAll` puts element 0 on top; `stringPushAllChars` puts the *last* char on top. A real

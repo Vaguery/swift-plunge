@@ -22,4 +22,39 @@ nonisolated public extension PushInstruction {
         .stringIterate,
         .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
     ]
+
+    // TODO: a `contingencySources` sibling — the instructions whose results are
+    // contingent *in themselves*, rather than because an argument was.
+    //
+    // Contingency divides cleanly into two groups today, and only the first is
+    // worth naming as a set:
+    //
+    //  - **Sources**, which set `isContingent = true` regardless of their
+    //    arguments: the ten `.inputN`, and — for every stack — `DeepDup`,
+    //    `Shove`, `Yank`, `YankDup`, `StackDepth`, `StackIsEmpty`. What unites
+    //    them is that the result depends on runtime *state* (which binding is
+    //    supplied, how deep a stack happens to be, where an item happens to sit)
+    //    rather than on the values handed to the instruction.
+    //  - **Propagators**, which is everything else: `Behavior.netContingency(of:)`
+    //    over the arguments, so a result is contingent exactly when some argument
+    //    was. Nothing to enumerate — it is the default.
+    //
+    // Two things to settle while building it:
+    //
+    //  - `DupItems`/`DupTimes` are unresolved. The comment on
+    //    `dupItemsCombinator_Behavior` has stood since it was written: it
+    //    "introduces some tacit contingency into execution, but it's not entirely
+    //    clear if it is making these results contingent in themselves". Today they
+    //    re-route arguments verbatim and mark nothing, so they are currently
+    //    propagators by omission rather than by decision.
+    //  - The set nearly — but not exactly — coincides with provenance law 4b
+    //    (Items.swift), which says a result read from transient execution state
+    //    records no `call`. `StackDepth`/`StackIsEmpty` are in both. The
+    //    combinators are contingency sources but law 1 (a within-stack move
+    //    records nothing). The inputs are contingency sources yet record
+    //    `[.inputN]`, because a binding is *environment* state that is re-supplied
+    //    when a crux is re-run. So the two axes are close cousins, not the same
+    //    question: 4b asks "does the VALUE depend on transient state?", this asks
+    //    "does the result's presence or position?". Worth stating explicitly in
+    //    the doc comment so the sets do not get conflated later.
 }

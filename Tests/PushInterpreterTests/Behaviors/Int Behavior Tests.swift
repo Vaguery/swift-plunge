@@ -38,6 +38,7 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         
         #expect(stackString(inty, .error).contains("Overflow in .intAdd") )
+        #expect(callString(topItem(inty, .error)) == "( 9223372036854775807 1000 .intAdd )")
     }
 
     @Test func intDec() {
@@ -67,6 +68,7 @@ struct IntBehaviorTests {
         doThis(.intDec, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intDec")  )
+        #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 .intDec )")
     }
 
     @Test func intFromBool() {
@@ -137,12 +139,14 @@ struct IntBehaviorTests {
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+        #expect(callString(topItem(inty, .error)) == "( inf .intFromDouble )")
 
         // a finite double beyond Int's range would also trap
         loadDoubles(inty, doubles: [-1e40])
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+        #expect(callString(topItem(inty, .error)) == "( -1e+40 .intFromDouble )")
 
         // NaN as well
         loadDoubles(inty, doubles: [Double.nan])
@@ -253,6 +257,7 @@ struct IntBehaviorTests {
         doThis(.intInc, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intInc")  )
+        #expect(callString(topItem(inty, .error)) == "( 9223372036854775807 .intInc )")
     }
 
     @Test func intLT() {
@@ -358,6 +363,7 @@ struct IntBehaviorTests {
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Divide by zero .intMod") )
+        #expect(callString(topItem(inty, .error)) == "( 999 0 .intMod )")
     }
 
     @Test func `intMod handles overflow`() {
@@ -367,6 +373,7 @@ struct IntBehaviorTests {
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intMod") )
+        #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 -1 .intMod )")
     }
 
     @Test func intMultiply() {
@@ -391,6 +398,7 @@ struct IntBehaviorTests {
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intMultiply")  )
+        #expect(callString(topItem(inty, .error)) == "( -9223372036854775807 1000 .intMultiply )")
     }
 
     @Test func intQuot() {
@@ -424,6 +432,7 @@ struct IntBehaviorTests {
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Divide by zero .intQuot") )
+        #expect(callString(topItem(inty, .error)) == "( 999 0 .intQuot )")
     }
 
     @Test func `intQuot handles overflow`() {
@@ -433,6 +442,7 @@ struct IntBehaviorTests {
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intQuot")  )
+        #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 -1 .intQuot )")
     }
 
     @Test func intSubtract() {
@@ -457,5 +467,6 @@ struct IntBehaviorTests {
         doThis(.intSubtract, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .intSubtract") )
+        #expect(callString(topItem(inty, .error)) == "( -9223372036854775807 1000 .intSubtract )")
     }
 }

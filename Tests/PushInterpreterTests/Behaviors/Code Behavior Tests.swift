@@ -40,6 +40,7 @@ struct CodeBehaviorTests {
 
         doThis(.codeItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(callString(topItem(inty, .bool)) == "( ( ) .codeItemIsEmpty )")
     }
 
     @Test func `codeItemIsEmpty works with non-empty code`() {
@@ -48,6 +49,7 @@ struct CodeBehaviorTests {
 
         doThis(.codeItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(callString(topItem(inty, .bool)) == "( ( 1 ) .codeItemIsEmpty )")
     }
 
     @Test func `codeLengthRoot only measures in the code root`() {
@@ -56,6 +58,7 @@ struct CodeBehaviorTests {
 
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(callString(topItem(inty, .int)) == "( ( 1 ) .codeLengthRoot )")
 
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 2 1 ]")
@@ -70,6 +73,7 @@ struct CodeBehaviorTests {
 
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(callString(topItem(inty, .int)) == "( ( ) .codeLengthRoot )")
     }
 
     @Test func `codeWrapRoot works with empty code`() {
@@ -78,6 +82,7 @@ struct CodeBehaviorTests {
 
         doThis(.codeWrapRoot, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
+        #expect(callString(topItem(inty, .code)) == "( ( ) .codeWrapRoot )")
     }
 
     @Test func `codeWrapRoot works with non-empty code`() {

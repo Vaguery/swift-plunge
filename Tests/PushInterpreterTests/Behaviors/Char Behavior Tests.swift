@@ -44,12 +44,14 @@ struct CharBehaviorTests {
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+        #expect(callString(topItem(inty, .error)) == "( inf .charFromDouble )")
 
         // a finite double beyond Int's range would also trap
         loadDoubles(inty, doubles: [1e40])
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+        #expect(callString(topItem(inty, .error)) == "( 1e+40 .charFromDouble )")
     }
 
     @Test func charFromInt() {

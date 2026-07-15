@@ -157,6 +157,7 @@ struct StringBehaviorTests {
         doThis(.stringFirst, to: inty)
         #expect(stackString(inty, .char) == "[ 'a' ]")
         #expect(stackString(inty, .string) == "[ ]")
+        #expect(callString(topItem(inty, .char)) == "( \"abcdefghij\" .stringFirst )")
     }
 
     @Test func stringFromBool() {
@@ -363,6 +364,15 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ 'b' ]")
         #expect(stackString(inty, .exec) == "[ .intInc \"oo\" .stringIterate .intInc ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
+        // The two derived results name the instructions that honestly reproduce
+        // them. Naming `.stringIterate` (as they used to) made a crux that re-ran
+        // the whole loop, mouse and all, and grew a level per pass.
+        #expect(callString(topItem(inty, .char)) == "( \"boo\" .stringFirst )")
+        #expect(callString(inty.stacks[.exec]![1]) == "( \"boo\" .stringRest )")
+        // ...while the mouse copies and the re-pushed token record nothing.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)
+        #expect(inty.stacks[.exec]![2].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)
 
         inty.step()
 
@@ -487,6 +497,7 @@ struct StringBehaviorTests {
         doThis(.stringLast, to: inty)
         #expect(stackString(inty, .char) == "[ 'j' ]")
         #expect(stackString(inty, .string) == "[ ]")
+        #expect(callString(topItem(inty, .char)) == "( \"abcdefghij\" .stringLast )")
    }
 
     @Test func stringLength() {
@@ -957,6 +968,8 @@ struct StringBehaviorTests {
         doThis(.stringSubstring, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"m\" ]")
+        #expect(callString(topItem(inty, .string))
+            == "( \"lorex ipsum\" 94 72 .stringSubstring )")
      }
 
     @Test func `stringSubstring works for nonempty with 2 negative indices`() {
