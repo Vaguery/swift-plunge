@@ -52,6 +52,15 @@ public nonisolated protocol Pretty {
 //  3. A genuinely new value records `call = [args…, InstructionItem(name)]` —
 //     args in the order that re-runs postfix, instruction last.
 //
+//  3b. UNLESS the arguments come from `.exec`, in which case the instruction is
+//     recorded FIRST: `call = [InstructionItem(name), args…]`. Push is not
+//     uniformly postfix, and this is the important quirk. An `.exec` argument is
+//     not waiting on a stack behind the instruction — it is the next thing ahead
+//     of it in the program, so the source that re-runs it must read
+//     `.execEq 3 3`, not `3 3 .execEq`. Reconstructed source is executed from
+//     `.exec` like any other program, so it has to be written the way `.exec`
+//     reads it. `execQuote` and `execEq` are the two that record this way.
+//
 //  4. A freshly minted instruction token records nothing. Its crux is itself.
 //
 //  4b. A result read from transient EXECUTION state rather than from arguments

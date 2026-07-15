@@ -227,23 +227,20 @@ nonisolated final class Interpreter {
         }
     }
 
-    func unwrapCodeItem(code:CodeItem) {
-        let items = code.value
-        var result = [any Item]()
-
-        for idx in (0..<items.count) {
-            var copy = items[idx]
-            copy.isContingent = Behavior.netContingency(of: code, copy)
-            result.append(copy)
-        }
-        self.stacks[.exec]!.prepend(contentsOf: result)
-    }
-
     func step() {
         if counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             let nextItem = stacks[.exec]!.popFirst()
             if nextItem is CodeItem {
-                unwrapCodeItem(code: nextItem as! CodeItem)
+                // Code is data until a program asks for it: a block met on
+                // `.exec` comes to rest on `.code` intact, rather than having its
+                // contents scattered back onto `.exec` to run. `.codeDo` is the
+                // only thing that unwraps one now — that used to happen here, on
+                // sight (see `codeDo_Behavior`, which is the old `unwrapCodeItem`).
+                //
+                // Keeping the block whole is also what lets its `call` survive:
+                // unwrapping here used to discard it, so an `.input` bound to a
+                // block lost its provenance the moment it scattered.
+                self.push(nextItem!, to: .code)
             } else if nextItem is InstructionItem {
                 let action = (nextItem as! InstructionItem).value
                 if let behavior = self.behaviors[action] {

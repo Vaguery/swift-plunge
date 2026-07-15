@@ -207,29 +207,35 @@ struct VecBoolBehaviorTests {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([false, true]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.intInc),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.intInc)]))
 
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(stackString(inty, .vecBool) == "[ [false, true] ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
         doThis(.vecBoolIterate, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
 
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc [true] .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec)
+            == "[ ( .intInc ) .codeDo [true] ( .intInc ) .vecBoolIterate ]")
         // The two mouse copies and the re-pushed iterate token are combinatory,
         // so they record nothing. The shrunken vector is genuinely derived and
         // names `.vecBoolRest` — an instruction that honestly reproduces it —
         // rather than the iterate instruction, whose crux would re-run the loop.
-        #expect(inty.stacks[.exec]![0].call.isEmpty)
-        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+        // .exec is now: mouse, .codeDo, rest, mouse, iterate — the mouse runs via
+        // .codeDo and is re-supplied to .code for the next pass. Only the
+        // shrunken vector is derived.
+        #expect(inty.stacks[.exec]!.count == 5)
+        #expect(inty.stacks[.exec]![0].call.isEmpty)   // mouse, to run
+        #expect(inty.stacks[.exec]![1].call.isEmpty)   // .codeDo
+        #expect(CodeItem(inty.stacks[.exec]![2].crux()).pretty()
             == "( [false, true] .vecBoolRest )")
-        #expect(inty.stacks[.exec]![2].call.isEmpty)
-        #expect(inty.stacks[.exec]![3].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)   // mouse, re-supplied
+        #expect(inty.stacks[.exec]![4].call.isEmpty)   // the iterate token
 
         // Likewise the extracted element is honestly the vector's first.
         #expect(CodeItem(topItem(inty, .bool).crux()).pretty()
@@ -241,75 +247,74 @@ struct VecBoolBehaviorTests {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([false, true, false]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.intInc),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.intInc)]))
 
         #expect(stackString(inty, .int) == "[ 17 ]")
         #expect(stackString(inty, .vecBool) == "[ [false, true, false] ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
         doThis(.vecBoolIterate, to: inty)
         #expect(stackString(inty, .int) == "[ 17 ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc [true, false] .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo [true, false] ( .intInc ) .vecBoolIterate ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .int) == "[ 17 ]")
+        #expect(stackString(inty, .vecBool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo [true, false] ( .intInc ) .vecBoolIterate ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .int) == "[ 17 ]")
+        #expect(stackString(inty, .vecBool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .intInc [true, false] ( .intInc ) .vecBoolIterate ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
         #expect(stackString(inty, .int) == "[ 18 ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ [true, false] .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ [true, false] ( .intInc ) .vecBoolIterate ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
         #expect(stackString(inty, .int) == "[ 18 ]")
         #expect(stackString(inty, .vecBool) == "[ [true, false] ]")
-        #expect(stackString(inty, .exec) == "[ .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .vecBoolIterate ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .int) == "[ 18 ]")
+        #expect(stackString(inty, .vecBool) == "[ [true, false] ]")
+        #expect(stackString(inty, .exec) == "[ .vecBoolIterate ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
         #expect(stackString(inty, .int) == "[ 18 ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc [false] .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo [false] ( .intInc ) .vecBoolIterate ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
 
         inty.step()
-        #expect(stackString(inty, .int) == "[ 19 ]")
+        #expect(stackString(inty, .int) == "[ 18 ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ [false] .vecBoolIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo [false] ( .intInc ) .vecBoolIterate ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-
-        inty.step()
-        #expect(stackString(inty, .int) == "[ 19 ]")
-        #expect(stackString(inty, .vecBool) == "[ [false] ]")
-        #expect(stackString(inty, .exec) == "[ .vecBoolIterate .intInc ]")
-        #expect(stackString(inty, .bool) == "[ true false ]")
-
-        inty.step()
-        #expect(stackString(inty, .int) == "[ 19 ]")
-        #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
-        #expect(stackString(inty, .bool) == "[ false true false ]")
-
-        inty.step()
-        #expect(stackString(inty, .int) == "[ 20 ]")
-        #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ false true false ]")
     }
 
     @Test func `vecBoolIterate works for empty`() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a code argument now, so it waits on `.code` as a block.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .vecBool) == "[ [] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecBoolIterate, to: inty)
         #expect(stackString(inty, .bool) == "[ ]")
@@ -322,18 +327,17 @@ struct VecBoolBehaviorTests {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([false]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a code argument now, so it waits on `.code` as a block.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .vecBool) == "[ [false] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecBoolIterate, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
     }
 
     @Test func vecBoolLast() {

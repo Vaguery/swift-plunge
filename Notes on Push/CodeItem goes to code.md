@@ -1,6 +1,6 @@
 # CodeItem goes to `.code`
 
-*Design note, 2026-07-15. Not implemented — this is the thing to react to first.*
+*Design note, 2026-07-15. **Implemented** — kept as the account of what changed and why.*
 
 **Why:** the headline is not the crux gaps — it is that `Plushy`'s hand-maintained `extraOpens` table
 stops being necessary. See "The actual point" below.
@@ -16,10 +16,10 @@ Three parts, in dependency order:
 3. **A new `.codeDo`** — the traditional Push name, and currently absent from `PushInstruction`. Without
    it nothing can run a block at all (see below), so it is not optional.
 
-## What it buys, measured
+## What it bought, measured
 
-A spike of **part 1 alone** (three lines in `step()`, since reverted) was run to get real numbers rather
-than guesses:
+A spike of **part 1 alone** (three lines in `step()`) was run before committing to the design, to get
+real numbers rather than guesses. It predicted the outcome well:
 
 - **Four of the five known crux gaps close immediately**: `codeAppend`, `codeEq`, `codeItemIsEmpty`,
   `codeWrapRoot` all round-trip. The `knownGapsPendingCodeItemChange` assertion fired in the direction
@@ -248,3 +248,52 @@ The provenance work is done and does not block this. It leaves the exec behavior
 were — `execDoRange` went from ~15 provenance lines to ~2 — which is most of what makes this tractable:
 the continuations are already spread as explicit Routers rather than hidden inside `CodeItem` wrappers
 that this change would have broken.
+
+
+---
+
+# What actually happened
+
+All three parts landed, and the five known crux gaps closed: the round-trip sweep reports
+**320 claims across 298 behaviors, 0 failures**, with `knownGapsPendingCodeItemChange` **empty**.
+451 tests pass.
+
+## Two things this note got wrong
+
+**Argument order reverses, and the note did not say so.** A code argument read from `.exec` was read
+*forward* from the program; read from `.code` it comes off a *stack*, so the last-written block is on
+top. `( 111 ) ( 222 ) .execK` returned **222**, and `true ( A ) ( B ) .execIf` picked **B**. Both
+backwards.
+
+`execIf`, `execK` and `execS` now remap their indices so the first-written block wins, which is what the
+rest of the language does with postfix arguments — `2 3 .intSubtract` is 2−3, with the 2 at `a[1]`.
+Caught by probing the migrated instructions before rewriting any tests against them; nothing in the
+design predicted it.
+
+**Contingency moved with the arguments.** A contingent *item* used to be the argument. Wrapped in a
+block it is now the block's *content*, where `netContingency` over the arguments cannot see it — so
+"a contingent code argument" means a contingent **block** now. Every test that seeded one needed that
+adjustment. Worth remembering when writing new ones.
+
+## The `.codeDo` design held
+
+Everything the note predicted about `.codeDo` was right: it must spread rather than push (a pushed block
+bounces back to `.code` forever), it is exactly the old `unwrapCodeItem`, and a loop re-supplies its own
+body with no new machinery — push the `CodeItem` to `.exec` and it lands on `.code`; push
+`[body, .codeDo]` and it runs. `execDoTimes`'s continuation is literally the shape drawn above.
+
+## The Plushy consequence, now visible
+
+`Plushy` is frozen for compatibility, and its `extraOpens` still emits the old shape: the body
+immediately *after* its instruction, where `.code` is still empty when the instruction fires. So
+Plushy-generated programs mostly no longer drive the exec instructions at all.
+
+This is measurable. The crux fuzzer, which builds its programs with Plushy, went from **21,123
+provenance claims to 855** — a 96% collapse. Not a regression in provenance (0 broken either way); the
+random programs simply do far less, because their loops never start. Real coverage of the exec module
+from random programs is gone until the new genome representations land, and that is worth weighing when
+deciding how soon they matter.
+
+`CruxTests.crux can work through contingent code` hit the same wall and had to be rebuilt without
+Plushy. Its expectations survived untouched — including the exact crux text
+`( 3 33 .intMultiply .intQuote 2 22 .intSubtract .intQuote .codeAppend )`. Only the source order moved.

@@ -246,12 +246,22 @@ nonisolated extension Interpreter {
             takes: [stack, stack],
             fxn: { a in
                 let isSame = a[0].isEqual(to: a[1])
+                // Provenance law 3b (Items.swift): `.execEq` reads its arguments
+                // from `.exec` — the next two things ahead of it in the program,
+                // not values waiting on a stack behind it — so the source that
+                // re-runs it is `.execEq 3 3`, prefix. Every other stack's Eq is
+                // postfix like everything else. Push is not uniformly postfix,
+                // and a crux has to be written the way `.exec` reads it.
+                let record: [any Item] =
+                    stack == .exec
+                    ? [InstructionItem(name), a[0], a[1]]
+                    : [a[1], a[0], InstructionItem(name)]
                 return [
                     Router(
                         .bool,
                         BoolItem(
                             isSame,
-                            call: [a[1], a[0], InstructionItem(name)],
+                            call: record,
                             isContingent: Behavior.netContingency(
                                 of: a[0],
                                 a[1]

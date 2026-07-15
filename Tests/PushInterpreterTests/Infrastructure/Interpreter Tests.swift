@@ -130,13 +130,14 @@ struct InterpreterTests {
         #expect(inty.stacks[.exec]!.count == 2)
         
         inty.step()
-        #expect(stackString(inty, .exec) == "[ 777 888 .intAdd ]")
-        #expect(inty.stacks[.exec]!.count == 3)
+        // The block used to scatter its contents back onto `.exec` here, growing
+        // it to 3. It comes to rest on `.code` intact now, so `.exec` simply
+        // shrinks like every other literal — code is data until a program asks
+        // for it with `.codeDo`.
+        #expect(stackString(inty, .code) == "[ ( 777 888 ) ]")
+        #expect(inty.stacks[.exec]!.count == 1)
 
         inty.step()
-        inty.step()
-        inty.step()
-        
         #expect(inty.stacks[.error]!.count == 1)
         #expect(stackString(inty, .error).contains("I haz no stick") )
         #expect(inty.stacks[.exec]!.count == 0)
@@ -164,7 +165,10 @@ struct InterpreterTests {
                 
         inty.run(inputs: [:], stacks: [:], program: everythingProggy)
         #expect(inty.stacks[.exec]!.count == 0)
-        #expect(inty.counter == 13)
+        // 11, not 13: the code block is one step (resting on `.code`) where it
+        // used to be three (unwrap, then 777, then 888).
+        #expect(inty.counter == 11)
+        #expect(stackString(inty, .code) == "[ ( 777 888 ) ]")
     }
     
     @Test func `resetting works`() {

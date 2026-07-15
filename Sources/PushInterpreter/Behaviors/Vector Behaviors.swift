@@ -610,58 +610,65 @@ nonisolated extension Interpreter {
 
         return Behavior(
             instruction,
-            takes: [V.pushStack, .exec],
+            takes: [V.pushStack, .code],
             fxn: { a in
                 let (x, y) = (a[0] as! V, a[1])
                 var results = [Router]()
-                var workingVector = x.value
+                var working = x.value
 
-                let count = workingVector.count
-                if count > 0 {
-                    // The mouse and the re-pushed iterate token are combinatory
-                    // (laws 1 and 4) and record nothing.
-                    results.append(Router(.exec, y))
+                let count = working.count
+                guard count > 0 else { return results }
+                let item = working.removeFirst()
 
-                    let item = workingVector.removeFirst()
+                // `.exec` top→bottom, when more remains:
+                //   mouse, .codeDo, rest, mouse, instruction
+                //
+                // The mouse comes from `.code` now, so running it takes a
+                // `.codeDo`; re-supplying it for the next pass is just a push to
+                // `.exec`, which lands it back on `.code`. The re-supply has to
+                // precede the token — the token takes its argument from `.code`,
+                // so the mouse must already be resting there when it fires.
+                // Routers are listed in reverse, because `distribute` prepends.
+                //
+                // Provenance: mouse copies and the token are combinatory (laws 1,
+                // 1b and 4). The two derived values name the instructions that
+                // honestly reproduce them, `.vecXFirst` and `.vecXRest` — not the
+                // iterate instruction, whose crux would re-run the whole loop.
+                if count > 1 {
                     results.append(
                         Router(
-                            V.Scalar.pushStack,
-                            V.Scalar(
-                                item,
-                                call: [x, InstructionItem(firstInstruction)],
+                            .exec,
+                            InstructionItem(
+                                instruction,
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     )
-                    if count > 1 {
-                        results.append(
-                            Router(
-                                .exec,
-                                InstructionItem(
-                                    instruction,
-                                    isContingent: Behavior.netContingency(
-                                        of: x,
-                                        y
-                                    )
-                                )
-                            )
-                        )
-                        results.append(
-                            Router(
-                                .exec,
+                    results.append(Router(.exec, y))
+                    results.append(
+                        Router(
+                            .exec,
                                 V(
-                                    workingVector,  // which was changed
+                                    working,
                                     call: [x, InstructionItem(restInstruction)],
-                                    isContingent: Behavior.netContingency(
-                                        of: x,
-                                        y
-                                    )
+                                    isContingent: Behavior.netContingency(of: x, y)
                                 )
-                            )
                         )
-                        results.append(Router(.exec, y))
-                    }
+                    )
                 }
+                results.append(Router(.exec, InstructionItem(.codeDo)))
+                results.append(Router(.exec, y))
+
+                results.append(
+                    Router(
+                        V.Scalar.pushStack,
+                        V.Scalar(
+                            item,
+                            call: [x, InstructionItem(firstInstruction)],
+                            isContingent: Behavior.netContingency(of: x, y)
+                        )
+                    )
+                )
                 return results
             }
         )

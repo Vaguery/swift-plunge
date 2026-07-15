@@ -40,8 +40,8 @@ struct ProvenanceTests {
         inty.load(program: [
             IntItem(0),
             IntItem(iterations),
+            CodeItem(body),                    // lands on .code, waiting
             InstructionItem(.execDoRange),
-            CodeItem(body),
         ])
         inty.run(stepLimit: 20_000)
         return inty
@@ -57,7 +57,7 @@ struct ProvenanceTests {
         // Before folding this was one level per iteration, and the recorded
         // source (`y x .execDoRange`) did not even produce the value.
         #expect(counter.call.count == 1)
-        #expect(counter.call[0] is IteratorItem)
+        #expect(counter.call.first is IteratorItem)
         #expect(callDepth(counter) == 2)
         #expect(CodeItem(counter.crux()).pretty() == "( 0 199 .intAdd )")
     }
@@ -83,7 +83,7 @@ struct ProvenanceTests {
         let inty = Interpreter()
         inty.config.stepLimit = 20_000
         inty.load(program: [
-            IntItem(60), IntItem(10), InstructionItem(.execDoRange), CodeItem([]),
+            IntItem(60), IntItem(10), CodeItem([]), InstructionItem(.execDoRange),
         ])
         inty.run(stepLimit: 20_000)
 
@@ -118,8 +118,8 @@ struct ProvenanceTests {
             IntItem(999),
             IntItem(0),
             IntItem(iterations),
+            CodeItem([InstructionItem(.intAdd)]),   // lands on .code, waiting
             InstructionItem(.execDoRange),
-            CodeItem([InstructionItem(.intAdd)]),
         ])
         inty.run(stepLimit: 20_000)
         return inty

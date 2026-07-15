@@ -198,29 +198,35 @@ struct VecStringBehaviorTests {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem(["1","2"]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .vecString) == "[ [\"1\", \"2\"] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.vecStringIterate, to: inty)
         #expect(stackString(inty, .string) == "[ \"1\" ]")
 
         #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot [\"2\"] .vecStringIterate .boolNot ]")
+        #expect(stackString(inty, .exec)
+            == "[ ( .boolNot ) .codeDo [\"2\"] ( .boolNot ) .vecStringIterate ]")
         // The two mouse copies and the re-pushed iterate token are combinatory,
         // so they record nothing. The shrunken vector is genuinely derived and
         // names `.vecStringRest` — an instruction that honestly reproduces it —
         // rather than the iterate instruction, whose crux would re-run the loop.
-        #expect(inty.stacks[.exec]![0].call.isEmpty)
-        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+        // .exec is now: mouse, .codeDo, rest, mouse, iterate — the mouse runs via
+        // .codeDo and is re-supplied to .code for the next pass. Only the
+        // shrunken vector is derived.
+        #expect(inty.stacks[.exec]!.count == 5)
+        #expect(inty.stacks[.exec]![0].call.isEmpty)   // mouse, to run
+        #expect(inty.stacks[.exec]![1].call.isEmpty)   // .codeDo
+        #expect(CodeItem(inty.stacks[.exec]![2].crux()).pretty()
             == "( [\"1\", \"2\"] .vecStringRest )")
-        #expect(inty.stacks[.exec]![2].call.isEmpty)
-        #expect(inty.stacks[.exec]![3].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)   // mouse, re-supplied
+        #expect(inty.stacks[.exec]![4].call.isEmpty)   // the iterate token
 
         // Likewise the extracted element is honestly the vector's first.
         #expect(CodeItem(topItem(inty, .string).crux()).pretty()
@@ -233,44 +239,44 @@ struct VecStringBehaviorTests {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem(["skunk", "badger"]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .vecString) == "[ [\"skunk\", \"badger\"] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.vecStringIterate, to: inty)
         #expect(stackString(inty, .string) == "[ \"skunk\" ]")
         #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot [\"badger\"] .vecStringIterate .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo [\"badger\"] ( .boolNot ) .vecStringIterate ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
         #expect(stackString(inty, .string) == "[ \"skunk\" ]")
         #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ [\"badger\"] .vecStringIterate .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo [\"badger\"] ( .boolNot ) .vecStringIterate ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .string) == "[ \"skunk\" ]")
+        #expect(stackString(inty, .vecString) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .boolNot [\"badger\"] ( .boolNot ) .vecStringIterate ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()
+        #expect(stackString(inty, .string) == "[ \"skunk\" ]")
+        #expect(stackString(inty, .vecString) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ [\"badger\"] ( .boolNot ) .vecStringIterate ]")
         #expect(stackString(inty, .bool) == "[ true ]")
 
         inty.step()
         #expect(stackString(inty, .string) == "[ \"skunk\" ]")
         #expect(stackString(inty, .vecString) == "[ [\"badger\"] ]")
-        #expect(stackString(inty, .exec) == "[ .vecStringIterate .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .vecStringIterate ]")
         #expect(stackString(inty, .bool) == "[ true ]")
-
-        inty.step()
-        #expect(stackString(inty, .string) == "[ \"badger\" \"skunk\" ]")
-        #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
-        #expect(stackString(inty, .bool) == "[ true ]")
-
-        inty.step()
-        #expect(stackString(inty, .string) == "[ \"badger\" \"skunk\" ]")
-        #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
 
     }
 
@@ -278,13 +284,13 @@ struct VecStringBehaviorTests {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .vecString) == "[ [] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecStringIterate, to: inty)
         #expect(stackString(inty, .string) == "[ ]")
@@ -296,18 +302,18 @@ struct VecStringBehaviorTests {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem(["joe"]),
                         ])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.boolNot),
-                        ])
+        // The mouse is a block on `.code` now: an iterate takes its body as a
+        // code argument, so it must already be resting there when it fires.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .vecString) == "[ [\"joe\"] ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecStringIterate, to: inty)
         #expect(stackString(inty, .string) == "[ \"joe\" ]")
         #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
     }
 
     @Test func vecStringLast() {

@@ -29,31 +29,23 @@ import Testing
 
 // MARK: - The shared check
 
-/// Whether an item's claim is one the current `CodeItem` model cannot honour, so
-/// checking it would only re-find a gap that is already understood and pinned by
+/// Whether an item's claim is one the language provably cannot honour yet, so
+/// checking it would only re-find a gap already pinned by
 /// `CruxRoundTripTests.knownGapsPendingCodeItemChange`.
 ///
-/// Two shapes, both fixed when the Interpreter starts pushing a `CodeItem` on
-/// `.exec` to `.code` intact:
+/// That set is now empty, so this skips nothing — kept as the seam where a future
+/// known gap would be declared, and because leaving it means the fuzzer reports a
+/// skip count that must stay at zero.
 ///
-/// - **The crux leans on `execEq`**, whose `call` is postfix (inherited from the
-///   shared `eqCombinator`) where `.exec` arguments need prefix. Any crux quoting
-///   it is contaminated regardless of what else it does.
-/// - **The item is a code block.** A block can only reach `.code` by being quoted;
-///   a bare one in a program unwraps onto `.exec` instead. So a block whose crux
-///   does not go through a `*Quote` cannot land where it belongs — e.g. an
-///   `.input` bound to a block has crux `( .input3 )`, which scatters.
+/// It used to skip two shapes, both closed by the CodeItem change:
+/// cruxes leaning on `execEq` (whose postfix `call` could not reach `.exec`
+/// arguments — now prefix, provenance law 3b), and bare code blocks (which
+/// scattered onto `.exec` instead of reaching `.code` — now they come to rest
+/// there intact, so a block genuinely *is* its own crux).
 @MainActor
 func blockedByCodeItemModel(_ item: any Item) -> Bool {
-    let crux = item.crux()
-    let names = crux.compactMap { ($0 as? InstructionItem)?.value }
-    if names.contains(where: CruxRoundTripTests.knownGapsPendingCodeItemChange.contains) {
-        return true
-    }
-    if item is CodeItem, !names.contains(where: { $0.rawValue.hasSuffix("Quote") }) {
-        return true
-    }
-    return false
+    let names = item.crux().compactMap { ($0 as? InstructionItem)?.value }
+    return names.contains(where: CruxRoundTripTests.knownGapsPendingCodeItemChange.contains)
 }
 
 
@@ -186,37 +178,26 @@ struct CruxRoundTripTests {
     }
 
 
-    /// Behaviors whose crux provably cannot round-trip **while the Interpreter
-    /// unwraps a `CodeItem` on `.exec` instead of pushing it to `.code` intact**.
-    /// Pinned as an exact set rather than skipped, so the gap can neither grow
-    /// silently nor stay closed-but-listed: this test fails either way.
+    /// Behaviors whose crux provably cannot round-trip. **Empty, and worth
+    /// keeping that way.**
     ///
-    /// Two causes, both fixed by that planned change:
+    /// It held five entries until the CodeItem change landed, and all five closed
+    /// at once:
     ///
-    /// - **A bare code block is not its own crux.** `crux()` returns `[self]` for
-    ///   an empty `call`, and for every scalar that literal reproduces the value.
-    ///   Not for a `CodeItem`: a block in a program unwraps onto `.exec` and its
-    ///   contents scatter to their own stacks, so it never reaches `.code`, and
-    ///   `( 2 3 ) ( 1 2 ) .codeAppend` finds `.code` empty. (Real programs mostly
-    ///   dodge this because their code items come from `.intQuote`, which does
-    ///   land on `.code` — the existing `CruxTests` pass for exactly that reason.
-    ///   Seeding bare blocks is what exposes it.) Worth noting this is the one
-    ///   hole in the elision backstop too: eliding a `CodeItem`'s call currently
-    ///   makes it unreproducible.
+    /// - `codeAppend`, `codeEq`, `codeItemIsEmpty`, `codeWrapRoot` — a bare code
+    ///   block used not to be its own crux. `crux()` returns `[self]` for an empty
+    ///   `call`, and for every scalar that literal reproduces the value; a
+    ///   `CodeItem` was the exception, because a block in a program unwrapped onto
+    ///   `.exec` and scattered instead of reaching `.code`. Now it comes to rest
+    ///   there intact, and `( 2 3 ) ( 1 2 ) .codeAppend` finds what it needs.
+    /// - `execEq` — its arguments still come from `.exec`, which is right, but its
+    ///   crux has to be **prefix** to say so (provenance law 3b). `.execEq 3 3`
+    ///   reproduces; `3 3 .execEq` lets the literals fall to `.int` first.
     ///
-    /// - **`.exec` arguments are consumed from ahead, so their crux is prefix.**
-    ///   `execEq` inherits the shared `eqCombinator`'s postfix
-    ///   `[y, x, .execEq]`, which is right for the other ten stacks and wrong
-    ///   here: `101 100 .execEq` lets the literals fall to `.int` before `execEq`
-    ///   runs. `execQuote` gets this right today with a deliberate prefix
-    ///   `[.execQuote, x]`. A prefix `call` alone would not fix `execEq` anyway —
-    ///   a multi-item argument crux would need bracketing, and the bracket would
-    ///   itself unwrap. After the change, exec instructions take their arguments
-    ///   from `.code`, and postfix becomes correct.
-    static let knownGapsPendingCodeItemChange: Set<PushInstruction> = [
-        .codeAppend, .codeEq, .codeItemIsEmpty, .codeWrapRoot,   // bare block ≠ its own crux
-        .execEq,                                                 // exec args are prefix
-    ]
+    /// Both halves of the assertion below matter: this fails if the set grows
+    /// *and* if an entry silently starts passing. That is how the change was
+    /// confirmed — the "these now round-trip" branch fired for all five.
+    static let knownGapsPendingCodeItemChange: Set<PushInstruction> = []
 
 
     /// The sweep. Every registered behavior, driven with synthetic arguments;

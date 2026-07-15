@@ -155,11 +155,45 @@ nonisolated extension Interpreter {
     )
 
 
+    /// Unwraps the top `.code` block onto `.exec`, so its contents run.
+    ///
+    /// This is the only way a block executes: the Interpreter pushes any
+    /// `CodeItem` it meets on `.exec` to `.code` intact, so code is data until a
+    /// program asks for it. It is `unwrapCodeItem` — which used to happen
+    /// implicitly, on sight — promoted to an instruction.
+    ///
+    /// Note it cannot work the Push3 way. `CODE.DO` there pushes the block onto
+    /// `EXEC`, where lists unwrap; here that would send it straight back to
+    /// `.code`, forever. So it spreads the contents directly.
+    ///
+    /// Provenance: combinatory, law 1b. The block's own `call` is erased with the
+    /// block, and each content keeps the `call` it already had — exposed as
+    /// though it had been sitting there all along, unchanged from the time it
+    /// went in. Being inside a block leaves no mark. Contingency does propagate:
+    /// a block reached contingently makes its contents contingent.
+    static let codeDo_Behavior =
+    BehaviorWithSideEffects(
+        .codeDo,
+        takes: [.code],
+        modifier: { (interpreter, collectedItems) in
+            let block = collectedItems[0] as! CodeItem
+            let contents = block.value.map { item -> any Item in
+                var copy = item
+                copy.isContingent = Behavior.netContingency(of: block, copy)
+                return copy
+            }
+            interpreter.stacks[.exec]!.prepend(contentsOf: contents)
+            return []
+        }
+    )
+
+
     static let codeBehaviors:[PushInstruction : Behavior] =
     [
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,
+        .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,

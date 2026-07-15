@@ -330,12 +330,11 @@ struct StringBehaviorTests {
     @Test func `stringIterate works for an empty string`() {
         loadInts(inty, ints: [1])
         loadStrings(inty, strings: [""])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.intInc),
-                        ])
+        // The mouse is a code argument now, so it waits on `.code` as a block.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.intInc)]))
         #expect(stackString(inty, .string) == "[ \"\" ]")
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
 
         doThis(.stringIterate, to: inty)
@@ -349,79 +348,82 @@ struct StringBehaviorTests {
     @Test func `stringIterate works for a nonempty string`() {
         loadInts(inty, ints: [1])
         loadStrings(inty, strings: ["boo"])
-        inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.intInc),
-                        ])
+        // The mouse is a code argument now, so it waits on `.code` as a block.
+        inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.intInc)]))
 
         #expect(stackString(inty, .string) == "[ \"boo\" ]")
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
 
         doThis(.stringIterate, to: inty)
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .intInc \"oo\" .stringIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo \"oo\" ( .intInc ) .stringIterate ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
         // The two derived results name the instructions that honestly reproduce
         // them. Naming `.stringIterate` (as they used to) made a crux that re-ran
         // the whole loop, mouse and all, and grew a level per pass.
         #expect(callString(topItem(inty, .char)) == "( \"boo\" .stringFirst )")
-        #expect(callString(inty.stacks[.exec]![1]) == "( \"boo\" .stringRest )")
-        // ...while the mouse copies and the re-pushed token record nothing.
-        #expect(inty.stacks[.exec]![0].call.isEmpty)
-        #expect(inty.stacks[.exec]![2].call.isEmpty)
-        #expect(inty.stacks[.exec]![3].call.isEmpty)
+        #expect(callString(inty.stacks[.exec]![2]) == "( \"boo\" .stringRest )")
+        // ...while the two mouse copies and the two freshly minted tokens record
+        // nothing: `.exec` is mouse, .codeDo, rest, mouse, .stringIterate — the
+        // first mouse runs via `.codeDo`, the second re-supplies `.code` for the
+        // next pass.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)   // mouse, to run
+        #expect(inty.stacks[.exec]![1].call.isEmpty)   // .codeDo
+        #expect(inty.stacks[.exec]![3].call.isEmpty)   // mouse, re-supplied
+        #expect(inty.stacks[.exec]![4].call.isEmpty)   // the iterate token
 
         inty.step()
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ \"oo\" .stringIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo \"oo\" ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ ]")
+        #expect(stackString(inty, .char) == "[ 'b' ]")
+        #expect(stackString(inty, .exec) == "[ .intInc \"oo\" ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ ]")
+        #expect(stackString(inty, .char) == "[ 'b' ]")
+        #expect(stackString(inty, .exec) == "[ \"oo\" ( .intInc ) .stringIterate ]")
         #expect(stackString(inty, .int) == "[ 2 ]")
 
         inty.step()
 
         #expect(stackString(inty, .string) == "[ \"oo\" ]")
         #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .stringIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .int) == "[ 2 ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"oo\" ]")
+        #expect(stackString(inty, .char) == "[ 'b' ]")
+        #expect(stackString(inty, .exec) == "[ .stringIterate ]")
         #expect(stackString(inty, .int) == "[ 2 ]")
 
         inty.step()
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .intInc \"o\" .stringIterate .intInc ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo \"o\" ( .intInc ) .stringIterate ]")
         #expect(stackString(inty, .int) == "[ 2 ]")
 
         inty.step()
 
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ \"o\" .stringIterate .intInc ]")
-        #expect(stackString(inty, .int) == "[ 3 ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"o\" ]")
-        #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .stringIterate .intInc ]")
-        #expect(stackString(inty, .int) == "[ 3 ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'o' 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .intInc ]")
-        #expect(stackString(inty, .int) == "[ 3 ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'o' 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .int) == "[ 4 ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo \"o\" ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .int) == "[ 2 ]")
 
 
     }
@@ -438,49 +440,49 @@ struct StringBehaviorTests {
 
         doThis(.stringIterate, to: inty)
 
-        #expect(stackString(inty, .string) == "[ \"tan\" ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .stringConjChar \"oo\" .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"tanb\" ]")
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ \"oo\" .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"oo\" \"tanb\" ]")
-        #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"tanb\" ]")
-        #expect(stackString(inty, .char) == "[ 'o' ]")
-        #expect(stackString(inty, .exec) == "[ .stringConjChar \"o\" .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"tanbo\" ]")
-        #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ \"o\" .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"o\" \"tanbo\" ]")
-        #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .stringIterate .stringConjChar ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"tanbo\" ]")
-        #expect(stackString(inty, .char) == "[ 'o' ]")
         #expect(stackString(inty, .exec) == "[ .stringConjChar ]")
 
         inty.step()
 
-        #expect(stackString(inty, .string) == "[ \"tanboo\" ]")
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ ]")
+
+        inty.step()
+
+        #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .exec) == "[ ]")
     }

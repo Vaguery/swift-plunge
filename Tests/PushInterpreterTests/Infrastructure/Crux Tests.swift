@@ -95,26 +95,24 @@ struct CruxTests {
 
     @Test
     func `crux can work through contingent code`() {
-        let treeProg = [
-            false,
-            PushInstruction.execIf,
-            1,
-            11,
-            PushInstruction.intAdd,
-            PlushyControl.close,
-            2,
-            22,
-            PushInstruction.intSubtract,
-            PlushyControl.close,
-            3,
-            33,
-            PushInstruction.intMultiply,
-            PushInstruction.intQuote,
-            PushInstruction.intQuote,
-            PushInstruction.codeAppend,
-        ] as [Any]
-        let prog2 = Plushy.plushy2push(treeProg)
-        #expect(CodeItem(prog2).pretty() == "( false .execIf ( 1 11 .intAdd ) ( 2 22 .intSubtract ) 3 33 .intMultiply .intQuote .intQuote .codeAppend )")
+        // Built directly rather than through Plushy. `execIf` takes its branches
+        // from `.code` now, so they have to reach it before the instruction
+        // fires — whereas Plushy's `extraOpens` still emits the old shape, with
+        // the blocks immediately *after* `.execIf`, where `.code` is still empty.
+        // Plushy is deliberately frozen for compatibility, so the source order is
+        // written out here instead. Only the order moves: every expectation below
+        // is the one this test has always made, including the crux text.
+        let prog2: [any Item] = [
+            CodeItem([IntItem(1), IntItem(11), InstructionItem(.intAdd)]),
+            CodeItem([IntItem(2), IntItem(22), InstructionItem(.intSubtract)]),
+            BoolItem(false),
+            InstructionItem(.execIf),
+            IntItem(3), IntItem(33), InstructionItem(.intMultiply),
+            InstructionItem(.intQuote),
+            InstructionItem(.intQuote),
+            InstructionItem(.codeAppend),
+        ]
+        #expect(CodeItem(prog2).pretty() == "( ( 1 11 .intAdd ) ( 2 22 .intSubtract ) false .execIf 3 33 .intMultiply .intQuote .intQuote .codeAppend )")
 
         inty.load(program:prog2)
         inty.run()

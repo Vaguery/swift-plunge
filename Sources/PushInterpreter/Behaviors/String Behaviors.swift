@@ -783,62 +783,65 @@ nonisolated extension Interpreter {
     static let stringIterate_Behavior =
         Behavior(
             .stringIterate,
-            takes: [.string, .exec],
-            // As `vecXIterate`: the char pulled off the front and the string left
-            // behind are honestly `.stringFirst` and `.stringRest` of the
-            // argument. Naming `.stringIterate` instead made a crux that re-ran
-            // the whole loop, and grew a level per pass.
+            takes: [.string, .code],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1])
                 var results = [Router]()
-                var workingString = x.value
+                var working = x.value
 
-                let count = workingString.count
-                if count > 0 {
-                    // The mouse and the re-pushed iterate token are combinatory
-                    // (laws 1 and 4) and record nothing.
-                    results.append(Router(.exec, y))
+                let count = working.count
+                guard count > 0 else { return results }
+                let item = working.removeFirst()
 
-                    let item = workingString.removeFirst()
+                // `.exec` top→bottom, when more remains:
+                //   mouse, .codeDo, rest, mouse, .stringIterate
+                //
+                // The mouse comes from `.code` now, so running it takes a
+                // `.codeDo`; re-supplying it for the next pass is just a push to
+                // `.exec`, which lands it back on `.code`. The re-supply has to
+                // precede the token — the token takes its argument from `.code`,
+                // so the mouse must already be resting there when it fires.
+                // Routers are listed in reverse, because `distribute` prepends.
+                //
+                // Provenance: mouse copies and the token are combinatory (laws 1,
+                // 1b and 4). The two derived values name the instructions that
+                // honestly reproduce them, `.stringFirst` and `.stringRest` — not the
+                // iterate instruction, whose crux would re-run the whole loop.
+                if count > 1 {
                     results.append(
                         Router(
-                            .char,
-                            CharItem(
-                                item,
-                                call: [x, InstructionItem(.stringFirst)],
+                            .exec,
+                            InstructionItem(
+                                .stringIterate,
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     )
-                    if count > 1 {
-                        results.append(
-                            Router(
-                                .exec,
-                                InstructionItem(
-                                    .stringIterate,
-                                    isContingent: Behavior.netContingency(
-                                        of: x,
-                                        y
-                                    )
-                                )
-                            )
-                        )
-                        results.append(
-                            Router(
-                                .exec,
+                    results.append(Router(.exec, y))
+                    results.append(
+                        Router(
+                            .exec,
                                 StringItem(
-                                    workingString,  // which was changed
+                                    working,
                                     call: [x, InstructionItem(.stringRest)],
-                                    isContingent: Behavior.netContingency(
-                                        of: x,
-                                        y
-                                    )
+                                    isContingent: Behavior.netContingency(of: x, y)
                                 )
-                            )
                         )
-                        results.append(Router(.exec, y))
-                    }
+                    )
                 }
+                results.append(Router(.exec, InstructionItem(.codeDo)))
+                results.append(Router(.exec, y))
+
+                results.append(
+                    Router(
+                        .char,
+                        CharItem(
+                            item,
+                            call: [x, InstructionItem(.stringFirst)],
+                            isContingent: Behavior.netContingency(of: x, y)
+                        )
+                    )
+                )
                 return results
             }
         )

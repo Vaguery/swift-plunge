@@ -16,13 +16,29 @@ Each instruction has two layers, deliberately separated:
   flags. Another interpreter may differ here and still be correct. Listed so a
   reader can tell signal from noise.
 
-  Note for readers of an earlier draft: child-item `index` tags are gone (the
-  field no longer exists), and no exec continuation is wrapped in a code block
-  any more — every one is spread as loose items. Under our provenance law
-  (`Items.swift`) an exec instruction's results are *combinatory*: body copies
-  and re-pushed continuation tokens leave values where they already were, so
-  they record no `call` at all. The one exception is a loop counter, which is
-  genuinely derived; see `IteratorItem`.
+  Note for readers of an earlier draft, since two things changed under them:
+
+  - **Code arguments now come from CODE, not EXEC.** A `CodeItem` the interpreter
+    meets on EXEC comes to rest on CODE intact rather than having its contents
+    scattered back onto EXEC, so code is data until a program asks for it with
+    `codeDo`. Every instruction below that takes a *body* takes it from CODE, and
+    its body must therefore reach CODE **before** the instruction fires — it need
+    not sit adjacent to it. `execEq`, `execQuote` and `execPrint` still read EXEC:
+    they are asking about *pending* items, which is a different question.
+    `codeDo` is the only thing that unwraps a block, and is the old implicit
+    unwrap promoted to an instruction.
+  - **Argument order therefore reverses** relative to the old EXEC form. EXEC
+    arguments were read forward from the program; CODE is a stack, so the
+    last-written block is on top. `( then ) ( else ) .execIf` reads
+    first-written-first, matching every other postfix instruction here.
+
+  Also: child-item `index` tags are gone (the field no longer exists), and no
+  continuation is wrapped in a code block — every one is spread as loose items.
+  Under our provenance law (`Items.swift`) an exec instruction's results are
+  *combinatory*: body copies and re-pushed continuation tokens leave values where
+  they already were, so they record no `call`. The exceptions are a loop counter,
+  which is genuinely derived (see `IteratorItem`), and `execEq`, which records
+  **prefix** because its arguments are read from EXEC (law 3b).
 
 **Notation.** Stacks are written top-first: `[ top … bottom ]`. `INT`, `BOOL`,
 `EXEC`, `CODE` name stacks (map to your own type names — e.g. `INT`→`integer`,
