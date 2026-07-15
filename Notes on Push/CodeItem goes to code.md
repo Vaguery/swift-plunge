@@ -2,6 +2,9 @@
 
 *Design note, 2026-07-15. Not implemented — this is the thing to react to first.*
 
+**Why:** the headline is not the crux gaps — it is that `Plushy`'s hand-maintained `extraOpens` table
+stops being necessary. See "The actual point" below.
+
 ## The change
 
 Three parts, in dependency order:
@@ -35,6 +38,32 @@ want part 2 before they can be rewritten sensibly.
 It also fixes, for free, two things the provenance work had to leave alone: `unwrapCodeItem` currently
 discards a block's `call` on unwrap, and an `.input` bound to a code block loses its `[.input3]`
 provenance the moment it scatters. Both stop happening when the block stays intact.
+
+## The actual point: `extraOpens` goes away
+
+The crux gaps are a symptom. The motivation is `Plushy.destructivePlushy2push`, which carries a
+**27-entry hand-maintained table** (`extraOpens`) mapping each exec instruction to how many implicit
+`(` it must synthesise into the genome:
+
+```swift
+.execDoCount : 1,   .execIf : 2,   .execS : 3,   .execRot : 3,
+.execDoRange : 1,   .execK : 2,    .execY : 1,   .stringIterate : 1,   …
+```
+
+It exists for one reason: **an exec instruction should run a *block*, not the single next
+instruction.** So the genome layer fabricates the parentheses that make the body a block, and the count
+has to be right per instruction, and it has to be maintained as the language drifts. It is exactly the
+kind of table that rots — it must already be re-checked against every new exec instruction, and nothing
+enforces that.
+
+Sourcing `.exec` arguments from `.code` dissolves the requirement rather than automating it. A block
+lands on `.code` simply by *being a block*, so the body is a block by construction, and the table has
+nothing left to assert. The positional coupling goes too: today the body must sit syntactically
+adjacent to its instruction, because the implicit `(` is inserted right there. After the change, a block
+need only be **somewhere before** the exec instruction fires — it will be waiting on `.code`.
+
+This also feeds the crux. A body that is a first-class block on `.code` is a reusable unit with its own
+provenance, rather than a run of items the genome layer happened to fence off.
 
 ## Code is data until run
 
@@ -104,33 +133,103 @@ came from unwrapping the three `CodeItem` continuations earlier. Worth accepting
 | `execK` | `.exec, .exec` | `.code, .code` | |
 | `execS` | `.exec, .exec, .exec` | `.code, .code, .code` | |
 | `execY` | `.exec` | `.code` | |
-| `execEq` | `.exec, .exec` | `.code, .code` | closes the last crux gap |
 | `stringIterate` | `.string, .exec` | `.string, .code` | the mouse |
 | `vecXIterate` ×4 | `vecX, .exec` | `vecX, .code` | the mouse |
+| **`execEq`** | `.exec, .exec` | **`.exec` — unchanged** | compares two *pending* items; see below |
 | **`execQuote`** | `.exec` | **`.exec` — unchanged** | it wraps the top `.exec` item in a `CodeItem`; this is how a *non-block* exec item reaches `.code` at all |
 | **`execPrint`** | `.exec` | **`.exec` — unchanged** | it prints the top `.exec` item |
 | **`.codeDo`** | — | `.code` | new; the only way to run a block |
 
 The `exec` combinators (`execDup`, `execSwap`, `execYank`, `execPop`, …) are not in the table because
 nothing about them changes: they shuffle pending code on `.exec`, which still exists and still holds
-whatever has not run yet.
+whatever has not run yet. They pop from `.exec` directly, so they still see a `CodeItem` before
+`step()` can route it to `.code` — worth a test (see below), not a change.
 
-## Open questions
+### `execEq` stays on `.exec`, and its crux gap stays open
 
-- **Does `.codeDo` pop or peek?** Push3 has both `CODE.DO` (pops) and `CODE.DO*` (does not). Starting
-  with the popping form seems right; the other is cheap to add later.
-- **Do the loop bodies need `.codeDo`, or should the exec instructions spread directly?** Pushing
-  `[body, .codeDo]` reuses one mechanism and keeps the instructions simple. Spreading the contents
-  directly is fewer steps but re-implements `.codeDo` inside each instruction. Recommend the former.
-- **What happens to a `CodeItem` on `.exec` that a combinator put there?** `execDup` duplicating a
-  pending block leaves two blocks on `.exec`; both will land on `.code` when reached. That seems right,
-  but it is a behaviour worth a test.
-- **`codeIf` already exists in the enum, unimplemented,** and under this model it and `execIf` are close
-  to the same instruction. Worth deciding whether both survive.
-- **The search layer.** 22 of the 24 unimplemented behaviors are `code*`. Until they exist, the exec
-  module carries the whole load of consuming code, and Plushy's nested blocks are mostly inert data.
-  That may be fine — or may argue for implementing `codeDo` plus a few `code*` instructions in the same
-  pass.
+Keeping `execEq` on `.exec` is right — it is asking "are the next two pending things the same?", which is
+a question about `.exec`. But it does mean this is the one gap the change does **not** close, and the
+reason is worth stating rather than leaving to be rediscovered.
+
+Its crux must be **prefix** (`.execEq <A> <B>`), because `.exec` arguments are consumed from ahead. That
+works only while `crux(A)` and `crux(B)` are each a *single* item:
+
+```
+.execEq 44 55                    ✓  reproduces
+.execEq 0 5 .intAdd  X           ✗  execEq grabs `0` and `5`, not the sum and X
+.execEq ( 0 5 .intAdd ) X        ✗  execEq grabs the BLOCK, and compares that instead
+```
+
+Bracketing does not rescue it: under this change a bracketed crux *is* a block, and comparing the block
+is a different question from comparing the value it computes. Three ways out, none obviously best:
+
+- **Leave it as a permanent known gap.** Honest, costs nothing, and `execEq` on a derived pending value
+  is a rare shape.
+- **Record nothing (provenance law 4b).** "Are the next two pending things equal?" is arguably a reading
+  of *transient execution state*, exactly like `.execStackDepth` — in which case the honest crux is the
+  literal bool, which reproduces perfectly and closes the gap. The wrinkle: unlike `StackDepth`, it does
+  consume real arguments, so this is a judgement call about what `execEq` is *for*.
+- **Restrict the recorded call to single-item argument cruxes** and elide otherwise. Precise but fiddly,
+  and the elision rule would be unlike anything else in the law.
+
+Worth a ruling before implementing; law 4b looks most defensible to me.
+
+## Settled
+
+- **`.codeDo` pops** (it consumes the block), matching today's `unwrapCodeItem`. A non-destructive form
+  is not needed here: a planned general feature for non-destructive instruction execution will handle
+  that distinction across the language, rather than `CODE.DO*` handling it for one instruction.
+- **The loop expansions use `.codeDo`** rather than each instruction spreading its own body. One
+  mechanism, and it puts the unwrap on the record where a crux can see it.
+- **`execDup` on a pending `CodeItem` must be tested**: two copies, and *both* land on `.code` intact.
+  It pops from `.exec` before `step()` can route the block, so this is the seam where the old and new
+  behaviours meet.
+
+## `codeDoIf` — better name than `codeIf`
+
+The unimplemented `codeIf` is really a `.codeDoIf`: it consumes the code item and the top `.bool`; if
+true the item is unwrapped and executed, if false the item goes back to `.code`. It can be built out of
+the pieces already here — push `.codeDo` when the bool is true, replace the block otherwise — which is a
+good sign the decomposition is right.
+
+## Still open
+
+- **What does `.codeDo` record?** There is a real tension here and I do not want to guess.
+
+  By law 1 it records nothing: it moves items out of a block onto `.exec` without changing any value, and
+  the items it spreads already carry their own `call`, so a crux reaches them through their own history.
+  That is also what makes the change fix the current unwrap leak.
+
+  But law 5 says a Behavior putting several results on one stack records the discard that surfaces each —
+  and `.codeDo` puts N items on `.exec`. Applying it would give a block's k-th item the crux
+  `<block> .codeDo k .execPopItems`. The snag: law 5 assumes results *come to rest* on that stack, and
+  `.exec` items do not rest — they execute. Popping N exec items to "surface" one leaves it about to run,
+  not sitting there to be read.
+
+  So: does an item that came out of a block get its provenance *through* the block (`.codeDo` +
+  `popItems`), or does it keep the history it already had? The two disagree, and the answer decides
+  whether `.codeDo` is combinatory or generative.
+
+- **The search layer.** 22 of the 24 unimplemented behaviors are `code*`, so at first the exec module
+  carries the whole load of consuming code. This is less of a problem than it looks: `.codeIterate` is
+  planned and addresses the nested-code-unreachable concern directly, and the genome change is the point
+  rather than a casualty. But `.codeDo` plus a few `code*` instructions may want to land together.
+
+## Where this is heading
+
+Recorded so the change is not designed too narrowly. `.code` becomes a **pool of reusable subroutines**,
+not just a place blocks sit. Planned work on top:
+
+- Instructions that extract an item's **crux** and produce a `CodeItem` from it — the
+  `codeFuncFrom_Crux` family sketched in `Code instruction planning.markdown` — and then curry that into
+  a "function" by removing a leaf. This is the payoff the whole provenance exercise is for: a crux is
+  runnable source, so it can become a first-class code value.
+- `.codeIterate`, which gives nested code a way to be reached.
+- The `IteratorItem` upgrade to a first-class type with its own stack and combinators.
+- A general non-destructive execution feature (see `.codeDo` above).
+
+Together with the expanded `code*` instruction set, these are what make the language more functional —
+the CodeItem change is the enabling step, not the whole story.
 
 ## Sequencing
 
