@@ -298,17 +298,31 @@ struct CruxFuzzTests {
     // nonisolated so the `.disabled(if:)` trait can read it from the @Test
     // macro's Sendable context under Swift 6 language mode
     //
-    // ENABLED, unlike its `Stress_Tests` siblings, which are off by default
-    // because a meaningful run takes a minute or more. This one gets ~21k
-    // provenance claims out of 60 programs in ~2s — cheap for the only check that
-    // can catch provenance which lies. Set true to skip it.
-    nonisolated static let disabledTests = false
+    // Disabled by default, like every other fuzz test here — and for a reason
+    // worth knowing rather than by convention alone. `fuzzRNG` is a
+    // `nonisolated(unsafe)` global, and Swift Testing runs suites in parallel, so
+    // any other enabled test that draws from it (today: `Stress_Tests.set random
+    // constants works`, via `setRandomConstants`) consumes this test's stream
+    // mid-generation. Left enabled it is not reproducible: observed runs drew
+    // 21,123 claims and 17,016 from the same seed.
+    //
+    // To run it (~2s): set this false AND run it alone —
+    // `swift test --filter CruxFuzzTests` — because a filter alone only skips it,
+    // and running it alongside the suite is what breaks the seed.
+    //
+    // The deterministic half of this file, the per-Behavior sweep above, needs no
+    // RNG and stays enabled.
+    nonisolated static let disabledTests = true
 
     /// Replaces the old `random programs produce legible cruxes`, which printed
     /// cruxes for a human to eyeball and asserted nothing.
     @Test(.disabled(if: CruxFuzzTests.disabledTests))
     func `every item a random program leaves has a runnable crux`() {
-        let seed: UInt64 = 20_260_715   // fixed & logged so any run reproduces exactly
+        // Reproduces exactly when this test runs alone; see the note on
+        // `disabledTests` for why that qualifier is load-bearing. Failing cases
+        // are written to disk as replayable JSON regardless, which is the
+        // reproduction path that does not depend on the RNG.
+        let seed: UInt64 = 20_260_715
         fuzzRNG = SeededRNG(seed: seed)
         let cases = 60            // random programs generated
         let programItems = 150    // Plushy tokens per random genome

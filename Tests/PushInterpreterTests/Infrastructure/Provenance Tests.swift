@@ -196,6 +196,31 @@ struct ProvenanceTests {
         }
     }
 
+    @Test func `an unbound input's error records what would reproduce it`() {
+        let inty = Interpreter()
+        inty.load(program: [InstructionItem(.input3)])   // nothing bound
+        inty.run()
+        let failed = inty.stacks[.error]!.first!
+        #expect(CodeItem(failed.crux()).pretty() == "( .input3 )")
+
+        // The error is reproducible, like any other result: an environment
+        // binding outlives the run and is re-supplied, so naming the instruction
+        // reproduces the failure. (Law 4b's counterpart: `.boolStackDepth` reads
+        // *transient* state and so records nothing instead.)
+        let again = Interpreter()
+        again.load(program: failed.crux())
+        again.run()
+        #expect(again.stacks[.error]!.first?.pretty() == failed.pretty())
+
+        // And that is the point of naming the dependency rather than freezing the
+        // outcome: the same source against a bound environment yields the value.
+        let bound = Interpreter()
+        bound.load(inputs: [.input3: IntItem(42)], program: failed.crux())
+        bound.run()
+        #expect((bound.stacks[.int]!.first as? IntItem)?.value == 42)
+        #expect(bound.stacks[.error]!.isEmpty)
+    }
+
     @Test func `quoting across stacks IS recorded`() {
         // The counterpart to law 1: `.intQuote` moves the value to `.code`, so a
         // crux that dropped it would leave an int where a code item belongs.

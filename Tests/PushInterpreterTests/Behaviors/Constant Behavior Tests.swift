@@ -40,7 +40,9 @@ struct ConstantBehaviorTests {
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .error).contains("No constant assigned") )
-        #expect(callString(topItem(inty, .error)) == "( )")
+        // As with an unbound input: the error records the instruction that
+        // would reproduce it against the same environment.
+        #expect(callString(topItem(inty, .error)) == "( .vecBool8 )")
     }
 
 }

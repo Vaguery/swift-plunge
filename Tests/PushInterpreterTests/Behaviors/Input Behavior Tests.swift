@@ -38,6 +38,9 @@ struct InputBehaviorTests {
         Interpreter.language[.input3]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .error).contains("No input for") )
-        #expect(callString(topItem(inty, .error)) == "( )")
+        // The unbound error records what the bound path would have: re-running
+        // `.input3` against the same environment reproduces this error.
+        #expect(callString(topItem(inty, .error)) == "( .input3 )")
+        #expect(topItem(inty, .error).isContingent == true)
     }
 }

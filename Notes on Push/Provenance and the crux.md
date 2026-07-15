@@ -230,6 +230,12 @@ survivor on every stack to prove its history. Between them they check ~21k prove
 the only kind of test that can catch a `call` that *lies* — a unit test written by reading the code
 transcribes whatever the code says, bug and all, which is exactly how `charGTE` came to record `.charGT`.
 
+The sweep needs no RNG and stays enabled. The fuzz half is disabled by default like every other fuzz
+test here, and the reason is worth knowing rather than inheriting: `fuzzRNG` is a `nonisolated(unsafe)`
+global, and Swift Testing runs suites in parallel, so any other enabled test drawing from it consumes
+the fuzzer's stream mid-generation. Enabled, it drew 21,123 claims on one run and 17,016 on the next
+from the same seed. Fuzz tests here must be run alone to be reproducible.
+
 They immediately found two things worth recording.
 
 **Every `StackDepth`/`StackIsEmpty` recorded a lie** (22 behaviors). They take no arguments; their value

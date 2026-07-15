@@ -26,10 +26,21 @@ nonisolated extension Interpreter {
                             v.isContingent = true
                             return [Router(.exec, v)]
                         } else {
+                            // Records the same `[.inputN]` its success branch
+                            // does: a binding is environment state, re-supplied
+                            // when a crux is re-run, so naming the instruction
+                            // reproduces this error against the same environment.
+                            // (Contrast the "on empty stack" and "missing args"
+                            // errors, which depend on transient stack state and
+                            // are their own literal crux — provenance law 4b.)
                             return [
                                 Router(
                                     .error,
-                                    ErrorItem("No input for \(instructionName)")
+                                    ErrorItem(
+                                        "No input for \(instructionName)",
+                                        call: [InstructionItem(instructionName)],
+                                        isContingent: true
+                                    )
                                 )
                             ]
                         }
