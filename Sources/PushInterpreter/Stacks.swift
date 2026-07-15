@@ -67,5 +67,37 @@ nonisolated extension PushStack {
         case .exec:      return true
         }
     }
+
+    /// The stack an item comes to rest on, or `nil` for items that never rest
+    /// on one: `InstructionItem` (it executes rather than lands) and
+    /// `IteratorItem` (provenance-only — see IteratorItem.swift).
+    ///
+    /// Shared by `Interpreter.pushDefault`, which routes a literal popped off
+    /// `.exec`, and by `crux()`, which needs an item's stack to name that
+    /// stack's `PopItems` instruction. The two must agree, so they read one map.
+    static func defaultStack(for item: any Item) -> PushStack? {
+        switch item {
+        case is BoolItem:      .bool
+        case is CharItem:      .char
+        case is CodeItem:      .code
+        case is DoubleItem:    .double
+        case is IntItem:       .int
+        case is StringItem:    .string
+        case is VecBoolItem:   .vecBool
+        case is VecDoubleItem: .vecDouble
+        case is VecIntItem:    .vecInt
+        case is VecStringItem: .vecString
+        case is ErrorItem:     .error
+        default:               nil
+        }
+    }
+
+    /// This stack's `PopItems` instruction — the token `crux()` emits to discard
+    /// results stacked above the one it is reconstructing. Every stack has one
+    /// (`combinators(for:)` builds the family for all of them), so the lookup
+    /// cannot fail.
+    var popItemsInstruction: PushInstruction {
+        PushInstruction(rawValue: "\(self.rawValue)PopItems")!
+    }
 }
 

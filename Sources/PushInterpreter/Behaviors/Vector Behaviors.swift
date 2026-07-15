@@ -12,7 +12,7 @@ import DequeModule
 // and construct new scalar Items generically
 nonisolated protocol ScalarItem: Item {
     static var pushStack: PushStack { get }
-    init(_ value: Value, call: [any Item], isContingent: Bool, index: Int)
+    init(_ value: Value, call: [any Item], isContingent: Bool)
 }
 
 nonisolated extension BoolItem: ScalarItem {
@@ -38,7 +38,7 @@ nonisolated protocol VectorItem: Item where Value == [Element] {
     associatedtype Element
     associatedtype Scalar: ScalarItem where Scalar.Value == Element
     static var pushStack: PushStack { get }
-    init(_ value: [Element], call: [any Item], isContingent: Bool, index: Int)
+    init(_ value: [Element], call: [any Item], isContingent: Bool)
 }
 
 nonisolated extension VecBoolItem: VectorItem {
@@ -78,8 +78,7 @@ nonisolated extension Interpreter {
                         V(
                             x.value.dropLast(1),
                             call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x)
                         )
                     )
                 ]
@@ -102,8 +101,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
                 ]
@@ -124,8 +122,7 @@ nonisolated extension Interpreter {
                         V(
                             y.value + x.value,
                             call: [y, x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
                 ]
@@ -188,8 +185,7 @@ nonisolated extension Interpreter {
                         V(
                             Array(x.value.dropFirst(1)),
                             call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x)
                         )
                     )
                 ]
@@ -210,8 +206,7 @@ nonisolated extension Interpreter {
                         V(
                             Array(x.value.reversed()),
                             call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x)
                         )
                     )
                 ]
@@ -236,8 +231,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
                 ]
@@ -262,8 +256,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
                 ]
@@ -307,8 +300,7 @@ nonisolated extension Interpreter {
                             V.Scalar(
                                 result,
                                 call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x),
-                                index: 0
+                                isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     ]
@@ -333,8 +325,7 @@ nonisolated extension Interpreter {
                             V.Scalar(
                                 result,
                                 call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x),
-                                index: 0
+                                isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     ]
@@ -367,8 +358,7 @@ nonisolated extension Interpreter {
                             V.Scalar(
                                 result,
                                 call: [x, y, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x, y),
-                                index: 0
+                                isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     ]
@@ -436,8 +426,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
                 ]
@@ -462,8 +451,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y, z)
                         )
                     )
                 ]
@@ -491,8 +479,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y, z)
                         )
                     )
                 ]
@@ -522,8 +509,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y, z)
                         )
                     )
                 ]
@@ -557,8 +543,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
-                            index: 0
+                            isContingent: Behavior.netContingency(of: x, y, z)
                         )
                     )
                 ]
@@ -578,6 +563,9 @@ nonisolated extension Interpreter {
             fxn: { a in
                 let (x) = (a[0] as! V)
                 var results = [Router]()
+                // Reversed before pushing, so element 0 ends up on TOP — the
+                // opposite of `stringPushAllChars`, whose first char ends up
+                // deepest. Law 5 counts from the end of the results either way.
                 let backwards = Array(x.value.reversed())
                 for idx in 0..<backwards.count {
                     results.append(
@@ -585,9 +573,13 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 backwards[idx],
-                                call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x),
-                                index: backwards.count - idx - 1
+                                call: Behavior.selecting(
+                                    idx,
+                                    of: backwards.count,
+                                    on: V.Scalar.pushStack,
+                                    from: [x, InstructionItem(instruction)]
+                                ),
+                                isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     )
@@ -603,7 +595,20 @@ nonisolated extension Interpreter {
     // reults: ( exec:MOUSE exec:remains exec:.vecXIterate exec:MOUSE scalar:CHEESE )
     //
     static func iterateBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
-        Behavior(
+        // The two derived values here are the element pulled off the front and
+        // the vector left behind, and each is honestly described by an existing
+        // instruction — `.vecXFirst` and `.vecXRest` — rather than by the
+        // iterate instruction that happened to produce them. Naming the iterate
+        // instruction was both unrunnable (its crux re-ran the whole loop, mouse
+        // and all) and unbounded. Naming `First`/`Rest` also makes the mouse
+        // genuinely irrelevant to the element's provenance, which is why it no
+        // longer appears in the `call`.
+        let firstInstruction =
+            PushInstruction(rawValue: "\(V.pushStack.rawValue)First")!
+        let restInstruction =
+            PushInstruction(rawValue: "\(V.pushStack.rawValue)Rest")!
+
+        return Behavior(
             instruction,
             takes: [V.pushStack, .exec],
             fxn: { a in
@@ -611,11 +616,11 @@ nonisolated extension Interpreter {
                 var results = [Router]()
                 var workingVector = x.value
 
-                var mouseCopy = a[1]
                 let count = workingVector.count
                 if count > 0 {
-                    mouseCopy.index = 1
-                    results.append(Router(.exec, mouseCopy))  //1
+                    // The mouse and the re-pushed iterate token are combinatory
+                    // (laws 1 and 4) and record nothing.
+                    results.append(Router(.exec, y))
 
                     let item = workingVector.removeFirst()
                     results.append(
@@ -623,9 +628,8 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 item,
-                                call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x, y),
-                                index: 0
+                                call: [x, InstructionItem(firstInstruction)],
+                                isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     )
@@ -635,12 +639,10 @@ nonisolated extension Interpreter {
                                 .exec,
                                 InstructionItem(
                                     instruction,
-                                    call: [x, InstructionItem(instruction)],
                                     isContingent: Behavior.netContingency(
                                         of: x,
                                         y
-                                    ),
-                                    index: 2
+                                    )
                                 )
                             )
                         )
@@ -649,17 +651,15 @@ nonisolated extension Interpreter {
                                 .exec,
                                 V(
                                     workingVector,  // which was changed
-                                    call: [x, InstructionItem(instruction)],
+                                    call: [x, InstructionItem(restInstruction)],
                                     isContingent: Behavior.netContingency(
                                         of: x,
                                         y
-                                    ),
-                                    index: 3
+                                    )
                                 )
                             )
                         )
-                        mouseCopy.index = 4
-                        results.append(Router(.exec, mouseCopy))  //4
+                        results.append(Router(.exec, y))
                     }
                 }
                 return results

@@ -64,14 +64,12 @@ struct AnyItemCodableTests {
         let dirty = IntItem(
             5,
             call: [InstructionItem(.intAdd), IntItem(2)],
-            isContingent: true,
-            index: 3
+            isContingent: true
         )
         let restored = try roundTrip(dirty)
         #expect((restored as? IntItem)?.value == 5)
         #expect(restored.call.isEmpty)
         #expect(restored.isContingent == false)
-        #expect(restored.index == 0)
     }
 
     // A crux result — a flattened bag of pristine value items — is Codable-ready.

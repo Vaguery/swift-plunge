@@ -180,7 +180,7 @@ struct VecIntBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
-    @Test func `vecIntIterate produces valid index numbers for results`() {
+    @Test func `vecIntIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([4, 55]),
@@ -196,17 +196,22 @@ struct VecIntBehaviorTests {
 
         doThis(.vecIntIterate, to: inty)
         #expect(stackString(inty, .int) == "[ 4 ]")
-        #expect(topItem(inty, .int).index == 0)
 
         #expect(stackString(inty, .vecInt) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .boolNot [55] .vecIntIterate .boolNot ]")
-        #expect(topItem(inty, .exec).index == 4)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 3)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 2)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 1)
+        // The two mouse copies and the re-pushed iterate token are combinatory,
+        // so they record nothing. The shrunken vector is genuinely derived and
+        // names `.vecIntRest` — an instruction that honestly reproduces it —
+        // rather than the iterate instruction, whose crux would re-run the loop.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)
+        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+            == "( [4, 55] .vecIntRest )")
+        #expect(inty.stacks[.exec]![2].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)
+
+        // Likewise the extracted element is honestly the vector's first.
+        #expect(CodeItem(topItem(inty, .int).crux()).pretty()
+            == "( [4, 55] .vecIntFirst )")
 
     }
 
@@ -405,9 +410,11 @@ struct VecIntBehaviorTests {
         doThis(.vecIntPushAll, to: inty)
         #expect(stackString(inty, .int) == "[ 1 22 333 ]")
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(topItem(inty, .int).index == 0)
         doThis(.intPop, to: inty)
-        #expect(topItem(inty, .int).index == 1)
+        // Elements are reversed before pushing, so element 0 lands on top and
+        // needs no discard; the one below it is surfaced by popping that.
+        #expect(CodeItem(topItem(inty, .int).crux()).pretty()
+            == "( [1, 22, 333] .vecIntPushAll 1 .intPopItems )")
     }
 
     @Test func vecIntRemove() {

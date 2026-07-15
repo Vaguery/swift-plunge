@@ -182,12 +182,10 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .int) == "[ 33 ]")
 
+        // The continuation is now pushed as four separate items rather than one
+        // CodeItem that `.exec` unwraps on the following step, so the same
+        // sequence arrives one step earlier per iteration.
         doThis(.execDoTimes, to: inty)
-        #expect(stackString(inty, .exec) == "[ ( false 32 .execDoTimes false ) ]")
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ ]")
-
-        inty.step()
         #expect(stackString(inty, .exec) == "[ false 32 .execDoTimes false ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
@@ -203,9 +201,15 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false 31 .execDoTimes false ) ]")
+        #expect(stackString(inty, .exec) == "[ false 31 .execDoTimes false ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false ]")
+
+        // The counter is the one derived result, and its provenance folds to a
+        // single node rather than deepening once per pass.
+        let counter = inty.stacks[.exec]![1]
+        #expect(counter.call.count == 1)
+        #expect(counter.call[0] is IteratorItem)
     }
 
     @Test func `execDoWhile acts once even if a false is found`() {
@@ -219,7 +223,9 @@ struct ExecBehaviorTests {
         doThis(.execDoWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 2)
+        // The body copy is a duplication that stays on `.exec`, so it records no
+        // provenance (law 1). It used to be tagged `index: 2`.
+        #expect(topItem(inty, .exec).call.isEmpty)
         #expect(topItem(inty, .exec).isContingent == false)
     }
 
@@ -234,15 +240,16 @@ struct ExecBehaviorTests {
         doThis(.execDoWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 0)
         #expect(topItem(inty, .exec).isContingent == false)
-        #expect(inty.stacks[.exec]![1].index == 1)
-        #expect(inty.stacks[.exec]![2].index == 2)
+        // All three results are combinatory — two body copies and a freshly
+        // minted continuation token — so none records provenance. They used to
+        // be tagged `index:` 0, 1, 2.
+        #expect(inty.stacks[.exec]!.prefix(3).allSatisfy { $0.call.isEmpty })
 
         inty.step()
         #expect(stackString(inty, .exec) == "[ .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 1)
+        #expect(topItem(inty, .exec).call.isEmpty)
 
         inty.step()
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
@@ -298,8 +305,11 @@ struct ExecBehaviorTests {
 
         #expect(stackString(inty, .exec) == "[ 3.4 true 44 ]")
 
+        // The `(y z)` continuation is emitted as two separate `.exec` items now
+        // rather than a CodeItem unwrapped on a later step. The contingency the
+        // wrapper used to spread onto its children is applied to them directly.
         doThis(.execS, to: inty)
-        #expect(stackString(inty, .exec) == "[ 3.4 44 ( true 44 ) ]")
+        #expect(stackString(inty, .exec) == "[ 3.4 44 true 44 ]")
         #expect(topItem(inty, .exec).isContingent == false)
         #expect(inty.stacks[.exec]![2].isContingent == true)
     }
@@ -347,10 +357,10 @@ struct ExecBehaviorTests {
         doThis(.execWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ 44 .execWhile 44 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).index == 0)
         #expect(topItem(inty, .exec).isContingent == false)
-        #expect(inty.stacks[.exec]![1].index == 1)
-        #expect(inty.stacks[.exec]![2].index == 2)
+        // Combinatory results record no provenance (laws 1 and 4). These used to
+        // be tagged `index:` 0, 1, 2.
+        #expect(inty.stacks[.exec]!.prefix(3).allSatisfy { $0.call.isEmpty })
     }
 
     @Test func execY() {
@@ -360,23 +370,26 @@ struct ExecBehaviorTests {
         
         #expect(stackString(inty, .exec) == "[ 1 true 44 ]")
         
+        // The `(.execY x)` continuation is pushed as two separate `.exec` items
+        // rather than a CodeItem unwrapped on a later step, so each cycle of the
+        // Y combinator now takes two steps instead of three.
         doThis(.execY, to: inty)
-        #expect(stackString(inty, .exec) == "[ 1 ( .execY 1 ) true 44 ]")
-        
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ( .execY 1 ) true 44 ]")
-        #expect(stackString(inty, .int) == "[ 1 ]")
-        
+        #expect(stackString(inty, .exec) == "[ 1 .execY 1 true 44 ]")
+
         inty.step()
         #expect(stackString(inty, .exec) == "[ .execY 1 true 44 ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
-        
+
         inty.step()
-        #expect(stackString(inty, .exec) == "[ 1 ( .execY 1 ) true 44 ]")
+        #expect(stackString(inty, .exec) == "[ 1 .execY 1 true 44 ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
-        
+
         inty.step()
-        #expect(stackString(inty, .exec) == "[ ( .execY 1 ) true 44 ]")
+        #expect(stackString(inty, .exec) == "[ .execY 1 true 44 ]")
+        #expect(stackString(inty, .int) == "[ 1 1 ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ 1 .execY 1 true 44 ]")
         #expect(stackString(inty, .int) == "[ 1 1 ]")
     }
 

@@ -12,10 +12,17 @@ Each instruction has two layers, deliberately separated:
 - **Canonical** — portable semantics every conforming Push interpreter should
   share. This is the actual specification.
 - **This implementation** *(informative, non-normative)* — details that are
-  artifacts of *our* codebase: provenance tracking (`call`), contingency flags,
-  child-item `index` tags, and whether a continuation is wrapped in a code block
-  or spread as loose items. Another interpreter may differ here and still be
-  correct. Listed so a reader can tell signal from noise.
+  artifacts of *our* codebase: provenance tracking (`call`) and contingency
+  flags. Another interpreter may differ here and still be correct. Listed so a
+  reader can tell signal from noise.
+
+  Note for readers of an earlier draft: child-item `index` tags are gone (the
+  field no longer exists), and no exec continuation is wrapped in a code block
+  any more — every one is spread as loose items. Under our provenance law
+  (`Items.swift`) an exec instruction's results are *combinatory*: body copies
+  and re-pushed continuation tokens leave values where they already were, so
+  they record no `call` at all. The one exception is a loop counter, which is
+  genuinely derived; see `IteratorItem`.
 
 **Notation.** Stacks are written top-first: `[ top … bottom ]`. `INT`, `BOOL`,
 `EXEC`, `CODE` name stacks (map to your own type names — e.g. `INT`→`integer`,
@@ -60,8 +67,10 @@ fixing exact ordering), `execDoRange handles extreme bounds without trapping`.
 
 **This implementation** *(informative):* the recursive continuation is spread as
 loose exec items `[ current, body, nextCounter, destination, execDoRange, body ]`
-(not wrapped in a code block). Each child carries `index` 0–5 and a `call`
-provenance chain; `isContingent` is the net contingency of the two int args.
+(not wrapped in a code block). `isContingent` is the net contingency of the two
+int args. Only `nextCounter` records provenance — everything else here is
+combinatory. Its `call` is a single folded `IteratorItem`, so a counter's history
+stays one node deep however many passes the loop makes.
 
 ---
 
@@ -80,8 +89,10 @@ iteration).
 `execDoCount doesn't loop if the index < 1`.
 
 **This implementation** *(informative):* emits literal `0`, `count`,
-`execDoRange`, `body` onto exec with provenance/index tags. Iteration total
-follows from `execDoRange`'s inclusive semantics — defer to the trace.
+`execDoRange`, `body` onto exec. All four are combinatory or literal, so none
+records provenance — the `0` is the literal `0` whatever the arguments were, and
+so is its own crux. Iteration total follows from `execDoRange`'s inclusive
+semantics — defer to the trace.
 
 ---
 
@@ -96,11 +107,14 @@ non-positive base case.
 
 *Oracle:* `execDoTimes doesn't loop if the counter is not positive` (tests both
 −5 and 0), `execDoTimes loops if the counter is positive` (shows the
-`( body count-1 .execDoTimes body )` continuation).
+`body count-1 .execDoTimes body` continuation).
 
-**This implementation** *(informative):* the recursive continuation **is** wrapped
-in a code block `( body, count−1, execDoTimes, body )` (contrast `execDoRange`,
-which spreads its items). Children carry `index`/`call`/contingency.
+**This implementation** *(informative):* the recursive continuation
+`[ body, count−1, execDoTimes, body ]` is spread as loose exec items, like
+`execDoRange`. It used to be wrapped in a code block that `.exec` unwrapped on the
+following step; spreading it makes the co-arity of 4 visible and removes that
+extra step, so each pass now arrives one step sooner. Only `count−1` records
+provenance (a folded `IteratorItem`); the rest is combinatory.
 
 ---
 
@@ -116,8 +130,10 @@ iteration executes the body and then re-tests the (next) top BOOL.
 *Oracle:* `execWhile doesn't act if a false is found`,
 `execWhile pushes several items back to .exec when true is found`.
 
-**This implementation** *(informative):* the re-queued items reference
-`execDoWhile` in their `call` provenance and carry `index` 0/1/2.
+**This implementation** *(informative):* the re-queued items are two body copies
+and a freshly minted `execWhile` token — all combinatory, so none records
+provenance. (They previously named `execDoWhile` in their `call`, following the
+klapaucius continuation form.)
 
 ---
 

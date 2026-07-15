@@ -100,7 +100,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: [y, x, InstructionItem(.charGT)],
+                            call: [y, x, InstructionItem(.charGTE)],
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )

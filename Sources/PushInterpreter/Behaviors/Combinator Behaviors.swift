@@ -63,7 +63,9 @@ nonisolated extension Interpreter {
                 }
                 let oldItem = interpreter.stacks[stack]![idx]
                 var newItem = oldItem
-                newItem.call = [oldItem, InstructionItem(name)]
+                // Provenance law 1 (Items.swift): moving an item within its own
+                // stack records nothing — `call` passes through untouched.
+                // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
                     interpreter.stacks[stack]!.insert(newItem, at: idx)
@@ -294,6 +296,37 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
+    //  `PopItems` discards the top N items of its stack, leaving the item that
+    //  was N deep on top. This is how a `crux()` selects one result of an
+    //  instruction that produced several on the same stack: the selected item's
+    //  `index` is exactly the number of pops needed to surface it. See the
+    //  provenance law in Items.swift.
+    //
+    static func popItemsCombinator_Behavior(
+        for stack: PushStack,
+        into result: inout [PushInstruction: Behavior]
+    ) {
+        let type = stack.rawValue
+        let name: PushInstruction
+        var inst: Behavior
+
+        name = PushInstruction(rawValue: "\(type)PopItems")!
+        inst = BehaviorWithSideEffects(
+            name,
+            takes: [.int],
+            modifier: { (interpreter, collectedItems) in
+                let rawCount = collectedItems[0] as! IntItem
+                // Clamped rather than an error, like its `DupItems`/`Yank`
+                // siblings: a count past the bottom empties the stack.
+                let available = interpreter.stacks[stack]!.count
+                let number = min(available, max(rawCount.value, 0))
+                interpreter.stacks[stack]!.removeFirst(number)
+                return []
+            }
+        )
+        result[name] = inst
+    }
+
     static func rotCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -347,7 +380,9 @@ nonisolated extension Interpreter {
                 let range = interpreter.stacks[stack]!.count - 1
                 let idx = max(0, min(indexRaw.value, range))
                 var newItem = oldItem
-                newItem.call = [oldItem, InstructionItem(name)]
+                // Provenance law 1 (Items.swift): moving an item within its own
+                // stack records nothing — `call` passes through untouched.
+                // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
                     interpreter.stacks[stack]!.insert(newItem, at: idx)
@@ -440,7 +475,9 @@ nonisolated extension Interpreter {
 
                 let oldItem = interpreter.stacks[stack]!.remove(at: idx)
                 var newItem = oldItem
-                newItem.call = [oldItem, InstructionItem(name)]
+                // Provenance law 1 (Items.swift): moving an item within its own
+                // stack records nothing — `call` passes through untouched.
+                // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 return [Router(stack, newItem)]
             }
@@ -478,7 +515,9 @@ nonisolated extension Interpreter {
                 }
                 let oldItem = interpreter.stacks[stack]![idx]
                 var newItem = oldItem
-                newItem.call = [oldItem, InstructionItem(name)]
+                // Provenance law 1 (Items.swift): moving an item within its own
+                // stack records nothing — `call` passes through untouched.
+                // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 return [Router(stack, newItem)]
             }
@@ -498,6 +537,7 @@ nonisolated extension Interpreter {
         eqCombinator_Behavior(for: stack, into: &result)
         flushCombinator_Behavior(for: stack, into: &result)
         popCombinator_Behavior(for: stack, into: &result)
+        popItemsCombinator_Behavior(for: stack, into: &result)
         rotCombinator_Behavior(for: stack, into: &result)
         shoveCombinator_Behavior(for: stack, into: &result)
         stackDepthCombinator_Behavior(for: stack, into: &result)

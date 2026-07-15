@@ -25,7 +25,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case boolFromDouble, boolFromInt
     
     // bool combinators
-    case boolDeepDup, boolDup, boolDupItems, boolDupTimes, boolStackIsEmpty, boolFlush, boolPop, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup
+    case boolDeepDup, boolDup, boolDupItems, boolDupTimes, boolStackIsEmpty, boolFlush, boolPop, boolPopItems, boolRot, boolShove, boolStackDepth, boolSwap, boolYank, boolYankDup
 
 
     // CHAR instructions
@@ -39,7 +39,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case charFromDouble, charFromInt
     
     // char combinators
-    case charDeepDup, charDup, charDupItems, charDupTimes, charStackIsEmpty, charFlush, charPop, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
+    case charDeepDup, charDup, charDupItems, charDupTimes, charStackIsEmpty, charFlush, charPop, charPopItems, charRot, charShove, charStackDepth, charSwap, charYank, charYankDup
 
 
     // CODE instructions
@@ -54,7 +54,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case execQuote, intQuote, boolQuote, charQuote, stringQuote, doubleQuote
 
     // code combinators
-    case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeStackIsEmpty, codeFlush, codePop, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
+    case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeStackIsEmpty, codeFlush, codePop, codePopItems, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
 
     
     // DOUBLE instructions
@@ -68,7 +68,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case doubleFromBool, doubleFromChar, doubleFromString, doubleFromInt
     
     // double combinators
-    case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleStackIsEmpty, doubleFlush, doublePop, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
+    case doubleDeepDup, doubleDup, doubleDupItems, doubleDupTimes, doubleStackIsEmpty, doubleFlush, doublePop, doublePopItems, doubleRot, doubleShove, doubleStackDepth, doubleSwap, doubleYank, doubleYankDup
 
 
     // EXEC instructions
@@ -81,7 +81,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // exec conversion
     
     // exec combinators
-    case execDeepDup, execDup, execDupItems, execDupTimes, execStackIsEmpty, execFlush, execPop, execRot, execShove, execStackDepth, execSwap, execYank, execYankDup
+    case execDeepDup, execDup, execDupItems, execDupTimes, execStackIsEmpty, execFlush, execPop, execPopItems, execRot, execShove, execStackDepth, execSwap, execYank, execYankDup
 
     
     
@@ -102,7 +102,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case intFromBool, intFromChar, intFromDouble, intFromString
     
     // int combinators
-    case intDeepDup, intDup, intDupItems, intDupTimes, intStackIsEmpty, intFlush, intPop, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
+    case intDeepDup, intDup, intDupItems, intDupTimes, intStackIsEmpty, intFlush, intPop, intPopItems, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
 
 
     // PRINT instructions
@@ -121,7 +121,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case stringFromBool, stringFromChar, stringFromDouble, stringFromInt, stringParseToLetters, stringPushAllChars
     
     // string combinators
-    case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringStackIsEmpty, stringFlush, stringPop, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
+    case stringDeepDup, stringDup, stringDupItems, stringDupTimes, stringStackIsEmpty, stringFlush, stringPop, stringPopItems, stringRot, stringShove, stringStackDepth, stringSwap, stringYank, stringYankDup
 
 
     
@@ -136,7 +136,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecBoolPushAll
     
     // vecBool combinators
-    case vecBoolDeepDup, vecBoolDup, vecBoolDupItems, vecBoolDupTimes, vecBoolStackIsEmpty, vecBoolFlush, vecBoolPop, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup
+    case vecBoolDeepDup, vecBoolDup, vecBoolDupItems, vecBoolDupTimes, vecBoolStackIsEmpty, vecBoolFlush, vecBoolPop, vecBoolPopItems, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup
 
     
     // VECDOUBLE instructions
@@ -150,7 +150,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecDoublePushAll
     
     // vecDouble combinators
-    case vecDoubleDeepDup, vecDoubleDup, vecDoubleDupItems, vecDoubleDupTimes, vecDoubleStackIsEmpty, vecDoubleFlush, vecDoublePop, vecDoubleRot, vecDoubleShove, vecDoubleStackDepth, vecDoubleSwap, vecDoubleYank, vecDoubleYankDup
+    case vecDoubleDeepDup, vecDoubleDup, vecDoubleDupItems, vecDoubleDupTimes, vecDoubleStackIsEmpty, vecDoubleFlush, vecDoublePop, vecDoublePopItems, vecDoubleRot, vecDoubleShove, vecDoubleStackDepth, vecDoubleSwap, vecDoubleYank, vecDoubleYankDup
 
     
     
@@ -165,7 +165,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecIntPushAll
     
     // vecInt combinators
-    case vecIntDeepDup, vecIntDup, vecIntDupItems, vecIntDupTimes, vecIntStackIsEmpty, vecIntFlush, vecIntPop, vecIntRot, vecIntShove, vecIntStackDepth, vecIntSwap, vecIntYank, vecIntYankDup
+    case vecIntDeepDup, vecIntDup, vecIntDupItems, vecIntDupTimes, vecIntStackIsEmpty, vecIntFlush, vecIntPop, vecIntPopItems, vecIntRot, vecIntShove, vecIntStackDepth, vecIntSwap, vecIntYank, vecIntYankDup
 
     
     // VECSTRING instructions
@@ -179,7 +179,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecStringPushAll
     
     // vecString combinators
-    case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringStackIsEmpty, vecStringFlush, vecStringPop, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup
+    case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringStackIsEmpty, vecStringFlush, vecStringPop, vecStringPopItems, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup
 
     
     

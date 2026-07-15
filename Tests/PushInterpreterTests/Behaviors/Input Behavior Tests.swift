@@ -21,7 +21,6 @@ struct InputBehaviorTests {
         #expect(!result.call.isEmpty)
         #expect(result.isContingent == true)
         #expect(result.value == 17)
-        #expect(result.index == 0)
         #expect(result.pretty() == "17")
     }
 

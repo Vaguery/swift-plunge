@@ -108,4 +108,33 @@ nonisolated extension Behavior {
     static func netContingency(of items:(any Item)...) -> Bool {
         return items.map({$0.isContingent}).contains(true)
     }
+
+
+    /// The `call` for one of several results a Behavior puts on a single stack —
+    /// provenance law 5 (Items.swift).
+    ///
+    /// `producedAt` is the result's position in the Router order, `of` is how
+    /// many of this Behavior's results land on `stack`, and `from` is the source
+    /// that produces them all. Because `distribute` prepends Routers one at a
+    /// time, the first produced ends up deepest, so surfacing it takes
+    /// `total - 1 - producedAt` pops — counted from the END of the results, not
+    /// from the production order.
+    ///
+    /// The pops are recorded as ordinary items in the returned `call`, which is
+    /// why `crux()` needs no special case for multi-result instructions: it
+    /// walks the array and each element speaks for itself. The topmost result
+    /// needs no discard and gets `source` unchanged.
+    static func selecting(
+        _ producedAt: Int,
+        of total: Int,
+        on stack: PushStack,
+        from source: [any Item]
+    ) -> [any Item] {
+        let pops = total - 1 - producedAt
+        guard pops > 0 else { return source }
+        return source + [
+            IntItem(pops),
+            InstructionItem(stack.popItemsInstruction),
+        ]
+    }
 }

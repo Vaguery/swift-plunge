@@ -182,7 +182,7 @@ struct VecBoolBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
-    @Test func `vecBoolIterate produces valid index numbers for results`() {
+    @Test func `vecBoolIterate records provenance only for its derived results`() {
         loadInts(inty, ints: [0])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([false, true]),
@@ -198,17 +198,22 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolIterate, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
-        #expect(topItem(inty, .bool).index == 0)
 
         #expect(stackString(inty, .vecBool) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .intInc [true] .vecBoolIterate .intInc ]")
-        #expect(topItem(inty, .exec).index == 4)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 3)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 2)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 1)
+        // The two mouse copies and the re-pushed iterate token are combinatory,
+        // so they record nothing. The shrunken vector is genuinely derived and
+        // names `.vecBoolRest` — an instruction that honestly reproduces it —
+        // rather than the iterate instruction, whose crux would re-run the loop.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)
+        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+            == "( [false, true] .vecBoolRest )")
+        #expect(inty.stacks[.exec]![2].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)
+
+        // Likewise the extracted element is honestly the vector's first.
+        #expect(CodeItem(topItem(inty, .bool).crux()).pretty()
+            == "( [false, true] .vecBoolFirst )")
     }
 
     @Test func `vecBoolIterate works for >1 item`() {
@@ -396,9 +401,11 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolPushAll, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(topItem(inty, .bool).index == 0)
         doThis(.boolPop, to: inty)
-        #expect(topItem(inty, .bool).index == 1)
+        // Elements are reversed before pushing, so element 0 lands on top and
+        // needs no discard; the one below it is surfaced by popping that.
+        #expect(CodeItem(topItem(inty, .bool).crux()).pretty()
+            == "( [true, false, true, true] .vecBoolPushAll 1 .boolPopItems )")
     }
 
     @Test func vecBoolRemove() {

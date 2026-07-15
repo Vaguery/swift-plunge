@@ -27,6 +27,14 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // vector of long strings, or code whose leaves are large — that the
     // count-only caps cannot see.
     public var maxItemWeight   : Int = 100_000
+    // Total provenance (Item.callWeight) allowed on a single pushed item. The
+    // caps above bound an item's *content*; this bounds its *history*, which was
+    // the one unbounded dimension left in the system. Over-budget provenance is
+    // elided (`call = []`) rather than refused: `crux()` returns `[self]` for an
+    // empty call, and a bare literal is already a runnable program producing that
+    // value — so eliding costs the explanation and never the reconstruction.
+    // See `Interpreter.elidingOverBudgetProvenance`.
+    public var maxCallWeight   : Int = 10_000
     // When a stack fills faster than the size caps would catch, watch for the
     // signature of a runaway loop (a stack piling repeats or cycling a short
     // period, *and* a looping instruction pending on `.exec`) and stop the run
@@ -126,7 +134,33 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        self.stacks[stack]?.prepend(item)
+        self.stacks[stack]?.prepend(self.elidingOverBudgetProvenance(item))
+    }
+
+
+    /// Drops an item's `call` once its provenance exceeds `maxCallWeight`,
+    /// returning the item otherwise untouched.
+    ///
+    /// Deliberately not an error, and deliberately not a refusal — unlike
+    /// `overflow(of:)`, which rejects the push. The item is still perfectly
+    /// good; only its history is too expensive to keep. Forgetting that history
+    /// cannot break the reconstruction, because `crux()` returns `[self]` for an
+    /// empty `call` and a bare literal already reproduces the value. So the item
+    /// stops explaining where it came from and becomes a constant instead.
+    ///
+    /// This is the honest-growth backstop: the provenance law removes the
+    /// spurious growth and `IteratorItem` folds loop counters, but a value that
+    /// genuinely accumulates (`x 1 .intAdd` in a loop body that is not the loop's
+    /// own counter) has a truthfully linear history that no rule can shrink.
+    ///
+    /// `BehaviorWithSideEffects` writes some stacks directly and bypasses this,
+    /// which is acceptable: those behaviors (`deepDup`, `shove`) are
+    /// provenance-transparent under law 1, so they cannot grow a `call`.
+    func elidingOverBudgetProvenance(_ item: any Item) -> any Item {
+        guard item.callWeight > config.maxCallWeight else { return item }
+        var lightened = item
+        lightened.call = []
+        return lightened
     }
 
     /// Enforces the homogeneity invariant for any stack write. Every stack
@@ -265,19 +299,12 @@ nonisolated final class Interpreter {
 
 nonisolated extension Interpreter {
     
+    /// Routes a literal popped off `.exec` to its own stack. `step` intercepts
+    /// `CodeItem` and `InstructionItem` before this is reached, so the `.error`
+    /// fallback catches only items that rest nowhere — which reaching here at
+    /// all would mean a mis-tagged Router.
     func pushDefault(_ it: any Item) {
-        switch it {
-        case is BoolItem: self.push(it, to: .bool)
-        case is CharItem: self.push(it, to: .char)
-        case is DoubleItem: self.push(it, to: .double)
-        case is IntItem: self.push(it, to: .int)
-        case is StringItem: self.push(it, to: .string)
-        case is VecBoolItem: self.push(it, to: .vecBool)
-        case is VecDoubleItem: self.push(it, to: .vecDouble)
-        case is VecIntItem: self.push(it, to: .vecInt)
-        case is VecStringItem: self.push(it, to: .vecString)
-        default : self.push(it, to: .error)
-        }
+        self.push(it, to: PushStack.defaultStack(for: it) ?? .error)
     }
 }
 

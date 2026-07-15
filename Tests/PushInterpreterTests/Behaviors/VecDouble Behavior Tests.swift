@@ -174,7 +174,7 @@ struct VecDoubleBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
-    @Test func `vecDoubleIterate produces valid index numbers for results`() {
+    @Test func `vecDoubleIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([4, 55]),
@@ -190,17 +190,22 @@ struct VecDoubleBehaviorTests {
 
         doThis(.vecDoubleIterate, to: inty)
         #expect(stackString(inty, .double) == "[ 4.0 ]")
-        #expect(topItem(inty, .double).index == 0)
 
         #expect(stackString(inty, .vecDouble) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .boolNot [55.0] .vecDoubleIterate .boolNot ]")
-        #expect(topItem(inty, .exec).index == 4)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 3)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 2)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 1)
+        // The two mouse copies and the re-pushed iterate token are combinatory,
+        // so they record nothing. The shrunken vector is genuinely derived and
+        // names `.vecDoubleRest` — an instruction that honestly reproduces it —
+        // rather than the iterate instruction, whose crux would re-run the loop.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)
+        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+            == "( [4.0, 55.0] .vecDoubleRest )")
+        #expect(inty.stacks[.exec]![2].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)
+
+        // Likewise the extracted element is honestly the vector's first.
+        #expect(CodeItem(topItem(inty, .double).crux()).pretty()
+            == "( [4.0, 55.0] .vecDoubleFirst )")
 
     }
 
@@ -371,9 +376,11 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoublePushAll, to: inty)
         #expect(stackString(inty, .double) == "[ 1.0 22.0 333.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
-        #expect(topItem(inty, .double).index == 0)
         doThis(.doublePop, to: inty)
-        #expect(topItem(inty, .double).index == 1)
+        // Elements are reversed before pushing, so element 0 lands on top and
+        // needs no discard; the one below it is surfaced by popping that.
+        #expect(CodeItem(topItem(inty, .double).crux()).pretty()
+            == "( [1.0, 22.0, 333.0] .vecDoublePushAll 1 .doublePopItems )")
     }
 
     @Test func vecDoubleRemove() {

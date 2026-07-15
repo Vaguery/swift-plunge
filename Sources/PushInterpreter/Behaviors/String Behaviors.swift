@@ -485,11 +485,16 @@ nonisolated extension Interpreter {
                             .string,
                             StringItem(
                                 String(c),
-                                call: [
-                                    x, InstructionItem(.stringParseToLetters),
-                                ],
-                                isContingent: Behavior.netContingency(of: x),
-                                index: idx
+                                call: Behavior.selecting(
+                                    idx,
+                                    of: chars.count,
+                                    on: .string,
+                                    from: [
+                                        x,
+                                        InstructionItem(.stringParseToLetters),
+                                    ]
+                                ),
+                                isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     )
@@ -559,7 +564,7 @@ nonisolated extension Interpreter {
                                 with: String(y.value)
                             ),
                             call: [
-                                z, y, x, InstructionItem(.stringRemoveChar),
+                                z, y, x, InstructionItem(.stringReplaceChar),
                             ],
                             isContingent: Behavior.netContingency(of: x, y, z),
                         )
@@ -642,7 +647,7 @@ nonisolated extension Interpreter {
                                 with: x.value,
                                 maxReplacements: 1
                             ),
-                            call: [z, y, x, InstructionItem(.stringReplace)],
+                            call: [z, y, x, InstructionItem(.stringReplaceFirst)],
                             isContingent: Behavior.netContingency(of: x, y, z),
                         )
                     )
@@ -719,9 +724,13 @@ nonisolated extension Interpreter {
                             .string,
                             StringItem(
                                 String(chunk),
-                                call: [x, InstructionItem(.stringSplit)],
-                                isContingent: Behavior.netContingency(of: x),
-                                index: idx
+                                call: Behavior.selecting(
+                                    idx,
+                                    of: chunks.count,
+                                    on: .string,
+                                    from: [x, InstructionItem(.stringSplit)]
+                                ),
+                                isContingent: Behavior.netContingency(of: x)
                             )
                         )
                     )
@@ -775,16 +784,20 @@ nonisolated extension Interpreter {
         Behavior(
             .stringIterate,
             takes: [.string, .exec],
+            // As `vecXIterate`: the char pulled off the front and the string left
+            // behind are honestly `.stringFirst` and `.stringRest` of the
+            // argument. Naming `.stringIterate` instead made a crux that re-ran
+            // the whole loop, and grew a level per pass.
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1])
                 var results = [Router]()
                 var workingString = x.value
 
-                var mouseCopy = a[1]
                 let count = workingString.count
                 if count > 0 {
-                    mouseCopy.index = 1
-                    results.append(Router(.exec, mouseCopy))  //1
+                    // The mouse and the re-pushed iterate token are combinatory
+                    // (laws 1 and 4) and record nothing.
+                    results.append(Router(.exec, y))
 
                     let item = workingString.removeFirst()
                     results.append(
@@ -792,9 +805,8 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 item,
-                                call: [x, InstructionItem(.stringIterate), y],
-                                isContingent: Behavior.netContingency(of: x, y),
-                                index: 0
+                                call: [x, InstructionItem(.stringFirst)],
+                                isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
                     )
@@ -804,14 +816,10 @@ nonisolated extension Interpreter {
                                 .exec,
                                 InstructionItem(
                                     .stringIterate,
-                                    call: [
-                                        x, InstructionItem(.stringIterate), y,
-                                    ],
                                     isContingent: Behavior.netContingency(
                                         of: x,
                                         y
-                                    ),
-                                    index: 2
+                                    )
                                 )
                             )
                         )
@@ -820,19 +828,15 @@ nonisolated extension Interpreter {
                                 .exec,
                                 StringItem(
                                     workingString,  // which was changed
-                                    call: [
-                                        x, InstructionItem(.stringIterate), y,
-                                    ],
+                                    call: [x, InstructionItem(.stringRest)],
                                     isContingent: Behavior.netContingency(
                                         of: x,
                                         y
-                                    ),
-                                    index: 3
+                                    )
                                 )
                             )
                         )
-                        mouseCopy.index = 4
-                        results.append(Router(.exec, mouseCopy))  //4
+                        results.append(Router(.exec, y))
                     }
                 }
                 return results
@@ -855,13 +859,24 @@ nonisolated extension Interpreter {
                                 .char,
                                 CharItem(
                                     char,
-                                    call: [
-                                        s, InstructionItem(.stringPushAllChars),
-                                    ],
+                                    // Chars are pushed in reading order, so the
+                                    // first ends up deepest and needs the most
+                                    // pops. (`vecXPushAll` reverses before
+                                    // pushing, so its element 0 lands on top
+                                    // instead — a real inconsistency between the
+                                    // two siblings, left alone here.)
+                                    call: Behavior.selecting(
+                                        idx,
+                                        of: chars.count,
+                                        on: .char,
+                                        from: [
+                                            s,
+                                            InstructionItem(.stringPushAllChars),
+                                        ]
+                                    ),
                                     isContingent: Behavior.netContingency(
                                         of: s
-                                    ),
-                                    index: idx
+                                    )
                                 )
                             )
                         )

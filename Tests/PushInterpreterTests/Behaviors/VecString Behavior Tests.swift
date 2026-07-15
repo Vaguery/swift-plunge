@@ -174,7 +174,7 @@ struct VecStringBehaviorTests {
         #expect(topItem(inty, .bool).isContingent == true)
     }
 
-    @Test func `vecStringIterate produces valid index numbers for results`() {
+    @Test func `vecStringIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem(["1","2"]),
@@ -190,17 +190,22 @@ struct VecStringBehaviorTests {
 
         doThis(.vecStringIterate, to: inty)
         #expect(stackString(inty, .string) == "[ \"1\" ]")
-        #expect(topItem(inty, .string).index == 0)
 
         #expect(stackString(inty, .vecString) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .boolNot [\"2\"] .vecStringIterate .boolNot ]")
-        #expect(topItem(inty, .exec).index == 4)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 3)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 2)
-        doThis(.execPop, to: inty)
-        #expect(topItem(inty, .exec).index == 1)
+        // The two mouse copies and the re-pushed iterate token are combinatory,
+        // so they record nothing. The shrunken vector is genuinely derived and
+        // names `.vecStringRest` — an instruction that honestly reproduces it —
+        // rather than the iterate instruction, whose crux would re-run the loop.
+        #expect(inty.stacks[.exec]![0].call.isEmpty)
+        #expect(CodeItem(inty.stacks[.exec]![1].crux()).pretty()
+            == "( [\"1\", \"2\"] .vecStringRest )")
+        #expect(inty.stacks[.exec]![2].call.isEmpty)
+        #expect(inty.stacks[.exec]![3].call.isEmpty)
+
+        // Likewise the extracted element is honestly the vector's first.
+        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
+            == "( [\"1\", \"2\"] .vecStringFirst )")
 
     }
 
@@ -371,9 +376,11 @@ struct VecStringBehaviorTests {
         doThis(.vecStringPushAll, to: inty)
         #expect(stackString(inty, .string) == "[ \"1\" \"22\" \"333\" ]")
         #expect(topItem(inty, .string).isContingent == true)
-        #expect(topItem(inty, .string).index == 0)
         doThis(.stringPop, to: inty)
-        #expect(topItem(inty, .string).index == 1)
+        // Elements are reversed before pushing, so element 0 lands on top and
+        // needs no discard; the one below it is surfaced by popping that.
+        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
+            == "( [\"1\", \"22\", \"333\"] .vecStringPushAll 1 .stringPopItems )")
     }
 
     @Test func vecStringRemove() {

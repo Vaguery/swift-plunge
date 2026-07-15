@@ -578,12 +578,29 @@ struct StringBehaviorTests {
 
         doThis(.stringParseToLetters, to: inty)
         #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
-        #expect(topItem(inty, .string).index == 3)
         #expect(topItem(inty, .string).isContingent == true)
 
         doThis(.stringPop, to: inty)
-        #expect(topItem(inty, .string).index == 2)
         #expect(topItem(inty, .string).isContingent == true)
+    }
+
+    @Test func `stringParseToLetters results reconstruct through PopItems`() {
+        loadStrings(inty, strings: ["live"])
+        doThis(.stringParseToLetters, to: inty)
+        #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
+
+        // The deepest letter needs three pops to surface; the top one needs none.
+        let ell = inty.stacks[.string]![3]
+        #expect(CodeItem(ell.crux()).pretty()
+            == "( \"live\" .stringParseToLetters 3 .stringPopItems )")
+        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
+            == "( \"live\" .stringParseToLetters )")
+
+        // ...and running that reconstruction really does leave "l" on top.
+        let redo = Interpreter()
+        redo.load(program: ell.crux())
+        redo.run()
+        #expect(stackString(redo, .string) == "[ \"l\" ]")
     }
 
     @Test func stringPushAllChars() {
@@ -594,13 +611,17 @@ struct StringBehaviorTests {
         doThis(.stringPushAllChars, to: inty)
         #expect(stackString(inty, .char) == "[ 'r' 'a' 'b' ]")
         #expect(topItem(inty, .char).isContingent == true)
-        #expect(topItem(inty, .char).index == 2)
+        // Each char records the discard that surfaces it. Chars are pushed in
+        // reading order, so 'b' went first and sits deepest.
+        #expect(CodeItem(topItem(inty, .char).crux()).pretty()
+            == "( \"bar\" .stringPushAllChars )")
+        #expect(CodeItem(inty.stacks[.char]![2].crux()).pretty()
+            == "( \"bar\" .stringPushAllChars 2 .charPopItems )")
         #expect(stackString(inty, .string) == "[ \"fizz\" \"\" ]")
 
         doThis(.stringPushAllChars, to: inty)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
         #expect(topItem(inty, .char).isContingent == false)
-        #expect(topItem(inty, .char).index == 3)
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
         doThis(.stringPushAllChars, to: inty)
@@ -833,8 +854,10 @@ struct StringBehaviorTests {
 
         doThis(.stringSplit, to: inty)
         #expect(stackString(inty, .string) == "[ \"f\" \"e\" \"cd\" \"ab\" ]")
-        #expect(topItem(inty, .string).index == 3)
         #expect(topItem(inty, .string).isContingent == false)
+        // "ab" was split off first and so sits deepest, under three others.
+        #expect(CodeItem(inty.stacks[.string]![3].crux()).pretty()
+            == "( \"ab    cd \ne\tf\" .stringSplit 3 .stringPopItems )")
     }
 
     @Test func `stringSubstring works for empty`() {
