@@ -1,8 +1,23 @@
 # Stack economics: what piles up, what dries up
 
-Where do a random program's items accumulate, and where do they run out? This is the shape of **argument
-starvation** (Design Principles, §5) — the flaw the iterator work is aimed at — so it is worth knowing
-rather than guessing.
+Where do items accumulate, and where do they run out? This is the shape of **argument starvation**
+(Design Principles, §5) — the flaw the iterator work is aimed at — so it is worth measuring rather than
+guessing.
+
+Two halves, and they **disagree**, which turns out to be the most useful thing here:
+
+- **Part 1 — the language.** Which stacks do its instructions fill and drain? A structural question,
+  answered by driving every Behavior against a fully seeded interpreter.
+- **Part 2 — the programs.** Which instructions actually go hungry, and which stack was empty when they
+  did? An empirical question, answered by running 2,000 random programs.
+
+Part 1 describes a program's **steady state**; Part 2 describes its **opening**. `.code` is the
+language's scarcest resource *and* the one random programs never run out of. Both are true. Read §6
+before drawing conclusions from either half alone.
+
+---
+
+# Part 1: what the language fills and drains
 
 ## How this was measured
 
@@ -123,14 +138,114 @@ heaviest items in the language, since each retains its origin and body for its l
 stack full of abandoned half-run loops is a plausible memory shape that nothing currently discourages.
 `maxStackDepth` bounds the count and `maxItemWeight` bounds each one, so it is bounded — just untidy.
 
+---
+
+# Part 2: what actually starves, empirically
+
+The half above measures the **language**: which stacks its instructions fill and drain. This half
+measures **programs**: run a lot of random ones and see who actually goes hungry.
+
+`Tests/PushInterpreterTests/Infrastructure/Argument Starvation Probe.swift`, disabled and **run alone**
+(it draws from `fuzzRNG`, a shared global; a concurrent drawer breaks the seed). 2,000 programs × 120
+tokens, ~10 seconds.
+
+It does not read the `.error` stack. An error says "`intAdd` missing args" but never says *which* stack
+was short, and says nothing about the attempts that succeeded — so counting errors tells you which
+instructions are **common**, not which are **starved**. The probe steps by hand and inspects the
+interpreter in the instant before each instruction fires, giving an exact denominator and exact blame.
+
+**Two denominators, because they disagree wildly and both are true:**
+
+- *per attempt* — every firing. An instruction inside a loop body fires once per pass, so this is
+  dominated by whichever programs happened to loop. `boolPop` starving 123 times can be one program going
+  round 123 times with an empty `.bool`.
+- *per program* — each instruction once, at its first firing. The unweighted question: when a random
+  program reaches this instruction, is anything there for it? **This is the one to trust.**
+
+## 6. Structural scarcity is not empirical scarcity
+
+The headline finding, and it contradicts Part 1.
+
+| stack | asked | empty | rate |
+|---|---|---|---|
+| `.bool` | 3595 | 2815 | **78.3%** |
+| `.double` | 3120 | 2232 | **71.5%** |
+| `.char` | 1662 | 1065 | 64.1% |
+| `.int` | 10832 | 6882 | 63.5% |
+| `.string` | 4498 | 2329 | 51.8% |
+| `.vecDouble` / `.vecBool` / `.vecInt` / `.vecString` | ~2200 each | ~1100 | ~48% |
+| `.code` | 14947 | 981 | **6.6%** |
+| `.iterator` | 62273 | 1471 | 2.4% |
+| `.exec` | 2402 | 3 | 0.1% |
+
+**`.code` is the language's scarcest resource (0.29 producers/consumers) and random programs are swimming
+in it (6.6% empty).** Both are true. The generator emits literal blocks, and nothing consumes them fast
+enough — so a structural famine and an empirical glut coexist. `.bool` is the mirror image: the language
+*produces* bools faster than it eats them (1.52), yet random programs want one and find nothing 78% of
+the time, because a fresh program has produced none *yet*.
+
+The lesson is that Part 1 describes a program's **steady state** and Part 2 its **opening**. Most random
+programs never reach a steady state — they die on `stepLimit` first — so the empirical numbers are what
+a search actually experiences, and the structural ones are what a *good* program would experience.
+
+Both matter, for different reasons, and neither substitutes for the other.
+
+## 7. The iterator constructors are unfireable by accident, and that is mostly fine
+
+Every `iteratorFromX` starves ~100% of the time per program. The reason is arity:
+
+```
+.execDoRange           takes [.int, .int, .code]                         — 3 args, 2 stacks
+.iteratorFromIntRange  takes [.int ×5, .bool, .code]                     — 7 args, 3 stacks
+```
+
+Seven arguments across three stacks is a conjunction a random program essentially never satisfies. The
+blame column shows exactly that: `int:57 bool:34 code:20` — it fails on the ints first, then the bool,
+then the code.
+
+**This is by design and not a defect**: the constructors exist so `crux()` has something to say, not for
+programs to call. `execDoRange` — the instruction a program *should* use — starves rarely.
+
+But it does mean **twelve constructors sit in the genome pool as dead weight**, drawn as often as
+anything else and doing nothing. That is a real cost to a search, and it is the kind of thing
+`InstructionSets.swift` exists to fix: a `crux-only` set to subtract from an evolvable language would pay
+for itself. Worth doing alongside the `contingencySources` set already noted there.
+
+## 8. An iterator exists only during a loop
+
+Every `.iterator` instruction — `Peek`, `Swap`, `Rot`, `Eq`, the setters, `Step`, `PopState` — starves
+~100% per program, while `.iteratorPlay` starves 2.4% per attempt. Both are right: `.iterator` is nearly
+always occupied *while a loop runs*, and nearly always empty when a random program reaches an iterator
+instruction at some arbitrary point.
+
+So the whole `.iterator` vocabulary is only reachable from inside a loop body. That is not obviously
+wrong — a getter is for asking about *your* loop — but it means a genome carrying `.iteratorPeekStride`
+outside a body is carrying a no-op, and that the surplus in Part 1 (2.43) never materialises for a random
+program.
+
+## 9. `.exec` instructions are the best-fed in the language
+
+`execDup`, `execSwap`, `execRot`, `execEq`, `execPrint`: **0% starved**, every one. `.exec` is never
+empty while a program is running — if it were, the program would have stopped. They are the only
+instructions guaranteed an argument.
+
 ## What this suggests, in rough order
 
 Not decisions — the trade-offs belong to whoever picks these up.
 
-1. **Give `.code` a source.** `codeGather` (enumerated, unimplemented) would take N items and make a
-   block. This is the single highest-leverage gap, and the CodeItem change is what made it urgent.
-2. **Give the vectors a source.** Something like `vecIntGather`, or an empty-vector constant. Right now
-   the only vector a program can ever have is one it was handed.
-3. **Watch `.int`.** Not a bug, but the per-stack combinators are 84 draws on one shared channel, and
-   that is the starvation mechanism made concrete.
-4. Nothing needs doing about `.bool` or `.iterator`; they are healthy surpluses.
+1. **Give the vectors a source.** Something like `vecIntGather`, or an empty-vector constant. Right now
+   the only vector a program can ever have is one it was handed, which makes the whole vector half of the
+   language unreachable to a search that was not seeded with one. This is the clearest outright gap.
+2. **A `crux-only` instruction set to subtract from an evolvable language.** Twelve constructors are
+   drawn into genomes as often as anything else and can essentially never fire (§7). `InstructionSets.swift`
+   is where this belongs, next to the `contingencySources` set already noted there. Cheap, and it is pure
+   waste until done.
+3. **Give `.code` a source** — `codeGather` (enumerated, unimplemented). Structurally the tightest
+   bottleneck (§1), *but* §6 shows random programs are not short of code today, so this is less urgent
+   than it looked from Part 1 alone. It will bite a program that gets past its opening, which is exactly
+   the program a search is trying to find.
+4. **Watch `.int`.** Not a bug, but the per-stack combinators are 84 draws on one shared channel, and it
+   is empty 63.5% of the time it is wanted. That is the starvation mechanism made concrete, from both
+   ends at once.
+5. Nothing needs doing about `.bool` structurally — but note the 78.3% empirical shortfall is the worst
+   in the language, and it is an *opening* problem, not a steady-state one.

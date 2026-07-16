@@ -74,6 +74,7 @@ This feels like a reasonable collection:
 - codeCutAtGap: convert `.code` argument to a flat Plushy, count points and gaps, and cut where indexed by an `.int`; repair both pieces with `Open` and `Close` as needed at the ends, then return
 - codeCutRootAtGap: cut the root of a `.code` item where indexed by an `'.int`
 - codeDepth: maximum steps from root to leaf
+- codeDo: pop code item and unwrap onto .exec stack
 - codeFlatten: flatten then entire tree of a `.code` item in post-order traversal
 - codeFlattenPoint: find the indexed point in the tree and flatten that
 - codeFlattenRange: find two indexed gaps in the tree, and flatten every container with one end overlapping that range; do not flatten containers that are entirely inside or outside the range
