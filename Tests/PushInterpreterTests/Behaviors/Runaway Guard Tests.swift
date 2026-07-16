@@ -29,14 +29,23 @@ struct RunawayGuardTests {
     }
 
     @Test func `the iterators set names the looping instructions, not others`() {
-        #expect(PushInstruction.iterators.contains(.execDoRange))
+        #expect(PushInstruction.iterators.contains(.iteratorPlay))
+        #expect(PushInstruction.iterators.contains(.iteratorPlayDelayed))
         #expect(PushInstruction.iterators.contains(.execY))
         #expect(PushInstruction.iterators.contains(.vecIntIterate))
         #expect(!PushInstruction.iterators.contains(.intAdd))
+
+        // `.execDoRange` and its siblings are deliberately absent now: they fire
+        // once, build an iterator and hand it to `.iteratorPlay`, so they never
+        // sit on `.exec` waiting for a next pass. `.iteratorPlay` is what does,
+        // and it is the signal in their place.
+        #expect(!PushInstruction.iterators.contains(.execDoRange))
+        #expect(!PushInstruction.iterators.contains(.execDoCount))
+        #expect(!PushInstruction.iterators.contains(.execDoTimes))
     }
 
     @Test func `a piling stack with a live looper is stopped`() {
-        let interp = loaded(intPile: 1200, exec: [.execDoRange])
+        let interp = loaded(intPile: 1200, exec: [.iteratorPlay])
         interp.enforceRunawayGuard()
         #expect(interp.stacks[.exec]!.isEmpty)   // unwound
         #expect(errorMarkers(interp).contains { $0.hasPrefix(Interpreter.runawayMarker) })
@@ -45,7 +54,7 @@ struct RunawayGuardTests {
     @Test func `a monotone counter with a live looper is stopped`() {
         let interp = Interpreter()
         interp.stacks[.int] = Deque((0..<1200).map { IntItem($0) as any Item })   // 0,1,2,… distinct + monotone
-        interp.stacks[.exec] = Deque([InstructionItem(.execDoRange) as any Item])
+        interp.stacks[.exec] = Deque([InstructionItem(.iteratorPlay) as any Item])
         interp.enforceRunawayGuard()
         #expect(interp.stacks[.exec]!.isEmpty)
         #expect(errorMarkers(interp).contains { $0.contains("counting monotonically") })
@@ -62,21 +71,21 @@ struct RunawayGuardTests {
         let interp = Interpreter()
         // Squares mod 97: ~49 distinct values, non-monotone, no short period.
         interp.stacks[.int] = Deque((0..<1200).map { IntItem(($0 * $0) % 97) as any Item })
-        interp.stacks[.exec] = Deque([InstructionItem(.execDoRange) as any Item])
+        interp.stacks[.exec] = Deque([InstructionItem(.iteratorPlay) as any Item])
         interp.enforceRunawayGuard()
         #expect(!interp.stacks[.exec]!.isEmpty)   // data gate fails
         #expect(errorMarkers(interp).isEmpty)
     }
 
     @Test func `a stack below the trigger is ignored even with a looper`() {
-        let interp = loaded(intPile: 100, exec: [.execDoRange])   // 100 < trigger
+        let interp = loaded(intPile: 100, exec: [.iteratorPlay])   // 100 < trigger
         interp.enforceRunawayGuard()
         #expect(!interp.stacks[.exec]!.isEmpty)
         #expect(errorMarkers(interp).isEmpty)
     }
 
     @Test func `the guard can be disabled`() {
-        let interp = loaded(intPile: 1200, exec: [.execDoRange])
+        let interp = loaded(intPile: 1200, exec: [.iteratorPlay])
         interp.config.runawayGuardEnabled = false
         interp.enforceRunawayGuard()
         #expect(!interp.stacks[.exec]!.isEmpty)

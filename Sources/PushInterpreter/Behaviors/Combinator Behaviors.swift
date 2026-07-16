@@ -21,6 +21,7 @@ nonisolated extension Interpreter {
             .vecBool,
             .vecDouble,
             .vecString,
+            .iterator,
         ]
 
         var result: [PushInstruction: Behavior] = [:]

@@ -31,6 +31,13 @@ struct InterpreterRobustnessTests {
         case .vecInt:    return VecIntItem([1, 2, 3])
         case .vecDouble: return VecDoubleItem([1.0, 2.0])
         case .vecString: return VecStringItem(["a", "b"])
+        case .iterator:  return IteratorItem(
+                            kind: .counting(stride: 1),
+                            origin: IntItem(0),
+                            destination: IntItem(3),
+                            body: CodeItem([BoolItem(false)]),
+                            emits: true
+                         )
         case .exec:      return BoolItem(false)
         case .error:     return ErrorItem("x")
         }

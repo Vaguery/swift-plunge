@@ -14,7 +14,12 @@ struct ExecBehaviorTests {
 
     var inty = Interpreter()
 
-    @Test func `execDoCount creates an execDoRange continuation when counter > 0`() {
+    /// `.execDoCount` used to rewrite itself into an `.execDoRange` continuation
+    /// and let that do the counting, re-pushing both bounds onto `.int` every
+    /// pass. It now builds an iterator that holds the bounds and hands it to
+    /// `.iteratorPlay` — the counting is Swift's job, and none of it is expressed
+    /// in Push.
+    @Test func `execDoCount builds an iterator and plays it when counter > 0`() {
         loadInts(inty, ints: [3456])
         // The body is a code argument now, so it waits on `.code`.
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))
@@ -24,24 +29,47 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .int) == "[ 3456 ]")
 
         doThis(.execDoCount, to: inty)
-        #expect(stackString(inty, .exec) == "[ 0 3456 ( false ) .execDoRange ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «0→3456 by 1 @0 ( false )» ]")
+        // The bounds are inside the iterator now, not loose on `.int`.
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ 3456 ( false ) .execDoRange ]")
+        inty.step()   // one pass: the index, the body, and the loop's next copy
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «0→3456 by 1 @1 ( false )» ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 3456 0 ]")
-        #expect(stackString(inty, .bool) == "[ ]")
+        inty.step()   // the body comes to rest on .code, data until asked for
+        #expect(stackString(inty, .exec) == "[ .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .code) == "[ ( false ) ]")
+
+        inty.step()   // .codeDo spreads it, so this pass's body runs
+        #expect(stackString(inty, .exec) == "[ false .iteratorPlay ]")
+        #expect(stackString(inty, .code) == "[ ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 3456 0 ]")
-        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+    }
+
+    /// Counting 0 toward `x` is exactly `x` passes, because the range stops one
+    /// short of its destination.
+    @Test func `execDoCount runs its body exactly count times`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(5),
+            CodeItem([BoolItem(true)]),
+            InstructionItem(.execDoCount),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(inty.stacks[.bool]!.count == 5)
+        // …and each pass left its index behind for the body to have read.
+        #expect(stackString(inty, .int) == "[ 4 3 2 1 0 ]")
+        #expect(inty.stacks[.iterator]!.isEmpty)
     }
 
     @Test func `execDoCount doesn't loop if the index < 1`() {
@@ -65,21 +93,39 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ 3 4 ]")
 
+        // Building the iterator and running a pass are separate now: the
+        // instruction only builds, and `.iteratorPlay` does the work.
         doThis(.execDoRange, to: inty)
-        #expect(stackString(inty, .exec) == "[ 4 ( false ) .codeDo ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «4→3 by -1 @0 ( false )» ]")
         #expect(stackString(inty, .int) == "[ ]")
+
+        // One pass, and no continuation: 4 and 3 are within a stride of each
+        // other, so this loop was over before it began. The index goes straight to
+        // `.int` rather than travelling via `.exec` as it used to, and the spent
+        // iterator is consumed rather than coming to rest.
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ]")
+        #expect(stackString(inty, .int) == "[ 4 ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
     }
 
     @Test func `execDoRange handles extreme bounds without trapping`() {
-        // start - end overflows (and abs would trap on Int.min); the guard must
-        // treat the counters as far apart and take the looping branch, not crash
+        // The difference between the bounds overflows (and abs would trap on
+        // Int.min); `hasNextPass` must read that as "as far apart as possible" and
+        // keep looping, not crash.
         loadInts(inty, ints: [Int.min, Int.max])   // end = Int.min, start = Int.max
         // The body is a code argument now, so it waits on `.code`.
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))
 
         doThis(.execDoRange, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .exec).contains(".execDoRange"))
+        #expect(stackString(inty, .exec).contains(".iteratorPlay"))
+
+        inty.step()
+        #expect(stackString(inty, .int) == "[ 9223372036854775807 ]")
+        #expect(stackString(inty, .exec).contains(".iteratorPlay"))
+        #expect(stackString(inty, .iterator).contains("@1"))
     }
 
     @Test func `execDoRange loops if the start and end are different by 2+`() {
@@ -91,70 +137,62 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .int) == "[ 4 7 ]")
 
+        // Counting DOWN from 7 toward 4, since start > end. The whole loop is one
+        // `.iteratorPlay` and one iterator; the bounds never touch `.int` again.
         doThis(.execDoRange, to: inty)
-        #expect(stackString(inty, .exec) == "[ 7 ( false ) .codeDo 6 4 ( false ) .execDoRange ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @0 ( false )» ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo 6 4 ( false ) .execDoRange ]")
+        inty.step()   // first pass: index 7, the body, and the loop's next copy
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @1 ( false )» ]")
         #expect(stackString(inty, .int) == "[ 7 ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ .codeDo 6 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 7 ]")
-        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .code) == "[ ( false ) ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ false 6 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 7 ]")
-        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ false .iteratorPlay ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ 6 4 ( false ) .execDoRange ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(stackString(inty, .int) == "[ 7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ 4 ( false ) .execDoRange ]")
+        inty.step()   // second pass: index 6
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @2 ( false )» ]")
         #expect(stackString(inty, .int) == "[ 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
 
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 4 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 4 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ 6 ( false ) .codeDo 5 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo 5 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ .codeDo 5 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ false 5 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 6 7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ 5 4 ( false ) .execDoRange ]")
-        #expect(stackString(inty, .int) == "[ 6 7 ]")
+        for _ in 0..<3 { inty.step() }   // run the body again
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(stackString(inty, .bool) == "[ false false ]")
+
+        inty.step()   // third pass: index 5, and the loop ends there
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ]")
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        // The destination is EXCLUDED: 4 is never emitted, and the iterator is
+        // spent rather than resting. This preserves the pre-iterator behavior
+        // exactly — see `hasNextPass`.
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// The loop index is genuinely derived, and its record names its origin and
+    /// its offset — bounded, and independent of how many passes have run.
+    @Test func `execDoRange indices record origin and offset`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(7), IntItem(4), CodeItem([]), InstructionItem(.execDoRange),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        let last = inty.stacks[.int]!.first!
+        #expect(CodeItem(last.crux()).pretty() == "( 7 -2 .intAdd )")
     }
 
     @Test func `execDoTimes doesn't loop if the counter is not positive`() {
@@ -183,44 +221,48 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .int) == "[ 33 ]")
 
-        // The continuation is `body .codeDo count-1 body .execDoTimes`: the body
-        // lands on `.code`, `.codeDo` spreads it to run it, and the second copy
-        // re-supplies `.code` for the next pass.
+        // Identical to `.execDoCount`'s iterator but `silent`: the index is the
+        // loop's own business and is never shown to the body. That flag is now the
+        // whole of the difference between the two instructions.
         doThis(.execDoTimes, to: inty)
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo 32 ( false ) .execDoTimes ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «0→33 by 1 @0 silent ( false )» ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+
+        inty.step()   // a pass emits the body and the loop's next copy — no index
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «0→33 by 1 @1 silent ( false )» ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
         inty.step()
-        #expect(stackString(inty, .exec) == "[ .codeDo 32 ( false ) .execDoTimes ]")
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ false 32 ( false ) .execDoTimes ]")
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ 32 ( false ) .execDoTimes ]")
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
-
-        inty.step()   // the counter comes to rest on .int
-        #expect(stackString(inty, .exec) == "[ ( false ) .execDoTimes ]")
-        #expect(stackString(inty, .int) == "[ 32 ]")
-
-        // The counter is the one derived result here, and its provenance folds to
-        // a single node rather than deepening once per pass. `.first` rather than
-        // `[0]` so a miss reports instead of trapping the whole suite.
-        let counter = inty.stacks[.int]!.first
-        #expect(counter?.call.count == 1)
-        #expect(counter?.call.first is IteratorItem)
-        #expect(CodeItem(counter!.crux()).pretty() == "( 33 -1 .intAdd )")
-
-        inty.step()   // the re-supplied body comes to rest on .code, ready again
-        #expect(stackString(inty, .exec) == "[ .execDoTimes ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo .iteratorPlay ]")
         #expect(stackString(inty, .code) == "[ ( false ) ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ false .iteratorPlay ]")
+
+        inty.step()
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+        // Nothing about the count is visible in Push while the loop runs.
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+    /// "Do the body, x times" — and the count never leaks onto `.int`.
+    @Test func `execDoTimes runs its body exactly count times, silently`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(33),
+            CodeItem([BoolItem(true)]),
+            InstructionItem(.execDoTimes),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(inty.stacks[.bool]!.count == 33)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(inty.stacks[.iterator]!.isEmpty)
     }
 
     @Test func `execDoWhile acts once even if a false is found`() {

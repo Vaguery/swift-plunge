@@ -12,6 +12,7 @@ import DequeModule
 public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable, Codable, Sendable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
+    case iterator
     case error
 
 
@@ -63,14 +64,15 @@ nonisolated extension PushStack {
         case .vecInt:    return item is VecIntItem
         case .vecDouble: return item is VecDoubleItem
         case .vecString: return item is VecStringItem
+        case .iterator:  return item is IteratorItem
         case .error:     return item is ErrorItem
         case .exec:      return true
         }
     }
 
     /// The stack an item comes to rest on, or `nil` for items that never rest
-    /// on one: `InstructionItem` (it executes rather than lands) and
-    /// `IteratorItem` (provenance-only — see IteratorItem.swift).
+    /// on one — which is now only `InstructionItem`, since it executes rather
+    /// than lands.
     ///
     /// Shared by `Interpreter.pushDefault`, which routes a literal popped off
     /// `.exec`, and by `crux()`, which needs an item's stack to name that
@@ -87,6 +89,7 @@ nonisolated extension PushStack {
         case is VecDoubleItem: .vecDouble
         case is VecIntItem:    .vecInt
         case is VecStringItem: .vecString
+        case is IteratorItem:  .iterator
         case is ErrorItem:     .error
         default:               nil
         }

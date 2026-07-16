@@ -30,6 +30,17 @@ nonisolated extension Interpreter {
             }
         )
 
+    static let iteratorPrint_Behavior =
+        BehaviorWithSideEffects(
+            .iteratorPrint,
+            takes: [.iterator],
+            modifier: { (interpreter, args) in
+                let (x) = args[0] as! IteratorItem
+                interpreter.printout.append("\(x.pretty())\n")
+                return []
+            }
+        )
+
     static let execPrint_Behavior =
         BehaviorWithSideEffects(
             .execPrint,
@@ -150,6 +161,7 @@ nonisolated extension Interpreter {
             .doublePrint : doublePrint_Behavior,
             .execPrint : execPrint_Behavior,
             .intPrint : intPrint_Behavior,
+            .iteratorPrint : iteratorPrint_Behavior,
             .printNewline : printNewline_Behavior,
             .stringPrint : stringPrint_Behavior,
             .vecBoolPrint : vecBoolPrint_Behavior,

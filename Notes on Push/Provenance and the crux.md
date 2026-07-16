@@ -133,6 +133,11 @@ harmless: the obligation is about the value's own resting place, not about a cle
 
 ## The iteration counter
 
+> **Read the "DONE" subsection at the end of this section first.** The reasoning below is how the
+> counter problem was solved the first time, and it is kept because the *argument* is still the point.
+> But the provenance-only `IteratorItem` it describes no longer exists: making the iterator first-class
+> made the folding node unnecessary, and it was deleted.
+
 Some growth is honest. A loop counter really does get 1 added to it every few steps, so it has a real
 excuse for a large call tree — its crux is `y0 1 .intAdd 1 .intAdd 1 .intAdd …`, faithful and O(n).
 
@@ -168,10 +173,15 @@ errors at a different step than adding 1000 does. Accepted deliberately.
 
 ### To revisit: extending IteratorItem
 
-**Counting down and counting by an increment already work**, without a new field. `offset` is a signed
-running total, and `steppedCall(from:by:)` takes an arbitrary step, so a descending loop folds to a
-negative offset (`60 -49 .intAdd`, which the tests pin) and a loop striding by 3 folds to `9`, `12`,
-`15`… Even a *varying* stride accumulates correctly, because the total is all the reconstruction needs.
+*(Partly overtaken: the first-class type has a real `stride`, so the "structure vs net effect" question
+below is answered for the additive case — the iterator records 333 passes of +3 as `stride: 3` and a
+cursor of 333, which says exactly how it got there. The multiplicative case is still open. The rest of
+this subsection is kept for that argument.)*
+
+**Counting down and counting by an increment already work**, without a new field. The offset was a
+signed running total taking an arbitrary step, so a descending loop folded to a negative offset
+(`60 -49 .intAdd`, which the tests still pin) and a loop striding by 3 folded to `9`, `12`, `15`… Even a
+*varying* stride accumulated correctly, because the total is all the reconstruction needs.
 
 What an additional field would buy is **structure rather than net effect**. `offset` records *where the
 counter ended up*; it cannot say *how it got there*. A `step` field alongside a count would distinguish
@@ -185,26 +195,45 @@ That needs an operation field (add vs. multiply, or a general step instruction),
 `crux()` emits that operation instead of a hard-coded `.intAdd`. Worth designing only when a
 multiplicative iterator actually exists in the language.
 
-### Planned: lifting IteratorItem to a first-class type
+### DONE: IteratorItem is a first-class type, and the folding node is gone
 
-**This is a decision, not an open question.** `IteratorItem` is intended to become a proper Push type —
-its own stack, its own combinators, the full treatment. It arrives here from an earlier interpreter
-project, where it was introduced for exactly the reason it is introduced here, and where making it
-first-class **made the language markedly more evolvable**. The `exec` instructions that produce
-iterators will change so the first-class item is popped and pushed as part of the transaction.
+**Everything above about the folding node is now history.** `IteratorItem` is a proper Push type: its own
+`.iterator` stack, its own combinators, its own getters, produced by the `exec` looping instructions and
+by `.iteratorFromIntRange`. See "Notes on Push/The first-class iterator.md" for the design.
 
-What exists today is the provenance-only core of that type, and it is deliberately a placeholder:
-`PushStack.defaultStack(for:)` returns **nil** for it, meaning "this does not come to rest anywhere
-yet." That nil is the right answer for now, and things that consume it (the crux round-trip sweep, for
-instance) should simply skip what has no resting stack rather than build around the gap.
+The part worth recording *here* is what that did to provenance, because it is not what this document
+predicted. The plan was that a first-class iterator would be popped and pushed as part of the loop's
+transaction, with the provenance-only node carrying on inside `call` as before. **What actually happened
+is that the node became unnecessary and was deleted.**
 
-Note the crux obligation is *already* satisfied and will stay satisfied either way: `crux()` never emits
-an `IteratorItem` — it expands to `base.crux() + [offset, .intAdd]`, all ordinary items — so no
-reconstruction can encounter one. Nothing in the language constructs one either; only `steppedCall`
-does, and only into a `call`. Today a stray one on `.exec` would be popped, find no resting stack, and
-be refused with an `INVARIANT:` marker. That is placeholder behaviour, not the intended semantics.
+The reason is that `steppedCall` only ever existed to *rediscover* something the loop already knew. It
+pattern-matched `from.call[0] as? IteratorItem` to work out "is this counter already an offset from some
+base, and if so which?" — a question with an obvious answer that was simply not written down anywhere.
+Once the iterator holds its own origin and cursor, the answer is right there, and the counter can name
+its origin and offset in ordinary items:
 
-Sequencing: this wants to come after the CodeItem change, which is itself the next task.
+```
+counter.call = [origin, IntItem(cursor × stride), .intAdd]      crux: y0 999 .intAdd
+```
+
+Identical crux, identical O(1) bound, no special node, no folding rule, and no `crux()` override. The
+whole apparatus collapses into one arithmetic projection (`IteratorItem.projection`). `IteratorItem` now
+appears in nobody's `call` at all — it only rests on `.iterator`.
+
+Two things this document worried about also dissolved rather than being solved:
+
+- **`elidingOverBudgetProvenance` was a no-op on the type** — it clears `call`, but the old
+  `callWeight` was computed from `base`, a stored field, so the budget could never bite. A real `call`
+  plus a stored `callWeight` puts it back under the same backstop as everything else.
+- **`AnyItem` could not encode it**, because `base` was reachable only through `call`, which the
+  envelope drops by contract. The first-class type's origin, body, bounds and cursor are *value* fields,
+  so the envelope carries them without breaching that contract.
+
+The iterator's own `call` reconstructs it **by state** rather than by history —
+`origin dest stride cursor emits (body) .iteratorFromIntRange` — which is the same self-describing trick
+the old node used, generalized. O(1) forever, because origin, destination and body are fixed for the
+loop's life and only the two literals change. And it keeps the link to *how a bound was computed*:
+`origin.crux()` expands, so a loop over a computed range still explains where the range came from.
 
 ## The backstop
 

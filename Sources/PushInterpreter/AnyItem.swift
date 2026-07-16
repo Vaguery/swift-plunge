@@ -8,7 +8,26 @@
 /// The concrete `Item` types, used as a Codable type tag.
 nonisolated enum ItemKind: String, Codable, Sendable {
     case bool, char, code, double, instruction, int, string
-    case vecBool, vecDouble, vecInt, vecString, error
+    case vecBool, vecDouble, vecInt, vecString, iterator, error
+}
+
+
+/// Everything an `IteratorItem` needs to be rebuilt.
+///
+/// The only item whose envelope `value` is a structure rather than a scalar: an
+/// iterator's `value` is just its cursor, but what it *is* — the loop it
+/// describes — is the whole of this. All of it is value content (where the loop
+/// starts, where it ends, its stride, how far it has come, what it emits), not
+/// history, so carrying it does not breach the envelope's rule against
+/// serializing provenance. `origin` and `body` nest as `AnyItem`s, exactly as a
+/// `CodeItem`'s contents do.
+nonisolated struct IteratorState: Codable, Sendable {
+    var cursor: Int
+    var kind: IteratorKind
+    var origin: AnyItem
+    var destination: AnyItem?
+    var body: AnyItem
+    var emits: Bool
 }
 
 
@@ -73,6 +92,22 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             item = VecIntItem(try container.decode([Int].self, forKey: .value))
         case .vecString:
             item = VecStringItem(try container.decode([String].self, forKey: .value))
+        case .iterator:
+            let state = try container.decode(IteratorState.self, forKey: .value)
+            guard let body = state.body.item as? CodeItem else {
+                throw DecodingError.dataCorruptedError(
+                    forKey: .value, in: container,
+                    debugDescription: "an iterator's body must be a code block, got \(type(of: state.body.item))"
+                )
+            }
+            item = IteratorItem(
+                kind: state.kind,
+                origin: state.origin.item,
+                destination: state.destination?.item,
+                body: body,
+                emits: state.emits,
+                cursor: state.cursor
+            )
         case .error:
             item = ErrorItem(try container.decode(String.self, forKey: .value))
         }
@@ -114,6 +149,19 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case let concrete as VecStringItem:
             try container.encode(ItemKind.vecString, forKey: .type)
             try container.encode(concrete.value, forKey: .value)
+        case let concrete as IteratorItem:
+            try container.encode(ItemKind.iterator, forKey: .type)
+            try container.encode(
+                IteratorState(
+                    cursor: concrete.value,
+                    kind: concrete.kind,
+                    origin: AnyItem(concrete.origin),
+                    destination: concrete.destination.map(AnyItem.init),
+                    body: AnyItem(concrete.body),
+                    emits: concrete.emits
+                ),
+                forKey: .value
+            )
         case let concrete as ErrorItem:
             try container.encode(ItemKind.error, forKey: .type)
             try container.encode(concrete.value, forKey: .value)

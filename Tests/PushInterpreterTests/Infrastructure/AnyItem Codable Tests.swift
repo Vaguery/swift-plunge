@@ -37,6 +37,61 @@ struct AnyItemCodableTests {
         }
     }
 
+    /// The one item whose envelope `value` is a structure rather than a scalar:
+    /// an iterator's `value` is only its cursor, but what it *is* is the whole
+    /// loop. All of that is value content, not history, so the envelope carries it
+    /// without breaking its own rule against serializing provenance.
+    @Test func `an iterator round-trips its whole state`() throws {
+        let iterator = IteratorItem(
+            kind: .counting(stride: -3),
+            origin: IntItem(40),
+            destination: IntItem(4),
+            body: CodeItem([IntItem(1), InstructionItem(.intAdd)]),
+            emits: true,
+            cursor: 7
+        )
+        let back = try roundTrip(iterator) as? IteratorItem
+        #expect(back?.isEqual(to: iterator) == true)
+        #expect(back?.value == 7)
+        #expect(back?.kind == .counting(stride: -3))
+        #expect(back?.emits == true)
+        #expect((back?.destination as? IntItem)?.value == 4)
+    }
+
+    /// A collection iterator has no end bound of its own, and the optional has to
+    /// survive as nil rather than becoming something else.
+    @Test func `an iterator with no destination round-trips`() throws {
+        let iterator = IteratorItem(
+            kind: .elements,
+            origin: VecBoolItem([true, false]),
+            body: CodeItem([]),
+            emits: true
+        )
+        let back = try roundTrip(iterator) as? IteratorItem
+        #expect(back?.isEqual(to: iterator) == true)
+        #expect(back?.destination == nil)
+    }
+
+    /// Provenance is dropped, as it is for every other item — the envelope's
+    /// contract. The iterator's *state* is not provenance and must survive.
+    @Test func `an iterator's provenance is dropped but its state is not`() throws {
+        var iterator = IteratorItem(
+            kind: .counting(stride: 1),
+            origin: IntItem(0),
+            destination: IntItem(9),
+            body: CodeItem([]),
+            emits: false,
+            cursor: 3
+        )
+        iterator.call = iterator.reconstruction()
+        #expect(!iterator.call.isEmpty)
+
+        let back = try roundTrip(iterator) as? IteratorItem
+        #expect(back?.call.isEmpty == true)
+        #expect(back?.value == 3)
+        #expect(back?.isEqual(to: iterator) == true)   // equality is about values
+    }
+
     // A nested CodeItem (code is "just text too") round-trips recursively.
     @Test func `nested CodeItem round-trips recursively`() throws {
         let program = CodeItem([

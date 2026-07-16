@@ -8,138 +8,303 @@
 import Foundation
 
 
-/// A provenance-only node recording "this base value, plus an offset".
+/// How an iterator's cursor projects into the item it emits each pass.
 ///
-/// Loop counters are the one place `call` has an honest excuse to grow: a
-/// counter really does get 1 added to it every few steps, so its faithful
-/// history is `y0 1 .intAdd 1 .intAdd 1 .intAdd …`, linear in the iteration
-/// count. Recording that honestly is what runs the interpreter out of memory.
+/// The cursor is **always an `Int`**, and everything else is a projection of it.
+/// That is what lets one type cover counting, walking a collection, and (later)
+/// sampling a Double range: a Double range needs no Double counter, only an
+/// origin, an endpoint, and a number of steps to divide the span into.
+public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
+    /// `origin` and `destination` are `IntItem`s; pass `i` emits
+    /// `origin + i × stride` to `.int`.
+    case counting(stride: Int)
+
+    /// `origin` is a `StringItem` or a vector; pass `i` emits `origin[i]` to the
+    /// matching scalar stack.
+    case elements
+}
+
+
+/// One loop's state, entire.
 ///
-/// The trick that collapses it is that an `IteratorItem`'s **own `call` is
-/// always empty**. It is self-describing rather than derived, so it has no
-/// history of its own to grow — which is what makes it different from simply
-/// pointing each counter at the previous one. Because `base` stays fixed for
-/// the life of a loop, stepping is `offset + 1` against that same base and the
-/// record stays exactly one node deep forever:
+/// Before this type was first-class, `execDoRange` kept its bounds as loose ints
+/// on `.int` and rebuilt its own recursion as Push source every pass — the
+/// counting was done *in Push*. Now the bounds, the stride and the cursor live
+/// in here for the loop's duration, the counting is done in Swift, and the only
+/// Push-visible artifacts of a pass are the emitted payload and one continuation
+/// token. State escapes by stepping, or through the getters (`.iteratorStart`,
+/// `.iteratorEnd`, `.iteratorStride`, `.iteratorBody`), and by no other route.
 ///
-///     c1.call   = [IteratorItem(y0, +1)]
-///     c999.call = [IteratorItem(y0, +999)]      crux: y0 999 .intAdd
+/// ## Provenance
 ///
-/// It never comes to rest anywhere: `PushStack.defaultStack(for:)` returns nil
-/// for it and no stack `accepts` it, so a leak onto a value stack trips the
-/// existing `INVARIANT:` marker instead of corrupting a stack. (`.exec` accepts
-/// any item, so it is not self-policing there.) It has no `AnyItem` envelope
-/// case either, so an attempt to serialize one fails loudly rather than
-/// silently — appropriate, since `AnyItem` drops `call` regardless.
+/// This type began as a provenance-only node living inside `call`, recording
+/// "this counter is `base` plus an offset" so that a loop counter's history
+/// stayed one node deep however many passes ran. **That node is gone.** Holding
+/// `origin` and the cursor here makes it unnecessary: a counter can name its
+/// origin and its offset directly, in ordinary items, because the iterator
+/// already knows both. The emitted counter records
+/// `[origin, IntItem(offset), .intAdd]`, whose crux is exactly what the folding
+/// node used to produce — `y0 999 .intAdd` — with no special node to fold.
 ///
-/// **Known caveat:** folding is not overflow-faithful. With `base` near
+/// The iterator's own `call` reconstructs it *by state* rather than by history:
+/// `origin dest stride cursor emits (body) .iteratorFromIntRange`. That is O(1)
+/// forever, because `origin`, `destination` and `body` are fixed for the loop's
+/// life and only the two literals change from pass to pass. It is self-describing
+/// in the same way the old node was — see "The provenance law" in Items.swift.
+///
+/// **Known caveat:** projection is not overflow-faithful. With `origin` near
 /// `Int.max`, adding 1 a thousand times errors at a different step than adding
 /// 1000 does. Accepted deliberately.
-///
-/// **This is the provenance-only core of a type that is planned to become
-/// first-class** — its own stack, its own combinators — as it is in the earlier
-/// interpreter this comes from, where making it first-class made the language
-/// markedly more evolvable. The `exec` instructions that produce iterators will
-/// change so the first-class item is popped and pushed as part of the
-/// transaction. Until then `PushStack.defaultStack(for:)` returns nil for it,
-/// meaning "does not come to rest anywhere yet"; callers should skip what has no
-/// resting stack rather than build around the gap. Wants to follow the CodeItem
-/// `.exec`→`.code` change. See "Notes on Push/Provenance and the crux.md".
-///
-/// **Also to revisit:** counting down and striding by an increment need no new
-/// field — `offset` is a signed running total and `steppedCall(from:by:)` takes
-/// any step. A `step` field would record *structure* ("333 passes of +3" vs
-/// "999 passes of +1"), which the net offset cannot distinguish and which the
-/// explanatory goal may want. Non-additive stepping (a doubling loop) genuinely
-/// cannot be expressed by an offset and would need an operation field.
 public nonisolated struct IteratorItem: Item, Pretty {
-    /// The offset from `base`; negative for a descending loop.
+
+    /// **The cursor**: how many passes have been taken from `origin`. Everything
+    /// this iterator emits is a projection of this one number.
     public var value: Int
 
-    /// The value this counter was originally stepped away from. Fixed for the
-    /// life of the loop, which is precisely why folding stays O(1).
-    public var base: any Item
+    /// How `value` projects into the emitted item.
+    public var kind: IteratorKind
 
-    /// Always empty. An `IteratorItem` describes itself, and that is what bounds
-    /// the counter's provenance.
-    public var call: [any Item]
+    /// The start value, or the collection being walked. **Fixed for the life of
+    /// the loop**, which is precisely why provenance stays O(1) — and it keeps
+    /// its own `call`, so the crux can still say how a computed bound was
+    /// arrived at.
+    public var origin: any Item
+
+    /// The end bound. `nil` for `.elements`, whose end is its origin's length.
+    public var destination: (any Item)?
+
+    /// Emitted to `.code` every pass, for `.codeDo` to run.
+    public var body: CodeItem
+
+    /// Whether a pass pushes its projection at all. `execDoRange` leaves its
+    /// index on `.int` for the body to read; `execDoTimes` deliberately does not.
+    public var emits: Bool
+
+    public var call: [any Item] {
+        didSet { callWeight = Self.weighCall(call) }
+    }
 
     public var isContingent: Bool
 
-    public init(base: any Item, offset: Int, isContingent: Bool = false) {
-        self.value = offset
-        self.base = base
-        self.call = []
+    public var callWeight: Int
+
+    public init(
+        kind: IteratorKind,
+        origin: any Item,
+        destination: (any Item)? = nil,
+        body: CodeItem,
+        emits: Bool,
+        cursor: Int = 0,
+        call: [any Item] = [],
+        isContingent: Bool = false
+    ) {
+        self.value = cursor
+        self.kind = kind
+        self.origin = origin
+        self.destination = destination
+        self.body = body
+        self.emits = emits
+        self.call = call
         self.isContingent = isContingent
+        self.callWeight = Self.weighCall(call)
     }
 
-    /// `base`'s own reconstruction, then the one arithmetic step that reaches
-    /// this value. Overriding this is why `crux()` is declared as an `Item`
-    /// requirement and not only in an extension — an extension-only method would
-    /// dispatch statically through `any Item` and silently ignore this.
-    public func crux() -> [any Item] {
-        base.crux() + [IntItem(value), InstructionItem(.intAdd)]
-    }
-
-    /// The node adds no value content of its own; it only refers to `base`.
-    public var weight: Int { base.weight }
-
-    /// Computed, not stored: `call` is always empty here, so the shared
-    /// `weighCall(call)` would report 1 and hide `base` entirely. The crux this
-    /// node emits is `base`'s plus the two-item `offset .intAdd` step, and that
-    /// is what the budget needs to see. Constant time, because `base` stores its
-    /// own — and constant across iterations, because `base` never changes.
-    public var callWeight: Int {
-        let (sum, overflowed) = base.callWeight.addingReportingOverflow(2)
+    /// The content this iterator holds, for the `maxItemWeight` budget: its
+    /// source and its body, both of which it retains for the loop's duration.
+    public var weight: Int {
+        let (sum, overflowed) = origin.weight.addingReportingOverflow(body.weight)
         return overflowed ? Int.max : sum
     }
 
-    // Hand-written rather than synthesized: `base` is an existential, so
-    // `IteratorItem` cannot be `Equatable` and pick up the shared default.
+    // Hand-written rather than synthesized: `origin` is an existential, so
+    // `IteratorItem` cannot be `Equatable` and pick up the shared default. That
+    // costs nothing — `eqCombinator_Behavior` reaches equality through
+    // `isEqual(to:)`, so `.iteratorEq` works without the conformance.
     //
     // Value equality, like every other Item (see "Equality is about values" in
-    // Items.swift) — and this node's value is the pair, since "y0 + 3" and
-    // "y1 + 3" describe different numbers.
+    // Items.swift), and this item's value is its whole state: two iterators over
+    // the same range differ if they are at different cursors, or emit different
+    // bodies.
     public func isEqual(to other: any Item) -> Bool {
         guard let other = other as? IteratorItem else { return false }
-        return value == other.value && base.isEqual(to: other.base)
+        guard
+            value == other.value,
+            kind == other.kind,
+            emits == other.emits,
+            origin.isEqual(to: other.origin),
+            body.isEqual(to: other.body)
+        else { return false }
+        switch (destination, other.destination) {
+        case (nil, nil):             return true
+        case let (mine?, theirs?):   return mine.isEqual(to: theirs)
+        default:                     return false
+        }
     }
 
     public func pretty() -> String {
-        "«\(base.pretty()) \(value < 0 ? "" : "+")\(value)»"
+        let where_ = destination.map { "\(origin.pretty())→\($0.pretty())" }
+            ?? origin.pretty()
+        let by = switch kind {
+            case .counting(let stride): " by \(stride)"
+            case .elements:             ""
+        }
+        return "«\(where_)\(by) @\(value)\(emits ? "" : " silent") \(body.pretty())»"
     }
 }
 
 
+// MARK: - Stepping and projection
+
 nonisolated extension IteratorItem {
 
-    /// The `call` a counter should record when it is reached by stepping `from`
-    /// by `step`.
-    ///
-    /// This is the folding rule. When `from` is *already* an offset from some
-    /// base, the new counter records that same base with a larger offset rather
-    /// than nesting a reference to `from` — so going around the loop again costs
-    /// nothing. Only the first step of a loop allocates a new node.
-    static func steppedCall(from: any Item, by step: Int) -> [any Item] {
-        if from.call.count == 1, let prior = from.call[0] as? IteratorItem {
-            let (offset, overflowed) = prior.value.addingReportingOverflow(step)
-            if !overflowed {
-                return [
-                    IteratorItem(
-                        base: prior.base,
-                        offset: offset,
-                        isContingent: prior.isContingent
-                    )
-                ]
-            }
-            // Unreachable short of 2^63 iterations; nest rather than trap.
+    /// The stride, as the projection uses it. `.elements` walks one at a time.
+    var stride: Int {
+        switch kind {
+        case .counting(let stride): stride
+        case .elements:             1
         }
-        return [
-            IteratorItem(
-                base: from,
-                offset: step,
-                isContingent: from.isContingent
+    }
+
+    /// The value this iterator's cursor currently names, with the provenance that
+    /// reproduces it — or `nil` if the cursor has run past what `origin` holds,
+    /// or if projecting it would overflow.
+    ///
+    /// At cursor 0 the answer is `origin` **itself**, `call` untouched: nothing
+    /// has been derived yet, so law 1 applies and the item passes straight
+    /// through. After that the counter names its origin and its offset directly:
+    /// `[origin, IntItem(offset), .intAdd]`, whose crux is `y0 999 .intAdd`. This
+    /// is where the old provenance-only folding node used to be needed, and is
+    /// why it no longer is.
+    func projection() -> (any Item)? {
+        switch kind {
+        case .counting:
+            guard let current = currentValue() else { return nil }
+            guard value != 0 else { return origin }
+            let (offset, overflowed) = value.multipliedReportingOverflow(by: stride)
+            guard !overflowed else { return nil }
+            return IntItem(
+                current,
+                call: [origin, IntItem(offset), InstructionItem(.intAdd)],
+                isContingent: isContingent
             )
+
+        case .elements:
+            return element(at: value)
+        }
+    }
+
+    /// The counter this cursor names, or `nil` on overflow. `.counting` only.
+    func currentValue() -> Int? {
+        guard let start = (origin as? IntItem)?.value else { return nil }
+        let (offset, offsetOverflowed) = value.multipliedReportingOverflow(by: stride)
+        guard !offsetOverflowed else { return nil }
+        let (current, sumOverflowed) = start.addingReportingOverflow(offset)
+        return sumOverflowed ? nil : current
+    }
+
+    /// Whether this iterator has anything left to emit at its current cursor.
+    var isSpent: Bool {
+        switch kind {
+        case .counting: currentValue() == nil
+        case .elements: value < 0 || value >= sourceCount
+        }
+    }
+
+    /// Whether another pass follows the one at the current cursor.
+    ///
+    /// The counting rule preserves `execDoRange`'s existing behavior exactly, and
+    /// that behavior is **not** inclusive of the destination, whatever the docs
+    /// say: `4 7 .execDoRange` emits 7, 6, 5 and stops, because the old base case
+    /// fired at `|current − dest| ≤ 1` *having already emitted* `current`.
+    /// Generalizing that to `|dest − current| > |stride|` is bit-for-bit
+    /// identical at stride ±1, and extends sensibly to wider strides (0→10 by 3
+    /// emits 0, 3, 6, 9).
+    ///
+    /// The subtraction can overflow — `Int.min` to `Int.max` — and an overflowing
+    /// difference means the two are as far apart as it is possible to be, so it
+    /// is the looping branch, not a trap. `abs` would trap on `Int.min`; this
+    /// does not.
+    var hasNextPass: Bool {
+        switch kind {
+        case .counting:
+            guard
+                let current = currentValue(),
+                let end = (destination as? IntItem)?.value
+            else { return false }
+            let (difference, tooFarApart) = end.subtractingReportingOverflow(current)
+            if tooFarApart { return true }
+            return difference.magnitude > stride.magnitude
+        case .elements:
+            return value + 1 < sourceCount
+        }
+    }
+
+    /// This iterator advanced by one pass, with provenance for its new state.
+    func stepped() -> IteratorItem {
+        var next = self
+        next.value = value + 1
+        next.call = next.reconstruction()
+        return next
+    }
+
+    /// The `call` that rebuilds this iterator *by state* — the whole reason its
+    /// provenance stays O(1). `origin`, `destination` and `body` are fixed for
+    /// the loop's life, so only the two literals differ from pass to pass.
+    func reconstruction() -> [any Item] {
+        guard case .counting(let stride) = kind, let destination else { return [] }
+        return [
+            origin,
+            destination,
+            IntItem(stride),
+            IntItem(value),
+            BoolItem(emits),
+            body,
+            InstructionItem(.iteratorFromIntRange),
         ]
+    }
+}
+
+
+// MARK: - Walking a collection
+
+nonisolated extension IteratorItem {
+
+    /// How many items `origin` holds. Zero for anything that is not a source a
+    /// `.elements` iterator can walk.
+    var sourceCount: Int {
+        switch origin {
+        case let s as StringItem:       s.value.count
+        case let v as VecBoolItem:      v.value.count
+        case let v as VecDoubleItem:    v.value.count
+        case let v as VecIntItem:       v.value.count
+        case let v as VecStringItem:    v.value.count
+        default:                        0
+        }
+    }
+
+    /// The element at `index`, recording the `Nth` instruction that honestly
+    /// reproduces it: `origin index .vecBoolNth` — O(1), and independent of how
+    /// many passes have run.
+    func element(at index: Int) -> (any Item)? {
+        guard index >= 0, index < sourceCount else { return nil }
+        let cursor = IntItem(index)
+        func record(_ name: PushInstruction) -> [any Item] {
+            [origin, cursor, InstructionItem(name)]
+        }
+        switch origin {
+        case let s as StringItem:
+            let i = s.value.index(s.value.startIndex, offsetBy: index)
+            return CharItem(s.value[i], call: record(.stringNth), isContingent: isContingent)
+        case let v as VecBoolItem:
+            return BoolItem(v.value[index], call: record(.vecBoolNth), isContingent: isContingent)
+        case let v as VecDoubleItem:
+            return DoubleItem(v.value[index], call: record(.vecDoubleNth), isContingent: isContingent)
+        case let v as VecIntItem:
+            return IntItem(v.value[index], call: record(.vecIntNth), isContingent: isContingent)
+        case let v as VecStringItem:
+            return StringItem(v.value[index], call: record(.vecStringNth), isContingent: isContingent)
+        default:
+            return nil
+        }
     }
 }

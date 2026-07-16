@@ -105,9 +105,27 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case intDeepDup, intDup, intDupItems, intDupTimes, intStackIsEmpty, intFlush, intPop, intPopItems, intRot, intShove, intStackDepth, intSwap, intYank, intYankDup
 
 
+    // ITERATOR instructions
+    //
+    // An iterator encapsulates the state of one loop: where it started, where it
+    // ends, its stride, how far it has come, and the body it emits each pass.
+    // Stepping is the only thing that moves it; the getters below are the only
+    // things that read it.
+    case iteratorStep, iteratorPlay, iteratorPlayDelayed, iteratorPopState
+
+    // iterator getters
+    case iteratorStart, iteratorEnd, iteratorStride, iteratorBody
+
+    // iterator construction
+    case iteratorFromIntRange
+
+    // iterator combinators
+    case iteratorDeepDup, iteratorDup, iteratorDupItems, iteratorDupTimes, iteratorStackIsEmpty, iteratorEq, iteratorFlush, iteratorPop, iteratorPopItems, iteratorRot, iteratorShove, iteratorStackDepth, iteratorSwap, iteratorYank, iteratorYankDup
+
+
     // PRINT instructions
     //
-    case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
+    case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, iteratorPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
     
     
     // STRING instructions

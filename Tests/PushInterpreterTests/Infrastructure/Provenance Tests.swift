@@ -5,8 +5,8 @@
 //  Created by William Tozier on 7/15/26.
 //
 //  The provenance law (see Items.swift) and the two things that bound `.call`:
-//  `IteratorItem` folding for loop counters, and the `maxCallWeight` backstop for
-//  growth that is honestly linear.
+//  a loop counter naming its origin and offset directly, and the `maxCallWeight`
+//  backstop for growth that is honestly linear.
 //
 
 import DequeModule
@@ -23,6 +23,17 @@ struct ProvenanceTests {
 
     func errors(_ interpreter: Interpreter) -> [String] {
         interpreter.stacks[.error]!.compactMap { ($0 as? ErrorItem)?.value }
+    }
+
+    func sampleIterator(cursor: Int = 0) -> IteratorItem {
+        IteratorItem(
+            kind: .counting(stride: 1),
+            origin: IntItem(1),
+            destination: IntItem(9),
+            body: CodeItem([]),
+            emits: true,
+            cursor: cursor
+        )
     }
 
     /// Runs `item.crux()` on a fresh interpreter and reports the top of `stack`.
@@ -54,10 +65,14 @@ struct ProvenanceTests {
         let inty = loopedRange(200)
         let counter = inty.stacks[.int]!.first!
 
-        // Before folding this was one level per iteration, and the recorded
-        // source (`y x .execDoRange`) did not even produce the value.
-        #expect(counter.call.count == 1)
-        #expect(counter.call.first is IteratorItem)
+        // Before this was bounded it grew one level per iteration, and the
+        // recorded source (`y x .execDoRange`) did not even produce the value.
+        //
+        // The counter now names its origin and its offset outright — the iterator
+        // holds both, so there is nothing to fold and no folding node to find.
+        #expect(counter.call.count == 3)
+        #expect(counter.call.first is IntItem)
+        #expect(counter.call.last as? InstructionItem == InstructionItem(.intAdd))
         #expect(callDepth(counter) == 2)
         #expect(CodeItem(counter.crux()).pretty() == "( 0 199 .intAdd )")
     }
@@ -88,20 +103,63 @@ struct ProvenanceTests {
         inty.run(stepLimit: 20_000)
 
         let counter = inty.stacks[.int]!.first!
-        #expect(counter.call.count == 1)
+        #expect(counter.call.count == 3)
         #expect(CodeItem(counter.crux()).pretty() == "( 60 -49 .intAdd )")
         #expect((rerun(counter.crux(), reading: .int) as? IntItem)?.value == 11)
     }
 
-    @Test func `an IteratorItem never comes to rest on a stack`() {
+    /// `IteratorItem` is first-class now: it rests on `.iterator`, and its state
+    /// is its own for the loop's duration rather than being spread across `.int`.
+    ///
+    /// This test used to assert the exact opposite — that an iterator never comes
+    /// to rest anywhere — back when it was a provenance-only node that lived
+    /// inside `call`. It is inverted deliberately.
+    @Test func `an iterator rests on its own stack and is gone when the loop ends`() {
         let inty = loopedRange(200)
-        // It is provenance-only. If one ever leaked onto a value stack, `push`
-        // would refuse it and leave the distinctive marker behind.
-        for stack in PushStack.allStacks {
-            #expect(inty.stacks[stack]!.allSatisfy { !($0 is IteratorItem) })
-        }
+
+        // The loop ran to completion, so its iterator has been consumed.
+        #expect(inty.stacks[.iterator]!.isEmpty)
         #expect(!errors(inty).contains { $0.contains(Interpreter.invariantMarker) })
-        #expect(PushStack.defaultStack(for: IteratorItem(base: IntItem(1), offset: 1)) == nil)
+        #expect(PushStack.defaultStack(for: sampleIterator()) == .iterator)
+
+        // Mid-flight it is on `.iterator`, and nowhere else.
+        let running = midLoop()
+        #expect(running.stacks[.iterator]!.count == 1)
+        for stack in PushStack.allStacks where stack != .iterator {
+            #expect(running.stacks[stack]!.allSatisfy { !($0 is IteratorItem) })
+        }
+    }
+
+    /// Four steps into `0 200 () .execDoRange`: the three literals land, then the
+    /// instruction builds the iterator. One more step would run the first pass.
+    ///
+    /// Stepped by hand because `run(stepLimit:)` ignores its argument and reads
+    /// `config.stepLimit` instead.
+    func midLoop() -> Interpreter {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(0), IntItem(200), CodeItem([]), InstructionItem(.execDoRange),
+        ])
+        for _ in 0..<4 { inty.step() }
+        return inty
+    }
+
+    /// The loop's bounds are inside the iterator, not loose on `.int`. Before this
+    /// change `execDoRange` re-pushed both of them onto `.int` every pass.
+    @Test func `a running loop keeps its state encapsulated`() {
+        let inty = midLoop()
+
+        let iterator = inty.stacks[.iterator]!.first as? IteratorItem
+        #expect((iterator?.origin as? IntItem)?.value == 0)
+        #expect((iterator?.destination as? IntItem)?.value == 200)
+        #expect(iterator?.stride == 1)
+        #expect(iterator?.value == 0)          // the cursor
+        // Neither bound is loose anywhere.
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+
+        inty.step()   // one pass: only the index escapes
+        #expect(stackString(inty, .int) == "[ 0 ]")
     }
 
 

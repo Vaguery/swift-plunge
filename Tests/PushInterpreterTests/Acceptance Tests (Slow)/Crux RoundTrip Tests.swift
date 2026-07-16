@@ -53,8 +53,8 @@ func blockedByCodeItemModel(_ item: any Item) -> Bool {
 ///
 /// Returns nil when the claim holds or when there is nothing to check:
 /// an empty `call` is a literal, and a literal reproduces itself trivially;
-/// an item with no resting stack is an instruction token or (for now) an
-/// `IteratorItem`, neither of which comes to rest anywhere to be compared.
+/// an item with no resting stack is an instruction token, which executes rather
+/// than coming anywhere to rest to be compared.
 @MainActor
 func brokenClaim(
     about item: any Item,
@@ -107,6 +107,14 @@ struct CruxRoundTripTests {
         case .vecInt:    VecIntItem([n + 1, n + 2, n + 3])
         case .vecDouble: VecDoubleItem([1.5, 2.5, 3.5])
         case .vecString: VecStringItem(["pq", "rs", "tu"])
+        case .iterator:  IteratorItem(
+                            kind: .counting(stride: 1),
+                            origin: IntItem(n),
+                            destination: IntItem(n + 5),
+                            body: CodeItem([IntItem(n + 1)]),
+                            emits: true,
+                            cursor: n % 3
+                         )
         case .error:     nil   // never seeded; never checked
         }
     }
@@ -160,10 +168,10 @@ struct CruxRoundTripTests {
     /// Every item a behavior left behind that makes a provenance claim worth
     /// checking: it records a `call`, and it has a stack to come to rest on.
     ///
-    /// Skipping `defaultStack == nil` skips instruction tokens (which execute
-    /// rather than land) and `IteratorItem` (provenance-only for now — it is
-    /// planned to become a first-class type with its own stack, and this sweep
-    /// should pick it up automatically when it does).
+    /// Skipping `defaultStack == nil` now skips only instruction tokens, which
+    /// execute rather than land. It used to skip `IteratorItem` too, back when it
+    /// was provenance-only; the type became first-class and this sweep picked it
+    /// up automatically, exactly as intended.
     func claimsWorthChecking(in inty: Interpreter) -> [(item: any Item, stack: PushStack)] {
         var found: [(any Item, PushStack)] = []
         for stack in PushStack.allStacks where stack != .error {

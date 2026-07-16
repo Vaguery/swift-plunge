@@ -16,9 +16,17 @@ nonisolated public extension PushInstruction {
     /// sits somewhere down `.exec`, waiting to run the next pass — the control-
     /// side signal the runaway guard uses to confirm that a fast-filling stack
     /// is being fed by an active loop rather than a large one-shot computation.
+    ///
+    /// `.execDoCount`/`.execDoRange`/`.execDoTimes` are deliberately **not** here:
+    /// they no longer re-push themselves. Each now builds an `IteratorItem` and
+    /// hands it to `.iteratorPlay`, so `.iteratorPlay` is what sits on `.exec` for
+    /// the life of one of their loops, and it is the signal instead.
+    /// `.iteratorPlayDelayed` shoves its next copy further down `.exec` rather than
+    /// directly under its payload, which is exactly the shape this set describes.
     static let iterators: Set<PushInstruction> = [
-        .execDoCount, .execDoRange, .execDoTimes, .execDoWhile, .execWhile, .execY,
+        .execDoWhile, .execWhile, .execY,
         .codeIteratePoints, .codeIterateRoot,
+        .iteratorPlay, .iteratorPlayDelayed,
         .stringIterate,
         .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
     ]

@@ -61,44 +61,38 @@ nonisolated extension Interpreter {
         Behavior(
             .execDoCount,
             takes: [.int, .code],
-            // Provenance: all combinatory. `body` and `x` pass through unchanged
-            // (law 1 — the round trip via `.exec` to reach `.code`/`.int` is
-            // transit, not relocation), and the `.execDoRange` token is freshly
-            // minted (law 4). `newEndPoint` is the literal 0 whatever the
-            // arguments were, so it is its own crux and records nothing.
+            // Counts from 0 up to `x`, leaving each index on `.int` for the body.
+            //
+            // It used to rewrite itself into an `.execDoRange` continuation and let
+            // that do the counting; now it simply builds the iterator that does,
+            // and the delegation is gone. The bounds go *into* the iterator rather
+            // than back onto `.int`.
+            //
+            // Provenance: the iterator records how to rebuild itself (see
+            // `IteratorItem.reconstruction`); the `.iteratorPlay` token is freshly
+            // minted (law 4). `newEndPoint` is the literal 0 whatever the arguments
+            // were, so it is its own crux and records nothing.
             fxn: { a in
-                let (x, body) = (a[0] as! IntItem, a[1])
+                let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
-                var results = [Router]()
-                let counter = x.value
-
-                if counter < 1 {
+                guard x.value >= 1 else {
                     // Both arguments are returned to where they came from.
-                    results = [
+                    return [
                         Router(.code, body),
                         Router(.exec, x),
                     ]
-                } else {
-                    var newInstruction = InstructionItem(.execDoRange)
-                    newInstruction.isContingent = Behavior.netContingency(
-                        of: x,
-                        body
-                    )
-
-                    var newEndPoint = IntItem(0)
-                    newEndPoint.isContingent = Behavior.netContingency(of: x)
-
-                    // Rewrites to `0 count body .execDoRange`, `.exec` top→bottom.
-                    // The body must reach `.code` *before* `.execDoRange` fires,
-                    // so it now precedes the token rather than following it.
-                    results = [
-                        Router(.exec, newInstruction),
-                        Router(.exec, body),
-                        Router(.exec, x),
-                        Router(.exec, newEndPoint),
-                    ]
                 }
-                return results
+
+                var origin = IntItem(0)
+                origin.isContingent = Behavior.netContingency(of: x)
+
+                return iteratorLoop(
+                    kind: .counting(stride: 1),
+                    origin: origin,
+                    destination: x,
+                    body: body,
+                    emits: true
+                )
             }
         )
 
@@ -107,55 +101,43 @@ nonisolated extension Interpreter {
         Behavior(
             .execDoTimes,
             takes: [.int, .code],
-            // Provenance: the body copies and the re-pushed `.execDoTimes` and
-            // `.codeDo` tokens are combinatory (laws 1 and 4) and record nothing.
-            // `newCounter` is the one derived value, and it folds — see
-            // IteratorItem.
+            // "Do the body, `x` times" — the index is the loop's business and is
+            // never shown to the body, which is the whole of the difference from
+            // `.execDoCount`. That distinction is now one flag on the iterator
+            // rather than a separate recursion.
+            //
+            // Provenance: the iterator records how to rebuild itself; the
+            // `.iteratorPlay` token is freshly minted (law 4). The counter that
+            // used to need `IteratorItem.steppedCall` to fold is gone — the
+            // iterator holds the count, and never emits it.
             fxn: { a in
-                let (intArg, body) = (a[0], a[1])
-                let counter = (intArg as! IntItem).value
+                let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
+
                 var bodyCopy = body
-                bodyCopy.isContingent = Behavior.netContingency(of: intArg, body)
+                bodyCopy.isContingent = Behavior.netContingency(of: x, body)
 
-                var results = [Router]()
-
-                if counter < 1 {
+                guard x.value >= 1 else {
                     // No iteration: the body is returned to where it came from,
                     // which is now `.code`. It stays data rather than running,
-                    // which is the whole point of the change.
-                    results = [Router(.code, bodyCopy)]
-                } else {
-                    var newCounter = IntItem(counter - 1)
-                    newCounter.isContingent =
-                        Behavior.netContingency(of: intArg, body)
-                    newCounter.call =
-                        IteratorItem.steppedCall(from: intArg, by: -1)
-
-                    var newInstruction = InstructionItem(.execDoTimes)
-                    newInstruction.isContingent =
-                        Behavior.netContingency( of: intArg, body )
-
-                    // The continuation, `.exec` top→bottom:
-                    //
-                    //   body      lands on .code
-                    //   .codeDo   pops it back off and spreads it → runs it
-                    //   counter-1 lands on .int
-                    //   body      lands on .code, re-supplying it for next pass
-                    //   .execDoTimes  takes .int + .code — both now waiting
-                    //
-                    // Both halves fall out of the new rule rather than needing
-                    // machinery: pushing a CodeItem to `.exec` re-supplies `.code`,
-                    // and `[body, .codeDo]` runs it. Routers are listed in reverse
-                    // because `distribute` prepends each in turn.
-                    results = [
-                        Router(.exec, newInstruction),
-                        Router(.exec, bodyCopy),
-                        Router(.exec, newCounter),
-                        Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, bodyCopy),
-                    ]
+                    // which is the whole point of the CodeItem change.
+                    return [Router(.code, bodyCopy)]
                 }
-                return results
+
+                var origin = IntItem(0)
+                origin.isContingent = Behavior.netContingency(of: x)
+
+                // Identical to `.execDoCount`'s iterator but for `emits`, which is
+                // the whole of the difference between the two instructions. `x` is
+                // the destination, not `x - 1`: the range stops one short of its
+                // destination (see `hasNextPass`), so counting 0 toward `x` is
+                // exactly `x` passes.
+                return iteratorLoop(
+                    kind: .counting(stride: 1),
+                    origin: origin,
+                    destination: x,
+                    body: bodyCopy,
+                    emits: false
+                )
             }
         )
 
@@ -164,72 +146,71 @@ nonisolated extension Interpreter {
         Behavior(
             .execDoRange,
             takes: [.int, .int, .code],
-            // Provenance: the body copies, the re-pushed `.execDoRange` and
-            // `.codeDo` tokens, and the passed-through bounds (`x`, `y`) are all
-            // combinatory — laws 1 and 4 — and record nothing. `newCounter` is
-            // the sole derived value.
+            // Steps an index from `y` toward `x`, leaving it on `.int` each pass.
             //
-            // This is where `.call` used to blow up: `newCounter` recorded
-            // `[y, x, .execDoRange]` where `y` is the PREVIOUS counter, so the
-            // chain deepened once per iteration — and `y x .execDoRange` does
-            // not produce `y+1` in any case. It now folds to one node.
+            // This is where `.call` used to blow up: the next counter recorded
+            // `[y, x, .execDoRange]` where `y` was the PREVIOUS counter, so the
+            // chain deepened once per pass — and `y x .execDoRange` does not
+            // produce `y+1` in any case. The counter now names its origin and its
+            // offset directly (`IteratorItem.projection`), which is O(1) without
+            // needing anything folded.
+            //
+            // It also used to rebuild its own recursion as Push source every pass,
+            // re-pushing both bounds and a fresh `.execDoRange` token. The bounds
+            // now go into the iterator and stay there; the counting is Swift's job.
+            //
+            // Provenance: the body copy is combinatory (laws 1 and 1b) and the
+            // `.iteratorPlay` token is freshly minted (law 4). The iterator records
+            // how to rebuild itself by state.
             fxn: { a in
-                let (x, y, body) = (a[0], a[1], a[2])
-                let end = (x as! IntItem).value
-                let start = (y as! IntItem).value
+                let (x, y, body) = (a[0] as! IntItem, a[1] as! IntItem, a[2] as! CodeItem)
+
                 var bodyCopy = body
                 bodyCopy.isContingent = Behavior.netContingency(of: x, y)
 
-                var results = [Router]()
+                // The stride is the direction to travel, and equal bounds are a
+                // single pass either way.
+                let direction = y.value <= x.value ? 1 : -1
 
-                // start - end can overflow, and abs traps on Int.min; when the
-                // subtraction overflows the two are far apart (not the base case)
-                let (difference, tooFarApart) = start.subtractingReportingOverflow(end)
-                if !tooFarApart && difference.magnitude <= 1 {
-                    // Last pass: leave the index on `.int` and run the body once.
-                    // `.exec` top→bottom: y, body, .codeDo
-                    results = [
-                        Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, bodyCopy),
-                        Router(.exec, y),
-                    ]
-                } else {
-                    let direction = start < end ? 1 : -1
-                    var newCounter = IntItem(start + direction)
-                    newCounter.isContingent = Behavior.netContingency(
-                        of: x,
-                        y
-                    )
-                    newCounter.call =
-                        IteratorItem.steppedCall(from: y, by: direction)
-
-                    var newInstruction = InstructionItem(.execDoRange)
-                    newInstruction.isContingent = Behavior.netContingency(
-                        of: x,
-                        y
-                    )
-
-                    // `.exec` top→bottom:
-                    //   y           the loop index, onto .int for the body to read
-                    //   body        lands on .code
-                    //   .codeDo     spreads it → this pass's body runs
-                    //   newCounter  onto .int — the next start
-                    //   x           onto .int — the end, so .int reads (end, start)
-                    //   body        lands on .code, re-supplying it
-                    //   .execDoRange
-                    results = [
-                        Router(.exec, newInstruction),
-                        Router(.exec, bodyCopy),
-                        Router(.exec, x),
-                        Router(.exec, newCounter),
-                        Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, bodyCopy),
-                        Router(.exec, y),
-                    ]
-                }
-                return results
+                return iteratorLoop(
+                    kind: .counting(stride: direction),
+                    origin: y,
+                    destination: x,
+                    body: bodyCopy,
+                    emits: true
+                )
             }
         )
+
+    /// Build a counting iterator and hand it to `.iteratorPlay` — the shape every
+    /// `exec` looping instruction now reduces to.
+    ///
+    /// `.exec` top→bottom ends up `.iteratorPlay`, so the iterator is resting on
+    /// `.iterator` by the time it fires. The loop's whole state travels inside it;
+    /// nothing about the counting is expressed in Push any more.
+    static func iteratorLoop(
+        kind: IteratorKind,
+        origin: any Item,
+        destination: (any Item)?,
+        body: CodeItem,
+        emits: Bool
+    ) -> [Router] {
+        let contingent = Behavior.netContingency(of: origin, body)
+        var iterator = IteratorItem(
+            kind: kind,
+            origin: origin,
+            destination: destination,
+            body: body,
+            emits: emits,
+            isContingent: contingent
+        )
+        iterator.call = iterator.reconstruction()
+
+        return [
+            Router(.exec, InstructionItem(.iteratorPlay, isContingent: contingent)),
+            Router(.iterator, iterator),
+        ]
+    }
 
     static let execIf_Behavior =
         Behavior(

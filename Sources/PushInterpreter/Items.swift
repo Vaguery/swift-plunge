@@ -39,9 +39,14 @@ public nonisolated protocol Pretty {
 //     the block contributes nothing to its history. Unwrapping therefore drops
 //     the *block's* `call` and leaves each content's own `call` untouched,
 //     exposing them as though they had been sitting there all along. This is
-//     what `unwrapCodeItem` does today, and what the planned `.codeDo` will do
-//     once unwrapping becomes an instruction a program asks for rather than
-//     something the interpreter does on sight.
+//     what `.codeDo` does.
+//
+//     The same holds for CONTAINMENT IN AN ITERATOR: an `IteratorItem` keeps the
+//     bounds and body it was built from, and the getters (`.iteratorStart`,
+//     `.iteratorEnd`, `.iteratorBody`) hand back the very items that went in, so
+//     they record nothing. `.iteratorStride` is the exception that shows the
+//     rule — there is no contained item to give back, only a stored Int, so it
+//     really is produced by that instruction and records under rule 3.
 //
 //  2. Relocation ACROSS stacks is not free: `.intQuote` moves a value from
 //     `.int` to `.code`, and a crux omitting it would leave an int where a code

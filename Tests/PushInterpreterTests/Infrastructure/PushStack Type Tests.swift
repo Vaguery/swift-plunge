@@ -27,6 +27,13 @@ struct PushStackTypeTests {
         (VecIntItem([]),            .vecInt),
         (VecDoubleItem([]),         .vecDouble),
         (VecStringItem([]),         .vecString),
+        (IteratorItem(
+            kind: .counting(stride: 1),
+            origin: IntItem(0),
+            destination: IntItem(3),
+            body: CodeItem([]),
+            emits: true
+        ),                          .iterator),
         (ErrorItem("boom"),         .error),
     ]
 

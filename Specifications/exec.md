@@ -57,80 +57,95 @@ prefer it over prose if they ever seem to disagree.
 
 ## Iteration instructions
 
-### `execDoRange` — iterate an index across an inclusive range
+### `execDoRange` — step an index across a range
 *Equivalents:* `EXEC.DO*RANGE`, `:exec-do*range`, `exec_do_range`
 
-**Pops:** `destination : INT` (top), `current : INT` (second), `body : EXEC` (top of exec).
-**Effect:** runs `body` once for each integer from `current` toward `destination`
-**inclusive**, stepping by +1 or −1. Before each pass the loop index is left on
+**Pops:** `destination : INT` (top), `current : INT` (second), `body : CODE`.
+**Effect:** runs `body` once for each integer from `current` toward
+`destination`, stepping by +1 or −1. Before each pass the loop index is left on
 the `INT` stack so `body` can read it.
 
+**The destination is EXCLUDED**, which is worth stating plainly because an
+earlier draft of this document (and the code's own comments) claimed "inclusive"
+and were wrong. `4 7 .execDoRange` emits **7, 6, 5** — never 4. The rule is that
+a pass stops the loop when `|destination − current| ≤ 1`, *having already
+emitted* `current`, so the last index emitted is one short of the destination.
+Equal bounds are the exception: they emit once. This differs from Push3, and
+whether to change it is an open question — but it is what the tests pin, and any
+reimplementation matching this document should match it.
+
 **Canonical:**
-- **Base case** — if `current` and `destination` differ by 0 or 1: push `current`
-  to `INT` and run `body` once; no recursion.
-- **Recursive case** — otherwise, arrange the exec stack so that this pass's
-  index reaches `INT`, then `body` runs, then a recursive `execDoRange` fires
-  with `current` stepped one unit toward `destination` (same `body`, same
-  `destination`). Iteration proceeds until the base case.
-- **Overflow safety** — the base-case test is `current − destination` within 1;
-  it must not trap when the bounds are `INT.min`/`INT.max` (their difference
-  overflows, and a naive `abs` traps). Treat an overflowing difference as "far
-  apart" → recursive case.
+- Emit `current` to `INT`, run `body`.
+- Continue with `current` stepped one unit toward `destination` iff
+  `|destination − current| > 1`; otherwise stop.
+- **Overflow safety** — the difference must not trap when the bounds are
+  `INT.min`/`INT.max` (it overflows, and a naive `abs` traps on `INT.min`).
+  Treat an overflowing difference as "far apart" → keep looping.
 
 *Oracle:* `execDoRange doesn't loop if the counters are the same`,
-`execDoRange loops if the start and end are different by 2+` (13-step trace
-fixing exact ordering), `execDoRange handles extreme bounds without trapping`.
+`execDoRange loops if the start and end are different by 2+` (a step-by-step
+trace fixing exact ordering), `execDoRange handles extreme bounds without
+trapping`, `execDoRange indices record origin and offset`.
 
-**This implementation** *(informative):* the recursive continuation is spread as
-loose exec items `[ current, body, nextCounter, destination, execDoRange, body ]`
-(not wrapped in a code block). `isContingent` is the net contingency of the two
-int args. Only `nextCounter` records provenance — everything else here is
-combinatory. Its `call` is a single folded `IteratorItem`, so a counter's history
-stays one node deep however many passes the loop makes.
+**This implementation** *(informative):* **the counting is not expressed in Push
+at all.** The instruction pops its bounds, builds an `IteratorItem` holding the
+origin, the destination, the stride and a cursor, pushes it to the `ITERATOR`
+stack, and emits a single `.iteratorPlay` token. Each pass then emits only its
+index, the body, and a `.codeDo` — the bounds never return to `INT`, and no
+recursive `.execDoRange` is ever rebuilt.
+
+This is a deliberate encapsulation: a loop's state is the iterator's own for its
+duration, readable only by stepping it or by the `.iteratorStart`/`.iteratorEnd`/
+`.iteratorStride`/`.iteratorBody` getters. Another interpreter is free to keep
+the Push-level recursion instead — the canonical layer above is what matters.
+
+The index is the one derived value, and it records `[origin, offset, .intAdd]`,
+so its crux is `7 -2 .intAdd`: bounded, and the same size however many passes
+run. The iterator itself records how to rebuild it *by state*
+(`.iteratorFromIntRange`), which is likewise O(1) because its origin,
+destination and body never change.
 
 ---
 
 ### `execDoCount` — run a body a counted number of times
 *Equivalents:* `EXEC.DO*COUNT`, `:exec-do*count`, `exec_do_count`
 
-**Pops:** `count : INT` (top), `body : EXEC`.
-**Canonical:** rewrites itself into an `execDoRange` from current index `0` to
-destination `count`, with the same `body` — i.e. it delegates counting to
-`execDoRange` (so the loop index is available on `INT`, running from 0 upward).
-If `count < 1` no loop is created (the count and body are returned to exec; no
-iteration).
+**Pops:** `count : INT` (top), `body : CODE`.
+**Canonical:** counts from `0` toward `count`, leaving each index on `INT` — i.e.
+`execDoRange` from `0` to `count`, which (the destination being excluded) is
+exactly `count` passes, emitting `0 … count−1`. If `count < 1` no loop is created
+and both arguments are returned.
 
-*Oracle:* `execDoCount creates an execDoRange continuation when counter > 0`
-(shows the rewrite to `[ 0 3456 .execDoRange body ]`),
+*Oracle:* `execDoCount builds an iterator and plays it when counter > 0`,
+`execDoCount runs its body exactly count times`,
 `execDoCount doesn't loop if the index < 1`.
 
-**This implementation** *(informative):* emits literal `0`, `count`,
-`execDoRange`, `body` onto exec. All four are combinatory or literal, so none
-records provenance — the `0` is the literal `0` whatever the arguments were, and
-so is its own crux. Iteration total follows from `execDoRange`'s inclusive
-semantics — defer to the trace.
+**This implementation** *(informative):* it used to *rewrite itself* into a
+literal `0 count body .execDoRange` continuation and let that do the counting. It
+now builds the same iterator `execDoRange` would and hands it to `.iteratorPlay`
+directly, so the delegation is gone. `execDoCount` and `execDoTimes` now differ
+in exactly one flag — whether the iterator emits its index.
 
 ---
 
 ### `execDoTimes` — run a body N times, index discarded
 *Equivalents:* `EXEC.DO*TIMES`, `:exec-do*times`, `exec_do_times`
 
-**Pops:** `count : INT` (top), `body : EXEC`.
-**Canonical:** like `execDoCount` but the loop index is **not** left for the body
-to use — semantically "do `body`, `count` times." If `count < 1`, no iteration.
-Each pass decrements `count` and re-invokes `execDoTimes` until it reaches the
-non-positive base case.
+**Pops:** `count : INT` (top), `body : CODE`.
+**Canonical:** exactly `execDoCount`, except the loop index is **not** left for
+the body to use — semantically "do `body`, `count` times." If `count < 1`, no
+iteration and the body is returned.
 
 *Oracle:* `execDoTimes doesn't loop if the counter is not positive` (tests both
-−5 and 0), `execDoTimes loops if the counter is positive` (shows the
-`body count-1 .execDoTimes body` continuation).
+−5 and 0), `execDoTimes loops if the counter is positive`,
+`execDoTimes runs its body exactly count times, silently`.
 
-**This implementation** *(informative):* the recursive continuation
-`[ body, count−1, execDoTimes, body ]` is spread as loose exec items, like
-`execDoRange`. It used to be wrapped in a code block that `.exec` unwrapped on the
-following step; spreading it makes the co-arity of 4 visible and removes that
-extra step, so each pass now arrives one step sooner. Only `count−1` records
-provenance (a folded `IteratorItem`); the rest is combinatory.
+**This implementation** *(informative):* it used to count by decrementing a
+counter it re-pushed onto `INT` every pass, which meant the count was visible in
+Push even though the instruction's whole point is that it should not be. The
+count now lives inside the iterator and never escapes: `execDoTimes` builds the
+same iterator as `execDoCount` with its `emits` flag off. Nothing about the
+counting reaches any stack.
 
 ---
 
