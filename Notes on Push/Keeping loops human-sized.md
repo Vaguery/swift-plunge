@@ -115,15 +115,26 @@ starves everything downstream of it.
 
 ## Where it applies, and where it must not
 
-- **In `iteratorLoop` — yes.** One function; every looping instruction funnels through it. **No new
-  instructions, none renamed, none deprecated.** `execDoRange` keeps its name, its arity and its meaning.
-- **In the `.iteratorFromX` constructors — no.** They exist so `crux()` has something to say, and they
-  must reconstruct *faithfully*: a crux recorded under one setting has to round-trip under another.
-  This is a theoretical bypass — a program could construct an unclamped loop directly — but the
-  starvation probe shows those constructors want seven arguments across three stacks and starve ~100% of
-  the time, so nothing will find it by accident. Worth stating out loud rather than discovering.
-- **In `.iteratorSetEnd` — yes.** It is program-facing, and "no loop may promise more than
-  `maxIterations` passes" should hold however the loop was aimed.
+**It lives at `Interpreter.push`** — not, as this note first proposed, in `iteratorLoop`. Two reasons,
+and the second is the interesting one:
+
+- `iteratorLoop` is `static` and the exec loops are pure `Behavior`s, so neither can see `config` at all.
+  Only `push` can.
+- `push` is where §11 says budgets live, beside `maxItemWeight` and `maxCallWeight`, and it catches
+  **every** path at once — the loop instructions, the setters, each pass's re-push, and the constructors.
+
+The original plan carved the constructors out, on the grounds that a crux recorded under one setting must
+round-trip under another. **That carve-out turned out to be unnecessary, because the clamp is
+idempotent**: a clamped iterator is a fixed point of the clamp, so reconstructing one and pushing it again
+changes nothing. There is a test for exactly that, because the whole design rests on it. (A crux re-run
+under a *smaller* budget would clamp further — but so would a large item under a smaller
+`maxItemWeight`. That is what a budget is.)
+
+The carve-out would also have been a bypass: a program could have built an unclamped loop by hand. That
+it starves ~100% of the time is not a reason to leave a hole.
+
+**No new instructions, none renamed, none deprecated.** `execDoRange` keeps its name, its arity and its
+meaning.
 - **For `.elements` walks — impossible, and rightly so.** A walking iterator has **`destination = nil`**:
   its end derives from its source's length, so there is structurally nothing to move in. The clamp cannot
   reach it even if someone wanted it to.
@@ -271,15 +282,30 @@ body, and a body that restarts its own loop is a `while true` bounded by `stepLi
 guard (`.execIf`, `.execWhen`) it is a real do-while, built out of pieces that already exist. That is the
 Push thing to do.
 
-## Open questions
+## Settled in the building
 
-1. **The default.** `100` makes most loops complete at the default `stepLimit` of 1,000, which is the
-   whole argument — but it is smaller than the other 1,000s and will look inconsistent. The two
-   provenance tests that loop 200 and 500 times would need `config.maxIterations` raised alongside the
-   `config.stepLimit = 20_000` they *already* set, which is arguably a feature: a test that wants a big
-   loop should say so, and it demonstrates the knob.
-2. **Should a program be able to raise its own loop's ceiling?** An `.iteratorSetIterations` would give a
+1. **The default is `100`.** It makes most loops complete at the default `stepLimit` of 1,000, which is
+   the whole argument, even though it looks inconsistent beside the other 1,000s. Six tests that wanted
+   longer loops now raise `config.maxIterations` next to the `config.stepLimit = 20_000` they *already*
+   set — the pattern, not an obstacle: **a test that wants a big loop says so**, and it demonstrates the
+   knob. **Review this number**; it is the one thing here that is a judgement call rather than a
+   consequence.
+2. **Silent.** It is not an error: `maxStackDepth` errors because the push cannot happen, whereas here
+   the loop happens, just smaller. The clamped value is on the iterator for anyone who peeks, and its
+   crux tells the truth about what actually ran.
+3. **It supersedes the runaway guard for `dupTimes`.** Three billion copies is now a hundred that
+   *finish*, where the guard used to have to stop a few hundred that never would. Raise the budget past
+   what the run can afford and the guard takes over exactly as before. Both are tested.
+
+## Still open
+
+1. **Should a program be able to raise its own loop's ceiling?** An `.iteratorSetIterations` would give a
    search a knob on its own tractability, and `stepLimit` still backstops it. Interesting; probably later.
-3. **Silent, or noted?** Recommendation: silent. It is not an error — `maxStackDepth` errors because the
-   push cannot happen, whereas here the loop happens, just smaller — and the clamped value is visible on
-   the iterator to anyone who peeks.
+2. **The other half is not done.** The clamp is a backstop, not a shaper: it makes a huge count
+   survivable, it does not make counts *tend* to be human-sized. Ints drawn uniformly over a huge range
+   will now mostly produce identical clamped loops — safe, monotone, and wasting the whole range. The
+   tendency has to come from a human-scaled distribution in the genome, which belongs with the new
+   genome representations.
+3. **Coarsening** (stride = span/budget) is still the more expressive option for ranges, and is exactly
+   the `.sampling` mechanism. Rejected here because it cannot work for counts and so needs two rules —
+   but worth revisiting when `.sampling` lands.
