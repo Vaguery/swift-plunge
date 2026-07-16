@@ -143,17 +143,43 @@ loop's output, and is deliberately not touched here.
 - **Stride is not reachable from `.execDoRange`**, which always builds ±1: the instructions keep their
   arity. The type carries stride; new constructors are how it gets set.
 
+## Everything that produces many things is an iterator now
+
+The five `*Iterate`, the explode family (`stringPushAllChars`, `stringParseToLetters`, `stringSplit`,
+`vecXPushAll`), and both dup families across all thirteen stacks. Three things fell out:
+
+- **Law 5 has no users.** `Behavior.selecting`/`<stack>PopItems` answered "which of these k results am
+  I?"; an iterator never produces k results at once, so an element says what it *is* (`s 2 .stringNth`)
+  instead. The machinery stays for any future multi-result Behavior; nothing emits it.
+- **`xDupTimes`'s bespoke `maxStackDepth` guard is gone.** It was the only per-instruction size check in
+  the language, and it existed purely because the instruction exploded. Copying over `count` passes puts
+  the work back under `stepLimit`, the push boundary, and the runaway guard — which now catches a runaway
+  `dupTimes` by itself, because `.iteratorPlay` on `.exec` is exactly the control-side signal it looks
+  for. It could see none of that when the copies arrived in one step.
+- **The box is the universal origin.** A CodeItem holds any item, so `( item ) count cursor burial
+  .iteratorRepeating` is **one** constructor for all thirteen stacks rather than thirteen. Law 1b makes
+  it free: the item that comes back out is the item that went in.
+
+### `.exec` interleaves now, deliberately
+
+`execDupItems` boxes its copies and walks them, which makes it in essence a first `.codeIterate` — but
+emitting onto `.exec` means **run**, not **place**. Each copy executes before the next is emitted, where
+they used to be laid down contiguously and run as a block. So `execDupItems 2` over `7 .intInc` now runs
+the copied `.intInc` *before* the copied `7` arrives; it complains and the loop carries on.
+
+Every other stack rests its elements, so only `.exec` notices. This is a real change of meaning, taken
+knowingly as the price of one uniform mechanism.
+
 ## Next
 
-- **The five collection iterates should adopt this.** `stringIterate` and the four `vec*Iterate` (one
-  generic factory) build `.elements` iterators. The machinery is already written and tested —
-  `IteratorItem.element(at:)` records `origin cursor .vecBoolNth`, O(1), replacing today's `.stringRest`
-  chain, which is O(n) and bounded only by the backstop. Needs five `.iteratorFromX` constructors.
 - **map/filter** — the iterator needs somewhere to *collect* body results, not just emit them: an
   accumulator field plus a rule for reading what the body left. This is what the "pseudofunction" work
   wants.
-- **`.sampling(steps:)`** for Double ranges, and behaviors that make iterators from other sources (every
-  word of a string).
+- **`.points(into:)`** — the zipper walk of a code tree. The architecture already admits it (a pre-order
+  walk is a pure function of `(origin, cursor)`, which is all a projection must be); it wants
+  `codeNthPoint` implemented and a memoized point-count on `CodeItem` first.
+- **`.sampling(steps:)`** for Double ranges, and behaviors that make iterators from other sources.
+- **A real `.codeIterate`**, which would give the boxed-code walk an honest name of its own.
 ## Fixed in passing
 
 **`run(stepLimit:)` ignored its argument entirely** and looped on `config.stepLimit` — found because it

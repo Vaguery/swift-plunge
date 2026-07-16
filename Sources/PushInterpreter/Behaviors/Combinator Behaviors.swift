@@ -96,10 +96,24 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    //  'DupItems` introduces some tacit contingency into execution,
-    //  but it's not entirely clear if it is making these results
-    //  contingent in themselves?
-    //
+    /// Copies the top `n` items of a stack back onto it, **one per pass**.
+    ///
+    /// It used to push them all at once. Now it takes a copy of the slice, boxes
+    /// it in a CodeItem, and walks that — which is to say `execDupItems` is, in
+    /// essence, a first `.codeIterate`: the machinery for iterating a block's
+    /// contents is exactly the machinery for handing back a stack's top few.
+    ///
+    /// The box holds the slice **bottom-to-top**, i.e. the order a program would
+    /// have written those items in, so walking it front-to-back lands them in
+    /// their original order (principle 6).
+    ///
+    /// Provenance: a dup changes no value, so law 1 applies and the copies keep
+    /// their own `call` untouched. That is why this family needs no `Nth` — and it
+    /// is why `codeNthRoot` can stay unimplemented.
+    ///
+    ///  `DupItems` introduces some tacit contingency into execution,
+    ///  but it's not entirely clear if it is making these results
+    ///  contingent in themselves?
     static func dupItemsCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -116,33 +130,45 @@ nonisolated extension Interpreter {
                 let range = interpreter.stacks[stack]!.count - 1
                 let rawIndex = collectedItems[0] as! IntItem
                 let number = min(range, max(rawIndex.value, 0))
-                if interpreter.stacks[stack]!.isEmpty == true {
-                    return []
-                } else {
-                    let duplicates = interpreter.stacks[stack]!.prefix(number)
-                    var result = [Router]()
-                    for d in duplicates {
-                        result.append(Router(stack, d))
-                    }
-                    return result.reversed()
-                }
+                guard !interpreter.stacks[stack]!.isEmpty, number > 0 else { return [] }
+
+                let box = CodeItem(
+                    Array(interpreter.stacks[stack]!.prefix(number).reversed())
+                )
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: stack.isHeterogeneous ? stack : nil),
+                    origin: box,
+                    body: nil,
+                    emits: true
+                )
             }
         )
         result[name] = inst
     }
 
-    //
-    // \(type)DupTimes consumes an .int and tries to make that many
-    // copies of the top .type item and push them _all at once_ to the
-    // stack, which is ridiculous for large counts. Now it will read
-    // Interpreter.config.maxStackDepth and fail entirely if its action
-    // would overflow the stack.
-    //  'DupTimes` introduces some tacit contingency into execution,
-    //  but it's not entirely clear if it is making these results
-    //  contingent in themselves?
-    //  TODO: work out details of this contingency definition
-    //
-
+    /// Copies the top item of a stack `count` times, **one per pass**.
+    ///
+    /// This is the instruction that made the case for the whole "nothing explodes"
+    /// principle. It used to push all `count` copies at once, which is ridiculous
+    /// for large counts — so ridiculous it grew **its own `maxStackDepth` check**,
+    /// the only bespoke size guard in the language, and refused outright rather
+    /// than doing any of the work.
+    ///
+    /// **That guard is gone.** A repeating iterator does the copying over `count`
+    /// passes, so `stepLimit`, `maxStackDepth` at the push boundary, and the
+    /// runaway guard govern it exactly as they govern any other loop, with no
+    /// special pleading. `10_000` copies is now a long loop rather than an error —
+    /// it fills the stack and reports *that*, which is the truth. If you find
+    /// yourself writing a size check for one instruction, you have found a loop in
+    /// disguise (see "Notes on Push/Design Principles.md").
+    ///
+    /// Provenance: a dup changes no value, so law 1 applies and every copy keeps
+    /// the original's `call` untouched.
+    ///
+    ///  `DupTimes` introduces some tacit contingency into execution,
+    ///  but it's not entirely clear if it is making these results
+    ///  contingent in themselves?
+    ///  TODO: work out details of this contingency definition
     static func dupTimesCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -156,40 +182,21 @@ nonisolated extension Interpreter {
             name,
             takes: [.int],
             modifier: { (interpreter, collectedItems) in
-
-                let allowedMax = interpreter.config.maxStackDepth
                 let howMany = (collectedItems[0] as! IntItem).value
-                let rawNumber = max(howMany, 0)
-                let allowed = min(rawNumber, allowedMax)
-                let overflow = (rawNumber - allowed)
 
-                var result = [Router]()
-
-                if let item = interpreter.stacks[stack]!.first {
-                    if overflow > 0 {
-                        result.append(
-                            Router(
-                                .error,
-                                ErrorItem(
-                                    "\(type)DupTimes overflow: \(rawNumber) items attempted"
-                                )
-                            )
-                        )
-                    } else {
-                        for _ in 0..<allowed {
-                            result.append(Router(stack, item))
-                        }
-                    }
-
-                    return result
-                } else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem("\(name) on empty stack")
-                        )
-                    ]
+                guard let item = interpreter.stacks[stack]!.first else {
+                    return [Router(.error, ErrorItem("\(name) on empty stack"))]
                 }
+                // A non-positive count copies nothing, and says nothing about it.
+                guard howMany > 0 else { return [] }
+
+                return Interpreter.iteratorLoop(
+                    kind: .repeating(into: stack.isHeterogeneous ? stack : nil),
+                    origin: item,
+                    destination: IntItem(howMany),
+                    body: nil,
+                    emits: true
+                )
             }
         )
         result[name] = inst

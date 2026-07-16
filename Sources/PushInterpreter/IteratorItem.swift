@@ -390,8 +390,20 @@ nonisolated extension IteratorItem {
                 InstructionItem(name),
             ]
 
-        case .repeating:
-            return []   // stage 4
+        // The box is what lets one constructor serve all thirteen stacks: a
+        // CodeItem can hold any item, and law 1b says taking it back out gives
+        // back the item that went in.
+        case .repeating(let into):
+            guard let destination else { return [] }
+            return [
+                CodeItem([origin]),
+                destination,
+                IntItem(value),
+                IntItem(burial),
+                InstructionItem(
+                    into == .exec ? .iteratorRepeatingIntoExec : .iteratorRepeating
+                ),
+            ]
         }
     }
 
@@ -402,14 +414,17 @@ nonisolated extension IteratorItem {
         switch kind {
         case .letters: return .iteratorFromStringLetters
         case .words:   return .iteratorFromStringWords
-        case .elements:
+        case .elements(let into):
             switch origin {
             case is StringItem:    return .iteratorFromString
             case is VecBoolItem:   return .iteratorFromVecBool
             case is VecDoubleItem: return .iteratorFromVecDouble
             case is VecIntItem:    return .iteratorFromVecInt
             case is VecStringItem: return .iteratorFromVecString
-            default:               return nil   // CodeItem origins: stage 4
+            case is CodeItem:      return into == .exec
+                                        ? .iteratorFromCodeIntoExec
+                                        : .iteratorFromCode
+            default:               return nil
             }
         default:
             return nil

@@ -408,6 +408,95 @@ struct IteratorBehaviorTests {
     }
 
 
+    // MARK: - Repeating, and the dup families
+
+    @Test func `a repeating iterator emits its origin over and over`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            CodeItem([IntItem(7)]), IntItem(4), IntItem(0), IntItem(0),
+            InstructionItem(.iteratorRepeating),
+        ])
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .iterator) == "[ «7→4 @0» ]")
+
+        // Construct only: nothing was emitted until it is played.
+        #expect(stackString(inty, .int) == "[ ]")
+        inty.stacks[.exec]!.prepend(InstructionItem(.iteratorPlay))
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .int) == "[ 7 7 7 7 ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// The box is what lets one constructor serve all thirteen stacks. Law 1b: an
+    /// item that goes into a block and comes back out is the item that went in.
+    @Test func `a repeating iterator's crux reproduces it`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            DoubleItem(2.5), IntItem(3), InstructionItem(.doubleDupTimes),
+        ])
+        inty.run(stepLimit: 4)   // build it, do not finish the loop
+
+        let live = inty.stacks[.iterator]!.first!
+        #expect(CodeItem(live.crux()).pretty() == "( ( 2.5 ) 3 1 0 .iteratorRepeating )")
+
+        let rebuilt = rerunTop(live.crux(), on: .iterator)
+        #expect(rebuilt?.isEqual(to: live) == true)
+    }
+
+    /// A dup changes no value, so law 1 applies: every copy keeps the original's
+    /// record untouched, which is why this family needs no `Nth` at all.
+    @Test func `dup copies keep the original's provenance`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(2), IntItem(3), InstructionItem(.intAdd),   // 5, with a record
+            IntItem(2), InstructionItem(.intDupTimes),
+        ])
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .int) == "[ 5 5 5 ]")
+        for copy in inty.stacks[.int]! {
+            #expect(CodeItem(copy.crux()).pretty() == "( 2 3 .intAdd )")
+        }
+    }
+
+    /// `execDupItems` boxes its copies in a CodeItem and walks them — which makes
+    /// it, in essence, a first `.codeIterate`: iterating a block's contents and
+    /// handing back a stack's top few are the same machinery.
+    ///
+    /// `.exec` is the awkward one, and the reason `into:` exists. Its contents are
+    /// heterogeneous *and* pending, so the target cannot be derived from the
+    /// element — and `defaultStack(for:)` answers **nil** for an InstructionItem,
+    /// which without the `?? .exec` fallback would drop it silently.
+    ///
+    /// **The copies now interleave with the loop, and that is a deliberate change
+    /// of meaning.** Emitting onto `.exec` means *run*, not *place*: each copy
+    /// executes before the next is emitted, where they used to be laid down
+    /// contiguously and run as a block. Every other stack rests its elements, so
+    /// only `.exec` notices. Here `.intInc` is copied and runs before the `7` it
+    /// wants arrives — so it complains, and the loop carries on. Accepted as the
+    /// price of one uniform mechanism; see "Notes on Push/The first-class
+    /// iterator.md".
+    @Test func `execDupItems walks a box of heterogeneous pending code`() {
+        let inty = Interpreter()
+        inty.stacks[.exec] = Deque([
+            InstructionItem(.execDupItems), IntItem(7), InstructionItem(.intInc),
+            BoolItem(true),
+        ] as [any Item])
+        inty.stacks[.int]!.prepend(IntItem(2))
+
+        inty.step()   // execDupItems: copies the top 2 pending items into a box
+        #expect(stackString(inty, .iterator) == "[ «( .intInc 7 ) @0» ]")
+
+        inty.run(stepLimit: 10_000)
+        // The copied `.intInc` ran first and found nothing — an instruction with
+        // no resting stack executes rather than vanishing, which is the point of
+        // the `?? .exec` fallback. Then the copied 7, then the originals: 7 and
+        // `.intInc` giving 8.
+        #expect(stackString(inty, .int) == "[ 8 7 ]")
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(errorStrings(inty).contains { $0.contains("intInc missing args") })
+    }
+
+
     // MARK: - Helpers
 
     func errorStrings(_ inty: Interpreter) -> [String] {

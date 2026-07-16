@@ -375,6 +375,106 @@ nonisolated extension Interpreter {
         iteratorWalking_Behavior(name, over: V.pushStack) { _ in .elements(into: nil) }
     }
 
+    /// Builds an iterator that walks a **code block's contents**, root level only,
+    /// and leaves it alone.
+    ///
+    /// Its own constructor rather than one from the factory above, because both
+    /// the origin and the body come off `.code`: the factory's argument positions
+    /// only hold when the origin has a stack to itself. `origin ( body )` in
+    /// source, so the body is written last and arrives on top.
+    ///
+    /// `into` is `.exec` for the `IntoExec` variant and derived otherwise. It
+    /// cannot be an argument — a `PushStack` is not a Push value — which is why
+    /// there are two names.
+    static func iteratorFromCode_Behavior(
+        _ name: PushInstruction,
+        into: PushStack?
+    ) -> Behavior {
+        Behavior(
+            name,
+            takes: [.code, .code, .int, .int, .bool],
+            fxn: { a in
+                let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
+                let emits = a[4] as! BoolItem
+
+                let iterator = IteratorItem(
+                    kind: .elements(into: into),
+                    origin: origin,
+                    body: body,
+                    emits: emits.value,
+                    cursor: cursor.value,
+                    burial: burial.value,
+                    call: [
+                        origin, cursor, burial, emits, body,
+                        InstructionItem(name),
+                    ],
+                    isContingent: Behavior.netContingency(
+                        of: origin, cursor, burial, emits, body
+                    )
+                )
+                return [Router(.iterator, iterator)]
+            }
+        )
+    }
+
+    static let iteratorFromCode_Behavior =
+        iteratorFromCode_Behavior(.iteratorFromCode, into: nil)
+    static let iteratorFromCodeIntoExec_Behavior =
+        iteratorFromCode_Behavior(.iteratorFromCodeIntoExec, into: .exec)
+
+    /// Builds an iterator that emits the **same item** over and over, `count`
+    /// times, and leaves it alone. This is what the `xDupTimes` family rests on.
+    ///
+    /// `( item ) count cursor burial`. The item arrives boxed in a code block,
+    /// which is the trick that makes **one** constructor serve all thirteen
+    /// stacks instead of thirteen: a CodeItem holds any item, and law 1b says
+    /// taking it back out gives back the item that went in, `call` and all.
+    ///
+    /// No body and no `emits` flag: a repeating iterator is always a sequence, and
+    /// always emits.
+    static func iteratorRepeating_Behavior(
+        _ name: PushInstruction,
+        into: PushStack?
+    ) -> Behavior {
+        Behavior(
+            name,
+            takes: [.code, .int, .int, .int],
+            fxn: { a in
+                let box = a[0] as! CodeItem
+                let (burial, cursor, count) = (
+                    a[1] as! IntItem, a[2] as! IntItem, a[3] as! IntItem
+                )
+                guard let origin = box.value.first else {
+                    return [Router(.error, ErrorItem("\(name) needs an item in its block"))]
+                }
+
+                let iterator = IteratorItem(
+                    kind: .repeating(into: into),
+                    origin: origin,
+                    destination: count,
+                    body: nil,
+                    emits: true,
+                    cursor: cursor.value,
+                    burial: burial.value,
+                    call: [
+                        box, count, cursor, burial,
+                        InstructionItem(name),
+                    ],
+                    isContingent: Behavior.netContingency(
+                        of: box, count, cursor, burial
+                    )
+                )
+                return [Router(.iterator, iterator)]
+            }
+        )
+    }
+
+    static let iteratorRepeating_Behavior =
+        iteratorRepeating_Behavior(.iteratorRepeating, into: nil)
+    static let iteratorRepeatingIntoExec_Behavior =
+        iteratorRepeating_Behavior(.iteratorRepeatingIntoExec, into: .exec)
+
     static let iteratorFromVecBool_Behavior =
         iteratorFromVector_Behavior(.iteratorFromVecBool, over: VecBoolItem.self)
     static let iteratorFromVecDouble_Behavior =
@@ -387,6 +487,10 @@ nonisolated extension Interpreter {
 
     static let iteratorBehaviors: [PushInstruction: Behavior] =
     [
+        .iteratorFromCode : iteratorFromCode_Behavior,
+        .iteratorFromCodeIntoExec : iteratorFromCodeIntoExec_Behavior,
+        .iteratorRepeating : iteratorRepeating_Behavior,
+        .iteratorRepeatingIntoExec : iteratorRepeatingIntoExec_Behavior,
         .iteratorFromString : iteratorFromString_Behavior,
         .iteratorFromStringLetters : iteratorFromStringLetters_Behavior,
         .iteratorFromStringWords : iteratorFromStringWords_Behavior,

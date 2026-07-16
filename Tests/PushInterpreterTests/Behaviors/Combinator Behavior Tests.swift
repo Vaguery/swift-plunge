@@ -58,6 +58,8 @@ struct CombinatorBehaviorTests {
     }
 
     // contingency
+    /// The outcomes are exactly what they were; the copies simply arrive one per
+    /// pass rather than all at once, so the loop has to run.
     @Test func `combinator DupItems works`() {
         loadInts(inty, ints: [2,0,-5, 9])
         loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4])
@@ -65,17 +67,23 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")
 
         doThis(.doubleDupItems, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
+        // A dup changes no value, so the copies keep their own (empty) record.
         #expect(callString(topItem(inty, .double)) == "( )")
 
+        // A count of 0 copies nothing and builds no iterator.
         doThis(.doubleDupItems, to: inty)
+        #expect(stackString(inty, .iterator) == "[ ]")
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
         #expect(
             (probeItemOnStack(inty, .double, index: 1) as! DoubleItem
             ).isContingent == false
         )
+        // …and so does a negative one.
         doThis(.doubleDupItems, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
         #expect(callString(topItem(inty, .double)) == "( )")
@@ -89,30 +97,70 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")
 
         doThis(.doubleDupTimes, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 2.2 3.3 4.4 ]")
 
+        // A count of 0 copies nothing and builds no iterator.
         doThis(.doubleDupTimes, to: inty)
+        #expect(stackString(inty, .iterator) == "[ ]")
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
         #expect(callString(topItem(inty, .double)) == "( )")
 
+        // …and so does a negative one.
         doThis(.doubleDupTimes, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .double) == "[ 1.1 1.1 1.1 2.2 3.3 4.4 ]")
         #expect(topItem(inty, .double).isContingent == false )
         #expect(callString(topItem(inty, .double)) == "( )")
     }
 
-    // contingency
-    @Test func `combinator DupTimes handles overflow`() {
+    /// **This test used to assert that DupTimes refuses a large count.** It had
+    /// its own `maxStackDepth` check — the only bespoke size guard in the
+    /// language — and errored rather than doing any of the work.
+    ///
+    /// That guard is gone. Copying over `count` passes puts the work back under
+    /// `stepLimit`, `maxStackDepth` at the push boundary, and the runaway guard,
+    /// exactly like any other loop. A huge count is now a long loop that fills the
+    /// stack and reports *that*, which is the truth about what happened.
+    @Test func `combinator DupTimes no longer needs its own size guard`() {
         loadInts(inty, ints: [3_000_000_000])
         loadDoubles(inty, doubles: [1.1])
         #expect(stackString(inty, .int) == "[ 3000000000 ]")
         #expect(stackString(inty, .double) == "[ 1.1 ]")
 
         doThis(.doubleDupTimes, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.1 ]")
-        #expect(stackString(inty, .error).contains("doubleDupTimes overflow") )
-        #expect(callString(topItem(inty, .error)) == "( )")
+        // It builds a loop rather than refusing outright…
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(!errorStrings(inty).contains { $0.contains("overflow") })
+
+        inty.config.stepLimit = 20_000
+        inty.run()
+
+        // …and **the runaway guard stops it**, which is the whole point: a piling
+        // stack fed by an active loop is precisely the shape that guard exists to
+        // catch, and `.iteratorPlay` sitting on `.exec` is the control-side signal
+        // it looks for. It could not see any of this when the copies arrived in
+        // one step, which is why the instruction needed a private guard instead.
+        #expect(errorStrings(inty).contains { $0.hasPrefix(Interpreter.runawayMarker) })
+        #expect(inty.counter < 20_000)
+        #expect(stackString(inty, .exec) == "[ ]")   // unwound
+    }
+
+    /// The whole point of the change: the work is bounded by the ordinary budgets,
+    /// so a full stack reports being full rather than being refused in advance.
+    @Test func `DupTimes fills a stack and says so`() {
+        let inty = Interpreter()
+        inty.config.maxStackDepth = 20
+        inty.load(program: [DoubleItem(1.1), IntItem(500), InstructionItem(.doubleDupTimes)])
+        inty.run(stepLimit: 10_000)
+
+        #expect(inty.stacks[.double]!.count == 20)
+        #expect(errorStrings(inty).contains { $0.contains("is full at maxStackDepth") })
+    }
+
+    func errorStrings(_ inty: Interpreter) -> [String] {
+        inty.stacks[.error]!.compactMap { ($0 as? ErrorItem)?.value }
     }
 
     @Test func `combinator Empty works`() {

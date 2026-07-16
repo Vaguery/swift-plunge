@@ -131,6 +131,14 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case iteratorFromIntRange
     case iteratorFromString, iteratorFromStringLetters, iteratorFromStringWords
     case iteratorFromVecBool, iteratorFromVecDouble, iteratorFromVecInt, iteratorFromVecString
+    // A CodeItem is the universal box: it can hold any item, so ONE constructor
+    // covers a repeating iterator over all thirteen stacks rather than thirteen.
+    // The `IntoExec` variants exist because `.exec` is the one target that cannot
+    // be derived from the element — its contents are heterogeneous *and* pending —
+    // and a PushStack is not expressible as a Push value, so the exception has to
+    // live in the name.
+    case iteratorFromCode, iteratorFromCodeIntoExec
+    case iteratorRepeating, iteratorRepeatingIntoExec
 
     // iterator combinators
     case iteratorDeepDup, iteratorDup, iteratorDupItems, iteratorDupTimes, iteratorStackIsEmpty, iteratorEq, iteratorFlush, iteratorPop, iteratorPopItems, iteratorRot, iteratorShove, iteratorStackDepth, iteratorSwap, iteratorYank, iteratorYankDup
