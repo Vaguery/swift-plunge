@@ -17,20 +17,24 @@ import DequeModule
 struct IteratorBehaviorTests {
 
     /// `0 → 5` by 1, emitting its index, with a body that pushes one `true`.
+    /// Pass `body: nil` for a sequence rather than a loop.
     func counting(
         from origin: Int = 0,
         to destination: Int = 5,
         by stride: Int = 1,
         emits: Bool = true,
-        cursor: Int = 0
+        cursor: Int = 0,
+        burial: Int = 0,
+        body: CodeItem? = CodeItem([BoolItem(true)])
     ) -> IteratorItem {
         IteratorItem(
             kind: .counting(stride: stride),
             origin: IntItem(origin),
             destination: IntItem(destination),
-            body: CodeItem([BoolItem(true)]),
+            body: body,
             emits: emits,
-            cursor: cursor
+            cursor: cursor,
+            burial: burial
         )
     }
 
@@ -133,7 +137,9 @@ struct IteratorBehaviorTests {
         delayed.stacks[.int]!.prepend(IntItem(0))
         doThis(.iteratorPlayDelayed, to: delayed)
 
-        #expect(stackString(delayed, .exec) == "[ ( true ) .codeDo .iteratorPlayDelayed ]")
+        // The continuation is a plain `.iteratorPlay`: the burial is on the
+        // iterator now, so nothing needs to re-read it.
+        #expect(stackString(delayed, .exec) == "[ ( true ) .codeDo .iteratorPlay ]")
         #expect(stackString(delayed, .int) == "[ 0 ]")
         #expect(stackString(delayed, .iterator) == "[ «0→5 by 1 @1 ( true )» ]")
     }
@@ -150,8 +156,10 @@ struct IteratorBehaviorTests {
         // payload is on top, then 91 and 92, and only then the continuation.
         #expect(
             stackString(inty, .exec)
-                == "[ ( true ) .codeDo 91 92 .iteratorPlayDelayed 93 ]"
+                == "[ ( true ) .codeDo 91 92 .iteratorPlay 93 ]"
         )
+        // …and the depth is now the iterator's own, shown by `⤓`.
+        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @1 ⤓2 ( true )» ]")
     }
 
     @Test func `iteratorPlayDelayed clamps a delay past the bottom of exec`() {
@@ -160,7 +168,7 @@ struct IteratorBehaviorTests {
         doThis(.iteratorPlayDelayed, to: inty)
 
         // Everything pending runs first; the loop resumes last.
-        #expect(stackString(inty, .exec) == "[ ( true ) .codeDo 91 .iteratorPlayDelayed ]")
+        #expect(stackString(inty, .exec) == "[ ( true ) .codeDo 91 .iteratorPlay ]")
     }
 
     @Test func `a negative delay ends the loop early`() {
@@ -185,20 +193,56 @@ struct IteratorBehaviorTests {
         #expect(errorStrings(inty).contains { $0.contains("missing args") })
     }
 
-    /// The delay is read fresh every pass, so a body that leaves one can change
-    /// the loop's own schedule as it runs.
-    @Test func `a delayed loop re-reads its delay each pass`() {
+    /// **The burial is read once and then persists** — this test asserted the
+    /// opposite until the rework, and the opposite was the dead end: a loop that
+    /// re-read a delay every pass ate one `.int` per pass, so a thousand-pass loop
+    /// starved every other instruction of arguments. Argument starvation is the
+    /// Push flaw first-class iterators are meant to relieve, not deepen.
+    @Test func `a delayed loop reads its burial once and keeps it`() {
         let inty = loaded(
             counting(emits: false),
             exec: [InstructionItem(.iteratorPlayDelayed)]
         )
-        // One delay per pass, all zero: five passes, five bodies, none left over.
         inty.stacks[.int] = Deque((0..<5).map { _ in IntItem(0) as any Item })
         inty.run(stepLimit: 10_000)
 
-        #expect(inty.stacks[.bool]!.count == 5)
+        #expect(inty.stacks[.bool]!.count == 5)     // five passes, five bodies
+        // Four of the five ints are untouched: the loop took exactly one.
+        #expect(stackString(inty, .int) == "[ 0 0 0 0 ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// A buried loop stays buried, without asking again — the whole point of
+    /// keeping the depth on the iterator.
+    @Test func `a burial persists for the life of the loop`() {
+        let inty = loaded(
+            counting(from: 0, to: 4, emits: false),
+            exec: [InstructionItem(.iteratorPlayDelayed)]
+        )
+        inty.stacks[.int]!.prepend(IntItem(2))
+        inty.run(stepLimit: 10_000)
+
+        // It ran to exhaustion on one int, and never touched .int again.
+        #expect(inty.stacks[.bool]!.count == 4)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(inty.stacks[.error]!.isEmpty)
+    }
+
+    /// The burial survives a round trip through the iterator's own crux, which is
+    /// what makes it genuinely part of the iterator's value rather than a passing
+    /// argument.
+    @Test func `a buried iterator's crux reproduces its burial`() {
+        let inty = loaded(counting(), exec: [InstructionItem(.iteratorPlayDelayed)])
+        inty.stacks[.int]!.prepend(IntItem(3))
+        doThis(.iteratorPlayDelayed, to: inty)
+
+        let live = inty.stacks[.iterator]!.first!
+        #expect((live as? IteratorItem)?.burial == 3)
+
+        let rebuilt = rerunTop(live.crux(), on: .iterator) as? IteratorItem
+        #expect(rebuilt?.burial == 3)
+        #expect(rebuilt?.isEqual(to: live) == true)
     }
 
 
@@ -249,8 +293,10 @@ struct IteratorBehaviorTests {
 
     @Test func `iteratorFromIntRange builds an iterator without running it`() {
         let inty = Interpreter()
+        // origin dest stride cursor burial emits (body)
         inty.load(program: [
-            IntItem(2), IntItem(8), IntItem(3), IntItem(1), BoolItem(true),
+            IntItem(2), IntItem(8), IntItem(3), IntItem(1), IntItem(0),
+            BoolItem(true),
             CodeItem([BoolItem(true)]),
             InstructionItem(.iteratorFromIntRange),
         ])
@@ -260,6 +306,41 @@ struct IteratorBehaviorTests {
         // Emphatically not a loop: nothing ran, nothing was emitted.
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
+    }
+
+    /// An empty body is no body: `init` normalizes the two together, which is what
+    /// lets one constructor serve both a sequence and a loop. A crux writes `( )`
+    /// for a bodyless iterator and gets nil back.
+    @Test func `an empty body is normalized to no body`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(0), IntItem(5), IntItem(1), IntItem(0), IntItem(0),
+            BoolItem(true),
+            CodeItem([]),
+            InstructionItem(.iteratorFromIntRange),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        let built = inty.stacks[.iterator]!.first as? IteratorItem
+        #expect(built?.body == nil)
+        #expect(built?.isEqual(to: counting(body: nil)) == true)
+    }
+
+    /// A bodyless pass emits its element and nothing else — one step, not three.
+    @Test func `a bodyless iterator emits only its elements`() {
+        let inty = loaded(
+            counting(body: nil),
+            exec: [InstructionItem(.iteratorPlay)]
+        )
+        doThis(.iteratorPlay, to: inty)
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay .iteratorPlay ]")
+        #expect(stackString(inty, .int) == "[ 0 ]")
+
+        let all = loaded(counting(body: nil), exec: [InstructionItem(.iteratorPlay)])
+        all.run(stepLimit: 10_000)
+        #expect(stackString(all, .int) == "[ 4 3 2 1 0 ]")
+        // Five elements in five passes: no `.codeDo` cycles in between.
+        #expect(all.counter == 5)
     }
 
     /// The obligation, for the type that carries a loop: an iterator's crux

@@ -55,16 +55,40 @@ is what lets it see — or steal — the iterator.
 | instruction | what it does |
 |---|---|
 | `.iteratorStep` | One pass, by hand, no continuation. |
-| `.iteratorPlay` | One pass + its own next copy under the payload. The ordinary loop. |
-| `.iteratorPlayDelayed` | One pass, then its next copy **inserted `delay` items down `.exec`** — shoved, with no Push code. Pops a fresh delay each pass. `< 0` ends the loop; `0` is exactly `.iteratorPlay`; `> 0` interleaves. |
+| `.iteratorPlay` | One pass + its own next copy buried `burial` items under the payload. **The only continuation token.** |
+| `.iteratorPlayDelayed` | Pops a burial **once**, stores it on the iterator, then plays — handing off to `.iteratorPlay`. `< 0` ends the loop; `0` is an ordinary tight loop; `> 0` interleaves. |
 | `.iteratorPopState` | Advance without emitting — skip a pass. |
 | `.iteratorPeekStart` / `.iteratorPeekEnd` / `.iteratorPeekStride` / `.iteratorPeekBody` | The getters. Non-destructive. |
 | `.iteratorFromIntRange` | Construct only, never runs. Exists for `crux()`. |
 | `.iteratorPrint`, + the 15 combinators | The usual per-type furniture. |
 
-`.iteratorPlayDelayed` is the interesting one: a loop that schedules its own resumption *behind* other
-pending work is a coroutine, and re-reading the delay every pass means a body can retune its own
-schedule as it runs.
+### Burial, and argument starvation
+
+Every iterator carries a **`burial`** (always ≥ 0): how deep in `.exec` it hides its next copy. Zero —
+what every tight loop carries, because the creators of tight loops simply never gather one — puts the
+copy directly under the payload. A positive burial lets other pending work run in between, so the loop
+interleaves rather than monopolising `.exec`. That is a coroutine, without the `.execShove` gymnastics.
+
+**`.iteratorPlayDelayed` originally re-read its delay every pass, and that was a dead end.** A
+thousand-pass loop would eat a thousand `.int`s — deepening *argument starvation*, the Push design flaw
+this whole effort is meant to relieve. It now reads the depth once, stores it on the iterator, and hands
+the loop to a plain `.iteratorPlay` that consumes nothing. A `.iteratorPlaySlow` was considered as a
+separate "persisting" variant and rejected: it collapses into this, and one play mechanism is better
+than two.
+
+Burial is *state*, not a passing argument — two iterators alike but for where they hide their next copy
+behave differently — so it is part of `isEqual`, part of the `AnyItem` envelope, and carried by the
+constructor for `crux()`.
+
+### Bodies are optional
+
+`body: CodeItem?`. **nil means a sequence rather than a loop**: it only emits its elements, and a pass
+costs one step instead of three. That is what keeps exploding cheap — a 200-character string costs 200
+steps, not 600, which against `stepLimit` is a difference in behaviour and not merely speed.
+
+`init` normalizes an *empty* body to nil, so `CodeItem([])` can never exist to be confused with "no
+body". That is what lets one constructor per source serve both forms: a crux writes `( )` for a bodyless
+iterator and gets nil back. An empty body is a no-op body, so nothing is lost.
 
 **Termination never dangles.** On the last pass neither the iterator nor a continuation is emitted. A
 stray continuation can only arise if the body removed the iterator, and then "missing args" is the

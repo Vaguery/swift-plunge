@@ -14,14 +14,56 @@ import Foundation
 /// That is what lets one type cover counting, walking a collection, and (later)
 /// sampling a Double range: a Double range needs no Double counter, only an
 /// origin, an endpoint, and a number of steps to divide the span into.
+/// A projection must be a **pure function of `(origin, cursor)`** — that is the
+/// only thing `projection()` asks of a kind, and it is what keeps every kind O(1)
+/// and reconstructible. `origin` never changes for the life of a loop, so the
+/// index always means the same thing.
 public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
     /// `origin` and `destination` are `IntItem`s; pass `i` emits
     /// `origin + i × stride` to `.int`.
     case counting(stride: Int)
 
-    /// `origin` is a `StringItem` or a vector; pass `i` emits `origin[i]` to the
-    /// matching scalar stack.
-    case elements
+    /// `origin` is a `StringItem`, a vector, or a `CodeItem`; pass `i` emits
+    /// `origin[i]` — the **root level only**, never descending into nesting.
+    ///
+    /// `into` names the stack elements land on, and is `nil` for everything but
+    /// `.exec`: a bool out of a `VecBoolItem` obviously belongs on `.bool`, and
+    /// `PushStack.defaultStack(for:)` already knows that. `.exec` is the one
+    /// target that cannot be derived, because its contents are heterogeneous
+    /// *and* pending rather than resting. A `PushStack` is not expressible as a
+    /// Push value, so a constructor cannot take one as an argument — which is why
+    /// the exception is spelled in an instruction's name (`…IntoExec`) instead.
+    case elements(into: PushStack?)
+
+    /// `origin` is a `StringItem`; pass `i` emits `String(origin[i])` — a
+    /// one-character *string* — to `.string`. This is `stringParseToLetters`.
+    case letters
+
+    /// `origin` is a `StringItem`; pass `i` emits its `i`-th whitespace-delimited
+    /// chunk to `.string`. This is `stringSplit`.
+    case words
+
+    /// `origin` is anything at all and `destination` is an `IntItem` count; every
+    /// pass emits `origin` again. This is the `xDupTimes` family — which is why
+    /// the copies record nothing (law 1: a dup changes no value).
+    case repeating(into: PushStack?)
+
+    // RESERVED — `case points(into: PushStack?)`
+    //
+    // The unwritten `.code` behaviors (`codeNthPoint`, `codeIteratePoints`,
+    // `codeIndexOfPoint`, `codeLengthPoints`) walk a CodeItem as a zipper:
+    // depth-first, descending into nested `CodeItem.value` on sight,
+    // left-to-right. That is `.elements`'s sibling rather than a different shape
+    // — same CodeItem origin, same Int cursor, the index simply applied in a
+    // different mode — and this architecture already admits it: a pre-order walk
+    // is a pure function of (origin, cursor), which is all a projection must be.
+    //
+    // Adding it is one case here, one branch in `projection()`, one in
+    // `sourceCount`, and one constructor. Two things must land first, and neither
+    // belongs to the current pass: `codeNthPoint` must exist for the element's
+    // `call` to name it, and a points *count* is needed for `hasNextPass` —
+    // memoized on CodeItem beside its `weight`, since a fresh depth-first count
+    // per pass would be O(size) per step.
 }
 
 
@@ -70,15 +112,41 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// arrived at.
     public var origin: any Item
 
-    /// The end bound. `nil` for `.elements`, whose end is its origin's length.
+    /// The end bound. `nil` for the kinds whose end derives from the origin
+    /// itself — `.elements` runs out when the collection does.
     public var destination: (any Item)?
 
-    /// Emitted to `.code` every pass, for `.codeDo` to run.
-    public var body: CodeItem
+    /// Emitted to `.code` each pass, for the `.codeDo` beside it to run.
+    ///
+    /// **`nil` means this iterator is a sequence rather than a loop**: it only
+    /// emits its elements, and a pass costs one step instead of three. Exploding
+    /// a 200-character string costs 200 steps, not 600 — which against
+    /// `stepLimit` is a difference in behaviour, not just in speed.
+    ///
+    /// An *empty* body is normalized to nil by `init`, so `CodeItem([])` can
+    /// never be here to be confused with "no body". That is deliberate: it lets
+    /// one constructor per source serve both forms, because a crux can emit `( )`
+    /// for a bodyless iterator and get nil back. An empty body is a no-op body,
+    /// so nothing is lost by conflating them.
+    public var body: CodeItem?
 
     /// Whether a pass pushes its projection at all. `execDoRange` leaves its
     /// index on `.int` for the body to read; `execDoTimes` deliberately does not.
     public var emits: Bool
+
+    /// How deep in `.exec` this loop hides its next copy — **always ≥ 0**.
+    ///
+    /// Zero, the overwhelmingly common case, means "directly under the payload":
+    /// a tight loop that comes back round as soon as its body is done. A positive
+    /// burial lets other pending work run first, so the loop interleaves with it
+    /// rather than monopolising `.exec` — a coroutine, in effect.
+    ///
+    /// It lives here rather than being re-read every pass because re-reading is
+    /// what *causes* argument starvation: a thousand-pass loop would eat a
+    /// thousand `.int`s. The creators of tight loops never gather one at all, so
+    /// they get 0 for free; `.iteratorPlayDelayed` gathers one, once, and it
+    /// persists for the life of the loop.
+    public var burial: Int
 
     public var call: [any Item] {
         didSet { callWeight = Self.weighCall(call) }
@@ -92,9 +160,10 @@ public nonisolated struct IteratorItem: Item, Pretty {
         kind: IteratorKind,
         origin: any Item,
         destination: (any Item)? = nil,
-        body: CodeItem,
+        body: CodeItem? = nil,
         emits: Bool,
         cursor: Int = 0,
+        burial: Int = 0,
         call: [any Item] = [],
         isContingent: Bool = false
     ) {
@@ -102,8 +171,11 @@ public nonisolated struct IteratorItem: Item, Pretty {
         self.kind = kind
         self.origin = origin
         self.destination = destination
-        self.body = body
+        // An empty body is no body: normalizing here is what keeps nil and
+        // `CodeItem([])` from being two spellings of the same iterator.
+        self.body = (body?.value.isEmpty ?? true) ? nil : body
         self.emits = emits
+        self.burial = max(0, burial)
         self.call = call
         self.isContingent = isContingent
         self.callWeight = Self.weighCall(call)
@@ -112,7 +184,8 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// The content this iterator holds, for the `maxItemWeight` budget: its
     /// source and its body, both of which it retains for the loop's duration.
     public var weight: Int {
-        let (sum, overflowed) = origin.weight.addingReportingOverflow(body.weight)
+        let (sum, overflowed) =
+            origin.weight.addingReportingOverflow(body?.weight ?? 0)
         return overflowed ? Int.max : sum
     }
 
@@ -131,13 +204,22 @@ public nonisolated struct IteratorItem: Item, Pretty {
             value == other.value,
             kind == other.kind,
             emits == other.emits,
+            burial == other.burial,
             origin.isEqual(to: other.origin),
-            body.isEqual(to: other.body)
+            Self.same(body, other.body),
+            Self.same(destination, other.destination)
         else { return false }
-        switch (destination, other.destination) {
-        case (nil, nil):             return true
-        case let (mine?, theirs?):   return mine.isEqual(to: theirs)
-        default:                     return false
+        return true
+    }
+
+    /// Two optional items are the same when both are absent, or both present and
+    /// equal. Used for `body` and `destination`, which are absent for different
+    /// reasons but compare the same way.
+    static func same(_ mine: (any Item)?, _ theirs: (any Item)?) -> Bool {
+        switch (mine, theirs) {
+        case (nil, nil):            true
+        case let (mine?, theirs?):  mine.isEqual(to: theirs)
+        default:                    false
         }
     }
 
@@ -146,9 +228,11 @@ public nonisolated struct IteratorItem: Item, Pretty {
             ?? origin.pretty()
         let by = switch kind {
             case .counting(let stride): " by \(stride)"
-            case .elements:             ""
+            default:                    ""
         }
-        return "«\(where_)\(by) @\(value)\(emits ? "" : " silent") \(body.pretty())»"
+        let doing = body.map { " \($0.pretty())" } ?? ""
+        let deep = burial > 0 ? " ⤓\(burial)" : ""
+        return "«\(where_)\(by) @\(value)\(emits ? "" : " silent")\(deep)\(doing)»"
     }
 }
 
@@ -157,11 +241,22 @@ public nonisolated struct IteratorItem: Item, Pretty {
 
 nonisolated extension IteratorItem {
 
-    /// The stride, as the projection uses it. `.elements` walks one at a time.
+    /// The stride, as the projection uses it. Everything that walks a source
+    /// walks it one at a time.
     var stride: Int {
         switch kind {
         case .counting(let stride): stride
-        case .elements:             1
+        default:                    1
+        }
+    }
+
+    /// The stack this iterator's projections come to rest on, when the kind names
+    /// one explicitly. `nil` means "derive it from the element itself".
+    var target: PushStack? {
+        switch kind {
+        case .elements(let into):  into
+        case .repeating(let into): into
+        default:                   nil
         }
     }
 
@@ -188,8 +283,14 @@ nonisolated extension IteratorItem {
                 isContingent: isContingent
             )
 
-        case .elements:
+        case .elements, .letters, .words:
             return element(at: value)
+
+        // A dup: the copy IS the argument, so law 1 applies and it records
+        // nothing. This is why the whole `xDupTimes` family needs no `Nth`.
+        case .repeating:
+            guard !isSpent else { return nil }
+            return origin
         }
     }
 
@@ -205,8 +306,12 @@ nonisolated extension IteratorItem {
     /// Whether this iterator has anything left to emit at its current cursor.
     var isSpent: Bool {
         switch kind {
-        case .counting: currentValue() == nil
-        case .elements: value < 0 || value >= sourceCount
+        case .counting:
+            currentValue() == nil
+        case .repeating:
+            value < 0 || value >= (destination as? IntItem)?.value ?? 0
+        case .elements, .letters, .words:
+            value < 0 || value >= sourceCount
         }
     }
 
@@ -234,7 +339,9 @@ nonisolated extension IteratorItem {
             let (difference, tooFarApart) = end.subtractingReportingOverflow(current)
             if tooFarApart { return true }
             return difference.magnitude > stride.magnitude
-        case .elements:
+        case .repeating:
+            return value + 1 < (destination as? IntItem)?.value ?? 0
+        case .elements, .letters, .words:
             return value + 1 < sourceCount
         }
     }
@@ -249,7 +356,11 @@ nonisolated extension IteratorItem {
 
     /// The `call` that rebuilds this iterator *by state* — the whole reason its
     /// provenance stays O(1). `origin`, `destination` and `body` are fixed for
-    /// the loop's life, so only the two literals differ from pass to pass.
+    /// the loop's life, so only the literals differ from pass to pass.
+    ///
+    /// A nil body is written as `( )` and read back as nil, since `init`
+    /// normalizes an empty body away. That is what lets one constructor per
+    /// source serve both a sequence and a loop.
     func reconstruction() -> [any Item] {
         guard case .counting(let stride) = kind, let destination else { return [] }
         return [
@@ -257,8 +368,9 @@ nonisolated extension IteratorItem {
             destination,
             IntItem(stride),
             IntItem(value),
+            IntItem(burial),
             BoolItem(emits),
-            body,
+            body ?? CodeItem([]),
             InstructionItem(.iteratorFromIntRange),
         ]
     }
@@ -269,42 +381,88 @@ nonisolated extension IteratorItem {
 
 nonisolated extension IteratorItem {
 
-    /// How many items `origin` holds. Zero for anything that is not a source a
-    /// `.elements` iterator can walk.
+    /// The whitespace-delimited chunks of a string origin. `.words` only.
+    var sourceWords: [Substring] {
+        (origin as? StringItem)?.value.split { $0.isWhitespace } ?? []
+    }
+
+    /// How many things this iterator's cursor can address. Zero for anything that
+    /// is not a source it knows how to walk.
     var sourceCount: Int {
-        switch origin {
-        case let s as StringItem:       s.value.count
-        case let v as VecBoolItem:      v.value.count
-        case let v as VecDoubleItem:    v.value.count
-        case let v as VecIntItem:       v.value.count
-        case let v as VecStringItem:    v.value.count
-        default:                        0
+        switch kind {
+        case .words:
+            return sourceWords.count
+        default:
+            switch origin {
+            case let s as StringItem:    return s.value.count
+            case let v as VecBoolItem:   return v.value.count
+            case let v as VecDoubleItem: return v.value.count
+            case let v as VecIntItem:    return v.value.count
+            case let v as VecStringItem: return v.value.count
+            case let c as CodeItem:      return c.value.count
+            default:                     return 0
+            }
         }
     }
 
-    /// The element at `index`, recording the `Nth` instruction that honestly
-    /// reproduces it: `origin index .vecBoolNth` — O(1), and independent of how
-    /// many passes have run.
+    /// The element at `index`, recording the instruction that honestly reproduces
+    /// it — `origin index .vecBoolNth` — which is O(1) and, crucially,
+    /// independent of how many passes have run. Order within the record is free:
+    /// every `Nth` takes its two arguments from *different* stacks.
     func element(at index: Int) -> (any Item)? {
         guard index >= 0, index < sourceCount else { return nil }
         let cursor = IntItem(index)
-        func record(_ name: PushInstruction) -> [any Item] {
-            [origin, cursor, InstructionItem(name)]
+        func record(_ names: PushInstruction...) -> [any Item] {
+            [origin, cursor] + names.map { InstructionItem($0) }
         }
-        switch origin {
-        case let s as StringItem:
+
+        switch kind {
+        // A one-character *string*, not a char: `stringParseToLetters`. Two
+        // instructions to reproduce, still O(1).
+        case .letters:
+            guard let s = origin as? StringItem else { return nil }
             let i = s.value.index(s.value.startIndex, offsetBy: index)
-            return CharItem(s.value[i], call: record(.stringNth), isContingent: isContingent)
-        case let v as VecBoolItem:
-            return BoolItem(v.value[index], call: record(.vecBoolNth), isContingent: isContingent)
-        case let v as VecDoubleItem:
-            return DoubleItem(v.value[index], call: record(.vecDoubleNth), isContingent: isContingent)
-        case let v as VecIntItem:
-            return IntItem(v.value[index], call: record(.vecIntNth), isContingent: isContingent)
-        case let v as VecStringItem:
-            return StringItem(v.value[index], call: record(.vecStringNth), isContingent: isContingent)
+            return StringItem(
+                String(s.value[i]),
+                call: record(.stringNth, .stringFromChar),
+                isContingent: isContingent
+            )
+
+        case .words:
+            let chunks = sourceWords
+            guard index < chunks.count else { return nil }
+            return StringItem(
+                String(chunks[index]),
+                call: record(.stringNthWord),
+                isContingent: isContingent
+            )
+
         default:
-            return nil
+            switch origin {
+            case let s as StringItem:
+                let i = s.value.index(s.value.startIndex, offsetBy: index)
+                return CharItem(s.value[i], call: record(.stringNth), isContingent: isContingent)
+            case let v as VecBoolItem:
+                return BoolItem(v.value[index], call: record(.vecBoolNth), isContingent: isContingent)
+            case let v as VecDoubleItem:
+                return DoubleItem(v.value[index], call: record(.vecDoubleNth), isContingent: isContingent)
+            case let v as VecIntItem:
+                return IntItem(v.value[index], call: record(.vecIntNth), isContingent: isContingent)
+            case let v as VecStringItem:
+                return StringItem(v.value[index], call: record(.vecStringNth), isContingent: isContingent)
+
+            // Law 1b: an item that goes into a block and comes back out is the
+            // item that went in, so it keeps its own `call` and records nothing.
+            // This is what spares the dup families an `Nth` — and it is why
+            // `codeNthRoot` can stay unimplemented.
+            case let c as CodeItem:
+                var element = c.value[index]
+                element.isContingent = Behavior.netContingency(of: c, element)
+                return element
+
+            default:
+                return nil
+            }
         }
     }
 }

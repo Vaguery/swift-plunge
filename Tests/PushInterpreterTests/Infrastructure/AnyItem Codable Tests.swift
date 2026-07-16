@@ -58,11 +58,13 @@ struct AnyItemCodableTests {
         #expect((back?.destination as? IntItem)?.value == 4)
     }
 
-    /// A collection iterator has no end bound of its own, and the optional has to
-    /// survive as nil rather than becoming something else.
-    @Test func `an iterator with no destination round-trips`() throws {
+    /// A collection iterator has no end bound of its own, and a sequence has no
+    /// body. Both optionals have to survive as nil rather than becoming something
+    /// else — and an empty body must come back as *no* body, since `init`
+    /// normalizes the two together.
+    @Test func `an iterator with no destination and no body round-trips`() throws {
         let iterator = IteratorItem(
-            kind: .elements,
+            kind: .elements(into: nil),
             origin: VecBoolItem([true, false]),
             body: CodeItem([]),
             emits: true
@@ -70,6 +72,24 @@ struct AnyItemCodableTests {
         let back = try roundTrip(iterator) as? IteratorItem
         #expect(back?.isEqual(to: iterator) == true)
         #expect(back?.destination == nil)
+        #expect(back?.body == nil)
+    }
+
+    /// Burial is state — two iterators identical but for where they hide their
+    /// next copy are different iterators, and behave differently.
+    @Test func `an iterator's burial depth round-trips`() throws {
+        let iterator = IteratorItem(
+            kind: .elements(into: .exec),
+            origin: CodeItem([IntItem(1), InstructionItem(.intAdd)]),
+            body: CodeItem([BoolItem(true)]),
+            emits: true,
+            cursor: 1,
+            burial: 4
+        )
+        let back = try roundTrip(iterator) as? IteratorItem
+        #expect(back?.burial == 4)
+        #expect(back?.kind == .elements(into: .exec))
+        #expect(back?.isEqual(to: iterator) == true)
     }
 
     /// Provenance is dropped, as it is for every other item — the envelope's

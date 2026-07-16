@@ -12,11 +12,16 @@ nonisolated extension Interpreter {
     // MARK: - Stepping
 
     /// The payload of one pass, as Routers: the projected item (when the iterator
-    /// emits one), then the body and the `.codeDo` that runs it.
+    /// emits one), then — if it has a body — the body and the `.codeDo` that runs
+    /// it.
     ///
     /// `.exec` ends up top→bottom `body, .codeDo, …`, so the body runs *between*
     /// the payload and whatever continuation the caller appends. That is what lets
     /// the body see — or steal — the iterator resting on `.iterator`.
+    ///
+    /// **A bodyless iterator emits only its element.** Those are the sequences —
+    /// `stringPushAllChars` and the dup families — which have no mouse to run, and
+    /// pushing an empty block for them would cost two wasted steps per element.
     ///
     /// Provenance: the body copy is combinatory (laws 1 and 1b) and the `.codeDo`
     /// token is freshly minted (law 4), so neither records anything. The
@@ -24,17 +29,49 @@ nonisolated extension Interpreter {
     static func iteratorPass(_ iterator: IteratorItem) -> [Router] {
         var results = [Router]()
 
-        if iterator.emits, let projected = iterator.projection(),
-           let resting = PushStack.defaultStack(for: projected) {
+        if iterator.emits, let projected = iterator.projection() {
+            // `?? .exec` because `defaultStack(for:)` answers nil for an
+            // InstructionItem — it executes rather than lands. Without the
+            // fallback an instruction walked out of a code block would be
+            // silently dropped, which is exactly what a points traversal would
+            // meet: most leaves of a block ARE instructions. An instruction with
+            // no resting place should run, and `.exec` is where running happens.
+            let resting = iterator.target
+                ?? PushStack.defaultStack(for: projected)
+                ?? .exec
             results.append(Router(resting, projected))
         }
 
-        var bodyCopy = iterator.body
-        bodyCopy.isContingent = Behavior.netContingency(of: iterator, iterator.body)
-
-        results.append(Router(.exec, InstructionItem(.codeDo)))
-        results.append(Router(.exec, bodyCopy))
+        if let body = iterator.body {
+            var bodyCopy = body
+            bodyCopy.isContingent = Behavior.netContingency(of: iterator, body)
+            results.append(Router(.exec, InstructionItem(.codeDo)))
+            results.append(Router(.exec, bodyCopy))
+        }
         return results
+    }
+
+    /// Insert `token` into `.exec` at `burial` items below the payload the caller
+    /// has already pushed, clamped to the stack's depth.
+    ///
+    /// Burial 0 means directly under the payload — a tight loop that comes back
+    /// round the moment its body is done, which is what every ordinary loop wants
+    /// and what `.iteratorPlay` did before burial existed. A positive burial lets
+    /// whatever else is pending run first.
+    static func bury(
+        _ token: any Item,
+        _ burial: Int,
+        under payload: [Router],
+        in interpreter: Interpreter
+    ) {
+        let before = interpreter.stacks[.exec]!.count
+        for router in payload {
+            interpreter.push(router.item, to: router.stack)
+        }
+        let payloadDepth = interpreter.stacks[.exec]!.count - before
+
+        let target = min(payloadDepth + max(0, burial), interpreter.stacks[.exec]!.count)
+        interpreter.stacks[.exec]!.insert(token, at: target)
     }
 
     /// One pass, by hand — no continuation. A program driving a loop itself calls
@@ -58,52 +95,60 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// One pass, plus its own next copy just below the payload — the ordinary
-    /// loop, and what the `exec` looping instructions emit.
+    /// One pass, plus its own next copy buried `burial` items below the payload —
+    /// the loop, and **the only continuation token**.
+    ///
+    /// At burial 0, which is what every tight loop carries, the copy lands
+    /// directly under the payload and this is an ordinary loop. A positive burial
+    /// lets other pending work run in between, so the loop interleaves rather than
+    /// monopolising `.exec`. Reading the depth from the iterator rather than from
+    /// `.int` is the whole point: a thousand-pass loop consumes no arguments at
+    /// all, which is what `.iteratorPlayDelayed` re-reading a delay every pass got
+    /// wrong.
     ///
     /// On the last pass neither the iterator nor the continuation is emitted, so a
     /// loop never leaves a token behind to fire against an empty stack. A dangling
     /// `.iteratorPlay` can only arise if the body itself removed the iterator, and
     /// then "missing args" on `.error` is the honest answer.
     static let iteratorPlay_Behavior =
-        Behavior(
+        BehaviorWithSideEffects(
             .iteratorPlay,
             takes: [.iterator],
-            fxn: { a in
-                let iterator = a[0] as! IteratorItem
+            modifier: { (interpreter, collectedItems) in
+                let iterator = collectedItems[0] as! IteratorItem
                 guard !iterator.isSpent else { return [] }
 
-                var results = [Router]()
-                if iterator.hasNextPass {
-                    // Prepended first, so it lands *under* the payload: the body
-                    // runs, then the loop comes back round.
-                    results.append(
-                        Router(
-                            .exec,
-                            InstructionItem(
-                                .iteratorPlay,
-                                isContingent: iterator.isContingent
-                            )
-                        )
-                    )
-                    results.append(Router(.iterator, iterator.stepped()))
+                let payload = iteratorPass(iterator)
+                guard iterator.hasNextPass else {
+                    return payload
                 }
-                results.append(contentsOf: iteratorPass(iterator))
-                return results
+
+                bury(
+                    InstructionItem(.iteratorPlay, isContingent: iterator.isContingent),
+                    iterator.burial,
+                    under: payload,
+                    in: interpreter
+                )
+                return [Router(.iterator, iterator.stepped())]
             }
         )
 
-    /// One pass, then the loop's next copy is **inserted `delay` items deep** in
-    /// `.exec` rather than sitting directly under the payload — shoved, without
-    /// the Push code a shove would need.
+    /// Aim a loop's burial depth, once, and play it.
     ///
-    /// The delay is popped fresh every pass, so the schedule can change as the
-    /// loop runs, and a loop can interleave itself with whatever else is pending.
+    /// Pops a single `.int`, **stores it on the iterator**, and then behaves
+    /// exactly as `.iteratorPlay` — including handing the loop off to
+    /// `.iteratorPlay` as its continuation. So the depth is read one time and
+    /// persists for the life of the loop.
     ///
-    /// - `delay < 0` — no continuation: the loop ends here, short of exhaustion.
-    /// - `delay == 0` — exactly where `.iteratorPlay` puts it, just below the payload.
-    /// - `delay > 0` — that many items further down, clamped to the depth of
-    ///   `.exec` like the `Shove`/`Yank` combinators clamp.
+    /// This used to re-read a delay every pass, which was a dead end: it made a
+    /// long loop eat every `.int` in sight, and argument starvation is the very
+    /// Push design flaw first-class iterators are meant to relieve.
+    ///
+    /// - `burial < 0` — the loop ends here, short of exhaustion. This pass still
+    ///   happens; only the continuation is dropped.
+    /// - `burial == 0` — an ordinary tight loop.
+    /// - `burial > 0` — that many items further down `.exec`, clamped to its depth
+    ///   like the `Shove`/`Yank` combinators clamp.
     ///
     /// Note `gather` is all-or-nothing, so meeting an empty `.int` leaves the
     /// iterator un-popped: the loop stalls with its state intact rather than
@@ -113,33 +158,23 @@ nonisolated extension Interpreter {
             .iteratorPlayDelayed,
             takes: [.int, .iterator],
             modifier: { (interpreter, collectedItems) in
-                let delay = (collectedItems[0] as! IntItem).value
-                let iterator = collectedItems[1] as! IteratorItem
+                let burial = (collectedItems[0] as! IntItem).value
+                var iterator = collectedItems[1] as! IteratorItem
                 guard !iterator.isSpent else { return [] }
 
                 let payload = iteratorPass(iterator)
+                guard burial >= 0, iterator.hasNextPass else { return payload }
 
-                guard delay >= 0, iterator.hasNextPass else { return payload }
+                iterator.burial = burial
+                iterator.call = iterator.reconstruction()
 
-                // The payload has to be in place before the continuation can be
-                // measured against it: `delay` counts from just below the payload,
-                // so delay 0 is `.iteratorPlay`'s placement exactly.
-                let before = interpreter.stacks[.exec]!.count
-                for router in payload {
-                    interpreter.push(router.item, to: router.stack)
-                }
-                let payloadDepth = interpreter.stacks[.exec]!.count - before
-
-                let target = min(
-                    payloadDepth + delay,
-                    interpreter.stacks[.exec]!.count
-                )
-                interpreter.stacks[.exec]!.insert(
-                    InstructionItem(
-                        .iteratorPlayDelayed,
-                        isContingent: iterator.isContingent
-                    ),
-                    at: target
+                // The continuation is a plain `.iteratorPlay`: it will read the
+                // burial now stored on the iterator, and consume no more ints.
+                bury(
+                    InstructionItem(.iteratorPlay, isContingent: iterator.isContingent),
+                    burial,
+                    under: payload,
+                    in: interpreter
                 )
                 return [Router(.iterator, iterator.stepped())]
             }
@@ -229,9 +264,13 @@ nonisolated extension Interpreter {
     /// continuation.
     ///
     /// This exists so `crux()` has something to say. An iterator's `call`
-    /// reconstructs it by state — `origin dest stride cursor emits (body)` — and
-    /// re-running that reconstruction has to produce the iterator, not run its
-    /// loop. Anything that ran the body here would make a crux a side effect.
+    /// reconstructs it by state — `origin dest stride cursor burial emits (body)`
+    /// — and re-running that reconstruction has to produce the iterator, not run
+    /// its loop. Anything that ran the body here would make a crux a side effect.
+    ///
+    /// The body arrives as `( )` for a bodyless iterator, and `init` normalizes an
+    /// empty body back to nil, so one constructor serves both a sequence and a
+    /// loop rather than needing a second instruction for each.
     ///
     /// Provenance: law 3, the ordinary shape. The arguments are all read off
     /// ordinary stacks, so the record is postfix with the instruction last, which
@@ -239,14 +278,15 @@ nonisolated extension Interpreter {
     static let iteratorFromIntRange_Behavior =
         Behavior(
             .iteratorFromIntRange,
-            takes: [.int, .int, .int, .int, .bool, .code],
+            takes: [.int, .int, .int, .int, .int, .bool, .code],
             fxn: { a in
                 // `.int` is a stack, so the last argument written is on top:
-                // `origin dest stride cursor` arrives reversed.
-                let (cursor, stride, destination, origin) = (
-                    a[0] as! IntItem, a[1] as! IntItem, a[2] as! IntItem, a[3] as! IntItem
+                // `origin dest stride cursor burial` arrives reversed.
+                let (burial, cursor, stride, destination, origin) = (
+                    a[0] as! IntItem, a[1] as! IntItem, a[2] as! IntItem,
+                    a[3] as! IntItem, a[4] as! IntItem
                 )
-                let (emits, body) = (a[4] as! BoolItem, a[5] as! CodeItem)
+                let (emits, body) = (a[5] as! BoolItem, a[6] as! CodeItem)
 
                 let iterator = IteratorItem(
                     kind: .counting(stride: stride.value),
@@ -255,12 +295,13 @@ nonisolated extension Interpreter {
                     body: body,
                     emits: emits.value,
                     cursor: cursor.value,
+                    burial: burial.value,
                     call: [
-                        origin, destination, stride, cursor, emits, body,
+                        origin, destination, stride, cursor, burial, emits, body,
                         InstructionItem(.iteratorFromIntRange),
                     ],
                     isContingent: Behavior.netContingency(
-                        of: origin, destination, stride, cursor, emits, body
+                        of: origin, destination, stride, cursor, burial, emits, body
                     )
                 )
                 return [Router(.iterator, iterator)]

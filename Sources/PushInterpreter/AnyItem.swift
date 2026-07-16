@@ -26,8 +26,10 @@ nonisolated struct IteratorState: Codable, Sendable {
     var kind: IteratorKind
     var origin: AnyItem
     var destination: AnyItem?
-    var body: AnyItem
+    /// Absent for a sequence — an iterator that only emits and has no body to run.
+    var body: AnyItem?
     var emits: Bool
+    var burial: Int
 }
 
 
@@ -94,11 +96,15 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             item = VecStringItem(try container.decode([String].self, forKey: .value))
         case .iterator:
             let state = try container.decode(IteratorState.self, forKey: .value)
-            guard let body = state.body.item as? CodeItem else {
-                throw DecodingError.dataCorruptedError(
-                    forKey: .value, in: container,
-                    debugDescription: "an iterator's body must be a code block, got \(type(of: state.body.item))"
-                )
+            var body: CodeItem?
+            if let encoded = state.body?.item {
+                guard let block = encoded as? CodeItem else {
+                    throw DecodingError.dataCorruptedError(
+                        forKey: .value, in: container,
+                        debugDescription: "an iterator's body must be a code block, got \(type(of: encoded))"
+                    )
+                }
+                body = block
             }
             item = IteratorItem(
                 kind: state.kind,
@@ -106,7 +112,8 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 destination: state.destination?.item,
                 body: body,
                 emits: state.emits,
-                cursor: state.cursor
+                cursor: state.cursor,
+                burial: state.burial
             )
         case .error:
             item = ErrorItem(try container.decode(String.self, forKey: .value))
@@ -157,8 +164,9 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                     kind: concrete.kind,
                     origin: AnyItem(concrete.origin),
                     destination: concrete.destination.map(AnyItem.init),
-                    body: AnyItem(concrete.body),
-                    emits: concrete.emits
+                    body: concrete.body.map(AnyItem.init),
+                    emits: concrete.emits,
+                    burial: concrete.burial
                 ),
                 forKey: .value
             )
