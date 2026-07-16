@@ -160,7 +160,8 @@ nonisolated extension Interpreter {
 
     // MARK: - Getters
 
-    /// The getters are non-destructive: they hand back the iterator unchanged.
+    /// The getters are non-destructive: they hand back the iterator unchanged —
+    /// which is what `Peek` in their names is there to promise.
     ///
     /// Push convention would have them consume it — `.stringFirst` eats its
     /// string — but an iterator is a live loop rather than a value, and a getter
@@ -194,32 +195,32 @@ nonisolated extension Interpreter {
     /// Where the loop started, or the collection it walks. Lands on whatever stack
     /// that item belongs to, so it is `.int` for a counting loop and `.string` or a
     /// vector stack for one walking a collection.
-    static let iteratorStart_Behavior =
-        iteratorGetter_Behavior(.iteratorStart) { $0.origin }
+    static let iteratorPeekStart_Behavior =
+        iteratorGetter_Behavior(.iteratorPeekStart) { $0.origin }
 
     /// Where the loop ends. A `.elements` iterator has no end bound of its own —
     /// its end is its source's length — so this emits nothing for one.
-    static let iteratorEnd_Behavior =
-        iteratorGetter_Behavior(.iteratorEnd) { $0.destination }
+    static let iteratorPeekEnd_Behavior =
+        iteratorGetter_Behavior(.iteratorPeekEnd) { $0.destination }
 
     /// The step between passes; `1` for an iterator walking a collection.
     ///
     /// The one getter that records provenance: there is no contained item to hand
     /// back, so the `IntItem` really is produced here, from the iterator, and law 3
     /// applies — argument first, instruction last.
-    static let iteratorStride_Behavior =
-        iteratorGetter_Behavior(.iteratorStride) { iterator in
+    static let iteratorPeekStride_Behavior =
+        iteratorGetter_Behavior(.iteratorPeekStride) { iterator in
             IntItem(
                 iterator.stride,
-                call: [iterator, InstructionItem(.iteratorStride)],
+                call: [iterator, InstructionItem(.iteratorPeekStride)],
                 isContingent: iterator.isContingent
             )
         }
 
     /// The block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
-    static let iteratorBody_Behavior =
-        iteratorGetter_Behavior(.iteratorBody) { $0.body }
+    static let iteratorPeekBody_Behavior =
+        iteratorGetter_Behavior(.iteratorPeekBody) { $0.body }
 
 
     // MARK: - Construction
@@ -269,14 +270,14 @@ nonisolated extension Interpreter {
 
     static let iteratorBehaviors: [PushInstruction: Behavior] =
     [
-        .iteratorBody : iteratorBody_Behavior,
-        .iteratorEnd : iteratorEnd_Behavior,
+        .iteratorPeekBody : iteratorPeekBody_Behavior,
+        .iteratorPeekEnd : iteratorPeekEnd_Behavior,
         .iteratorFromIntRange : iteratorFromIntRange_Behavior,
         .iteratorPlay : iteratorPlay_Behavior,
         .iteratorPlayDelayed : iteratorPlayDelayed_Behavior,
         .iteratorPopState : iteratorPopState_Behavior,
-        .iteratorStart : iteratorStart_Behavior,
+        .iteratorPeekStart : iteratorPeekStart_Behavior,
         .iteratorStep : iteratorStep_Behavior,
-        .iteratorStride : iteratorStride_Behavior,
+        .iteratorPeekStride : iteratorPeekStride_Behavior,
     ]
 }

@@ -268,16 +268,26 @@ nonisolated final class Interpreter {
     func run(inputs: [PushInstruction:any Item],
              stacks initial: [PushStack: [any Item]],
              program: [any Item],
-             stepLimit: Int = Interpreter.defaultSettings.stepLimit) {
-        
+             stepLimit: Int? = nil) {
+
         load(inputs: inputs, stacks: initial, program: program)
-        self.config.stepLimit = stepLimit
-        while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
-            self.step()
-        }
+        self.run(stepLimit: stepLimit)
     }
-    
-    func run(stepLimit: Int = Interpreter.defaultSettings.stepLimit) {
+
+    /// Runs until `.exec` empties or the step limit is reached.
+    ///
+    /// Passing `stepLimit` **rewrites this interpreter's `config`**, and it stays
+    /// rewritten: it is this instance's limit from here on, not a loan for the
+    /// duration of one call. Omitting it leaves `config.stepLimit` alone, which is
+    /// what a caller that configured the interpreter up front (`Runner`, say, from
+    /// its `RunnerConfiguration`) wants — an unasked-for argument must not
+    /// silently overwrite a setting someone else chose.
+    ///
+    /// That is why the parameter is optional rather than defaulting to
+    /// `defaultSettings.stepLimit`: "not given" and "given the default value" are
+    /// different instructions, and only the second should touch `config`.
+    func run(stepLimit: Int? = nil) {
+        if let stepLimit { self.config.stepLimit = stepLimit }
         while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             self.step()
         }

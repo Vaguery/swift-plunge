@@ -95,8 +95,8 @@ index, the body, and a `.codeDo` — the bounds never return to `INT`, and no
 recursive `.execDoRange` is ever rebuilt.
 
 This is a deliberate encapsulation: a loop's state is the iterator's own for its
-duration, readable only by stepping it or by the `.iteratorStart`/`.iteratorEnd`/
-`.iteratorStride`/`.iteratorBody` getters. Another interpreter is free to keep
+duration, readable only by stepping it or by the `.iteratorPeekStart`/`.iteratorPeekEnd`/
+`.iteratorPeekStride`/`.iteratorPeekBody` getters. Another interpreter is free to keep
 the Push-level recursion instead — the canonical layer above is what matters.
 
 The index is the one derived value, and it records `[origin, offset, .intAdd]`,

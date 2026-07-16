@@ -32,8 +32,8 @@ public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
 /// counting was done *in Push*. Now the bounds, the stride and the cursor live
 /// in here for the loop's duration, the counting is done in Swift, and the only
 /// Push-visible artifacts of a pass are the emitted payload and one continuation
-/// token. State escapes by stepping, or through the getters (`.iteratorStart`,
-/// `.iteratorEnd`, `.iteratorStride`, `.iteratorBody`), and by no other route.
+/// token. State escapes by stepping, or through the getters (`.iteratorPeekStart`,
+/// `.iteratorPeekEnd`, `.iteratorPeekStride`, `.iteratorPeekBody`), and by no other route.
 ///
 /// ## Provenance
 ///

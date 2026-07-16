@@ -58,7 +58,7 @@ is what lets it see — or steal — the iterator.
 | `.iteratorPlay` | One pass + its own next copy under the payload. The ordinary loop. |
 | `.iteratorPlayDelayed` | One pass, then its next copy **inserted `delay` items down `.exec`** — shoved, with no Push code. Pops a fresh delay each pass. `< 0` ends the loop; `0` is exactly `.iteratorPlay`; `> 0` interleaves. |
 | `.iteratorPopState` | Advance without emitting — skip a pass. |
-| `.iteratorStart` / `.iteratorEnd` / `.iteratorStride` / `.iteratorBody` | The getters. Non-destructive. |
+| `.iteratorPeekStart` / `.iteratorPeekEnd` / `.iteratorPeekStride` / `.iteratorPeekBody` | The getters. Non-destructive. |
 | `.iteratorFromIntRange` | Construct only, never runs. Exists for `crux()`. |
 | `.iteratorPrint`, + the 15 combinators | The usual per-type furniture. |
 
@@ -82,9 +82,9 @@ Two results, both better than expected — see "Provenance and the crux.md" for 
    `origin dest stride cursor emits (body) .iteratorFromIntRange`. O(1) forever, and it keeps the link
    to how a computed bound was computed, because `origin.crux()` expands.
 
-**Law 1b extends from CodeItems to iterators**: containment is combinatory, so `.iteratorStart`,
-`.iteratorEnd` and `.iteratorBody` hand back the items that went in with their `call` untouched.
-`.iteratorStride` is the exception that shows the rule — no contained item to give back, so it records
+**Law 1b extends from CodeItems to iterators**: containment is combinatory, so `.iteratorPeekStart`,
+`.iteratorPeekEnd` and `.iteratorPeekBody` hand back the items that went in with their `call` untouched.
+`.iteratorPeekStride` is the exception that shows the rule — no contained item to give back, so it records
 under law 3.
 
 ## The destination is excluded (a real bug, found here)
@@ -108,7 +108,7 @@ loop's output, and is deliberately not touched here.
   ask. `.iteratorPop` is there for anyone who wants it gone.
 - **Storage is `origin` + cursor, not a shrinking remainder** — a remainder cannot satisfy an
   origin+offset crux, which needs the original. This is unobservable either way: with no cursor getter
-  and `.iteratorStart` returning the original, nothing in the surface can tell which way it is stored.
+  and `.iteratorPeekStart` returning the original, nothing in the surface can tell which way it is stored.
 - **`execDoCount` and `execDoTimes` now differ in exactly one flag** (`emits`). `execDoCount`'s
   rewrite-into-`execDoRange` delegation is gone; both build their iterator directly. Both use
   `destination = x`, *not* `x − 1` — since the destination is excluded, counting 0 toward `x` is exactly
@@ -130,5 +130,15 @@ loop's output, and is deliberately not touched here.
   wants.
 - **`.sampling(steps:)`** for Double ranges, and behaviors that make iterators from other sources (every
   word of a string).
-- **`run(stepLimit:)` ignores its argument** (`Interpreter.swift`) and loops on `config.stepLimit`
-  instead. Unrelated, pre-existing, and a trap for anyone writing a mid-flight test — step by hand.
+## Fixed in passing
+
+**`run(stepLimit:)` ignored its argument entirely** and looped on `config.stepLimit` — found because it
+silently ran a mid-flight test to completion. It now rewrites `config.stepLimit`, and the rewrite
+sticks: it is that instance's limit from then on, not a loan for one call.
+
+The parameter became `Int?` rather than keeping its `Int = defaultSettings.stepLimit` default, because
+"not given" and "given the default" have to mean different things here. `Runner.evaluateOne` sets
+`interpreter.config = configuration.settings` and *then* calls bare `run()`; had the argument defaulted
+to 1000 and assigned unconditionally, honoring it would have clobbered every configured run in the
+Runner. Omitting it now means "leave `config` alone", which is exactly what every existing bare caller
+already relied on.

@@ -207,13 +207,13 @@ struct IteratorBehaviorTests {
     @Test func `the getters read an iterator without disturbing it`() {
         let inty = loaded(counting(from: 2, to: 8, by: 3, cursor: 1))
 
-        doThis(.iteratorStart, to: inty)
+        doThis(.iteratorPeekStart, to: inty)
         #expect(stackString(inty, .int) == "[ 2 ]")
-        doThis(.iteratorEnd, to: inty)
+        doThis(.iteratorPeekEnd, to: inty)
         #expect(stackString(inty, .int) == "[ 8 2 ]")
-        doThis(.iteratorStride, to: inty)
+        doThis(.iteratorPeekStride, to: inty)
         #expect(stackString(inty, .int) == "[ 3 8 2 ]")
-        doThis(.iteratorBody, to: inty)
+        doThis(.iteratorPeekBody, to: inty)
         #expect(stackString(inty, .code) == "[ ( true ) ]")
 
         // Four reads, and the loop is exactly where it was: same cursor, still
@@ -225,22 +225,22 @@ struct IteratorBehaviorTests {
     /// out as the items that went in, so they record nothing.
     @Test func `the container getters record no provenance`() {
         let inty = loaded(counting())
-        doThis(.iteratorStart, to: inty)
+        doThis(.iteratorPeekStart, to: inty)
         #expect(topItem(inty, .int).call.isEmpty)
 
-        doThis(.iteratorBody, to: inty)
+        doThis(.iteratorPeekBody, to: inty)
         #expect(topItem(inty, .code).call.isEmpty)
     }
 
     /// The exception that shows the rule: there is no contained item to hand back,
     /// so the stride really is produced here and records under law 3.
-    @Test func `iteratorStride records where it came from`() {
+    @Test func `iteratorPeekStride records where it came from`() {
         let inty = loaded(counting(by: 3))
-        doThis(.iteratorStride, to: inty)
+        doThis(.iteratorPeekStride, to: inty)
 
         let stride = topItem(inty, .int)
         #expect(stride.call.count == 2)
-        #expect(stride.call.last as? InstructionItem == InstructionItem(.iteratorStride))
+        #expect(stride.call.last as? InstructionItem == InstructionItem(.iteratorPeekStride))
         #expect((rerunTop(stride.crux(), on: .int) as? IntItem)?.value == 3)
     }
 

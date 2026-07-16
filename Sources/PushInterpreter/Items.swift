@@ -42,9 +42,9 @@ public nonisolated protocol Pretty {
 //     what `.codeDo` does.
 //
 //     The same holds for CONTAINMENT IN AN ITERATOR: an `IteratorItem` keeps the
-//     bounds and body it was built from, and the getters (`.iteratorStart`,
-//     `.iteratorEnd`, `.iteratorBody`) hand back the very items that went in, so
-//     they record nothing. `.iteratorStride` is the exception that shows the
+//     bounds and body it was built from, and the getters (`.iteratorPeekStart`,
+//     `.iteratorPeekEnd`, `.iteratorPeekBody`) hand back the very items that went in, so
+//     they record nothing. `.iteratorPeekStride` is the exception that shows the
 //     rule — there is no contained item to give back, only a stored Int, so it
 //     really is produced by that instruction and records under rule 3.
 //
@@ -106,9 +106,16 @@ public nonisolated protocol Item: Pretty, Sendable {
     var value: Value {get set}
 
     /// Declared here (not only in an extension) so it dispatches dynamically
-    /// through `any Item` — same reason as `weight` below. `IteratorItem`
-    /// overrides it, and a protocol-extension-only method would statically
-    /// dispatch to the default and silently ignore that override.
+    /// through `any Item` — same reason as `weight` below. A
+    /// protocol-extension-only method would dispatch *statically* through the
+    /// existential and silently ignore any override.
+    ///
+    /// **Nothing overrides it today.** `IteratorItem` did, back when it was a
+    /// provenance-only node whose crux was `base.crux() + [offset, .intAdd]`;
+    /// making the iterator first-class removed the need (see IteratorItem.swift),
+    /// and every type now walks `call` the same way. The requirement stays because
+    /// the failure it prevents is silent: a future override written against an
+    /// extension-only method would compile, look right, and never run.
     func crux() -> [any Item]
 
     /// A recursive memory-proxy: the total primitive content this item holds,

@@ -114,7 +114,13 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case iteratorStep, iteratorPlay, iteratorPlayDelayed, iteratorPopState
 
     // iterator getters
-    case iteratorStart, iteratorEnd, iteratorStride, iteratorBody
+    //
+    // `Peek` rather than the bare field name, because these are the language's
+    // one deliberate exception to "an instruction eats its argument": they hand
+    // the iterator back untouched. A live loop is not a value, and a getter that
+    // killed it to report its stride would be useless in the body, which is
+    // exactly where a program wants to ask. The name is the warning label.
+    case iteratorPeekStart, iteratorPeekEnd, iteratorPeekStride, iteratorPeekBody
 
     // iterator construction
     case iteratorFromIntRange

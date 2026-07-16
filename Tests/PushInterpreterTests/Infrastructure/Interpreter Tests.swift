@@ -213,6 +213,44 @@ struct InterpreterTests {
     }
     
     
+    /// A program that never empties `.exec`, so only the step limit can stop it.
+    func endless() -> Interpreter {
+        let inty = Interpreter()
+        inty.load(program: [CodeItem([IntItem(1)]), InstructionItem(.execY)])
+        return inty
+    }
+
+    /// `run(stepLimit:)` used to ignore its argument entirely and loop on
+    /// `config.stepLimit` — so this test would have passed with 1000, whatever
+    /// was asked for.
+    @Test func `run(stepLimit:) honors its argument`() {
+        let inty = endless()
+        inty.run(stepLimit: 50)
+        #expect(inty.counter == 50)
+    }
+
+    /// The limit is this interpreter's from here on, not a loan for one call.
+    @Test func `run(stepLimit:) rewrites the config for good`() {
+        let inty = endless()
+        inty.run(stepLimit: 50)
+        #expect(inty.config.stepLimit == 50)
+
+        // A later bare `run()` reads the limit that was set, not the default.
+        inty.run()
+        #expect(inty.counter == 50)
+    }
+
+    /// Omitting the argument must leave `config` alone: `Runner` configures its
+    /// interpreter from a `RunnerConfiguration` and then calls `run()` bare, so an
+    /// unasked-for default would silently overwrite a setting someone else chose.
+    @Test func `bare run() does not overwrite a configured step limit`() {
+        let inty = endless()
+        inty.config.stepLimit = 25
+        inty.run()
+        #expect(inty.counter == 25)
+        #expect(inty.config.stepLimit == 25)
+    }
+
 //    @Test
     @Test(.disabled("run manually to see the coverage"))
     func behaviorCoverageTest() {
