@@ -67,13 +67,14 @@ or the int first makes no difference — each lands on its own stack and is popp
 ordering *within one stack* changes what a program computes.
 
 **But free is not arbitrary, and this cost a real bug.** `stringNth` recorded `[index, string]` while its
-four `vecXNth` siblings recorded `[vector, index]`. Both ran correctly for years. Then an iterator walked
-a string and recorded the *other* order — and the crux stopped being a **fixed point**: re-running a crux
-produced a differently-worded crux for the same value. "The crux" was no longer well defined.
+four `vecXNth` siblings recorded `[vector, index]`. Both ran correctly for years, and both were pinned by
+tests. Then an iterator walked a string and recorded the *other* order — and the crux stopped being a
+**fixed point**: re-running a crux produced a differently-worded crux for the same value. "The crux" was
+no longer well defined.
 
 So the rule is: **a derived value must record the same way the instruction it names would record.** Where
-two instructions do the same job, they must agree. The fuzzer catches this and the unit tests cannot,
-because a unit test transcribes whatever order the code already uses (principle 14).
+two instructions do the same job, they must agree. Only the fuzzer catches this; a unit test cannot,
+because it transcribes whatever order the code already uses (principle 14).
 
 ## 3. Iteration, recursion and repetition are `IteratorItem`s
 
@@ -195,7 +196,7 @@ wants to know asks with a getter.
 to report its stride would be useless in the body, which is exactly where you would want to ask.
 `.iteratorPop` exists for anyone who wants it gone.
 
-The exception is *narrow* on purpose. Everything else consumes.
+The exception is *narrow* on purpose. Everything else consumes. But there can be future changes affecting this.
 
 ## 11. Everything that can grow is bounded
 
