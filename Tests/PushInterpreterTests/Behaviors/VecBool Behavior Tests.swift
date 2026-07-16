@@ -415,24 +415,41 @@ struct VecBoolBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( [true, true, true, false] false .vecBoolOccurrencesOf )")
     }
 
+    /// **The order changed here, deliberately.** This used to reverse before
+    /// pushing, so element 0 landed on top; it now walks front to back like
+    /// everything else, so the LAST element lands on top. See "Collections are
+    /// walked front-to-back" in "Notes on Push/Design Principles.md".
+    ///
+    /// It also emits one element per pass rather than exploding, so the elements
+    /// do not appear until the loop runs.
     @Test func vecBoolPushAll() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, false, true, true], isContingent: true),
                         ])
 
+        // An empty vector yields nothing at all — not even an iterator.
         doThis(.vecBoolPushAll, to: inty)
         #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
         doThis(.vecBoolPushAll, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false true true ]")
+        #expect(stackString(inty, .bool) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+
+        inty.run(stepLimit: 10_000)
+        // Front to back: element 3 was pushed last, so it is on top.
+        #expect(stackString(inty, .bool) == "[ true true false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [true, false, true, true] .vecBoolPushAll )")
+        #expect(stackString(inty, .iterator) == "[ ]")
+
+        // Each element names its own index rather than how far down a pile it
+        // landed — so this record says nothing about the other three.
+        #expect(callString(topItem(inty, .bool))
+            == "( [true, false, true, true] 3 .vecBoolNth )")
         doThis(.boolPop, to: inty)
-        // Elements are reversed before pushing, so element 0 lands on top and
-        // needs no discard; the one below it is surfaced by popping that.
         #expect(CodeItem(topItem(inty, .bool).crux()).pretty()
-            == "( [true, false, true, true] .vecBoolPushAll 1 .boolPopItems )")
+            == "( [true, false, true, true] 2 .vecBoolNth )")
     }
 
     @Test func vecBoolRemove() {

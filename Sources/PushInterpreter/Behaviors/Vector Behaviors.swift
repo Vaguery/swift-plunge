@@ -552,39 +552,36 @@ nonisolated extension Interpreter {
     }
 
     // ( vec .vecXPushAll )
-    //
-    // return every item on the argument (in reverse order)
-    // routing them to the correct stack
-    //
+    /// Pushes every element of a vector to its scalar stack, **one per pass**,
+    /// front to back — so the last element ends up on top.
+    ///
+    /// **The order changed here, deliberately.** This used to reverse before
+    /// pushing, so element 0 landed on top, while its sibling
+    /// `stringPushAllChars` left the *last* character on top. Two instructions
+    /// doing the same job and disagreeing about a basic question, for years —
+    /// each internally consistent, neither wrong on its own. Walking front to back
+    /// settles it; see "Collections are walked front-to-back" in
+    /// "Notes on Push/Design Principles.md".
+    ///
+    /// It also used to explode in a single step, which put the work beyond
+    /// `stepLimit` and the runaway guard, and forced every element to record which
+    /// of the pile it was (a law-5 selection). Each element now records
+    /// `v 2 .vecIntNth`: independent, O(1), and true however many passes have run.
+    ///
+    /// A sequence, not a loop: no body, so a pass costs one step rather than three.
     static func pushAllBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
             takes: [V.pushStack],
             fxn: { a in
-                let (x) = (a[0] as! V)
-                var results = [Router]()
-                // Reversed before pushing, so element 0 ends up on TOP — the
-                // opposite of `stringPushAllChars`, whose first char ends up
-                // deepest. Law 5 counts from the end of the results either way.
-                let backwards = Array(x.value.reversed())
-                for idx in 0..<backwards.count {
-                    results.append(
-                        Router(
-                            V.Scalar.pushStack,
-                            V.Scalar(
-                                backwards[idx],
-                                call: Behavior.selecting(
-                                    idx,
-                                    of: backwards.count,
-                                    on: V.Scalar.pushStack,
-                                    from: [x, InstructionItem(instruction)]
-                                ),
-                                isContingent: Behavior.netContingency(of: x)
-                            )
-                        )
-                    )
-                }
-                return results
+                let x = a[0] as! V
+                guard !x.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: nil),
+                    origin: x,
+                    body: nil,
+                    emits: true
+                )
             }
         )
     }

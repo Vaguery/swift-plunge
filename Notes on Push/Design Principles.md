@@ -61,10 +61,19 @@ re-runs it reads `.execEq 3 3`, **prefix**, not `3 3 .execEq`. Reconstructed sou
 `.exec` like anything else, so it has to be written the way `.exec` reads it. `execQuote` and `execEq`
 are the only two that record this way (law 3b).
 
-**Practical relief:** when an instruction's arguments come from *different* stacks, their order in the
-record is free. `stringNth` takes `[.string, .int]`, so pushing the string or the int first makes no
-difference — each lands on its own stack and is popped from there. Only ordering *within one stack*
-carries meaning.
+**Practical relief, with a sting:** when an instruction's arguments come from *different* stacks, their
+order in the record is free *for correctness*. `stringNth` takes `[.string, .int]`, so pushing the string
+or the int first makes no difference — each lands on its own stack and is popped from there. Only
+ordering *within one stack* changes what a program computes.
+
+**But free is not arbitrary, and this cost a real bug.** `stringNth` recorded `[index, string]` while its
+four `vecXNth` siblings recorded `[vector, index]`. Both ran correctly for years. Then an iterator walked
+a string and recorded the *other* order — and the crux stopped being a **fixed point**: re-running a crux
+produced a differently-worded crux for the same value. "The crux" was no longer well defined.
+
+So the rule is: **a derived value must record the same way the instruction it names would record.** Where
+two instructions do the same job, they must agree. The fuzzer catches this and the unit tests cannot,
+because a unit test transcribes whatever order the code already uses (principle 14).
 
 ## 3. Iteration, recursion and repetition are `IteratorItem`s
 
@@ -120,7 +129,8 @@ control instead of dumping its output can be interleaved rather than flooding a 
 So: **an instruction must not consume arguments proportional to the work it does.** `.iteratorPlayDelayed`
 originally re-read its delay every pass, which meant a thousand-pass loop ate a thousand `.int`s. That was
 a dead end. It now reads once and stores the depth on the iterator, and the loop continues with a token
-that consumes nothing.
+that consumes nothing. If for some algorithmic reason the depth needs to change, a separate instruction
+(not yet written) can do that at lower risk.
 
 ## 6. Collections are walked front-to-back
 
@@ -135,8 +145,9 @@ front-to-back means `vecXPushAll`'s order changes, deliberately.
 
 ## 7. Code is data until a program asks for it
 
-A `CodeItem` met on `.exec` comes to rest on `.code` **intact**. It does not scatter. `.codeDo` is the
-only thing that unwraps a block, and a program has to ask.
+A `CodeItem` met on `.exec` comes to rest on `.code` **intact**. It does not scatter. `.codeDo` is one
+of the several instructions that unwraps a block and executes its contents, but in every case, a program
+has to ask.
 
 This is what makes code inspectable rather than merely runnable, and it is what lets a block's `call`
 survive — unwrapping on sight used to discard it, so an `.input` bound to a block lost its provenance the

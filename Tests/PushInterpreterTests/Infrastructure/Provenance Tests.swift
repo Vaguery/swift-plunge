@@ -295,29 +295,79 @@ struct ProvenanceTests {
 
 
     // MARK: - Law 5: selecting one of several results on one stack
+    //
+    // **Nothing in the language emits a law-5 record any more.** Its four users —
+    // `stringPushAllChars`, `stringParseToLetters`, `stringSplit` and the generic
+    // `vecXPushAll` — all became iterators, and an iterator never puts several
+    // results on a stack at once: it emits one per pass, and each says what it is
+    // (`v 2 .vecIntNth`) rather than which of a pile it was.
+    //
+    // The law and its machinery are kept, because the obligation still holds for
+    // any future Behavior that does produce several results on one stack. So these
+    // test the mechanism directly rather than through a caller — which they should
+    // arguably have done all along, since it turns out `<stack>PopItems` had no
+    // unit test of its own.
 
-    @Test func `each of several results on one stack reconstructs itself`() {
-        let inty = Interpreter()
-        inty.load(program: [
-            VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll),
-        ])
-        inty.run()
-        #expect(inty.stacks[.int]!.count == 3)
+    @Test func `selecting records the pops that surface each result`() {
+        let source: [any Item] = [VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll)]
 
-        // Elements are reversed before pushing, so 10 lands on top.
-        for (depth, expected) in [(0, 10), (1, 20), (2, 30)] {
-            let item = inty.stacks[.int]![depth]
-            #expect((item as! IntItem).value == expected)
-            let reproduced = rerun(item.crux(), reading: .int) as? IntItem
-            #expect(reproduced?.value == expected,
-                    "result at depth \(depth) did not reconstruct")
-        }
-
-        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty()
+        // Of N results on one stack, the one at position i needs N-1-i pops: the
+        // first produced is the deepest, because `distribute` prepends each in
+        // turn. The top one needs none and records nothing extra.
+        #expect(CodeItem(Behavior.selecting(2, of: 3, on: .int, from: source)).pretty()
+            == "( [10, 20, 30] .vecIntPushAll )")
+        #expect(CodeItem(Behavior.selecting(1, of: 3, on: .int, from: source)).pretty()
+            == "( [10, 20, 30] .vecIntPushAll 1 .intPopItems )")
+        #expect(CodeItem(Behavior.selecting(0, of: 3, on: .int, from: source)).pretty()
             == "( [10, 20, 30] .vecIntPushAll 2 .intPopItems )")
+
+        // A lone result needs no selection at all.
+        #expect(CodeItem(Behavior.selecting(0, of: 1, on: .int, from: source)).pretty()
+            == "( [10, 20, 30] .vecIntPushAll )")
     }
 
-    @Test func `a selected result composes into a later computation`() {
+    /// The instruction a law-5 record leans on. It had no test of its own.
+    @Test func `PopItems discards that many items from its stack`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(10), IntItem(20), IntItem(30), IntItem(2),
+            InstructionItem(.intPopItems),
+        ])
+        inty.run()
+        #expect(stackString(inty, .int) == "[ 10 ]")
+
+        // Clamped rather than an error, like its DupItems/Yank siblings: a count
+        // past the bottom empties the stack, and a negative one does nothing.
+        let deep = Interpreter()
+        deep.load(program: [IntItem(10), IntItem(999), InstructionItem(.intPopItems)])
+        deep.run()
+        #expect(stackString(deep, .int) == "[ ]")
+
+        let negative = Interpreter()
+        negative.load(program: [IntItem(10), IntItem(-4), InstructionItem(.intPopItems)])
+        negative.run()
+        #expect(stackString(negative, .int) == "[ 10 ]")
+    }
+
+    /// A hand-built law-5 record round-trips: this is what a future multi-result
+    /// Behavior would be relying on.
+    @Test func `a law 5 record reconstructs the result it selects`() {
+        let vector = VecIntItem([10, 20, 30])
+        for (position, expected) in [(0, 10), (1, 20), (2, 30)] {
+            let record = Behavior.selecting(
+                position, of: 3, on: .int,
+                from: [vector, InstructionItem(.vecIntPushAll)]
+            )
+            // `.vecIntPushAll` is an iterator now, so re-running this needs the
+            // loop to finish before the pops fire — which it does, since a crux is
+            // run to completion like any other program.
+            let item = IntItem(expected, call: record)
+            #expect((rerun(item.crux(), reading: .int) as? IntItem)?.value == expected,
+                    "the result at position \(position) did not reconstruct")
+        }
+    }
+
+    @Test func `a result composes into a later computation`() {
         // The composition property: each crux fragment leaves its value on top,
         // so fragments concatenate postfix without interfering.
         let inty = Interpreter()
@@ -327,9 +377,12 @@ struct ProvenanceTests {
         ])
         inty.run()
         let sum = inty.stacks[.int]!.first! as! IntItem
-        #expect(sum.value == 30)   // 10 + 20
+        // Front-to-back now, so 30 lands on top and 20 beneath it.
+        #expect(sum.value == 50)
 
         let reproduced = rerun(sum.crux(), reading: .int) as? IntItem
-        #expect(reproduced?.value == 30)
+        #expect(reproduced?.value == 50)
+        #expect(CodeItem(sum.crux()).pretty()
+            == "( [10, 20, 30] 1 .vecIntNth [10, 20, 30] 2 .vecIntNth .intAdd )")
     }
 }

@@ -570,21 +570,21 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ -222 22 ]")
         #expect(stackString(inty, .string) == "[ \"abcdefghi\" \"abcdefghi\" ]")
         #expect(topItem(inty, .char).isContingent == false)
-        #expect(callString(topItem(inty, .char)) == "( 2 \"abcdefghi\" .stringNth )")
+        #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" 2 .stringNth )")
 
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ 'a' 'c' ]")
         #expect(stackString(inty, .int) == "[ 22 ]")
         #expect(stackString(inty, .string) == "[ \"abcdefghi\" ]")
         #expect(topItem(inty, .char).isContingent == true)
-        #expect(callString(topItem(inty, .char)) == "( -222 \"abcdefghi\" .stringNth )")
+        #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" -222 .stringNth )")
 
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ 'e' 'a' 'c' ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ ]")
         #expect(topItem(inty, .char).isContingent == true)
-        #expect(callString(topItem(inty, .char)) == "( 22 \"abcdefghi\" .stringNth )")
+        #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" 22 .stringNth )")
     }
 
     @Test func stringOccurrencesOfChar() {
@@ -616,68 +616,87 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( 'f' \"bee\" .stringOccurrencesOfChar )")
     }
 
+    /// The order is unchanged — front-to-back, so "e" ends up on top — but the
+    /// letters arrive one per pass rather than all at once, and each records what
+    /// it *is* rather than how far down a pile it landed.
     @Test func stringParseToLetters() {
         loadStrings(inty, strings: ["", "live"], contingent: [1])
         #expect(stackString(inty, .string) == "[ \"\" \"live\" ]")
 
+        // An empty string yields nothing at all — not even an iterator.
         doThis(.stringParseToLetters, to: inty)
         #expect(stackString(inty, .string) == "[ \"live\" ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
         doThis(.stringParseToLetters, to: inty)
+        #expect(stackString(inty, .string) == "[ ]")
+        inty.run(stepLimit: 10_000)
+
         #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
         #expect(topItem(inty, .string).isContingent == true)
-        #expect(callString(topItem(inty, .string)) == "( \"live\" .stringParseToLetters )")
+        // A one-character *string*, so two instructions to reproduce — still O(1),
+        // and it names no other letter.
+        #expect(callString(topItem(inty, .string))
+            == "( \"live\" 3 .stringNth .stringFromChar )")
 
         doThis(.stringPop, to: inty)
         #expect(topItem(inty, .string).isContingent == true)
-        #expect(callString(topItem(inty, .string)) == "( \"live\" .stringParseToLetters 1 .stringPopItems )")
+        #expect(callString(topItem(inty, .string))
+            == "( \"live\" 2 .stringNth .stringFromChar )")
     }
 
-    @Test func `stringParseToLetters results reconstruct through PopItems`() {
+    @Test func `stringParseToLetters letters each reconstruct`() {
         loadStrings(inty, strings: ["live"])
         doThis(.stringParseToLetters, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
 
-        // The deepest letter needs three pops to surface; the top one needs none.
-        let ell = inty.stacks[.string]![3]
-        #expect(CodeItem(ell.crux()).pretty()
-            == "( \"live\" .stringParseToLetters 3 .stringPopItems )")
-        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
-            == "( \"live\" .stringParseToLetters )")
-
-        // ...and running that reconstruction really does leave "l" on top.
-        let redo = Interpreter()
-        redo.load(program: ell.crux())
-        redo.run()
-        #expect(stackString(redo, .string) == "[ \"l\" ]")
+        // Every letter reconstructs on its own, and the deepest costs no more to
+        // explain than the top one — where each used to record the *pile* it came
+        // out of and how far to dig.
+        for (depth, expected) in [(0, "e"), (1, "v"), (2, "i"), (3, "l")] {
+            let letter = inty.stacks[.string]![depth]
+            let redo = Interpreter()
+            redo.load(program: letter.crux())
+            redo.run(stepLimit: 10_000)
+            #expect(stackString(redo, .string) == "[ \"\(expected)\" ]",
+                    "the letter at depth \(depth) did not reconstruct")
+        }
+        #expect(topItem(inty, .string).callWeight == inty.stacks[.string]![3].callWeight)
     }
 
+    /// The order is unchanged — front-to-back, so 'r' ends up on top — but the
+    /// characters arrive one per pass rather than all at once.
     @Test func stringPushAllChars() {
         loadStrings(inty, strings: ["bar", "fizz", ""], contingent: [0])
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"bar\" \"fizz\" \"\" ]")
 
         doThis(.stringPushAllChars, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")   // nothing until it runs
+        inty.run(stepLimit: 10_000)
+
         #expect(stackString(inty, .char) == "[ 'r' 'a' 'b' ]")
         #expect(topItem(inty, .char).isContingent == true)
-        #expect(callString(topItem(inty, .char)) == "( \"bar\" .stringPushAllChars )")
-        // Each char records the discard that surfaces it. Chars are pushed in
-        // reading order, so 'b' went first and sits deepest.
-        #expect(CodeItem(topItem(inty, .char).crux()).pretty()
-            == "( \"bar\" .stringPushAllChars )")
+        // Each char names its own index. It used to record the discard that
+        // surfaced it from a pile — `"bar" .stringPushAllChars 2 .charPopItems`.
+        #expect(callString(topItem(inty, .char)) == "( \"bar\" 2 .stringNth )")
         #expect(CodeItem(inty.stacks[.char]![2].crux()).pretty()
-            == "( \"bar\" .stringPushAllChars 2 .charPopItems )")
+            == "( \"bar\" 0 .stringNth )")
         #expect(stackString(inty, .string) == "[ \"fizz\" \"\" ]")
 
         doThis(.stringPushAllChars, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
         #expect(topItem(inty, .char).isContingent == false)
-        #expect(callString(topItem(inty, .char)) == "( \"fizz\" .stringPushAllChars )")
+        #expect(callString(topItem(inty, .char)) == "( \"fizz\" 3 .stringNth )")
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
+        // An empty string yields nothing at all — not even an iterator.
         doThis(.stringPushAllChars, to: inty)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
         #expect(stackString(inty, .string) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
     }
 
     @Test func stringRemoveChar() {
@@ -905,12 +924,17 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .string)) == "( '+' 13 \"?1.3456789\" .stringSetChar )")
     }
 
+    /// The order is unchanged — front-to-back, so the last word ends up on top —
+    /// but the words arrive one per pass, and each names itself with the new
+    /// `.stringNthWord` rather than recording how far down a pile it landed.
     @Test func stringSplit() {
         loadStrings(inty, strings: [""])
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
+        // No words at all: nothing, not even an iterator.
         doThis(.stringSplit, to: inty)
         #expect(stackString(inty, .string) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
         doThis(.stringFlush, to: inty)
 
@@ -918,9 +942,10 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"abcde\" ]")
 
         doThis(.stringSplit, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"abcde\" ]")
         #expect(topItem(inty, .string).isContingent == true)
-        #expect(callString(topItem(inty, .string)) == "( \"abcde\" .stringSplit )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcde\" 0 .stringNthWord )")
 
         doThis(.stringFlush, to: inty)
 
@@ -928,13 +953,38 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"ab    cd \ne\tf\" ]")
 
         doThis(.stringSplit, to: inty)
+        inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"f\" \"e\" \"cd\" \"ab\" ]")
         #expect(topItem(inty, .string).isContingent == false)
-        // "f" was split off last, so it lands on top and needs no discard.
-        #expect(callString(topItem(inty, .string)) == "( \"ab    cd \ne\tf\" .stringSplit )")
-        // "ab" was split off first and so sits deepest, under three others.
+        // A word is not `origin[i]`, so no existing instruction could name one —
+        // which is why `.stringNthWord` had to be added for these to have a record
+        // at all. "f" is the 4th word; "ab" is the 1st, and says so without
+        // reference to the other three.
+        #expect(callString(topItem(inty, .string)) == "( \"ab    cd \ne\tf\" 3 .stringNthWord )")
         #expect(CodeItem(inty.stacks[.string]![3].crux()).pretty()
-            == "( \"ab    cd \ne\tf\" .stringSplit 3 .stringPopItems )")
+            == "( \"ab    cd \ne\tf\" 0 .stringNthWord )")
+    }
+
+    @Test func stringNthWord() {
+        loadInts(inty, ints: [1])
+        loadStrings(inty, strings: ["one two three"])
+
+        doThis(.stringNthWord, to: inty)
+        #expect(stackString(inty, .string) == "[ \"two\" ]")
+        #expect(callString(topItem(inty, .string)) == "( \"one two three\" 1 .stringNthWord )")
+
+        // Indexed modulo the word count, like its `stringNth` sibling.
+        loadInts(inty, ints: [4])
+        loadStrings(inty, strings: ["one two three"])
+        doThis(.stringNthWord, to: inty)
+        #expect(topItem(inty, .string).pretty() == "\"two\"")
+
+        // A string with no words has no word to give back, and an ErrorItem here
+        // would be noise.
+        loadInts(inty, ints: [0])
+        loadStrings(inty, strings: ["   "])
+        doThis(.stringNthWord, to: inty)
+        #expect(stackString(inty, .string) == "[ \"two\" \"two\" ]")
     }
 
     @Test func `stringSubstring works for empty`() {

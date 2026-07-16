@@ -456,7 +456,19 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 c,
-                                call: [y, x, InstructionItem(.stringNth)],
+                                // `[string, index]`, matching the four `vecXNth`
+                                // siblings. This used to be `[index, string]` —
+                                // harmless in itself, since the two arguments come
+                                // off different stacks and either order re-runs
+                                // correctly, but the two families disagreeing meant
+                                // an iterator walking a string could not record the
+                                // same way one walking a vector did. The crux then
+                                // stopped being a fixed point: re-running it
+                                // produced a differently-worded crux for the same
+                                // value. The fuzzer found it; see "Design
+                                // Principles.md" on argument order being free only
+                                // *across* stacks.
+                                call: [x, y, InstructionItem(.stringNth)],
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
@@ -465,41 +477,29 @@ nonisolated extension Interpreter {
             }
         )
 
-    // produces one substring of one character each for every character in the string
-    // the stack will read backwards vs the order in the string
-    //
+    /// Pushes every character of a string to `.string` as a one-character
+    /// *string* — not a char, which is the whole of the difference from
+    /// `stringPushAllChars` — one per pass, front to back.
+    ///
+    /// One element per Character (grapheme), which the `.letters` projection gets
+    /// by indexing rather than by `split(separator: "")`, whose empty-separator
+    /// overload resolution is unstable across Foundation / module contexts.
+    ///
+    /// Each letter records `x 2 .stringNth .stringFromChar` — two instructions to
+    /// reproduce, still O(1), and still independent of every other letter.
     static let stringParseToLetters_Behavior =
         Behavior(
             .stringParseToLetters,
             takes: [.string],
             fxn: { a in
-                let (x) = (a[0] as! StringItem)
-                // one element per Character (grapheme) — deterministic, unlike
-                // `split(separator: "")`, whose empty-separator overload
-                // resolution is unstable across Foundation / module contexts
-                let chars = Array(x.value)
-                var results: [Router] = []
-                for (idx, c) in chars.enumerated() {
-                    results.append(
-                        Router(
-                            .string,
-                            StringItem(
-                                String(c),
-                                call: Behavior.selecting(
-                                    idx,
-                                    of: chars.count,
-                                    on: .string,
-                                    from: [
-                                        x,
-                                        InstructionItem(.stringParseToLetters),
-                                    ]
-                                ),
-                                isContingent: Behavior.netContingency(of: x)
-                            )
-                        )
-                    )
-                }
-                return results
+                let x = a[0] as! StringItem
+                guard !x.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .letters,
+                    origin: x,
+                    body: nil,
+                    emits: true
+                )
             }
         )
 
@@ -707,35 +707,59 @@ nonisolated extension Interpreter {
             }
         )
 
-    // returns every substring delimited by whitespace, if any
-    // unlike stringButLast, which always returns a string, this might not return anything
-    //
+    /// Pushes every whitespace-delimited word of a string to `.string`, one per
+    /// pass, front to back. A string with no words produces nothing.
+    ///
+    /// The odd one of the explode family: a word is not `origin[i]`, so no
+    /// existing instruction could name it and `.stringNthWord` had to be added
+    /// for these to have a record at all. That is the price of the last law-5
+    /// user, and it buys a genuinely useful instruction — "the nth word of a
+    /// string" is a thing a program wants regardless.
     static let stringSplit_Behavior =
         Behavior(
             .stringSplit,
             takes: [.string],
             fxn: { a in
-                let (x) = (a[0] as! StringItem)
-                var result = [Router]()
-                let chunks = x.value.split { $0.isWhitespace }
-                for (idx, chunk) in chunks.enumerated() {
-                    result.append(
-                        Router(
-                            .string,
-                            StringItem(
-                                String(chunk),
-                                call: Behavior.selecting(
-                                    idx,
-                                    of: chunks.count,
-                                    on: .string,
-                                    from: [x, InstructionItem(.stringSplit)]
-                                ),
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                let x = a[0] as! StringItem
+                guard !x.value.split(whereSeparator: { $0.isWhitespace }).isEmpty
+                else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .words,
+                    origin: x,
+                    body: nil,
+                    emits: true
+                )
+            }
+        )
+
+    /// The `n`th whitespace-delimited word of a string, indexed modulo the word
+    /// count like its `stringNth` sibling. Nothing at all for a string with no
+    /// words — there is no sensible word to return, and an ErrorItem would be
+    /// noise.
+    ///
+    /// Added for `stringSplit`'s iterator to have something honest to record, but
+    /// useful in its own right.
+    static let stringNthWord_Behavior =
+        Behavior(
+            .stringNthWord,
+            takes: [.string, .int],
+            fxn: { a in
+                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
+                let words = x.value.split { $0.isWhitespace }
+                guard !words.isEmpty else { return [] }
+                let idx = (max(0, y.value) % words.count)
+                return [
+                    Router(
+                        .string,
+                        StringItem(
+                            String(words[idx]),
+                            // `[string, index]`, matching `stringNth` and the four
+                            // `vecXNth` siblings.
+                            call: [x, y, InstructionItem(.stringNthWord)],
+                            isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
-                }
-                return result
+                ]
             }
         )
 
@@ -809,46 +833,32 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// Pushes every character of a string to `.char`, **one per pass**, front to
+    /// back — so the last character ends up on top.
+    ///
+    /// It used to do this in a single step, which is the thing this whole family
+    /// was reworked to stop doing: a loop refusing to be one. Exploding all at
+    /// once put the work outside `stepLimit` and the runaway guard's reach, and it
+    /// forced every character to record *which of the pile it was* —
+    /// `s .stringPushAllChars 3 .charPopItems`, a law-5 selection. Now each
+    /// character just says what it is, `s 2 .stringNth`: independent, O(1), and
+    /// true regardless of how many passes have run.
+    ///
+    /// A sequence, not a loop: the iterator has no body, so a pass costs one step
+    /// rather than three.
     static let stringPushAllChars_Behavior =
         Behavior(
             .stringPushAllChars,
             takes: [.string],
             fxn: { a in
-                let (s) = (a[0] as! StringItem)
-
-                var results = [Router]()
-                if s.value.count > 0 {
-                    let chars = Array(s.value)
-                    for (idx, char) in chars.enumerated() {
-                        results.append(
-                            Router(
-                                .char,
-                                CharItem(
-                                    char,
-                                    // Chars are pushed in reading order, so the
-                                    // first ends up deepest and needs the most
-                                    // pops. (`vecXPushAll` reverses before
-                                    // pushing, so its element 0 lands on top
-                                    // instead — a real inconsistency between the
-                                    // two siblings, left alone here.)
-                                    call: Behavior.selecting(
-                                        idx,
-                                        of: chars.count,
-                                        on: .char,
-                                        from: [
-                                            s,
-                                            InstructionItem(.stringPushAllChars),
-                                        ]
-                                    ),
-                                    isContingent: Behavior.netContingency(
-                                        of: s
-                                    )
-                                )
-                            )
-                        )
-                    }
-                }
-                return results
+                let s = a[0] as! StringItem
+                guard !s.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: nil),
+                    origin: s,
+                    body: nil,
+                    emits: true
+                )
             }
         )
 
@@ -875,6 +885,7 @@ nonisolated extension Interpreter {
         .stringLT : stringLT_Behavior,
         .stringLTE : stringLTE_Behavior,
         .stringNth : stringNth_Behavior,
+        .stringNthWord : stringNthWord_Behavior,
         .stringOccurrencesOfChar : stringOccurrencesOfChar_Behavior,
         .stringParseToLetters : stringParseToLetters_Behavior,
         .stringPushAllChars : stringPushAllChars_Behavior,

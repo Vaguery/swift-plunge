@@ -400,18 +400,28 @@ struct VecDoubleBehaviorTests {
                          VecDoubleItem([1,22,333], isContingent: true),
                         ])
 
+        // An empty vector yields nothing at all — not even an iterator.
         doThis(.vecDoublePushAll, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
+        // It emits one element per pass now, so nothing appears until it runs.
         doThis(.vecDoublePushAll, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.0 22.0 333.0 ]")
+        #expect(stackString(inty, .double) == "[ ]")
+        inty.run(stepLimit: 10_000)
+
+        // Front to back, so 333.0 was pushed last and is on top — the reverse of
+        // what it used to be, deliberately. See "Collections are walked
+        // front-to-back" in "Notes on Push/Design Principles.md".
+        #expect(stackString(inty, .double) == "[ 333.0 22.0 1.0 ]")
         #expect(topItem(inty, .double).isContingent == true)
-        #expect(callString(topItem(inty, .double)) == "( [1.0, 22.0, 333.0] .vecDoublePushAll )")
+
+        // Each element names its own index rather than how far down a pile it
+        // landed, so this record says nothing about the other two.
+        #expect(callString(topItem(inty, .double)) == "( [1.0, 22.0, 333.0] 2 .vecDoubleNth )")
         doThis(.doublePop, to: inty)
-        // Elements are reversed before pushing, so element 0 lands on top and
-        // needs no discard; the one below it is surfaced by popping that.
         #expect(CodeItem(topItem(inty, .double).crux()).pretty()
-            == "( [1.0, 22.0, 333.0] .vecDoublePushAll 1 .doublePopItems )")
+            == "( [1.0, 22.0, 333.0] 1 .vecDoubleNth )")
     }
 
     @Test func vecDoubleRemove() {

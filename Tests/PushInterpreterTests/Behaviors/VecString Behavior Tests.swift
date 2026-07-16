@@ -400,18 +400,28 @@ struct VecStringBehaviorTests {
                          VecStringItem(["1","22","333"], isContingent: true),
                         ])
 
+        // An empty vector yields nothing at all — not even an iterator.
         doThis(.vecStringPushAll, to: inty)
         #expect(stackString(inty, .string) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
+        // It emits one element per pass now, so nothing appears until it runs.
         doThis(.vecStringPushAll, to: inty)
-        #expect(stackString(inty, .string) == "[ \"1\" \"22\" \"333\" ]")
+        #expect(stackString(inty, .string) == "[ ]")
+        inty.run(stepLimit: 10_000)
+
+        // Front to back, so "333" was pushed last and is on top — the reverse of
+        // what it used to be, deliberately. See "Collections are walked
+        // front-to-back" in "Notes on Push/Design Principles.md".
+        #expect(stackString(inty, .string) == "[ \"333\" \"22\" \"1\" ]")
         #expect(topItem(inty, .string).isContingent == true)
-        #expect(callString(topItem(inty, .string)) == "( [\"1\", \"22\", \"333\"] .vecStringPushAll )")
+
+        // Each element names its own index rather than how far down a pile it
+        // landed, so this record says nothing about the other two.
+        #expect(callString(topItem(inty, .string)) == "( [\"1\", \"22\", \"333\"] 2 .vecStringNth )")
         doThis(.stringPop, to: inty)
-        // Elements are reversed before pushing, so element 0 lands on top and
-        // needs no discard; the one below it is surfaced by popping that.
         #expect(CodeItem(topItem(inty, .string).crux()).pretty()
-            == "( [\"1\", \"22\", \"333\"] .vecStringPushAll 1 .stringPopItems )")
+            == "( [\"1\", \"22\", \"333\"] 1 .vecStringNth )")
     }
 
     @Test func vecStringRemove() {

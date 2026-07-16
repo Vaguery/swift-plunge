@@ -454,18 +454,28 @@ struct VecIntBehaviorTests {
                          VecIntItem([1,22,333], isContingent: true),
                         ])
 
+        // An empty vector yields nothing at all — not even an iterator.
         doThis(.vecIntPushAll, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
 
+        // It emits one element per pass now, so nothing appears until it runs.
         doThis(.vecIntPushAll, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 22 333 ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        inty.run(stepLimit: 10_000)
+
+        // Front to back, so 333 was pushed last and is on top — this order is the
+        // reverse of what it used to be, deliberately. See "Collections are walked
+        // front-to-back" in "Notes on Push/Design Principles.md".
+        #expect(stackString(inty, .int) == "[ 333 22 1 ]")
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [1, 22, 333] .vecIntPushAll )")
+
+        // Each element names its own index rather than how far down a pile it
+        // landed, so this record says nothing about the other two.
+        #expect(callString(topItem(inty, .int)) == "( [1, 22, 333] 2 .vecIntNth )")
         doThis(.intPop, to: inty)
-        // Elements are reversed before pushing, so element 0 lands on top and
-        // needs no discard; the one below it is surfaced by popping that.
         #expect(CodeItem(topItem(inty, .int).crux()).pretty()
-            == "( [1, 22, 333] .vecIntPushAll 1 .intPopItems )")
+            == "( [1, 22, 333] 1 .vecIntNth )")
     }
 
     @Test func vecIntRemove() {
