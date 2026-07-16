@@ -123,7 +123,14 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case iteratorPeekStart, iteratorPeekEnd, iteratorPeekStride, iteratorPeekBody
 
     // iterator construction
+    //
+    // All construct-only: they build an iterator and leave it alone, never
+    // running it. They exist so `crux()` has something to say — an iterator's
+    // record rebuilds it by state, and re-running that record has to produce the
+    // iterator rather than run its loop.
     case iteratorFromIntRange
+    case iteratorFromString, iteratorFromStringLetters, iteratorFromStringWords
+    case iteratorFromVecBool, iteratorFromVecDouble, iteratorFromVecInt, iteratorFromVecString
 
     // iterator combinators
     case iteratorDeepDup, iteratorDup, iteratorDupItems, iteratorDupTimes, iteratorStackIsEmpty, iteratorEq, iteratorFlush, iteratorPop, iteratorPopItems, iteratorRot, iteratorShove, iteratorStackDepth, iteratorSwap, iteratorYank, iteratorYankDup

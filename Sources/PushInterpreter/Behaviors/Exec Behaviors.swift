@@ -182,20 +182,26 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// Build a counting iterator and hand it to `.iteratorPlay` — the shape every
-    /// `exec` looping instruction now reduces to.
+    /// Build an iterator and hand it to `.iteratorPlay` — the shape every looping
+    /// instruction in the language now reduces to, whether it counts a range or
+    /// walks a collection.
     ///
     /// `.exec` top→bottom ends up `.iteratorPlay`, so the iterator is resting on
     /// `.iterator` by the time it fires. The loop's whole state travels inside it;
-    /// nothing about the counting is expressed in Push any more.
+    /// none of the counting or walking is expressed in Push any more.
+    ///
+    /// `destination` is nil for a walker, whose end is its origin's own length.
+    /// Burial is 0 and deliberately not a parameter: these are all tight loops,
+    /// and never gathering a burial is exactly how they avoid paying for one.
     static func iteratorLoop(
         kind: IteratorKind,
         origin: any Item,
-        destination: (any Item)?,
-        body: CodeItem,
+        destination: (any Item)? = nil,
+        body: CodeItem?,
         emits: Bool
     ) -> [Router] {
-        let contingent = Behavior.netContingency(of: origin, body)
+        let contingent = body.map { Behavior.netContingency(of: origin, $0) }
+            ?? origin.isContingent
         var iterator = IteratorItem(
             kind: kind,
             origin: origin,

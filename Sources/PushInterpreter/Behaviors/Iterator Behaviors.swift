@@ -309,8 +309,91 @@ nonisolated extension Interpreter {
         )
 
 
+    /// Builds an iterator that **walks** a source — a string's characters, its
+    /// letters, its words, or a vector's elements — and leaves it alone.
+    ///
+    /// One factory for all of them, because they differ only in where the origin
+    /// comes from and how the cursor projects: the state is the same shape either
+    /// way. No bounds, because a walker's end is its origin's own length.
+    ///
+    /// `origin cursor burial emits (body)`. The origin lands on its own stack, so
+    /// only the two ints share `.int` — `burial` is written last and arrives on
+    /// top. An empty body means a sequence rather than a loop (see
+    /// `IteratorItem.init`), which is how one constructor serves both.
+    static func iteratorWalking_Behavior(
+        _ name: PushInstruction,
+        over source: PushStack,
+        kind: @escaping @Sendable (any Item) -> IteratorKind
+    ) -> Behavior {
+        Behavior(
+            name,
+            takes: [source, .int, .int, .bool, .code],
+            fxn: { a in
+                let origin = a[0]
+                let (burial, cursor) = (a[1] as! IntItem, a[2] as! IntItem)
+                let (emits, body) = (a[3] as! BoolItem, a[4] as! CodeItem)
+
+                let iterator = IteratorItem(
+                    kind: kind(origin),
+                    origin: origin,
+                    body: body,
+                    emits: emits.value,
+                    cursor: cursor.value,
+                    burial: burial.value,
+                    call: [
+                        origin, cursor, burial, emits, body,
+                        InstructionItem(name),
+                    ],
+                    isContingent: Behavior.netContingency(
+                        of: origin, cursor, burial, emits, body
+                    )
+                )
+                return [Router(.iterator, iterator)]
+            }
+        )
+    }
+
+    static let iteratorFromString_Behavior =
+        iteratorWalking_Behavior(.iteratorFromString, over: .string) { _ in
+            .elements(into: nil)
+        }
+
+    static let iteratorFromStringLetters_Behavior =
+        iteratorWalking_Behavior(.iteratorFromStringLetters, over: .string) { _ in
+            .letters
+        }
+
+    static let iteratorFromStringWords_Behavior =
+        iteratorWalking_Behavior(.iteratorFromStringWords, over: .string) { _ in
+            .words
+        }
+
+    static func iteratorFromVector_Behavior<V: VectorItem>(
+        _ name: PushInstruction,
+        over itemType: V.Type
+    ) -> Behavior {
+        iteratorWalking_Behavior(name, over: V.pushStack) { _ in .elements(into: nil) }
+    }
+
+    static let iteratorFromVecBool_Behavior =
+        iteratorFromVector_Behavior(.iteratorFromVecBool, over: VecBoolItem.self)
+    static let iteratorFromVecDouble_Behavior =
+        iteratorFromVector_Behavior(.iteratorFromVecDouble, over: VecDoubleItem.self)
+    static let iteratorFromVecInt_Behavior =
+        iteratorFromVector_Behavior(.iteratorFromVecInt, over: VecIntItem.self)
+    static let iteratorFromVecString_Behavior =
+        iteratorFromVector_Behavior(.iteratorFromVecString, over: VecStringItem.self)
+
+
     static let iteratorBehaviors: [PushInstruction: Behavior] =
     [
+        .iteratorFromString : iteratorFromString_Behavior,
+        .iteratorFromStringLetters : iteratorFromStringLetters_Behavior,
+        .iteratorFromStringWords : iteratorFromStringWords_Behavior,
+        .iteratorFromVecBool : iteratorFromVecBool_Behavior,
+        .iteratorFromVecDouble : iteratorFromVecDouble_Behavior,
+        .iteratorFromVecInt : iteratorFromVecInt_Behavior,
+        .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
         .iteratorPeekEnd : iteratorPeekEnd_Behavior,
         .iteratorFromIntRange : iteratorFromIntRange_Behavior,

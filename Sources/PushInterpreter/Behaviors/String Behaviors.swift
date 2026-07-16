@@ -777,72 +777,35 @@ nonisolated extension Interpreter {
     //
     // index:        4          3          2                   1          0
     // reults: ( exec:MOUSE exec:"bcd" exec:.stringIterate exec:MOUSE char:'a' )
-    //
-    // TODO: explain what THE MOUSE is
-    //
+    /// Runs the mouse once per character of the string, leaving each character on
+    /// `.char` for it to read.
+    ///
+    /// **The mouse** is the loop body — the block re-supplied to `.code` on every
+    /// pass, which is why it survives being consumed. The name is inherited; the
+    /// iterator holds it now, and the re-supply is gone with everything else the
+    /// loop used to rebuild.
+    ///
+    /// It used to carry its own state in Push: each pass re-pushed the *remaining*
+    /// string and a fresh `.stringIterate` token, so the shrinking remainder was a
+    /// derived value with `[previous, .stringRest]` for a record — one level
+    /// deeper per character, O(n) and bounded only by the `maxCallWeight`
+    /// backstop, which means a long string lost its story. The iterator keeps the
+    /// whole string and a cursor instead, so each character records
+    /// `s 2 .stringNth`: O(1), independent of the others, and independent of how
+    /// many passes have run.
     static let stringIterate_Behavior =
         Behavior(
             .stringIterate,
             takes: [.string, .code],
             fxn: { a in
-                let (x, y) = (a[0] as! StringItem, a[1])
-                var results = [Router]()
-                var working = x.value
-
-                let count = working.count
-                guard count > 0 else { return results }
-                let item = working.removeFirst()
-
-                // `.exec` top→bottom, when more remains:
-                //   mouse, .codeDo, rest, mouse, .stringIterate
-                //
-                // The mouse comes from `.code` now, so running it takes a
-                // `.codeDo`; re-supplying it for the next pass is just a push to
-                // `.exec`, which lands it back on `.code`. The re-supply has to
-                // precede the token — the token takes its argument from `.code`,
-                // so the mouse must already be resting there when it fires.
-                // Routers are listed in reverse, because `distribute` prepends.
-                //
-                // Provenance: mouse copies and the token are combinatory (laws 1,
-                // 1b and 4). The two derived values name the instructions that
-                // honestly reproduce them, `.stringFirst` and `.stringRest` — not the
-                // iterate instruction, whose crux would re-run the whole loop.
-                if count > 1 {
-                    results.append(
-                        Router(
-                            .exec,
-                            InstructionItem(
-                                .stringIterate,
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
-                        )
-                    )
-                    results.append(Router(.exec, y))
-                    results.append(
-                        Router(
-                            .exec,
-                                StringItem(
-                                    working,
-                                    call: [x, InstructionItem(.stringRest)],
-                                    isContingent: Behavior.netContingency(of: x, y)
-                                )
-                        )
-                    )
-                }
-                results.append(Router(.exec, InstructionItem(.codeDo)))
-                results.append(Router(.exec, y))
-
-                results.append(
-                    Router(
-                        .char,
-                        CharItem(
-                            item,
-                            call: [x, InstructionItem(.stringFirst)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
-                    )
+                let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
+                guard !x.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: nil),
+                    origin: x,
+                    body: mouse,
+                    emits: true
                 )
-                return results
             }
         )
 

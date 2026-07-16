@@ -362,17 +362,58 @@ nonisolated extension IteratorItem {
     /// normalizes an empty body away. That is what lets one constructor per
     /// source serve both a sequence and a loop.
     func reconstruction() -> [any Item] {
-        guard case .counting(let stride) = kind, let destination else { return [] }
-        return [
-            origin,
-            destination,
-            IntItem(stride),
-            IntItem(value),
-            IntItem(burial),
-            BoolItem(emits),
-            body ?? CodeItem([]),
-            InstructionItem(.iteratorFromIntRange),
-        ]
+        switch kind {
+        case .counting(let stride):
+            guard let destination else { return [] }
+            return [
+                origin,
+                destination,
+                IntItem(stride),
+                IntItem(value),
+                IntItem(burial),
+                BoolItem(emits),
+                body ?? CodeItem([]),
+                InstructionItem(.iteratorFromIntRange),
+            ]
+
+        // A walking iterator needs no bounds: its end is its origin's own length.
+        // The origin lands on its own stack, so only the two cursor-ish ints share
+        // `.int`, and `burial` is written last and so arrives on top.
+        case .letters, .words, .elements:
+            guard let name = walkingConstructor else { return [] }
+            return [
+                origin,
+                IntItem(value),
+                IntItem(burial),
+                BoolItem(emits),
+                body ?? CodeItem([]),
+                InstructionItem(name),
+            ]
+
+        case .repeating:
+            return []   // stage 4
+        }
+    }
+
+    /// The construct-only instruction that rebuilds this walking iterator. The
+    /// kind and the origin's type together pick it — `.letters` and `.words` walk
+    /// a string too, but project differently, so each needs its own name.
+    var walkingConstructor: PushInstruction? {
+        switch kind {
+        case .letters: return .iteratorFromStringLetters
+        case .words:   return .iteratorFromStringWords
+        case .elements:
+            switch origin {
+            case is StringItem:    return .iteratorFromString
+            case is VecBoolItem:   return .iteratorFromVecBool
+            case is VecDoubleItem: return .iteratorFromVecDouble
+            case is VecIntItem:    return .iteratorFromVecInt
+            case is VecStringItem: return .iteratorFromVecString
+            default:               return nil   // CodeItem origins: stage 4
+            }
+        default:
+            return nil
+        }
     }
 }
 

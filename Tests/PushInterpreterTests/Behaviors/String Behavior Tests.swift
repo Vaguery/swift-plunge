@@ -356,76 +356,63 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
 
+        // The instruction only builds the iterator; `.iteratorPlay` does the work.
+        // The whole string goes in and stays there — where it used to re-push a
+        // *shrinking* copy of itself onto `.exec` every single pass.
         doThis(.stringIterate, to: inty)
 
         #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo \"oo\" ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .iterator) == "[ «\"boo\" @0 ( .intInc )» ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
-        // The two derived results name the instructions that honestly reproduce
-        // them. Naming `.stringIterate` (as they used to) made a crux that re-ran
-        // the whole loop, mouse and all, and grew a level per pass.
-        #expect(callString(topItem(inty, .char)) == "( \"boo\" .stringFirst )")
-        #expect(callString(inty.stacks[.exec]![2]) == "( \"boo\" .stringRest )")
-        // ...while the two mouse copies and the two freshly minted tokens record
-        // nothing: `.exec` is mouse, .codeDo, rest, mouse, .stringIterate — the
-        // first mouse runs via `.codeDo`, the second re-supplies `.code` for the
-        // next pass.
+
+        inty.step()   // first pass: 'b', then the mouse
+
+        #expect(stackString(inty, .char) == "[ 'b' ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+        // The character names the instruction that honestly reproduces it, and
+        // that record does not depend on how many passes have run. The shrinking
+        // remainder — the other derived value, which recorded `.stringRest` and
+        // deepened a level per character — does not exist any more.
+        #expect(callString(topItem(inty, .char)) == "( \"boo\" 0 .stringNth )")
+        // The mouse copy, the `.codeDo` and the continuation record nothing.
         #expect(inty.stacks[.exec]![0].call.isEmpty)   // mouse, to run
         #expect(inty.stacks[.exec]![1].call.isEmpty)   // .codeDo
-        #expect(inty.stacks[.exec]![3].call.isEmpty)   // mouse, re-supplied
-        #expect(inty.stacks[.exec]![4].call.isEmpty)   // the iterate token
+        #expect(inty.stacks[.exec]![2].call.isEmpty)   // .iteratorPlay
 
         inty.step()
 
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .codeDo \"oo\" ( .intInc ) .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo .iteratorPlay ]")
+        #expect(stackString(inty, .code) == "[ ( .intInc ) ]")
 
         inty.step()
 
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .intInc \"oo\" ( .intInc ) .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(stackString(inty, .exec) == "[ .intInc .iteratorPlay ]")
 
-        inty.step()
+        inty.step()   // the mouse runs
 
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ \"oo\" ( .intInc ) .stringIterate ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(stackString(inty, .int) == "[ 2 ]")
 
-        inty.step()
+        // The loop comes back round in ONE step, where it used to take three: the
+        // string and the token no longer travel through `.exec` to be re-supplied.
+        inty.step()   // second pass: 'o'
 
-        #expect(stackString(inty, .string) == "[ \"oo\" ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ ( .intInc ) .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 2 ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ \"oo\" ]")
-        #expect(stackString(inty, .char) == "[ 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 2 ]")
-
-        inty.step()
-
-        #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo \"o\" ( .intInc ) .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 2 ]")
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo .iteratorPlay ]")
+        #expect(callString(topItem(inty, .char)) == "( \"boo\" 1 .stringNth )")
 
-        inty.step()
+        for _ in 0..<4 { inty.step() }   // run the mouse, then the last pass
 
-        #expect(stackString(inty, .string) == "[ ]")
-        #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
-        #expect(stackString(inty, .exec) == "[ .codeDo \"o\" ( .intInc ) .stringIterate ]")
-        #expect(stackString(inty, .int) == "[ 2 ]")
-
-
+        #expect(stackString(inty, .char) == "[ 'o' 'o' 'b' ]")
+        #expect(stackString(inty, .int) == "[ 3 ]")
+        // Three characters, so three passes and no continuation.
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
+        // The last character costs no more to explain than the first.
+        #expect(callString(topItem(inty, .char)) == "( \"boo\" 2 .stringNth )")
     }
 
     @Test func `stringIterate might be weird when recursive`() {

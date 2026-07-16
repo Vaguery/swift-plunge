@@ -589,87 +589,32 @@ nonisolated extension Interpreter {
         )
     }
 
-    // ( vec .vecXIterate MOUSE )
-    //
-    //               4          3            2                   1         0
-    // reults: ( exec:MOUSE exec:remains exec:.vecXIterate exec:MOUSE scalar:CHEESE )
-    //
+    /// Runs the mouse once per element of the vector, leaving each element on the
+    /// matching scalar stack for it to read.
+    ///
+    /// Like `stringIterate`, this used to carry its own state in Push: every pass
+    /// re-pushed the *remaining* vector and a fresh token, so the shrinking
+    /// remainder recorded `[previous, .vecXRest]` — one level deeper per element,
+    /// O(n), and bounded only by the `maxCallWeight` backstop, which meant a long
+    /// vector lost its story. The iterator keeps the whole vector and a cursor, so
+    /// each element records `v 2 .vecXNth`: O(1), and independent of how many
+    /// passes have run.
+    ///
+    /// `.vecXFirst`/`.vecXRest` are no longer named by anything here. They were the
+    /// honest description of a *shrinking* walk; there is no shrinking now.
     static func iterateBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
-        // The two derived values here are the element pulled off the front and
-        // the vector left behind, and each is honestly described by an existing
-        // instruction — `.vecXFirst` and `.vecXRest` — rather than by the
-        // iterate instruction that happened to produce them. Naming the iterate
-        // instruction was both unrunnable (its crux re-ran the whole loop, mouse
-        // and all) and unbounded. Naming `First`/`Rest` also makes the mouse
-        // genuinely irrelevant to the element's provenance, which is why it no
-        // longer appears in the `call`.
-        let firstInstruction =
-            PushInstruction(rawValue: "\(V.pushStack.rawValue)First")!
-        let restInstruction =
-            PushInstruction(rawValue: "\(V.pushStack.rawValue)Rest")!
-
-        return Behavior(
+        Behavior(
             instruction,
             takes: [V.pushStack, .code],
             fxn: { a in
-                let (x, y) = (a[0] as! V, a[1])
-                var results = [Router]()
-                var working = x.value
-
-                let count = working.count
-                guard count > 0 else { return results }
-                let item = working.removeFirst()
-
-                // `.exec` top→bottom, when more remains:
-                //   mouse, .codeDo, rest, mouse, instruction
-                //
-                // The mouse comes from `.code` now, so running it takes a
-                // `.codeDo`; re-supplying it for the next pass is just a push to
-                // `.exec`, which lands it back on `.code`. The re-supply has to
-                // precede the token — the token takes its argument from `.code`,
-                // so the mouse must already be resting there when it fires.
-                // Routers are listed in reverse, because `distribute` prepends.
-                //
-                // Provenance: mouse copies and the token are combinatory (laws 1,
-                // 1b and 4). The two derived values name the instructions that
-                // honestly reproduce them, `.vecXFirst` and `.vecXRest` — not the
-                // iterate instruction, whose crux would re-run the whole loop.
-                if count > 1 {
-                    results.append(
-                        Router(
-                            .exec,
-                            InstructionItem(
-                                instruction,
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
-                        )
-                    )
-                    results.append(Router(.exec, y))
-                    results.append(
-                        Router(
-                            .exec,
-                                V(
-                                    working,
-                                    call: [x, InstructionItem(restInstruction)],
-                                    isContingent: Behavior.netContingency(of: x, y)
-                                )
-                        )
-                    )
-                }
-                results.append(Router(.exec, InstructionItem(.codeDo)))
-                results.append(Router(.exec, y))
-
-                results.append(
-                    Router(
-                        V.Scalar.pushStack,
-                        V.Scalar(
-                            item,
-                            call: [x, InstructionItem(firstInstruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
-                    )
+                let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
+                guard !x.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: nil),
+                    origin: x,
+                    body: mouse,
+                    emits: true
                 )
-                return results
             }
         )
     }

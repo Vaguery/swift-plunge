@@ -207,30 +207,28 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
+        // The instruction only builds the iterator; `.iteratorPlay` does the work.
         doThis(.vecDoubleIterate, to: inty)
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
-
+        #expect(stackString(inty, .double) == "[ ]")
         #expect(stackString(inty, .vecDouble) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo [55.0] ( .boolNot ) .vecDoubleIterate ]")
-        // The two mouse copies and the re-pushed iterate token are combinatory,
-        // so they record nothing. The shrunken vector is genuinely derived and
-        // names `.vecDoubleRest` — an instruction that honestly reproduces it —
-        // rather than the iterate instruction, whose crux would re-run the loop.
-        // .exec is now: mouse, .codeDo, rest, mouse, iterate — the mouse runs via
-        // .codeDo and is re-supplied to .code for the next pass. Only the
-        // shrunken vector is derived.
-        #expect(inty.stacks[.exec]!.count == 5)
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+
+        // The whole vector goes INTO the iterator and stays there. It used to
+        // re-push a *shrunken* copy every pass, which was the one derived value
+        // here and recorded `[previous, .vecDoubleRest]` — a level deeper per
+        // element, O(n) in the vector's length. There is no shrinking now, so
+        // there is nothing to record: `.vecDoubleRest` is named by nothing.
+        inty.step()
+        #expect(stackString(inty, .double) == "[ 4.0 ]")
+        #expect(inty.stacks[.exec]!.count == 3)
         #expect(inty.stacks[.exec]![0].call.isEmpty)   // mouse, to run
         #expect(inty.stacks[.exec]![1].call.isEmpty)   // .codeDo
-        #expect(CodeItem(inty.stacks[.exec]![2].crux()).pretty()
-            == "( [4.0, 55.0] .vecDoubleRest )")
-        #expect(inty.stacks[.exec]![3].call.isEmpty)   // mouse, re-supplied
-        #expect(inty.stacks[.exec]![4].call.isEmpty)   // the iterate token
+        #expect(inty.stacks[.exec]![2].call.isEmpty)   // .iteratorPlay
 
-        // Likewise the extracted element is honestly the vector's first.
+        // The element is honestly the vector's 1st, and says so without depending
+        // on how many passes have run.
         #expect(CodeItem(topItem(inty, .double).crux()).pretty()
-            == "( [4.0, 55.0] .vecDoubleFirst )")
-
+            == "( [4.0, 55.0] 0 .vecDoubleNth )")
     }
 
     @Test func `vecDoubleIterate works for >1 item`() {
@@ -248,35 +246,29 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]")
 
         doThis(.vecDoubleIterate, to: inty)
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
         #expect(stackString(inty, .vecDouble) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo [55.0] ( .boolNot ) .vecDoubleIterate ]")
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+        #expect(stackString(inty, .bool) == "[ false ]")
+
+        inty.step()   // first pass: element 4.0, then the mouse
+        #expect(stackString(inty, .double) == "[ 4.0 ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo .iteratorPlay ]")
         #expect(stackString(inty, .bool) == "[ false ]")
 
         inty.step()
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
-        #expect(stackString(inty, .vecDouble) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .codeDo [55.0] ( .boolNot ) .vecDoubleIterate ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .exec) == "[ .codeDo .iteratorPlay ]")
 
         inty.step()
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
-        #expect(stackString(inty, .vecDouble) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .boolNot [55.0] ( .boolNot ) .vecDoubleIterate ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .exec) == "[ .boolNot .iteratorPlay ]")
 
-        inty.step()
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
-        #expect(stackString(inty, .vecDouble) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ [55.0] ( .boolNot ) .vecDoubleIterate ]")
+        inty.step()   // the mouse runs
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(stackString(inty, .bool) == "[ true ]")
 
-        inty.step()
-        #expect(stackString(inty, .double) == "[ 4.0 ]")
-        #expect(stackString(inty, .vecDouble) == "[ [55.0] ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .vecDoubleIterate ]")
-        #expect(stackString(inty, .bool) == "[ true ]")
-
+        inty.step()   // second and last pass: element 55.0, and the loop is done
+        #expect(stackString(inty, .double) == "[ 55.0 4.0 ]")
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
     }
 
     @Test func `vecDoubleIterate works for empty`() {
@@ -310,9 +302,15 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecDoubleIterate, to: inty)
+        #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
+
+        // One element, so one pass and no continuation: the iterator is spent as
+        // soon as it is played, and never comes to rest.
+        inty.step()
         #expect(stackString(inty, .double) == "[ 55.0 ]")
         #expect(stackString(inty, .vecDouble) == "[ ]")
         #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
     }
 
     @Test func vecDoubleLast() {
