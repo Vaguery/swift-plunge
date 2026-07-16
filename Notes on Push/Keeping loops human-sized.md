@@ -94,7 +94,8 @@ could not be changed and had to be memorised. That is the whole difference, and 
 This is the part worth being clear about, because it is easy to sell this as a safety feature and it is
 not one. `stepLimit` already provides safety.
 
-At the default `stepLimit` of 1,000, and roughly 2–4 steps per pass:
+At the default `stepLimit` of 1,000. A bodyless pass costs **1 step** (measured — the optional-body work
+made sequences that cheap); a pass with a body costs that plus the body:
 
 - `0 999_999 .execDoRange` **today**: runs ~300 passes, hits the step limit, and **dies mid-loop**. The
   `.int` stack holds 300 indices going nowhere. Nothing was computed. The crux is `0 999999 .execDoRange`,
@@ -118,9 +119,36 @@ starves everything downstream of it.
   the time, so nothing will find it by accident. Worth stating out loud rather than discovering.
 - **In `.iteratorSetEnd` — yes.** It is program-facing, and "no loop may promise more than
   `maxIterations` passes" should hold however the loop was aimed.
-- **For `.elements` walks — unnecessary.** `maxVectorLength`/`maxStringLength` already bound them at
-  1,000. Clamping there would mean "you only see the first 100 elements of your own data", which is a
-  different and much worse lie.
+- **For `.elements` walks — impossible, and rightly so.** A walking iterator has **`destination = nil`**:
+  its end derives from its source's length, so there is structurally nothing to move in. The clamp cannot
+  reach it even if someone wanted it to.
+
+  That is the right answer, not a lucky escape. **A count is a claim; a collection's length is a fact.**
+  You can clamp a claim. Clamping a fact means "you only see the first 100 elements of your own data",
+  which is a different and much worse lie. `maxVectorLength`/`maxStringLength` already bound walks at
+  1,000, and *they are* a walk's iteration budget — lower them if you want shorter walks.
+
+  So the two limits are deliberately unequal: a program may walk all of its data, and may not invent a
+  loop longer than `maxIterations`. That asymmetry is the point.
+
+### The settings must be coherent, and today they are not
+
+Measured, and it has nothing to do with this proposal — it is true now:
+
+```
+maxVectorLength  1_000        stepLimit  1_000
+walking the largest LEGAL vector at default settings → emits 997 of 1000, dies 3 short
+```
+
+The largest vector the interpreter will accept cannot quite be traversed in the steps it allows, missing
+by exactly the setup cost. There is an unwritten invariant here worth writing down:
+
+> **`stepLimit` must exceed `maxVectorLength` and `maxStringLength`** (plus a little), or a legal
+> collection cannot be walked to completion.
+
+`maxIterations` should join that: a coherent configuration wants
+`stepLimit > max(maxIterations, maxVectorLength, maxStringLength)`. Whatever `maxIterations` defaults to,
+it is the *counted* loops it governs, and the collection limits govern the rest.
 
 **Clamp the span, not the destination.** `60 10 .execDoRange` descends: clamping its *destination* would
 mean raising it. The rule is "a loop may promise at most `maxIterations` passes; if it promises more, its
@@ -165,6 +193,78 @@ It covers its whole stated range, at the resolution it can afford. Nothing is tr
 
 **Recommendation: clamp.** One rule for every kind, monotone, and it changes only extent. Keep coarsening
 in mind for `.sampling`, where a range genuinely is being sampled and the resolution is the point.
+
+---
+
+# What a spent iterator should do
+
+Related, because `maxIterations` makes loops end *sooner* and more often, so how they end matters more.
+
+**Today it dies**, and the dying is invisible: on its last pass `.iteratorPlay` emits the payload and
+simply does not re-push. The iterator is consumed by its own final act. So an iterator never rests in a
+spent state — every one on `.iterator` has something left to emit.
+
+One inconsistency: the `.iteratorFromX` **constructors do not check `isSpent`**, so a crux can build an
+already-spent iterator that *does* rest. Playing it then destroys it silently and emits nothing. Worth
+closing — refuse to push a spent iterator from a constructor, and the invariant is exact: *every iterator
+on `.iterator` has something to emit*. Nothing is lost, because a spent iterator has no crux to reproduce
+if it cannot exist.
+
+## Parking a spent iterator would break nested loops
+
+Tempting — the starvation probe shows an iterator costs seven arguments to rebuild and starves ~100% of
+the time, so an exhausted one still holding a good origin, stride and body is the only cheap handle on an
+expensive object. Park it, and `.iteratorRestart` could rewind it.
+
+**It breaks nesting, and fatally.** `.iteratorPlay` takes whatever is on *top* of `.iterator`. An inner
+loop's corpse parks on top of the outer loop's live iterator; the outer loop's next continuation fires,
+pops the **corpse**, sees it is spent, returns nothing — **including no continuation**. The outer loop
+dies and its iterator is stranded underneath. Every nested loop would end this way.
+
+That is decisive on its own. (The corpses would also pile, but bounded by `stepLimit` you cannot end
+enough loops for the runaway guard to notice.)
+
+## Dumping its arguments back is safe where parking is not — and feeds the two hungriest stacks
+
+The other way to die: **give everything back**. A spent iterator pushes its origin, destination and body
+to `.exec`, whence `pushDefault` routes each to the stack it came from.
+
+Three things recommend it:
+
+1. **It does not touch `.iterator`,** so the outer loop's iterator stays on top and nesting is unharmed.
+   This is the whole difference from parking.
+2. **It is already the language's habit.** `execDoCount` with a count below 1 returns its arguments
+   (`Router(.code, body), Router(.exec, x)`); `execDoTimes` returns its body to `.code`. "Give the
+   arguments back when you cannot act" is established; this extends it to "when you are done".
+3. **It is a source for the two scarcest stacks.** From "Stack economics.md": `.code` is the language's
+   tightest structural bottleneck (0.29 producers per consumer, and only the five quotes can make a block
+   that did not exist), and `.int` is empty 63.5% of the time it is wanted. A dying loop hands back a
+   block and two ints. Every loop that ends becomes a small supply of exactly what the language is short
+   of — which is a *far* better argument than tidiness.
+
+It also reads well against principle 10: a loop's state is private **for its duration**. Dying ends the
+duration, so returning the state is not a leak; it is the encapsulation ending cleanly.
+
+**Against**: it changes every loop's trace again, and it hands back bounds nobody asked for. The pile is
+bounded by `stepLimit` — you cannot end many loops in 1,000 steps — so the runaway guard will not see it
+at default settings, though a long run might.
+
+**Recommendation: worth doing**, and mostly for reason (3), which is a real answer to a real famine rather
+than a nicety.
+
+## `.iteratorRestart` — yes, and for a better reason than symmetry
+
+Resets the cursor to 0. Leaves start, end, stride and body alone.
+
+It is not merely `0 .iteratorSetCounter` with fewer keystrokes. **It takes no arguments**, and `.int` is
+empty 63.5% of the time it is wanted — so `0 .iteratorSetCounter` frequently cannot fire, while
+`.iteratorRestart` always can. In a language whose defining flaw is argument starvation, a zero-argument
+form of a useful operation is worth a whole instruction.
+
+It only ever acts on a *live* iterator, since spent ones die — so in practice it is reached from inside a
+body, and a body that restarts its own loop is a `while true` bounded by `stepLimit`. Combined with a
+guard (`.execIf`, `.execWhen`) it is a real do-while, built out of pieces that already exist. That is the
+Push thing to do.
 
 ## Open questions
 
