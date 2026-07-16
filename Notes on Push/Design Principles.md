@@ -74,7 +74,7 @@ no longer well defined.
 
 So the rule is: **a derived value must record the same way the instruction it names would record.** Where
 two instructions do the same job, they must agree. Only the fuzzer catches this; a unit test cannot,
-because it transcribes whatever order the code already uses (principle 14).
+because it transcribes whatever order the code already uses (principle 15).
 
 ## 3. Iteration, recursion and repetition are `IteratorItem`s
 
@@ -132,6 +132,19 @@ originally re-read its delay every pass, which meant a thousand-pass loop ate a 
 a dead end. It now reads once and stores the depth on the iterator, and the loop continues with a token
 that consumes nothing. If for some algorithmic reason the depth needs to change, a separate instruction
 (not yet written) can do that at lower risk.
+
+Two corollaries, both measured rather than guessed ("Stack economics.md"):
+
+- **A zero-argument form of a useful operation earns its own instruction.** `.int` is empty **63.5%** of
+  the time something wants it, so `0 .iteratorSetCounter` frequently *cannot fire* where an argumentless
+  `.iteratorRestart` always can. That is not a keystroke saving; in a starved language it is the
+  difference between an operation that exists and one that does not.
+- **Give the arguments back when you cannot act — and when you are done.** `execDoCount` with a count
+  below 1 already returns its arguments rather than eating them, and a dying iterator returns its body to
+  `.code`. This is not tidiness: `.code` is the language's tightest bottleneck (0.29 producers per
+  consumer) and `.int` its hungriest, so anything that hands them back is a *source* for exactly what is
+  scarce. An instruction that consumed something and then achieved nothing with it should not also
+  destroy it.
 
 ## 6. Collections are walked front-to-back
 
@@ -210,7 +223,58 @@ merely forgets where it came from. That follows from principle 1: elision cannot
 Growth that survives is *honest* (`x 1 .intAdd` in a loop body really does accumulate). The budget is a
 backstop for honest growth, not a licence to record dishonestly.
 
-## 12. Nothing crashes the interpreter
+**The budgets must be coherent with each other, and are not automatically.** Measured: `maxVectorLength`
+is 1,000 and `stepLimit` is 1,000, so walking the largest *legal* vector emits 997 of 1,000 and dies three
+short — the interpreter accepts data it will not allow you to traverse. `stepLimit` must exceed
+`maxVectorLength` and `maxStringLength`, or a legal collection cannot be walked. Adding a budget means
+checking it against the others.
+
+## 12. Limit what a program *claims*, never what its data *is*
+
+A count is a **claim**; a collection's length is a **fact**. `0 999999 .execDoRange` is a program
+asserting something about a loop. A thousand-element vector is not asserting anything — it *is* a
+thousand elements.
+
+**Claims may be clamped. Facts may not.** Truncating a walk means "you only see the first hundred
+elements of your own data", which is a lie about the world rather than a limit on ambition. This falls
+out of the type rather than needing enforcement: a walking iterator has `destination = nil`, so there is
+structurally nothing for a clamp to move.
+
+### Clamp; never modulo
+
+When a limit does apply, **apply it monotonically**. The earlier `.execDoFew` family took its count
+modulo 10:
+
+| int | `% 100` | clamp to 100 |
+|---|---|---|
+| 5 | 5 | **5** |
+| 100 | **0** | **100** |
+| 999_999 | 99 | 100 |
+
+Modulo is *chaotic*: 100 becomes zero passes, 101 becomes one, 110 becomes zero again. The map from the
+program's number to the loop's size has no useful derivative anywhere — **a search cannot climb it and a
+reader cannot follow it**. Clamping is monotone: everything under the limit passes through untouched,
+everything over it saturates, and the relationship survives.
+
+This generalises past loops. Any transformation the language quietly applies to a program's numbers
+should preserve order, because §15 says a random program must be able to improve by degrees. A chaotic
+transformation is indistinguishable from noise, and evolution cannot optimise noise.
+
+### A limit is configuration, not vocabulary
+
+`.execDoFew`/`.execDoSome` put the magnitude **in the instruction name**, where it could not be tuned,
+had to be memorised, and multiplied by every looping instruction. `maxIterations` puts the same policy in
+`InterpreterSettings` beside every other budget: one dimension, one number, one place, changeable per
+experiment without touching the language.
+
+The number is arbitrary in exactly the way `1_000` is arbitrary for `maxStringLength` — it is a policy,
+declared once. That is a completely different thing from arbitrariness welded into semantics.
+
+**And the language bounds; the search shapes.** A clamp makes a huge count survivable; it does not make
+counts *tend* to be human-sized. That has to come from the distribution of numbers a genome produces,
+which is a search hyperparameter and belongs there. Arbitrariness in a hyperparameter is fine.
+
+## 13. Nothing crashes the interpreter
 
 An enumerated instruction with no Behavior, a missing argument, an oversized push, a mis-typed
 push — every one of these produces an `ErrorItem` and lets the loop continue. Evolved programs are
@@ -224,13 +288,13 @@ Two structural supports:
   programming bug, not a program bug, so it leaves the distinctive `INVARIANT:` marker — the one class of
   failure that means *the interpreter* is wrong.
 
-## 13. Contingency is a separate axis from provenance
+## 14. Contingency is a separate axis from provenance
 
 `isContingent` marks a value whose presence depended on something the crux does not capture — a
 stack-depth read, a yank from an arbitrary position. It travels alongside `call` and never inside it.
 Do not conflate them: an item can be perfectly reproducible and still contingent.
 
-## 14. Tests are the specification, and the acceptance tests are the ones that matter
+## 15. Tests are the specification, and the acceptance tests are the ones that matter
 
 Unit tests here are written by reading the code, which means they transcribe whatever the code says —
 **bug and all**. That is exactly how `charGTE` came to record `.charGT` and nobody noticed.
@@ -245,7 +309,7 @@ When you add an instruction, the sweep enrolls it for free. When you change a *t
 whether the trace or the behavior is the thing being pinned — most trace tests pin the shape of a
 continuation, and continuations are exactly what this design keeps deleting.
 
-## 15. Evolvability is the goal
+## 16. Evolvability is the goal
 
 The reason for all of it. This interpreter exists to run programs nobody wrote, so that a search can find
 ones that work.

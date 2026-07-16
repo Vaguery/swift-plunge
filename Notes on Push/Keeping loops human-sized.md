@@ -1,8 +1,13 @@
-# Proposal: keeping loops human-sized
+# Keeping loops human-sized
 
-**Status: a proposal, not built.** It replaces the `.execDoFew` / `.execDoSome` family of earlier
-interpreters, which took an `.int` argument modulo 10 or 100 to stop a random program asking for nine
-hundred million passes.
+**Status: BUILT.** `maxIterations` (default 100), `.iteratorRestart`, a dying loop returning its body,
+and the constructor invariant all landed together. This note is kept for the *reasoning*; the code is in
+`InterpreterSettings`, `Interpreter.clampingIterations`, `IteratorItem.clamped(toPasses:)` and
+`Interpreter.iteratorFarewell` / `iteratorBuilt`. The principles it argued for are Design Principles §5
+and §12.
+
+It replaces the `.execDoFew` / `.execDoSome` family of earlier interpreters, which took an `.int`
+argument modulo 10 or 100 to stop a random program asking for nine hundred million passes.
 
 ## First, why the old scheme was annoying
 

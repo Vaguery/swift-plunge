@@ -359,6 +359,69 @@ nonisolated extension IteratorItem {
         }
     }
 
+    /// How many passes this iterator promises, or nil if the question does not
+    /// apply to its kind.
+    ///
+    /// Only a **claim** has a promise to measure. A counted loop asserts a span
+    /// out of thin air and a repeating one asserts a count; a walk's length is a
+    /// fact about data it was handed, bounded already by `maxVectorLength` /
+    /// `maxStringLength`, and not this budget's business. See Design Principles
+    /// §12.
+    var promisedPasses: Int? {
+        switch kind {
+        case .counting(let stride):
+            guard
+                stride != 0,
+                let start = (origin as? IntItem)?.value,
+                let end = (destination as? IntItem)?.value
+            else { return nil }
+            let (span, overflowed) = end.subtractingReportingOverflow(start)
+            // A span too wide to subtract is wider than any limit.
+            guard !overflowed else { return Int.max }
+            return span.magnitude / stride.magnitude >= Int.max.magnitude
+                ? Int.max
+                : Int(span.magnitude / stride.magnitude)
+        case .repeating:
+            return (destination as? IntItem)?.value
+        case .elements, .letters, .words:
+            return nil
+        }
+    }
+
+    /// This iterator, promising no more than `limit` passes — or `nil` if it
+    /// already promises no more than that, which is the overwhelmingly common
+    /// case and the one that must cost nothing.
+    ///
+    /// **Clamped, never modulo.** Under the limit passes through completely
+    /// untouched; over it saturates. The relationship between the program's number
+    /// and its loop survives, so a search can climb it. `100 % 100 = 0` cannot be
+    /// climbed by anything (Design Principles §12).
+    ///
+    /// **Idempotent**, which is what lets it live at the push boundary without
+    /// breaking `crux()`: a clamped iterator is a fixed point, so reconstructing
+    /// one and pushing it again changes nothing.
+    func clamped(toPasses limit: Int) -> IteratorItem? {
+        let ceiling = max(0, limit)
+        guard let promised = promisedPasses, promised > ceiling else { return nil }
+
+        var clamped = self
+        switch kind {
+        case .counting(let stride):
+            guard let start = (origin as? IntItem)?.value else { return nil }
+            let (reach, reachOverflowed) = stride.multipliedReportingOverflow(by: ceiling)
+            guard !reachOverflowed else { return nil }
+            let (end, endOverflowed) = start.addingReportingOverflow(reach)
+            guard !endOverflowed else { return nil }
+            clamped.destination = IntItem(end)
+        case .repeating:
+            clamped.destination = IntItem(ceiling)
+        default:
+            return nil
+        }
+        clamped.call = clamped.reconstruction()
+        return clamped
+    }
+
     /// This iterator advanced by one pass, with provenance for its new state.
     func stepped() -> IteratorItem {
         var next = self

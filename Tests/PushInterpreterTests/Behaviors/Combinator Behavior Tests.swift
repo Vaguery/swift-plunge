@@ -119,10 +119,11 @@ struct CombinatorBehaviorTests {
     /// its own `maxStackDepth` check — the only bespoke size guard in the
     /// language — and errored rather than doing any of the work.
     ///
-    /// That guard is gone. Copying over `count` passes puts the work back under
-    /// `stepLimit`, `maxStackDepth` at the push boundary, and the runaway guard,
-    /// exactly like any other loop. A huge count is now a long loop that fills the
-    /// stack and reports *that*, which is the truth about what happened.
+    /// That guard is gone, and nothing bespoke replaced it. Three ordinary limits
+    /// now cover what it was groping for, and this asserts the first of them:
+    /// `maxIterations` holds any *counted* loop to a human-sized number of passes,
+    /// so three billion copies becomes a hundred. Clamped, not refused, and not
+    /// moduloed — a count under the limit would pass through untouched.
     @Test func `combinator DupTimes no longer needs its own size guard`() {
         loadInts(inty, ints: [3_000_000_000])
         loadDoubles(inty, doubles: [1.1])
@@ -137,11 +138,29 @@ struct CombinatorBehaviorTests {
         inty.config.stepLimit = 20_000
         inty.run()
 
-        // …and **the runaway guard stops it**, which is the whole point: a piling
-        // stack fed by an active loop is precisely the shape that guard exists to
-        // catch, and `.iteratorPlay` sitting on `.exec` is the control-side signal
-        // it looks for. It could not see any of this when the copies arrived in
-        // one step, which is why the instruction needed a private guard instead.
+        // …and it **finishes**, which is the whole argument for clamping: three
+        // billion copies would have run a few hundred and died mid-loop, leaving
+        // debris. A hundred is a whole answer.
+        #expect(inty.stacks[.double]!.count == 101)   // the original, plus 100
+        #expect(stackString(inty, .exec) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(errorStrings(inty).isEmpty)
+    }
+
+    /// Raise the budget past what the run can afford and the *other* two limits
+    /// take over — no bespoke guard needed for that either. A piling stack fed by
+    /// an active loop is exactly the shape the runaway guard exists to catch, and
+    /// `.iteratorPlay` on `.exec` is the control-side signal it looks for. It could
+    /// see none of that when the copies arrived in a single step.
+    @Test func `a DupTimes loop too big for its budget is caught by the runaway guard`() {
+        loadInts(inty, ints: [3_000_000_000])
+        loadDoubles(inty, doubles: [1.1])
+        inty.config.maxIterations = 3_000_000_000
+        inty.config.stepLimit = 20_000
+
+        doThis(.doubleDupTimes, to: inty)
+        inty.run()
+
         #expect(errorStrings(inty).contains { $0.hasPrefix(Interpreter.runawayMarker) })
         #expect(inty.counter < 20_000)
         #expect(stackString(inty, .exec) == "[ ]")   // unwound

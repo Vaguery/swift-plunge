@@ -365,6 +365,10 @@ struct IteratorBehaviorTests {
                 counting(from: 0, to: 10_000, emits: false),
                 exec: [InstructionItem(.iteratorPlay)]
             )
+            // A test that wants a long loop says so, next to the step limit it
+            // already raises. `maxIterations` would otherwise hold this to 100
+            // passes and the loop would be over before the second sample.
+            inty.config.maxIterations = 10_000
             for _ in 0..<steps { inty.step() }
             return inty.stacks[.iterator]!.first!
         }
@@ -594,6 +598,150 @@ struct IteratorBehaviorTests {
         doThis(.iteratorSetStart, to: inty)
         #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @0 ( true )» ]")
         #expect(errorStrings(inty).contains { $0.contains("needs an item") })
+    }
+
+
+    // MARK: - Restarting, dying, and the iteration budget
+
+    /// Not `0 .iteratorSetCounter` with fewer keystrokes: it takes **no
+    /// arguments**, and `.int` is empty 63.5% of the time something wants it, so
+    /// the setter frequently cannot fire where this always can.
+    @Test func `iteratorRestart rewinds a loop and needs nothing to do it`() {
+        let inty = loaded(counting(from: 3, to: 40, by: 2, cursor: 7))
+        #expect(stackString(inty, .int) == "[ ]")   // nothing to draw on
+
+        doThis(.iteratorRestart, to: inty)
+        // Cursor to 0; start, end, stride and body untouched.
+        #expect(stackString(inty, .iterator) == "[ «3→40 by 2 @0 ( true )» ]")
+        #expect(errorStrings(inty).isEmpty)
+    }
+
+    /// A body that restarts its own loop is a `while true`, bounded by `stepLimit`
+    /// — which is what it should be, and is reachable only from inside a body
+    /// since a spent iterator does not exist to be restarted.
+    @Test func `a body can restart its own loop forever`() {
+        let inty = Interpreter()
+        inty.config.stepLimit = 400
+        inty.load(program: [
+            IntItem(0), IntItem(4),
+            CodeItem([BoolItem(true), InstructionItem(.iteratorRestart)]),
+            InstructionItem(.execDoRange),
+        ])
+        inty.run()
+
+        // It ran out of steps, not out of loop.
+        #expect(inty.counter == 400)
+        #expect(inty.stacks[.bool]!.count > 40)
+
+        // And it never got anywhere: the cursor is rewound to 0 every pass, so it
+        // is only ever 0 or 1 depending on where the step limit fell. A four-pass
+        // loop that has run forty-plus bodies has plainly not been advancing.
+        let live = inty.stacks[.iterator]!.first as? IteratorItem
+        #expect((live?.value ?? 99) <= 1)
+        #expect(live?.body?.pretty() == "( true .iteratorRestart )")
+    }
+
+    /// A dying loop hands its body back to `.code` — the same courtesy
+    /// `execDoCount` already extends when its count is too small to act on, at the
+    /// other end of the loop. It is not tidiness: `.code` is the language's
+    /// tightest bottleneck, so every loop that ends is a small supply of the
+    /// scarcest thing there is.
+    @Test func `a dying loop gives its body back`() {
+        let inty = loaded(counting(from: 0, to: 3), exec: [InstructionItem(.iteratorPlay)])
+        #expect(stackString(inty, .code) == "[ ]")
+        inty.run(stepLimit: 10_000)
+
+        #expect(stackString(inty, .iterator) == "[ ]")   // still dies
+        #expect(stackString(inty, .code) == "[ ( true ) ]")
+    }
+
+    /// A sequence has no body, so it has nothing to give back and gives nothing.
+    @Test func `a dying sequence returns nothing`() {
+        let inty = loaded(counting(body: nil), exec: [InstructionItem(.iteratorPlay)])
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .code) == "[ ]")
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// The invariant: **every iterator resting on `.iterator` has something to
+    /// emit.** A constructor is the one door a spent one could walk in through,
+    /// since it takes its state verbatim rather than deriving it.
+    @Test func `a constructor refuses to build a spent iterator`() {
+        let inty = Interpreter()
+        // cursor 99 on a 0→3 range: nothing left to emit.
+        inty.load(program: [
+            IntItem(0), IntItem(3), IntItem(1), IntItem(99), IntItem(0), BoolItem(true),
+            CodeItem([]), InstructionItem(.iteratorFromIntRange),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(errorStrings(inty).contains { $0.contains("has nothing to emit") })
+    }
+
+    /// Clamped, never moduloed. A count under the limit passes through completely
+    /// untouched; one over it saturates. Monotone, so a search can climb it —
+    /// `100 % 100 = 0` cannot be climbed by anything.
+    @Test func `maxIterations clamps a loop's span rather than mangling it`() {
+        func endOf(_ destination: Int, limit: Int = 100) -> Int? {
+            let inty = Interpreter()
+            inty.config.maxIterations = limit
+            inty.load(program: [
+                IntItem(0), IntItem(destination), CodeItem([]),
+                InstructionItem(.execDoRange),
+            ])
+            for _ in 0..<4 { inty.step() }
+            return ((inty.stacks[.iterator]!.first as? IteratorItem)?.destination as? IntItem)?.value
+        }
+
+        #expect(endOf(5) == 5)              // untouched
+        #expect(endOf(100) == 100)          // exactly at the limit: untouched
+        #expect(endOf(101) == 100)          // saturates…
+        #expect(endOf(999_999) == 100)      // …and stays saturated
+    }
+
+    /// Clamping a *descending* loop moves its destination UP: the rule is about
+    /// the span, not the number.
+    @Test func `maxIterations clamps the span, not the destination`() {
+        let inty = Interpreter()
+        inty.config.maxIterations = 10
+        inty.load(program: [
+            IntItem(500), IntItem(0), CodeItem([]), InstructionItem(.execDoRange),
+        ])
+        for _ in 0..<4 { inty.step() }
+        let live = inty.stacks[.iterator]!.first as? IteratorItem
+        #expect((live?.destination as? IntItem)?.value == 490)
+        #expect(live?.stride == -1)
+    }
+
+    /// A collection's length is a fact, not a claim — so the budget does not touch
+    /// it. A walking iterator has no destination for a clamp to move.
+    @Test func `maxIterations does not truncate a walk over data`() {
+        let inty = Interpreter()
+        inty.config.maxIterations = 3
+        inty.load(program: [
+            VecIntItem(Array(0..<40)), CodeItem([]), InstructionItem(.vecIntIterate),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        // All forty, not three.
+        #expect(inty.stacks[.int]!.count == 40)
+    }
+
+    /// The clamp lives at the push boundary with the other budgets, which is only
+    /// safe because it is a fixed point: reconstructing a clamped iterator and
+    /// pushing it again must not clamp it further.
+    @Test func `the clamp is idempotent, so a clamped crux round-trips`() {
+        let inty = Interpreter()
+        inty.config.maxIterations = 100
+        inty.load(program: [
+            IntItem(0), IntItem(999_999), CodeItem([]), InstructionItem(.execDoRange),
+        ])
+        for _ in 0..<4 { inty.step() }
+
+        let live = inty.stacks[.iterator]!.first!
+        let rebuilt = rerunTop(live.crux(), on: .iterator)
+        #expect(rebuilt?.isEqual(to: live) == true)
     }
 
 

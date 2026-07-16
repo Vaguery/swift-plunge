@@ -135,6 +135,16 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // thing.
     case iteratorSetStart, iteratorSetEnd, iteratorSetCounter, iteratorSetDepth
 
+    /// Rewind a loop: the cursor goes back to 0, and start, end, stride and body
+    /// are left exactly as they were.
+    ///
+    /// It is not `0 .iteratorSetCounter` with fewer keystrokes. **It takes no
+    /// arguments**, and `.int` is empty 63.5% of the time something wants it
+    /// (Stack economics), so the setter frequently cannot fire where this always
+    /// can. In a language whose defining flaw is argument starvation, a
+    /// zero-argument form of a useful operation earns its own instruction.
+    case iteratorRestart
+
     // iterator construction
     //
     // All construct-only: they build an iterator and leave it alone, never

@@ -35,6 +35,25 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // value — so eliding costs the explanation and never the reconstruction.
     // See `Interpreter.elidingOverBudgetProvenance`.
     public var maxCallWeight   : Int = 10_000
+    // The most passes any single COUNTED loop may promise. Iteration count was the
+    // last unbounded dimension: `stepLimit` bounds the work a loop does, but
+    // nothing bounded what one loop *claims* it will do — so `0 999999
+    // .execDoRange` did not run a million times, it ran a few hundred and died
+    // half-finished, leaving debris instead of an answer. Clamping does not buy
+    // safety (stepLimit had that); it buys COMPLETION, and a program whose loops
+    // finish is one a human can read.
+    //
+    // Applied by clamping a loop's span at construction — never by modulo, which
+    // is chaotic (100 % 100 = 0 passes) and so cannot be climbed by a search or
+    // followed by a reader. Clamping is monotone: counts under the limit pass
+    // through untouched, counts over it saturate.
+    //
+    // Counted loops only. A collection's length is a fact rather than a claim, so
+    // `.elements` walks are bounded by maxVectorLength/maxStringLength instead —
+    // and NOTE those must stay below `stepLimit`, or the largest legal collection
+    // cannot be walked to completion. See "Notes on Push/Keeping loops
+    // human-sized.md" and Design Principles §12.
+    public var maxIterations   : Int = 100
     // When a stack fills faster than the size caps would catch, watch for the
     // signature of a runaway loop (a stack piling repeats or cycling a short
     // period, *and* a looping instruction pending on `.exec`) and stop the run
@@ -135,7 +154,9 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        self.stacks[stack]?.prepend(self.elidingOverBudgetProvenance(item))
+        self.stacks[stack]?.prepend(
+            self.elidingOverBudgetProvenance(self.clampingIterations(item))
+        )
     }
 
 
@@ -162,6 +183,29 @@ nonisolated final class Interpreter {
         var lightened = item
         lightened.call = []
         return lightened
+    }
+
+    /// Holds a loop to `maxIterations` passes, the third budget beside
+    /// `maxItemWeight` and `maxCallWeight` and enforced in the same place.
+    ///
+    /// **Clamped, not refused, and not moduloed.** Refusing would be the
+    /// `overflow(of:)` treatment, but nothing here is impossible — the loop can
+    /// run, just not as far as it claimed. And modulo, the old `.execDoFew` trick,
+    /// is chaotic: it maps 100 passes to 0. Clamping is monotone, so a search can
+    /// still climb toward the loop it wants (Design Principles §12).
+    ///
+    /// This works at the push boundary only because the clamp is **idempotent**: a
+    /// clamped iterator is a fixed point, so `crux()` reconstructs one and pushing
+    /// it again changes nothing.
+    ///
+    /// Counted and repeating loops only. A collection's length is a fact rather
+    /// than a claim; `maxVectorLength`/`maxStringLength` bound those.
+    func clampingIterations(_ item: any Item) -> any Item {
+        guard
+            let iterator = item as? IteratorItem,
+            let held = iterator.clamped(toPasses: config.maxIterations)
+        else { return item }
+        return held
     }
 
     /// Enforces the homogeneity invariant for any stack write. Every stack

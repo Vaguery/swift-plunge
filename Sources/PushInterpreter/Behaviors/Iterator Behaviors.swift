@@ -74,22 +74,47 @@ nonisolated extension Interpreter {
         interpreter.stacks[.exec]!.insert(token, at: target)
     }
 
+    /// Every iterator that comes to rest on `.iterator` **has something to
+    /// emit** — that is the type's invariant, and this is where it is kept.
+    ///
+    /// A spent iterator is not a thing. A loop's last pass simply does not
+    /// re-push, so an exhausted iterator is consumed by its own final act and
+    /// never rests; a setter that finishes one destroys it; and a constructor
+    /// asked to build one refuses. Nothing anywhere has to ask "is this one still
+    /// alive?" before using it.
+    ///
+    /// **Dying returns the body to `.code`.** An instruction that consumed
+    /// something and then finished with it should not also destroy it —
+    /// `execDoCount` already hands its arguments back when its count is too small
+    /// to act on, and this is the same courtesy at the other end of the loop
+    /// (principle 5). It is not tidiness: `.code` is the language's tightest
+    /// bottleneck, so every loop that ends is a small supply of the scarcest
+    /// thing there is.
+    ///
+    /// Only the body, and deliberately. Returning the *bounds* too sounds
+    /// symmetrical and is not: `xDupTimes` and `xDupItems` **read** their origin
+    /// off the stack without popping it, so handing it back would mint a copy
+    /// that was never taken. A body is the one thing every kind genuinely
+    /// consumed, from one stack, every time.
+    static func iteratorFarewell(_ iterator: IteratorItem) -> [Router] {
+        iterator.body.map { [Router(.code, $0)] } ?? []
+    }
+
     /// One pass, by hand — no continuation. A program driving a loop itself calls
     /// this as often as it wants a pass.
-    ///
-    /// A spent iterator emits nothing and does not come back: it is consumed and
-    /// simply disappears, which is how a loop ends.
     static let iteratorStep_Behavior =
         Behavior(
             .iteratorStep,
             takes: [.iterator],
             fxn: { a in
                 let iterator = a[0] as! IteratorItem
-                guard !iterator.isSpent else { return [] }
+                guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
                 var results = iteratorPass(iterator)
                 if iterator.hasNextPass {
                     results.append(Router(.iterator, iterator.stepped()))
+                } else {
+                    results.append(contentsOf: iteratorFarewell(iterator))
                 }
                 return results
             }
@@ -116,11 +141,11 @@ nonisolated extension Interpreter {
             takes: [.iterator],
             modifier: { (interpreter, collectedItems) in
                 let iterator = collectedItems[0] as! IteratorItem
-                guard !iterator.isSpent else { return [] }
+                guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
                 let payload = iteratorPass(iterator)
                 guard iterator.hasNextPass else {
-                    return payload
+                    return payload + iteratorFarewell(iterator)
                 }
 
                 bury(
@@ -160,10 +185,12 @@ nonisolated extension Interpreter {
             modifier: { (interpreter, collectedItems) in
                 let burial = (collectedItems[0] as! IntItem).value
                 var iterator = collectedItems[1] as! IteratorItem
-                guard !iterator.isSpent else { return [] }
+                guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
                 let payload = iteratorPass(iterator)
-                guard burial >= 0, iterator.hasNextPass else { return payload }
+                guard burial >= 0, iterator.hasNextPass else {
+                    return payload + iteratorFarewell(iterator)
+                }
 
                 iterator.burial = burial
                 iterator.call = iterator.reconstruction()
@@ -187,7 +214,9 @@ nonisolated extension Interpreter {
             takes: [.iterator],
             fxn: { a in
                 let iterator = a[0] as! IteratorItem
-                guard !iterator.isSpent, iterator.hasNextPass else { return [] }
+                guard !iterator.isSpent, iterator.hasNextPass else {
+                    return iteratorFarewell(iterator)
+                }
                 return [Router(.iterator, iterator.stepped())]
             }
         )
@@ -297,14 +326,56 @@ nonisolated extension Interpreter {
                         Router(.error, ErrorItem(complaint)),
                     ]
                 }
-                // Nothing left to emit, so nothing comes back.
-                guard !iterator.isSpent, iterator.burial >= 0 else { return [] }
+                // Nothing left to emit, so the loop is over — and hands its body
+                // back on the way out, like any other ending.
+                guard !iterator.isSpent, iterator.burial >= 0 else {
+                    return iteratorFarewell(iterator)
+                }
 
                 iterator.call = iterator.reconstruction()
                 iterator.isContingent = Behavior.netContingency(of: iterator, a[0])
-                return [Router(.iterator, iterator)]
+                return iteratorBuilt(iterator)
             }
         )
+    }
+
+    /// Rewind a loop to its start. Cursor to 0; start, end, stride and body
+    /// untouched.
+    ///
+    /// Reachable only from inside a body, since a spent iterator does not exist to
+    /// be restarted — so a body that restarts its own loop is a `while true`,
+    /// bounded by `stepLimit`. Put a guard in front of it (`.execIf`, `.execWhen`)
+    /// and it is a do-while, built from pieces that already exist.
+    static let iteratorRestart_Behavior =
+        Behavior(
+            .iteratorRestart,
+            takes: [.iterator],
+            fxn: { a in
+                var iterator = a[0] as! IteratorItem
+                iterator.value = 0
+                // A loop can always run its first pass — an iterator with nothing
+                // to emit at cursor 0 could never have been built.
+                iterator.call = iterator.reconstruction()
+                return iteratorBuilt(iterator)
+            }
+        )
+
+    /// Every constructor's last act, and the other half of the invariant that
+    /// `iteratorFarewell` keeps: **an iterator that comes to rest has something to
+    /// emit.**
+    ///
+    /// Constructors are the one door a spent iterator could walk in through — a
+    /// cursor past the end, a start of the wrong type — because they take their
+    /// state verbatim rather than deriving it. Refuse, and the invariant is exact
+    /// everywhere: nothing has to ask whether a resting iterator is still alive.
+    ///
+    /// Nothing is lost by refusing. A spent iterator cannot exist, so no crux ever
+    /// needs to reproduce one.
+    static func iteratorBuilt(_ iterator: IteratorItem) -> [Router] {
+        guard !iterator.isSpent else {
+            return [Router(.error, ErrorItem("\(iterator.pretty()) has nothing to emit"))]
+        }
+        return [Router(.iterator, iterator)]
     }
 
     /// The item a boxed setter argument carries, or nil for an empty block.
@@ -417,7 +488,7 @@ nonisolated extension Interpreter {
                         of: origin, destination, stride, cursor, burial, emits, body
                     )
                 )
-                return [Router(.iterator, iterator)]
+                return iteratorBuilt(iterator)
             }
         )
 
@@ -461,7 +532,7 @@ nonisolated extension Interpreter {
                         of: origin, cursor, burial, emits, body
                     )
                 )
-                return [Router(.iterator, iterator)]
+                return iteratorBuilt(iterator)
             }
         )
     }
@@ -526,7 +597,7 @@ nonisolated extension Interpreter {
                         of: origin, cursor, burial, emits, body
                     )
                 )
-                return [Router(.iterator, iterator)]
+                return iteratorBuilt(iterator)
             }
         )
     }
@@ -578,7 +649,7 @@ nonisolated extension Interpreter {
                         of: box, count, cursor, burial
                     )
                 )
-                return [Router(.iterator, iterator)]
+                return iteratorBuilt(iterator)
             }
         )
     }
@@ -612,6 +683,7 @@ nonisolated extension Interpreter {
         .iteratorFromVecInt : iteratorFromVecInt_Behavior,
         .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
+        .iteratorRestart : iteratorRestart_Behavior,
         .iteratorSetStart : iteratorSetStart_Behavior,
         .iteratorSetEnd : iteratorSetEnd_Behavior,
         .iteratorSetCounter : iteratorSetCounter_Behavior,
