@@ -5,7 +5,10 @@ instruction, a type, or a Behavior and the codebase does not already answer the 
 
 Each one is here because getting it wrong cost something. Where a principle has a fuller treatment
 elsewhere, this document points rather than repeats: the provenance law lives at the top of
-`Items.swift`, and the two design notes beside this file carry the arguments.
+`Items.swift`, the budgets and their reasons in `InterpreterSettings`, and the design notes beside this
+file carry the arguments — `Stack economics.md` (measured, and the one that disagrees with itself),
+`The first-class iterator.md`, `Keeping loops human-sized.md`, `Provenance and the crux.md`,
+`CodeItem goes to code.md`.
 
 ---
 
@@ -74,7 +77,7 @@ no longer well defined.
 
 So the rule is: **a derived value must record the same way the instruction it names would record.** Where
 two instructions do the same job, they must agree. Only the fuzzer catches this; a unit test cannot,
-because it transcribes whatever order the code already uses (principle 15).
+because it transcribes whatever order the code already uses (principle 16).
 
 ## 3. Iteration, recursion and repetition are `IteratorItem`s
 
@@ -257,7 +260,7 @@ reader cannot follow it**. Clamping is monotone: everything under the limit pass
 everything over it saturates, and the relationship survives.
 
 This generalises past loops. Any transformation the language quietly applies to a program's numbers
-should preserve order, because §15 says a random program must be able to improve by degrees. A chaotic
+should preserve order, because §17 says a random program must be able to improve by degrees. A chaotic
 transformation is indistinguishable from noise, and evolution cannot optimise noise.
 
 ### A limit is configuration, not vocabulary
@@ -274,7 +277,50 @@ declared once. That is a completely different thing from arbitrariness welded in
 counts *tend* to be human-sized. That has to come from the distribution of numbers a genome produces,
 which is a search hyperparameter and belongs there. Arbitrariness in a hyperparameter is fine.
 
-## 13. Nothing crashes the interpreter
+## 13. A limit must say where its number came from
+
+Every budget in `InterpreterSettings` has a reason. **Almost none of them are obvious** — including to
+us, six months later. A number with no stated reason is indistinguishable from cargo, and the next reader
+will either treat it as sacred or tidy it away. Both are wrong, and you cannot tell which is worse
+without knowing where it came from.
+
+Reasons come in three kinds, and the kind matters more than the number, because it says what you are
+allowed to do to it.
+
+**Free.** A policy. It could be anything; change it at will and nothing else moves.
+
+**Inherited.** Taken from another implementation — most of ours are "loosely after propeller's
+`limits.cljc`" — for comparability rather than correctness. Changing one costs cross-implementation
+comparison and nothing else. **Say so plainly.** "Inherited and never examined" is a real reason, and
+recording it is far better than implying a rationale that was never had. It also tells a reader that the
+number is *available* to be reconsidered, which a silent number does not.
+
+**Derived.** Fixed by some *other* limit. These are the dangerous ones, because they look free.
+`maxIterations = 100` is not a preference: at `stepLimit = 1_000` and roughly 1–4 steps per pass, ~100 is
+the largest loop that can **finish**, and finishing is the entire point of it (§12). Raise `stepLimit`
+and 100 is needlessly small; lower it and 100 becomes a lie. It looks inconsistent beside the other
+1,000s, and **that inconsistency is information** — it is derived, and they are not.
+
+### The failure mode, which we have already hit
+
+`stepLimit` (1,000) must exceed `maxVectorLength` (1,000), or the largest **legal** vector cannot be
+walked to completion. It does not. Measured: a 1,000-element walk emits 997 and dies three short, missing
+by exactly the setup cost.
+
+Nobody wrote the relation down, so nobody noticed it was violated — for however long both numbers have
+been 1,000. That is what an unrecorded derivation costs: not a bug anyone reported, but a quiet
+incoherence at the boundary of what the interpreter says it accepts.
+
+### So, when you add or change a limit, record
+
+1. **what it bounds** — most of ours already do this well;
+2. **which kind its number is** — free, inherited, or derived;
+3. **what it must stay in relation to**, if anything.
+
+A limit whose comment explains only (1) is half-documented, and the half that is missing is the half that
+will bite.
+
+## 14. Nothing crashes the interpreter
 
 An enumerated instruction with no Behavior, a missing argument, an oversized push, a mis-typed
 push — every one of these produces an `ErrorItem` and lets the loop continue. Evolved programs are
@@ -288,13 +334,13 @@ Two structural supports:
   programming bug, not a program bug, so it leaves the distinctive `INVARIANT:` marker — the one class of
   failure that means *the interpreter* is wrong.
 
-## 14. Contingency is a separate axis from provenance
+## 15. Contingency is a separate axis from provenance
 
 `isContingent` marks a value whose presence depended on something the crux does not capture — a
 stack-depth read, a yank from an arbitrary position. It travels alongside `call` and never inside it.
 Do not conflate them: an item can be perfectly reproducible and still contingent.
 
-## 15. Tests are the specification, and the acceptance tests are the ones that matter
+## 16. Tests are the specification, and the acceptance tests are the ones that matter
 
 Unit tests here are written by reading the code, which means they transcribe whatever the code says —
 **bug and all**. That is exactly how `charGTE` came to record `.charGT` and nobody noticed.
@@ -309,7 +355,7 @@ When you add an instruction, the sweep enrolls it for free. When you change a *t
 whether the trace or the behavior is the thing being pinned — most trace tests pin the shape of a
 continuation, and continuations are exactly what this design keeps deleting.
 
-## 16. Evolvability is the goal
+## 17. Evolvability is the goal
 
 The reason for all of it. This interpreter exists to run programs nobody wrote, so that a search can find
 ones that work.

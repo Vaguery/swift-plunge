@@ -12,32 +12,63 @@ import Foundation
 public nonisolated struct InterpreterSettings: Sendable, Codable {
     public init() {}
 
-    // Loosely after https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     // Numeric magnitude caps are intentionally omitted: Int behaviors use
     // checked (…ReportingOverflow) arithmetic and Double behaviors reject
     // non-finite results, so neither can trap or grow memory unbounded.
+    //
+    // EVERY NUMBER BELOW SAYS WHERE IT CAME FROM, because none of them is
+    // self-evident and an unexplained limit is indistinguishable from cargo (see
+    // Design Principles §13). Three kinds, and the kind says what you may do to it:
+    //
+    //   INHERITED — taken from another implementation for comparability, not
+    //               correctness. Change it freely; the only cost is that runs stop
+    //               being comparable with theirs. Most of these were never examined
+    //               on their own merits, and saying so is better than implying a
+    //               rationale nobody had.
+    //   CHOSEN    — a policy of ours. Change it at will; nothing else moves.
+    //   DERIVED   — fixed by another limit here. Looks free and is not: changing
+    //               the other one silently makes this one wrong.
+    //
+    // **A relation nothing enforces**: `stepLimit` must exceed `maxVectorLength`
+    // and `maxStringLength`, or the largest collection the interpreter will ACCEPT
+    // cannot be walked to completion. At these defaults it does not — a
+    // 1,000-element walk emits 997 and dies three short, missing by the setup cost.
+    // Left alone rather than papered over, because raising `stepLimit` changes
+    // every run; but it is a genuine incoherence and worth knowing.
+
+    // INHERITED, loosely after propeller's limits.cljc:
+    //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
+    // None of these six was chosen here on its own merits. `maxIterations` below is
+    // derived from `stepLimit`, so moving that one moves this one too.
     public var stepLimit       : Int = 1_000
     public var maxStackDepth   : Int = 10_000
     public var maxStringLength : Int = 1_000
     public var maxVectorLength : Int = 1_000
     public var maxCodePoints   : Int = 1_000
     public var maxCodeDepth    : Int = 1_000
-    // Total recursive content (Item.weight) allowed in a single pushed item.
-    // Supplements the per-dimension caps above to bound nested content — a
+    // CHOSEN. Total recursive content (Item.weight) allowed in a single pushed
+    // item. Supplements the per-dimension caps above to bound nested content — a
     // vector of long strings, or code whose leaves are large — that the
-    // count-only caps cannot see.
+    // count-only caps cannot see. The number is a policy: large enough not to
+    // refuse anything the per-dimension caps already allow, small enough to catch
+    // their product. Nothing else depends on it.
     public var maxItemWeight   : Int = 100_000
-    // Total provenance (Item.callWeight) allowed on a single pushed item. The
-    // caps above bound an item's *content*; this bounds its *history*, which was
-    // the one unbounded dimension left in the system. Over-budget provenance is
-    // elided (`call = []`) rather than refused: `crux()` returns `[self]` for an
-    // empty call, and a bare literal is already a runnable program producing that
-    // value — so eliding costs the explanation and never the reconstruction.
-    // See `Interpreter.elidingOverBudgetProvenance`.
+    // CHOSEN, and the most forgiving number here: over-budget provenance is
+    // ELIDED rather than refused, and eliding costs the explanation but never the
+    // value — `crux()` returns `[self]` for an empty call, and a bare literal is
+    // already a runnable program producing that value. So being wrong in either
+    // direction is cheap, which is exactly why the budget can afford to be
+    // aggressive. See `Interpreter.elidingOverBudgetProvenance`.
+    //
+    // Total provenance (Item.callWeight) allowed on a single pushed item: the caps
+    // above bound an item's *content*, this bounds its *history*. That used to be
+    // the last unbounded dimension in the system; `maxIterations` below now holds
+    // that title, since nothing bounded what a loop CLAIMS.
     public var maxCallWeight   : Int = 10_000
-    // The most passes any single COUNTED loop may promise. Iteration count was the
-    // last unbounded dimension: `stepLimit` bounds the work a loop does, but
-    // nothing bounded what one loop *claims* it will do — so `0 999999
+    // DERIVED from `stepLimit`, and NOT a preference. The most passes any single
+    // COUNTED loop may promise — the last unbounded dimension there was:
+    // `stepLimit` bounds the work a loop does, but nothing bounded what one loop
+    // *claims* it will do — so `0 999999
     // .execDoRange` did not run a million times, it ran a few hundred and died
     // half-finished, leaving debris instead of an answer. Clamping does not buy
     // safety (stepLimit had that); it buys COMPLETION, and a program whose loops
@@ -47,6 +78,13 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // is chaotic (100 % 100 = 0 passes) and so cannot be climbed by a search or
     // followed by a reader. Clamping is monotone: counts under the limit pass
     // through untouched, counts over it saturate.
+    //
+    // WHY 100: at `stepLimit` 1_000 and roughly 1-4 steps per pass, ~100 is the
+    // largest loop that can FINISH, and finishing is the entire point of it. It
+    // looks inconsistent beside the 1_000s above and that inconsistency is
+    // information — this one is derived and they are not. **Raise `stepLimit` and
+    // this is needlessly small; lower it and this becomes a lie.** A test that
+    // wants a longer loop raises both, which is the pattern.
     //
     // Counted loops only. A collection's length is a fact rather than a claim, so
     // `.elements` walks are bounded by maxVectorLength/maxStringLength instead —
