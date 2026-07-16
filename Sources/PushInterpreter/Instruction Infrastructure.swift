@@ -122,6 +122,19 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // exactly where a program wants to ask. The name is the warning label.
     case iteratorPeekStart, iteratorPeekEnd, iteratorPeekStride, iteratorPeekBody
 
+    // iterator setters
+    //
+    // These re-aim a loop that is already running. They consume their new value
+    // and hand the iterator back changed — so unlike `Peek` they are ordinary in
+    // that respect, and only the iterator itself survives.
+    //
+    // **A change that finishes the loop destroys it.** Carry the counter past the
+    // end, hand a counting iterator a string to count from, or set a negative
+    // depth, and there is nothing left to emit — so nothing comes back. That is
+    // the same rule every other path already follows: a spent iterator is not a
+    // thing.
+    case iteratorSetStart, iteratorSetEnd, iteratorSetCounter, iteratorSetDepth
+
     // iterator construction
     //
     // All construct-only: they build an iterator and leave it alone, never

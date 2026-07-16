@@ -304,14 +304,27 @@ nonisolated extension IteratorItem {
     }
 
     /// Whether this iterator has anything left to emit at its current cursor.
+    ///
+    /// For `.counting` this asks two things: whether the projection is even
+    /// computable (it overflows near `Int.max`), and whether the cursor has been
+    /// carried *past* the destination. Stepping can never do the latter —
+    /// `hasNextPass` stops a pass short of it — but **a setter can put the cursor
+    /// anywhere**, and an iterator sitting beyond its own end is finished by any
+    /// honest reading.
     var isSpent: Bool {
         switch kind {
         case .counting:
-            currentValue() == nil
+            // A negative cursor is nonsense in every kind — the cursor counts
+            // passes taken, and a descending loop carries its direction in the
+            // stride rather than here. Stepping cannot produce one; a setter can.
+            guard value >= 0 else { return true }
+            guard let current = currentValue() else { return true }
+            guard let end = (destination as? IntItem)?.value else { return true }
+            return stride > 0 ? current > end : current < end
         case .repeating:
-            value < 0 || value >= (destination as? IntItem)?.value ?? 0
+            return value < 0 || value >= (destination as? IntItem)?.value ?? 0
         case .elements, .letters, .words:
-            value < 0 || value >= sourceCount
+            return value < 0 || value >= sourceCount
         }
     }
 

@@ -258,6 +258,119 @@ nonisolated extension Interpreter {
         iteratorGetter_Behavior(.iteratorPeekBody) { $0.body }
 
 
+    // MARK: - Setters
+
+    /// Re-aim one field of a live iterator.
+    ///
+    /// These are **not** `Peek`: they consume their new value and hand the
+    /// iterator back changed. Principle 10 warned the narrow Peek exception might
+    /// widen; this is the widening, and it is narrow in the other direction —
+    /// only the iterator survives, and only because re-aiming a loop you cannot
+    /// keep would be pointless.
+    ///
+    /// **If the change finishes the loop, the iterator is destroyed.** There is no
+    /// third state: a spent iterator is not a thing, and every other path in the
+    /// language already drops one rather than hand back something with nothing
+    /// left to emit. That covers more than it looks — carrying the counter past
+    /// the end, handing a counting iterator a string to count from (its
+    /// projection stops computing), or setting a negative depth.
+    ///
+    /// Provenance: a re-aimed iterator is a genuinely new value, and records the
+    /// same way a stepped one does — by state, via its constructor. O(1), like
+    /// everything else here.
+    static func iteratorSetter_Behavior(
+        _ name: PushInstruction,
+        takes source: PushStack,
+        setting: @escaping @Sendable (inout IteratorItem, any Item) -> String?
+    ) -> Behavior {
+        Behavior(
+            name,
+            takes: [source, .iterator],
+            fxn: { a in
+                var iterator = a[1] as! IteratorItem
+
+                // A refusal hands the iterator back untouched and says why: the
+                // program asked for something this kind of loop does not have.
+                if let complaint = setting(&iterator, a[0]) {
+                    return [
+                        Router(.iterator, iterator),
+                        Router(.error, ErrorItem(complaint)),
+                    ]
+                }
+                // Nothing left to emit, so nothing comes back.
+                guard !iterator.isSpent, iterator.burial >= 0 else { return [] }
+
+                iterator.call = iterator.reconstruction()
+                iterator.isContingent = Behavior.netContingency(of: iterator, a[0])
+                return [Router(.iterator, iterator)]
+            }
+        )
+    }
+
+    /// The item a boxed setter argument carries, or nil for an empty block.
+    ///
+    /// `origin` and `destination` can be any type at all — an int for a counting
+    /// loop, a vector or a string for a walking one — but `takes:` is declared
+    /// statically and cannot ask the iterator what it wants. So the new value
+    /// arrives boxed in a code block, the same universal channel
+    /// `.iteratorRepeating` uses, and law 1b hands back exactly what went in.
+    static func unboxed(_ item: any Item) -> (any Item)? {
+        (item as? CodeItem)?.value.first
+    }
+
+    /// Where the loop counts from, or the collection it walks. `( 5 ) …`
+    ///
+    /// A type the kind cannot use is not refused — it simply leaves the loop with
+    /// nothing to emit, and the iterator goes. Handing a counting iterator a
+    /// string is a way to stop it.
+    static let iteratorSetStart_Behavior =
+        iteratorSetter_Behavior(.iteratorSetStart, takes: .code) { iterator, boxed in
+            guard let item = unboxed(boxed) else {
+                return "iteratorSetStart needs an item in its block"
+            }
+            iterator.origin = item
+            return nil
+        }
+
+    /// Where the loop ends. `( 20 ) …`
+    ///
+    /// Refused for a walking iterator, whose end is its source's own length and is
+    /// not a field at all — storing one would be a lie its crux could not carry.
+    static let iteratorSetEnd_Behavior =
+        iteratorSetter_Behavior(.iteratorSetEnd, takes: .code) { iterator, boxed in
+            switch iterator.kind {
+            case .counting, .repeating: break
+            default:
+                return "iteratorSetEnd: a walking iterator's end is its source's length"
+            }
+            guard let item = unboxed(boxed) else {
+                return "iteratorSetEnd needs an item in its block"
+            }
+            iterator.destination = item
+            return nil
+        }
+
+    /// How far along the loop is. Carrying it past the end finishes it.
+    static let iteratorSetCounter_Behavior =
+        iteratorSetter_Behavior(.iteratorSetCounter, takes: .int) { iterator, n in
+            iterator.value = (n as! IntItem).value
+            return nil
+        }
+
+    /// How deep in `.exec` the loop hides its next copy — the field
+    /// `.iteratorPlayDelayed` sets once. This is the "separate instruction" that
+    /// lets an algorithm re-aim it mid-loop without paying an argument per pass.
+    ///
+    /// A negative depth ends the loop, exactly as it does at
+    /// `.iteratorPlayDelayed`: that is the only other place a negative depth can
+    /// appear, and it means the same thing in both.
+    static let iteratorSetDepth_Behavior =
+        iteratorSetter_Behavior(.iteratorSetDepth, takes: .int) { iterator, n in
+            iterator.burial = (n as! IntItem).value
+            return nil
+        }
+
+
     // MARK: - Construction
 
     /// Builds a counting iterator and **leaves it alone**: no pass, no body, no
@@ -499,6 +612,10 @@ nonisolated extension Interpreter {
         .iteratorFromVecInt : iteratorFromVecInt_Behavior,
         .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
+        .iteratorSetStart : iteratorSetStart_Behavior,
+        .iteratorSetEnd : iteratorSetEnd_Behavior,
+        .iteratorSetCounter : iteratorSetCounter_Behavior,
+        .iteratorSetDepth : iteratorSetDepth_Behavior,
         .iteratorPeekEnd : iteratorPeekEnd_Behavior,
         .iteratorFromIntRange : iteratorFromIntRange_Behavior,
         .iteratorPlay : iteratorPlay_Behavior,

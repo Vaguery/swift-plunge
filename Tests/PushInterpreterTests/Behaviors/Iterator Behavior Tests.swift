@@ -497,6 +497,236 @@ struct IteratorBehaviorTests {
     }
 
 
+    // MARK: - Setters
+
+    @Test func `the setters re-aim a live loop`() {
+        let inty = loaded(counting(from: 0, to: 20, emits: false))
+        inty.stacks[.code]!.prepend(CodeItem([IntItem(9)]))
+        doThis(.iteratorSetStart, to: inty)
+        #expect(stackString(inty, .iterator) == "[ «9→20 by 1 @0 silent ( true )» ]")
+
+        inty.stacks[.code]!.prepend(CodeItem([IntItem(12)]))
+        doThis(.iteratorSetEnd, to: inty)
+        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @0 silent ( true )» ]")
+
+        inty.stacks[.int]!.prepend(IntItem(2))
+        doThis(.iteratorSetCounter, to: inty)
+        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @2 silent ( true )» ]")
+
+        inty.stacks[.int]!.prepend(IntItem(3))
+        doThis(.iteratorSetDepth, to: inty)
+        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @2 silent ⤓3 ( true )» ]")
+
+        // Re-aimed and still runnable: 11 and 12 are within a stride of the end,
+        // so from cursor 2 (value 11) exactly one pass remains.
+        inty.stacks[.exec]!.prepend(InstructionItem(.iteratorPlay))
+        inty.run(stepLimit: 10_000)
+        #expect(inty.stacks[.bool]!.count == 1)
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// A re-aimed iterator records the same way a stepped one does — by state —
+    /// so its crux still reproduces it exactly.
+    @Test func `a re-aimed iterator's crux reproduces it`() {
+        let inty = loaded(counting(from: 0, to: 20))
+        inty.stacks[.int]!.prepend(IntItem(7))
+        doThis(.iteratorSetCounter, to: inty)
+
+        let live = inty.stacks[.iterator]!.first!
+        #expect(rerunTop(live.crux(), on: .iterator)?.isEqual(to: live) == true)
+    }
+
+    @Test func `carrying the counter past the end destroys the loop`() {
+        let inty = loaded(counting(from: 0, to: 5))
+        inty.stacks[.int]!.prepend(IntItem(99))
+        doThis(.iteratorSetCounter, to: inty)
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(errorStrings(inty).isEmpty)   // finishing is not an error
+
+        // …and so does a negative one.
+        let back = loaded(counting(from: 0, to: 5))
+        back.stacks[.int]!.prepend(IntItem(-1))
+        doThis(.iteratorSetCounter, to: back)
+        #expect(stackString(back, .iterator) == "[ ]")
+    }
+
+    /// A type the kind cannot use is not refused: it simply leaves the loop with
+    /// nothing to emit. Handing a counting iterator a string is a way to stop it.
+    @Test func `an unusable start destroys the loop rather than erroring`() {
+        let inty = loaded(counting())
+        inty.stacks[.code]!.prepend(CodeItem([StringItem("nope")]))
+        doThis(.iteratorSetStart, to: inty)
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(errorStrings(inty).isEmpty)
+    }
+
+    @Test func `a negative depth ends the loop`() {
+        let inty = loaded(counting())
+        inty.stacks[.int]!.prepend(IntItem(-1))
+        doThis(.iteratorSetDepth, to: inty)
+        #expect(stackString(inty, .iterator) == "[ ]")
+    }
+
+    /// A walking iterator's end is its source's own length, not a field — so
+    /// setting one is refused rather than stored. Storing it would be a lie the
+    /// crux could not carry: a walking constructor takes no bounds, so the
+    /// destination would vanish on reconstruction and the round trip would break.
+    @Test func `setting the end of a walking iterator is refused`() {
+        let inty = loaded(
+            IteratorItem(
+                kind: .elements(into: nil),
+                origin: VecIntItem([1, 2, 3]),
+                body: nil,
+                emits: true
+            )
+        )
+        inty.stacks[.code]!.prepend(CodeItem([IntItem(99)]))
+        doThis(.iteratorSetEnd, to: inty)
+
+        // Handed back untouched, and told why.
+        #expect(stackString(inty, .iterator) == "[ «[1, 2, 3] @0» ]")
+        #expect(errorStrings(inty).contains { $0.contains("source's length") })
+    }
+
+    @Test func `an empty box is refused, and the iterator survives`() {
+        let inty = loaded(counting())
+        inty.stacks[.code]!.prepend(CodeItem([]))
+        doThis(.iteratorSetStart, to: inty)
+        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @0 ( true )» ]")
+        #expect(errorStrings(inty).contains { $0.contains("needs an item") })
+    }
+
+
+    // MARK: - Iterators inside iterators
+
+    /// `.iterator` is an ordinary stack, so an iterator can walk a vector of
+    /// nothing in particular while another walks it — and a body can build one.
+    /// Nested loops are just two iterators resting on the same stack.
+    @Test func `a loop body can run a loop of its own`() {
+        let inty = Interpreter()
+        // Outer: 0→3. Inner, per pass: 0→3 again, pushing a `true` each time.
+        inty.load(program: [
+            IntItem(0), IntItem(3),
+            CodeItem([
+                IntItem(0), IntItem(3), CodeItem([BoolItem(true)]),
+                InstructionItem(.execDoRange),
+            ]),
+            InstructionItem(.execDoRange),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        // Three outer passes (0,1,2 — the end is excluded), each running three
+        // inner ones: nine bodies.
+        #expect(inty.stacks[.bool]!.count == 9)
+        // Both loops finished and cleaned up after themselves.
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(inty.stacks[.error]!.isEmpty)
+    }
+
+    /// The inner loop rests *on top of* the outer one for its duration, and the
+    /// outer one is still there underneath, untouched, when it ends.
+    @Test func `a nested loop stacks its iterator above the outer one`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(0), IntItem(9),
+            CodeItem([
+                IntItem(0), IntItem(9), CodeItem([]), InstructionItem(.execDoRange),
+            ]),
+            InstructionItem(.execDoRange),
+        ])
+        // Far enough in for the outer loop to have started its inner one.
+        for _ in 0..<12 { inty.step() }
+
+        // Two live loops, resting on one ordinary stack.
+        #expect(inty.stacks[.iterator]!.count == 2)
+        #expect(inty.stacks[.iterator]!.allSatisfy {
+            ($0 as? IteratorItem).map { !$0.isSpent } ?? false
+        })
+
+        // The inner one is on top, so it is what the next `.iteratorPlay` finds —
+        // which is exactly how the nesting works, and exactly what makes an inner
+        // loop able to interfere with an outer one.
+        let inner = inty.stacks[.iterator]![0] as! IteratorItem
+        let outer = inty.stacks[.iterator]![1] as! IteratorItem
+        #expect((inner.destination as? IntItem)?.value == 9)
+        #expect((outer.destination as? IntItem)?.value == 9)
+
+        // Running on: the inner loop finishes and leaves the outer one behind,
+        // untouched and still going.
+        for _ in 0..<40 { inty.step() }
+        #expect(inty.stacks[.iterator]!.count >= 1)
+        #expect(inty.stacks[.int]!.count > 9)   // both loops emitted indices
+        _ = outer
+    }
+
+    /// The consequence of `.iterator` being ordinary: `.iteratorPlay` takes
+    /// whatever is on top, so an inner loop's iterator is what an outer loop's
+    /// continuation finds. This is deliberate — the type is first-class so that a
+    /// program can get hold of it — and the failure mode is an ErrorItem.
+    @Test func `an inner loop can strand the outer one's continuation`() {
+        let inty = Interpreter()
+        // The body flushes `.iterator`, so the outer loop's own iterator goes
+        // with it and its continuation finds nothing.
+        inty.load(program: [
+            IntItem(0), IntItem(50),
+            CodeItem([InstructionItem(.iteratorFlush)]),
+            InstructionItem(.execDoRange),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(stackString(inty, .iterator) == "[ ]")
+        #expect(errorStrings(inty).contains { $0.contains("missing args") })
+        #expect(inty.stacks[.int]!.count == 1)   // stopped after one pass
+    }
+
+    /// An iterator can be an iterator's origin: `.repeating` takes any item, and
+    /// `.iterator` is a stack like any other, so `iteratorDupTimes` copies a live
+    /// loop. The copies are independent — each is a value.
+    @Test func `an iterator can repeat an iterator`() {
+        let inty = loaded(counting(from: 0, to: 3, emits: false))
+        inty.stacks[.int]!.prepend(IntItem(2))
+        doThis(.iteratorDupTimes, to: inty)
+        inty.run(stepLimit: 10_000)
+
+        // The original, plus two copies of it.
+        #expect(inty.stacks[.iterator]!.count == 3)
+        for copy in inty.stacks[.iterator]! {
+            #expect(copy.isEqual(to: counting(from: 0, to: 3, emits: false)))
+        }
+
+        // Playing the top copy runs it to exhaustion and leaves the other two.
+        inty.stacks[.exec]!.prepend(InstructionItem(.iteratorPlay))
+        inty.run(stepLimit: 10_000)
+        #expect(inty.stacks[.bool]!.count == 3)
+        #expect(inty.stacks[.iterator]!.count == 2)
+    }
+
+    /// An iterator walking a code block full of iterators. The elements come back
+    /// out by law 1b — the items that went in — and land on `.iterator`, derived
+    /// from their own type with no `into:` needed.
+    @Test func `an iterator can walk a block of iterators`() {
+        let inty = Interpreter()
+        let box = CodeItem([
+            counting(from: 0, to: 3),
+            counting(from: 7, to: 9),
+        ])
+        // `origin ( body ) cursor burial emits` — the box of iterators to walk,
+        // then an empty body, which makes this a sequence rather than a loop.
+        inty.load(program: [
+            box, CodeItem([]),
+            IntItem(0), IntItem(0), BoolItem(true),
+            InstructionItem(.iteratorFromCode),
+            InstructionItem(.iteratorPlay),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect(inty.stacks[.iterator]!.count == 2)
+        #expect(stackString(inty, .iterator)
+            == "[ «7→9 by 1 @0 ( true )» «0→3 by 1 @0 ( true )» ]")
+        #expect(inty.stacks[.error]!.isEmpty)
+    }
+
+
     // MARK: - Helpers
 
     func errorStrings(_ inty: Interpreter) -> [String] {
