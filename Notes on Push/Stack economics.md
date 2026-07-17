@@ -319,10 +319,18 @@ Not decisions — the trade-offs belong to whoever picks these up.
 
 # Part 3: what mix of instructions should a random program have?
 
+> **The numbers below are preliminary and their method has since been corrected — do not cite them
+> yet.** They came from an early run: a single genome length (120), one seed, 300 programs, and a
+> starvation rate **pooled over attempts**. Attempts within a program are not independent (a loop repeats
+> one instruction), so pooling invents a denominator and understates the rate — the sound per-program
+> rate is roughly double at short lengths. The probe has been rebuilt to be per-program, to sweep four
+> lengths (50/100/250/500), and to **pool across bounded tranches** so a sound large sample can be
+> gathered without one process filling memory (`MIX_TRANCHE=k`). A calibrated run will replace this
+> section. What survives the rebuild for certain is **§0** — the lesson, not the digits.
+
 Measured by "Instruction Mix Probe", a slow diagnostic run alone. Ten mixes over the four
 `InstructionTag` partitions — the balanced centre, each tag **enriched** (a third of the draw) and
-**depleted** (a ninth) in turn, plus `language-shaped` as a control. 300 Fibonacci-genome programs of 120
-genes each, every mix meeting the same seed.
+**depleted** (a ninth) in turn, plus `language-shaped` as a control.
 
 ## 0. The measure lied first, again
 

@@ -48,6 +48,20 @@ nonisolated enum FibonacciGenome {
     ///
     /// Randomizing the genome length over a reasonable range covers the
     /// discontinuity, which is what makes it acceptable in a testing genome.
+    ///
+    /// **A consequence worth knowing before designing an experiment**: length and
+    /// code fraction are not independent here, so a sweep over lengths is also a
+    /// sweep over how much of the program is blocks. At the sizes people set as
+    /// initial GP arguments:
+    ///
+    /// | genes | blocks | in code | code % | largest block |
+    /// |---|---|---|---|---|
+    /// | 50 | 6 | 20 | 40.0% | 8 |
+    /// | 100 | 8 | 54 | **54.0%** | 21 |
+    /// | 250 | 9 | 88 | **35.2%** | 34 |
+    /// | 500 | 11 | 232 | 46.4% | 89 |
+    ///
+    /// Note it is not even monotonic: 100 is the *most* blocked and 250 the least.
     static func blockLengths(forGenomeOf count: Int) -> [Int] {
         guard count > 0 else { return [] }
 
