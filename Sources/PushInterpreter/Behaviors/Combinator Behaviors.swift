@@ -48,6 +48,11 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            // It reorders/copies `stack` without popping it, so say so: this is
+            // what stops it eating the index and then finding nothing there.
+            // TWO, not one: it guards on `count - 1 > 0`, because with a single
+            // item there is nothing to reach past.
+            alsoNeeds: [stack: 2],
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1
@@ -181,6 +186,9 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            // It reorders/copies `stack` without popping it, so say so: this is
+            // what stops it eating the index and then finding nothing there.
+            alsoNeeds: [stack: 1],
             modifier: { (interpreter, collectedItems) in
                 let howMany = (collectedItems[0] as! IntItem).value
 
@@ -389,6 +397,9 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            // It reorders/copies `stack` without popping it, so say so: this is
+            // what stops it eating the index and then finding nothing there.
+            alsoNeeds: [stack: 1],
             modifier: { (interpreter, collectedItems) in
                 guard let oldItem = interpreter.stacks[stack]!.popFirst() else {
                     return [
@@ -492,6 +503,11 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            // It reorders/copies `stack` without popping it, so say so: this is
+            // what stops it eating the index and then finding nothing there.
+            // TWO, not one: it guards on `count - 1 > 0`, because with a single
+            // item there is nothing to reach past.
+            alsoNeeds: [stack: 2],
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1
@@ -528,6 +544,11 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            // It reorders/copies `stack` without popping it, so say so: this is
+            // what stops it eating the index and then finding nothing there.
+            // TWO, not one: it guards on `count - 1 > 0`, because with a single
+            // item there is nothing to reach past.
+            alsoNeeds: [stack: 2],
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1

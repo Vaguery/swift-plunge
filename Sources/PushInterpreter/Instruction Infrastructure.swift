@@ -139,10 +139,10 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     /// are left exactly as they were.
     ///
     /// It is not `0 .iteratorSetCounter` with fewer keystrokes. **It takes no
-    /// arguments**, and `.int` is empty 63.5% of the time something wants it
-    /// (Stack economics), so the setter frequently cannot fire where this always
-    /// can. In a language whose defining flaw is argument starvation, a
-    /// zero-argument form of a useful operation earns its own instruction.
+    /// arguments**, and `.int` is unmet more often than not (Stack economics), so
+    /// the setter frequently cannot fire where this always can. In a language whose
+    /// defining flaw is argument starvation, a zero-argument form of a useful
+    /// operation earns its own instruction.
     case iteratorRestart
 
     // iterator construction

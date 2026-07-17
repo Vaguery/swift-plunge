@@ -138,8 +138,9 @@ that consumes nothing. If for some algorithmic reason the depth needs to change,
 
 Two corollaries, both measured rather than guessed ("Stack economics.md"):
 
-- **A zero-argument form of a useful operation earns its own instruction.** `.int` is empty **63.5%** of
-  the time something wants it, so `0 .iteratorSetCounter` frequently *cannot fire* where an argumentless
+- **A zero-argument form of a useful operation earns its own instruction.** `.int` is the
+  most-demanded stack in the language and **unmet more often than not**, so `0 .iteratorSetCounter`
+  frequently *cannot fire* where an argumentless
   `.iteratorRestart` always can. That is not a keystroke saving; in a starved language it is the
   difference between an operation that exists and one that does not.
 - **Give the arguments back when you cannot act — and when you are done.** `execDoCount` with a count
@@ -330,6 +331,23 @@ Two structural supports:
 
 - **`gather` is all-or-nothing.** Every stack demand is checked before anything is popped, so a Behavior
   that cannot run consumes nothing and leaves the stacks exactly as they were.
+
+  **This was false for sixty behaviors, and the way it failed is worth knowing**, because the same
+  mistake is available to anyone adding a Behavior. `takes:` conflated *what I consume* with *what I
+  need*. `doubleYank` takes an `.int` index and **reorders** `.double` — it cannot put `.double` in
+  `takes:`, which would pop the very item it means to move — so it declared only the int, popped it,
+  found the empty stack, and errored **having already eaten the argument**. Five families × twelve
+  stacks. And `.int` is the scarcest channel in the language, so the language's own furniture was the
+  thing burning it (§5).
+
+  It survived because it was **invisible to the only thing that could have seen it**: `isSatisfied`
+  reads `needs`, `needs` was derived from `takes:`, and the requirement was not in `takes:`. The
+  argument-starvation probe reads `needs` too, so it under-reported all sixty. The measure and the bug
+  had the same blind spot — which is the general lesson, and it is why no test caught it either.
+
+  **So: declare a requirement you do not consume, with `alsoNeeds:`.** It folds into `needs`, and
+  `isSatisfied` refuses before `gather` pops anything. A stack may appear in both and the counts add
+  (`intYank` wants three: one index, two to work on). The principle is now true rather than aspirational.
 - **Stacks are homogeneous except `.exec`**, and `accepts` enforces it. A mis-tagged `Router` is a
   programming bug, not a program bug, so it leaves the distinctive `INVARIANT:` marker — the one class of
   failure that means *the interpreter* is wrong.

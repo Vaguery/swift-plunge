@@ -182,15 +182,26 @@ The headline finding, and it contradicts Part 1.
 
 | stack | asked | empty | rate |
 |---|---|---|---|
-| `.bool` | 3595 | 2815 | **78.3%** |
-| `.double` | 3120 | 2232 | **71.5%** |
-| `.char` | 1662 | 1065 | 64.1% |
-| `.int` | 10832 | 6882 | 63.5% |
-| `.string` | 4498 | 2329 | 51.8% |
-| `.vecDouble` / `.vecBool` / `.vecInt` / `.vecString` | ~2200 each | ~1100 | ~48% |
-| `.code` | 14947 | 981 | **6.6%** |
-| `.iterator` | 62273 | 1471 | 2.4% |
-| `.exec` | 2402 | 3 | 0.1% |
+| `.bool` | 4736 | 3433 | **72.5%** |
+| `.double` | 3446 | 2186 | 63.4% |
+| `.string` | 5723 | 3444 | 60.2% |
+| `.int` | **15639** | **8619** | 55.1% |
+| `.char` | 2637 | 1411 | 53.5% |
+| `.vecInt` / `.vecString` / `.vecBool` / `.vecDouble` | ~3200 each | ~1500 | 42–51% |
+| `.code` | 18917 | 2043 | **10.8%** |
+| `.iterator` | 19632 | 1933 | 9.8% |
+| `.exec` | 1931 | 1 | 0.1% |
+
+> **These numbers replace an earlier, understated set**, and the reason is instructive. Sixty behaviors
+> reached into a stack they never declared in `takes:` (see Design Principles §14), so `needs` could not
+> see the requirement — and **this probe reads `needs`**. It was blind to the same thing the bug hid
+> behind. `alsoNeeds:` fixed it at the source and the demand figures rose accordingly: `.int` went from
+> 10,832 asks to 15,639. Anything quoting the old rates is stale.
+>
+> **Read `.int` by volume, not by rate.** At 55.1% it is no longer the highest *rate* — `.bool`, `.double`
+> and `.string` all starve more often. But it is asked **15,639 times**, far more than any other value
+> stack, so its 8,619 unmet asks are the largest shortfall in the language by a wide margin. A rate table
+> flatters it; the volume is the story.
 
 **`.code` is the language's scarcest resource (0.29 producers/consumers) and random programs are swimming
 in it (6.6% empty).** Both are true. The generator emits literal blocks, and nothing consumes them fast

@@ -604,8 +604,8 @@ struct IteratorBehaviorTests {
     // MARK: - Restarting, dying, and the iteration budget
 
     /// Not `0 .iteratorSetCounter` with fewer keystrokes: it takes **no
-    /// arguments**, and `.int` is empty 63.5% of the time something wants it, so
-    /// the setter frequently cannot fire where this always can.
+    /// arguments**, and `.int` is unmet more often than not, so the setter
+    /// frequently cannot fire where this always can.
     @Test func `iteratorRestart rewinds a loop and needs nothing to do it`() {
         let inty = loaded(counting(from: 3, to: 40, by: 2, cursor: 7))
         #expect(stackString(inty, .int) == "[ ]")   // nothing to draw on

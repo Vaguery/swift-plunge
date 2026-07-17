@@ -254,7 +254,8 @@ Three things recommend it:
    arguments back when you cannot act" is established; this extends it to "when you are done".
 3. **It is a source for the two scarcest stacks.** From "Stack economics.md": `.code` is the language's
    tightest structural bottleneck (0.29 producers per consumer, and only the five quotes can make a block
-   that did not exist), and `.int` is empty 63.5% of the time it is wanted. A dying loop hands back a
+   that did not exist), and `.int` is the most-demanded stack there is and unmet more often than not. A
+dying loop hands back a
    block and two ints. Every loop that ends becomes a small supply of exactly what the language is short
    of — which is a *far* better argument than tidiness.
 
@@ -273,7 +274,7 @@ than a nicety.
 Resets the cursor to 0. Leaves start, end, stride and body alone.
 
 It is not merely `0 .iteratorSetCounter` with fewer keystrokes. **It takes no arguments**, and `.int` is
-empty 63.5% of the time it is wanted — so `0 .iteratorSetCounter` frequently cannot fire, while
+unmet more often than not — so `0 .iteratorSetCounter` frequently cannot fire, while
 `.iteratorRestart` always can. In a language whose defining flaw is argument starvation, a zero-argument
 form of a useful operation is worth a whole instruction.
 

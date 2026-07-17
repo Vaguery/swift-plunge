@@ -182,6 +182,63 @@ struct CombinatorBehaviorTests {
         inty.stacks[.error]!.compactMap { ($0 as? ErrorItem)?.value }
     }
 
+    /// **The all-or-nothing bargain, for the five families that reach into a stack
+    /// they never declared.**
+    ///
+    /// `takes:` used to conflate "what I consume" with "what I need". `doubleYank`
+    /// takes an `.int` index and *reorders* `.double` — it cannot declare `.double`
+    /// in `takes:`, which would pop the very item it means to move — so it declared
+    /// only the int, popped it, discovered the empty stack, and errored **having
+    /// already eaten the argument**. Sixty behaviors did this, and `.int` is the
+    /// scarcest channel in the language.
+    ///
+    /// `alsoNeeds:` lets them say it, so `isSatisfied` refuses before `gather` pops
+    /// anything. Nothing keeps the bargain by hand.
+    ///
+    /// Untested until now, which is exactly why it survived: `isSatisfied` read
+    /// `needs`, and `needs` could not see the requirement — the measure and the bug
+    /// shared a blind spot.
+    @Test func `a combinator that cannot run consumes nothing`() {
+        // These five reach into their own stack without declaring it in `takes:`.
+        for instruction in [PushInstruction.doubleDeepDup, .doubleDupTimes,
+                            .doubleShove, .doubleYank, .doubleYankDup] {
+            let inty = Interpreter()
+            inty.stacks[.int]!.prepend(IntItem(5))     // an index…
+            // …and .double is empty, so there is nothing to act on.
+
+            #expect(Interpreter.language[instruction]!.isSatisfied(by: inty) == false,
+                    "\(instruction) claims it can run with an empty .double")
+            doThis(instruction, to: inty)
+
+            #expect(stackString(inty, .int) == "[ 5 ]",
+                    "\(instruction) ate its index and achieved nothing")
+            #expect(errorStrings(inty).contains { $0.contains("missing args") })
+        }
+    }
+
+    /// Yank, YankDup and DeepDup want *two*, not one: they guard on
+    /// `count - 1 > 0`, because with a single item there is nothing to reach past.
+    /// Declaring one would have left them eating the index in exactly the case
+    /// this exists to prevent.
+    @Test func `the reaching combinators declare what they really need`() {
+        #expect(Interpreter.language[.doubleDupTimes]!.needs == [.int: 1, .double: 1])
+        #expect(Interpreter.language[.doubleShove]!.needs == [.int: 1, .double: 1])
+        #expect(Interpreter.language[.doubleYank]!.needs == [.int: 1, .double: 2])
+        #expect(Interpreter.language[.doubleYankDup]!.needs == [.int: 1, .double: 2])
+        #expect(Interpreter.language[.doubleDeepDup]!.needs == [.int: 1, .double: 2])
+
+        // When the index and the target share a stack, the counts ADD.
+        #expect(Interpreter.language[.intYank]!.needs == [.int: 3])
+        #expect(Interpreter.language[.intDupTimes]!.needs == [.int: 2])
+
+        // A single item is not enough to yank: one int for the index, two to work on.
+        let inty = Interpreter()
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(7)] as [any Item])
+        #expect(Interpreter.language[.intYank]!.isSatisfied(by: inty) == false)
+        doThis(.intYank, to: inty)
+        #expect(stackString(inty, .int) == "[ 0 7 ]")   // untouched
+    }
+
     @Test func `combinator Empty works`() {
         loadBools(inty, bools: [])
         #expect(stackString(inty, .bool) == "[ ]")

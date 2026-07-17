@@ -15,9 +15,36 @@ nonisolated class Behavior: @unchecked Sendable {
     // (`let`) and Sendable and the stored closures are `@Sendable`, so a single
     // shared instance is safe to run from many interpreters/tasks at once.
     let name: PushInstruction
+    /// The stacks this Behavior **consumes**, one item each, popped in order.
     let parameters: [PushStack]
+
+    /// Stacks this Behavior needs but does **not** consume — it reaches in and
+    /// reads, reorders or copies without popping.
+    ///
+    /// `takes:` alone conflated "what I consume" with "what I need", and there was
+    /// no way to say the second without the first. `doubleYank` takes an `.int`
+    /// index and *reorders* `.double`; declaring `.double` in `takes:` would pop
+    /// the very item it means to move. So it declared only the int — and then
+    /// **60 behaviors across five families would pop their index, discover an
+    /// empty stack, and error, having already eaten the argument.** That broke the
+    /// all-or-nothing bargain (Design Principles §14) and burned `.int`, which is
+    /// the most-demanded channel in the language, and unmet more often than not
+    /// (Stack economics owns the figures). It was invisible because `isSatisfied` read
+    /// `needs`, and `needs` could not see it — the measure and the bug had the
+    /// same blind spot.
+    ///
+    /// Declaring it here folds it into `needs`, so `isSatisfied` refuses *before*
+    /// `gather` pops anything, and the bargain holds without any Behavior having to
+    /// keep it by hand.
+    ///
+    /// A stack may appear in both, and the counts add: `intYank` takes one `.int`
+    /// as its index **and** needs another to yank, so it wants two.
+    let requirements: [PushStack: Int]
+
+    /// Everything that must be present for this Behavior to run: what it consumes,
+    /// plus what it merely needs.
     var needs: [PushStack: Int] {
-        var result = [PushStack: Int]()
+        var result = requirements
         for v in parameters {
             result[v, default:0] += 1
         }
@@ -26,9 +53,15 @@ nonisolated class Behavior: @unchecked Sendable {
     let transformer: @Sendable ([any Item]) -> [Router]
 
 
-    init(_ label: PushInstruction, takes: [PushStack], fxn: @escaping @Sendable ([any Item]) -> [Router]) {
+    init(
+        _ label: PushInstruction,
+        takes: [PushStack],
+        alsoNeeds: [PushStack: Int] = [:],
+        fxn: @escaping @Sendable ([any Item]) -> [Router]
+    ) {
         self.name = label
         self.parameters = takes
+        self.requirements = alsoNeeds
         self.transformer = fxn
     }
 
@@ -92,9 +125,17 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
     // which is itself `@Sendable` and immutable, so the type stays safe to share.
     let directModifier: @Sendable (inout Interpreter, [any Item]) -> [Router]
 
-    init(_ label: PushInstruction, takes: [PushStack], modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]) {
+    /// `alsoNeeds` matters most here: reaching into a stack without popping it is
+    /// exactly what a `BehaviorWithSideEffects` is *for*, so it is these that could
+    /// need something they never declared.
+    init(
+        _ label: PushInstruction,
+        takes: [PushStack],
+        alsoNeeds: [PushStack: Int] = [:],
+        modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
+    ) {
         self.directModifier = modifier
-        super.init(label, takes: takes, fxn: {_ in return []})
+        super.init(label, takes: takes, alsoNeeds: alsoNeeds, fxn: {_ in return []})
     }
 
     override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {

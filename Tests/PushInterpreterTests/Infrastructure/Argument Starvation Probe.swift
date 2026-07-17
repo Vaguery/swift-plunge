@@ -20,18 +20,20 @@
 //  fires, which gives an exact denominator (every attempt) and exact blame (every
 //  stack that was short).
 //
-//  **Known blind spot: dynamic argument needs.** This reads `behavior.needs`, which
-//  is derived from the static `takes:` list — so it can only see requirements an
-//  instruction declares up front. `.vecXConstruct` wants N scalars where N is the
-//  length of its *other* argument, which `takes:` cannot express; it declares
-//  `[.vecInt: 1]`, and `isSatisfied` answers `true` in the very act of failing.
-//  So Construct's starvation is **under-reported here** — silently, and by the
-//  measure's own construction rather than by accident.
+//  **This reads `behavior.needs`, so it can only see what an instruction declares.**
+//  That used to hide a great deal: five combinator families reached into a stack
+//  they never named in `takes:`, so `needs` could not see it, so this probe
+//  under-reported sixty behaviors — and `isSatisfied` answered `true` in the very
+//  act of failing. The measure and the bug had the same blind spot. `alsoNeeds:`
+//  fixed it at the source, which is the right place: `needs` is now honest, so this
+//  is too.
 //
-//  It is the only such instruction today. If more appear, `needs` is the thing to
-//  fix rather than this probe: the all-or-nothing bargain in `Behavior.act`
-//  (Design Principles §14) is worth strictly more than the diagnostic is, and
-//  right now Construct keeps that bargain by hand where the framework cannot.
+//  **One blind spot remains, and it is narrow: a dynamic requirement.**
+//  `.vecXConstruct` wants N scalars where N is the *length of its other argument*,
+//  which no static declaration can express. It keeps the all-or-nothing bargain by
+//  hand instead — the only Behavior that has to — so its starvation is still
+//  under-reported here. If a second such instruction ever appears, that is the
+//  moment to make `needs` a function of the interpreter rather than a constant.
 //
 //  Disabled and run alone, like every fuzz test here: `fuzzRNG` is a shared
 //  global and Swift Testing runs suites in parallel, so a concurrent drawer breaks
