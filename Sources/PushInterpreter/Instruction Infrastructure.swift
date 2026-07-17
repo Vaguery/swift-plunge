@@ -195,7 +195,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecBoolEq
     
     // vecBool conversion
-    case vecBoolPushAll
+    case vecBoolPushAll, vecBoolConstruct
     
     // vecBool combinators
     case vecBoolDeepDup, vecBoolDup, vecBoolDupItems, vecBoolDupTimes, vecBoolStackIsEmpty, vecBoolFlush, vecBoolPop, vecBoolPopItems, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup
@@ -209,7 +209,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecDoubleEq
     
     // vecDouble conversion
-    case vecDoublePushAll
+    case vecDoublePushAll, vecDoubleConstruct
     
     // vecDouble combinators
     case vecDoubleDeepDup, vecDoubleDup, vecDoubleDupItems, vecDoubleDupTimes, vecDoubleStackIsEmpty, vecDoubleFlush, vecDoublePop, vecDoublePopItems, vecDoubleRot, vecDoubleShove, vecDoubleStackDepth, vecDoubleSwap, vecDoubleYank, vecDoubleYankDup
@@ -224,7 +224,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecIntEq
     
     // vecInt conversion
-    case vecIntPushAll
+    case vecIntPushAll, vecIntConstruct
     
     // vecInt combinators
     case vecIntDeepDup, vecIntDup, vecIntDupItems, vecIntDupTimes, vecIntStackIsEmpty, vecIntFlush, vecIntPop, vecIntPopItems, vecIntRot, vecIntShove, vecIntStackDepth, vecIntSwap, vecIntYank, vecIntYankDup
@@ -238,7 +238,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecStringEq
     
     // vecString conversion
-    case vecStringPushAll
+    case vecStringPushAll, vecStringConstruct
     
     // vecString combinators
     case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringStackIsEmpty, vecStringFlush, vecStringPop, vecStringPopItems, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup

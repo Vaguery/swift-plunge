@@ -569,6 +569,85 @@ nonisolated extension Interpreter {
     /// `v 2 .vecIntNth`: independent, O(1), and true however many passes have run.
     ///
     /// A sequence, not a loop: no body, so a pass costs one step rather than three.
+    /// Builds a vector out of scalars, using an existing vector **as a shape**:
+    /// it takes as many items off the scalar stack as the template has elements,
+    /// and never looks at the template's contents at all.
+    ///
+    /// This is the exact **inverse of `pushAll`**, and that is where its argument
+    /// order comes from. `[1, 22, 333] .vecIntPushAll` leaves `.int` reading
+    /// `[ 333 22 1 ]` top-to-bottom, so Construct pops top-first and the **first
+    /// item popped becomes the LAST element** — round-tripping the pair back to the
+    /// vector you started with. The postfix reading agrees, which is the useful
+    /// check: `1 22 333 ( a 3-element vector ) .vecIntConstruct` yields
+    /// `[1, 22, 333]`, in the order you wrote them (Design Principles §2, §6).
+    ///
+    /// **It does not open the closed system.** A program still cannot make a vector
+    /// out of nothing — it needs one to shape the new one, so the vector stacks
+    /// remain seeded-only (see "Stack economics.md" §2). What it *does* buy is the
+    /// thing that was actually missing: until now a vector's contents could only be
+    /// rearranged, never **computed**. Every element of the result can be something
+    /// the program worked out.
+    ///
+    /// Too few scalars and nothing happens: the template goes back untouched and an
+    /// ErrorItem says why. `takes:` cannot express "N of these, where N depends on
+    /// another argument", so this checks by hand — but it keeps `gather`'s
+    /// all-or-nothing bargain (Design Principles §14), which is what the rest of
+    /// the language relies on.
+    ///
+    /// Provenance: a genuinely new value, recording law 3 — the template first (as
+    /// `conj` and the rest of the vector family order it), then the elements in
+    /// source order, then the instruction. The record is O(N) in the vector's
+    /// length, which is honest: an N-element vector really does have N elements'
+    /// worth of history, and `maxCallWeight` bounds it like any other honest growth.
+    static func constructBehavior<V: VectorItem>(
+        _ instruction: PushInstruction,
+        making itemType: V.Type
+    ) -> Behavior {
+        BehaviorWithSideEffects(
+            instruction,
+            takes: [V.pushStack],
+            modifier: { (interpreter, collectedItems) in
+                let template = collectedItems[0] as! V
+                let wanted = template.value.count
+                let scalars = interpreter.stacks[V.Scalar.pushStack]!
+
+                guard scalars.count >= wanted else {
+                    return [
+                        Router(V.pushStack, template),
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "\(instruction) wants \(wanted) from .\(V.Scalar.pushStack), found \(scalars.count)"
+                            )
+                        ),
+                    ]
+                }
+
+                let taken = (0..<wanted).map { _ in
+                    interpreter.stacks[V.Scalar.pushStack]!.popFirst()! as! V.Scalar
+                }
+                // Top-first out, so reversing puts the first-written element first
+                // — the same order `pushAll` would put them back in.
+                let elements: [V.Scalar] = taken.reversed()
+
+                let record: [any Item] =
+                    [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]
+
+                return [
+                    Router(
+                        V.pushStack,
+                        V(
+                            elements.map(\.value),
+                            call: record,
+                            isContingent: template.isContingent
+                                || elements.contains { $0.isContingent }
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
     static func pushAllBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
@@ -705,6 +784,9 @@ nonisolated extension Interpreter {
     // return every item on the argument (in reverse order)
     // routing them to the correct stack
     //
+    static let vecBoolConstruct_Behavior =
+        constructBehavior(.vecBoolConstruct, making: VecBoolItem.self)
+
     static let vecBoolPushAll_Behavior =
         pushAllBehavior(.vecBoolPushAll, making: VecBoolItem.self)
 
@@ -733,6 +815,7 @@ nonisolated extension Interpreter {
         .vecBoolNth : vecBoolNth_Behavior,
         .vecBoolOccurrencesOf : vecBoolOccurrencesOf_Behavior,
         .vecBoolPushAll : vecBoolPushAll_Behavior,
+        .vecBoolConstruct : vecBoolConstruct_Behavior,
         .vecBoolRemove : vecBoolRemove_Behavior,
         .vecBoolReplace : vecBoolReplace_Behavior,
         .vecBoolReplaceFirst : vecBoolReplaceFirst_Behavior,
@@ -829,6 +912,9 @@ nonisolated extension Interpreter {
     // return every item on the argument (in reverse order)
     // routing them to the correct stack
     //
+    static let vecDoubleConstruct_Behavior =
+        constructBehavior(.vecDoubleConstruct, making: VecDoubleItem.self)
+
     static let vecDoublePushAll_Behavior =
         pushAllBehavior(.vecDoublePushAll, making: VecDoubleItem.self)
 
@@ -856,6 +942,7 @@ nonisolated extension Interpreter {
         .vecDoubleNth : vecDoubleNth_Behavior,
         .vecDoubleOccurrencesOf : vecDoubleOccurrencesOf_Behavior,
         .vecDoublePushAll : vecDoublePushAll_Behavior,
+        .vecDoubleConstruct : vecDoubleConstruct_Behavior,
         .vecDoubleRemove : vecDoubleRemove_Behavior,
         .vecDoubleReplace : vecDoubleReplace_Behavior,
         .vecDoubleReplaceFirst : vecDoubleReplaceFirst_Behavior,
@@ -954,6 +1041,9 @@ nonisolated extension Interpreter {
     // return every item on the argument (in reverse order)
     // routing them to the correct stack
     //
+    static let vecIntConstruct_Behavior =
+        constructBehavior(.vecIntConstruct, making: VecIntItem.self)
+
     static let vecIntPushAll_Behavior =
         pushAllBehavior(.vecIntPushAll, making: VecIntItem.self)
 
@@ -982,6 +1072,7 @@ nonisolated extension Interpreter {
         .vecIntNth : vecIntNth_Behavior,
         .vecIntOccurrencesOf : vecIntOccurrencesOf_Behavior,
         .vecIntPushAll : vecIntPushAll_Behavior,
+        .vecIntConstruct : vecIntConstruct_Behavior,
         .vecIntRemove : vecIntRemove_Behavior,
         .vecIntReplace : vecIntReplace_Behavior,
         .vecIntReplaceFirst : vecIntReplaceFirst_Behavior,
@@ -1083,6 +1174,9 @@ nonisolated extension Interpreter {
     // return every item on the argument (in reverse order)
     // routing them to the correct stack
     //
+    static let vecStringConstruct_Behavior =
+        constructBehavior(.vecStringConstruct, making: VecStringItem.self)
+
     static let vecStringPushAll_Behavior =
         pushAllBehavior(.vecStringPushAll, making: VecStringItem.self)
 
@@ -1112,6 +1206,7 @@ nonisolated extension Interpreter {
         .vecStringNth : vecStringNth_Behavior,
         .vecStringOccurrencesOf : vecStringOccurrencesOf_Behavior,
         .vecStringPushAll : vecStringPushAll_Behavior,
+        .vecStringConstruct : vecStringConstruct_Behavior,
         .vecStringRemove : vecStringRemove_Behavior,
         .vecStringReplace : vecStringReplace_Behavior,
         .vecStringReplaceFirst : vecStringReplaceFirst_Behavior,

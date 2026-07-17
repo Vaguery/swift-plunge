@@ -95,6 +95,20 @@ another. The 0.88 ratio hides this entirely, because reshaping counts as product
 This is arguably a worse gap than `.code`'s — at least `.code` has the five quotes, which genuinely lift
 a scalar into a new item.
 
+### Partly addressed: `vecXConstruct`
+
+`vecXConstruct` (added since) takes a vector as a **shape** — never reading its contents — and consumes
+that many scalars to fill a new one. It is the exact inverse of `pushAll`, which is where its argument
+order comes from.
+
+**It does not open the closed system**, and is not meant to: it still needs a vector to shape the new
+one, so the stacks remain seeded-only and everything above stands. What it fixes is the sharper half of
+the problem, which the "closed system" framing was obscuring: **until now a vector's contents could only
+be rearranged, never computed.** A program could not put an answer into a vector. Now every element can
+be something it worked out, and each element's own derivation survives into the vector's crux.
+
+Two more sources are planned and need infrastructure first.
+
 ## 3. `.int` is the currency, and the combinators tax it
 
 **159 behaviors take an `.int` argument. 84 of those are the per-stack combinators** — `DupItems`,

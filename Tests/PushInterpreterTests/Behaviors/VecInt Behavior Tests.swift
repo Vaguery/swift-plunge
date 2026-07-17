@@ -478,6 +478,87 @@ struct VecIntBehaviorTests {
             == "( [1, 22, 333] 1 .vecIntNth )")
     }
 
+    /// Builds a vector from computed scalars, using an existing vector purely as a
+    /// **shape** — it never looks at the template's contents.
+    ///
+    /// The order is the inverse of `pushAll`, which is where it comes from: the
+    /// first item popped becomes the LAST element. Read as source, `1 22 333`
+    /// yields `[1, 22, 333]` — the order you wrote them.
+    @Test func vecIntConstruct() {
+        loadInts(inty, ints: [1, 22, 333])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([0, 0, 0]))   // a shape, not data
+        #expect(stackString(inty, .int) == "[ 1 22 333 ]")
+
+        doThis(.vecIntConstruct, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [333, 22, 1] ]")
+        #expect(stackString(inty, .int) == "[ ]")   // all three consumed
+        #expect(callString(topItem(inty, .vecInt))
+            == "( [0, 0, 0] 333 22 1 .vecIntConstruct )")
+    }
+
+    /// The property that fixes the order: Construct undoes PushAll exactly.
+    @Test func `vecIntConstruct is the inverse of vecIntPushAll`() {
+        let original = VecIntItem([1, 22, 333])
+        let inty = Interpreter()
+        inty.load(program: [original, InstructionItem(.vecIntPushAll)])
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .int) == "[ 333 22 1 ]")
+
+        // Any 3-element vector will do as the shape — it is never read.
+        inty.stacks[.vecInt]!.prepend(VecIntItem([9, 9, 9]))
+        inty.stacks[.exec]!.prepend(InstructionItem(.vecIntConstruct))
+        inty.run(stepLimit: 10_000)
+
+        #expect((topItem(inty, .vecInt) as? VecIntItem)?.value == original.value)
+        #expect(stackString(inty, .int) == "[ ]")
+    }
+
+    /// Too few scalars and nothing happens: `takes:` cannot say "N of these, where
+    /// N depends on another argument", so this keeps `gather`'s all-or-nothing
+    /// bargain by hand.
+    @Test func `vecIntConstruct refuses rather than half-build`() {
+        loadInts(inty, ints: [1, 2])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([0, 0, 0, 0]))   // wants 4, has 2
+
+        doThis(.vecIntConstruct, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [0, 0, 0, 0] ]")   // handed back
+        #expect(stackString(inty, .int) == "[ 1 2 ]")               // untouched
+        #expect(errorStrings(inty).contains { $0.contains("wants 4 from .int, found 2") })
+    }
+
+    /// An empty template is the one case that needs nothing at all — and is how a
+    /// program makes an empty vector.
+    @Test func `vecIntConstruct with an empty template consumes nothing`() {
+        loadInts(inty, ints: [7])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([]))
+
+        doThis(.vecIntConstruct, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [] ]")
+        #expect(stackString(inty, .int) == "[ 7 ]")
+    }
+
+    /// The point of it: a vector's contents can now be **computed**, where before
+    /// they could only ever be rearranged.
+    @Test func `vecIntConstruct builds a vector out of computed elements`() {
+        let inty = Interpreter()
+        inty.load(program: [
+            IntItem(2), IntItem(3), InstructionItem(.intAdd),      // 5
+            IntItem(10), IntItem(4), InstructionItem(.intSubtract), // 6
+            VecIntItem([0, 0]),
+            InstructionItem(.vecIntConstruct),
+        ])
+        inty.run(stepLimit: 10_000)
+
+        #expect((topItem(inty, .vecInt) as? VecIntItem)?.value == [5, 6])
+        // …and each element's own derivation survives into the vector's crux.
+        #expect(CodeItem(topItem(inty, .vecInt).crux()).pretty()
+            == "( [0, 0] 2 3 .intAdd 10 4 .intSubtract .vecIntConstruct )")
+    }
+
+    func errorStrings(_ inty: Interpreter) -> [String] {
+        inty.stacks[.error]!.compactMap { ($0 as? ErrorItem)?.value }
+    }
+
     @Test func vecIntRemove() {
         loadInts(inty, ints: [9, 9, -99], contingent: [2])
         inty.stacks[.vecInt]!.prepend(
