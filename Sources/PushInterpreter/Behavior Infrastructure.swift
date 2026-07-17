@@ -44,6 +44,7 @@ nonisolated class Behavior: @unchecked Sendable {
             case .takes(let s):        result[s, default: 0] += 1
             case .needs(let s, let n): result[s, default: 0] += n
             case .takesMany(let s, _): result[s, default: 0] += 0
+            case .reads(let s):        result[s, default: 0] += 1
             }
         }
         return result
@@ -80,6 +81,22 @@ nonisolated class Behavior: @unchecked Sendable {
                     .map { Requirement.needs($0.key, count: $0.value) },
             fxn: fxn
         )
+    }
+
+    /// The non-destructive query form: **read** one item from each of `reads`,
+    /// examine it, leave it on the stack. The transformer receives the read items
+    /// (in order) exactly as `takes:` would hand over consumed ones — the only
+    /// difference is that they survive.
+    ///
+    /// A query result must record its cleanup with `Behavior.reading(_:from:)` so
+    /// its crux reproduces only the fact; the read itself leaves no provenance on
+    /// the argument (law 1b — reading does not change it).
+    convenience init(
+        _ label: PushInstruction,
+        reads: [PushStack],
+        fxn: @escaping @Sendable ([any Item]) -> [Router]
+    ) {
+        self.init(label, requires: reads.map { Requirement.reads($0) }, fxn: fxn)
     }
 
     /// The general form, for a Behavior whose requirements are not all static.
@@ -227,5 +244,31 @@ nonisolated extension Behavior {
             IntItem(pops),
             InstructionItem(stack.popItemsInstruction),
         ]
+    }
+
+
+    /// The `call` for a **non-destructive query** result — `selecting` generalized
+    /// from "several results on one stack" to "arguments read but not consumed."
+    ///
+    /// A query keeps its argument(s) alive at run time (`.reads`), but its crux
+    /// must reproduce only the fact: a fragment that left its argument behind would
+    /// be read by a same-stack sibling and corrupt it (Design Principles §6, the
+    /// composition invariant). So the crux names how the fact was computed, then
+    /// pops what it read. `reads` maps each stack read to how many items came off
+    /// it — a comparison reads two from one stack, a search one from each of two.
+    ///
+    /// Live execution never runs these pops (the arguments were never removed);
+    /// they exist only in the recorded `call`, so re-running the crux on a fresh
+    /// interpreter leaves the fact and nothing else. Stacks are sorted for a
+    /// deterministic, reproducible crux; cross-stack pops are order-independent.
+    static func reading(
+        _ reads: [PushStack: Int],
+        from source: [any Item]
+    ) -> [any Item] {
+        var result = source
+        for (stack, count) in reads.sorted(by: { "\($0.key)" < "\($1.key)" }) where count > 0 {
+            result += [IntItem(count), InstructionItem(stack.popItemsInstruction)]
+        }
+        return result
     }
 }

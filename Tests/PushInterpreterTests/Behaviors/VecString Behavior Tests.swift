@@ -334,15 +334,21 @@ struct VecStringBehaviorTests {
                          VecStringItem(["a","b","c"], isContingent: true)
                         ])
         
+        // Non-destructive: the vector is read, not consumed. It stays on
+        // .vecString, and the crux pops what it read so it reproduces only the count.
         doThis(.vecStringLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\"] ]")   // both survive
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] .vecStringLength )")
+        #expect(callString(topItem(inty, .int)) == "( [] .vecStringLength 1 .vecStringPopItems )")
+
+        doThis(.vecStringPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecStringLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"c\"] ]")   // still there
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [\"a\", \"b\", \"c\"] .vecStringLength )")
+        #expect(callString(topItem(inty, .int)) == "( [\"a\", \"b\", \"c\"] .vecStringLength 1 .vecStringPopItems )")
     }
 
     @Test func vecStringNth() {

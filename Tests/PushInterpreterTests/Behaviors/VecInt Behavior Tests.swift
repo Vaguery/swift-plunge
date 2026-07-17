@@ -360,15 +360,21 @@ struct VecIntBehaviorTests {
                          VecIntItem([9,99,999], isContingent: true)
                         ])
         
+        // Non-destructive: the vector is read, not consumed. It stays on .vecInt,
+        // and the crux pops what it read so it still reproduces only the count.
         doThis(.vecIntLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")   // both survive the read
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] .vecIntLength )")
+        #expect(callString(topItem(inty, .int)) == "( [] .vecIntLength 1 .vecIntPopItems )")
+
+        doThis(.vecIntPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecIntLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
+        #expect(stackString(inty, .vecInt) == "[ [9, 99, 999] ]")   // still there after the read
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] .vecIntLength )")
+        #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] .vecIntLength 1 .vecIntPopItems )")
     }
 
     @Test func vecIntNth() {

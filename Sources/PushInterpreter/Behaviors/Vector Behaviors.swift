@@ -151,11 +151,12 @@ nonisolated extension Interpreter {
         )
     }
 
-    // returns the number of elements in the vector argument
+    // returns the number of elements in the vector argument — non-destructively:
+    // the vector is read, not consumed, and stays on its stack for reuse.
     static func lengthBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
-            takes: [V.pushStack],
+            reads: [V.pushStack],
             fxn: { a in
                 let (x) = (a[0] as! V)
                 return [
@@ -163,7 +164,10 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.count,
-                            call: [x, InstructionItem(instruction)],
+                            call: Behavior.reading(
+                                [V.pushStack: 1],
+                                from: [x, InstructionItem(instruction)]
+                            ),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )

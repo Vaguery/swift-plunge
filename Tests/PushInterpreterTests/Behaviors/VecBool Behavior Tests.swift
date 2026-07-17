@@ -355,15 +355,21 @@ struct VecBoolBehaviorTests {
                          VecBoolItem([false, false, false], isContingent: true)
                         ])
         
+        // Non-destructive: the vector is read, not consumed. It stays on .vecBool,
+        // and the crux pops what it read so it reproduces only the count.
         doThis(.vecBoolLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .vecBool) == "[ [] [false, false, false] ]")   // both survive
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] .vecBoolLength )")
+        #expect(callString(topItem(inty, .int)) == "( [] .vecBoolLength 1 .vecBoolPopItems )")
+
+        doThis(.vecBoolPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecBoolLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
+        #expect(stackString(inty, .vecBool) == "[ [false, false, false] ]")   // still there
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [false, false, false] .vecBoolLength )")
+        #expect(callString(topItem(inty, .int)) == "( [false, false, false] .vecBoolLength 1 .vecBoolPopItems )")
     }
     
     @Test func vecBoolNth() {

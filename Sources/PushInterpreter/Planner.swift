@@ -31,8 +31,22 @@ nonisolated enum Requirement: Sendable {
 
     /// `count` further items must be present on `stack`, beyond everything already
     /// claimed — but they are **not** consumed. For a Behavior that reaches in and
-    /// reads, reorders or copies without popping.
+    /// reads, reorders or copies without popping. The transformer never sees these
+    /// (contrast `.reads`); they are a presence check for side-effect behaviors
+    /// that reach into `interpreter.stacks` directly.
     case needs(PushStack, count: Int)
+
+    /// Claim the topmost unclaimed item of `stack`, **give it to the transformer,
+    /// but do not remove it.** The non-destructive query's requirement: it reads
+    /// the argument's value to report a fact and leaves the argument alive for
+    /// reuse. Where `.takes` consumes and `.needs` only checks presence, this does
+    /// what both cannot — hand the value over without spending it.
+    ///
+    /// The *crux* of a query result still reproduces only its fact: it records the
+    /// pops that clean up what was read (`Behavior.reading`), because a fragment
+    /// that left its argument behind would corrupt a same-stack sibling. Live
+    /// keeps the argument; the crux cleans it up. See Design Principles §6.
+    case reads(PushStack)
 
     /// Consume as many items from `stack` as `count` says, where `count` is
     /// computed from the arguments resolved **so far**.
@@ -46,6 +60,7 @@ nonisolated enum Requirement: Sendable {
         case .takes(let s):        s
         case .needs(let s, _):     s
         case .takesMany(let s, _): s
+        case .reads(let s):        s
         }
     }
 }
@@ -126,6 +141,12 @@ nonisolated struct Planner {
             switch requirement {
             case .takes(let stack):
                 guard let item = claim(stack, consuming: true) else { return .short(stack) }
+                arguments.append(item)
+
+            case .reads(let stack):
+                // Given to the transformer like `.takes`, but claimed
+                // non-consuming so `commit` leaves it on the stack.
+                guard let item = claim(stack, consuming: false) else { return .short(stack) }
                 arguments.append(item)
 
             case .needs(let stack, let count):

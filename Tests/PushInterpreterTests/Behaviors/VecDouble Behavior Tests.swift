@@ -334,15 +334,21 @@ struct VecDoubleBehaviorTests {
                          VecDoubleItem([9,99,999], isContingent: true)
                         ])
         
+        // Non-destructive: the vector is read, not consumed. It stays on
+        // .vecDouble, and the crux pops what it read so it reproduces only the count.
         doThis(.vecDoubleLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")   // both survive
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] .vecDoubleLength )")
+        #expect(callString(topItem(inty, .int)) == "( [] .vecDoubleLength 1 .vecDoublePopItems )")
+
+        doThis(.vecDoublePop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecDoubleLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]")   // still there
         #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] .vecDoubleLength )")
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] .vecDoubleLength 1 .vecDoublePopItems )")
     }
     
     @Test func vecDoubleNth() {
