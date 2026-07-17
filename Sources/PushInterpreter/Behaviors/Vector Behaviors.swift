@@ -1181,6 +1181,88 @@ nonisolated extension Interpreter {
 
 
 
+    // MARK: - Vector instructions belonging to no one vector type
+
+    /// The second of the three ways to make a vector: drive an iterator to
+    /// exhaustion and keep what it emitted.
+    ///
+    /// **The result's type is the argument's**, which is what lets this work
+    /// without a sieve. `.vecXConstruct` needs a vector to shape a vector — a
+    /// closed system, as "Stack economics" puts it — and this opens it: a counting
+    /// iterator is built from two ints, so `0 10 …iteratorFromIntRange
+    /// .vecFromIterator` makes a vecInt out of nothing but ints.
+    ///
+    /// **The length is the iterator's, and nothing here chooses it.** Every kind
+    /// is bounded before it can ever be an argument: a claim (`.counting`,
+    /// `.repeating`, a cycling walk) was clamped to `maxIterations` at `push`, and
+    /// a plain walk's length is a fact about data `maxVectorLength` already
+    /// bounds. The push gate then measures the vector on the way out, so an
+    /// over-long collect errors like any oversized push rather than being silently
+    /// truncated.
+    ///
+    /// **Uniform or refuse.** The type is read off what actually came out, not off
+    /// the kind, so a `.code` walk over a uniform block collects fine and a mixed
+    /// one is refused. Two refusals are worth knowing: an iterator over a
+    /// *string's elements* emits `.char`s, and there is no vector of chars — that
+    /// is what `.iteratorFromStringLetters` is for, which emits one-character
+    /// strings. And a block of instructions is pending work rather than values —
+    /// note it is the *contents* that decide that, not the iterator's `into:` aim:
+    /// `into:` says where a played pass sends its element, and collecting never
+    /// plays, so a block of ints aimed at `.exec` collects like any other.
+    ///
+    /// **A refusal hands the iterator back**, as the setters do: an instruction
+    /// that cannot use a loop should not also destroy it. A *success* consumes it
+    /// — exhausting it is the whole job — and returns its body to `.code` on the
+    /// way out, the same courtesy every other ending pays (principle 5).
+    static let vecFromIterator_Behavior =
+    Behavior(
+        .vecFromIterator,
+        takes: [.iterator],
+        fxn: { a in
+            let iterator = a[0] as! IteratorItem
+            let record: [any Item] = [iterator, InstructionItem(.vecFromIterator)]
+            let contingent = Behavior.netContingency(of: iterator)
+
+            func refuse(_ why: String) -> [Router] {
+                [
+                    Router(.iterator, iterator),
+                    Router(.error, ErrorItem("vecFromIterator: \(why)")),
+                ]
+            }
+
+            let items = iterator.collected()
+            // Unreachable while a spent iterator cannot rest on a stack, but the
+            // type of an empty collection is a question with no answer, and
+            // guessing it is worse than saying so.
+            guard !items.isEmpty else { return refuse("\(iterator.pretty()) emitted nothing") }
+
+            let collected: (any Item)? =
+                if let values = items as? [BoolItem] {
+                    VecBoolItem(values.map(\.value), call: record, isContingent: contingent)
+                } else if let values = items as? [IntItem] {
+                    VecIntItem(values.map(\.value), call: record, isContingent: contingent)
+                } else if let values = items as? [DoubleItem] {
+                    VecDoubleItem(values.map(\.value), call: record, isContingent: contingent)
+                } else if let values = items as? [StringItem] {
+                    VecStringItem(values.map(\.value), call: record, isContingent: contingent)
+                } else {
+                    nil
+                }
+
+            guard let collected, let resting = PushStack.defaultStack(for: collected) else {
+                return refuse("\(iterator.pretty()) emits \(items[0].pretty()), which no vector holds")
+            }
+            return [Router(resting, collected)] + Interpreter.iteratorFarewell(iterator)
+        }
+    )
+
+
+    static let vectorSharedBehaviors: [PushInstruction : Behavior] =
+    [
+        .vecFromIterator : vecFromIterator_Behavior,
+    ]
+
+
     static let vecStringBehaviors: [PushInstruction : Behavior] =
     [
         .vecStringButLast : vecStringButLast_Behavior,

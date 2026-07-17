@@ -41,6 +41,34 @@ every case:
 | `.counting(stride:)` | `origin`, `destination` : IntItem | `origin + i × stride` → `.int` |
 | `.elements` | `origin` : String/Vector | `origin[i]` → the scalar stack |
 | `.sampling(steps:)` *(not built)* | `origin`, `destination` : DoubleItem | `origin + i × (dest−origin)/steps` → `.double` |
+| any walk, `laps > 1` | + `laps` : Int | `origin[i % sourceCount]` → the scalar stack |
+
+### Cycling: the cursor is monotone, the projection wraps
+
+`laps` makes a walk go round its source again — `[a b c]` cycled three times emits `a b c a b c a b c`.
+It is an **attribute rather than a kind**, which is the whole reason it costs nothing: at `laps == 1` the
+wrap is the identity, so one expression serves both and there is no second code path to keep honest. It
+composes with `.points` for free when that lands.
+
+**The cursor does not rewind, and that is the design.** Only the index wraps. Resetting the cursor to 0
+at the end of a lap is observably identical *this pass* and wrong forever after:
+
+- `reconstruction()` names the cursor, so a rewound cursor rebuilds an iterator that has done no laps —
+  and the crux stops being a fixed point;
+- with nothing else to count by, an iterator that rewinds its only state is **infinite**. Bounding it
+  would need a second counter, which costs the type its one invariant.
+
+**It costs provenance nothing.** `element(at:)` records `origin index .vecIntNth`, and for a wrapped
+index that record is already right: element 2 of the third lap *is* element 2. No new `Nth`, no new
+record, still O(1).
+
+Only the walking kinds cycle. `.counting` keeps its span in `destination` and `.repeating` its count;
+laps there would be a second number for something the iterator already knows — and `.repeating` **is** a
+cycle of length 1 run `destination` times, which is worth noticing but not worth collapsing. A sawtooth
+counter is a cycling walk over a vector of the numbers.
+
+The interesting consequence is a budget one, and it is in Design Principles §12: a lap is a number the
+*program made up*, so cycling moves a walk from fact to claim and `maxIterations` starts applying to it.
 
 A Double range needs no Double counter, which is what makes this hold: initialize by a number of steps
 (which fixes the stride from the endpoints) or by a stride (which fixes the step count by division). The
@@ -170,11 +198,35 @@ the copied `.intInc` *before* the copied `7` arrives; it complains and the loop 
 Every other stack rests its elements, so only `.exec` notices. This is a real change of meaning, taken
 knowingly as the price of one uniform mechanism.
 
+## Collecting: a sequence as a value
+
+`.vecFromIterator` drives an iterator to exhaustion **in Swift, inside one step**, and hands back a
+vector of what it emitted. The mechanics of iterating were never meant to be done in Push, and this is
+that principle applied to the result rather than the loop.
+
+Three things it settles:
+
+- **The result type is the argument's** — one instruction, four result stacks, read off what actually
+  came out rather than off the kind. That is what lets it exist without a sieve, and it answers question
+  1 of "Sieve arguments" in the affirmative: the vector case never needed one.
+- **Nothing chooses a length.** Every kind was already bounded before it could be an argument (§12), so
+  the question "how long should a collected vector be?" turned out to be already answered, twice, for
+  two different reasons.
+- **It follows the pass protocol, not `isSpent`** — emit at the cursor, stop when `hasNextPass` says the
+  last has gone by. `execDoRange` is deliberately not inclusive of its destination, so a collector using
+  the other rule would return a longer sequence than the same iterator emits when *played*, and the
+  language would contradict itself. Collecting and playing must agree, and there is a test that says so.
+
+Two deliberate asymmetries with playing, both of which follow existing rules rather than inventing any:
+**`emits` is ignored** (it exists to keep an index off `.int` while a body runs; collecting has no body
+and litters nothing), and **a success returns the body to `.code`** unrun — the same farewell every
+other ending pays. A *refusal* hands the whole iterator back, as the setters do.
+
 ## Next
 
 - **map/filter** — the iterator needs somewhere to *collect* body results, not just emit them: an
   accumulator field plus a rule for reading what the body left. This is what the "pseudofunction" work
-  wants.
+  wants. Note `.vecFromIterator` is **not** this: it collects projections, and never runs a body.
 - **`.points(into:)`** — the zipper walk of a code tree. The architecture already admits it (a pre-order
   walk is a pure function of `(origin, cursor)`, which is all a projection must be); it wants
   `codeNthPoint` implemented and a memoized point-count on `CodeItem` first.

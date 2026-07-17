@@ -11,9 +11,16 @@ blind spot closed (and `vecIntConstruct` promptly turned up starving in 100% of 
 it); and a refusal can name the stack it stopped at. The bargain of §14 is now structural and tested once
 for the whole language instead of Behavior by Behavior.
 
-**What is left to decide is only the sieve itself** — the predicate, its cost, and whether a program can
-tell the difference. Adding it is one enum case and one branch in `plan`, which was the point of
-sequencing it this way.
+**And question 1 is now answered too, by building the thing it asked about.** `.vecFromIterator` is the
+polymorphic collector §5 proposed, and it works: one instruction, four result stacks, chosen by what the
+iterator actually emits. **So the vector case does not need a sieve, and never did.** What remains is
+§5's honest conclusion — *the matrix case has no such escape*, because dimensional compatibility is a
+relation between two arguments and no polymorphism dodges it.
+
+**So the sieve is now justified by matrices alone, and matrices do not exist yet.** That is a good place
+for it to sit. What is left to decide is only the sieve itself — the predicate, its cost, and whether a
+program can tell the difference. Adding it is one enum case and one branch in `plan`, which was the point
+of sequencing it this way.
 
 ---
 
@@ -220,9 +227,11 @@ not be.
 
 ## Questions worth settling before any of this is built
 
-1. **Is `.iteratorCollect` (polymorphic result) enough for the vector case?** If yes, the sieve is
-   justified by matrices alone and can wait for them. If no — if a genome must be able to *demand* a
-   vecInt — the sieve is on the critical path.
+1. ~~**Is `.iteratorCollect` (polymorphic result) enough for the vector case?**~~ **Answered: yes.**
+   Built as `.vecFromIterator`. A genome still cannot *demand* a vecInt — it gets whatever the top
+   iterator emits — and that has turned out to be a price worth paying rather than a gap to close, since
+   the alternative was to make the instruction refuse most of the time in a language whose defining
+   failure is argument starvation. The sieve is justified by matrices alone and can wait for them.
 2. ~~**Build the planner without the sieve?**~~ **Answered: yes, and done.** Plan-then-commit was worth
    having on its own, and the sieve is now one more requirement kind whenever it is wanted.
 3. **What bounds a sieve's cost?** A `maxSieveDepth`, or a stated invariant that stacks searched by a

@@ -286,6 +286,21 @@ nonisolated extension Interpreter {
     static let iteratorPeekBody_Behavior =
         iteratorGetter_Behavior(.iteratorPeekBody) { $0.body }
 
+    /// How many times this iterator goes round its source — `1` for anything that
+    /// does not cycle, which is most iterators and every counting one.
+    ///
+    /// Records like `.iteratorPeekStride`, and for the same reason: there is no
+    /// contained item to hand back, so the `IntItem` really is produced here and
+    /// law 3 applies.
+    static let iteratorPeekLaps_Behavior =
+        iteratorGetter_Behavior(.iteratorPeekLaps) { iterator in
+            IntItem(
+                iterator.laps,
+                call: [iterator, InstructionItem(.iteratorPeekLaps)],
+                isContingent: iterator.isContingent
+            )
+        }
+
 
     // MARK: - Setters
 
@@ -438,6 +453,25 @@ nonisolated extension Interpreter {
     static let iteratorSetDepth_Behavior =
         iteratorSetter_Behavior(.iteratorSetDepth, takes: .int) { iterator, n in
             iterator.burial = (n as! IntItem).value
+            return nil
+        }
+
+    /// How many times the loop goes round its source. `3 …` walks it three times.
+    ///
+    /// Refused for the kinds that were *told* how far to go — theirs is in
+    /// `destination`, and a second number for the same thing is a lie the crux
+    /// would have to carry.
+    ///
+    /// Zero or fewer laps leaves nothing to emit, so the iterator dies, exactly as
+    /// a negative depth or an over-carried counter does. Nothing special is done
+    /// about it here; `isSpent` simply agrees, and the setter family already knows
+    /// what to do with a loop that is over.
+    static let iteratorSetLaps_Behavior =
+        iteratorSetter_Behavior(.iteratorSetLaps, takes: .int) { iterator, n in
+            guard iterator.kind.cycles else {
+                return "iteratorSetLaps: a counting or repeating loop's length is its destination"
+            }
+            iterator.laps = (n as! IntItem).value
             return nil
         }
 
@@ -683,11 +717,13 @@ nonisolated extension Interpreter {
         .iteratorFromVecInt : iteratorFromVecInt_Behavior,
         .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
+        .iteratorPeekLaps : iteratorPeekLaps_Behavior,
         .iteratorRestart : iteratorRestart_Behavior,
         .iteratorSetStart : iteratorSetStart_Behavior,
         .iteratorSetEnd : iteratorSetEnd_Behavior,
         .iteratorSetCounter : iteratorSetCounter_Behavior,
         .iteratorSetDepth : iteratorSetDepth_Behavior,
+        .iteratorSetLaps : iteratorSetLaps_Behavior,
         .iteratorPeekEnd : iteratorPeekEnd_Behavior,
         .iteratorFromIntRange : iteratorFromIntRange_Behavior,
         .iteratorPlay : iteratorPlay_Behavior,

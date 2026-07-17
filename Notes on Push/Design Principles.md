@@ -244,6 +244,23 @@ elements of your own data", which is a lie about the world rather than a limit o
 out of the type rather than needing enforcement: a walking iterator has `destination = nil`, so there is
 structurally nothing for a clamp to move.
 
+### The line is where the number came from, not what kind of loop it is
+
+**Cycling proved this the useful way round.** A walking iterator can be given `laps` — go round the
+source more than once — and the moment it does, the same walk that was a fact becomes a claim: the
+program asserted "forty times" out of thin air, exactly as a counted loop asserts a span. So
+`promisedPasses` starts answering, the clamp at `push` starts applying, and a cycling walk is bounded at
+`maxIterations` while a plain one is not. **The budget was already waiting on the other side of the
+line**; nothing new had to be built, and no number had to be chosen.
+
+The clamp cuts the **laps and never the source**, which is the same rule read carefully: a 3-element
+vector cycles 33 times and stops at 99 emissions, while a 1000-element vector asked to cycle twice falls
+back to *once* — 1000 emissions, allowed, because that lap is a fact and `maxVectorLength` is what
+bounds it. One lap is the floor a clamp may never cut below.
+
+The general form: **a limit belongs to the number a program made up, not to the loop it happens to sit
+in.** Two loops of the same kind can fall on opposite sides.
+
 ### Clamp; never modulo
 
 When a limit does apply, **apply it monotonically**. The earlier `.execDoFew` family took its count

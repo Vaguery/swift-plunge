@@ -107,7 +107,33 @@ the problem, which the "closed system" framing was obscuring: **until now a vect
 be rearranged, never computed.** A program could not put an answer into a vector. Now every element can
 be something it worked out, and each element's own derivation survives into the vector's crux.
 
-Two more sources are planned and need infrastructure first.
+### Opened: `vecFromIterator`
+
+**This is the one that opens the closed system**, and it is worth being precise about how, because it is
+not by adding a builder for each type.
+
+`.vecFromIterator` drives an iterator to exhaustion and collects what it emits into a vector of the
+matching type. So `0 10 1 0 0 true ( ) .iteratorFromIntRange .vecFromIterator` produces a `vecInt` from
+**nothing but ints**. The seeded-only property is gone: a program that flushes every vector it was given
+can now make more, from scalars, from a string, from a code block — from anything an iterator can walk or
+count.
+
+Two things make it possible, and both were already there:
+
+- **Its result type is its argument's.** One instruction, four result stacks, chosen by what actually
+  comes out. That is what lets it exist without a sieve — nothing can *ask* `.iterator` for an
+  Int-emitter (see "Sieve arguments"), so it takes whatever is on top and answers in kind. `.code`'s
+  quotes are the same trick from the other direction, and `pushDefault` already routed by type.
+- **Nothing had to choose a length.** Every kind was already bounded before it could be an argument: a
+  claim was clamped to `maxIterations` at `push`, a walk's length is a fact `maxVectorLength` bounds, and
+  the push gate measures the result once more on the way out.
+
+It is also the first instruction that makes `.int` *scarcer* on purpose and is right to: two ints become
+a hundred, on a different stack. Given that `.int` is the most-demanded stack in the language and unmet
+roughly half the time it is wanted, an instruction that turns the cheap plentiful thing into the
+expensive scarce one is exactly the direction of trade this document has been asking for.
+
+One more source is planned and needs infrastructure first.
 
 ## 3. `.int` is the currency, and the combinators tax it
 

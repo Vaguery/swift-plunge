@@ -121,6 +121,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // killed it to report its stride would be useless in the body, which is
     // exactly where a program wants to ask. The name is the warning label.
     case iteratorPeekStart, iteratorPeekEnd, iteratorPeekStride, iteratorPeekBody
+    case iteratorPeekLaps
 
     // iterator setters
     //
@@ -134,6 +135,16 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // the same rule every other path already follows: a spent iterator is not a
     // thing.
     case iteratorSetStart, iteratorSetEnd, iteratorSetCounter, iteratorSetDepth
+
+    /// How many times a walking iterator goes round its source. Cycling is an
+    /// attribute rather than a kind, and this is the only way to set it: no
+    /// constructor takes it, so an iterator that never asks pays nothing — not an
+    /// argument, and not a longer crux.
+    ///
+    /// **Refused for `.counting` and `.repeating`**, which keep their span in
+    /// `destination`; laps there would be a second number meaning the same thing.
+    /// A sawtooth counter is a cycling walk over a vector of the numbers.
+    case iteratorSetLaps
 
     /// Rewind a loop: the cursor goes back to 0, and start, end, stride and body
     /// are left exactly as they were.
@@ -201,6 +212,20 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecBoolDeepDup, vecBoolDup, vecBoolDupItems, vecBoolDupTimes, vecBoolStackIsEmpty, vecBoolFlush, vecBoolPop, vecBoolPopItems, vecBoolRot, vecBoolShove, vecBoolStackDepth, vecBoolSwap, vecBoolYank, vecBoolYankDup
 
     
+    /// Drive an iterator to exhaustion and collect what it emits into a vector of
+    /// the matching type — the one vector instruction belonging to no one vector
+    /// type, because **its result type is its argument's**. Hand it an
+    /// Int-emitting iterator and a `vecInt` comes back; a Bool-emitting one and a
+    /// `vecBool` does.
+    ///
+    /// That polymorphism is what lets this exist without a sieve. A genome cannot
+    /// *ask* for "an iterator that emits Ints" — `.iterator` is homogeneous by
+    /// type and heterogeneous by behaviour, and asking for the top one and hoping
+    /// is all anything can do (see "Notes on Push/Sieve arguments.md"). So this
+    /// takes whatever iterator is there and answers in kind, rather than
+    /// demanding a type it has no way to find.
+    case vecFromIterator
+
     // VECDOUBLE instructions
     //
     case vecDoubleButLast, vecDoubleConcat, vecDoubleConj, vecDoubleContains, vecDoubleDrop, vecDoubleFirst, vecDoubleIndexOf, vecDoubleItemIsEmpty, vecDoubleIterate, vecDoubleLast, vecDoubleLength, vecDoubleNth, vecDoubleOccurrencesOf, vecDoubleRemove, vecDoubleReplace, vecDoubleReplaceFirst, vecDoubleRest, vecDoubleReverse, vecDoubleSet, vecDoubleSubVec, vecDoubleTake
