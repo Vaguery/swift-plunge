@@ -124,6 +124,34 @@ It also improves the explanation. An exploded element had to record *which of th
 (`s .stringPushAllChars 3 .charPopItems` — law 5). An emitted element just says what it is:
 `s 2 .stringNth`. Independent, O(1), and true regardless of how many passes have run.
 
+### The unit is **items produced**, not work done
+
+This is the rule of thumb that says where the line falls, and it is narrower than "nothing expensive
+happens in one step":
+
+> **Making items is shunted into an Iterator. Computing a value is not.**
+
+Nobody wants "does this string contain that substring" or "split this vector at index n" to become an
+iterator that inspects one position per pass. Those do O(n) work and produce **one item**, and one item
+is fine. `stringPushAllChars` produced *N items*, and that is what made it a loop in disguise.
+
+So an instruction may do any amount of work; it may not produce an unbounded number of **items**. The
+asymmetry is not arbitrary — items are the thing that piles up. They land on stacks, persist, get copied
+by combinators and carried into other instructions' arguments. Work evaporates when the step ends, and
+its size is already bounded by the data it runs on (`maxStringLength`, `maxVectorLength`, `maxCodePoints`
+— §11 leaves nothing unbounded to work on).
+
+`.codeFromIterator` is the case that sharpens it. It collects up to a thousand values in a single step,
+which sounds like exactly what this principle forbids — and is not, because **it produces one Item**. A
+block of a thousand points is one thing on one stack, gated by `maxCodePoints` at the push boundary like
+any other item. Contrast `.stringPushAllChars`, which produced a thousand *separate* chars, each one
+independently copyable and each needing to say which of the pile it was.
+
+Pushing iteration and recursion into a continuation is a **practicality** — it is how the complexity
+stays legible and how `stepLimit` gets to govern a loop at all. It is not a claim that every expensive
+thing must be visible in Push. The mechanics of counting were never meant to be in Push, and neither is
+the mechanics of searching a string.
+
 ## 5. Relieve argument starvation; never deepen it
 
 Push programs starve: an instruction wants an argument, the stack is empty, nothing happens. It is one of

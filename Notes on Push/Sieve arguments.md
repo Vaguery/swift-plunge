@@ -178,11 +178,16 @@ it is exactly what §5 asks for.
 
 ## 4. What it would cost
 
-**A new unbounded dimension: work per step.** Every budget assumes a step is O(1)-ish. A sieve is
-O(depth), and `maxStackDepth` is 10,000 — so one step could run 10,000 predicate evaluations, and
-`stepLimit` would count it as one. That is precisely the shape §11 exists to prevent, and it would want a
-budget of its own with a stated reason (§13). Note this is *not* the same as the runaway guard's concern:
-the guard watches stacks growing, not steps getting expensive.
+**A new unbounded dimension: work per step.** ~~Every budget assumes a step is O(1)-ish.~~ **This has
+since been answered, and the answer is that it is not a cost.** Design Principles §4 now states the unit:
+*making items* is what must be bounded, not work done. A sieve does O(depth) work and produces **one
+item** — the same class as `stringContainsSubstring`, which nobody wants to be an iterator either. The
+work evaporates when the step ends; `maxStackDepth` bounds the depth it can search, exactly as
+`maxStringLength` bounds the string a search instruction scans.
+
+`.codeFromIterator` settled this by arriving first: it collects up to a thousand values in one step and
+is uncontroversial, because it produces one Item. So a sieve needs no budget of its own, and question 3
+below is closed.
 
 **A predicate is a new kind of thing in a Behavior.** Today a Behavior is a name, some stacks, and a
 transformer. A predicate is code that inspects a candidate — the first thing in the language that
@@ -234,8 +239,9 @@ not be.
    failure is argument starvation. The sieve is justified by matrices alone and can wait for them.
 2. ~~**Build the planner without the sieve?**~~ **Answered: yes, and done.** Plan-then-commit was worth
    having on its own, and the sieve is now one more requirement kind whenever it is wanted.
-3. **What bounds a sieve's cost?** A `maxSieveDepth`, or a stated invariant that stacks searched by a
-   sieve stay small, or nothing and accept O(depth) steps?
+3. ~~**What bounds a sieve's cost?**~~ **Closed: nothing new is needed.** `maxStackDepth` bounds what it
+   can search, and Design Principles §4 says the unit is items produced, not work done — a sieve produces
+   one. See §4 above.
 4. **Does the composition invariant hold?** "A crux fragment leaves its value and nothing else" is
    currently an accident. Is it worth promoting to a tested rule regardless of the sieve? (Probably yes.)
 5. **Should the sieve be visible to a program?** A sieved argument is *found*, not taken. If a program

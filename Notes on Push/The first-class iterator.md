@@ -108,6 +108,40 @@ Burial is *state*, not a passing argument — two iterators alike but for where 
 behave differently — so it is part of `isEqual`, part of the `AnyItem` envelope, and carried by the
 constructor for `crux()`.
 
+### Can a tight loop be paused? (measured)
+
+**Yes, and burial is the only self-contained way.** A body that runs `2 .iteratorSetDepth` re-aims its
+own loop, and the next pass's continuation lands two items deeper in `.exec`, so pending work runs in
+between. Traced, with five pending items behind the loop:
+
+```
+tight (burial 0):     play play play  true true true true true
+body sets depth 2:    play play  true true  play  true true true
+```
+
+Everything else needs something the loop may not have:
+
+- **The continuation token is anonymous.** `.iteratorPlay` advances whatever is on top of `.iterator` —
+  not "its" iterator. So `.iteratorSwap`/`.iteratorRot`/`.iteratorYank` pause a loop by displacing it,
+  and the pending token simply plays whoever surfaced. "Pause this loop" and "run that loop" are the same
+  operation, which is why two loops interleave by trading places. **But it takes two**: with a lone
+  iterator on the stack, swap and rot have nothing to swap with and shove is a no-op.
+- **`.exec` surgery** on the token — `.execYank`, `.execPopItems` — works but is blunt and
+  depth-dependent, and the body has to count.
+- **`.iteratorPop`** kills rather than pauses, and so do the setters that empty a loop (`0
+  .iteratorSetLaps`, a negative depth, a counter carried past the end).
+
+**The gap this leaves: a lone iterator cannot be shelved.** There is no `.iteratorQuote`, so an iterator
+cannot be moved to `.code` and parked — even though a CodeItem can perfectly well hold one (§7b), and
+`( «iter» ) .codeDo` would restore it via `pushDefault`. The five quotes are bool/char/double/int/string,
+and iterators were not considered. That is the missing instruction if parking is ever wanted.
+
+**A wart, found while measuring this.** On the last pass, `.iteratorPlay` deliberately re-pushes neither
+the iterator nor a continuation — but the **body still runs**, and a body that re-aims its own loop
+therefore reaches for an iterator that is already gone: `iteratorSetDepth missing args: .iterator` on
+`.error`, once, on the way out. It is honest and it is documented behaviour, but any self-modifying loop
+pays it.
+
 ### Bodies are optional
 
 `body: CodeItem?`. **nil means a sequence rather than a loop**: it only emits its elements, and a pass

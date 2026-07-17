@@ -63,15 +63,14 @@ does not degrade the crux, because collecting is law 3 and boxing is law 1b.
 
 ### What it costs, stated honestly
 
-- **One step can now do a thousand units of work.** `.codeFromIterator` collected a 1000-point block in
-  a **single step** (`counter == 1`). Every budget in the system assumes a step is roughly O(1), and this
-  is the first instruction where that is plainly false. It is *bounded* — `maxCodePoints` and
-  `maxItemWeight` gate the result at the push boundary — but `stepLimit` prices it at 1. This is exactly
-  the concern "Sieve arguments.md" §4 raised about a sieve's O(depth) step, arriving from a different
-  door and getting in.
 - **The real ceiling is `stepLimit`**, not the loop budget. 400 ints cost 418 steps, because *emitting*
   them one at a time is honest work even though *collecting* them was one step. A program can amplify
   until it runs out of steps, which is the bound that was doing the work all along.
+- **One step doing a thousand values' worth of work is *not* the cost**, though it looks like one.
+  `.codeFromIterator` collected a 1000-point block at `counter == 1` — and it produced **one Item**,
+  which is the unit that matters (§4). A block of a thousand points is one thing on one stack, gated by
+  `maxCodePoints` at the push boundary. The work evaporates; the item is what persists, and it is
+  bounded. The amplification is real, but it is not smuggled in through the step budget.
 - **The 10× rate is an accident**, not a decision. It is the ratio of two numbers chosen for unrelated
   reasons (§13: `maxIterations` is derived from `stepLimit`; `maxCodePoints` is a policy). Anyone tuning
   either should know they are also setting an exchange rate.
