@@ -96,11 +96,13 @@ struct InstructionMixProbe {
     /// half blocks and the other a third. Reported rather than solved.
     nonisolated static let lengths = [50, 100, 250, 500]
 
-    /// Programs per cell **per tranche**. Small on purpose: this bounds one
-    /// process's work and memory. The sample grows by running more tranches, not
-    /// by making one bigger. 25 × 40 cells = 1000 programs a tranche, a few
-    /// seconds even at length 500.
-    nonisolated static let casesPerTranche = 25
+    /// Programs per cell **per tranche**. Bounded on purpose: this fixes one
+    /// process's work and memory (~90 MB flat, whatever the total sample). The
+    /// sample grows by running more tranches, not by making one bigger.
+    /// 100 × 40 cells = 4000 programs a tranche, a handful of seconds at the
+    /// smaller lengths; six tranches gave 600 programs per cell with ±2-point
+    /// intervals. Lower it if a length-500 tranche runs long.
+    nonisolated static let casesPerTranche = 100
 
     /// Wall-clock budget for one program.
     ///
