@@ -313,3 +313,100 @@ Not decisions — the trade-offs belong to whoever picks these up.
    ends at once.
 5. Nothing needs doing about `.bool` structurally — but note the ~53% empirical shortfall is among the worst
    in the language, and it is an *opening* problem, not a steady-state one.
+
+
+---
+
+# Part 3: what mix of instructions should a random program have?
+
+Measured by "Instruction Mix Probe", a slow diagnostic run alone. Ten mixes over the four
+`InstructionTag` partitions — the balanced centre, each tag **enriched** (a third of the draw) and
+**depleted** (a ninth) in turn, plus `language-shaped` as a control. 300 Fibonacci-genome programs of 120
+genes each, every mix meeting the same seed.
+
+## 0. The measure lied first, again
+
+The raw starvation rate says `equal` starves at **4.0%** and `language-shaped` at **29.2%** — a 7×
+difference that is almost entirely an artifact.
+
+**127 of the 526 instructions can never starve.** Constants and inputs read a binding; `xStackDepth`,
+`xFlush` and `xStackIsEmpty` measure or clear, and an empty stack is a fine answer for all of them. So a
+mix carrying more of those scores a lower starvation rate *mechanically*, whatever it does to the
+programs. Half of `equal`'s draw is environment tokens; only 17% of `language-shaped`'s is. **Comparing
+their raw rates compares the dilution, not the language.**
+
+The comparable number is the **conditional rate**: of the attempts by instructions that ask for anything
+at all, how many went unfed. `Interpreter.alwaysSatisfied` makes it computable. It is a fourth instance
+of the pattern this document keeps meeting — see §14 — where the obvious measure and the thing it
+measures share a blind spot.
+
+| mix | starved (raw) | **of starvable** | maxCrux | meanCrux | composed | steps |
+|---|---|---|---|---|---|---|
+| equal | 4.0% | **34.7%** | 250 | 2.0 | 34% | 848 |
+| constant-rich | 4.3% | 34.2% | 193 | 1.8 | 29% | 807 |
+| input-rich | 3.6% | 35.1% | 250 | 2.1 | 36% | 837 |
+| combinator-rich | 4.3% | 36.2% | 56 | 1.9 | 28% | 779 |
+| other-rich | 5.6% | 39.0% | 181 | 2.1 | 34% | 832 |
+| constant-poor | 6.5% | **47.7%** | 99 | 1.6 | 26% | 777 |
+| input-poor | 7.1% | 34.7% | 399 | 2.1 | 35% | 693 |
+| combinator-poor | 5.0% | 35.2% | 211 | 1.8 | 30% | 874 |
+| other-poor | 3.8% | 39.1% | 131 | **1.4** | **18%** | 769 |
+| language-shaped | 29.2% | **54.0%** | 599 | 2.1 | 36% | 516 |
+
+*composed* = the share of surviving items whose crux is longer than one item — i.e. that were computed
+from something rather than handed over and left alone. It is the cheapest honest proxy for the thing this
+whole project is for: an item that can explain itself in more than one word.
+
+## 1. The headline: the pie chart barely matters — with one exception
+
+**Every one of the nine deliberate mixes lands between 34% and 39%.** Enrich or deplete any tag by a
+factor of three and the conditional starvation rate hardly moves. That is a genuinely surprising result:
+it says the generator's proportions, which nobody had ever chosen on purpose, are **not the lever** they
+looked like.
+
+The exception is real and points one way:
+
+> **`constant-poor` is 47.7%** — 13 points worse than anything else in the nine.
+
+Starve the constants and the programs starve, because **constants are where values come from**. Inputs
+are only 10 tokens and are bound to the same kinds of values, so `input-poor` costs nothing (34.7%); the
+80 constants are the actual supply. This is Part 1's "the vector stacks are closed systems" from the
+other end: a program that is handed nothing computes nothing.
+
+## 2. The status quo is the worst option measured
+
+`language-shaped` — drawing uniformly from `Interpreter.language.keys`, which is what
+`randomInstruction()` has always done — **starves at 54%, half again worse than any deliberate mix, and
+composes no better** (36% vs `equal`'s 34%, mean crux 2.1 vs 2.0).
+
+So the ~20-point starvation reduction from simply *choosing* a mix is free. Nothing is given up for it.
+That is worth knowing not because 54% is catastrophic but because it was never a decision: it is the
+shape of the language — 34% furniture, 15% constants, 2% inputs — leaking into the generator through
+`Dictionary.keys`.
+
+## 3. Composition needs instructions that compute
+
+`other-poor` (11% computing instructions) is the only mix that visibly hurts the programs: **18% composed
+against 26–36% everywhere else**, and the lowest mean crux at 1.4. Its starvation rate is *fine* (39.1%)
+— it simply produces less to starve over.
+
+Which sharpens what "starvation" is worth. **Low starvation is not the goal**; `other-poor` proves you
+can buy a decent rate by not attempting anything. The pair to watch is *starvation and composition
+together*, and on that pair `equal`, `input-rich`, `input-poor` and `other-rich` are indistinguishable
+winners — 34–39% starved, 34–36% composed.
+
+## 4. `.int` is still the story
+
+Every mix blames `.int` for 30–39% of its refusals, more than double the next stack. Nothing in the pie
+chart changes that, which is consistent with Part 2: `.int` is asked for three times more often than any
+other value stack, and no proportion of *instructions* fixes a shortage of *values*.
+
+## What this does not answer
+
+- **Genome length is not varied** (120 genes throughout), and the Fibonacci cliff means length is a
+  high-leverage parameter — 59 genes gives 34% code, 60 gives 55%. A length sweep is the obvious next
+  diagnostic.
+- **`maxCrux` is noisy** (a max over 300 programs; 56 to 599 across mixes with the same mean). Read the
+  mean and the composed share; treat the max as an anecdote.
+- **Only the Fibonacci genome.** Whether these proportions hold for a genome whose blocks are genes
+  (ForestGenome) is untested, and is exactly the kind of thing that could differ.
