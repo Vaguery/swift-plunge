@@ -189,22 +189,23 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
 
         doThis(.intGT, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGT )")
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGT 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intGT, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGT )")
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGT 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intGT, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGT )")
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGT 2 .intPopItems )")
     }
 
     @Test func intGTE() {
@@ -212,22 +213,23 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
 
         doThis(.intGTE, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intGTE 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intGTE, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intGTE 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intGTE, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intGTE 2 .intPopItems )")
     }
 
     @Test func intInc() {
@@ -265,22 +267,23 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
 
         doThis(.intLT, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLT )")
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLT 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intLT, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLT )")
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLT 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intLT, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLT )")
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLT 2 .intPopItems )")
     }
 
     @Test func intLTE() {
@@ -288,22 +291,23 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
 
         doThis(.intLTE, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intLTE 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intLTE, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intLTE 2 .intPopItems )")
 
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
         doThis(.intLTE, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intLTE 2 .intPopItems )")
     }
 
     @Test func intMax() {

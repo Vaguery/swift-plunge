@@ -282,7 +282,7 @@ nonisolated extension Interpreter {
     static let doubleGT_Behavior =
         Behavior(
             .doubleGT,
-            takes: [.double, .double],
+            reads: [.double, .double],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
@@ -290,7 +290,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: [y, x, InstructionItem(.doubleGT)],
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -301,7 +301,7 @@ nonisolated extension Interpreter {
     static let doubleGTE_Behavior =
         Behavior(
             .doubleGTE,
-            takes: [.double, .double],
+            reads: [.double, .double],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
@@ -309,7 +309,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: [y, x, InstructionItem(.doubleGTE)],
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -320,7 +320,7 @@ nonisolated extension Interpreter {
     static let doubleLTE_Behavior =
         Behavior(
             .doubleLTE,
-            takes: [.double, .double],
+            reads: [.double, .double],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
@@ -328,7 +328,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: [y, x, InstructionItem(.doubleLTE)],
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -339,7 +339,7 @@ nonisolated extension Interpreter {
     static let doubleLT_Behavior =
         Behavior(
             .doubleLT,
-            takes: [.double, .double],
+            reads: [.double, .double],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
@@ -347,7 +347,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: [y, x, InstructionItem(.doubleLT)],
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )

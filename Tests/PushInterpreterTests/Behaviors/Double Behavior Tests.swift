@@ -269,17 +269,21 @@ struct DoubleBehaviorTests {
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGT )")
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGT 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGT )")
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGT 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleGT, to: inty)
         #expect(stackString(inty, .bool) == "[ false false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGT )")
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGT 2 .doublePopItems )")
     }
 
     @Test func doubleGTE() {
@@ -294,17 +298,21 @@ struct DoubleBehaviorTests {
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleGTE 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleGTE 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleGTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleGTE 2 .doublePopItems )")
     }
 
     @Test func doubleInc() {
@@ -348,17 +356,21 @@ struct DoubleBehaviorTests {
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLT )")
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLT 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLT )")
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLT 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleLT, to: inty)
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLT )")
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLT 2 .doublePopItems )")
     }
 
     @Test func doubleLTE() {
@@ -372,17 +384,21 @@ struct DoubleBehaviorTests {
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( 4.25 3.25 .doubleLTE 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -4.25 3.25 .doubleLTE 2 .doublePopItems )")
 
+        doThis(.doublePop, to: inty)
+        doThis(.doublePop, to: inty)
         doThis(.doubleLTE, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLTE )")
+        #expect(callString(topItem(inty, .bool)) == "( -6.25 -6.25 .doubleLTE 2 .doublePopItems )")
     }
 
     @Test func doubleMax() {

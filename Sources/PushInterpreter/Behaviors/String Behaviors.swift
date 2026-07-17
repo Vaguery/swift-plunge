@@ -69,7 +69,7 @@ nonisolated extension Interpreter {
     static let stringContains_Behavior =
         Behavior(
             .stringContains,
-            takes: [.string, .string],
+            reads: [.string, .string],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
@@ -81,7 +81,7 @@ nonisolated extension Interpreter {
                             // resolved to different overloads across Foundation
                             // / module contexts once this code left the app target.
                             y.value.firstRange(of: x.value) != nil,
-                            call: [y, x, InstructionItem(.stringContains)],
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -92,7 +92,7 @@ nonisolated extension Interpreter {
     static let stringContainsChar_Behavior =
         Behavior(
             .stringContainsChar,
-            takes: [.string, .char],
+            reads: [.string, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
@@ -100,7 +100,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.contains(y.value),
-                            call: [y, x, InstructionItem(.stringContainsChar)],
+                            call: Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -111,7 +111,7 @@ nonisolated extension Interpreter {
     static let stringIndexOfChar_Behavior =
         Behavior(
             .stringIndexOfChar,
-            takes: [.string, .char],
+            reads: [.string, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 if let idx = x.value.firstIndex(of: y.value) {
@@ -124,9 +124,11 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 intIdx,
-                                call: [
-                                    y, x, InstructionItem(.stringIndexOfChar),
-                                ],
+                                call: Behavior.reading(
+                                [.string: 1, .char: 1],
+                                producing: .int,
+                                from: [y, x, InstructionItem(.stringIndexOfChar)]
+                            ),
                                 isContingent: Behavior.netContingency(of: x, y)
                             )
                         )
@@ -184,7 +186,7 @@ nonisolated extension Interpreter {
     static let stringItemIsEmpty_Behavior =
         Behavior(
             .stringItemIsEmpty,
-            takes: [.string],
+            reads: [.string],
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
                 return [
@@ -192,7 +194,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: [x, InstructionItem(.stringItemIsEmpty)],
+                            call: Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)]),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -249,7 +251,7 @@ nonisolated extension Interpreter {
     static let stringLTE_Behavior =
         Behavior(
             .stringLTE,
-            takes: [.string, .string],
+            reads: [.string, .string],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
@@ -257,7 +259,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: [y, x, InstructionItem(.stringLTE)],
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -268,7 +270,7 @@ nonisolated extension Interpreter {
     static let stringLT_Behavior =
         Behavior(
             .stringLT,
-            takes: [.string, .string],
+            reads: [.string, .string],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
@@ -276,7 +278,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: [y, x, InstructionItem(.stringLT)],
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -287,7 +289,7 @@ nonisolated extension Interpreter {
     static let stringGT_Behavior =
         Behavior(
             .stringGT,
-            takes: [.string, .string],
+            reads: [.string, .string],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
@@ -295,7 +297,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: [y, x, InstructionItem(.stringGT)],
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -306,7 +308,7 @@ nonisolated extension Interpreter {
     static let stringGTE_Behavior =
         Behavior(
             .stringGTE,
-            takes: [.string, .string],
+            reads: [.string, .string],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
@@ -314,7 +316,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: [y, x, InstructionItem(.stringGTE)],
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -344,7 +346,7 @@ nonisolated extension Interpreter {
     static let stringLength_Behavior =
         Behavior(
             .stringLength,
-            takes: [.string],
+            reads: [.string],
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
                 return [
@@ -352,7 +354,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.count,
-                            call: [x, InstructionItem(.stringLength)],
+                            call: Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)]),
                             isContingent: Behavior.netContingency(of: x, )
                         )
                     )
@@ -506,7 +508,7 @@ nonisolated extension Interpreter {
     static let stringOccurrencesOfChar_Behavior =
         Behavior(
             .stringOccurrencesOfChar,
-            takes: [.string, .char],
+            reads: [.string, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
@@ -514,9 +516,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.filter({ $0 == y.value }).count,
-                            call: [
-                                y, x, InstructionItem(.stringOccurrencesOfChar),
-                            ],
+                            call: Behavior.reading(
+                                [.string: 1, .char: 1],
+                                producing: .int,
+                                from: [y, x, InstructionItem(.stringOccurrencesOfChar)]
+                            ),
                             isContingent: Behavior.netContingency(of: x, y),
                         )
                     )

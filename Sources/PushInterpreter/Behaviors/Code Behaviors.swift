@@ -30,13 +30,13 @@ nonisolated extension Interpreter {
     static let codeItemIsEmpty_Behavior =
         Behavior(
             .codeItemIsEmpty,
-            takes: [.code],
+            reads: [.code],
             fxn: { a in
                 let (x) = (a[0] as! CodeItem)
                 let result =
                     BoolItem(
                         x.value.isEmpty,
-                        call: [x, InstructionItem(.codeItemIsEmpty)],
+                        call: Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)]),
                         isContingent: Behavior.netContingency(of: x)
                     )
                 return [Router(.bool, result)]
@@ -46,13 +46,13 @@ nonisolated extension Interpreter {
     static let codeLengthRoot_Behavior =
         Behavior(
             .codeLengthRoot,
-            takes: [.code],
+            reads: [.code],
             fxn: { a in
                 let (x) = (a[0] as! CodeItem)
                 let result =
                     IntItem(
                         x.value.count,
-                        call: [x, InstructionItem(.codeLengthRoot)],
+                        call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)]),
                         isContingent: Behavior.netContingency(of: x)
                     )
                 return [Router(.int, result)]

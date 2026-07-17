@@ -38,9 +38,11 @@ struct CodeBehaviorTests {
         loadCode(inty, code: [CodeItem([]) ] )
         #expect(stackString(inty, .code) == "[ ( ) ]")
 
+        // Non-destructive: reads the code, leaves it, and the crux pops it.
         doThis(.codeItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(callString(topItem(inty, .bool)) == "( ( ) .codeItemIsEmpty )")
+        #expect(stackString(inty, .code) == "[ ( ) ]", "the code survives")
+        #expect(callString(topItem(inty, .bool)) == "( ( ) .codeItemIsEmpty 1 .codePopItems )")
     }
 
     @Test func `codeItemIsEmpty works with non-empty code`() {
@@ -49,20 +51,23 @@ struct CodeBehaviorTests {
 
         doThis(.codeItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
-        #expect(callString(topItem(inty, .bool)) == "( ( 1 ) .codeItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( ( 1 ) .codeItemIsEmpty 1 .codePopItems )")
     }
 
     @Test func `codeLengthRoot only measures in the code root`() {
         loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]] )
         #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
 
+        // Non-destructive: each read leaves its code, so pop between reads.
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 1 ]")
-        #expect(callString(topItem(inty, .int)) == "( ( 1 ) .codeLengthRoot )")
+        #expect(callString(topItem(inty, .int)) == "( ( 1 ) .codeLengthRoot 1 .codePopItems )")
 
+        doThis(.codePop, to: inty)   // discard ( 1 ) to reach the next
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 2 1 ]")
 
+        doThis(.codePop, to: inty)
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 2 2 1 ]")
     }
@@ -73,7 +78,8 @@ struct CodeBehaviorTests {
 
         doThis(.codeLengthRoot, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(callString(topItem(inty, .int)) == "( ( ) .codeLengthRoot )")
+        #expect(stackString(inty, .code) == "[ ( ) ]", "the code survives")
+        #expect(callString(topItem(inty, .int)) == "( ( ) .codeLengthRoot 1 .codePopItems )")
     }
 
     @Test func `codeWrapRoot works with empty code`() {

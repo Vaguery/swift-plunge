@@ -73,7 +73,7 @@ nonisolated extension Interpreter {
     static let charGT_Behavior =
         Behavior(
             .charGT,
-            takes: [.char, .char],
+            reads: [.char, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
@@ -81,7 +81,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: [y, x, InstructionItem(.charGT)],
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -92,7 +92,7 @@ nonisolated extension Interpreter {
     static let charGTE_Behavior =
         Behavior(
             .charGTE,
-            takes: [.char, .char],
+            reads: [.char, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
@@ -100,7 +100,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: [y, x, InstructionItem(.charGTE)],
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -111,7 +111,7 @@ nonisolated extension Interpreter {
     static let charIsDigit_Behavior =
         Behavior(
             .charIsDigit,
-            takes: [.char],
+            reads: [.char],
             fxn: { a in
                 let (x) = (a[0] as! CharItem)
                 return [
@@ -119,7 +119,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWholeNumber,
-                            call: [x, InstructionItem(.charIsDigit)],
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)]),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -130,7 +130,7 @@ nonisolated extension Interpreter {
     static let charIsLetter_Behavior =
         Behavior(
             .charIsLetter,
-            takes: [.char],
+            reads: [.char],
             fxn: { a in
                 let (x) = (a[0] as! CharItem)
                 return [
@@ -138,7 +138,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isLetter,
-                            call: [x, InstructionItem(.charIsLetter)],
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)]),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -149,7 +149,7 @@ nonisolated extension Interpreter {
     static let charIsWhitespace_Behavior =
         Behavior(
             .charIsWhitespace,
-            takes: [.char],
+            reads: [.char],
             fxn: { a in
                 let (x) = (a[0] as! CharItem)
                 return [
@@ -157,7 +157,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWhitespace,
-                            call: [x, InstructionItem(.charIsWhitespace)],
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)]),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -168,7 +168,7 @@ nonisolated extension Interpreter {
     static let charLT_Behavior =
         Behavior(
             .charLT,
-            takes: [.char, .char],
+            reads: [.char, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
@@ -176,7 +176,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: [y, x, InstructionItem(.charLT)],
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -187,7 +187,7 @@ nonisolated extension Interpreter {
     static let charLTE_Behavior =
         Behavior(
             .charLTE,
-            takes: [.char, .char],
+            reads: [.char, .char],
             fxn: { a in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
@@ -195,7 +195,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: [y, x, InstructionItem(.charLTE)],
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )

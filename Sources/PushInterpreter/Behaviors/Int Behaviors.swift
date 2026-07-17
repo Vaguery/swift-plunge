@@ -258,7 +258,7 @@ nonisolated extension Interpreter {
     static let intGT_Behavior =
         Behavior(
             .intGT,
-            takes: [.int, .int],
+            reads: [.int, .int],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
@@ -266,7 +266,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value > x.value,
-                            call: [y, x, InstructionItem(.intGT)],
+                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -277,7 +277,7 @@ nonisolated extension Interpreter {
     static let intGTE_Behavior =
         Behavior(
             .intGTE,
-            takes: [.int, .int],
+            reads: [.int, .int],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
@@ -285,7 +285,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value >= x.value,
-                            call: [y, x, InstructionItem(.intGTE)],
+                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -296,7 +296,7 @@ nonisolated extension Interpreter {
     static let intLTE_Behavior =
         Behavior(
             .intLTE,
-            takes: [.int, .int],
+            reads: [.int, .int],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
@@ -304,7 +304,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value <= x.value,
-                            call: [y, x, InstructionItem(.intLTE)],
+                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLTE)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -315,7 +315,7 @@ nonisolated extension Interpreter {
     static let intLT_Behavior =
         Behavior(
             .intLT,
-            takes: [.int, .int],
+            reads: [.int, .int],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
@@ -323,7 +323,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value < x.value,
-                            call: [y, x, InstructionItem(.intLT)],
+                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLT)]),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
