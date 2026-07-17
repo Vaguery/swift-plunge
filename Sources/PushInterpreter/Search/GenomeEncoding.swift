@@ -12,11 +12,19 @@
 /// in: call sites take a `GenomeEncoding` and call `translate(_:)`, so adding a
 /// scheme means adding a case here and its translator — no call site changes.
 ///
-/// - `plushy`: the linear Plushy encoding (`Plushy.plushy2push`), the only one
-///   implemented today.
-/// - `forestGenome`, `bb9`: TODO — placeholder schemes, not yet implemented.
+/// - `plushy`: the linear Plushy encoding (`Plushy.plushy2push`), where structure
+///   is carried by open/close control tokens.
+/// - `fibonacci`: a flat item stream whose leading blocks have **implied**
+///   Fibonacci lengths (1, 1, 2, 3, 5…) until about a third of it is used, the
+///   rest flat. A testing genome: the lengths are not genes, so a search cannot
+///   move them.
+/// - `forestGenome`: TODO — the same shape as `fibonacci` with the block lengths
+///   **encoded as genes**, which is the evolvable version. It shares
+///   `BlockPacking`; only the source of the lengths differs.
+/// - `bb9`: TODO — placeholder scheme, not yet implemented.
 public nonisolated enum GenomeEncoding: String, Sendable, Codable, Hashable, CaseIterable {
     case plushy
+    case fibonacci
     case forestGenome
     case bb9
 
@@ -28,6 +36,8 @@ public nonisolated enum GenomeEncoding: String, Sendable, Codable, Hashable, Cas
         switch self {
         case .plushy:
             Plushy.plushy2push(genome)
+        case .fibonacci:
+            FibonacciGenome.translate(genome)
         case .forestGenome:
             ForestGenome.translate(genome)  // TODO: not yet implemented
         case .bb9:
