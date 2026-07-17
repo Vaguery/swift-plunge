@@ -229,9 +229,35 @@ nonisolated extension Interpreter {
     )
 
 
+    /// Box a live iterator and park it on `.code`, where no continuation can
+    /// reach it.
+    ///
+    /// Provenance is law 2 — relocation across stacks is not free — and it records
+    /// exactly as the other quotes do: `«iter» .iteratorQuote`. The iterator's own
+    /// `call` rebuilds it by state, so the block reproduces a loop at the cursor it
+    /// was parked at, which is the whole point of shelving one.
+    ///
+    /// **A spent iterator cannot arrive here**, because a spent iterator cannot
+    /// rest on `.iterator` to be quoted. So the block always holds a live loop, and
+    /// `.codeDo` hands back something that still has something to emit.
+    static let iteratorQuote_Behavior =
+    Behavior(
+        .iteratorQuote,
+        takes: [.iterator],
+        fxn: { a in
+            let (x) = (a[0])
+            var result = CodeItem([x])
+            result.isContingent = Behavior.netContingency(of: x)
+            result.call = [x, InstructionItem(.iteratorQuote)]
+            return [ Router(.code, result) ]
+        }
+    )
+
+
     static let codeBehaviors:[PushInstruction : Behavior] =
     [
         .codeFromIterator : codeFromIterator_Behavior,
+        .iteratorQuote : iteratorQuote_Behavior,
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,

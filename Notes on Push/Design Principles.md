@@ -230,6 +230,9 @@ of unrelated-looking design decisions becomes one decision:
   than a lossy one.
 - **Which makes it the obvious place to reach for**, and the reason to keep it in mind while designing:
   when an instruction needs to accept "any item" and `takes:` cannot say so, the answer is already built.
+  `.iteratorQuote` is the case in point — parking a live loop out of reach of a pending continuation took
+  one behavior and no new machinery, because the box was already there and `.codeDo` already knew how to
+  give things back.
 
 Two things follow that are less comfortable. `.code` is the language's **scarcest** resource (~0.29
 producers per consumer — see "Stack economics"), so the universal channel is also the one most likely to

@@ -65,6 +65,21 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // code conversion
     case execQuote, intQuote, boolQuote, charQuote, stringQuote, doubleQuote
 
+    /// Box a live iterator and park it on `.code`.
+    ///
+    /// The other quotes lift a *value* out of reach of its own stack's
+    /// combinators. This one lifts a **loop** out of reach of a pending
+    /// continuation, which is a sharper thing to want: `.iteratorPlay` advances
+    /// whatever is on top of `.iterator` and does not name its iterator, so before
+    /// this the only way to keep a loop from being advanced was to have a *second*
+    /// loop to displace it with. A lone iterator could be re-aimed or killed, never
+    /// shelved.
+    ///
+    /// `( «iter» ) .codeDo` gives it back: the block unwraps onto `.exec`, and an
+    /// iterator is not an instruction, so `pushDefault` routes it home to
+    /// `.iterator`. Nothing new was needed for the return trip.
+    case iteratorQuote
+
     // code combinators
     case codeDeepDup, codeDup, codeDupItems, codeDupTimes, codeStackIsEmpty, codeFlush, codePop, codePopItems, codeRot, codeShove, codeStackDepth, codeSwap, codeYank, codeYankDup
 

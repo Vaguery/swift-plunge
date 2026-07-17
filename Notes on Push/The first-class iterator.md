@@ -131,10 +131,22 @@ Everything else needs something the loop may not have:
 - **`.iteratorPop`** kills rather than pauses, and so do the setters that empty a loop (`0
   .iteratorSetLaps`, a negative depth, a counter carried past the end).
 
-**The gap this leaves: a lone iterator cannot be shelved.** There is no `.iteratorQuote`, so an iterator
-cannot be moved to `.code` and parked — even though a CodeItem can perfectly well hold one (§7b), and
-`( «iter» ) .codeDo` would restore it via `pushDefault`. The five quotes are bool/char/double/int/string,
-and iterators were not considered. That is the missing instruction if parking is ever wanted.
+**The gap this left has been filled: `.iteratorQuote`.** A lone iterator can now be shelved — boxed onto
+`.code`, where no continuation can reach it, and handed back by `.codeDo`. It is the fourth way to pause,
+and the second that needs nothing but the loop itself.
+
+It cost one behavior and no new machinery, because §7b had already done the work: a CodeItem holds
+anything, so the box existed; law 1b makes the trip lossless, so the loop keeps its body; and the return
+needed no instruction at all — `.codeDo` unwraps onto `.exec`, an iterator is not an instruction, and
+`pushDefault` routes it home to `.iterator`.
+
+What it parks is a **live loop at its cursor**, not a recipe for one: `«0→4 by 1 @2» .iteratorQuote`
+records under law 2 like every other quote, and the iterator's own record rebuilds it by state, so the
+crux reproduces a loop two passes in. That is the whole point of shelving one.
+
+The other quotes lift a *value* out of reach of its own stack's combinators. This lifts a *loop* out of
+reach of a pending continuation — a sharper thing to want, and only necessary because the token is
+anonymous.
 
 **A wart, found while measuring this.** On the last pass, `.iteratorPlay` deliberately re-pushes neither
 the iterator nor a continuation — but the **body still runs**, and a body that re-aims its own loop
