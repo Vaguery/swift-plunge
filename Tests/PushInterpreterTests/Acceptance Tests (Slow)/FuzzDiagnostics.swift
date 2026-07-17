@@ -14,25 +14,9 @@
 import Foundation
 @testable import PushInterpreter
 
-/// A deterministic RNG (SplitMix64) so a fuzz run reproduces exactly from its
-/// seed. Every random choice in the fuzzer — program generation, mutation,
-/// chunk deletion — draws from the shared `fuzzRNG`.
-struct SeededRNG: RandomNumberGenerator {
-    private var state: UInt64
-    init(seed: UInt64) { state = seed }
-    mutating func next() -> UInt64 {
-        state &+= 0x9E37_79B9_7F4A_7C15
-        var z = state
-        z = (z ^ (z >> 30)) &* 0xBF58_476D_1CE4_E5B9
-        z = (z ^ (z >> 27)) &* 0x94D0_49BB_1331_11EB
-        return z ^ (z >> 31)
-    }
-}
-
-/// The fuzzer's shared RNG. Only ever used on the test's MainActor timeline
-/// (request-building and refine — never inside the concurrent explore tasks,
-/// which do no random draws), so a single global is safe. Reseeded by the test.
-nonisolated(unsafe) var fuzzRNG = SeededRNG(seed: 0)
+// `SeededRNG` and `fuzzRNG` now live in the library beside `RandomCode`
+// (Sources/PushInterpreter/Search/RandomCode.swift), which is where the draws
+// they serve live. Still a shared global, so fuzz suites must still run alone.
 
 /// One window of a profiled run: how long a block of steps took, what ran, and
 /// how big the stacks were at the end.
