@@ -174,6 +174,31 @@ struct VecFromIteratorTests {
         #expect(stackString(inty, .vecInt) == "[ [1, 2] ]")
     }
 
+    /// **An iterator emitting CodeItems**, which is not hypothetical: `.repeating`
+    /// takes any item at all as its origin, and a walk over a block of blocks
+    /// emits blocks. There is no vector of code, so it refuses — and hands the
+    /// loop back, which is the only reason the refusal is cheap.
+    @Test func `an iterator emitting code blocks is refused`() {
+        let repeated = loaded(
+            IteratorItem(
+                kind: .repeating(into: nil),
+                origin: CodeItem([IntItem(1), IntItem(2)]),
+                destination: IntItem(3),
+                body: nil,
+                emits: true
+            )
+        )
+        doThis(.vecFromIterator, to: repeated)
+        #expect(errorStrings(repeated).contains { $0.contains("which no vector holds") })
+        #expect(repeated.stacks[.iterator]!.count == 1)
+        #expect(stackString(repeated, .code) == "[ ]", "and nothing leaks onto .code")
+
+        let nested = loaded(walking(CodeItem([CodeItem([IntItem(1)]), CodeItem([IntItem(2)])])))
+        doThis(.vecFromIterator, to: nested)
+        #expect(errorStrings(nested).contains { $0.contains("which no vector holds") })
+        #expect(nested.stacks[.iterator]!.count == 1)
+    }
+
     /// A repeating iterator over a *vector* emits vectors, and there is no vector
     /// of vectors — but over an int it emits ints, and there is.
     @Test func `a repeating iterator collects only if it repeats a scalar`() {

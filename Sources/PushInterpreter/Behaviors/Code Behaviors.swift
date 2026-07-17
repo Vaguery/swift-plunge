@@ -188,8 +188,50 @@ nonisolated extension Interpreter {
     )
 
 
+    /// Drive an iterator to exhaustion and box what it emitted into one block.
+    ///
+    /// **This is the general form of collecting, and it never refuses.** A
+    /// CodeItem is the vector-of-anything (see "The universal box" in Items.swift),
+    /// so every iterator that emits anything at all has an answer here — including
+    /// the ones `.vecFromIterator` must turn away: a tree walk emitting subtrees,
+    /// a `.repeating` iterator carrying a block, an `.elements` walk over a mixed
+    /// block, a string's chars. Read the pair the right way round and the
+    /// asymmetry disappears: **a vector is the special case where the emissions
+    /// are uniform scalars**, and this is the case that always applies.
+    ///
+    /// Provenance is law 3, exactly as `.vecFromIterator`: the block records its
+    /// iterator and this instruction, and the iterator's own record rebuilds it at
+    /// its cursor, so re-running collects the same sequence from the same place.
+    /// The elements keep their own `call`s, which is what makes the block's crux
+    /// say where each of its contents came from.
+    ///
+    /// An empty collect needs no special case here, and that is the difference
+    /// from the vector form: `( )` is a perfectly good value, where an empty
+    /// vector of *no particular type* is a question with no answer.
+    ///
+    /// **Order**: the body is handed back first so the collected block lands on
+    /// top of it. Both go to `.code`, and the result is what the next instruction
+    /// should find — a crux fragment has to leave its value on top or nothing
+    /// composes.
+    static let codeFromIterator_Behavior =
+    Behavior(
+        .codeFromIterator,
+        takes: [.iterator],
+        fxn: { a in
+            let iterator = a[0] as! IteratorItem
+            let collected = CodeItem(
+                iterator.collected(),
+                call: [iterator, InstructionItem(.codeFromIterator)],
+                isContingent: Behavior.netContingency(of: iterator)
+            )
+            return Interpreter.iteratorFarewell(iterator) + [Router(.code, collected)]
+        }
+    )
+
+
     static let codeBehaviors:[PushInstruction : Behavior] =
     [
+        .codeFromIterator : codeFromIterator_Behavior,
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,

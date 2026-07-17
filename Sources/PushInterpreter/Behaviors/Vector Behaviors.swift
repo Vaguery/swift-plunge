@@ -1250,7 +1250,10 @@ nonisolated extension Interpreter {
                 }
 
             guard let collected, let resting = PushStack.defaultStack(for: collected) else {
-                return refuse("\(iterator.pretty()) emits \(items[0].pretty()), which no vector holds")
+                return refuse(
+                    "\(iterator.pretty()) emits \(items[0].pretty()), which no vector holds"
+                    + " — .codeFromIterator takes anything"
+                )
             }
             return [Router(resting, collected)] + Interpreter.iteratorFarewell(iterator)
         }

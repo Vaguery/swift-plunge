@@ -47,6 +47,18 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     //
     case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeDo, codeFlatten, codeFlattenPoint, codeFlattenRange, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeItemIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
 
+    /// Drive an iterator to exhaustion and box everything it emitted into a block.
+    ///
+    /// **The general case of collecting**, and the reason it never refuses: a
+    /// CodeItem is this language's vector-of-anything, so *every* iterator has an
+    /// answer here. `.vecFromIterator` is the special case for when the emissions
+    /// happen to be uniform scalars and a real vector will hold them.
+    ///
+    /// It is also one of the few genuine **producers** of `.code`, which is the
+    /// language's structurally scarcest resource — until now, only the five quotes
+    /// made new code out of anything (Stack economics, part 1).
+    case codeFromIterator
+
     // code comparison
     case codeEq
 

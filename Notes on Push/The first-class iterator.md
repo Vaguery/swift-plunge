@@ -209,6 +209,11 @@ Three things it settles:
 - **The result type is the argument's** — one instruction, four result stacks, read off what actually
   came out rather than off the kind. That is what lets it exist without a sieve, and it answers question
   1 of "Sieve arguments" in the affirmative: the vector case never needed one.
+- **`.codeFromIterator` is the general form, and never refuses.** A CodeItem is the vector-of-anything
+  (§7b), so every iterator has an answer there: a tree walk emitting subtrees, a mixed block, a string's
+  chars. Read the pair the right way round and the asymmetry disappears — **a vector is the special case
+  where the emissions are uniform scalars**, and `.vecFromIterator` points at its sibling when it turns
+  something away. It is also one of the few genuine *producers* of `.code`, the scarcest stack there is.
 - **Nothing chooses a length.** Every kind was already bounded before it could be an argument (§12), so
   the question "how long should a collected vector be?" turned out to be already answered, twice, for
   two different reasons.

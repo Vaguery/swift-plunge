@@ -178,6 +178,38 @@ instruction.
 
 See "CodeItem goes to code.md".
 
+## 7b. A CodeItem is the vector-of-anything
+
+The name says "code". The type says `[any Item]`. **The type is the useful reading**, and forgetting it
+is how the same surprise keeps arriving from new directions.
+
+Every other collection in this language is homogeneous by construction: a `VecIntItem` holds ints, and
+two of them are interchangeable as arguments. A CodeItem holds ints, strings, vectors, instructions,
+iterators and other blocks, in any mixture, nested to any depth. **It is the only heterogeneous container
+here**, and the only one that can hold something which is not a value at all.
+
+Read `.code` as "the stack of arbitrary sequences, which a program may also choose to run", and a scatter
+of unrelated-looking design decisions becomes one decision:
+
+- **One constructor serves thirteen stacks.** `.iteratorRepeating` takes `( item ) count cursor burial`
+  rather than needing a per-stack variant, and the setters take `( 5 )` — because `takes:` is declared
+  statically and cannot ask an iterator what type it wants, so the value arrives in the universal box.
+- **It is the general case of collecting.** `.codeFromIterator` never refuses; `.vecFromIterator` is the
+  special case for when the emissions happen to be uniform scalars. Stated the other way round: **a
+  vector is a block that got lucky.**
+- **Boxing is free** (§8): an item put in and taken back out is the item that went in, with its own
+  `call` intact. The box is transparent to provenance, which is what makes it a usable channel rather
+  than a lossy one.
+- **Which makes it the obvious place to reach for**, and the reason to keep it in mind while designing:
+  when an instruction needs to accept "any item" and `takes:` cannot say so, the answer is already built.
+
+Two things follow that are less comfortable. `.code` is the language's **scarcest** resource (~0.29
+producers per consumer — see "Stack economics"), so the universal channel is also the one most likely to
+be empty; every design that routes through a box is paying in the tightest currency there is. And a
+heterogeneous stack is one where **two items of the same type are not interchangeable as arguments** —
+`.code` and `.exec` have always been so, `.iterator` now joins them, and that is exactly the itch a sieve
+would scratch ("Sieve arguments.md").
+
 ## 8. Containment leaves no mark
 
 An item that goes into a container and comes back out **is the item that went in**. Blocks get

@@ -309,7 +309,42 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
 }
 
 
+// MARK: - The universal box
+//
+// **A CodeItem is this language's vector-of-anything**, and that is worth saying
+// out loud because its name does not say it. `value` is `[any Item]`: it holds
+// ints, strings, vectors, instructions, iterators, other blocks — anything, in any
+// mixture, nested to any depth. Every other collection here is homogeneous by
+// construction. This one is the only heterogeneous container in the language, and
+// the only one that can hold an item that is not a value at all.
+//
+// Read `.code` as "the code stack" and you will keep meeting the same surprise
+// from different directions. Read it as "the stack of arbitrary sequences, which
+// a program may also choose to run", and these stop being surprises:
+//
+//  - **One constructor serves thirteen stacks.** `.iteratorRepeating` takes its
+//    payload boxed — `( item ) count cursor burial` — because a block can hold any
+//    item, so there is no need for a per-stack constructor. The setters do the
+//    same with `( 5 )`: `takes:` is declared statically and cannot ask an iterator
+//    what type it wants, so the value arrives in the universal box.
+//  - **It is the general case of collecting.** `.codeFromIterator` never refuses,
+//    while `.vecFromIterator` is the special case for when the emissions happen to
+//    be uniform scalars. A tree walk emitting subtrees, a mixed block, a string's
+//    chars — all have an answer, because a block holds anything.
+//  - **Boxing costs nothing** (law 1b, and principle 8): an item put in and taken
+//    back out is the item that went in, keeping its own `call`. The box is
+//    transparent to provenance, which is precisely what makes it usable as a
+//    universal channel rather than a lossy one.
+//  - **It is the scarcest thing in the language.** Structurally, `.code` has ~0.29
+//    producers per consumer — the five quotes, and now the collector. Everything
+//    else reshapes code it was already given. See "Stack economics".
+//
+// The cost of that generality is that `.code` is the one stack where two items of
+// the same type are not interchangeable as arguments, which `.exec` shares and
+// `.iterator` now joins — see "Sieve arguments.md" on liquid types.
 public nonisolated struct CodeItem: Item, Equatable, Pretty {
+    /// **Anything, in any mixture, nested to any depth** — see "The universal box"
+    /// above. This is the only heterogeneous container in the language.
     public var value: [any Item]
     public var call: [any Item] {
         didSet { self.callWeight = Self.weighCall(call) }
