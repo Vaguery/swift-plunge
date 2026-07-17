@@ -523,6 +523,9 @@ struct VecIntBehaviorTests {
         doThis(.vecIntConstruct, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [0, 0, 0, 0] ]")   // handed back
         #expect(stackString(inty, .int) == "[ 1 2 ]")               // untouched
+        // Worded like `Behavior.act`'s own refusal, because it is the same thing —
+        // so anything reading `.error` for "missing args" finds this too.
+        #expect(errorStrings(inty).contains { $0.contains("missing args") })
         #expect(errorStrings(inty).contains { $0.contains("wants 4 from .int, found 2") })
     }
 

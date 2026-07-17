@@ -20,6 +20,19 @@
 //  fires, which gives an exact denominator (every attempt) and exact blame (every
 //  stack that was short).
 //
+//  **Known blind spot: dynamic argument needs.** This reads `behavior.needs`, which
+//  is derived from the static `takes:` list — so it can only see requirements an
+//  instruction declares up front. `.vecXConstruct` wants N scalars where N is the
+//  length of its *other* argument, which `takes:` cannot express; it declares
+//  `[.vecInt: 1]`, and `isSatisfied` answers `true` in the very act of failing.
+//  So Construct's starvation is **under-reported here** — silently, and by the
+//  measure's own construction rather than by accident.
+//
+//  It is the only such instruction today. If more appear, `needs` is the thing to
+//  fix rather than this probe: the all-or-nothing bargain in `Behavior.act`
+//  (Design Principles §14) is worth strictly more than the diagnostic is, and
+//  right now Construct keeps that bargain by hand where the framework cannot.
+//
 //  Disabled and run alone, like every fuzz test here: `fuzzRNG` is a shared
 //  global and Swift Testing runs suites in parallel, so a concurrent drawer breaks
 //  the seed. See `CruxFuzzTests.disabledTests`.

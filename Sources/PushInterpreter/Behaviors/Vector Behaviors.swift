@@ -612,12 +612,19 @@ nonisolated extension Interpreter {
                 let scalars = interpreter.stacks[V.Scalar.pushStack]!
 
                 guard scalars.count >= wanted else {
+                    // Worded to match `Behavior.act`'s own refusal, because this is
+                    // the same thing: an instruction that cannot be supplied does
+                    // not run and does not consume. Anything reading `.error` for
+                    // "missing args" should find this too — the detail is added, not
+                    // substituted, because unlike an ordinary arity failure the
+                    // *number* wanted is not a property of the instruction.
                     return [
                         Router(V.pushStack, template),
                         Router(
                             .error,
                             ErrorItem(
-                                "\(instruction) wants \(wanted) from .\(V.Scalar.pushStack), found \(scalars.count)"
+                                "\(instruction) missing args: wants \(wanted) from"
+                                + " .\(V.Scalar.pushStack), found \(scalars.count)"
                             )
                         ),
                     ]
