@@ -20,20 +20,24 @@
 //  fires, which gives an exact denominator (every attempt) and exact blame (every
 //  stack that was short).
 //
-//  **This reads `behavior.needs`, so it can only see what an instruction declares.**
-//  That used to hide a great deal: five combinator families reached into a stack
-//  they never named in `takes:`, so `needs` could not see it, so this probe
-//  under-reported sixty behaviors — and `isSatisfied` answered `true` in the very
-//  act of failing. The measure and the bug had the same blind spot. `alsoNeeds:`
-//  fixed it at the source, which is the right place: `needs` is now honest, so this
-//  is too.
+//  **This asks the Planner, so it sees exactly what the Behavior will see.**
+//  It used to read `behavior.needs` and compare counts by hand, which could only
+//  ever see what an instruction *declared*. That hid a great deal twice over:
+//  five combinator families reached into a stack they never named in `takes:`, so
+//  this under-reported sixty behaviors — and `.vecXConstruct` wants N scalars where
+//  N is the length of its other argument, which no static count can state at all.
 //
-//  **One blind spot remains, and it is narrow: a dynamic requirement.**
-//  `.vecXConstruct` wants N scalars where N is the *length of its other argument*,
-//  which no static declaration can express. It keeps the all-or-nothing bargain by
-//  hand instead — the only Behavior that has to — so its starvation is still
-//  under-reported here. If a second such instruction ever appears, that is the
-//  moment to make `needs` a function of the interpreter rather than a constant.
+//  Both are now the Planner's business, and the probe simply runs the same plan the
+//  Behavior is about to run (`plan(on:)`), one instant before it fires. So a
+//  dynamic requirement is measured as honestly as a static one, and the blame is
+//  not inferred — `.short(stack)` names the stack the plan actually stopped at.
+//
+//  That makes blame **singular**: planning halts at the first stack that cannot
+//  supply, so a starved attempt blames one stack, not every stack it was short of.
+//  This is what the Behavior experiences, and it slightly under-counts a
+//  multiply-starved instruction's later stacks. `demand` still comes from
+//  `staticNeeds`, which is a lower bound — it names the stacks an instruction draws
+//  on, which is all a demand tally wants.
 //
 //  Disabled and run alone, like every fuzz test here: `fuzzRNG` is a shared
 //  global and Swift Testing runs suites in parallel, so a concurrent drawer breaks
@@ -113,27 +117,25 @@ struct ArgumentStarvationProbe {
                     let firstHere = seenHere.insert(next.value).inserted
                     if firstHere { tally.programs += 1 }
 
-                    // The instant before it fires: which of the stacks it wants
-                    // cannot supply what it wants?
+                    for stack in behavior.staticNeeds.keys { demand[stack, default: 0] += 1 }
+
+                    // The instant before it fires: run the very plan the Behavior
+                    // is about to run.
                     //
-                    // `.exec` is counted one short, because the instruction we are
-                    // about to run is still sitting on it and `step` pops it before
-                    // the Behavior gathers anything. Without this, every
-                    // `.exec`-taking instruction looks better fed than it is.
-                    var short: [PushStack] = []
-                    for (stack, wanted) in behavior.needs {
-                        demand[stack, default: 0] += 1
-                        let available = (inty.stacks[stack]?.count ?? 0) - (stack == .exec ? 1 : 0)
-                        if available < wanted { short.append(stack) }
-                    }
-                    if !short.isEmpty {
+                    // The instruction is still sitting on `.exec` and `step` pops
+                    // it before the Behavior gathers anything, so it comes off here
+                    // too. Without that, an `.exec`-taking instruction would find
+                    // itself and look better fed than it is.
+                    let token = inty.stacks[.exec]!.removeFirst()
+                    let plan = behavior.plan(on: inty)
+                    inty.stacks[.exec]!.prepend(token)
+
+                    if case .short(let stack) = plan {
                         tally.starved += 1
                         totalStarved += 1
                         if firstHere { tally.starvedFirst += 1 }
-                        for stack in short {
-                            tally.blamed[stack, default: 0] += 1
-                            shortfall[stack, default: 0] += 1
-                        }
+                        tally.blamed[stack, default: 0] += 1
+                        shortfall[stack, default: 0] += 1
                     }
                     tallies[next.value] = tally
                 }

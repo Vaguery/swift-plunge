@@ -1,7 +1,19 @@
 # Sieve arguments: finding an argument rather than taking one
 
-**Status: exploration. Nothing built, nothing decided.** Written down first because the idea is worth
-more than the session it was raised in.
+**Status: the planner is built; the sieve is not.** Question 2 below was answered *yes* — take the
+mechanism, leave the feature — so `Planner.swift` now exists and `Requirement` has three kinds
+(`.takes`, `.needs`, `.takesMany`). A sieve would be a fourth, and everything §1–§5 says about it still
+stands as written: **explored, not decided.**
+
+What that bought, all of it predicted here in §2: `isSatisfied` is now "the plan succeeds" rather than a
+depth count; `vecXConstruct`'s hand-rolled check is gone; `alsoNeeds:` folded in; the starvation probe's
+blind spot closed (and `vecIntConstruct` promptly turned up starving in 100% of the programs that reach
+it); and a refusal can name the stack it stopped at. The bargain of §14 is now structural and tested once
+for the whole language instead of Behavior by Behavior.
+
+**What is left to decide is only the sieve itself** — the predicate, its cost, and whether a program can
+tell the difference. Adding it is one enum case and one branch in `plan`, which was the point of
+sequencing it this way.
 
 ---
 
@@ -141,15 +153,16 @@ same shape keeps recurring — and that each recurrence has so far been solved s
 and once wrongly — is the strongest argument here. **The sieve is not the feature; the planner is.** The
 sieve is one requirement kind it happens to make possible.
 
-It would also close the last blind spot in the argument-starvation probe, which currently cannot see
+It would also close the last blind spot in the argument-starvation probe, which cannot see
 `vecXConstruct`'s dynamic need because `needs` is a constant rather than a function of the interpreter.
+*(Built, and it did: the probe now asks the planner, and the dynamic need is measured like any other.)*
 
 ## 3. It is an anti-starvation mechanism, which is the strongest argument for it
 
-Measured (`Stack economics.md`): `.bool` is unmet 72.5% of the time it is wanted, `.double` 63.4%,
-`.string` 60.2%, and `.int` — the most-demanded stack in the language — leaves **8,619 asks unmet**, the
-largest shortfall there is. Argument starvation is not a theoretical flaw here; it is the dominant
-failure mode of a random program.
+Measured (`Stack economics.md`): every scalar stack is empty roughly half the times it is wanted, and
+`.int` — the most-demanded stack in the language, asked three times more often than any other — leaves
+the largest shortfall there is by a wide margin. Argument starvation is not a theoretical flaw here; it
+is the dominant failure mode of a random program.
 
 A sieve is the only proposal so far that makes an instruction **more likely to fire**. `matrixMultiply`
 on a stack of random matrices is nearly always unsatisfiable if it takes the top; with a sieve it
@@ -210,10 +223,8 @@ not be.
 1. **Is `.iteratorCollect` (polymorphic result) enough for the vector case?** If yes, the sieve is
    justified by matrices alone and can wait for them. If no — if a genome must be able to *demand* a
    vecInt — the sieve is on the critical path.
-2. **Build the planner without the sieve?** Plan-then-commit is worth having on its own: it makes
-   `isSatisfied` honest, removes `vecXConstruct`'s hand-rolled check, folds in `alsoNeeds`, and closes the
-   probe's blind spot. The sieve could then be one more requirement kind, added later and cheaply. That
-   sequencing gets most of the value at a fraction of the risk.
+2. ~~**Build the planner without the sieve?**~~ **Answered: yes, and done.** Plan-then-commit was worth
+   having on its own, and the sieve is now one more requirement kind whenever it is wanted.
 3. **What bounds a sieve's cost?** A `maxSieveDepth`, or a stated invariant that stacks searched by a
    sieve stay small, or nothing and accept O(depth) steps?
 4. **Does the composition invariant hold?** "A crux fragment leaves its value and nothing else" is

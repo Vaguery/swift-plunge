@@ -588,11 +588,13 @@ nonisolated extension Interpreter {
     /// rearranged, never **computed**. Every element of the result can be something
     /// the program worked out.
     ///
-    /// Too few scalars and nothing happens: the template goes back untouched and an
-    /// ErrorItem says why. `takes:` cannot express "N of these, where N depends on
-    /// another argument", so this checks by hand — but it keeps `gather`'s
-    /// all-or-nothing bargain (Design Principles §14), which is what the rest of
-    /// the language relies on.
+    /// Too few scalars and nothing happens — and it no longer has to arrange that
+    /// itself. **This is the instruction the planner was built for**: "N items from
+    /// the scalar stack, where N is the length of my other argument" is a
+    /// requirement no static declaration can express, and for a while it was the
+    /// only thing in the language keeping the all-or-nothing bargain by hand.
+    /// `.takesMany` says it outright, so the Planner refuses before anything is
+    /// taken, and the refusal reads like every other missing argument.
     ///
     /// Provenance: a genuinely new value, recording law 3 — the template first (as
     /// `conj` and the rest of the vector family order it), then the elements in
@@ -603,39 +605,21 @@ nonisolated extension Interpreter {
         _ instruction: PushInstruction,
         making itemType: V.Type
     ) -> Behavior {
-        BehaviorWithSideEffects(
+        Behavior(
             instruction,
-            takes: [V.pushStack],
-            modifier: { (interpreter, collectedItems) in
-                let template = collectedItems[0] as! V
-                let wanted = template.value.count
-                let scalars = interpreter.stacks[V.Scalar.pushStack]!
-
-                guard scalars.count >= wanted else {
-                    // Worded to match `Behavior.act`'s own refusal, because this is
-                    // the same thing: an instruction that cannot be supplied does
-                    // not run and does not consume. Anything reading `.error` for
-                    // "missing args" should find this too — the detail is added, not
-                    // substituted, because unlike an ordinary arity failure the
-                    // *number* wanted is not a property of the instruction.
-                    return [
-                        Router(V.pushStack, template),
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "\(instruction) missing args: wants \(wanted) from"
-                                + " .\(V.Scalar.pushStack), found \(scalars.count)"
-                            )
-                        ),
-                    ]
-                }
-
-                let taken = (0..<wanted).map { _ in
-                    interpreter.stacks[V.Scalar.pushStack]!.popFirst()! as! V.Scalar
-                }
-                // Top-first out, so reversing puts the first-written element first
-                // — the same order `pushAll` would put them back in.
-                let elements: [V.Scalar] = taken.reversed()
+            requires: [
+                .takes(V.pushStack),
+                // N scalars, where N is the shape's length — the requirement that
+                // could not be declared before there was a planner to declare it to.
+                .takesMany(V.Scalar.pushStack, count: { args in
+                    (args[0] as? V)?.value.count ?? 0
+                }),
+            ],
+            fxn: { a in
+                let template = a[0] as! V
+                // Top-first out of the planner, so reversing puts the first-written
+                // element first — the same order `pushAll` would put them back in.
+                let elements: [V.Scalar] = a.dropFirst().map { $0 as! V.Scalar }.reversed()
 
                 let record: [any Item] =
                     [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]

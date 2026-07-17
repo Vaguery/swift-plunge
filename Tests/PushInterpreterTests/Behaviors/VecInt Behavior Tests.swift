@@ -513,20 +513,22 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
     }
 
-    /// Too few scalars and nothing happens: `takes:` cannot say "N of these, where
-    /// N depends on another argument", so this keeps `gather`'s all-or-nothing
-    /// bargain by hand.
+    /// Too few scalars and nothing happens.
+    ///
+    /// This once kept the all-or-nothing bargain by hand — the only Behavior that
+    /// had to, because `takes:` could not say "N of these, where N depends on
+    /// another argument". `.takesMany` says it, so the refusal now comes from
+    /// `act` like every other, and reads like every other. The old wording
+    /// counted ("wants 4 from .int, found 2"); the shared one does not, which is
+    /// the price of no longer being a special case.
     @Test func `vecIntConstruct refuses rather than half-build`() {
         loadInts(inty, ints: [1, 2])
         inty.stacks[.vecInt]!.prepend(VecIntItem([0, 0, 0, 0]))   // wants 4, has 2
 
         doThis(.vecIntConstruct, to: inty)
-        #expect(stackString(inty, .vecInt) == "[ [0, 0, 0, 0] ]")   // handed back
+        #expect(stackString(inty, .vecInt) == "[ [0, 0, 0, 0] ]")   // never taken
         #expect(stackString(inty, .int) == "[ 1 2 ]")               // untouched
-        // Worded like `Behavior.act`'s own refusal, because it is the same thing —
-        // so anything reading `.error` for "missing args" finds this too.
-        #expect(errorStrings(inty).contains { $0.contains("missing args") })
-        #expect(errorStrings(inty).contains { $0.contains("wants 4 from .int, found 2") })
+        #expect(errorStrings(inty).contains { $0.contains("vecIntConstruct missing args: .int") })
     }
 
     /// An empty template is the one case that needs nothing at all — and is how a

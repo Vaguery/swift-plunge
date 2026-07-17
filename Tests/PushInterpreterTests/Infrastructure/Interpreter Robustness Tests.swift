@@ -75,7 +75,7 @@ struct InterpreterRobustnessTests {
         #expect(stackString(inty, .error).contains("intAdd is an unknown instruction"))
     }
 
-    /// When a behavior's argument needs aren't met, `gather` returns nil and
+    /// When a behavior's argument needs aren't met, its plan is `.short` and
     /// `act` must route a "missing args" ErrorItem — without consuming the
     /// arguments that *are* present. Exercises the `guard let … else` branch of
     /// `act` (formerly the `isMissingArgs` flag), which no other test reaches.
@@ -87,7 +87,7 @@ struct InterpreterRobustnessTests {
         Interpreter.language[.intAdd]!.act(on: inty)
 
         #expect(stackString(inty, .error).contains("intAdd missing args"))
-        // the lone argument is left untouched (unsatisfied gather pops nothing)
+        // the lone argument is left untouched (a plan that fails commits nothing)
         #expect(inty.stacks[.int]!.count == 1)
         #expect((inty.stacks[.int]!.first as? IntItem)?.value == 7)
     }

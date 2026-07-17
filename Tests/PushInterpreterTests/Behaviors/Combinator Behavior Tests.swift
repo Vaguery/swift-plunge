@@ -192,7 +192,7 @@ struct CombinatorBehaviorTests {
     /// already eaten the argument**. Sixty behaviors did this, and `.int` is the
     /// scarcest channel in the language.
     ///
-    /// `alsoNeeds:` lets them say it, so `isSatisfied` refuses before `gather` pops
+    /// `alsoNeeds:` lets them say it, so the plan comes up short before anything pops
     /// anything. Nothing keeps the bargain by hand.
     ///
     /// Untested until now, which is exactly why it survived: `isSatisfied` read
@@ -221,15 +221,15 @@ struct CombinatorBehaviorTests {
     /// Declaring one would have left them eating the index in exactly the case
     /// this exists to prevent.
     @Test func `the reaching combinators declare what they really need`() {
-        #expect(Interpreter.language[.doubleDupTimes]!.needs == [.int: 1, .double: 1])
-        #expect(Interpreter.language[.doubleShove]!.needs == [.int: 1, .double: 1])
-        #expect(Interpreter.language[.doubleYank]!.needs == [.int: 1, .double: 2])
-        #expect(Interpreter.language[.doubleYankDup]!.needs == [.int: 1, .double: 2])
-        #expect(Interpreter.language[.doubleDeepDup]!.needs == [.int: 1, .double: 2])
+        #expect(Interpreter.language[.doubleDupTimes]!.staticNeeds == [.int: 1, .double: 1])
+        #expect(Interpreter.language[.doubleShove]!.staticNeeds == [.int: 1, .double: 1])
+        #expect(Interpreter.language[.doubleYank]!.staticNeeds == [.int: 1, .double: 2])
+        #expect(Interpreter.language[.doubleYankDup]!.staticNeeds == [.int: 1, .double: 2])
+        #expect(Interpreter.language[.doubleDeepDup]!.staticNeeds == [.int: 1, .double: 2])
 
         // When the index and the target share a stack, the counts ADD.
-        #expect(Interpreter.language[.intYank]!.needs == [.int: 3])
-        #expect(Interpreter.language[.intDupTimes]!.needs == [.int: 2])
+        #expect(Interpreter.language[.intYank]!.staticNeeds == [.int: 3])
+        #expect(Interpreter.language[.intDupTimes]!.staticNeeds == [.int: 2])
 
         // A single item is not enough to yank: one int for the index, two to work on.
         let inty = Interpreter()

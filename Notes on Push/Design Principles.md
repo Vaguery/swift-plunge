@@ -329,8 +329,10 @@ push — every one of these produces an `ErrorItem` and lets the loop continue. 
 
 Two structural supports:
 
-- **`gather` is all-or-nothing.** Every stack demand is checked before anything is popped, so a Behavior
-  that cannot run consumes nothing and leaves the stacks exactly as they were.
+- **A Behavior plans before it takes.** Every requirement is resolved against the stacks *without
+  mutating them*; only if all of them resolve is anything removed. So a Behavior that cannot run
+  consumes nothing and leaves the stacks exactly as they were, and `isSatisfied` means "the plan
+  succeeds" rather than "the depths look deep enough."
 
   **This was false for sixty behaviors, and the way it failed is worth knowing**, because the same
   mistake is available to anyone adding a Behavior. `takes:` conflated *what I consume* with *what I
@@ -341,13 +343,29 @@ Two structural supports:
   thing burning it (§5).
 
   It survived because it was **invisible to the only thing that could have seen it**: `isSatisfied`
-  reads `needs`, `needs` was derived from `takes:`, and the requirement was not in `takes:`. The
-  argument-starvation probe reads `needs` too, so it under-reported all sixty. The measure and the bug
+  read `needs`, `needs` was derived from `takes:`, and the requirement was not in `takes:`. The
+  argument-starvation probe read `needs` too, so it under-reported all sixty. The measure and the bug
   had the same blind spot — which is the general lesson, and it is why no test caught it either.
 
-  **So: declare a requirement you do not consume, with `alsoNeeds:`.** It folds into `needs`, and
-  `isSatisfied` refuses before `gather` pops anything. A stack may appear in both and the counts add
-  (`intYank` wants three: one index, two to work on). The principle is now true rather than aspirational.
+  **The fix is a type, not a discipline.** `alsoNeeds:` (declare what you require but do not consume)
+  named the missing requirements, and `Planner` made keeping the bargain structural rather than each
+  Behavior's own business. A Behavior now says *what* it needs; the Planner works out *where* it is and
+  whether it is there at all. Three kinds of requirement:
+
+  | `.takes(s)` | consume the topmost unclaimed item of `s` |
+  | `.needs(s, count:)` | `count` more must be present, and are **not** consumed |
+  | `.takesMany(s, count:)` | consume as many as `count` says, computed from the arguments so far |
+
+  A stack may appear in several and the counts add: `intYank` wants three ints — one index and two to
+  work on. `.takesMany` is why this is a *planner* and not a tally: `vecIntConstruct` wants N scalars
+  where N is the length of its other argument, so the question "can this run?" cannot be answered
+  before gathering has begun. It kept the bargain by hand until there was somewhere to declare it.
+
+  Two things follow. The refusal can **name the stack** it stopped at (`intAdd missing args: .int`),
+  because the planner knows which one failed. And the bargain can be **tested once for the whole
+  language** rather than sixty times by hand: drive every instruction against a starved interpreter and
+  assert that a refusal changes nothing (`Planner Tests.swift`). A property that was previously each
+  author's to remember is now one test.
 - **Stacks are homogeneous except `.exec`**, and `accepts` enforces it. A mis-tagged `Router` is a
   programming bug, not a program bug, so it leaves the distinctive `INVARIANT:` marker — the one class of
   failure that means *the interpreter* is wrong.

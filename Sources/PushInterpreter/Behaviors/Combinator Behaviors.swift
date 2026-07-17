@@ -192,6 +192,8 @@ nonisolated extension Interpreter {
             modifier: { (interpreter, collectedItems) in
                 let howMany = (collectedItems[0] as! IntItem).value
 
+                // Unreachable since `alsoNeeds` — the plan will not let this run
+                // with an empty `stack`. Kept as the honest alternative to a `!`.
                 guard let item = interpreter.stacks[stack]!.first else {
                     return [Router(.error, ErrorItem("\(name) on empty stack"))]
                 }
@@ -401,6 +403,8 @@ nonisolated extension Interpreter {
             // what stops it eating the index and then finding nothing there.
             alsoNeeds: [stack: 1],
             modifier: { (interpreter, collectedItems) in
+                // Unreachable since `alsoNeeds` — the plan will not let this run
+                // with an empty `stack`. Kept as the honest alternative to a `!`.
                 guard let oldItem = interpreter.stacks[stack]!.popFirst() else {
                     return [
                         Router(

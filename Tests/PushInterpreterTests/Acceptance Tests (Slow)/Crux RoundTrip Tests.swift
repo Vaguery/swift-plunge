@@ -141,7 +141,7 @@ struct CruxRoundTripTests {
 
     /// A fresh interpreter with every stack seeded several deep. Generous on
     /// purpose: combinators peek below their arguments, and a behavior that
-    /// cannot gather its arguments produces only an ErrorItem, which tests
+    /// cannot find its arguments produces only an ErrorItem, which tests
     /// nothing.
     func seeded(depth: Int = 4) -> Interpreter {
         let inty = Interpreter()

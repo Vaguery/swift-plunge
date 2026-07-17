@@ -182,31 +182,44 @@ The headline finding, and it contradicts Part 1.
 
 | stack | asked | empty | rate |
 |---|---|---|---|
-| `.bool` | 4736 | 3433 | **72.5%** |
-| `.double` | 3446 | 2186 | 63.4% |
-| `.string` | 5723 | 3444 | 60.2% |
-| `.int` | **15639** | **8619** | 55.1% |
-| `.char` | 2637 | 1411 | 53.5% |
-| `.vecInt` / `.vecString` / `.vecBool` / `.vecDouble` | ~3200 each | ~1500 | 42–51% |
-| `.code` | 18917 | 2043 | **10.8%** |
-| `.iterator` | 19632 | 1933 | 9.8% |
+| `.double` | 3493 | 1957 | **56.0%** |
+| `.string` | 5863 | 3231 | 55.1% |
+| `.bool` | 4814 | 2534 | 52.6% |
+| `.int` | **15679** | **7616** | 48.6% |
+| `.vecInt` | 2796 | 1336 | 47.8% |
+| `.char` | 2637 | 1192 | 45.2% |
+| `.vecString` / `.vecBool` / `.vecDouble` | ~3300 each | ~1400 | 39–45% |
+| `.iterator` | 19632 | 1555 | 7.9% |
+| `.code` | 18917 | 1286 | **6.8%** |
 | `.exec` | 1931 | 1 | 0.1% |
 
-> **These numbers replace an earlier, understated set**, and the reason is instructive. Sixty behaviors
-> reached into a stack they never declared in `takes:` (see Design Principles §14), so `needs` could not
-> see the requirement — and **this probe reads `needs`**. It was blind to the same thing the bug hid
-> behind. `alsoNeeds:` fixed it at the source and the demand figures rose accordingly: `.int` went from
-> 10,832 asks to 15,639. Anything quoting the old rates is stale.
+> **These numbers have been restated twice, and both times the measure — not the language — was what
+> changed.** The first set was understated because sixty behaviors reached into a stack they never
+> declared in `takes:` (Design Principles §14), and the probe read the same declaration the bug hid
+> behind. `alsoNeeds:` fixed it at the source and demand rose sharply: `.int` went from 10,832 asks to
+> 15,639.
 >
-> **Read `.int` by volume, not by rate.** At 55.1% it is no longer the highest *rate* — `.bool`, `.double`
-> and `.string` all starve more often. But it is asked **15,639 times**, far more than any other value
-> stack, so its 8,619 unmet asks are the largest shortfall in the language by a wide margin. A rate table
-> flatters it; the volume is the story.
+> This set is smaller again, for the opposite reason: **the probe now asks the Planner** (`plan(on:)`)
+> instead of comparing declared counts to stack depths. That is what a Behavior actually experiences, and
+> it closed the last blind spot — `vecIntConstruct`'s dynamic need was invisible to any static count, and
+> now shows up starving in **100%** of the programs that reach it. But a plan **stops at the first stack
+> that cannot supply**, so an instruction short of two stacks now blames one, where the old arithmetic
+> blamed both. Hence the rates fall by roughly 5–7 points across the value stacks (`.int` 55.1% → 48.6%)
+> **with no change to the language whatsoever.**
+>
+> So: *empty* now means "the stack the Behavior would have given up at," which slightly under-counts the
+> stacks it never got as far as reaching for. It is a truer denominator of *refusals* and a slightly
+> lower bound on *shortfall*. `asked` still comes from `staticNeeds`, which names the stacks an
+> instruction draws on without claiming to know how many it wants.
+>
+> **Read `.int` by volume, not by rate.** It is asked **15,679 times**, three times more than any other
+> value stack, so its 7,616 unmet asks remain the largest shortfall in the language by a wide margin,
+> even at the lowest rate of the four scalars. A rate table flatters it; the volume is the story.
 
 **`.code` is the language's scarcest resource (0.29 producers/consumers) and random programs are swimming
-in it (6.6% empty).** Both are true. The generator emits literal blocks, and nothing consumes them fast
+in it (6.8% empty).** Both are true. The generator emits literal blocks, and nothing consumes them fast
 enough — so a structural famine and an empirical glut coexist. `.bool` is the mirror image: the language
-*produces* bools faster than it eats them (1.52), yet random programs want one and find nothing 78% of
+*produces* bools faster than it eats them (1.52), yet random programs want one and find nothing half
 the time, because a fresh program has produced none *yet*.
 
 The lesson is that Part 1 describes a program's **steady state** and Part 2 its **opening**. Most random
@@ -272,5 +285,5 @@ Not decisions — the trade-offs belong to whoever picks these up.
 4. **Watch `.int`.** Not a bug, but the per-stack combinators are 84 draws on one shared channel, and it
    is empty 63.5% of the time it is wanted. That is the starvation mechanism made concrete, from both
    ends at once.
-5. Nothing needs doing about `.bool` structurally — but note the 78.3% empirical shortfall is the worst
+5. Nothing needs doing about `.bool` structurally — but note the ~53% empirical shortfall is among the worst
    in the language, and it is an *opening* problem, not a steady-state one.

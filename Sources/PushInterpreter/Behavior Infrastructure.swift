@@ -15,77 +15,95 @@ nonisolated class Behavior: @unchecked Sendable {
     // (`let`) and Sendable and the stored closures are `@Sendable`, so a single
     // shared instance is safe to run from many interpreters/tasks at once.
     let name: PushInstruction
-    /// The stacks this Behavior **consumes**, one item each, popped in order.
-    let parameters: [PushStack]
 
-    /// Stacks this Behavior needs but does **not** consume — it reaches in and
-    /// reads, reorders or copies without popping.
-    ///
-    /// `takes:` alone conflated "what I consume" with "what I need", and there was
-    /// no way to say the second without the first. `doubleYank` takes an `.int`
-    /// index and *reorders* `.double`; declaring `.double` in `takes:` would pop
-    /// the very item it means to move. So it declared only the int — and then
-    /// **60 behaviors across five families would pop their index, discover an
-    /// empty stack, and error, having already eaten the argument.** That broke the
-    /// all-or-nothing bargain (Design Principles §14) and burned `.int`, which is
-    /// the most-demanded channel in the language, and unmet more often than not
-    /// (Stack economics owns the figures). It was invisible because `isSatisfied` read
-    /// `needs`, and `needs` could not see it — the measure and the bug had the
-    /// same blind spot.
-    ///
-    /// Declaring it here folds it into `needs`, so `isSatisfied` refuses *before*
-    /// `gather` pops anything, and the bargain holds without any Behavior having to
-    /// keep it by hand.
-    ///
-    /// A stack may appear in both, and the counts add: `intYank` takes one `.int`
-    /// as its index **and** needs another to yank, so it wants two.
-    let requirements: [PushStack: Int]
+    /// Everything this Behavior must find, **in order**. Order matters: each
+    /// requirement claims the topmost item its predecessors have not, so
+    /// `takes(.int), takes(.int)` claims index 0 then index 1 — the same two items
+    /// a pair of pops would have taken.
+    let requirements: [Requirement]
 
-    /// Everything that must be present for this Behavior to run: what it consumes,
-    /// plus what it merely needs.
-    var needs: [PushStack: Int] {
-        var result = requirements
-        for v in parameters {
-            result[v, default:0] += 1
+    /// The stacks this Behavior consumes one item from, in order. Kept because most
+    /// of the language reads better as a list of stacks than a list of cases, and
+    /// because a great deal of code asks for it.
+    var parameters: [PushStack] {
+        requirements.compactMap { if case .takes(let s) = $0 { s } else { nil } }
+    }
+
+    /// The stacks this Behavior draws on and the least it can want from each —
+    /// **a lower bound, not the truth.** A `.takesMany` requirement's count depends
+    /// on an argument, so no constant can state it; it contributes its stack with a
+    /// count of zero.
+    ///
+    /// For the truth, ask `plan(on:)`, which is the only thing that knows. This
+    /// exists for documentation and for analysis that wants to know *which* stacks
+    /// an instruction touches without caring how many.
+    var staticNeeds: [PushStack: Int] {
+        var result = [PushStack: Int]()
+        for requirement in requirements {
+            switch requirement {
+            case .takes(let s):        result[s, default: 0] += 1
+            case .needs(let s, let n): result[s, default: 0] += n
+            case .takesMany(let s, _): result[s, default: 0] += 0
+            }
         }
         return result
     }
+
     let transformer: @Sendable ([any Item]) -> [Router]
 
 
-    init(
+    /// The common form: consume one item from each of `takes`, and require —
+    /// without consuming — `alsoNeeds` more.
+    ///
+    /// `alsoNeeds` exists because `takes:` alone conflated *what I consume* with
+    /// *what I need*. `doubleYank` takes an `.int` index and *reorders* `.double`;
+    /// declaring `.double` in `takes:` would pop the very item it means to move. So
+    /// it declared only the int — and then **60 behaviors across five families
+    /// popped their index, found an empty stack, and errored having already eaten
+    /// the argument** (Design Principles §14).
+    ///
+    /// A stack may appear in both and the counts add: `intYank` takes one `.int` as
+    /// its index **and** needs two more to work on, so it wants three.
+    convenience init(
         _ label: PushInstruction,
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         fxn: @escaping @Sendable ([any Item]) -> [Router]
     ) {
+        // `takes` first: an index is popped before the stack it indexes into is
+        // measured, so `intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
+        // Sorted so the ordering does not depend on Dictionary's iteration order.
+        self.init(
+            label,
+            requires: takes.map { Requirement.takes($0) }
+                + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
+                    .map { Requirement.needs($0.key, count: $0.value) },
+            fxn: fxn
+        )
+    }
+
+    /// The general form, for a Behavior whose requirements are not all static.
+    init(
+        _ label: PushInstruction,
+        requires: [Requirement],
+        fxn: @escaping @Sendable ([any Item]) -> [Router]
+    ) {
         self.name = label
-        self.parameters = takes
-        self.requirements = alsoNeeds
+        self.requirements = requires
         self.transformer = fxn
     }
 
 
-    func isSatisfied(by interpreter: Interpreter) -> Bool {
-        for (k,v) in self.needs {
-            if (interpreter.stacks[k]?.count ?? 0) < v { return false }
-        }
-        return true
+    /// What this Behavior would need of an interpreter, resolved against its
+    /// actual state. The `Planner` is the thing that knows how to look; this just
+    /// asks.
+    func plan(on interpreter: Interpreter) -> GatherPlan {
+        Planner(for: interpreter).plan(requirements)
     }
 
 
-    /// Pops one item per parameter, in order, and returns them — or `nil` when
-    /// the interpreter can't satisfy every stack demand. Returning the result
-    /// (instead of mutating a shared `collector`) is what lets one shared
-    /// `Behavior` instance run from many interpreters without racing.
-    func gather(from interpreter: Interpreter) -> [any Item]? {
-        guard self.isSatisfied(by: interpreter) else { return nil }
-        var collected = [any Item]()
-        collected.reserveCapacity(self.parameters.count)
-        for p in self.parameters {
-            collected.append(interpreter.stacks[p]!.popFirst()!)
-        }
-        return collected
+    func isSatisfied(by interpreter: Interpreter) -> Bool {
+        if case .ready = plan(on: interpreter) { true } else { false }
     }
 
 
@@ -105,16 +123,34 @@ nonisolated class Behavior: @unchecked Sendable {
     }
 
 
+    /// Plan; run only if the plan is `.ready`; otherwise report the refusal and
+    /// take nothing.
+    ///
+    /// The error **names the stack that came up short** — `intAdd missing args:
+    /// .int` — which is a thing it could not say until the Planner existed to be
+    /// asked. Before, an error said only that something was missing, and finding
+    /// out what meant reading the instruction's source. The stack the plan stopped
+    /// at is the one an argument was wanted from and not found, so it is the
+    /// honest answer even when several stacks are short: it is the first the
+    /// Behavior would have reached for.
+    ///
+    /// The prefix is unchanged, so anything matching on `"missing args"` still
+    /// matches.
     final func act(on interpreter: Interpreter) {
-        guard let arguments = self.gather(from: interpreter) else {
-            let mistakes = [Router(.error, ErrorItem("\(self.name) missing args"))]
-            self.distribute(to: interpreter, items: mistakes)
-            return
+        let planner = Planner(for: interpreter)
+        switch planner.plan(requirements) {
+        case .short(let stack):
+            self.distribute(
+                to: interpreter,
+                items: [Router(.error, ErrorItem("\(self.name) missing args: .\(stack)"))]
+            )
+        case .ready(let arguments, let claims):
+            planner.commit(claims)
+            self.distribute(
+                to: interpreter,
+                items: self.computeResults(from: arguments, on: interpreter)
+            )
         }
-        self.distribute(
-            to: interpreter,
-            items: self.computeResults(from: arguments, on: interpreter)
-        )
     }
 }
 
@@ -128,14 +164,28 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
     /// `alsoNeeds` matters most here: reaching into a stack without popping it is
     /// exactly what a `BehaviorWithSideEffects` is *for*, so it is these that could
     /// need something they never declared.
-    init(
+    convenience init(
         _ label: PushInstruction,
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
+        self.init(
+            label,
+            requires: takes.map { Requirement.takes($0) }
+                + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
+                    .map { Requirement.needs($0.key, count: $0.value) },
+            modifier: modifier
+        )
+    }
+
+    init(
+        _ label: PushInstruction,
+        requires: [Requirement],
+        modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
+    ) {
         self.directModifier = modifier
-        super.init(label, takes: takes, alsoNeeds: alsoNeeds, fxn: {_ in return []})
+        super.init(label, requires: requires, fxn: {_ in return []})
     }
 
     override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {

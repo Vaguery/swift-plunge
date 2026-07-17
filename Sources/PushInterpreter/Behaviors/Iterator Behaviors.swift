@@ -175,7 +175,7 @@ nonisolated extension Interpreter {
     /// - `burial > 0` — that many items further down `.exec`, clamped to its depth
     ///   like the `Shove`/`Yank` combinators clamp.
     ///
-    /// Note `gather` is all-or-nothing, so meeting an empty `.int` leaves the
+    /// Note a plan is all-or-nothing, so meeting an empty `.int` leaves the
     /// iterator un-popped: the loop stalls with its state intact rather than
     /// vanishing, and can be played again.
     static let iteratorPlayDelayed_Behavior =

@@ -183,7 +183,7 @@ struct IteratorBehaviorTests {
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
-    /// `gather` is all-or-nothing, so a missing delay costs the loop its pass but
+    /// A plan is all-or-nothing, so a missing delay costs the loop its pass but
     /// not its state: the iterator is never popped, and can be played again.
     @Test func `iteratorPlayDelayed with no delay stalls without losing the iterator`() {
         let inty = loaded(counting())
