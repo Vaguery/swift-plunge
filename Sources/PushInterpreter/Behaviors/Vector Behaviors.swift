@@ -134,7 +134,7 @@ nonisolated extension Interpreter {
     static func itemIsEmptyBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
-            takes: [V.pushStack],
+            reads: [V.pushStack],
             fxn: { a in
                 let (x) = (a[0] as! V)
                 return [
@@ -142,7 +142,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: [x, InstructionItem(instruction)],
+                            call: Behavior.reading(
+                                [V.pushStack: 1],
+                                producing: .bool,
+                                from: [x, InstructionItem(instruction)]
+                            ),
                             isContingent: Behavior.netContingency(of: x)
                         )
                     )
@@ -166,6 +170,7 @@ nonisolated extension Interpreter {
                             x.value.count,
                             call: Behavior.reading(
                                 [V.pushStack: 1],
+                                producing: .int,
                                 from: [x, InstructionItem(instruction)]
                             ),
                             isContingent: Behavior.netContingency(of: x)
@@ -268,11 +273,12 @@ nonisolated extension Interpreter {
         )
     }
 
-    // returns whether the vector contains the scalar argument
+    // returns whether the vector contains the scalar argument (non-destructively:
+    // both the vector and the needle survive the read)
     static func containsBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
             instruction,
-            takes: [V.pushStack, V.Scalar.pushStack],
+            reads: [V.pushStack, V.Scalar.pushStack],
             fxn: { a in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.contains(y.value)
@@ -281,7 +287,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
+                            call: Behavior.reading(
+                                [V.pushStack: 1, V.Scalar.pushStack: 1],
+                                producing: .bool,
+                                from: [x, y, InstructionItem(instruction)]
+                            ),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -372,10 +382,11 @@ nonisolated extension Interpreter {
     }
 
     // returns the index of the first occurrence of the scalar argument, or -1
+    // (non-destructively: both the vector and the needle survive the read)
     static func indexOfBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
             instruction,
-            takes: [V.pushStack, V.Scalar.pushStack],
+            reads: [V.pushStack, V.Scalar.pushStack],
             fxn: { a in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.firstIndex(of: y.value) ?? -1
@@ -384,7 +395,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
+                            call: Behavior.reading(
+                                [V.pushStack: 1, V.Scalar.pushStack: 1],
+                                producing: .int,
+                                from: [x, y, InstructionItem(instruction)]
+                            ),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -394,10 +409,11 @@ nonisolated extension Interpreter {
     }
 
     // returns the number of occurrences of the scalar argument in the vector
+    // (non-destructively: both the vector and the needle survive the read)
     static func occurrencesOfBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
             instruction,
-            takes: [V.pushStack, V.Scalar.pushStack],
+            reads: [V.pushStack, V.Scalar.pushStack],
             fxn: { a in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.count(where: { $0 == y.value })
@@ -406,7 +422,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
+                            call: Behavior.reading(
+                                [V.pushStack: 1, V.Scalar.pushStack: 1],
+                                producing: .int,
+                                from: [x, y, InstructionItem(instruction)]
+                            ),
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )

@@ -102,5 +102,16 @@ nonisolated extension PushStack {
     var popItemsInstruction: PushInstruction {
         PushInstruction(rawValue: "\(self.rawValue)PopItems")!
     }
+
+    /// This stack's `Swap` instruction. Every stack has one; used by a query's
+    /// cleanup crux to lift its result past an argument buried on the same stack.
+    var swapInstruction: PushInstruction {
+        PushInstruction(rawValue: "\(self.rawValue)Swap")!
+    }
+
+    /// This stack's `Pop` instruction. Every stack has one.
+    var popInstruction: PushInstruction {
+        PushInstruction(rawValue: "\(self.rawValue)Pop")!
+    }
 }
 

@@ -255,26 +255,32 @@ struct CombinatorBehaviorTests {
     }
 
     @Test func `combinator Eq works`() {
-        loadInts(inty, ints: [9, 38, 4, -4, -7, -7], contingent: [2])
-        #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]")
+        // `xEq` is now a non-destructive query: it reads both operands and leaves
+        // them, so the crux pops the two it read to reproduce just the bool. (Only
+        // `.execEq` still consumes — its operands are the pending continuation.)
+        loadInts(inty, ints: [9, 38, 4, -4, -7, -7], contingent: [2])   // 9 on top
 
         doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ 4 -4 -7 -7 ]")
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ false ]")   // 9 == 38? no
+        #expect(stackString(inty, .int) == "[ 9 38 4 -4 -7 -7 ]", "both operands survive")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intEq )")
+        #expect(callString(topItem(inty, .bool)) == "( 38 9 .intEq 2 .intPopItems )")
+
+        doThis(.intPop, to: inty)   // discard 9 and 38 to reach the next pair
+        doThis(.intPop, to: inty)
 
         doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ -7 -7 ]")
-        #expect(stackString(inty, .bool) == "[ false false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intEq )")
+        #expect(stackString(inty, .bool) == "[ false false ]")   // 4 == -4? no
+        #expect(topItem(inty, .bool).isContingent == true)       // 4 is contingent
+        #expect(callString(topItem(inty, .bool)) == "( -4 4 .intEq 2 .intPopItems )")
+
+        doThis(.intPop, to: inty)
+        doThis(.intPop, to: inty)
 
         doThis(.intEq, to: inty)
-        #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .bool) == "[ true false false ]")
+        #expect(stackString(inty, .bool) == "[ true false false ]")   // -7 == -7? yes
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intEq )")
+        #expect(callString(topItem(inty, .bool)) == "( -7 -7 .intEq 2 .intPopItems )")
     }
 
     @Test func `combinator Flush works`() {

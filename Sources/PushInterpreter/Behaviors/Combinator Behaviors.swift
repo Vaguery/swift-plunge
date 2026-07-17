@@ -259,9 +259,16 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Eq")!
+        // `.execEq` stays destructive: its two operands are the pending program
+        // continuation on `.exec`, not values to keep — "leaving them alive" would
+        // mean letting them run, which is not reuse. Every other Eq is a
+        // non-destructive query that reads its two operands and leaves them.
+        let isExec = stack == .exec
         inst = Behavior(
             name,
-            takes: [stack, stack],
+            requires: isExec
+                ? [Requirement.takes(stack), Requirement.takes(stack)]
+                : [Requirement.reads(stack), Requirement.reads(stack)],
             fxn: { a in
                 let isSame = a[0].isEqual(to: a[1])
                 // Provenance law 3b (Items.swift): `.execEq` reads its arguments
@@ -270,10 +277,18 @@ nonisolated extension Interpreter {
                 // re-runs it is `.execEq 3 3`, prefix. Every other stack's Eq is
                 // postfix like everything else. Push is not uniformly postfix,
                 // and a crux has to be written the way `.exec` reads it.
+                //
+                // The non-destructive forms clean up the two operands they read so
+                // the crux reproduces just the bool (`Behavior.reading`); `.execEq`
+                // consumed its operands, so it records them plainly.
                 let record: [any Item] =
-                    stack == .exec
+                    isExec
                     ? [InstructionItem(name), a[0], a[1]]
-                    : [a[1], a[0], InstructionItem(name)]
+                    : Behavior.reading(
+                        [stack: 2],
+                        producing: .bool,
+                        from: [a[1], a[0], InstructionItem(name)]
+                    )
                 return [
                     Router(
                         .bool,

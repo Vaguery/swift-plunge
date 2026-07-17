@@ -114,6 +114,24 @@ struct CompositionInvariantTests {
         #expect(redo.stacks[.vecInt]!.isEmpty, "and leaves no vector debris")
     }
 
+    /// **The collision case.** When the fact lands on a stack it also read from —
+    /// `vecIntOccurrencesOf` returns an `.int` count and read an `.int` needle —
+    /// the crux cannot just pop that stack (it would discard the count); it swaps
+    /// the count up past the needle instead. This checks the swap-cleanup crux
+    /// leaves only the count.
+    @Test func `a query whose result shares a stack with its argument still cleans up`() {
+        let inty = Interpreter()
+        inty.stacks[.vecInt]!.prepend(VecIntItem([7, 7, 7, 4]))
+        inty.stacks[.int]!.prepend(IntItem(7))
+        doThis(.vecIntOccurrencesOf, to: inty)
+        let count = topItem(inty, .int)
+        #expect((count as? IntItem)?.value == 3)
+
+        let after = stacksAfter(count.crux())
+        #expect(after[.int] == "[ 3 ]", "only the count — the needle was swapped out, not the result")
+        #expect(after[.vecInt] == "[ ]", "and the vector cleaned up too")
+    }
+
     /// A query nested inside a query: `len(v)` feeds an `.intGT` comparison later.
     /// Every fragment must stay debris-free for the whole to reproduce.
     @Test func `a query feeding a comparison composes cleanly`() {

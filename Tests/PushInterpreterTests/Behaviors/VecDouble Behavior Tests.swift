@@ -85,30 +85,23 @@ struct VecDoubleBehaviorTests {
     }
 
     @Test func vecDoubleContains() {
-        loadDoubles(inty, doubles: [-3, 9, 7777], contingent: [2])
-        inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999], isContingent: false),
-                         VecDoubleItem([9,99,999], isContingent: false)
-                        ])
-
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] [9.0, 99.0, 999.0] ]")
-        #expect(stackString(inty, .double) == "[ -3.0 9.0 7777.0 ]")
-
+        // Non-destructive: reads the vector and the needle and leaves both, so the
+        // crux pops both to reproduce just the bool.
+        loadDoubles(inty, doubles: [9])
+        inty.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 99, 999]))
         doThis(.vecDoubleContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]", "the vector survives the read")
+        #expect(stackString(inty, .double) == "[ 9.0 ]", "the needle survives the read")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] -3.0 .vecDoubleContains )")
+        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 9.0 .vecDoubleContains 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        doThis(.vecDoubleContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 9.0 .vecDoubleContains )")
-
-        doThis(.vecDoubleContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 7777.0 .vecDoubleContains )")
+        let miss = Interpreter()
+        miss.stacks[.vecDouble]!.prepend(VecDoubleItem([]))
+        miss.stacks[.double]!.prepend(DoubleItem(7777, isContingent: true))
+        doThis(.vecDoubleContains, to: miss)
+        #expect(stackString(miss, .bool) == "[ false ]")
+        #expect(topItem(miss, .bool).isContingent == true)
     }
 
     @Test func vecDoubleDrop() {
@@ -152,28 +145,23 @@ struct VecDoubleBehaviorTests {
     }
 
     @Test func vecDoubleIndexOf() {
-        loadDoubles(inty, doubles: [-3, 99, 7777], contingent: [2])
-        inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999]),
-                         VecDoubleItem([9,99,999])
-                        ])
-
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] [9.0, 99.0, 999.0] ]")
-        #expect(stackString(inty, .double) == "[ -3.0 99.0 7777.0 ]")
-
+        // The index lands on .int, a different stack from the .double needle, so a
+        // plain PopItems cleans up each read stack.
+        loadDoubles(inty, doubles: [99])
+        inty.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 99, 999]))
         doThis(.vecDoubleIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 ]")
-
-        doThis(.vecDoubleIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 -1 ]")
+        #expect(stackString(inty, .int) == "[ 1 ]", "the index")
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]", "the vector survives")
+        #expect(stackString(inty, .double) == "[ 99.0 ]", "the needle survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 99.0 .vecDoubleIndexOf )")
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 99.0 .vecDoubleIndexOf 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        doThis(.vecDoubleIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 1 -1 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 7777.0 .vecDoubleIndexOf )")
+        let absent = Interpreter()
+        absent.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 99, 999]))
+        absent.stacks[.double]!.prepend(DoubleItem(7777, isContingent: true))
+        doThis(.vecDoubleIndexOf, to: absent)
+        #expect(stackString(absent, .int) == "[ -1 ]")
+        #expect(topItem(absent, .int).isContingent == true)
     }
 
     @Test func vecDoubleItemIsEmpty() {
@@ -184,13 +172,16 @@ struct VecDoubleBehaviorTests {
         
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]", "the vector survives")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] .vecDoubleItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [] .vecDoubleItemIsEmpty 1 .vecDoublePopItems )")
+
+        doThis(.vecDoublePop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] .vecDoubleItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] .vecDoubleItemIsEmpty 1 .vecDoublePopItems )")
     }
 
     @Test func `vecDoubleIterate records provenance only for its derived results`() {
@@ -377,27 +368,21 @@ struct VecDoubleBehaviorTests {
     }
 
     @Test func vecDoubleOccurrencesOf() {
-        loadDoubles(inty, doubles: [9, 9, -99], contingent: [2])
-        inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,9,9,9,9]),
-                         VecDoubleItem([9,9,9,9,9])
-                        ])
-
+        loadDoubles(inty, doubles: [9])
+        inty.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 9, 9, 9, 9]))
         doThis(.vecDoubleOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .int) == "[ 5 ]")
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 9.0, 9.0, 9.0, 9.0] ]", "the vector survives")
+        #expect(stackString(inty, .double) == "[ 9.0 ]", "the needle survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] 9.0 .vecDoubleOccurrencesOf )")
+        #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 .vecDoubleOccurrencesOf 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        doThis(.vecDoubleOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 5 0 ]")
-        #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 .vecDoubleOccurrencesOf )")
-
-        doThis(.vecDoubleOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 5 0 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -99.0 .vecDoubleOccurrencesOf )")
+        let none = Interpreter()
+        none.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 9, 9, 9, 9]))
+        none.stacks[.double]!.prepend(DoubleItem(-99, isContingent: true))
+        doThis(.vecDoubleOccurrencesOf, to: none)
+        #expect(stackString(none, .int) == "[ 0 ]")
+        #expect(topItem(none, .int).isContingent == true)
     }
 
     @Test func vecDoublePushAll() {

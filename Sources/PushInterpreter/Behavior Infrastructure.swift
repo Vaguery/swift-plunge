@@ -254,20 +254,43 @@ nonisolated extension Behavior {
     /// must reproduce only the fact: a fragment that left its argument behind would
     /// be read by a same-stack sibling and corrupt it (Design Principles §6, the
     /// composition invariant). So the crux names how the fact was computed, then
-    /// pops what it read. `reads` maps each stack read to how many items came off
-    /// it — a comparison reads two from one stack, a search one from each of two.
+    /// removes what it read. `reads` maps each stack read to how many items came
+    /// off it — a comparison reads two from one stack, a search one from each of
+    /// two.
     ///
-    /// Live execution never runs these pops (the arguments were never removed);
-    /// they exist only in the recorded `call`, so re-running the crux on a fresh
+    /// **The `producing` stack is why this is not just `selecting` twice.** When a
+    /// read stack is *also* the result's stack (a comparison of two bools lands its
+    /// bool back on `.bool`; `vecIntOccurrencesOf` reads an `.int` needle and
+    /// returns an `.int`), the result sits on **top** of the arguments it read, so
+    /// a plain `PopItems` would discard the result. There the crux instead swaps
+    /// each argument up past the single result and pops it — `swap` moves items
+    /// without recording contingency, so the result survives untouched. Elsewhere
+    /// the arguments are on top and a plain `PopItems` is enough.
+    ///
+    /// Live execution never runs any of this (the arguments were never removed);
+    /// it exists only in the recorded `call`, so re-running the crux on a fresh
     /// interpreter leaves the fact and nothing else. Stacks are sorted for a
-    /// deterministic, reproducible crux; cross-stack pops are order-independent.
+    /// deterministic, reproducible crux.
     static func reading(
         _ reads: [PushStack: Int],
+        producing resultStack: PushStack,
         from source: [any Item]
     ) -> [any Item] {
         var result = source
         for (stack, count) in reads.sorted(by: { "\($0.key)" < "\($1.key)" }) where count > 0 {
-            result += [IntItem(count), InstructionItem(stack.popItemsInstruction)]
+            if stack == resultStack {
+                // The result is on top, the `count` arguments just beneath it.
+                // Lift each argument past the result and pop it.
+                for _ in 0..<count {
+                    result += [
+                        InstructionItem(stack.swapInstruction),
+                        InstructionItem(stack.popInstruction),
+                    ]
+                }
+            } else {
+                // The arguments are on top of a stack the result did not touch.
+                result += [IntItem(count), InstructionItem(stack.popItemsInstruction)]
+            }
         }
         return result
     }

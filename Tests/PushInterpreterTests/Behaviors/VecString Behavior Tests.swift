@@ -85,30 +85,23 @@ struct VecStringBehaviorTests {
     }
 
     @Test func vecStringContains() {
-        loadStrings(inty, strings: ["x", "a", "-"], contingent: [2])
-        inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c"], isContingent: false),
-                         VecStringItem(["a","b","c"], isContingent: false)
-                        ])
-
-        #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\"] [\"a\", \"b\", \"c\"] ]")
-        #expect(stackString(inty, .string) == "[ \"x\" \"a\" \"-\" ]")
-
+        // Non-destructive: reads the vector and the needle and leaves both, so the
+        // crux pops both to reproduce just the bool.
+        loadStrings(inty, strings: ["a"])
+        inty.stacks[.vecString]!.prepend(VecStringItem(["a", "b", "c"]))
         doThis(.vecStringContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"c\"] ]", "the vector survives the read")
+        #expect(stackString(inty, .string) == "[ \"a\" ]", "the needle survives the read")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] \"x\" .vecStringContains )")
+        #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\", \"c\"] \"a\" .vecStringContains 1 .stringPopItems 1 .vecStringPopItems )")
 
-        doThis(.vecStringContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\", \"c\"] \"a\" .vecStringContains )")
-
-        doThis(.vecStringContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\", \"c\"] \"-\" .vecStringContains )")
+        let miss = Interpreter()
+        miss.stacks[.vecString]!.prepend(VecStringItem([]))
+        miss.stacks[.string]!.prepend(StringItem("-", isContingent: true))
+        doThis(.vecStringContains, to: miss)
+        #expect(stackString(miss, .bool) == "[ false ]")
+        #expect(topItem(miss, .bool).isContingent == true)
     }
 
     @Test func vecStringDrop() {
@@ -152,28 +145,21 @@ struct VecStringBehaviorTests {
     }
 
     @Test func vecStringIndexOf() {
-        loadStrings(inty, strings: ["-", "b", "7"], contingent: [2])
-        inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c"]),
-                         VecStringItem(["x","y","z"])
-                        ])
-
-        #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\"] [\"x\", \"y\", \"z\"] ]")
-        #expect(stackString(inty, .string) == "[ \"-\" \"b\" \"7\" ]")
-
+        loadStrings(inty, strings: ["b"])
+        inty.stacks[.vecString]!.prepend(VecStringItem(["a", "b", "c"]))
         doThis(.vecStringIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 ]")
-
-        doThis(.vecStringIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 -1 ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"c\"] ]", "the vector survives")
+        #expect(stackString(inty, .string) == "[ \"b\" ]", "the needle survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [\"a\", \"b\", \"c\"] \"b\" .vecStringIndexOf )")
+        #expect(callString(topItem(inty, .int)) == "( [\"a\", \"b\", \"c\"] \"b\" .vecStringIndexOf 1 .stringPopItems 1 .vecStringPopItems )")
 
-        doThis(.vecStringIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 1 -1 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [\"x\", \"y\", \"z\"] \"7\" .vecStringIndexOf )")
+        let absent = Interpreter()
+        absent.stacks[.vecString]!.prepend(VecStringItem(["x", "y", "z"]))
+        absent.stacks[.string]!.prepend(StringItem("7", isContingent: true))
+        doThis(.vecStringIndexOf, to: absent)
+        #expect(stackString(absent, .int) == "[ -1 ]")
+        #expect(topItem(absent, .int).isContingent == true)
     }
 
     @Test func vecStringIsEmpty() {
@@ -184,13 +170,16 @@ struct VecStringBehaviorTests {
         
         doThis(.vecStringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\"] ]", "the vector survives")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] .vecStringItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [] .vecStringItemIsEmpty 1 .vecStringPopItems )")
+
+        doThis(.vecStringPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecStringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\"] .vecStringItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\"] .vecStringItemIsEmpty 1 .vecStringPopItems )")
     }
 
     @Test func `vecStringIterate records provenance only for its derived results`() {
@@ -377,27 +366,21 @@ struct VecStringBehaviorTests {
     }
 
     @Test func vecStringOccurrencesOf() {
-        loadStrings(inty, strings: ["o", "o", "x"], contingent: [2])
-        inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem([]),
-                         VecStringItem(["o","o","o","o","o"]),
-                         VecStringItem(["o","o","o","o","o"])
-                        ])
-
+        loadStrings(inty, strings: ["o"])
+        inty.stacks[.vecString]!.prepend(VecStringItem(["o", "o", "o", "o", "o"]))
         doThis(.vecStringOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect(stackString(inty, .int) == "[ 5 ]")
+        #expect(stackString(inty, .vecString) == "[ [\"o\", \"o\", \"o\", \"o\", \"o\"] ]", "the vector survives")
+        #expect(stackString(inty, .string) == "[ \"o\" ]", "the needle survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] \"o\" .vecStringOccurrencesOf )")
+        #expect(callString(topItem(inty, .int)) == "( [\"o\", \"o\", \"o\", \"o\", \"o\"] \"o\" .vecStringOccurrencesOf 1 .stringPopItems 1 .vecStringPopItems )")
 
-        doThis(.vecStringOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 5 0 ]")
-        #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [\"o\", \"o\", \"o\", \"o\", \"o\"] \"o\" .vecStringOccurrencesOf )")
-
-        doThis(.vecStringOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 5 0 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [\"o\", \"o\", \"o\", \"o\", \"o\"] \"x\" .vecStringOccurrencesOf )")
+        let none = Interpreter()
+        none.stacks[.vecString]!.prepend(VecStringItem(["o", "o", "o", "o", "o"]))
+        none.stacks[.string]!.prepend(StringItem("x", isContingent: true))
+        doThis(.vecStringOccurrencesOf, to: none)
+        #expect(stackString(none, .int) == "[ 0 ]")
+        #expect(topItem(none, .int).isContingent == true)
     }
 
     @Test func vecStringPushAll() {

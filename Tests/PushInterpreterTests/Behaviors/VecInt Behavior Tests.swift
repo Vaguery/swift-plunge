@@ -86,30 +86,25 @@ struct VecIntBehaviorTests {
     }
 
     @Test func vecIntContains() {
-        loadInts(inty, ints: [-3, 9, 7777], contingent: [2])
-        inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999], isContingent: false),
-                         VecIntItem([9,99,999], isContingent: false)
-                        ])
-
-        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
-        #expect(stackString(inty, .int) == "[ -3 9 7777 ]")
-
+        // Non-destructive: reads the vector and the needle and leaves both, so the
+        // crux pops both to reproduce just the bool.
+        loadInts(inty, ints: [9])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([9, 99, 999]))
         doThis(.vecIntContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false ]")
+        #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecInt) == "[ [9, 99, 999] ]", "the vector survives the read")
+        #expect(stackString(inty, .int) == "[ 9 ]", "the needle survives the read")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] -3 .vecIntContains )")
+        #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] 9 .vecIntContains 1 .intPopItems 1 .vecIntPopItems )")
 
-        doThis(.vecIntContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] 9 .vecIntContains )")
-
-        doThis(.vecIntContains, to: inty)
-        #expect(stackString(inty, .bool) == "[ false true false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] 7777 .vecIntContains )")
+        // A miss on an empty vector, and contingency propagates from the needle.
+        let miss = Interpreter()
+        miss.stacks[.vecInt]!.prepend(VecIntItem([]))
+        miss.stacks[.int]!.prepend(IntItem(7777, isContingent: true))
+        doThis(.vecIntContains, to: miss)
+        #expect(stackString(miss, .bool) == "[ false ]")
+        #expect(topItem(miss, .bool).isContingent == true)
+        #expect(callString(topItem(miss, .bool)) == "( [] 7777 .vecIntContains 1 .intPopItems 1 .vecIntPopItems )")
     }
 
     @Test func vecIntDrop() {
@@ -153,51 +148,45 @@ struct VecIntBehaviorTests {
     }
 
     @Test func vecIntIndexOf() {
-        loadInts(inty, ints: [-3, 99, 7777], contingent: [2])
-        inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999]),
-                         VecIntItem([9,99,999])
-                        ])
-
-        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
-        #expect(stackString(inty, .int) == "[ -3 99 7777 ]")
-
+        // The index lands back on .int, on top of the needle it read — so the crux
+        // swaps the result up past the needle (rather than a plain PopItems, which
+        // would discard the result) and then pops the vector.
+        loadInts(inty, ints: [99])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([9, 99, 999]))
         doThis(.vecIntIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 99 7777 ]")
+        #expect(stackString(inty, .int) == "[ 1 99 ]", "the index, atop the surviving needle")
+        #expect(stackString(inty, .vecInt) == "[ [9, 99, 999] ]", "the vector survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] -3 .vecIntIndexOf )")
+        #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 99 .vecIntIndexOf .intSwap .intPop 1 .vecIntPopItems )")
 
-        doThis(.intPop, to: inty)
-
-        doThis(.vecIntIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 1 7777 ]")
-        #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 99 .vecIntIndexOf )")
-
-        doThis(.intPop, to: inty)
-
-        doThis(.vecIntIndexOf, to: inty)
-        #expect(stackString(inty, .int) == "[ -1 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 7777 .vecIntIndexOf )")
+        // Absent → -1, and contingency from the needle.
+        let absent = Interpreter()
+        absent.stacks[.vecInt]!.prepend(VecIntItem([9, 99, 999]))
+        absent.stacks[.int]!.prepend(IntItem(7777, isContingent: true))
+        doThis(.vecIntIndexOf, to: absent)
+        #expect(stackString(absent, .int) == "[ -1 7777 ]")
+        #expect(topItem(absent, .int).isContingent == true)
     }
 
     @Test func vecIntItemIsEmpty() {
+        // Non-destructive: reads the vector, leaves it, and the crux pops it.
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
                          VecIntItem([9,99,999], isContingent: true)
                         ])
-        
+
         doThis(.vecIntItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
+        #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]", "the vector survives")
         #expect(topItem(inty, .bool).isContingent == false)
-        #expect(callString(topItem(inty, .bool)) == "( [] .vecIntItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [] .vecIntItemIsEmpty 1 .vecIntPopItems )")
+
+        doThis(.vecIntPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecIntItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
         #expect(topItem(inty, .bool).isContingent == true)
-        #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] .vecIntItemIsEmpty )")
+        #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] .vecIntItemIsEmpty 1 .vecIntPopItems )")
     }
 
     @Test func `vecIntIterate records provenance only for its derived results`() {
@@ -427,31 +416,23 @@ struct VecIntBehaviorTests {
     }
 
     @Test func vecIntOccurrencesOf() {
-        loadInts(inty, ints: [9, 9, -99], contingent: [2])
-        inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([]),
-                         VecIntItem([9,9,9,9,9]),
-                         VecIntItem([9,9,9,9,9])
-                        ])
-
+        // The count lands back on .int atop the surviving needle, so the crux
+        // swaps it up past the needle (like indexOf) and pops the vector.
+        loadInts(inty, ints: [9])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([9, 9, 9, 9, 9]))
         doThis(.vecIntOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 9 -99 ]")
+        #expect(stackString(inty, .int) == "[ 5 9 ]", "the count, atop the surviving needle")
+        #expect(stackString(inty, .vecInt) == "[ [9, 9, 9, 9, 9] ]", "the vector survives")
         #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [] 9 .vecIntOccurrencesOf )")
+        #expect(callString(topItem(inty, .int)) == "( [9, 9, 9, 9, 9] 9 .vecIntOccurrencesOf .intSwap .intPop 1 .vecIntPopItems )")
 
-        doThis(.intPop, to: inty)
-
-        doThis(.vecIntOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 5 -99 ]")
-        #expect(topItem(inty, .int).isContingent == false)
-        #expect(callString(topItem(inty, .int)) == "( [9, 9, 9, 9, 9] 9 .vecIntOccurrencesOf )")
-
-        doThis(.intPop, to: inty)
-
-        doThis(.vecIntOccurrencesOf, to: inty)
-        #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(topItem(inty, .int).isContingent == true)
-        #expect(callString(topItem(inty, .int)) == "( [9, 9, 9, 9, 9] -99 .vecIntOccurrencesOf )")
+        // None present → 0, contingency from the needle.
+        let none = Interpreter()
+        none.stacks[.vecInt]!.prepend(VecIntItem([9, 9, 9, 9, 9]))
+        none.stacks[.int]!.prepend(IntItem(-99, isContingent: true))
+        doThis(.vecIntOccurrencesOf, to: none)
+        #expect(stackString(none, .int) == "[ 0 -99 ]")
+        #expect(topItem(none, .int).isContingent == true)
     }
 
     @Test func vecIntPushAll() {
