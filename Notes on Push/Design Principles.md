@@ -189,6 +189,29 @@ disagreeing about a basic question, for years, each one internally consistent an
 its own. That is what an unwritten principle costs. Being converted to iterators settles it — walking
 front-to-back means `vecXPushAll`'s order changes, deliberately.
 
+### The same rule for whole pieces: earlier goes deeper, later goes on top
+
+An instruction that pushes **several pieces at once** follows the identical rule, one level up: the piece
+that comes first in reading order is pushed first, so it ends up **deeper**, and the later piece ends up
+**on top**. It is §6 applied to pieces rather than to elements — "front-to-back" whether the front is a
+lower index or an earlier fragment.
+
+`.vecXCut` / `.stringCut` are the case that named it. Cutting `[1 2 3 4 5]` at 2 pushes the prefix
+`[1 2]` first (deeper) and the suffix `[3 4 5]` on top. This is not an arbitrary tie-break — it is the
+one order that makes **cut and concat inverse**: `concat` consumes the deeper argument first
+(`a[1] + a[0]`), so `prefix + suffix` rebuilds the original only if the prefix is underneath. Get the
+order backwards and a program that cuts and rejoins silently reverses its own data.
+
+The two readings of the rule agree exactly, which is why it is one principle and not two: an iterator
+emitting elements 0,1,2… over successive passes leaves element 2 on top; a cut emitting `[prefix,
+suffix]` in one pass leaves the suffix on top. "Later material sits higher" holds whether *later* means a
+subsequent pass or a subsequent fragment.
+
+Provenance rides along without a special case (law 5, Items.swift): the deeper piece records the discard
+that surfaces it (`x i .vecIntCut 1 .vecIntPopItems`), the top piece records nothing extra. So the
+ordering is not merely a convention the reader must remember — it is the thing that makes the multi-result
+crux mechanical.
+
 ## 7. Code is data until a program asks for it
 
 A `CodeItem` met on `.exec` comes to rest on `.code` **intact**. It does not scatter. `.codeDo` is one
