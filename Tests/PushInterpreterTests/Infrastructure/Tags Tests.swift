@@ -95,6 +95,28 @@ struct TagsTests {
         #expect(intEaters.count > Interpreter.instructions(consuming: .bool).count)
     }
 
+    /// **Consuming and reading are now distinct**, and a non-destructive query
+    /// belongs to the second. `.intGT` reads two ints and leaves them, so it
+    /// consumes neither `.int` nor anything — it only reads.
+    @Test func `a non-destructive query reads its argument, it does not consume it`() {
+        #expect(Interpreter.instructions(reading: .int).contains(.intGT))
+        #expect(!Interpreter.instructions(consuming: .int).contains(.intGT),
+                "a query examines its argument; it must not count as eating it")
+
+        // The vector length family reads its vector; contains reads the needle too.
+        #expect(Interpreter.instructions(reading: .vecInt).contains(.vecIntLength))
+        #expect(Interpreter.instructions(reading: .int).contains(.vecIntContains),
+                "contains reads its .int needle non-destructively")
+
+        // A genuine consumer is not a reader: `.intAdd` eats its ints.
+        #expect(Interpreter.instructions(consuming: .int).contains(.intAdd))
+        #expect(!Interpreter.instructions(reading: .int).contains(.intAdd))
+
+        // `.execEq` stayed destructive, so it consumes `.exec` rather than reading.
+        #expect(Interpreter.instructions(consuming: .exec).contains(.execEq))
+        #expect(!Interpreter.instructions(reading: .exec).contains(.execEq))
+    }
+
     /// "What can never starve?" — a question worth being able to ask in a language
     /// whose defining failure is argument starvation.
     @Test func `the always-satisfied set is the environment and the measurers`() {

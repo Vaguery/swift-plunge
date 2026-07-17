@@ -50,6 +50,38 @@ nonisolated class Behavior: @unchecked Sendable {
         return result
     }
 
+    /// The stacks this Behavior truly **consumes** (removes items from), and the
+    /// least from each. `.takes` contributes one; `.takesMany` its stack with a
+    /// lower bound of zero (its count is dynamic). **Excludes `.reads`** (examined
+    /// and left) and `.needs` (required and left) — neither removes anything.
+    ///
+    /// This is what "does instruction X consume stack S?" should mean, and it is
+    /// what `Interpreter.instructions(consuming:)` is built on. `staticNeeds`
+    /// answers the different question "which stacks does X draw on at all", and
+    /// counts every requirement kind.
+    var consumedStacks: [PushStack: Int] {
+        var result = [PushStack: Int]()
+        for requirement in requirements {
+            switch requirement {
+            case .takes(let s):        result[s, default: 0] += 1
+            case .takesMany(let s, _): result[s, default: 0] += 0
+            case .needs, .reads:       break
+            }
+        }
+        return result
+    }
+
+    /// The stacks this Behavior **reads without consuming** (`.reads`) — the
+    /// non-destructive queries. The complement of `consumedStacks` among the
+    /// stacks an instruction actually hands to its transformer.
+    var readStacks: [PushStack: Int] {
+        var result = [PushStack: Int]()
+        for requirement in requirements {
+            if case .reads(let s) = requirement { result[s, default: 0] += 1 }
+        }
+        return result
+    }
+
     let transformer: @Sendable ([any Item]) -> [Router]
 
 

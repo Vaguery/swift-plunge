@@ -88,14 +88,26 @@ nonisolated extension Interpreter {
         tags[tag] ?? []
     }
 
-    /// The instructions that draw on `stack` — **computed, not declared.**
+    /// The instructions that **consume** `stack` — remove items from it —
+    /// **computed, not declared.**
     ///
-    /// The Planner already knows: a Behavior's requirements say which stacks it
-    /// reaches for. `staticNeeds` is a lower bound on *how many* (a `.takesMany`
-    /// count depends on an argument), but it names the stacks exactly, which is
-    /// all this asks.
+    /// This counts only `.takes`/`.takesMany` (see `Behavior.consumedStacks`), so
+    /// a non-destructive query that *reads* the stack does **not** appear here, and
+    /// neither does a combinator that reaches in without popping (`.needs`). Ask
+    /// `instructions(reading:)` for the readers, or `staticNeeds` for "draws on it
+    /// at all".
+    ///
+    /// The distinction is load-bearing for the economics: once queries stopped
+    /// consuming their arguments, a consumer set built on `staticNeeds` would have
+    /// kept counting them and reported no change.
     static func instructions(consuming stack: PushStack) -> Set<PushInstruction> {
-        Set(language.filter { $0.value.staticNeeds.keys.contains(stack) }.keys)
+        Set(language.filter { $0.value.consumedStacks.keys.contains(stack) }.keys)
+    }
+
+    /// The instructions that **read** `stack` without consuming it — the
+    /// non-destructive queries (`.reads`).
+    static func instructions(reading stack: PushStack) -> Set<PushInstruction> {
+        Set(language.filter { $0.value.readStacks.keys.contains(stack) }.keys)
     }
 
     /// The instructions that need nothing and so can never starve — constants,

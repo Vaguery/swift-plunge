@@ -418,3 +418,60 @@ other value stack, and no proportion of *instructions* fixes a shortage of *valu
   mean and the composed share; treat the max as an anecdote.
 - **Only the Fibonacci genome.** Whether these proportions hold for a genome whose blocks are genes
   (ForestGenome) is untested, and is exactly the kind of thing that could differ.
+
+---
+
+# Part 4: non-destructive queries flip consumers into producers
+
+The 59 query instructions — lengths, `isEmpty`, `contains`, `indexOf`, comparisons, `xEq` — used to
+**consume** the argument they examined. They now read it and leave it (Design Principles: "queries don't
+destroy their object"; the mechanism is the `.reads` requirement + a cleanup-pop crux). The economic
+consequence is direct and structural, and unlike Part 3 it needs no random sampling to see: **a query
+that used to shallow its argument stack now deepens it.**
+
+Measured by the Stack Flow Probe (each behavior run once), the flip is exact per instruction:
+
+```
+boolEq   was  bool:-1   (ate two bools, pushed one)
+boolEq   now  bool:+1   (reads two bools, pushes one)
+```
+
+A +2 swing on `.bool` for that one instruction, and the same story for every query on its argument
+stack(s).
+
+## The aggregate: every value stack's ratio rose
+
+Producer/consumer ratios (deepen ÷ shallow, one vote per behavior), against the Part-1 snapshot:
+
+| stack | was | now |
+|---|---|---|
+| `.code` | **0.29** | **~0.59** |
+| `.int` | 0.53 | ~0.56 |
+| `.string` | 0.70 | ~1.12 |
+| `.double` | 0.80 | ~1.04 |
+| `.char` | 0.92 | ~1.69 |
+| `.vecInt` | 0.88 | ~1.55 |
+| `.bool` | 1.52 | ~1.64 |
+
+`.string`, `.double`, `.char` and the vector stacks cross from **net-drained to net-produced** — the
+closed-system framing of Part 1 loosens, because a program can now inspect a value without spending it.
+
+**`.code` is the headline: its ratio roughly doubled** off the language's long-standing scarcest number.
+Part of that is this change (its three queries — `codeItemIsEmpty`, `codeLengthRoot`, `codeEq` — flipped
+from shallow to deepen); part is the collectors added earlier (`codeFromIterator`). Both pull the same
+way. And the latent gain is larger: the convention makes the **unbuilt** code queries
+(`.codeContains`, `.codeDepth`, `.codeNthPoint`…) non-destructive by default when built — more ways to
+interrogate code without eating it.
+
+## Two honest caveats
+
+- **The absolute ratios are not attributable to this change alone.** The whole session added instructions
+  (iterators, collectors, cut) that moved the counts too; treat the *direction* (every affected stack
+  rose) and the per-instruction flip as the clean signal, not the exact deltas.
+- **Runtime starvation is a downstream, confounded effect.** A query still needs its argument *present*
+  to fire, so it does not starve less itself; the benefit is that the argument survives for whatever
+  comes next. Whether that shows up in the Argument Starvation Probe depends on program structure, and
+  its demand figures shifted this session for unrelated reasons. The tag machinery now separates
+  `instructions(reading:)` from `instructions(consuming:)`, so a future probe can isolate the effect
+  cleanly — the trap noted during design (a consumer set built on `staticNeeds` would have stayed blind)
+  is closed.
