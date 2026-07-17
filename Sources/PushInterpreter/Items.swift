@@ -78,9 +78,11 @@ public nonisolated protocol Pretty {
 //     The test is whether re-running the name would find the same world.
 //
 //  5. When a Behavior puts SEVERAL results on ONE stack, each result records the
-//     discard that surfaces it, right there in its own `call`:
+//     discard that surfaces it, right there in its own `call`. The deeper piece
+//     of a `.vecIntCut`, for instance, records the pop that removes the piece
+//     above it:
 //
-//         call: [s, .stringPushAllChars, IntItem(2), .charPopItems]
+//         call: [v, i, .vecIntCut, IntItem(1), .vecIntPopItems]
 //
 //     The count is taken from the END of that stack's results, NOT the order
 //     they were produced in: `distribute` prepends Routers one at a time, so the

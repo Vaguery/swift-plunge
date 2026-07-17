@@ -763,6 +763,44 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// Snips a string into two pieces at the indexed position, pushing **both** to
+    /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
+    /// `stringConcat` is the identity (concat consumes the deeper piece first).
+    ///
+    /// The index wraps modulo the character count (`magnitude % count`, trap-safe
+    /// and matching `stringNth`), so the suffix is never empty for a non-empty
+    /// string and cutting an empty string gives two empty strings. Character
+    /// counting is by grapheme, like every other string instruction here.
+    ///
+    /// Provenance is law 5 (`Behavior.selecting`): the deeper piece records
+    /// `x y .stringCut 1 .stringPopItems`, the top piece just the cut.
+    static let stringCut_Behavior =
+        Behavior(
+            .stringCut,
+            takes: [.string, .int],
+            fxn: { a in
+                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
+                let count = x.value.count
+                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+                let cut = x.value.index(x.value.startIndex, offsetBy: idx)
+
+                let source: [any Item] = [x, y, InstructionItem(.stringCut)]
+                let contingent = Behavior.netContingency(of: x, y)
+                return [
+                    Router(.string, StringItem(
+                        String(x.value[..<cut]),
+                        call: Behavior.selecting(0, of: 2, on: .string, from: source),
+                        isContingent: contingent
+                    )),
+                    Router(.string, StringItem(
+                        String(x.value[cut...]),
+                        call: Behavior.selecting(1, of: 2, on: .string, from: source),
+                        isContingent: contingent
+                    )),
+                ]
+            }
+        )
+
     static let stringSubstring_Behavior =
         Behavior(
             .stringSubstring,
@@ -898,6 +936,7 @@ nonisolated extension Interpreter {
         .stringReverse : stringReverse_Behavior,
         .stringSetChar : stringSetChar_Behavior,
         .stringSplit : stringSplit_Behavior,
+        .stringCut : stringCut_Behavior,
         .stringSubstring : stringSubstring_Behavior,
         .stringTake : stringTake_Behavior,
         ]

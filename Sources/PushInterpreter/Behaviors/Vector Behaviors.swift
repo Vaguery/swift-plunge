@@ -551,6 +551,59 @@ nonisolated extension Interpreter {
         )
     }
 
+    /// Snips a vector into two pieces at the indexed position, pushing **both** to
+    /// the same stack: the prefix `[0..<idx]` deeper, the suffix `[idx..<count]`
+    /// on top.
+    ///
+    /// **The order is chosen so `cut` then `concat` is the identity.** `concat`
+    /// consumes the deeper argument first (`a[1].value + a[0].value`), so with the
+    /// prefix underneath, `prefix + suffix` rebuilds the original vector.
+    ///
+    /// **The index wraps** — `magnitude % count` maps any int into `[0, count)`,
+    /// avoiding the `Int.min` trap and matching the `nth` family's wrapped-index
+    /// reading. Two consequences of the wrap, both deliberate: an index of exactly
+    /// `count` wraps to 0, so the suffix is **never empty** for a non-empty
+    /// argument (you cannot cut off the whole thing and leave nothing); and the
+    /// prefix is empty exactly when the cut lands at 0. Cutting an empty vector
+    /// gives two empty vectors.
+    ///
+    /// **Provenance is law 5** (`Behavior.selecting`, Items.swift): two results on
+    /// one stack. The deeper piece records the discard that surfaces it —
+    /// `x y .vecXCut 1 .vecXPopItems` — and the top piece records just the cut.
+    /// This is the machinery the explode family retired; a cut is the honest
+    /// multi-result case it was built for, so it has a user again.
+    static func cutBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+        Behavior(
+            instruction,
+            takes: [V.pushStack, .int],
+            fxn: { a in
+                let (x, y) = (a[0] as! V, a[1] as! IntItem)
+                let count = x.value.count
+                // `.magnitude` (a UInt) avoids `abs(Int.min)` trapping; the modulo
+                // is skipped on an empty vector, where it would divide by zero.
+                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+
+                let prefix = Array(x.value[0..<idx])
+                let suffix = Array(x.value[idx...])
+                let source: [any Item] = [x, y, InstructionItem(instruction)]
+                let contingent = Behavior.netContingency(of: x, y)
+
+                return [
+                    Router(V.pushStack, V(
+                        prefix,
+                        call: Behavior.selecting(0, of: 2, on: V.pushStack, from: source),
+                        isContingent: contingent
+                    )),
+                    Router(V.pushStack, V(
+                        suffix,
+                        call: Behavior.selecting(1, of: 2, on: V.pushStack, from: source),
+                        isContingent: contingent
+                    )),
+                ]
+            }
+        )
+    }
+
     // ( vec .vecXPushAll )
     /// Pushes every element of a vector to its scalar stack, **one per pass**,
     /// front to back — so the last element ends up on top.
@@ -770,6 +823,9 @@ nonisolated extension Interpreter {
     static let vecBoolSubVec_Behavior =
         subVecBehavior(.vecBoolSubVec, making: VecBoolItem.self)
 
+    static let vecBoolCut_Behavior =
+        cutBehavior(.vecBoolCut, making: VecBoolItem.self)
+
     // ( [1,1,2,3] .vecBoolPushAll)
     //
     // return every item on the argument (in reverse order)
@@ -814,6 +870,7 @@ nonisolated extension Interpreter {
         .vecBoolReverse : vecBoolReverse_Behavior,
         .vecBoolSet : vecBoolSet_Behavior,
         .vecBoolSubVec : vecBoolSubVec_Behavior,
+        .vecBoolCut : vecBoolCut_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
     ]
 
@@ -898,6 +955,9 @@ nonisolated extension Interpreter {
     static let vecDoubleSubVec_Behavior =
         subVecBehavior(.vecDoubleSubVec, making: VecDoubleItem.self)
 
+    static let vecDoubleCut_Behavior =
+        cutBehavior(.vecDoubleCut, making: VecDoubleItem.self)
+
     // ( [1,1,2,3] .vecDoublePushAll)
     //
     // return every item on the argument (in reverse order)
@@ -941,6 +1001,7 @@ nonisolated extension Interpreter {
         .vecDoubleReverse : vecDoubleReverse_Behavior,
         .vecDoubleSet : vecDoubleSet_Behavior,
         .vecDoubleSubVec : vecDoubleSubVec_Behavior,
+        .vecDoubleCut : vecDoubleCut_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
     ]
 
@@ -1027,6 +1088,9 @@ nonisolated extension Interpreter {
     static let vecIntSubVec_Behavior =
         subVecBehavior(.vecIntSubVec, making: VecIntItem.self)
 
+    static let vecIntCut_Behavior =
+        cutBehavior(.vecIntCut, making: VecIntItem.self)
+
     // ( [1,1,2,3] .vecIntPushAll)
     //
     // return every item on the argument (in reverse order)
@@ -1071,6 +1135,7 @@ nonisolated extension Interpreter {
         .vecIntReverse : vecIntReverse_Behavior,
         .vecIntSet : vecIntSet_Behavior,
         .vecIntSubVec : vecIntSubVec_Behavior,
+        .vecIntCut : vecIntCut_Behavior,
         .vecIntTake : vecIntTake_Behavior,
     ]
 
@@ -1159,6 +1224,9 @@ nonisolated extension Interpreter {
     //
     static let vecStringSubVec_Behavior =
         subVecBehavior(.vecStringSubVec, making: VecStringItem.self)
+
+    static let vecStringCut_Behavior =
+        cutBehavior(.vecStringCut, making: VecStringItem.self)
 
     // ( [1,1,2,3] .vecStringPushAll)
     //
@@ -1290,6 +1358,7 @@ nonisolated extension Interpreter {
         .vecStringReverse : vecStringReverse_Behavior,
         .vecStringSet : vecStringSet_Behavior,
         .vecStringSubVec : vecStringSubVec_Behavior,
+        .vecStringCut : vecStringCut_Behavior,
         .vecStringTake : vecStringTake_Behavior,
     ]
 

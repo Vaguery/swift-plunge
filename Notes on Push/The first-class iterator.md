@@ -222,9 +222,13 @@ loop's output, and is deliberately not touched here.
 The five `*Iterate`, the explode family (`stringPushAllChars`, `stringParseToLetters`, `stringSplit`,
 `vecXPushAll`), and both dup families across all thirteen stacks. Three things fell out:
 
-- **Law 5 has no users.** `Behavior.selecting`/`<stack>PopItems` answered "which of these k results am
-  I?"; an iterator never produces k results at once, so an element says what it *is* (`s 2 .stringNth`)
-  instead. The machinery stays for any future multi-result Behavior; nothing emits it.
+- **Law 5 lost all its old users.** `Behavior.selecting`/`<stack>PopItems` answered "which of these k
+  results am I?"; an iterator never produces k results at once, so an element says what it *is*
+  (`s 2 .stringNth`) instead. The machinery was kept for any future multi-result Behavior — and
+  `.vecXCut`/`.stringCut` (added later) are exactly that, so it has users again: a cut's deeper piece
+  records `x i .vecIntCut 1 .vecIntPopItems`. The explode family retiring from law 5 and the cut family
+  arriving at it is the clean split — law 5 is for genuinely simultaneous results, which a loop's outputs
+  never were.
 - **`xDupTimes`'s bespoke `maxStackDepth` guard is gone.** It was the only per-instruction size check in
   the language, and it existed purely because the instruction exploded. Copying over `count` passes puts
   the work back under `stepLimit`, the push boundary, and the runaway guard — which now catches a runaway
