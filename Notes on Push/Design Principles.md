@@ -590,3 +590,22 @@ outcome. Making that impossible would cost more than it saves.
 
 So when weighing a design: prefer the option that gives a random program more to work with, provided the
 failure mode is an `ErrorItem` rather than a lie.
+
+### Values move freely among types; there are always neutral paths
+
+A fundamental heuristic: let values move freely among types as they are needed, so that between any two
+alternative designs there is always a *neutral path* — a way to get from one to the other without a special
+case. This is deliberately at odds with the human-written-language paradigm, where the ideal is *one*
+obvious path from a task to the code that runs it. Here the opposite is the virtue. We depend on a
+multiplicity of paths so evolution can move from any structure it happens to have to as many functional
+applications as possible; the more ways a given arrangement of items can be made to *do* something, the
+more a search can exploit it.
+
+This is why so much of the design converges on interchangeability. A `CodeItem` is the vector-of-anything
+(§7b), so any item can be boxed, carried, and taken back out unchanged (§8) — one container reaches every
+stack. An item's type names the one stack it rests on, so routing is automatic and a value dropped anywhere
+finds its home. And where a single operation could sensibly end in more than one place, we build *all* the
+endings rather than pick one: the point-access family, for instance, offers the same walked point boxed to
+`.code`, handed on whole, or run on `.exec` (`codeNth`/`codeEmitNth`/`codeDoNth` and their `Iterate`
+siblings) — three neutral paths where a human-facing language would expose one. Each new neutral path is a
+new edge in the graph the search moves through.
