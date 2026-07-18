@@ -206,6 +206,53 @@ nonisolated extension Interpreter {
             }
         )
 
+    // MARK: - Point access (non-destructive)
+    //
+    // Both **always yield `.code`**: a point that is a sub-block pushes as itself;
+    // a leaf (scalar, instruction, whole vector) is wrapped `( x )` so the result
+    // is uniform and inert. The extracted point is treated as a derived value —
+    // "the code at point i of x" — recording the reading crux rather than the
+    // point's own history, so the crux is uniform whatever the point's type and
+    // cleans up both arguments (§5). Index is `magnitude % count`.
+
+    /// Box a point as a `.code` result: a sub-block as-is, a leaf wrapped once.
+    static func boxedPointContents(_ point: any Item) -> [any Item] {
+        (point as? CodeItem)?.value ?? [point]
+    }
+
+    /// The pre-order point at the `.int` index (root at 0), yielded as `.code`.
+    static let codeNthPoint_Behavior =
+        Behavior(
+            .codeNthPoint,
+            reads: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                return [Router(.code, CodeItem(
+                    boxedPointContents(x.point(at: i.value)),
+                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)]),
+                    isContingent: Behavior.netContingency(of: x, i)
+                ))]
+            }
+        )
+
+    /// The root `.value` element at the `.int` index (`magnitude % count`), yielded
+    /// as `.code`. An empty block has no root elements, so nothing is pushed.
+    static let codeNthRoot_Behavior =
+        Behavior(
+            .codeNthRoot,
+            reads: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                guard !x.value.isEmpty else { return [] }
+                let element = x.value[Int(i.value.magnitude % UInt(x.value.count))]
+                return [Router(.code, CodeItem(
+                    boxedPointContents(element),
+                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)]),
+                    isContingent: Behavior.netContingency(of: x, i)
+                ))]
+            }
+        )
+
     static let codeWrapRoot_Behavior =
     Behavior(
         .codeWrapRoot,
@@ -419,6 +466,8 @@ nonisolated extension Interpreter {
         .codeContains : codeContains_Behavior,
         .codeIndexOfPoint : codeIndexOfPoint_Behavior,
         .codeContainer : codeContainer_Behavior,
+        .codeNthPoint : codeNthPoint_Behavior,
+        .codeNthRoot : codeNthRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
