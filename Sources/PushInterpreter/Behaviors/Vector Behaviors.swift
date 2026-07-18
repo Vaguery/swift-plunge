@@ -932,6 +932,103 @@ nonisolated extension Interpreter {
         )
     }
 
+    // MARK: - Read-only constructors (the stack "backup" / snapshot)
+    //
+    // Build a vector from the scalars on its `X` stack **without consuming them** —
+    // the closed-system fix (a program can finally create a vector) and a
+    // non-destructive snapshot of the stack. They reach into the stack directly
+    // (a `BehaviorWithSideEffects`, because the count is dynamic), and leave the
+    // scalars in place.
+    //
+    // The crux always reconstructs via the fixed-count `readItems` form (never
+    // `readStack`, which reads the whole stack and so could pick up an earlier
+    // fragment's debris when composed): it re-pushes exactly the k scalars it
+    // read, rebuilds the same vector, and pops those k. Debris-free and composable.
+
+    /// The `call` a read-only constructor records: push the `k` scalars (keeping
+    /// their own provenance), rebuild the vector with `readItems k`, then pop the
+    /// k scalars. `readInstruction` is the type's fixed-count `…ReadItems`.
+    static func snapshotCrux<V: VectorItem>(
+        _ scalars: [V.Scalar],
+        readInstruction: PushInstruction,
+        making itemType: V.Type
+    ) -> [any Item] {
+        // `scalars` are in vector order (element 0 first). Re-pushed in that order,
+        // element 0 ends up deepest; `readItems` reads top-first and reverses, so
+        // element 0 comes back to the front — the round trip is exact.
+        Behavior.reading(
+            [V.Scalar.pushStack: scalars.count],
+            producing: V.pushStack,
+            from: scalars.map { $0 as any Item }
+                + [IntItem(scalars.count), InstructionItem(readInstruction)]
+        )
+    }
+
+    /// Read the top `N` scalars of the `X` stack into a new vector, leaving them in
+    /// place. `N` is clamped to `[0, available]`.
+    static func readItemsBehavior<V: VectorItem>(
+        _ instruction: PushInstruction, making itemType: V.Type
+    ) -> Behavior {
+        BehaviorWithSideEffects(
+            instruction,
+            takes: [.int],
+            modifier: { (interpreter, collected) in
+                let n = (collected[0] as! IntItem).value
+                let stack = V.Scalar.pushStack
+                let available = interpreter.stacks[stack]!.count
+                let k = min(max(0, n), available)
+                // Top k, top-first, reversed so the first-read scalar is the last
+                // element — the inverse of `pushAll`, matching `vecXConstruct`.
+                let elements = Array(interpreter.stacks[stack]!.prefix(k))
+                    .map { $0 as! V.Scalar }
+                    .reversed()
+                    .map { $0 }
+                return [
+                    Router(
+                        V.pushStack,
+                        V(
+                            elements.map(\.value),
+                            call: snapshotCrux(elements, readInstruction: instruction, making: V.self),
+                            isContingent: elements.contains { $0.isContingent }
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// Read the **whole** `X` stack into a new vector, leaving it in place. An
+    /// empty stack gives an empty vector. The result is **contingent** — it
+    /// depended on the entire stack's arrangement (like `StackDepth`) — and its
+    /// crux reconstructs via `readItems`, so it stays composable.
+    static func readStackBehavior<V: VectorItem>(
+        _ instruction: PushInstruction,
+        readItemsInstruction: PushInstruction,
+        making itemType: V.Type
+    ) -> Behavior {
+        BehaviorWithSideEffects(
+            instruction,
+            takes: [],
+            modifier: { (interpreter, _) in
+                let stack = V.Scalar.pushStack
+                let elements = Array(interpreter.stacks[stack]!)
+                    .map { $0 as! V.Scalar }
+                    .reversed()
+                    .map { $0 }
+                return [
+                    Router(
+                        V.pushStack,
+                        V(
+                            elements.map(\.value),
+                            call: snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self),
+                            isContingent: true
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
     static func pushAllBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
@@ -1081,6 +1178,11 @@ nonisolated extension Interpreter {
     static let vecBoolReplaceFirstSubVec_Behavior =
         replaceFirstSubVecBehavior(.vecBoolReplaceFirstSubVec, making: VecBoolItem.self)
 
+    static let vecBoolReadItems_Behavior =
+        readItemsBehavior(.vecBoolReadItems, making: VecBoolItem.self)
+    static let vecBoolReadStack_Behavior =
+        readStackBehavior(.vecBoolReadStack, readItemsInstruction: .vecBoolReadItems, making: VecBoolItem.self)
+
     // ( [1,1,2,3] .vecBoolPushAll)
     //
     // return every item on the argument (in reverse order)
@@ -1131,6 +1233,8 @@ nonisolated extension Interpreter {
         .vecBoolOccurrencesOfSubVec : vecBoolOccurrencesOfSubVec_Behavior,
         .vecBoolReplaceSubVec : vecBoolReplaceSubVec_Behavior,
         .vecBoolReplaceFirstSubVec : vecBoolReplaceFirstSubVec_Behavior,
+        .vecBoolReadItems : vecBoolReadItems_Behavior,
+        .vecBoolReadStack : vecBoolReadStack_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
     ]
 
@@ -1233,6 +1337,11 @@ nonisolated extension Interpreter {
     static let vecDoubleReplaceFirstSubVec_Behavior =
         replaceFirstSubVecBehavior(.vecDoubleReplaceFirstSubVec, making: VecDoubleItem.self)
 
+    static let vecDoubleReadItems_Behavior =
+        readItemsBehavior(.vecDoubleReadItems, making: VecDoubleItem.self)
+    static let vecDoubleReadStack_Behavior =
+        readStackBehavior(.vecDoubleReadStack, readItemsInstruction: .vecDoubleReadItems, making: VecDoubleItem.self)
+
     static let vecDoubleLT_Behavior =
         comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
     static let vecDoubleLTE_Behavior =
@@ -1291,6 +1400,8 @@ nonisolated extension Interpreter {
         .vecDoubleOccurrencesOfSubVec : vecDoubleOccurrencesOfSubVec_Behavior,
         .vecDoubleReplaceSubVec : vecDoubleReplaceSubVec_Behavior,
         .vecDoubleReplaceFirstSubVec : vecDoubleReplaceFirstSubVec_Behavior,
+        .vecDoubleReadItems : vecDoubleReadItems_Behavior,
+        .vecDoubleReadStack : vecDoubleReadStack_Behavior,
         .vecDoubleLT : vecDoubleLT_Behavior,
         .vecDoubleLTE : vecDoubleLTE_Behavior,
         .vecDoubleGT : vecDoubleGT_Behavior,
@@ -1399,6 +1510,11 @@ nonisolated extension Interpreter {
     static let vecIntReplaceFirstSubVec_Behavior =
         replaceFirstSubVecBehavior(.vecIntReplaceFirstSubVec, making: VecIntItem.self)
 
+    static let vecIntReadItems_Behavior =
+        readItemsBehavior(.vecIntReadItems, making: VecIntItem.self)
+    static let vecIntReadStack_Behavior =
+        readStackBehavior(.vecIntReadStack, readItemsInstruction: .vecIntReadItems, making: VecIntItem.self)
+
     static let vecIntLT_Behavior =
         comparisonBehavior(.vecIntLT, making: VecIntItem.self) { $0.lexicographicallyPrecedes($1) }
     static let vecIntLTE_Behavior =
@@ -1458,6 +1574,8 @@ nonisolated extension Interpreter {
         .vecIntOccurrencesOfSubVec : vecIntOccurrencesOfSubVec_Behavior,
         .vecIntReplaceSubVec : vecIntReplaceSubVec_Behavior,
         .vecIntReplaceFirstSubVec : vecIntReplaceFirstSubVec_Behavior,
+        .vecIntReadItems : vecIntReadItems_Behavior,
+        .vecIntReadStack : vecIntReadStack_Behavior,
         .vecIntLT : vecIntLT_Behavior,
         .vecIntLTE : vecIntLTE_Behavior,
         .vecIntGT : vecIntGT_Behavior,
@@ -1568,6 +1686,11 @@ nonisolated extension Interpreter {
 
     static let vecStringReplaceFirstSubVec_Behavior =
         replaceFirstSubVecBehavior(.vecStringReplaceFirstSubVec, making: VecStringItem.self)
+
+    static let vecStringReadItems_Behavior =
+        readItemsBehavior(.vecStringReadItems, making: VecStringItem.self)
+    static let vecStringReadStack_Behavior =
+        readStackBehavior(.vecStringReadStack, readItemsInstruction: .vecStringReadItems, making: VecStringItem.self)
 
     static let vecStringLT_Behavior =
         comparisonBehavior(.vecStringLT, making: VecStringItem.self) { $0.lexicographicallyPrecedes($1) }
@@ -1714,6 +1837,8 @@ nonisolated extension Interpreter {
         .vecStringOccurrencesOfSubVec : vecStringOccurrencesOfSubVec_Behavior,
         .vecStringReplaceSubVec : vecStringReplaceSubVec_Behavior,
         .vecStringReplaceFirstSubVec : vecStringReplaceFirstSubVec_Behavior,
+        .vecStringReadItems : vecStringReadItems_Behavior,
+        .vecStringReadStack : vecStringReadStack_Behavior,
         .vecStringLT : vecStringLT_Behavior,
         .vecStringLTE : vecStringLTE_Behavior,
         .vecStringGT : vecStringGT_Behavior,
