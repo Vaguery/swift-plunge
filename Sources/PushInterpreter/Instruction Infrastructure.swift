@@ -227,7 +227,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     
     // VECBOOL instructions
     //
-    case vecBoolButLast, vecBoolConcat, vecBoolConj, vecBoolContains, vecBoolDrop, vecBoolFirst, vecBoolIndexOf, vecBoolItemIsEmpty, vecBoolIterate, vecBoolLast, vecBoolLength, vecBoolNth, vecBoolOccurrencesOf, vecBoolRemove, vecBoolReplace, vecBoolReplaceFirst, vecBoolRest, vecBoolReverse, vecBoolSet, vecBoolSubVec, vecBoolTake, vecBoolCut
+    case vecBoolButLast, vecBoolConcat, vecBoolConj, vecBoolContains, vecBoolDrop, vecBoolFirst, vecBoolIndexOf, vecBoolItemIsEmpty, vecBoolIterate, vecBoolLast, vecBoolLength, vecBoolNth, vecBoolOccurrencesOf, vecBoolRemove, vecBoolReplace, vecBoolReplaceFirst, vecBoolRest, vecBoolReverse, vecBoolSet, vecBoolSubVec, vecBoolTake, vecBoolCut, vecBoolContainsSubVec, vecBoolIndexOfSubVec, vecBoolOccurrencesOfSubVec, vecBoolReplaceSubVec, vecBoolReplaceFirstSubVec
 
     // vecBool comparison
     case vecBoolEq
@@ -255,7 +255,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
 
     // VECDOUBLE instructions
     //
-    case vecDoubleButLast, vecDoubleConcat, vecDoubleConj, vecDoubleContains, vecDoubleDrop, vecDoubleFirst, vecDoubleIndexOf, vecDoubleItemIsEmpty, vecDoubleIterate, vecDoubleLast, vecDoubleLength, vecDoubleNth, vecDoubleOccurrencesOf, vecDoubleRemove, vecDoubleReplace, vecDoubleReplaceFirst, vecDoubleRest, vecDoubleReverse, vecDoubleSet, vecDoubleSubVec, vecDoubleTake, vecDoubleCut, vecDoubleLT, vecDoubleLTE, vecDoubleGT, vecDoubleGTE
+    case vecDoubleButLast, vecDoubleConcat, vecDoubleConj, vecDoubleContains, vecDoubleDrop, vecDoubleFirst, vecDoubleIndexOf, vecDoubleItemIsEmpty, vecDoubleIterate, vecDoubleLast, vecDoubleLength, vecDoubleNth, vecDoubleOccurrencesOf, vecDoubleRemove, vecDoubleReplace, vecDoubleReplaceFirst, vecDoubleRest, vecDoubleReverse, vecDoubleSet, vecDoubleSubVec, vecDoubleTake, vecDoubleCut, vecDoubleContainsSubVec, vecDoubleIndexOfSubVec, vecDoubleOccurrencesOfSubVec, vecDoubleReplaceSubVec, vecDoubleReplaceFirstSubVec, vecDoubleLT, vecDoubleLTE, vecDoubleGT, vecDoubleGTE
 
     // vecDouble comparison
     case vecDoubleEq
@@ -270,7 +270,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     
     // VECINT instructions
     //
-    case vecIntButLast, vecIntConcat, vecIntConj, vecIntContains, vecIntDrop, vecIntFirst, vecIntIndexOf, vecIntItemIsEmpty, vecIntIterate, vecIntLast, vecIntLength, vecIntNth, vecIntOccurrencesOf, vecIntRemove, vecIntReplace, vecIntReplaceFirst, vecIntRest, vecIntReverse, vecIntSet, vecIntSubVec, vecIntTake, vecIntCut, vecIntLT, vecIntLTE, vecIntGT, vecIntGTE
+    case vecIntButLast, vecIntConcat, vecIntConj, vecIntContains, vecIntDrop, vecIntFirst, vecIntIndexOf, vecIntItemIsEmpty, vecIntIterate, vecIntLast, vecIntLength, vecIntNth, vecIntOccurrencesOf, vecIntRemove, vecIntReplace, vecIntReplaceFirst, vecIntRest, vecIntReverse, vecIntSet, vecIntSubVec, vecIntTake, vecIntCut, vecIntContainsSubVec, vecIntIndexOfSubVec, vecIntOccurrencesOfSubVec, vecIntReplaceSubVec, vecIntReplaceFirstSubVec, vecIntLT, vecIntLTE, vecIntGT, vecIntGTE
 
     // vecInt comparison
     case vecIntEq
@@ -284,7 +284,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     
     // VECSTRING instructions
     //
-    case vecStringButLast, vecStringConcat, vecStringConj, vecStringContains, vecStringDrop, vecStringFirst, vecStringIndexOf, vecStringItemIsEmpty, vecStringIterate, vecStringLast, vecStringLength, vecStringNth, vecStringOccurrencesOf, vecStringRemove, vecStringReplace, vecStringReplaceFirst, vecStringRest, vecStringReverse, vecStringSet, vecStringSubVec, vecStringTake, vecStringCut, vecStringLT, vecStringLTE, vecStringGT, vecStringGTE
+    case vecStringButLast, vecStringConcat, vecStringConj, vecStringContains, vecStringDrop, vecStringFirst, vecStringIndexOf, vecStringItemIsEmpty, vecStringIterate, vecStringLast, vecStringLength, vecStringNth, vecStringOccurrencesOf, vecStringRemove, vecStringReplace, vecStringReplaceFirst, vecStringRest, vecStringReverse, vecStringSet, vecStringSubVec, vecStringTake, vecStringCut, vecStringContainsSubVec, vecStringIndexOfSubVec, vecStringOccurrencesOfSubVec, vecStringReplaceSubVec, vecStringReplaceFirstSubVec, vecStringLT, vecStringLTE, vecStringGT, vecStringGTE
 
     // vecString comparison
     case vecStringEq

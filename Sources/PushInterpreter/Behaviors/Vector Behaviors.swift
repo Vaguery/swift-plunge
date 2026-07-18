@@ -472,6 +472,185 @@ nonisolated extension Interpreter {
         )
     }
 
+    // MARK: - Sub-vector search and replace
+    //
+    // The whole-subsequence analogs of string's `stringContains`/`stringReplace`
+    // (as opposed to the element-wise `contains`/`replace` above). All operands
+    // are vectors on the same `V.pushStack`, so — unlike the element forms, whose
+    // arguments split across the vector and scalar stacks — the crux records them
+    // **reversed** (`[a[1], a[0], …]`), the same as `concatBehavior`, so re-running
+    // rebuilds the same top-of-stack binding.
+
+    /// The index at which `needle` first occurs contiguously in `hay`, or nil.
+    /// An empty needle matches at 0 (a vacuous prefix), as `firstRange(of:)` does.
+    static func firstSubIndex<E: Equatable>(_ hay: [E], _ needle: [E]) -> Int? {
+        guard !needle.isEmpty else { return 0 }
+        guard needle.count <= hay.count else { return nil }
+        for start in 0...(hay.count - needle.count) {
+            if Array(hay[start..<start + needle.count]) == needle { return start }
+        }
+        return nil
+    }
+
+    /// Non-overlapping occurrences of `needle` in `hay`. An empty needle counts 0
+    /// (it would otherwise match unboundedly).
+    static func subCount<E: Equatable>(_ hay: [E], _ needle: [E]) -> Int {
+        guard !needle.isEmpty, needle.count <= hay.count else { return 0 }
+        var count = 0
+        var i = 0
+        while i <= hay.count - needle.count {
+            if Array(hay[i..<i + needle.count]) == needle { count += 1; i += needle.count }
+            else { i += 1 }
+        }
+        return count
+    }
+
+    /// Whether the vector contains the **sub-vector** argument (contiguous),
+    /// non-destructively — both vectors survive; the crux pops both.
+    static func containsSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+        Behavior(
+            instruction,
+            reads: [V.pushStack, V.pushStack],
+            fxn: { a in
+                let (hay, needle) = (a[0] as! V, a[1] as! V)
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            firstSubIndex(hay.value, needle.value) != nil,
+                            call: Behavior.reading(
+                                [V.pushStack: 2],
+                                producing: .bool,
+                                from: [needle, hay, InstructionItem(instruction)]
+                            ),
+                            isContingent: Behavior.netContingency(of: hay, needle)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// The index of the first contiguous occurrence of the sub-vector, or −1.
+    static func indexOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+        Behavior(
+            instruction,
+            reads: [V.pushStack, V.pushStack],
+            fxn: { a in
+                let (hay, needle) = (a[0] as! V, a[1] as! V)
+                return [
+                    Router(
+                        .int,
+                        IntItem(
+                            firstSubIndex(hay.value, needle.value) ?? -1,
+                            call: Behavior.reading(
+                                [V.pushStack: 2],
+                                producing: .int,
+                                from: [needle, hay, InstructionItem(instruction)]
+                            ),
+                            isContingent: Behavior.netContingency(of: hay, needle)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// The number of non-overlapping occurrences of the sub-vector.
+    static func occurrencesOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+        Behavior(
+            instruction,
+            reads: [V.pushStack, V.pushStack],
+            fxn: { a in
+                let (hay, needle) = (a[0] as! V, a[1] as! V)
+                return [
+                    Router(
+                        .int,
+                        IntItem(
+                            subCount(hay.value, needle.value),
+                            call: Behavior.reading(
+                                [V.pushStack: 2],
+                                producing: .int,
+                                from: [needle, hay, InstructionItem(instruction)]
+                            ),
+                            isContingent: Behavior.netContingency(of: hay, needle)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// Replace **every** non-overlapping occurrence of a sub-vector with another
+    /// sub-vector — a transform, so it **consumes** all three arguments. The
+    /// subject is the deepest, then the needle, then the replacement on top; the
+    /// crux re-pushes them in that order.
+    static func replaceSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+        Behavior(
+            instruction,
+            takes: [V.pushStack, V.pushStack, V.pushStack],
+            fxn: { a in
+                let (repl, needle, subject) = (a[0] as! V, a[1] as! V, a[2] as! V)
+                return [
+                    Router(
+                        V.pushStack,
+                        V(
+                            replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
+                            call: [subject, needle, repl, InstructionItem(instruction)],
+                            isContingent: Behavior.netContingency(of: subject, needle, repl)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// Replace only the **first** occurrence of a sub-vector. Consumes, like its
+    /// replace-all sibling.
+    static func replaceFirstSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+        Behavior(
+            instruction,
+            takes: [V.pushStack, V.pushStack, V.pushStack],
+            fxn: { a in
+                let (repl, needle, subject) = (a[0] as! V, a[1] as! V, a[2] as! V)
+                return [
+                    Router(
+                        V.pushStack,
+                        V(
+                            replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
+                            call: [subject, needle, repl, InstructionItem(instruction)],
+                            isContingent: Behavior.netContingency(of: subject, needle, repl)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
+    /// Substitute `repl` for occurrences of `needle` in `hay`, left to right,
+    /// non-overlapping. An empty needle matches nothing (returns `hay` unchanged),
+    /// which is the only sane reading — otherwise it would splice `repl` between
+    /// every element.
+    static func replacingSub<E: Equatable>(_ hay: [E], _ needle: [E], _ repl: [E], firstOnly: Bool) -> [E] {
+        guard !needle.isEmpty, needle.count <= hay.count else { return hay }
+        var result: [E] = []
+        var i = 0
+        var replaced = false
+        while i < hay.count {
+            if (!firstOnly || !replaced),
+               i <= hay.count - needle.count,
+               Array(hay[i..<i + needle.count]) == needle {
+                result.append(contentsOf: repl)
+                i += needle.count
+                replaced = true
+            } else {
+                result.append(hay[i])
+                i += 1
+            }
+        }
+        return result
+    }
+
     // returns a new vector with every occurrence of the scalar argument removed
     static func removeBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
@@ -887,6 +1066,21 @@ nonisolated extension Interpreter {
     static let vecBoolCut_Behavior =
         cutBehavior(.vecBoolCut, making: VecBoolItem.self)
 
+    static let vecBoolContainsSubVec_Behavior =
+        containsSubVecBehavior(.vecBoolContainsSubVec, making: VecBoolItem.self)
+
+    static let vecBoolIndexOfSubVec_Behavior =
+        indexOfSubVecBehavior(.vecBoolIndexOfSubVec, making: VecBoolItem.self)
+
+    static let vecBoolOccurrencesOfSubVec_Behavior =
+        occurrencesOfSubVecBehavior(.vecBoolOccurrencesOfSubVec, making: VecBoolItem.self)
+
+    static let vecBoolReplaceSubVec_Behavior =
+        replaceSubVecBehavior(.vecBoolReplaceSubVec, making: VecBoolItem.self)
+
+    static let vecBoolReplaceFirstSubVec_Behavior =
+        replaceFirstSubVecBehavior(.vecBoolReplaceFirstSubVec, making: VecBoolItem.self)
+
     // ( [1,1,2,3] .vecBoolPushAll)
     //
     // return every item on the argument (in reverse order)
@@ -932,6 +1126,11 @@ nonisolated extension Interpreter {
         .vecBoolSet : vecBoolSet_Behavior,
         .vecBoolSubVec : vecBoolSubVec_Behavior,
         .vecBoolCut : vecBoolCut_Behavior,
+        .vecBoolContainsSubVec : vecBoolContainsSubVec_Behavior,
+        .vecBoolIndexOfSubVec : vecBoolIndexOfSubVec_Behavior,
+        .vecBoolOccurrencesOfSubVec : vecBoolOccurrencesOfSubVec_Behavior,
+        .vecBoolReplaceSubVec : vecBoolReplaceSubVec_Behavior,
+        .vecBoolReplaceFirstSubVec : vecBoolReplaceFirstSubVec_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
     ]
 
@@ -1019,6 +1218,21 @@ nonisolated extension Interpreter {
     static let vecDoubleCut_Behavior =
         cutBehavior(.vecDoubleCut, making: VecDoubleItem.self)
 
+    static let vecDoubleContainsSubVec_Behavior =
+        containsSubVecBehavior(.vecDoubleContainsSubVec, making: VecDoubleItem.self)
+
+    static let vecDoubleIndexOfSubVec_Behavior =
+        indexOfSubVecBehavior(.vecDoubleIndexOfSubVec, making: VecDoubleItem.self)
+
+    static let vecDoubleOccurrencesOfSubVec_Behavior =
+        occurrencesOfSubVecBehavior(.vecDoubleOccurrencesOfSubVec, making: VecDoubleItem.self)
+
+    static let vecDoubleReplaceSubVec_Behavior =
+        replaceSubVecBehavior(.vecDoubleReplaceSubVec, making: VecDoubleItem.self)
+
+    static let vecDoubleReplaceFirstSubVec_Behavior =
+        replaceFirstSubVecBehavior(.vecDoubleReplaceFirstSubVec, making: VecDoubleItem.self)
+
     static let vecDoubleLT_Behavior =
         comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
     static let vecDoubleLTE_Behavior =
@@ -1072,6 +1286,11 @@ nonisolated extension Interpreter {
         .vecDoubleSet : vecDoubleSet_Behavior,
         .vecDoubleSubVec : vecDoubleSubVec_Behavior,
         .vecDoubleCut : vecDoubleCut_Behavior,
+        .vecDoubleContainsSubVec : vecDoubleContainsSubVec_Behavior,
+        .vecDoubleIndexOfSubVec : vecDoubleIndexOfSubVec_Behavior,
+        .vecDoubleOccurrencesOfSubVec : vecDoubleOccurrencesOfSubVec_Behavior,
+        .vecDoubleReplaceSubVec : vecDoubleReplaceSubVec_Behavior,
+        .vecDoubleReplaceFirstSubVec : vecDoubleReplaceFirstSubVec_Behavior,
         .vecDoubleLT : vecDoubleLT_Behavior,
         .vecDoubleLTE : vecDoubleLTE_Behavior,
         .vecDoubleGT : vecDoubleGT_Behavior,
@@ -1165,6 +1384,21 @@ nonisolated extension Interpreter {
     static let vecIntCut_Behavior =
         cutBehavior(.vecIntCut, making: VecIntItem.self)
 
+    static let vecIntContainsSubVec_Behavior =
+        containsSubVecBehavior(.vecIntContainsSubVec, making: VecIntItem.self)
+
+    static let vecIntIndexOfSubVec_Behavior =
+        indexOfSubVecBehavior(.vecIntIndexOfSubVec, making: VecIntItem.self)
+
+    static let vecIntOccurrencesOfSubVec_Behavior =
+        occurrencesOfSubVecBehavior(.vecIntOccurrencesOfSubVec, making: VecIntItem.self)
+
+    static let vecIntReplaceSubVec_Behavior =
+        replaceSubVecBehavior(.vecIntReplaceSubVec, making: VecIntItem.self)
+
+    static let vecIntReplaceFirstSubVec_Behavior =
+        replaceFirstSubVecBehavior(.vecIntReplaceFirstSubVec, making: VecIntItem.self)
+
     static let vecIntLT_Behavior =
         comparisonBehavior(.vecIntLT, making: VecIntItem.self) { $0.lexicographicallyPrecedes($1) }
     static let vecIntLTE_Behavior =
@@ -1219,6 +1453,11 @@ nonisolated extension Interpreter {
         .vecIntSet : vecIntSet_Behavior,
         .vecIntSubVec : vecIntSubVec_Behavior,
         .vecIntCut : vecIntCut_Behavior,
+        .vecIntContainsSubVec : vecIntContainsSubVec_Behavior,
+        .vecIntIndexOfSubVec : vecIntIndexOfSubVec_Behavior,
+        .vecIntOccurrencesOfSubVec : vecIntOccurrencesOfSubVec_Behavior,
+        .vecIntReplaceSubVec : vecIntReplaceSubVec_Behavior,
+        .vecIntReplaceFirstSubVec : vecIntReplaceFirstSubVec_Behavior,
         .vecIntLT : vecIntLT_Behavior,
         .vecIntLTE : vecIntLTE_Behavior,
         .vecIntGT : vecIntGT_Behavior,
@@ -1314,6 +1553,21 @@ nonisolated extension Interpreter {
 
     static let vecStringCut_Behavior =
         cutBehavior(.vecStringCut, making: VecStringItem.self)
+
+    static let vecStringContainsSubVec_Behavior =
+        containsSubVecBehavior(.vecStringContainsSubVec, making: VecStringItem.self)
+
+    static let vecStringIndexOfSubVec_Behavior =
+        indexOfSubVecBehavior(.vecStringIndexOfSubVec, making: VecStringItem.self)
+
+    static let vecStringOccurrencesOfSubVec_Behavior =
+        occurrencesOfSubVecBehavior(.vecStringOccurrencesOfSubVec, making: VecStringItem.self)
+
+    static let vecStringReplaceSubVec_Behavior =
+        replaceSubVecBehavior(.vecStringReplaceSubVec, making: VecStringItem.self)
+
+    static let vecStringReplaceFirstSubVec_Behavior =
+        replaceFirstSubVecBehavior(.vecStringReplaceFirstSubVec, making: VecStringItem.self)
 
     static let vecStringLT_Behavior =
         comparisonBehavior(.vecStringLT, making: VecStringItem.self) { $0.lexicographicallyPrecedes($1) }
@@ -1455,6 +1709,11 @@ nonisolated extension Interpreter {
         .vecStringSet : vecStringSet_Behavior,
         .vecStringSubVec : vecStringSubVec_Behavior,
         .vecStringCut : vecStringCut_Behavior,
+        .vecStringContainsSubVec : vecStringContainsSubVec_Behavior,
+        .vecStringIndexOfSubVec : vecStringIndexOfSubVec_Behavior,
+        .vecStringOccurrencesOfSubVec : vecStringOccurrencesOfSubVec_Behavior,
+        .vecStringReplaceSubVec : vecStringReplaceSubVec_Behavior,
+        .vecStringReplaceFirstSubVec : vecStringReplaceFirstSubVec_Behavior,
         .vecStringLT : vecStringLT_Behavior,
         .vecStringLTE : vecStringLTE_Behavior,
         .vecStringGT : vecStringGT_Behavior,

@@ -63,12 +63,23 @@ struct RandomCodeTests {
     }
 
     /// The control, and the reason the others exist: drawing from the language as
-    /// it is, is **34% furniture** — a proportion nobody chose.
+    /// it is over-weights whatever the language happens to hold most of —
+    /// combinators are a large minority, inputs a sliver — a shape nobody chose.
+    ///
+    /// Compared against the *actual* tag fractions rather than frozen numbers, so
+    /// it stays true as `.other` grows with each new instruction. What it pins is
+    /// that `uniformOverLanguage` really is proportional to tag size, and that the
+    /// language is furniture-heavy and input-starved.
     @Test func `the language's own shape is not neutral`() {
         let realized = composition(of: .uniformOverLanguage)
-        #expect(abs((realized[.combinator] ?? 0) - 0.342) < 0.02)
-        #expect(abs((realized[.constant] ?? 0) - 0.152) < 0.02)
-        #expect((realized[.input] ?? 0) < 0.03, "10 of 526 tokens")
+        let total = Double(Interpreter.language.count)
+        func fraction(_ tag: InstructionTag) -> Double {
+            Double(Interpreter.instructions(tagged: tag).count) / total
+        }
+        #expect(abs((realized[.combinator] ?? 0) - fraction(.combinator)) < 0.02)
+        #expect(abs((realized[.constant] ?? 0) - fraction(.constant)) < 0.02)
+        #expect((realized[.input] ?? 0) < 0.03, "inputs are a sliver of the language")
+        #expect(fraction(.combinator) > 0.25, "furniture is a large minority")
     }
 
     /// A weight of zero means never.
