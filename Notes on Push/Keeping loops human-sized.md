@@ -300,13 +300,15 @@ Push thing to do.
 
 ## Still open
 
-1. **Should a program be able to raise its own loop's ceiling?** An `.iteratorSetIterations` would give a
-   search a knob on its own tractability, and `stepLimit` still backstops it. Interesting; probably later.
+Tracked in `Roadmap.md`, with the argument kept here:
+
+1. **Should a program raise its own loop's ceiling?** An `.iteratorSetIterations` would give a search a
+   knob on its own tractability, and `stepLimit` still backstops it. Interesting; probably later.
+   (Roadmap §F.)
 2. **The other half is not done.** The clamp is a backstop, not a shaper: it makes a huge count
    survivable, it does not make counts *tend* to be human-sized. Ints drawn uniformly over a huge range
-   will now mostly produce identical clamped loops — safe, monotone, and wasting the whole range. The
-   tendency has to come from a human-scaled distribution in the genome, which belongs with the new
-   genome representations.
+   mostly produce identical clamped loops — safe, monotone, and wasting the whole range. The tendency has
+   to come from a human-scaled distribution in the genome. (Roadmap §D.)
 3. **Coarsening** (stride = span/budget) is still the more expressive option for ranges, and is exactly
-   the `.sampling` mechanism. Rejected here because it cannot work for counts and so needs two rules —
-   but worth revisiting when `.sampling` lands.
+   the `.sampling` mechanism. Rejected here because it cannot work for counts and so needs two rules — but
+   worth revisiting when `.sampling` lands. (Roadmap §F.)

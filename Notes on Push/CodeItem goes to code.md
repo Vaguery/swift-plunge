@@ -225,6 +225,10 @@ Popping N exec items to "surface" one leaves it about to run, not sitting there 
 
 ## Where this is heading
 
+*Update: most of this landed. `IteratorItem` is first-class, non-destructive execution arrived (via the
+query convention and `.codeDo`), and `.codeFromIterator` makes `.code` from anything an iterator walks.
+What remains — `.codeIterate` and the `codeFuncFrom_Crux` family — is in `Roadmap.md` §A/§E.*
+
 Recorded so the change is not designed too narrowly. `.code` becomes a **pool of reusable subroutines**,
 not just a place blocks sit. Planned work on top:
 

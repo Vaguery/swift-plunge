@@ -411,6 +411,8 @@ other value stack, and no proportion of *instructions* fixes a shortage of *valu
 
 ## What this does not answer
 
+*The genome items are tracked in `Roadmap.md` §D.*
+
 - **Genome length is not varied** (120 genes throughout), and the Fibonacci cliff means length is a
   high-leverage parameter — 59 genes gives 34% code, 60 gives 55%. A length sweep is the obvious next
   diagnostic.

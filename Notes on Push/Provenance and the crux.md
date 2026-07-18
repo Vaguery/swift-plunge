@@ -366,6 +366,8 @@ containment destroys history, and law 1b says containment should not.
 
 ## Future work noted along the way
 
+*Indexed in `Roadmap.md` §E.*
+
 - **A `contingencySources` instruction set**, sibling to `PushInstruction.iterators`. Contingency splits
   into sources (the ten `.inputN`, plus `DeepDup`/`Shove`/`Yank`/`YankDup`/`StackDepth`/`StackIsEmpty`
   for every stack, which set it regardless of their arguments) and propagators (everything else, via

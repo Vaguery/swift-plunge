@@ -245,8 +245,11 @@ not be.
 3. ~~**What bounds a sieve's cost?**~~ **Closed: nothing new is needed.** `maxStackDepth` bounds what it
    can search, and Design Principles §4 says the unit is items produced, not work done — a sieve produces
    one. See §4 above.
-4. **Does the composition invariant hold?** "A crux fragment leaves its value and nothing else" is
-   currently an accident. Is it worth promoting to a tested rule regardless of the sieve? (Probably yes.)
+4. ~~**Does the composition invariant hold?**~~ **Answered: promoted to a tested rule** — non-destructive
+   queries forced it (Design Principles §5). "A crux fragment leaves its value and nothing else" is now
+   Design Principles §1, enforced by `Composition Invariant Tests.swift` and the crux fuzzer. The
+   "probably yes" was right, and it was worth doing regardless of the sieve.
 5. **Should the sieve be visible to a program?** A sieved argument is *found*, not taken. If a program
    can tell the difference — via contingency, or a `.xSieve` combinator of its own — that is a language
-   feature; if not, it is an implementation detail of particular instructions.
+   feature; if not, it is an implementation detail of particular instructions. *(The one live sieve
+   question; Roadmap §C.)*

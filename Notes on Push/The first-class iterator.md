@@ -279,14 +279,10 @@ other ending pays. A *refusal* hands the whole iterator back, as the setters do.
 
 ## Next
 
-- **map/filter** — the iterator needs somewhere to *collect* body results, not just emit them: an
-  accumulator field plus a rule for reading what the body left. This is what the "pseudofunction" work
-  wants. Note `.vecFromIterator` is **not** this: it collects projections, and never runs a body.
-- **`.points(into:)`** — the zipper walk of a code tree. The architecture already admits it (a pre-order
-  walk is a pure function of `(origin, cursor)`, which is all a projection must be); it wants
-  `codeNthPoint` implemented and a memoized point-count on `CodeItem` first.
-- **`.sampling(steps:)`** for Double ranges, and behaviors that make iterators from other sources.
-- **A real `.codeIterate`**, which would give the boxed-code walk an honest name of its own.
+The iterator follow-ons — `.points(into:)`, map/filter (the accumulator work), `.sampling(steps:)`, a
+real `.codeIterate` — are in the single roadmap: see `Roadmap.md` §A. The `.points` architecture is
+worked out here; the rest are one-liners there.
+
 ## Fixed in passing
 
 **`run(stepLimit:)` ignored its argument entirely** and looped on `config.stepLimit` — found because it
