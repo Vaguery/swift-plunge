@@ -4,7 +4,7 @@
 //
 //  Created by William Tozier on 7/18/26.
 //
-//  codeCollect (wrap two) and codeIf (execIf with a .code source).
+//  codePair (wrap two) and codeIf (execIf with a .code source).
 //
 
 @testable import PushInterpreter
@@ -14,28 +14,42 @@ import DequeModule
 @Suite @MainActor
 struct CodeStage1Tests {
 
-    @Test func `codeCollect wraps two blocks, nesting preserved`() {
+    @Test func `codePair wraps two blocks, nesting preserved`() {
         let inty = Interpreter()
         // push y=(c d) then x=(a b) so x is on top (a[0]=x, a[1]=y)
         inty.stacks[.code]!.prepend(contentsOf:
             [CodeItem([StringItem("a"), StringItem("b")]),
              CodeItem([StringItem("c"), StringItem("d")])] as [any Item])
-        doThis(.codeCollect, to: inty)
+        doThis(.codePair, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( \"c\" \"d\" ) ( \"a\" \"b\" ) ) ]")
         // distinct from append, which would flatten to ( c d a b )
     }
 
-    @Test func `codeCollect on empty blocks`() {
+    @Test func `codePair denotes singleton arguments`() {
+        // ( 1 ) ( 2 3 ) .codePair → ( 1 ( 2 3 ) ): the singleton ( 1 ) contributes
+        // the bare leaf 1, the two-element ( 2 3 ) stays a block. Loaded as a
+        // program so the reading order matches the plan's example.
+        let inty = Interpreter()
+        inty.load(program: [
+            CodeItem([IntItem(1)]),               // ( 1 ), deeper
+            CodeItem([IntItem(2), IntItem(3)]),   // ( 2 3 ), on top
+            InstructionItem(.codePair),
+        ])
+        inty.run()
+        #expect(stackString(inty, .code) == "[ ( 1 ( 2 3 ) ) ]")
+    }
+
+    @Test func `codePair on empty blocks`() {
         let inty = Interpreter()
         inty.stacks[.code]!.prepend(contentsOf: [CodeItem([]), CodeItem([])] as [any Item])
-        doThis(.codeCollect, to: inty)
+        doThis(.codePair, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ( ) ) ]")
     }
 
-    @Test func `codeCollect reproduces from its crux`() {
+    @Test func `codePair reproduces from its crux`() {
         let inty = Interpreter()
         inty.stacks[.code]!.prepend(contentsOf: [CodeItem([IntItem(1)]), CodeItem([IntItem(2)])] as [any Item])
-        doThis(.codeCollect, to: inty)
+        doThis(.codePair, to: inty)
         let result = topItem(inty, .code)
         let redo = Interpreter()
         redo.load(program: result.crux())

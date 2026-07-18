@@ -28,22 +28,24 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// Wrap **two** code items into one new block `( x y )` — the arity-2 sibling
-    /// of `codeWrapRoot`, and Clojure's `list` with two arguments. Distinct from
-    /// `codeAppend`, which concatenates their contents flat: `(a b)` collect
-    /// `(c d)` → `( (a b) (c d) )`, not `(a b c d)`.
-    static let codeCollect_Behavior =
+    /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
+    /// `codeWrapRoot`, and Clojure's `list` with two arguments. Each argument is
+    /// **denoted** (singleton-unwrap): a one-element block contributes its bare
+    /// element, so `( 1 ) ( 2 3 ) .codePair` → `( 1 ( 2 3 ) )`, not
+    /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeAppend`, which concatenates
+    /// contents flat.
+    static let codePair_Behavior =
         Behavior(
-            .codeCollect,
+            .codePair,
             takes: [.code, .code],
             fxn: { a in
-                let (x, y) = (a[0], a[1])
+                let (x, y) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [
                     Router(
                         .code,
                         CodeItem(
-                            [y, x],
-                            call: [y, x, InstructionItem(.codeCollect)],
+                            [y.denotedItem, x.denotedItem],
+                            call: [y, x, InstructionItem(.codePair)],
                             isContingent: Behavior.netContingency(of: x, y)
                         )
                     )
@@ -364,8 +366,12 @@ nonisolated extension Interpreter {
             takes: [.code, .int],
             fxn: { a in
                 let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
+                // Gaps, not elements: a root of N items has N+1 gaps, from 0
+                // (before everything → empty prefix) to N (after everything →
+                // empty suffix). So the index wraps modulo count+1, not count —
+                // that is what lets a cut reach the two extremes.
                 let count = x.value.count
-                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+                let idx = Int(y.value.magnitude % UInt(count + 1))
                 let prefix = Array(x.value[0..<idx])
                 let suffix = Array(x.value[idx...])
                 let source: [any Item] = [x, y, InstructionItem(.codeCutRootAtGap)]
@@ -627,7 +633,7 @@ nonisolated extension Interpreter {
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,
-        .codeCollect : codeCollect_Behavior,
+        .codePair : codePair_Behavior,
         .codeIf : codeIf_Behavior,
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,

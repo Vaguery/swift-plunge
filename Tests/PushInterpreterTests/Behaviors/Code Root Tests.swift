@@ -32,13 +32,30 @@ struct CodeRootTests {
         #expect(stackString(inty, .code) == "[ ( 1 2 3 4 ) ]")
     }
 
-    @Test func `cutRootAtGap index wraps; empty block gives two empties`() {
-        let a = Interpreter()
-        a.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
-        a.stacks[.int]!.prepend(IntItem(4))   // 4 % 3 == 1
-        doThis(.codeCutRootAtGap, to: a)
-        #expect(stackString(a, .code) == "[ ( 2 3 ) ( 1 ) ]")
+    @Test func `cutRootAtGap reaches both extremes and wraps modulo count+1`() {
+        // ( 1 2 ) has 3 gaps: 0 (before), 1 (between), 2 (after).
+        // gap 0 → empty prefix, whole suffix.
+        let g0 = Interpreter()
+        g0.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
+        g0.stacks[.int]!.prepend(IntItem(0))
+        doThis(.codeCutRootAtGap, to: g0)
+        #expect(stackString(g0, .code) == "[ ( 1 2 ) ( ) ]", "empty prefix (deeper), whole suffix on top")
 
+        // gap 2 (== count) → whole prefix, empty suffix — the after-the-final gap.
+        let g2 = Interpreter()
+        g2.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
+        g2.stacks[.int]!.prepend(IntItem(2))
+        doThis(.codeCutRootAtGap, to: g2)
+        #expect(stackString(g2, .code) == "[ ( ) ( 1 2 ) ]", "whole prefix (deeper), empty suffix on top")
+
+        // wraps modulo count+1: gap 3 on a 3-item root (4 gaps) == gap 3.
+        let w = Interpreter()
+        w.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
+        w.stacks[.int]!.prepend(IntItem(3))   // 3 % 4 == 3 → after everything
+        doThis(.codeCutRootAtGap, to: w)
+        #expect(stackString(w, .code) == "[ ( ) ( 1 2 3 ) ]")
+
+        // empty block: one gap only, both pieces empty.
         let e = Interpreter()
         e.stacks[.code]!.prepend(CodeItem([]))
         e.stacks[.int]!.prepend(IntItem(3))

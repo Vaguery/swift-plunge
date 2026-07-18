@@ -3,7 +3,7 @@
 > **Status (2026-07-18): built** (branch `codeTreeInstructions`) — every `code*` instruction below is
 > implemented **except the four gap-based ops** (`codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`,
 > `codeWrapPoints`), postponed to a dedicated gap-model design pass. `codeGather` was renamed
-> **`codeCollect`** (wrap two items into `(x y)`) and `codeFlattenOnce` added. The singleton-unwrap
+> **`codePair`** (wrap two items into `(x y)`) and `codeFlattenOnce` added. The singleton-unwrap
 > convention (a one-element block denotes its element) lets code needles name leaves — Design Principles
 > §7b. See Roadmap.
 
@@ -51,7 +51,7 @@ Code in propeller and Clojush/Klapaucius
 | code_quote       | code-quote      |             | execQuote                 |
 | code_if          | code-if         |             | codeIf                    |
 | code_length      | code-length     |             | codeLength                |
-| code_list        | code-list       |             | codeCollect               |
+| code_list        | code-list       |             | codePair               |
 |                  | code-list!      |             |                           |
 | code_wrap        | code-wrap       |             | codeWrap                  |
 |                  | code-wrap!      |             |                           |
@@ -93,7 +93,7 @@ This feels like a reasonable collection to implement:
 - codeFlattenOnce: flatten the `CodeItem` tree one level towards the root, bringing any subtrees in the root value down into the root itself, but not flattening their grandchildren nodes 
 - codeFlattenPoint: find the indexed point in the tree and flatten that (replace the subtree with its leaves as a flat CodeItem)
 - codeFlattenRange: find two indexed gaps in the tree (inclusive), and flatten every subtree with either of its ends overlapping that range; do not flatten containers that are entirely outside the range
-- codeCollect: take two `.code` items and put them into a new one
+- codePair: take two `.code` items and put them into a new one
 - codeIf: pop two `.code` arguments, and send the correct one (unwrapped) to `.exec` based on a `.bool`
 - codeIndexOfPoint: if a `.code` item's contents can be found in the tree of another, return the position as an `.int` index of the point it's first found; NONDESTRUCTIVE
 - codeInsertAtGap: insert a second `.code` item into the tree of another, at an `.int`-indexed gap between points
