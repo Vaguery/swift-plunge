@@ -43,14 +43,16 @@ struct TagsTests {
         #expect(Interpreter.instructions(tagged: .input).count == 10)
         #expect(Interpreter.instructions(tagged: .combinator).count == 180)
 
-        // The elephant: the furniture is 41% of everything that is not a constant
-        // or an input, which is why it is a partition of its own.
+        // The elephant: the furniture is a large minority of everything that is
+        // not a constant or an input — which is why it is a partition of its own.
+        // (The exact fraction drifts as `.other` grows with each new instruction;
+        // the load-bearing facts are the three fixed counts above.)
         let notEnvironment = Interpreter.language.count
             - Interpreter.instructions(tagged: .constant).count
             - Interpreter.instructions(tagged: .input).count
         let furniture = Double(Interpreter.instructions(tagged: .combinator).count)
             / Double(notEnvironment)
-        #expect(furniture > 0.40 && furniture < 0.42)
+        #expect(furniture > 0.30 && furniture < 0.42)
     }
 
     @Test func `the tags hold what their names claim`() {

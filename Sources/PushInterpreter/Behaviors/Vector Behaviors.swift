@@ -435,6 +435,43 @@ nonisolated extension Interpreter {
         )
     }
 
+    /// A lexicographic ordering comparison of two vectors — the vector analog of
+    /// `stringLT`/`stringGT`/etc. **Non-destructive**, like every comparison: it
+    /// reads both operands and leaves them, and the crux pops the two it read
+    /// (`Behavior.reading`). `V.Element: Comparable`, so `[9, 2] > [1, 1, 1]`
+    /// (element-by-element, length only breaks ties) — Swift's built-in array
+    /// order, not shortlex.
+    ///
+    /// `satisfied(y, x)` decides the result, given the two operands in record
+    /// order (`y` deeper, `x` on top) — matching the scalar comparisons.
+    static func comparisonBehavior<V: VectorItem>(
+        _ instruction: PushInstruction,
+        making itemType: V.Type,
+        _ satisfied: @escaping @Sendable ([V.Element], [V.Element]) -> Bool
+    ) -> Behavior where V.Element: Comparable {
+        Behavior(
+            instruction,
+            reads: [V.pushStack, V.pushStack],
+            fxn: { a in
+                let (x, y) = (a[0] as! V, a[1] as! V)
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            satisfied(y.value, x.value),
+                            call: Behavior.reading(
+                                [V.pushStack: 2],
+                                producing: .bool,
+                                from: [y, x, InstructionItem(instruction)]
+                            ),
+                            isContingent: Behavior.netContingency(of: x, y)
+                        )
+                    )
+                ]
+            }
+        )
+    }
+
     // returns a new vector with every occurrence of the scalar argument removed
     static func removeBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
@@ -982,6 +1019,15 @@ nonisolated extension Interpreter {
     static let vecDoubleCut_Behavior =
         cutBehavior(.vecDoubleCut, making: VecDoubleItem.self)
 
+    static let vecDoubleLT_Behavior =
+        comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
+    static let vecDoubleLTE_Behavior =
+        comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { !$1.lexicographicallyPrecedes($0) }
+    static let vecDoubleGT_Behavior =
+        comparisonBehavior(.vecDoubleGT, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) }
+    static let vecDoubleGTE_Behavior =
+        comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { !$0.lexicographicallyPrecedes($1) }
+
     // ( [1,1,2,3] .vecDoublePushAll)
     //
     // return every item on the argument (in reverse order)
@@ -1026,6 +1072,10 @@ nonisolated extension Interpreter {
         .vecDoubleSet : vecDoubleSet_Behavior,
         .vecDoubleSubVec : vecDoubleSubVec_Behavior,
         .vecDoubleCut : vecDoubleCut_Behavior,
+        .vecDoubleLT : vecDoubleLT_Behavior,
+        .vecDoubleLTE : vecDoubleLTE_Behavior,
+        .vecDoubleGT : vecDoubleGT_Behavior,
+        .vecDoubleGTE : vecDoubleGTE_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
     ]
 
@@ -1115,6 +1165,15 @@ nonisolated extension Interpreter {
     static let vecIntCut_Behavior =
         cutBehavior(.vecIntCut, making: VecIntItem.self)
 
+    static let vecIntLT_Behavior =
+        comparisonBehavior(.vecIntLT, making: VecIntItem.self) { $0.lexicographicallyPrecedes($1) }
+    static let vecIntLTE_Behavior =
+        comparisonBehavior(.vecIntLTE, making: VecIntItem.self) { !$1.lexicographicallyPrecedes($0) }
+    static let vecIntGT_Behavior =
+        comparisonBehavior(.vecIntGT, making: VecIntItem.self) { $1.lexicographicallyPrecedes($0) }
+    static let vecIntGTE_Behavior =
+        comparisonBehavior(.vecIntGTE, making: VecIntItem.self) { !$0.lexicographicallyPrecedes($1) }
+
     // ( [1,1,2,3] .vecIntPushAll)
     //
     // return every item on the argument (in reverse order)
@@ -1160,6 +1219,10 @@ nonisolated extension Interpreter {
         .vecIntSet : vecIntSet_Behavior,
         .vecIntSubVec : vecIntSubVec_Behavior,
         .vecIntCut : vecIntCut_Behavior,
+        .vecIntLT : vecIntLT_Behavior,
+        .vecIntLTE : vecIntLTE_Behavior,
+        .vecIntGT : vecIntGT_Behavior,
+        .vecIntGTE : vecIntGTE_Behavior,
         .vecIntTake : vecIntTake_Behavior,
     ]
 
@@ -1251,6 +1314,15 @@ nonisolated extension Interpreter {
 
     static let vecStringCut_Behavior =
         cutBehavior(.vecStringCut, making: VecStringItem.self)
+
+    static let vecStringLT_Behavior =
+        comparisonBehavior(.vecStringLT, making: VecStringItem.self) { $0.lexicographicallyPrecedes($1) }
+    static let vecStringLTE_Behavior =
+        comparisonBehavior(.vecStringLTE, making: VecStringItem.self) { !$1.lexicographicallyPrecedes($0) }
+    static let vecStringGT_Behavior =
+        comparisonBehavior(.vecStringGT, making: VecStringItem.self) { $1.lexicographicallyPrecedes($0) }
+    static let vecStringGTE_Behavior =
+        comparisonBehavior(.vecStringGTE, making: VecStringItem.self) { !$0.lexicographicallyPrecedes($1) }
 
     // ( [1,1,2,3] .vecStringPushAll)
     //
@@ -1383,6 +1455,10 @@ nonisolated extension Interpreter {
         .vecStringSet : vecStringSet_Behavior,
         .vecStringSubVec : vecStringSubVec_Behavior,
         .vecStringCut : vecStringCut_Behavior,
+        .vecStringLT : vecStringLT_Behavior,
+        .vecStringLTE : vecStringLTE_Behavior,
+        .vecStringGT : vecStringGT_Behavior,
+        .vecStringGTE : vecStringGTE_Behavior,
         .vecStringTake : vecStringTake_Behavior,
     ]
 
