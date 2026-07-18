@@ -11,21 +11,18 @@ commitment.
 
 ## A. Language features not yet built
 
-1. **`.points(into:)`** — the depth-first code-tree walk (a zipper). The architecture already admits it;
-   reserved in an `IteratorItem.swift` comment. Wants `codeNthPoint` and a memoized point-count on
-   `CodeItem` first. → *The first-class iterator.md*
+1. ~~**`.points(into:)`** — the depth-first code-tree walk~~ **BUILT** (`codeIteratePoints`, the `.points`
+   IteratorKind). → *Code instruction planning.md*
 2. **map / filter** — an accumulator field on the iterator plus a rule for reading what the body left
    (the "pseudofunction" work). Note `.vecFromIterator`/`.codeFromIterator` are **not** this — they
    collect projections and never run a body. → *The first-class iterator.md*
 3. **`.sampling(steps:)`** — Double ranges, initialised by a step count or a stride. Also the
    "coarsening" mechanism §F wants. → *The first-class iterator.md*
-4. **A real `.codeIterate`** — an honest name for the boxed-code walk `.execDupItems` is currently the
-   first instance of. → *CodeItem goes to code.md*
-5. **`codeDoIf`** — consume a block, unwrap it onto `.exec` if the bool is true, replace it on `.code`
-   if false. Decomposes into pieces already present.
-6. **The unbuilt `.code*` queries** — `codeContains`, `codeDepth`, `codeNthPoint`, `codeLengthPoints`,
-   `codeWidth` — non-destructive by default under the query convention (Design Principles §5). This is
-   the real `.code`-relief payoff.
+4. ~~**A real `.codeIterate`**~~ **BUILT** — `codeIterateRoot` (root elements) and `codeIteratePoints`
+   (whole tree). → *Code instruction planning.md*
+5. ~~**`codeDoIf`**~~ **BUILT** as `codeIf` (bool + two blocks, run the chosen on `.exec`).
+6. ~~**The unbuilt `.code*` queries**~~ **BUILT** — `codeContains`/`codeDepth`/`codeWidth`/
+   `codeLengthPoints`/`codeNthPoint`/`codeNthRoot`/`codeIndexOfPoint`/`codeContainer`, all non-destructive.
 7. **A multiplicative / doubling iterator** — would need an "operation" field; the additive `stride`
    cannot express it. → *Provenance and the crux.md*
 
@@ -113,10 +110,13 @@ Left for later, with the arguments in the coverage note:
 31. **`parseToLetters` vector analog** — an iterator emitting one-element vectors. Low value; add on a
     concrete use.
 32. **Chunking** (fixed windows, overlapping/non-overlapping) — needs a **new `IteratorKind`**; `stride`
-    is honoured only by `.counting` today. The reserved `.points` slot is the precedent. Overlaps #A.1.
-33. **Code partitioning/search family** (`codeCut`/`codeContains`/`codeNth*`… at root and points level) —
-    defer as a block; the points level needs `.points` (#A.1), the rest belongs with
-    `Code instruction planning.markdown`.
+    is honoured only by `.counting` today (the `.points` kind now exists as a further precedent).
+    Overlaps #A.1.
+33. **Code gap-based ops** — `codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`, `codeWrapPoints` —
+    the last of the code family, postponed for a **gap coordinate model** design pass (how positions
+    *between* points are numbered; child-array splice vs Plushy Open/Close-with-repair). The rest of the
+    code batch is **built** (`Code instruction planning.md`, branch `codeTreeInstructions`): all `code*`
+    instructions incl. the `.points` iterator, singleton-unwrap needles (Design Principles §7b).
 34. **Pattern as a first-class item** — connects sub-vector search, the sieve (§C), and `.points`. A
     research direction, not an instruction.
 35. **Naming reconciliation** (`stringSubstring`↔`subVec`, `stringSetChar`↔`set`, `stringConjChar`↔`conj`)

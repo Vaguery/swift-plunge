@@ -1,5 +1,13 @@
 #  Missing Code instructions
 
+> **Status (2026-07-18): built** (branch `codeTreeInstructions`) — every `code*` instruction below is
+> implemented **except the four gap-based ops** (`codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`,
+> `codeWrapPoints`), postponed to a dedicated gap-model design pass. `codeGather` was renamed
+> **`codeCollect`** (wrap two items into `(x y)`) and `codeFlattenOnce` added. The singleton-unwrap
+> convention (a one-element block denotes its element) lets code needles name leaves — Design Principles
+> §7b. See Roadmap.
+
+
 ## Action items
 
 1. Examine the current Instruction definitions and ensure there is a mapping between the list of proposed instructions given in `swift-push-interpreter plan` and the ones currently named in the language enum; ask about accidental renames I may have made (there are a lot, and many names have changed over the months); after discussion, adjust this document's list to match the ground truth decided
@@ -8,7 +16,7 @@
 
 ### Notes
 - As mentioned elsewhere, the `points` traversals and indexing are based on the implementation of the `zipper` data structure from Clojure, which offers a low-complexity immutable way to traverse and manipulate a tree structure. There is no need to replicate that if Swift or some simple library provides the necessary functionality already; this is just how the nomenclature arose originally, and isn't a decision, just a metaphor
-- As a rule of thumb, any counting or traversal of a nested CodeItem tree is assumed to be in post-order or depth-first order
+- As a rule of thumb, any counting or traversal of a nested CodeItem tree is **pre-order** (a node before its children, depth-first, left to right). Point index 0 is the CodeItem itself.
 - Some of the iterators mentioned here have already been discussed and imlpemented
 - Unit testing should be rigorous and expressive, because these CodeItem manipulations may be strange when an empty code block is involved
 - The use cases for CodeItems as "crux-based functions" is postponed to a later increment phase
@@ -81,9 +89,9 @@ This feels like a reasonable collection to implement:
 - codeCutRootAtGap: cut the root of a `.code` item where indexed by an `'.int`
 - codeDepth: maximum steps from root to the farthest leaf; NONDESTRUCTIVE
 - codeDo: pop code item and unwrap onto .exec stack
-- codeFlatten: flatten then entire tree of a `.code` item in a post-order traversal (depth first, in other words)
+- codeFlatten: flatten the entire tree of a `.code` item to its leaves, left to right (pre- and post-order agree on leaf order)
 - codeFlattenOnce: flatten the `CodeItem` tree one level towards the root, bringing any subtrees in the root value down into the root itself, but not flattening their grandchildren nodes 
-- codeFlattenPoint: find the indexed point in the tree and flatten that (replace the subtree with a post-order traversal of itself as a CodeItem holding a flat array)
+- codeFlattenPoint: find the indexed point in the tree and flatten that (replace the subtree with its leaves as a flat CodeItem)
 - codeFlattenRange: find two indexed gaps in the tree (inclusive), and flatten every subtree with either of its ends overlapping that range; do not flatten containers that are entirely outside the range
 - codeCollect: take two `.code` items and put them into a new one
 - codeIf: pop two `.code` arguments, and send the correct one (unwrapped) to `.exec` based on a `.bool`
@@ -105,7 +113,7 @@ This feels like a reasonable collection to implement:
 
 ## For later, not now
 
-- codePreOrderIterate: create am iterator that traverses the `CodeItem` points in preorder
+- ~~codePreOrderIterate~~ — this is `codeIteratePoints` (built): points are always walked pre-order, so the separate name was redundant
      
 - codeFuncFromXCrux: takes an item of the specified type `X` and an `.int`, looks at its history (aka 
 "crux"), and removes the indexed leaf from that tree. The result is pushed as a new `.code` item
