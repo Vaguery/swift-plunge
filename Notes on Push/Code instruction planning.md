@@ -1,6 +1,19 @@
 #  Missing Code instructions
 
-Missing instructions in bold
+## Action items
+
+1. Examine the current Instruction definitions and ensure there is a mapping between the list of proposed instructions given in `swift-push-interpreter plan` and the ones currently named in the language enum; ask about accidental renames I may have made (there are a lot, and many names have changed over the months); after discussion, adjust this document's list to match the ground truth decided
+2. Check which of the currently implemented Behaviors match the descriptions here, and which are not yet implemented
+3. Implement what remains
+
+### Notes
+- As mentioned elsewhere, the `points` traversals and indexing are based on the implementation of the `zipper` data structure from Clojure, which offers a low-complexity immutable way to traverse and manipulate a tree structure. There is no need to replicate that if Swift or some simple library provides the necessary functionality already; this is just how the nomenclature arose originally, and isn't a decision, just a metaphor
+- As a rule of thumb, any counting or traversal of a nested CodeItem tree is assumed to be in post-order or depth-first order
+- Some of the iterators mentioned here have already been discussed and imlpemented
+- Unit testing should be rigorous and expressive, because these CodeItem manipulations may be strange when an empty code block is involved
+- The use cases for CodeItems as "crux-based functions" is postponed to a later increment phase
+
+## A historical comparison
 
 Code in propeller and Clojush/Klapaucius
 
@@ -30,7 +43,7 @@ Code in propeller and Clojush/Klapaucius
 | code_quote       | code-quote      |             | execQuote                 |
 | code_if          | code-if         |             | codeIf                    |
 | code_length      | code-length     |             | codeLength                |
-| code_list        | code-list       |             | codeGather                |
+| code_list        | code-list       |             | codeCollect               |
 |                  | code-list!      |             |                           |
 | code_wrap        | code-wrap       |             | codeWrap                  |
 |                  | code-wrap!      |             |                           |
@@ -53,57 +66,53 @@ Code in propeller and Clojush/Klapaucius
 | code_position    | code-position   |             | codeIndexOf               |
 |                  | code-reduce     |             |                           |
 |                  | code-return     |             |                           |
-|                  |                 |             | codePostOrderIterate      |
-|                  |                 |             | codePreOrderIterate       |
-|                  |                 |             | codeCutPostOrder          |
-|                  |                 |             | codeCutPreorder           |
-|                  |                 |             | codeFlattenPostOrder      |
-|                  |                 |             | codeFlattenPreOrder       |
-|                  |                 |             | codeFlattenNth            |
-|                  |                 |             | codeFlatten               |
-|                  |                 |             | codeLiftSubtree           |
-|                  |                 |             | codeFlattenSubtree        |
-|                  |                 |             |                           |
+
+Many of these instructions are from Push interpreters where code items are handled by immediate unwrapping and execution, not by pushing to the code stack and manipulation, so only the ones that are compatible have been retained here.
 
 
-This feels like a reasonable collection:
+## swift-push-interpreter plan
+
+This feels like a reasonable collection to implement:
 
 - codeAppend: concatenate the values of two `.code` args
-- codeContainer: find a target `.code` item in another's tree, and if so return its parent
-- codeContains: `true` if a target `.code` item is present in another's tree
-- codeCutAtGap: convert `.code` argument to a flat Plushy, count points and gaps, and cut where indexed by an `.int`; repair both pieces with `Open` and `Close` as needed at the ends, then return
+- codeContainer: find a target `.code` item in another's tree, and if so return its parent; NONDESTRUCTIVE
+- codeContains: `true` if a target `.code` item is present in another's tree; NONDESTRUCTIVE
+- codeCutAtGap: convert `.code` argument to a flat Plushy, count points and gaps, and cut where indexed by an `.int`; repair both pieces as needed at the ends so they contain the entire CodeItem tree (essentially, remove and extract some arbitrary subtree of the argument's root .value array, as a new CodeItem), then return
 - codeCutRootAtGap: cut the root of a `.code` item where indexed by an `'.int`
-- codeDepth: maximum steps from root to leaf
+- codeDepth: maximum steps from root to the farthest leaf; NONDESTRUCTIVE
 - codeDo: pop code item and unwrap onto .exec stack
-- codeFlatten: flatten then entire tree of a `.code` item in post-order traversal
-- codeFlattenPoint: find the indexed point in the tree and flatten that
-- codeFlattenRange: find two indexed gaps in the tree, and flatten every container with one end overlapping that range; do not flatten containers that are entirely inside or outside the range
-- codeGather: take two `.code` items and put them into a new one
-- codeIf: pop two `.code` arguments, and send the correct one to `.exec` based on a `.bool`
-- codeIndexOfPoint: if a `.code` item's contents can be found in the tree of another, return the position as an `.int` index of the point it's first found
+- codeFlatten: flatten then entire tree of a `.code` item in a post-order traversal (depth first, in other words)
+- codeFlattenOnce: flatten the `CodeItem` tree one level towards the root, bringing any subtrees in the root value down into the root itself, but not flattening their grandchildren nodes 
+- codeFlattenPoint: find the indexed point in the tree and flatten that (replace the subtree with a post-order traversal of itself as a CodeItem holding a flat array)
+- codeFlattenRange: find two indexed gaps in the tree (inclusive), and flatten every subtree with either of its ends overlapping that range; do not flatten containers that are entirely outside the range
+- codeCollect: take two `.code` items and put them into a new one
+- codeIf: pop two `.code` arguments, and send the correct one (unwrapped) to `.exec` based on a `.bool`
+- codeIndexOfPoint: if a `.code` item's contents can be found in the tree of another, return the position as an `.int` index of the point it's first found; NONDESTRUCTIVE
 - codeInsertAtGap: insert a second `.code` item into the tree of another, at an `.int`-indexed gap between points
-- codeItemIsEmpty: `true` if empty
+- codeItemIsEmpty: `true` if empty; NONDESTRUCTIVE
 - codeIteratePoints: standard `iterate` but using every point in turn
 - codeIterateRoot: standard `iterate` using root elements only
-- codeLengthPoints: count of points in entire tree
-- codeLengthRoot: count of points in the root
-- codeNthPoint: return the indexed point
-- codeNthRoot: return the indexed root element
+- codeLengthPoints: count of points in entire tree; NONDESTRUCTIVE
+- codeLengthRoot: count of points in the root; NONDESTRUCTIVE
+- codeNthPoint: return the indexed point; NONDESTRUCTIVE
+- codeNthRoot: return the indexed root element; NONDESTRUCTIVE
 - codeRemovePoint: delete the entire point (subtree) at the indexed location
 - codeReplaceAllPoints: every place a given subtree is found in a larger tree, replace as indeicated
 - codeReplaceFirstPoint: as above, but first location only (in point order)
-- codeWidth: total number of leaves in the tree
+- codeWidth: total number of leaves in the tree; NONDESTRUCTIVE
 - codeWrapRoot: insert `Open` and `Close` marks around a root element of the tree and rebuild
 - codeWrapPoints: pick two indexed gaps; insert an `Open` at the first and a `Close` at the second, and rebuild
 
-- codeFuncFrom_Crux: takes an item of the specified type and an `.int`, looks at its history (aka 
-"crux"), and removes the indexed leaf from that tree. The result is pushed as a new `.code` item
-- codeFuncFromBoolCrux
-- codeFuncFromCharCrux
-- codeFuncFromCodeCrux
-- codeFuncFromDoubleCrux
-- codeFuncFromIntCrux
-- codeFuncFromStringCrux
+## For later, not now
 
-- codeToCrux: takes a single `.code` item and rewrites it so that the internal structure is stored in post-order "runnable" mode
+- codePreOrderIterate: create am iterator that traverses the `CodeItem` points in preorder
+     
+- codeFuncFromXCrux: takes an item of the specified type `X` and an `.int`, looks at its history (aka 
+"crux"), and removes the indexed leaf from that tree. The result is pushed as a new `.code` item
+    - codeFuncFromBoolCrux
+    - codeFuncFromCharCrux
+    - codeFuncFromCodeCrux
+    - codeFuncFromDoubleCrux
+    - codeFuncFromIntCrux
+    - codeFuncFromStringCrux
 
