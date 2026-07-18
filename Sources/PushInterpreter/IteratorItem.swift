@@ -43,30 +43,16 @@ public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
     /// chunk to `.string`. This is `stringSplit`.
     case words
 
+    /// `origin` is a `CodeItem`; pass `i` emits its `i`-th **pre-order point**
+    /// (root at 0), boxed as `.code`. `.elements`'s sibling — same origin, same
+    /// Int cursor — but the index walks the whole tree, not just the root. This
+    /// is `codeIteratePoints`.
+    case points(into: PushStack?)
+
     /// `origin` is anything at all and `destination` is an `IntItem` count; every
     /// pass emits `origin` again. This is the `xDupTimes` family — which is why
     /// the copies record nothing (law 1: a dup changes no value).
     case repeating(into: PushStack?)
-
-    // RESERVED — `case points(into: PushStack?)`
-    //
-    // The unwritten `.code` behaviors (`codeNthPoint`, `codeIteratePoints`,
-    // `codeIndexOfPoint`, `codeLengthPoints`) walk a CodeItem as a zipper:
-    // depth-first, descending into nested `CodeItem.value` on sight,
-    // left-to-right. That is `.elements`'s sibling rather than a different shape
-    // — same CodeItem origin, same Int cursor, the index simply applied in a
-    // different mode — and this architecture already admits it: a pre-order walk
-    // is a pure function of (origin, cursor), which is all a projection must be.
-    //
-    // Adding it is one case here, one branch in `projection()`, one in
-    // `sourceCount`, and one constructor. Two things must land first, and neither
-    // belongs to the current pass: `codeNthPoint` must exist for the element's
-    // `call` to name it, and a points *count* is needed for `hasNextPass` —
-    // memoized on CodeItem beside its `weight`, since a fresh depth-first count
-    // per pass would be O(size) per step.
-    //
-    // It would cycle for free, like every other walk: `points % sourceCount` is
-    // the same expression `.elements` uses.
 }
 
 
@@ -80,8 +66,8 @@ nonisolated extension IteratorKind {
     /// `destination`; laps there would be a second number meaning the same thing.
     var cycles: Bool {
         switch self {
-        case .elements, .letters, .words: true
-        case .counting, .repeating:       false
+        case .elements, .letters, .words, .points: true
+        case .counting, .repeating:                false
         }
     }
 }
@@ -316,6 +302,7 @@ nonisolated extension IteratorItem {
     var target: PushStack? {
         switch kind {
         case .elements(let into):  into
+        case .points(let into):    into
         case .repeating(let into): into
         default:                   nil
         }
@@ -346,7 +333,7 @@ nonisolated extension IteratorItem {
 
         // The wrap is the identity at `laps == 1`, so this one expression is both
         // the plain walk and the cycling one.
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             guard let index = wrappedCursor else { return nil }
             return element(at: index)
 
@@ -379,7 +366,7 @@ nonisolated extension IteratorItem {
         switch kind {
         case .counting, .repeating:
             return nil
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             let (total, overflowed) = laps.multipliedReportingOverflow(by: sourceCount)
             return overflowed ? Int.max : total
         }
@@ -417,7 +404,7 @@ nonisolated extension IteratorItem {
         // Laps multiply the source, so this is the one reading that changed
         // when cycling arrived: `sourceCount` was the end, and now it is the end
         // of the *first* lap.
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             return value < 0 || value >= (totalEmissions ?? 0)
         }
     }
@@ -448,7 +435,7 @@ nonisolated extension IteratorItem {
             return difference.magnitude > stride.magnitude
         case .repeating:
             return value + 1 < (destination as? IntItem)?.value ?? 0
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             return value + 1 < (totalEmissions ?? 0)
         }
     }
@@ -482,7 +469,7 @@ nonisolated extension IteratorItem {
         // of thin air — exactly what a counted loop's span is — so a cycling walk
         // is clamped and a plain one is not. Cycling moves a walk across §12's
         // line, and the budget was already waiting on the other side.
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             return laps > 1 ? totalEmissions : nil
         }
     }
@@ -520,7 +507,7 @@ nonisolated extension IteratorItem {
         // bound *that*. So a 3-element vector cycles 33 times and stops at 99
         // emissions, while a 1000-element vector cycled twice falls back to
         // once — 1000 emissions, because that lap was never this budget's to cut.
-        case .elements, .letters, .words:
+        case .elements, .letters, .words, .points:
             let count = sourceCount
             guard count > 0 else { return nil }
             let allowed = max(1, ceiling / count)
@@ -609,7 +596,7 @@ nonisolated extension IteratorItem {
         // cycling walk rebuilds itself and then says how far round it goes. At
         // `laps == 1` — every iterator that never asked — the suffix is absent and
         // the record is exactly what it always was.
-        case .letters, .words, .elements:
+        case .letters, .words, .elements, .points:
             guard let name = walkingConstructor else { return [] }
             let built: [any Item] = [
                 origin,
@@ -646,6 +633,7 @@ nonisolated extension IteratorItem {
         switch kind {
         case .letters: return .iteratorFromStringLetters
         case .words:   return .iteratorFromStringWords
+        case .points:  return .iteratorFromCodePoints
         case .elements(let into):
             switch origin {
             case is StringItem:    return .iteratorFromString
@@ -680,6 +668,10 @@ nonisolated extension IteratorItem {
         switch kind {
         case .words:
             return sourceWords.count
+        case .points:
+            // The whole pre-order point count (root included), not the root
+            // length — that is the difference between `.points` and `.elements`.
+            return (origin as? CodeItem)?.pointCount ?? 0
         default:
             switch origin {
             case let s as StringItem:    return s.value.count
@@ -722,6 +714,23 @@ nonisolated extension IteratorItem {
             return StringItem(
                 String(chunks[index]),
                 call: record(.stringNthWord),
+                isContingent: isContingent
+            )
+
+        // The i-th pre-order point, boxed as `.code` — exactly what
+        // `codeNthPoint` yields, so the element records that (nondestructive)
+        // instruction's cleanup crux and reproduces debris-free.
+        case .points:
+            guard let c = origin as? CodeItem else { return nil }
+            let point = c.point(at: index)
+            let contents = (point as? CodeItem)?.value ?? [point]
+            return CodeItem(
+                contents,
+                call: Behavior.reading(
+                    [.code: 1, .int: 1],
+                    producing: .code,
+                    from: [origin, IntItem(index), InstructionItem(.codeNthPoint)]
+                ),
                 isContingent: isContingent
             )
 

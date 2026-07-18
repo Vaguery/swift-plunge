@@ -641,6 +641,31 @@ nonisolated extension Interpreter {
     static let iteratorFromCodeIntoExec_Behavior =
         iteratorFromCode_Behavior(.iteratorFromCodeIntoExec, into: .exec)
 
+    /// Construct-only: rebuild a **points** iterator by state. Same shape as
+    /// `iteratorFromCode`, but the walk is pre-order over the whole tree, not the
+    /// root — so `crux()` for a points iterator names this.
+    static let iteratorFromCodePoints_Behavior =
+        Behavior(
+            .iteratorFromCodePoints,
+            takes: [.code, .code, .int, .int, .bool],
+            fxn: { a in
+                let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
+                let emits = a[4] as! BoolItem
+                let iterator = IteratorItem(
+                    kind: .points(into: nil),
+                    origin: origin,
+                    body: body,
+                    emits: emits.value,
+                    cursor: cursor.value,
+                    burial: burial.value,
+                    call: [origin, cursor, burial, emits, body, InstructionItem(.iteratorFromCodePoints)],
+                    isContingent: Behavior.netContingency(of: origin, cursor, burial, emits, body)
+                )
+                return iteratorBuilt(iterator)
+            }
+        )
+
     /// Builds an iterator that emits the **same item** over and over, `count`
     /// times, and leaves it alone. This is what the `xDupTimes` family rests on.
     ///
@@ -707,6 +732,7 @@ nonisolated extension Interpreter {
     [
         .iteratorFromCode : iteratorFromCode_Behavior,
         .iteratorFromCodeIntoExec : iteratorFromCodeIntoExec_Behavior,
+        .iteratorFromCodePoints : iteratorFromCodePoints_Behavior,
         .iteratorRepeating : iteratorRepeating_Behavior,
         .iteratorRepeatingIntoExec : iteratorRepeatingIntoExec_Behavior,
         .iteratorFromString : iteratorFromString_Behavior,

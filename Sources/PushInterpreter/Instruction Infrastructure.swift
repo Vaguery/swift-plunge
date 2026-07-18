@@ -198,7 +198,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // be derived from the element — its contents are heterogeneous *and* pending —
     // and a PushStack is not expressible as a Push value, so the exception has to
     // live in the name.
-    case iteratorFromCode, iteratorFromCodeIntoExec
+    case iteratorFromCode, iteratorFromCodeIntoExec, iteratorFromCodePoints
     case iteratorRepeating, iteratorRepeatingIntoExec
 
     // iterator combinators

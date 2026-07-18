@@ -406,6 +406,25 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// Iterate every **pre-order point** of the tree, running the mouse once per
+    /// point — each point boxed as `.code` (via `codeNthPoint`). The `.points`
+    /// sibling of `codeIterateRoot`. A tree always has at least its root, so this
+    /// never does nothing.
+    static let codeIteratePoints_Behavior =
+        Behavior(
+            .codeIteratePoints,
+            takes: [.code, .code],
+            fxn: { a in
+                let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                return Interpreter.iteratorLoop(
+                    kind: .points(into: nil),
+                    origin: x,
+                    body: mouse,
+                    emits: true
+                )
+            }
+        )
+
     static let codeWrapRoot_Behavior =
     Behavior(
         .codeWrapRoot,
@@ -629,6 +648,7 @@ nonisolated extension Interpreter {
         .codeReplaceFirstPoint : codeReplaceFirstPoint_Behavior,
         .codeCutRootAtGap : codeCutRootAtGap_Behavior,
         .codeIterateRoot : codeIterateRoot_Behavior,
+        .codeIteratePoints : codeIteratePoints_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
