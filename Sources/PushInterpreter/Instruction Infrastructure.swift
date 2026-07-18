@@ -43,9 +43,9 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
 
 
     // CODE instructions
-    // wherever a tree ordering is needed, it is PostOrder unless specifically mentioned
+    // wherever a tree ordering is needed, it is pre-order (a node before its children)
     //
-    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeDo, codeFlatten, codeFlattenPoint, codeFlattenRange, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeItemIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
+    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenPoint, codeFlattenRange, codeCollect, codeIf, codeIndexOfPoint, codeInsertAtGap, codeItemIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
 
     /// Drive an iterator to exhaustion and box everything it emitted into a block.
     ///

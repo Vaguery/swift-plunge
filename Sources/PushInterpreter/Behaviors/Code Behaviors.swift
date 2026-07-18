@@ -7,7 +7,8 @@
 
 import DequeModule
 
-//case codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeFlatten, codeFlattenPoint, codeFlattenRange, codeGather, codeIf, codeIndexOfPoint, codeInsertAtGap, codeIteratePoints, codeIterateRoot, codeLengthPoints, , codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapPoints
+// Remaining unimplemented (gap-based ops deferred to a later batch):
+//   codeCutAtGap, codeInsertAtGap, codeWrapPoints, codeFlattenRange
 
 nonisolated extension Interpreter {
 
@@ -24,6 +25,49 @@ nonisolated extension Interpreter {
                         isContingent: Behavior.netContingency(of: x, y)
                     )
                 return [Router(.code, result)]
+            }
+        )
+
+    /// Wrap **two** code items into one new block `( x y )` — the arity-2 sibling
+    /// of `codeWrapRoot`, and Clojure's `list` with two arguments. Distinct from
+    /// `codeAppend`, which concatenates their contents flat: `(a b)` collect
+    /// `(c d)` → `( (a b) (c d) )`, not `(a b c d)`.
+    static let codeCollect_Behavior =
+        Behavior(
+            .codeCollect,
+            takes: [.code, .code],
+            fxn: { a in
+                let (x, y) = (a[0], a[1])
+                return [
+                    Router(
+                        .code,
+                        CodeItem(
+                            [y, x],
+                            call: [y, x, InstructionItem(.codeCollect)],
+                            isContingent: Behavior.netContingency(of: x, y)
+                        )
+                    )
+                ]
+            }
+        )
+
+    /// The `.code` sibling of `execIf`: pop a bool and two blocks, run the chosen
+    /// one on `.exec`. Only the source stack differs — the mechanics (argument
+    /// order, `.codeDo` the winner, the loser recorded nowhere) are execIf's.
+    static let codeIf_Behavior =
+        Behavior(
+            .codeIf,
+            takes: [.bool, .code, .code],
+            fxn: { a in
+                // Like execIf: `( then ) ( else ) .codeIf` — the last-written block
+                // is on top and arrives as a[1] (`else`), so a[2] is `then`.
+                let (cond, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
+                var result = cond.value ? thenBlock : elseBlock
+                result.isContingent = cond.isContingent
+                return [
+                    Router(.exec, InstructionItem(.codeDo)),
+                    Router(.exec, result),
+                ]
             }
         )
 
@@ -261,6 +305,8 @@ nonisolated extension Interpreter {
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
         .codeAppend : codeAppend_Behavior,
+        .codeCollect : codeCollect_Behavior,
+        .codeIf : codeIf_Behavior,
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
