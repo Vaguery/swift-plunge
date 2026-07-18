@@ -110,13 +110,15 @@ Left for later, with the arguments in the coverage note:
 31. **`parseToLetters` vector analog** — an iterator emitting one-element vectors. Low value; add on a
     concrete use.
 32. **Chunking** (fixed windows, overlapping/non-overlapping) — needs a **new `IteratorKind`**; `stride`
-    is honoured only by `.counting` today (the `.points` kind now exists as a further precedent).
-    Overlaps #A.1.
+    is honoured only by `.counting` today (the `.points` kind now exists as a further precedent, and its
+    `PointsEmission` mode shows a kind carrying an emission variant without new kinds). Overlaps #A.1.
 33. **Code gap-based ops** — `codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`, `codeWrapPoints` —
-    the last of the code family, postponed for a **gap coordinate model** design pass (how positions
-    *between* points are numbered; child-array splice vs Plushy Open/Close-with-repair). The rest of the
-    code batch is **built** (`Code instruction planning.md`, branch `codeTreeInstructions`): all `code*`
-    instructions incl. the `.points` iterator, singleton-unwrap needles (Design Principles §7b).
+    **the only unbuilt code instructions left**, postponed for a **gap coordinate model** design pass (how
+    positions *between* points are numbered; child-array splice vs Plushy Open/Close-with-repair). The rest
+    of the code batch is **built** (`Code instruction planning.md`, branch `codeTreeInstructions`): every
+    `code*` instruction incl. the `.points` iterator and singleton-unwrap needles (Design Principles §7b),
+    plus the `.exec` point-access family — `codeEmitNth{Point,Root}`/`codeDoNth{Point,Root}` and
+    `codeIterate{Emit,Do}Points` (the three-way `PointsEmission`: boxed / whole / unwrapped).
 34. **Pattern as a first-class item** — connects sub-vector search, the sieve (§C), and `.points`. A
     research direction, not an instruction.
 35. **Naming reconciliation** (`stringSubstring`↔`subVec`, `stringSetChar`↔`set`, `stringConjChar`↔`conj`)

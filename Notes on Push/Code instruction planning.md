@@ -5,7 +5,10 @@
 > `codeWrapPoints`), postponed to a dedicated gap-model design pass. `codeGather` was renamed
 > **`codePair`** (wrap two items into `(x y)`) and `codeFlattenOnce` added. The singleton-unwrap
 > convention (a one-element block denotes its element) lets code needles name leaves — Design Principles
-> §7b. See Roadmap.
+> §7b. A later pass added the `.exec` point-access family beyond the list below —
+> `codeEmitNth{Point,Root}`/`codeDoNth{Point,Root}` and `codeIterate{Emit,Do}Points` (the three-way
+> `PointsEmission`: boxed / whole / unwrapped) — the neutral-paths idea in Design Principles §17. See
+> Roadmap.
 
 
 ## Action items
