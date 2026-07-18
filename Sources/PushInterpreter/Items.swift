@@ -411,6 +411,18 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
 // block `( )` is a point (a node with no children).
 nonisolated extension CodeItem {
 
+    /// The item this block **denotes** under the singleton-unwrap convention: a
+    /// one-element block denotes its sole element, any other block denotes itself.
+    ///
+    /// `(6)` denotes the leaf `6` — because `CodeItem([IntItem(6)])` *is* a
+    /// quoted 6, the Lisp reading of a one-element list. This is how the code
+    /// search/replace instructions let a program name a **leaf**, not only a
+    /// subtree: `(5)` searches for the leaf 5, `((5))` for the subtree `(5)`, and
+    /// `(1 2)` for the subtree `(1 2)`. See Design Principles.
+    var denotedItem: any Item {
+        value.count == 1 ? value[0] : self
+    }
+
     /// Every pre-order point, the whole tree included, root first. The simple
     /// backbone the other point operations index into.
     var preorderPoints: [any Item] {

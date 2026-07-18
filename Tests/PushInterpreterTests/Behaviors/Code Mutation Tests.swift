@@ -76,23 +76,30 @@ struct CodeMutationTests {
         return inty
     }
 
-    @Test func `a block needle does not match a bare leaf`() {
-        // needle ( 1 ) is a one-element block, which is NOT equal to the leaf 1,
-        // so nothing in ( 1 ( 1 2 ) 1 ) matches — the subject is unchanged.
+    @Test func `a singleton needle denotes a bare leaf (singleton-unwrap)`() {
+        // needle ( 1 ) is a one-element block, so it DENOTES the leaf 1; the
+        // replacement ( 9 ) denotes the leaf 9. Every leaf-1 point in
+        // ( 1 ( 1 2 ) 1 ) becomes 9.
         let subj = CodeItem([IntItem(1), CodeItem([IntItem(1), IntItem(2)]), IntItem(1)])
         let inty = replace(.codeReplaceAllPoints, subj, CodeItem([IntItem(1)]), CodeItem([IntItem(9)]))
-        #expect(stackString(inty, .code) == "[ ( 1 ( 1 2 ) 1 ) ]")
+        #expect(stackString(inty, .code) == "[ ( 9 ( 9 2 ) 9 ) ]")
     }
 
-    @Test func `replace matches subtrees by value`() {
-        // replace the subtree ( 1 2 ) with ( 9 ) in ( ( 1 2 ) ( 1 2 ) )
+    @Test func `a subtree needle takes two elements or a double wrap`() {
+        // needle ( 1 2 ) has two elements, so it denotes the subtree ( 1 2 );
+        // replacement ( 9 ) denotes the leaf 9. Each ( 1 2 ) subtree → 9.
         let subj = CodeItem([CodeItem([IntItem(1), IntItem(2)]), CodeItem([IntItem(1), IntItem(2)])])
         let needle = CodeItem([IntItem(1), IntItem(2)])
         let all = replace(.codeReplaceAllPoints, subj, needle, CodeItem([IntItem(9)]))
-        #expect(stackString(all, .code) == "[ ( ( 9 ) ( 9 ) ) ]")
+        #expect(stackString(all, .code) == "[ ( 9 9 ) ]", "subtrees replaced by the leaf 9")
 
         let first = replace(.codeReplaceFirstPoint, subj, needle, CodeItem([IntItem(9)]))
-        #expect(stackString(first, .code) == "[ ( ( 9 ) ( 1 2 ) ) ]", "only the first")
+        #expect(stackString(first, .code) == "[ ( 9 ( 1 2 ) ) ]", "only the first")
+
+        // To replace a subtree WITH a singleton block, double-wrap the
+        // replacement: (( 9 )) denotes the subtree ( 9 ).
+        let asBlock = replace(.codeReplaceAllPoints, subj, needle, CodeItem([CodeItem([IntItem(9)])]))
+        #expect(stackString(asBlock, .code) == "[ ( ( 9 ) ( 9 ) ) ]")
     }
 
     @Test func `mutation cruxes reproduce`() {

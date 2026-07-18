@@ -314,6 +314,37 @@ heterogeneous stack is one where **two items of the same type are not interchang
 `.code` and `.exec` have always been so, `.iterator` now joins them, and that is exactly the itch a sieve
 would scratch ("Sieve arguments.md").
 
+### A singleton block denotes its element
+
+The `.code` stack is **typed** — it holds only `CodeItem`s, which is what keeps the `a[i] as! CodeItem`
+casts throughout the code behaviors safe (the homogeneity every stack but `.exec` relies on). So a needle
+handed to a code instruction off `.code` is always a *block*, never a bare leaf. That would leave the
+tree leaves — scalars, instructions, whole vectors — **unsearchable and unnameable**, which is a real
+gap: half the points of a tree are leaves.
+
+The convention that closes it: **a one-element block denotes its sole element; any other block denotes
+itself.** This is not a workaround — it is the Lisp reading. `CodeItem([IntItem(6)])` *is* a quoted 6, so
+`(6)` naming the leaf 6 is exactly right. So:
+
+- `(5)` denotes the leaf `5` — searchable, insertable, replaceable.
+- `((5))` denotes the subtree `(5)`.
+- `(1 2)` denotes the subtree `(1 2)`.
+
+`CodeItem.denotedItem` is the one-line rule, applied wherever a code instruction takes a *needle* or an
+*item to place* (`codeContains`/`codeIndexOfPoint`/`codeContainer`/`codeReplace*Points`, and the
+gap-family inserts when they land). A leaf and a singleton subtree stay distinct (`(5)` vs `((5))`), so
+nothing is conflated; the only cost is that a singleton subtree needs the double wrap, which is
+learnable. The *crux* still records the original block, so re-running re-derives the denotation — the
+convention lives in the behavior, not the recorded source.
+
+This is the alternative to **un-typing `.code`** (letting bare items sit on the stack, as Clojush's
+untyped code stack did). That would make leaves first-class needles with no convention, but it severs the
+language's load-bearing assumption that **an item's type determines the one stack it rests on** — the
+thing the whole crux/`PopItems`/round-trip system is built on — and would reclassify `.code` as
+heterogeneous, rewrite ~31 casts, and change the quotes' semantics. Kept as a recorded architectural
+option (Roadmap), not taken: the singleton-unwrap convention gets the practical benefit at none of that
+cost, and the homogeneity is worth more than the exceptions un-typing would scatter.
+
 ## 8. Containment leaves no mark
 
 An item that goes into a container and comes back out **is the item that went in**. Blocks get

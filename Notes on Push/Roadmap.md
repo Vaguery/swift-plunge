@@ -89,6 +89,13 @@ commitment.
     `.sampling` (#3) lands. → *Keeping loops human-sized.md*
 28. **`.iteratorSetIterations`** — let a program raise its own loop ceiling (`stepLimit` still backstops).
     "Probably later." → *Keeping loops human-sized.md*
+29a. **Un-type the `.code` stack** (let bare items of any type sit on `.code`, as Clojush's untyped code
+    stack did). Would make tree leaves first-class needles with no singleton-unwrap convention, and
+    simplify point access — but it severs the load-bearing assumption that *an item's type determines the
+    one stack it rests on* (the basis of the crux/`PopItems`/round-trip system), reclassifies `.code` as
+    the second heterogeneous stack, rewrites ~31 `as! CodeItem` casts, and reopens the quotes' semantics.
+    A coherent, foundational change; **not taken** (singleton-unwrap, Design Principles §7b, gets the
+    practical benefit at none of the cost). Recorded here as a real option for its own deliberate effort.
 
 ## G. Deferred infrastructure
 

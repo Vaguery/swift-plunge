@@ -163,12 +163,14 @@ nonisolated extension Interpreter {
             .codeContains,
             reads: [.code, .code],
             fxn: { a in
-                // a[0] is the haystack (top), a[1] the target.
-                let (hay, target) = (a[0] as! CodeItem, a[1])
+                // a[0] is the haystack (top), a[1] the needle block. The needle
+                // is *denoted* for the search (singleton-unwrap), but the crux
+                // must re-push the original block so re-running denotes it again.
+                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.bool, BoolItem(
-                    hay.firstPointIndex(of: target) != nil,
-                    call: Behavior.reading([.code: 2], producing: .bool, from: [target, hay, InstructionItem(.codeContains)]),
-                    isContingent: Behavior.netContingency(of: hay, target)
+                    hay.firstPointIndex(of: needle.denotedItem) != nil,
+                    call: Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)]),
+                    isContingent: Behavior.netContingency(of: hay, needle)
                 ))]
             }
         )
@@ -179,11 +181,11 @@ nonisolated extension Interpreter {
             .codeIndexOfPoint,
             reads: [.code, .code],
             fxn: { a in
-                let (hay, target) = (a[0] as! CodeItem, a[1])
+                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.int, IntItem(
-                    hay.firstPointIndex(of: target) ?? -1,
-                    call: Behavior.reading([.code: 2], producing: .int, from: [target, hay, InstructionItem(.codeIndexOfPoint)]),
-                    isContingent: Behavior.netContingency(of: hay, target)
+                    hay.firstPointIndex(of: needle.denotedItem) ?? -1,
+                    call: Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)]),
+                    isContingent: Behavior.netContingency(of: hay, needle)
                 ))]
             }
         )
@@ -196,12 +198,12 @@ nonisolated extension Interpreter {
             .codeContainer,
             reads: [.code, .code],
             fxn: { a in
-                let (hay, target) = (a[0] as! CodeItem, a[1])
-                guard let parent = hay.parentContaining(target) else { return [] }
+                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                guard let parent = hay.parentContaining(needle.denotedItem) else { return [] }
                 return [Router(.code, CodeItem(
                     parent.value,
-                    call: Behavior.reading([.code: 2], producing: .code, from: [target, hay, InstructionItem(.codeContainer)]),
-                    isContingent: Behavior.netContingency(of: hay, target)
+                    call: Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)]),
+                    isContingent: Behavior.netContingency(of: hay, needle)
                 ))]
             }
         )
@@ -340,7 +342,7 @@ nonisolated extension Interpreter {
             fxn: { a in
                 // a[0]=replacement (top), a[1]=needle, a[2]=subject (deepest).
                 let (repl, needle, subject) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! CodeItem)
-                let rebuilt = subject.replacingPoints(equalTo: needle, with: repl, firstOnly: firstOnly)
+                let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
                 let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,

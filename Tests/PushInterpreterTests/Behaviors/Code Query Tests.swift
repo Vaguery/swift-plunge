@@ -80,6 +80,19 @@ struct CodeQueryTests {
         #expect(redo.stacks[.code]!.isEmpty, "crux popped both")
     }
 
+    @Test func `a singleton needle finds a leaf; double-wrap finds the singleton subtree`() {
+        func idxOf(_ hay: CodeItem, _ needle: CodeItem) -> Int {
+            let inty = Interpreter()
+            inty.stacks[.code]!.prepend(contentsOf: [hay, needle] as [any Item])
+            doThis(.codeIndexOfPoint, to: inty)
+            return (topItem(inty, .int) as! IntItem).value
+        }
+        // ( 5 ( 5 ) ): points 0:root 1:5(leaf) 2:(5)(subtree) 3:5(leaf inside)
+        let mixed = CodeItem([IntItem(5), CodeItem([IntItem(5)])])
+        #expect(idxOf(mixed, CodeItem([IntItem(5)])) == 1, "( 5 ) denotes leaf 5 → first leaf")
+        #expect(idxOf(mixed, CodeItem([CodeItem([IntItem(5)])])) == 2, "(( 5 )) denotes subtree ( 5 )")
+    }
+
     @Test func `indexOfPoint returns pre-order index or -1`() {
         func idx(_ hay: CodeItem, _ target: CodeItem) -> Int {
             let inty = Interpreter()
@@ -110,12 +123,21 @@ struct CodeQueryTests {
         #expect(stackString(redo, .code) == "[ ( ( 1 2 ) 3 ) ]", "reproduces just the container")
     }
 
-    @Test func `container of a nested leaf is the inner block; absent pushes nothing`() {
+    @Test func `container of a leaf (singleton needle) is its inner block`() {
         let inty = Interpreter()
+        // needle ( 1 ) denotes the leaf 1, whose parent is the inner block ( 1 2 ).
         inty.stacks[.code]!.prepend(contentsOf: [tree, CodeItem([IntItem(1)])] as [any Item])
-        // target is a full block ( 1 ), which is NOT a point of the tree — absent
         doThis(.codeContainer, to: inty)
-        #expect(stackString(inty, .code) == "[ ( ( 1 2 ) 3 ) ( 1 ) ]",
+        #expect(stackString(inty, .code) == "[ ( 1 2 ) ( ( 1 2 ) 3 ) ( 1 ) ]",
+                "the parent ( 1 2 ), atop the surviving operands")
+    }
+
+    @Test func `container of an absent needle pushes nothing`() {
+        let inty = Interpreter()
+        // needle ( 9 ) denotes leaf 9, which the tree does not contain.
+        inty.stacks[.code]!.prepend(contentsOf: [tree, CodeItem([IntItem(9)])] as [any Item])
+        doThis(.codeContainer, to: inty)
+        #expect(stackString(inty, .code) == "[ ( ( 1 2 ) 3 ) ( 9 ) ]",
                 "nothing pushed; operands untouched (nondestructive)")
     }
 }
