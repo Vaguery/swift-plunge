@@ -103,6 +103,109 @@ nonisolated extension Interpreter {
             }
         )
 
+    // MARK: - Whole-tree queries (non-destructive)
+    //
+    // All read their code argument(s) and leave them; the crux pops what it read
+    // (`Behavior.reading`), like the vector queries. They use the pre-order point
+    // walker on `CodeItem` (Items.swift).
+
+    /// The number of pre-order points in the whole tree, root included.
+    /// `( (1 2) 3 )` → 5. (Contrast `codeLengthRoot`, the root `.value` count.)
+    static let codeLengthPoints_Behavior =
+        Behavior(
+            .codeLengthPoints,
+            reads: [.code],
+            fxn: { a in
+                let x = a[0] as! CodeItem
+                return [Router(.int, IntItem(
+                    x.pointCount,
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)]),
+                    isContingent: Behavior.netContingency(of: x)
+                ))]
+            }
+        )
+
+    /// The number of leaves in the tree — everything that is not a sub-block, so
+    /// scalars, instructions and whole vectors each count one. Equals `flatSize`.
+    static let codeWidth_Behavior =
+        Behavior(
+            .codeWidth,
+            reads: [.code],
+            fxn: { a in
+                let x = a[0] as! CodeItem
+                return [Router(.int, IntItem(
+                    x.flatSize,
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)]),
+                    isContingent: Behavior.netContingency(of: x)
+                ))]
+            }
+        )
+
+    /// The maximum nesting depth: root 0, each nested block one deeper.
+    static let codeDepth_Behavior =
+        Behavior(
+            .codeDepth,
+            reads: [.code],
+            fxn: { a in
+                let x = a[0] as! CodeItem
+                return [Router(.int, IntItem(
+                    x.depth,
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)]),
+                    isContingent: Behavior.netContingency(of: x)
+                ))]
+            }
+        )
+
+    /// Whether a target block occurs as a point anywhere in another's tree. Since
+    /// the root is a point, a tree contains itself. Reads both, leaves both.
+    static let codeContains_Behavior =
+        Behavior(
+            .codeContains,
+            reads: [.code, .code],
+            fxn: { a in
+                // a[0] is the haystack (top), a[1] the target.
+                let (hay, target) = (a[0] as! CodeItem, a[1])
+                return [Router(.bool, BoolItem(
+                    hay.firstPointIndex(of: target) != nil,
+                    call: Behavior.reading([.code: 2], producing: .bool, from: [target, hay, InstructionItem(.codeContains)]),
+                    isContingent: Behavior.netContingency(of: hay, target)
+                ))]
+            }
+        )
+
+    /// The pre-order index of the first point equal to the target, or −1.
+    static let codeIndexOfPoint_Behavior =
+        Behavior(
+            .codeIndexOfPoint,
+            reads: [.code, .code],
+            fxn: { a in
+                let (hay, target) = (a[0] as! CodeItem, a[1])
+                return [Router(.int, IntItem(
+                    hay.firstPointIndex(of: target) ?? -1,
+                    call: Behavior.reading([.code: 2], producing: .int, from: [target, hay, InstructionItem(.codeIndexOfPoint)]),
+                    isContingent: Behavior.netContingency(of: hay, target)
+                ))]
+            }
+        )
+
+    /// The block that directly contains the first point equal to the target —
+    /// its parent. Nothing is pushed if the target is absent, or if it is the
+    /// whole tree (which has no parent here). Reads both, leaves both.
+    static let codeContainer_Behavior =
+        Behavior(
+            .codeContainer,
+            reads: [.code, .code],
+            fxn: { a in
+                let (hay, target) = (a[0] as! CodeItem, a[1])
+                guard let parent = hay.parentContaining(target) else { return [] }
+                return [Router(.code, CodeItem(
+                    parent.value,
+                    call: Behavior.reading([.code: 2], producing: .code, from: [target, hay, InstructionItem(.codeContainer)]),
+                    isContingent: Behavior.netContingency(of: hay, target)
+                ))]
+            }
+        )
+
     static let codeWrapRoot_Behavior =
     Behavior(
         .codeWrapRoot,
@@ -310,6 +413,12 @@ nonisolated extension Interpreter {
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
+        .codeLengthPoints : codeLengthPoints_Behavior,
+        .codeWidth : codeWidth_Behavior,
+        .codeDepth : codeDepth_Behavior,
+        .codeContains : codeContains_Behavior,
+        .codeIndexOfPoint : codeIndexOfPoint_Behavior,
+        .codeContainer : codeContainer_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
