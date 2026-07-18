@@ -351,6 +351,59 @@ nonisolated extension Interpreter {
         )
     }
 
+    // MARK: - Root-level split and iterate
+
+    /// Split the **root** `.value` array at the indexed gap into two blocks — the
+    /// `.code` analog of `vecXCut`/`stringCut`. Prefix deeper, suffix on top (so
+    /// `cut` then `codeAppend` rebuilds the original); law-5 multi-result crux.
+    static let codeCutRootAtGap_Behavior =
+        Behavior(
+            .codeCutRootAtGap,
+            takes: [.code, .int],
+            fxn: { a in
+                let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
+                let count = x.value.count
+                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+                let prefix = Array(x.value[0..<idx])
+                let suffix = Array(x.value[idx...])
+                let source: [any Item] = [x, y, InstructionItem(.codeCutRootAtGap)]
+                let contingent = Behavior.netContingency(of: x, y)
+                return [
+                    Router(.code, CodeItem(
+                        prefix,
+                        call: Behavior.selecting(0, of: 2, on: .code, from: source),
+                        isContingent: contingent
+                    )),
+                    Router(.code, CodeItem(
+                        suffix,
+                        call: Behavior.selecting(1, of: 2, on: .code, from: source),
+                        isContingent: contingent
+                    )),
+                ]
+            }
+        )
+
+    /// Iterate a block's **root** elements, running the mouse once per element —
+    /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing
+    /// `.elements`-over-CodeItem walk. `code MOUSE .codeIterateRoot`: the mouse is
+    /// on top (a[0]), the iterated code beneath (a[1]). An empty block does
+    /// nothing.
+    static let codeIterateRoot_Behavior =
+        Behavior(
+            .codeIterateRoot,
+            takes: [.code, .code],
+            fxn: { a in
+                let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                guard !x.value.isEmpty else { return [] }
+                return Interpreter.iteratorLoop(
+                    kind: .elements(into: nil),
+                    origin: x,
+                    body: mouse,
+                    emits: true
+                )
+            }
+        )
+
     static let codeWrapRoot_Behavior =
     Behavior(
         .codeWrapRoot,
@@ -572,6 +625,8 @@ nonisolated extension Interpreter {
         .codeRemovePoint : codeRemovePoint_Behavior,
         .codeReplaceAllPoints : codeReplaceAllPoints_Behavior,
         .codeReplaceFirstPoint : codeReplaceFirstPoint_Behavior,
+        .codeCutRootAtGap : codeCutRootAtGap_Behavior,
+        .codeIterateRoot : codeIterateRoot_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
