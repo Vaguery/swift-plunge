@@ -253,6 +253,104 @@ nonisolated extension Interpreter {
             }
         )
 
+    // MARK: - Flatten and point mutation (transforms, consume)
+
+    /// Flatten the whole tree to its leaves, left to right. `(1 (2 3) ())` →
+    /// `(1 2 3)`. Empty blocks vanish.
+    static let codeFlatten_Behavior =
+        Behavior(
+            .codeFlatten,
+            takes: [.code],
+            fxn: { a in
+                let x = a[0] as! CodeItem
+                return [Router(.code, CodeItem(
+                    x.flattenedLeaves(),
+                    call: [x, InstructionItem(.codeFlatten)],
+                    isContingent: Behavior.netContingency(of: x)
+                ))]
+            }
+        )
+
+    /// Flatten one level: each root element that is a block is replaced by its
+    /// contents, no deeper. `(1 (2 (3 4)) 5)` → `(1 2 (3 4) 5)`.
+    static let codeFlattenOnce_Behavior =
+        Behavior(
+            .codeFlattenOnce,
+            takes: [.code],
+            fxn: { a in
+                let x = a[0] as! CodeItem
+                return [Router(.code, CodeItem(
+                    x.flattenedOnce(),
+                    call: [x, InstructionItem(.codeFlattenOnce)],
+                    isContingent: Behavior.netContingency(of: x)
+                ))]
+            }
+        )
+
+    /// Flatten the subtree at the indexed point in place. A leaf point is
+    /// unchanged; point 0 (the root) flattens the whole thing (= codeFlatten).
+    static let codeFlattenPoint_Behavior =
+        Behavior(
+            .codeFlattenPoint,
+            takes: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                let point = x.point(at: i.value)
+                let flattened: any Item =
+                    (point as? CodeItem).map { CodeItem($0.flattenedLeaves()) } ?? point
+                let rebuilt = x.replacingPoint(at: i.value, with: flattened)
+                let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
+                return [Router(.code, CodeItem(
+                    result.value,
+                    call: [x, i, InstructionItem(.codeFlattenPoint)],
+                    isContingent: Behavior.netContingency(of: x, i)
+                ))]
+            }
+        )
+
+    /// Remove the point at the indexed location, subtree and all. Removing the
+    /// root gives an empty block.
+    static let codeRemovePoint_Behavior =
+        Behavior(
+            .codeRemovePoint,
+            takes: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                return [Router(.code, CodeItem(
+                    x.removingPoint(at: i.value).value,
+                    call: [x, i, InstructionItem(.codeRemovePoint)],
+                    isContingent: Behavior.netContingency(of: x, i)
+                ))]
+            }
+        )
+
+    /// Replace every point equal to `needle` with `replacement` (whole subtree),
+    /// single pass. Consumes subject, needle, replacement (all `.code`).
+    static let codeReplaceAllPoints_Behavior =
+        replacePointsBehavior(.codeReplaceAllPoints, firstOnly: false)
+
+    /// As above, but only the first matching point in pre-order.
+    static let codeReplaceFirstPoint_Behavior =
+        replacePointsBehavior(.codeReplaceFirstPoint, firstOnly: true)
+
+    static func replacePointsBehavior(_ instruction: PushInstruction, firstOnly: Bool) -> Behavior {
+        Behavior(
+            instruction,
+            takes: [.code, .code, .code],
+            fxn: { a in
+                // a[0]=replacement (top), a[1]=needle, a[2]=subject (deepest).
+                let (repl, needle, subject) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! CodeItem)
+                let rebuilt = subject.replacingPoints(equalTo: needle, with: repl, firstOnly: firstOnly)
+                let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
+                return [Router(.code, CodeItem(
+                    result.value,
+                    call: [subject, needle, repl, InstructionItem(instruction)],
+                    isContingent: Behavior.netContingency(of: subject, needle, repl)
+                ))]
+            }
+        )
+    }
+
     static let codeWrapRoot_Behavior =
     Behavior(
         .codeWrapRoot,
@@ -468,6 +566,12 @@ nonisolated extension Interpreter {
         .codeContainer : codeContainer_Behavior,
         .codeNthPoint : codeNthPoint_Behavior,
         .codeNthRoot : codeNthRoot_Behavior,
+        .codeFlatten : codeFlatten_Behavior,
+        .codeFlattenOnce : codeFlattenOnce_Behavior,
+        .codeFlattenPoint : codeFlattenPoint_Behavior,
+        .codeRemovePoint : codeRemovePoint_Behavior,
+        .codeReplaceAllPoints : codeReplaceAllPoints_Behavior,
+        .codeReplaceFirstPoint : codeReplaceFirstPoint_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,

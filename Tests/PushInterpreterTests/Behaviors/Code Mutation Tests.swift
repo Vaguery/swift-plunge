@@ -1,0 +1,110 @@
+//
+//  Code Mutation Tests.swift
+//  PushInterpreterTests
+//
+//  Created by William Tozier on 7/18/26.
+//
+//  Flatten and point-mutation transforms (they consume): codeFlatten,
+//  codeFlattenOnce, codeFlattenPoint, codeRemovePoint, codeReplaceAllPoints,
+//  codeReplaceFirstPoint.
+//
+
+@testable import PushInterpreter
+import Testing
+import DequeModule
+
+@Suite @MainActor
+struct CodeMutationTests {
+
+    /// ( (1 2) 3 ): points 0:root 1:(1 2) 2:1 3:2 4:3
+    let tree = CodeItem([CodeItem([IntItem(1), IntItem(2)]), IntItem(3)])
+
+    func onTree(_ instr: PushInstruction, _ code: CodeItem, int: Int? = nil) -> Interpreter {
+        let inty = Interpreter()
+        inty.stacks[.code]!.prepend(code)
+        if let int { inty.stacks[.int]!.prepend(IntItem(int)) }
+        doThis(instr, to: inty)
+        return inty
+    }
+
+    @Test func flatten() {
+        let inty = onTree(.codeFlatten, tree)
+        #expect(stackString(inty, .code) == "[ ( 1 2 3 ) ]")
+        // empty blocks vanish
+        let e = onTree(.codeFlatten, CodeItem([IntItem(1), CodeItem([]), IntItem(2)]))
+        #expect(stackString(e, .code) == "[ ( 1 2 ) ]")
+    }
+
+    @Test func flattenOnce() {
+        let deep = CodeItem([IntItem(1),
+                             CodeItem([IntItem(2), CodeItem([IntItem(3), IntItem(4)])]),
+                             IntItem(5)])
+        let inty = onTree(.codeFlattenOnce, deep)
+        #expect(stackString(inty, .code) == "[ ( 1 2 ( 3 4 ) 5 ) ]", "one level only")
+    }
+
+    @Test func flattenPoint() {
+        // flatten point 1, the (1 2) subtree — already flat, unchanged shape
+        let a = onTree(.codeFlattenPoint, tree, int: 1)
+        #expect(stackString(a, .code) == "[ ( ( 1 2 ) 3 ) ]")
+
+        // a nested subtree: ( (1 (2 3)) 4 ), flatten point 1 → ( (1 2 3) 4 )
+        let nested = CodeItem([CodeItem([IntItem(1), CodeItem([IntItem(2), IntItem(3)])]), IntItem(4)])
+        let b = onTree(.codeFlattenPoint, nested, int: 1)
+        #expect(stackString(b, .code) == "[ ( ( 1 2 3 ) 4 ) ]")
+
+        // a leaf point is unchanged
+        let c = onTree(.codeFlattenPoint, tree, int: 2)
+        #expect(stackString(c, .code) == "[ ( ( 1 2 ) 3 ) ]")
+
+        // point 0 flattens the whole thing
+        let d = onTree(.codeFlattenPoint, nested, int: 0)
+        #expect(stackString(d, .code) == "[ ( 1 2 3 4 ) ]")
+    }
+
+    @Test func removePoint() {
+        #expect(stackString(onTree(.codeRemovePoint, tree, int: 2), .code) == "[ ( ( 2 ) 3 ) ]")
+        #expect(stackString(onTree(.codeRemovePoint, tree, int: 1), .code) == "[ ( 3 ) ]", "whole subtree")
+        #expect(stackString(onTree(.codeRemovePoint, tree, int: 0), .code) == "[ ( ) ]", "root → empty")
+    }
+
+    /// subject deepest, needle, replacement on top.
+    func replace(_ instr: PushInstruction, _ subject: CodeItem, _ needle: CodeItem, _ repl: CodeItem) -> Interpreter {
+        let inty = Interpreter()
+        inty.stacks[.code]!.prepend(contentsOf: [repl, needle, subject] as [any Item])
+        doThis(instr, to: inty)
+        return inty
+    }
+
+    @Test func `a block needle does not match a bare leaf`() {
+        // needle ( 1 ) is a one-element block, which is NOT equal to the leaf 1,
+        // so nothing in ( 1 ( 1 2 ) 1 ) matches — the subject is unchanged.
+        let subj = CodeItem([IntItem(1), CodeItem([IntItem(1), IntItem(2)]), IntItem(1)])
+        let inty = replace(.codeReplaceAllPoints, subj, CodeItem([IntItem(1)]), CodeItem([IntItem(9)]))
+        #expect(stackString(inty, .code) == "[ ( 1 ( 1 2 ) 1 ) ]")
+    }
+
+    @Test func `replace matches subtrees by value`() {
+        // replace the subtree ( 1 2 ) with ( 9 ) in ( ( 1 2 ) ( 1 2 ) )
+        let subj = CodeItem([CodeItem([IntItem(1), IntItem(2)]), CodeItem([IntItem(1), IntItem(2)])])
+        let needle = CodeItem([IntItem(1), IntItem(2)])
+        let all = replace(.codeReplaceAllPoints, subj, needle, CodeItem([IntItem(9)]))
+        #expect(stackString(all, .code) == "[ ( ( 9 ) ( 9 ) ) ]")
+
+        let first = replace(.codeReplaceFirstPoint, subj, needle, CodeItem([IntItem(9)]))
+        #expect(stackString(first, .code) == "[ ( ( 9 ) ( 1 2 ) ) ]", "only the first")
+    }
+
+    @Test func `mutation cruxes reproduce`() {
+        for (instr, code, i) in [(PushInstruction.codeFlatten, tree, nil),
+                                 (.codeRemovePoint, tree, 2),
+                                 (.codeFlattenPoint, tree, 1)] as [(PushInstruction, CodeItem, Int?)] {
+            let inty = onTree(instr, code, int: i)
+            let result = topItem(inty, .code)
+            let redo = Interpreter()
+            redo.load(program: result.crux())
+            redo.run()
+            #expect(stackString(redo, .code) == stackString(inty, .code), "\(instr) crux")
+        }
+    }
+}
