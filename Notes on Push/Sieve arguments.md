@@ -1,9 +1,12 @@
 # Sieve arguments: finding an argument rather than taking one
 
 **Status: the planner is built; the sieve is not.** Question 2 below was answered *yes* — take the
-mechanism, leave the feature — so `Planner.swift` now exists and `Requirement` has three kinds
-(`.takes`, `.needs`, `.takesMany`). A sieve would be a fourth, and everything §1–§5 says about it still
-stands as written: **explored, not decided.**
+mechanism, leave the feature — so `Planner.swift` now exists and `Requirement` has four kinds
+(`.takes`, `.needs`, `.takesMany`, and `.reads`, the last added later for non-destructive queries —
+Design Principles §5). A sieve would be a fifth, and everything §1–§5 says about it still stands as
+written: **explored, not decided.** That `.reads` slotted in cleanly — one enum case, one branch in
+`plan()` — is itself evidence for the note's central claim: the planner is the reusable mechanism, and a
+new requirement kind is cheap.
 
 What that bought, all of it predicted here in §2: `isSatisfied` is now "the plan succeeds" rather than a
 depth count; `vecXConstruct`'s hand-rolled check is gone; `alsoNeeds:` folded in; the starvation probe's

@@ -42,6 +42,27 @@ The full rules — laws 1 through 5, and the containment and prefix sub-rules �
 bare literal is already a runnable program producing itself. So dropping a record costs the *story*,
 never the correctness. That asymmetry is what makes an aggressive `maxCallWeight` budget acceptable.
 
+### The composition invariant: a fragment leaves its value and nothing else
+
+`crux()` builds a parent's source by **concatenating its children's**, flat, with no separators
+(`self.call.flatMap { $0.crux() }`). That is only correct if each fragment, run in sequence, leaves
+exactly its own value where the next instruction expects it — on top of its stack, with no litter on any
+other. State it as a rule:
+
+> **a crux fragment leaves its value and nothing else, on any stack.**
+
+For a long time this was true only by accident — every Behavior happened to consume exactly what it
+recorded, so it left one value and no debris — and nothing tested it (it is question 4 of "Sieve
+arguments.md"). Non-destructive queries (§5) are the first thing that would break it: a query leaves its
+argument alive at run time, so a naive crux would leave that argument as debris, and a later same-stack
+fragment would grab it. The concrete failure: `[z, y, .vecIntLength, .vecIntNth]` would index into `y`
+instead of `z`.
+
+The fix makes the invariant true rather than accidental — a query's crux pops what it read — and promotes
+it to a tested rule (`Composition Invariant Tests.swift`, plus the crux fuzzer, which runs *composed*
+cruxes and is the only thing that sees a violation). **Any new Behavior whose crux leaves debris on a
+stack a sibling might read is a latent corruption; make its fragment clean.**
+
 ## 2. Push is mostly postfix — and a stack reverses what you wrote
 
 `2 3 .intSubtract` computes 2−3. The `2` was written first, so it is *deeper*; the `3` is on top. A
@@ -177,6 +198,35 @@ Two corollaries, both measured rather than guessed ("Stack economics.md"):
   consumer) and `.int` its hungriest, so anything that hands them back is a *source* for exactly what is
   scarce. An instruction that consumed something and then achieved nothing with it should not also
   destroy it.
+
+### A query reads its argument; it does not consume it
+
+The strongest single relief for starvation, because it turns a whole class of instructions from
+consumers into producers. **An instruction that examines an argument to report a *fact* about it — a
+length, an `isEmpty`, a `contains`, an index, a comparison — must leave that argument on the stack.**
+Deleting it is deleting the object of the request: a program that wants both to inspect a value and keep
+it is forced to duplicate it first, which spends the scarcest channels twice.
+
+The dividing line is what the result *is*. A **query** returns a fact describing its argument(s); a
+**transform** (`.intAdd`, `.vecReverse`, `.stringTake`, the conversions) returns a new value built out of
+them. Transforms are right to consume — their operands are used up into the result. Queries are not.
+There are 59 of them, and they form a coherent set with one rule; `.execEq` is the lone exception, since
+its operands are the pending program continuation rather than values to keep.
+
+The mechanism is the `.reads` requirement (§14): hand the value to the transformer, do not remove it.
+Both operands of a comparison survive — a query destroys nothing it examined.
+
+**Live and the crux are deliberately different here, and the split is the subtle part.** At run time the
+argument survives, keeps its own `call`, and is available to whatever comes next — its "future life."
+But the argument's *crux* must still reproduce only the fact, so a query records a cleanup that pops what
+it read (`Behavior.reading`, law 5 generalized). Otherwise the fragment would leave its argument as
+debris and break composition — see §1's composition invariant, which this is the first widespread test
+of. The argument's future life is carried not by the query's crux but by whatever later consumes it, in
+that consumer's own record.
+
+Measured (Stack economics, Part 4): every value stack's producer/consumer ratio rose, and `.code`'s
+roughly doubled off its long-standing 0.29 — a query that used to shallow its argument stack now deepens
+it.
 
 ## 6. Collections are walked front-to-back
 
@@ -453,14 +503,16 @@ Two structural supports:
   **The fix is a type, not a discipline.** `alsoNeeds:` (declare what you require but do not consume)
   named the missing requirements, and `Planner` made keeping the bargain structural rather than each
   Behavior's own business. A Behavior now says *what* it needs; the Planner works out *where* it is and
-  whether it is there at all. Three kinds of requirement:
+  whether it is there at all. Four kinds of requirement:
 
-  | `.takes(s)` | consume the topmost unclaimed item of `s` |
-  | `.needs(s, count:)` | `count` more must be present, and are **not** consumed |
+  | `.takes(s)` | consume the topmost unclaimed item of `s`; hand it to the transformer |
+  | `.needs(s, count:)` | `count` more must be present, and are **not** consumed or handed over |
   | `.takesMany(s, count:)` | consume as many as `count` says, computed from the arguments so far |
+  | `.reads(s)` | hand the topmost item to the transformer but do **not** consume it — the non-destructive query (§5) |
 
-  A stack may appear in several and the counts add: `intYank` wants three ints — one index and two to
-  work on. `.takesMany` is why this is a *planner* and not a tally: `vecIntConstruct` wants N scalars
+  The four fill a two-by-two: consume-or-not × hand-to-the-transformer-or-not. `.needs` is the odd corner
+  (neither), used by combinators that reach into a stack through the interpreter directly. A stack may
+  appear in several and the counts add: `intYank` wants three ints — one index and two to work on. `.takesMany` is why this is a *planner* and not a tally: `vecIntConstruct` wants N scalars
   where N is the length of its other argument, so the question "can this run?" cannot be answered
   before gathering has begun. It kept the bargain by hand until there was somewhere to declare it.
 
