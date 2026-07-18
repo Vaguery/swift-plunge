@@ -257,6 +257,59 @@ nonisolated extension Interpreter {
             }
         )
 
+    // MARK: - Point access that emits to `.exec` (Do / Emit)
+    //
+    // The `.exec` cousins of `codeNth*`. They read the tree and index
+    // non-destructively, like `codeNth`, but instead of producing a boxed `.code`
+    // result they route the point through `.exec`:
+    //
+    //   Emit — push the point **as it is**. A sub-block rests on `.code` whole; a
+    //          leaf routes to its own stack; an instruction runs.
+    //   Do   — push the point **unwrapped** (via `.codeDo`), so a sub-block's
+    //          contents run. Identical to Emit for a leaf.
+    //
+    // They emit existing items (law 1b / combinatory), so they record no crux of
+    // their own — the routed items carry their own provenance. The index is taken
+    // `magnitude % count`.
+
+    /// Emit a point to `.exec` as-is (whole).
+    static func emitNthBehavior(_ instruction: PushInstruction, point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?) -> Behavior {
+        Behavior(
+            instruction,
+            reads: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                guard var point = pick(x, i.value) else { return [] }
+                point.isContingent = Behavior.netContingency(of: x, i, point)
+                return [Router(.exec, point)]
+            }
+        )
+    }
+
+    /// Emit a point to `.exec` unwrapped — box it and let `.codeDo` run it.
+    static func doNthBehavior(_ instruction: PushInstruction, point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?) -> Behavior {
+        Behavior(
+            instruction,
+            reads: [.code, .int],
+            fxn: { a in
+                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
+                guard let point = pick(x, i.value) else { return [] }
+                let boxed = CodeItem(boxedPointContents(point), isContingent: Behavior.netContingency(of: x, i))
+                return [Router(.exec, InstructionItem(.codeDo)), Router(.exec, boxed)]
+            }
+        )
+    }
+
+    static let pointPicker: @Sendable (CodeItem, Int) -> (any Item)? = { x, i in x.point(at: i) }
+    static let rootPicker: @Sendable (CodeItem, Int) -> (any Item)? = { x, i in
+        x.value.isEmpty ? nil : x.value[Int(i.magnitude % UInt(x.value.count))]
+    }
+
+    static let codeEmitNthPoint_Behavior = emitNthBehavior(.codeEmitNthPoint, point: pointPicker)
+    static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker)
+    static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker)
+    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker)
+
     // MARK: - Flatten and point mutation (transforms, consume)
 
     /// Flatten the whole tree to its leaves, left to right. `(1 (2 3) ())` →
@@ -413,23 +466,30 @@ nonisolated extension Interpreter {
         )
 
     /// Iterate every **pre-order point** of the tree, running the mouse once per
-    /// point — each point boxed as `.code` (via `codeNthPoint`). The `.points`
-    /// sibling of `codeIterateRoot`. A tree always has at least its root, so this
-    /// never does nothing.
-    static let codeIteratePoints_Behavior =
+    /// point. The three variants differ only in how each point is handed on (see
+    /// `PointsEmission`): `codeIteratePoints` boxes it as `.code`,
+    /// `codeIterateEmitPoints` hands it on whole, and `codeIterateDoPoints` runs a
+    /// sub-block's contents. The `.points` siblings of `codeIterateRoot`. A tree
+    /// always has at least its root, so none of them ever does nothing.
+    static func iteratePointsBehavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
         Behavior(
-            .codeIteratePoints,
+            instruction,
             takes: [.code, .code],
             fxn: { a in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return Interpreter.iteratorLoop(
-                    kind: .points(into: nil),
+                    kind: .points(mode),
                     origin: x,
                     body: mouse,
                     emits: true
                 )
             }
         )
+    }
+
+    static let codeIteratePoints_Behavior     = iteratePointsBehavior(.codeIteratePoints, .boxed)
+    static let codeIterateEmitPoints_Behavior = iteratePointsBehavior(.codeIterateEmitPoints, .whole)
+    static let codeIterateDoPoints_Behavior   = iteratePointsBehavior(.codeIterateDoPoints, .unwrapped)
 
     static let codeWrapRoot_Behavior =
     Behavior(
@@ -646,6 +706,10 @@ nonisolated extension Interpreter {
         .codeContainer : codeContainer_Behavior,
         .codeNthPoint : codeNthPoint_Behavior,
         .codeNthRoot : codeNthRoot_Behavior,
+        .codeDoNthPoint : codeDoNthPoint_Behavior,
+        .codeDoNthRoot : codeDoNthRoot_Behavior,
+        .codeEmitNthPoint : codeEmitNthPoint_Behavior,
+        .codeEmitNthRoot : codeEmitNthRoot_Behavior,
         .codeFlatten : codeFlatten_Behavior,
         .codeFlattenOnce : codeFlattenOnce_Behavior,
         .codeFlattenPoint : codeFlattenPoint_Behavior,
@@ -655,6 +719,8 @@ nonisolated extension Interpreter {
         .codeCutRootAtGap : codeCutRootAtGap_Behavior,
         .codeIterateRoot : codeIterateRoot_Behavior,
         .codeIteratePoints : codeIteratePoints_Behavior,
+        .codeIterateEmitPoints : codeIterateEmitPoints_Behavior,
+        .codeIterateDoPoints : codeIterateDoPoints_Behavior,
         .codeWrapRoot : codeWrapRoot_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,

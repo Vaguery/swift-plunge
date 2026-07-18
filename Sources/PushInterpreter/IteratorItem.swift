@@ -8,6 +8,21 @@
 import Foundation
 
 
+/// How a `.points` walk hands each point on. The three modes are the pre-order
+/// analogue of the `codeNth`/`codeEmitNth`/`codeDoNth` trio, and they differ only
+/// in what becomes of a point that is itself a sub-block:
+///
+/// - `boxed` — every point boxed as `.code` (via `codeNthPoint`) and left resting
+///   there. A leaf becomes `( leaf )`. This is `codeIteratePoints`.
+/// - `whole` — the point routed **as it is**: a sub-block rests whole on `.code`,
+///   a leaf routes to its own stack, an instruction runs. This is
+///   `codeIterateEmitPoints`.
+/// - `unwrapped` — the point sent through `.exec` via `.codeDo`, so a sub-block's
+///   contents run. Identical to `whole` for a leaf. This is `codeIterateDoPoints`.
+public nonisolated enum PointsEmission: Sendable, Equatable, Codable {
+    case boxed, whole, unwrapped
+}
+
 /// How an iterator's cursor projects into the item it emits each pass.
 ///
 /// The cursor is **always an `Int`**, and everything else is a projection of it.
@@ -44,10 +59,10 @@ public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
     case words
 
     /// `origin` is a `CodeItem`; pass `i` emits its `i`-th **pre-order point**
-    /// (root at 0), boxed as `.code`. `.elements`'s sibling — same origin, same
-    /// Int cursor — but the index walks the whole tree, not just the root. This
-    /// is `codeIteratePoints`.
-    case points(into: PushStack?)
+    /// (root at 0). `.elements`'s sibling — same origin, same Int cursor — but the
+    /// index walks the whole tree, not just the root. The `PointsEmission` mode
+    /// decides how each point is handed on. This is the `codeIterate*Points` family.
+    case points(PointsEmission)
 
     /// `origin` is anything at all and `destination` is an `IntItem` count; every
     /// pass emits `origin` again. This is the `xDupTimes` family — which is why
@@ -302,7 +317,11 @@ nonisolated extension IteratorItem {
     var target: PushStack? {
         switch kind {
         case .elements(let into):  into
-        case .points(let into):    into
+        // `.whole` derives its stack from the point itself (a sub-block to `.code`,
+        // a leaf to its own stack); `.boxed` always lands a CodeItem, so it also
+        // derives `.code`. `.unwrapped` is special-cased in `iteratorPass` (it emits
+        // a `.codeDo` alongside the point), so its target here is unused.
+        case .points:              nil
         case .repeating(let into): into
         default:                   nil
         }
@@ -633,7 +652,12 @@ nonisolated extension IteratorItem {
         switch kind {
         case .letters: return .iteratorFromStringLetters
         case .words:   return .iteratorFromStringWords
-        case .points:  return .iteratorFromCodePoints
+        case .points(let mode):
+            switch mode {
+            case .boxed:     return .iteratorFromCodePoints
+            case .whole:     return .iteratorFromCodeEmitPoints
+            case .unwrapped: return .iteratorFromCodeDoPoints
+            }
         case .elements(let into):
             switch origin {
             case is StringItem:    return .iteratorFromString
@@ -717,12 +741,21 @@ nonisolated extension IteratorItem {
                 isContingent: isContingent
             )
 
-        // The i-th pre-order point, boxed as `.code` — exactly what
-        // `codeNthPoint` yields, so the element records that (nondestructive)
-        // instruction's cleanup crux and reproduces debris-free.
-        case .points:
+        // The i-th pre-order point. `.boxed` yields exactly what `codeNthPoint`
+        // does — the point boxed as `.code`, recording that (nondestructive)
+        // instruction's cleanup crux, reproducing debris-free. `.unwrapped` also
+        // boxes: `iteratorPass` routes the box through `.codeDo`, which spills the
+        // contents (a leaf's box `( x )` spills to `x`). `.whole` hands the raw
+        // point on, keeping its own provenance (law 1b) so it rests wherever its
+        // type belongs.
+        case .points(let mode):
             guard let c = origin as? CodeItem else { return nil }
             let point = c.point(at: index)
+            if mode == .whole {
+                var raw = point
+                raw.isContingent = raw.isContingent || isContingent
+                return raw
+            }
             let contents = (point as? CodeItem)?.value ?? [point]
             return CodeItem(
                 contents,

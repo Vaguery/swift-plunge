@@ -30,16 +30,25 @@ nonisolated extension Interpreter {
         var results = [Router]()
 
         if iterator.emits, let projected = iterator.projection() {
-            // `?? .exec` because `defaultStack(for:)` answers nil for an
-            // InstructionItem — it executes rather than lands. Without the
-            // fallback an instruction walked out of a code block would be
-            // silently dropped, which is exactly what a points traversal would
-            // meet: most leaves of a block ARE instructions. An instruction with
-            // no resting place should run, and `.exec` is where running happens.
-            let resting = iterator.target
-                ?? PushStack.defaultStack(for: projected)
-                ?? .exec
-            results.append(Router(resting, projected))
+            if case .points(.unwrapped) = iterator.kind {
+                // Do: the boxed point runs. A block met on `.exec` only rests on
+                // `.code` (it does not spill), so `.codeDo` is what unwraps it —
+                // the same mechanism `codeDoNthPoint` uses. A leaf's box `( x )`
+                // spills to `x`, so leaves behave as `whole` does.
+                results.append(Router(.exec, InstructionItem(.codeDo)))
+                results.append(Router(.exec, projected))
+            } else {
+                // `?? .exec` because `defaultStack(for:)` answers nil for an
+                // InstructionItem — it executes rather than lands. Without the
+                // fallback an instruction walked out of a code block would be
+                // silently dropped, which is exactly what a points traversal would
+                // meet: most leaves of a block ARE instructions. An instruction with
+                // no resting place should run, and `.exec` is where running happens.
+                let resting = iterator.target
+                    ?? PushStack.defaultStack(for: projected)
+                    ?? .exec
+                results.append(Router(resting, projected))
+            }
         }
 
         if let body = iterator.body {
@@ -643,28 +652,38 @@ nonisolated extension Interpreter {
 
     /// Construct-only: rebuild a **points** iterator by state. Same shape as
     /// `iteratorFromCode`, but the walk is pre-order over the whole tree, not the
-    /// root — so `crux()` for a points iterator names this.
-    static let iteratorFromCodePoints_Behavior =
+    /// root — so `crux()` for a points iterator names this. One per `PointsEmission`
+    /// mode, because the mode is part of the iterator's identity and a rebuilt copy
+    /// must carry it.
+    static func iteratorFromCodePoints_Behavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
         Behavior(
-            .iteratorFromCodePoints,
+            instruction,
             takes: [.code, .code, .int, .int, .bool],
             fxn: { a in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
                 let emits = a[4] as! BoolItem
                 let iterator = IteratorItem(
-                    kind: .points(into: nil),
+                    kind: .points(mode),
                     origin: origin,
                     body: body,
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [origin, cursor, burial, emits, body, InstructionItem(.iteratorFromCodePoints)],
+                    call: [origin, cursor, burial, emits, body, InstructionItem(instruction)],
                     isContingent: Behavior.netContingency(of: origin, cursor, burial, emits, body)
                 )
                 return iteratorBuilt(iterator)
             }
         )
+    }
+
+    static let iteratorFromCodePoints_Behavior =
+        iteratorFromCodePoints_Behavior(.iteratorFromCodePoints, .boxed)
+    static let iteratorFromCodeEmitPoints_Behavior =
+        iteratorFromCodePoints_Behavior(.iteratorFromCodeEmitPoints, .whole)
+    static let iteratorFromCodeDoPoints_Behavior =
+        iteratorFromCodePoints_Behavior(.iteratorFromCodeDoPoints, .unwrapped)
 
     /// Builds an iterator that emits the **same item** over and over, `count`
     /// times, and leaves it alone. This is what the `xDupTimes` family rests on.
@@ -733,6 +752,8 @@ nonisolated extension Interpreter {
         .iteratorFromCode : iteratorFromCode_Behavior,
         .iteratorFromCodeIntoExec : iteratorFromCodeIntoExec_Behavior,
         .iteratorFromCodePoints : iteratorFromCodePoints_Behavior,
+        .iteratorFromCodeEmitPoints : iteratorFromCodeEmitPoints_Behavior,
+        .iteratorFromCodeDoPoints : iteratorFromCodeDoPoints_Behavior,
         .iteratorRepeating : iteratorRepeating_Behavior,
         .iteratorRepeatingIntoExec : iteratorRepeatingIntoExec_Behavior,
         .iteratorFromString : iteratorFromString_Behavior,

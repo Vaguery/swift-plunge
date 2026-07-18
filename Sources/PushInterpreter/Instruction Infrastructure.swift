@@ -45,7 +45,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // CODE instructions
     // wherever a tree ordering is needed, it is pre-order (a node before its children)
     //
-    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenPoint, codeFlattenRange, codePair, codeIf, codeIndexOfPoint, codeInsertAtGap, codeItemIsEmpty, codeIteratePoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
+    case codeAppend, codeContainer, codeContains, codeCutAtGap, codeCutRootAtGap, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenPoint, codeFlattenRange, codePair, codeIf, codeIndexOfPoint, codeInsertAtGap, codeItemIsEmpty, codeIteratePoints, codeIterateEmitPoints, codeIterateDoPoints, codeIterateRoot, codeLengthPoints, codeLengthRoot, codeNthPoint, codeNthRoot, codeDoNthPoint, codeDoNthRoot, codeEmitNthPoint, codeEmitNthRoot, codeRemovePoint, codeReplaceAllPoints, codeReplaceFirstPoint, codeWidth, codeWrapRoot, codeWrapPoints
 
     /// Drive an iterator to exhaustion and box everything it emitted into a block.
     ///
@@ -198,7 +198,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // be derived from the element — its contents are heterogeneous *and* pending —
     // and a PushStack is not expressible as a Push value, so the exception has to
     // live in the name.
-    case iteratorFromCode, iteratorFromCodeIntoExec, iteratorFromCodePoints
+    case iteratorFromCode, iteratorFromCodeIntoExec, iteratorFromCodePoints, iteratorFromCodeEmitPoints, iteratorFromCodeDoPoints
     case iteratorRepeating, iteratorRepeatingIntoExec
 
     // iterator combinators

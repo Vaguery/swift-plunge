@@ -21,7 +21,7 @@ struct CodeIteratePointsTests {
     /// Build a bodyless .points iterator over `code` and collect everything it
     /// emits, front to back.
     func emittedPoints(_ code: CodeItem) -> [String] {
-        let it = IteratorItem(kind: .points(into: nil), origin: code, body: nil, emits: true)
+        let it = IteratorItem(kind: .points(.boxed), origin: code, body: nil, emits: true)
         return it.collected().map { $0.pretty() }
     }
 
@@ -40,7 +40,7 @@ struct CodeIteratePointsTests {
     }
 
     @Test func `each emitted point records the codeNthPoint crux and reproduces`() {
-        let it = IteratorItem(kind: .points(into: nil), origin: tree, body: nil, emits: true)
+        let it = IteratorItem(kind: .points(.boxed), origin: tree, body: nil, emits: true)
         let points = it.collected()
         // point 2 is the leaf 1, boxed as ( 1 )
         let leafPoint = points[2]
@@ -67,7 +67,7 @@ struct CodeIteratePointsTests {
     }
 
     @Test func `a points iterator reconstructs via iteratorFromCodePoints`() {
-        var it = IteratorItem(kind: .points(into: nil), origin: tree, body: nil, emits: true)
+        var it = IteratorItem(kind: .points(.boxed), origin: tree, body: nil, emits: true)
         it.call = it.reconstruction()
         #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodePoints"))
 
@@ -75,7 +75,7 @@ struct CodeIteratePointsTests {
         redo.load(program: it.crux())
         redo.run()
         let rebuilt = redo.stacks[.iterator]!.first as? IteratorItem
-        #expect(rebuilt?.kind == .points(into: nil))
+        #expect(rebuilt?.kind == .points(.boxed))
         #expect(rebuilt?.origin.pretty() == tree.pretty())
     }
 }

@@ -25,7 +25,7 @@ nonisolated public extension PushInstruction {
     /// directly under its payload, which is exactly the shape this set describes.
     static let iterators: Set<PushInstruction> = [
         .execDoWhile, .execWhile, .execY,
-        .codeIteratePoints, .codeIterateRoot,
+        .codeIteratePoints, .codeIterateEmitPoints, .codeIterateDoPoints, .codeIterateRoot,
         .iteratorPlay, .iteratorPlayDelayed,
         .stringIterate,
         .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
