@@ -96,6 +96,25 @@ commitment.
     whose body queues thousands ahead of its iterator is not diagnosed. Long deferred, still fine to
     defer.
 
+## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
+
+The clear-cut vector cases are built (comparisons, sub-vector search/replace, read-only constructors).
+Left for later, with the arguments in the coverage note:
+
+30. **Vector `split`** — prefer an explicit-separator `vecXSplitOn(separator)` (uniform, data-driven)
+    over the "negatives-as-whitespace" analogy. Its own small proposal.
+31. **`parseToLetters` vector analog** — an iterator emitting one-element vectors. Low value; add on a
+    concrete use.
+32. **Chunking** (fixed windows, overlapping/non-overlapping) — needs a **new `IteratorKind`**; `stride`
+    is honoured only by `.counting` today. The reserved `.points` slot is the precedent. Overlaps #A.1.
+33. **Code partitioning/search family** (`codeCut`/`codeContains`/`codeNth*`… at root and points level) —
+    defer as a block; the points level needs `.points` (#A.1), the rest belongs with
+    `Code instruction planning.markdown`.
+34. **Pattern as a first-class item** — connects sub-vector search, the sieve (§C), and `.points`. A
+    research direction, not an instruction.
+35. **Naming reconciliation** (`stringSubstring`↔`subVec`, `stringSetChar`↔`set`, `stringConjChar`↔`conj`)
+    — left as-is; renaming churns cruxes and tests for cosmetics.
+
 ---
 
 ## Resolved / overtaken (kept briefly so the old notes can be trimmed to point here)
@@ -104,9 +123,12 @@ commitment.
   the setters), the collectors (`.vecFromIterator`, `.codeFromIterator`), cycling (`laps`),
   `.iteratorQuote`, `.vecXCut`/`.stringCut`, non-destructive queries, the `Planner`/`.reads` requirement,
   `InstructionTag`, the Fibonacci genome, and the mix diagnostic — **all done.**
-- **"A program cannot create a vector / the vector stacks are closed systems"** — **partly opened** by
-  `.vecXConstruct` (shape from a vector) and `.vecFromIterator` (from anything an iterator walks). Fully
-  open only for a from-nothing constructor. → *Stack economics.md* Part 1.
+- **"A program cannot create a vector / the vector stacks are closed systems"** — **now opened**:
+  `.vecXConstruct` (shape from a vector), `.vecFromIterator` (from anything an iterator walks), and the
+  read-only `.vecXReadItems`/`.vecXReadStack` (from loose scalars, non-destructively) all make vectors.
+  → *Stack economics.md* Part 1, *Vector and Collection Coverage.md*.
+- **Vector coverage: comparisons, sub-vector search/replace, read-only constructors** — **done** (branch
+  `collectionCoverage`). Deferred pieces in §H above.
 - **`vecXPushAll` vs `stringPushAllChars` disagreed on which end lands on top** — **resolved**,
   front-to-back everywhere (Design Principles §6).
 - **The composition invariant "a fragment leaves its value and nothing else"** was an untested accident

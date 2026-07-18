@@ -1,5 +1,22 @@
 # vector and collection instruction coverage
 
+> **Status (2026-07-18): the clear-cut vector cases are built** — see the branch `collectionCoverage`.
+> - **Comparisons** → `vec{Int,Double,String}{LT,LTE,GT,GTE}`, lexicographic, non-destructive queries.
+>   `vecBool` excluded (Bool is not Comparable); there is no `VecChar` type.
+> - **Sub-vector search/replace** → `vecXContainsSubVec` / `IndexOfSubVec` / `OccurrencesOfSubVec`
+>   (queries) and `vecXReplaceSubVec` / `ReplaceFirstSubVec` (transforms), all four types.
+> - **Constructors** → read-only `vecXReadItems` / `vecXReadStack` only (no consuming `fromItems`, no
+>   string-from-chars), all four types. The "backup snapshot" framing.
+>
+> **Deferred, with reasons, tracked in `Roadmap.md`:** vector `split` (→ prefer explicit-separator
+> `vecXSplitOn`, not negatives-as-whitespace), the `parseToLetters` vector analog, chunking (needs a new
+> `IteratorKind` — `stride` is honoured only by `.counting`), the whole **code** partitioning/search
+> family (root + points level — wants `.points`), pattern-as-first-class-item (research), and the
+> `Substring`/`SubVec` naming reconciliation (left alone — cosmetic churn). The prose below is the
+> original proposal, kept for its arguments.
+
+---
+
 In some of the oldest planning documents I have a few more stray instructions (and families) I would like to
 add, for completeness. The first batch is from the planning document in Instruction Coverage.markdown, and let
  me go through them all in turn. This is a collected proposal for how to proceed, and what I want is some argument where asked and a plan for implementing the clear-cut cases. In some cases these will help the flow of items between types, and may help the shortage of some stack items.
