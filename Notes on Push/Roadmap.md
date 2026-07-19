@@ -13,9 +13,11 @@ commitment.
 
 1. ~~**`.points(into:)`** — the depth-first code-tree walk~~ **BUILT** (`codeIteratePoints`, the `.points`
    IteratorKind). → *Code instruction planning.md*
-2. **map / filter** — an accumulator field on the iterator plus a rule for reading what the body left
-   (the "pseudofunction" work). Note `.vecFromIterator`/`.codeFromIterator` are **not** this — they
-   collect projections and never run a body. → *The first-class iterator.md*
+2. **map / filter** — apply a crux-function to each vector element. Concrete design done (approved, not yet
+   built): one `BehaviorWithSideEffects` per op, **no iterator** (map/reduce produce one item — §4), a
+   sub-`Interpreter` rebinds the function's `.inputN` holes per element. Note `.vecFromIterator`/
+   `.codeFromIterator` are **not** this — they collect projections and never run a body.
+   → *Map and reduce from a crux-function.md*
 3. **`.sampling(steps:)`** — Double ranges, initialised by a step count or a stride. Also the
    "coarsening" mechanism §F wants. → *The first-class iterator.md*
 4. ~~**A real `.codeIterate`**~~ **BUILT** — `codeIterateRoot` (root elements) and `codeIteratePoints`
