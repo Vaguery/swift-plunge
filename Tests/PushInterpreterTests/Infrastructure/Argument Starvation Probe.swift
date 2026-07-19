@@ -101,7 +101,7 @@ struct ArgumentStarvationProbe {
         for _ in 0..<cases {
             let inty = Interpreter()
             inty.config = settings
-            inty.load(program: Plushy.plushy2push(RandomCode.randomPlushy(programItems)))
+            inty.load(program: FibonacciGenome.translate(RandomCode.randomProgram(programItems)))
             RandomCode.setRandomInputs(in: inty)
             RandomCode.setRandomConstants(in: inty)
 

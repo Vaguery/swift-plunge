@@ -104,8 +104,8 @@ public func callString(_ item: any Item) -> String {
 /// `loadCode()` is a helper for testing, and 100% should not
 /// be used for any other purpose. Worse, it's _quirky_.
 ///
-/// The `code: [Any]` argument is parsed by `Plushy.plushy2push()`, so
-/// it inherits the quirks of that. Any array item encountered in this array will be converted to a
+/// The `code: [Any]` argument is parsed by `buildProgram()` (see ProgramBuilder),
+/// so it inherits the quirks of that. Any array item encountered in this array will be converted to a
 /// vector Item if possible first, including empty ones. Any array that contains multiple
 /// types will be comverted to a `CodeItem` recursively.
 ///
@@ -121,7 +121,7 @@ public func callString(_ item: any Item) -> String {
                             contingent: [Int] = [] ) {
 
         func codeLoaderParser(_ item: Any) -> CodeItem {
-            let parsed = Plushy.plushy2push( [item] )
+            let parsed = buildProgram( [item] )
             var result = CodeItem([])
             if parsed.count > 0 {
                 if parsed[0] is CodeItem {

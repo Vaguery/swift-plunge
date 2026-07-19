@@ -332,7 +332,7 @@ struct CruxFuzzTests {
 
         for caseIndex in 0..<cases {
             let caseId = "crux-\(caseIndex)"
-            let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
+            let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
 
             let inty = Interpreter()
             inty.config = settings

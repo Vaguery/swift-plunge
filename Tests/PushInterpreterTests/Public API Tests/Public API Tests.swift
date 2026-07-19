@@ -60,11 +60,15 @@ struct PublicAPITests {
         #expect(results.count == 1)
     }
 
-    @Test func `language introspection and genome translation are public`() async {
+    @Test func `language introspection is public`() async {
         let runner = Runner()
         #expect(runner.instructionNames.contains("intAdd"))
 
-        let program = GenomeEncoding.plushy.translate([1, PushInstruction.intAdd])
-        #expect(!program.isEmpty)
+        // The typed introspection surface a caller uses to shape an Experiment:
+        // the whole set, and the tag partition (which must sum back to the whole).
+        #expect(runner.definedInstructions.contains(.intAdd))
+        let byTag = runner.instructionsByTag
+        #expect(byTag[.constant]?.isEmpty == false)
+        #expect(byTag.values.map(\.count).reduce(0, +) == runner.definedInstructions.count)
     }
 }

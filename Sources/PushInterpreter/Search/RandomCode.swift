@@ -9,7 +9,7 @@
 //  **This is test scaffolding that lives in the library**, deliberately. It is
 //  carried here so it survives the repo split — but it is almost entirely
 //  `internal`, so it is invisible to production code and reachable only from the
-//  interpreter's own `@testable` tests. (Three helpers are `public`; see
+//  interpreter's own `@testable` tests. (Two helpers are `public`; see
 //  `RandomCode`.) The real search process owns genome generation; nothing here
 //  should end up on an evolutionary critical path.
 //
@@ -146,7 +146,7 @@ public nonisolated enum RandomCode {
 
     /// Uniform over the *whole* language — which means 34% combinators and 15%
     /// constants, because that is the language's shape rather than a decision.
-    /// Kept for the frozen Plushy path; prefer `randomInstruction(from:)`.
+    /// Prefer `randomInstruction(from:)`, which draws by tag.
     static func randomInstruction() -> PushInstruction {
         allInstructions.randomElement(using: &fuzzRNG)!
     }
@@ -241,26 +241,6 @@ public nonisolated enum RandomCode {
         Interpreter.sortedTags[.input]!.randomElement(using: &fuzzRNG)!
     }
 
-    static func randomGenomeStuff() -> Any {
-        return switch Int.random(in: 0..<20, using: &fuzzRNG) {
-        case 0: PlushyControl.close
-        case 1: PlushyControl.open
-        case 2...6: randomInput()
-        case 7...11: randomConstant()
-        default: randomInstruction()
-        }
-    }
-
-    // do not need CodeBlock because of Plushy Open and Close
-
-    public static func randomPlushy(_ items: Int) -> [Any] {
-        var result: [Any] = []
-        for _ in 0..<items {
-            result.append(randomGenomeStuff())
-        }
-        return result
-    }
-
     /// A random *value*, for binding to an input or a constant — **not a gene.**
     /// This is the genome's other half (the constant assignments), and unlike the
     /// program it can be any Item at all, including a code block.
@@ -275,8 +255,10 @@ public nonisolated enum RandomCode {
         case 6: return VecDoubleItem(randomVecDouble(100_000.0, 20))
         case 7: return VecStringItem(randomVecString(20))
         case 8...10:
-            let plush = RandomCode.randomPlushy(Int.random(in: 1..<20, using: &fuzzRNG))
-            return CodeItem(Plushy.plushy2push(plush))
+            // A random code block for a constant/input binding. Fibonacci-packing a
+            // flat instruction stream gives a nested-ish block without the departed
+            // Plushy genome (see FibonacciGenome, the retained test generator).
+            return CodeItem(FibonacciGenome.translate(randomProgram(Int.random(in: 1..<20, using: &fuzzRNG))))
         case 11...20: return InstructionItem(randomInput())
         default: return InstructionItem(randomInstruction())
         }

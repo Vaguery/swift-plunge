@@ -35,7 +35,7 @@ struct Stress_Tests {
         fuzzRNG = SeededRNG(seed: seed)
         let exploreCases = 200        // random programs generated and profiled in the explore phase
         let batchSize = 20             // explore cases run concurrently per batch; suspects are refined after each batch, so smaller ⇒ sooner feedback
-        let programItems = 300         // Plushy tokens per random genome (larger ⇒ bigger, more complex programs)
+        let programItems = 300         // instruction tokens per random genome (larger ⇒ bigger, more complex programs)
         let windowSize = 100           // interpreter steps per profiling window (the timing/attribution granularity)
         let amplifyAttempts = 6        // mutations per amplified case
         let simplifyAttempts = 40      // chunk-deletions per case
@@ -184,7 +184,7 @@ struct Stress_Tests {
         // the same crashes/pathologies — run to run.
         let allRequests: [EvaluationRequest] = (0..<exploreCases).map { i in
             let temp = Interpreter(); RandomCode.setRandomConstants(in: temp)
-            let program = Plushy.plushy2push(RandomCode.randomPlushy(programItems))
+            let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
             return EvaluationRequest(
                 individuals: [Individual(id: "fuzz-\(i)", program: program, constants: temp.constants)],
                 trainingCases: [TrainingCase(id: "fuzz-\(i)", inputs: temp.inputs)],

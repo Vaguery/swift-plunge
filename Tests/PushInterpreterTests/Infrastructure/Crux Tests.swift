@@ -34,8 +34,8 @@ struct CruxTests {
     var inty = Interpreter()
 
     @Test func `crux can be constructed`() {
-        let plushy = [1, 2, PushInstruction.intAdd, 3, 4, PushInstruction.intMultiply, PushInstruction.intSubtract] as [Any]
-        let program = Plushy.plushy2push(plushy)
+        let tokens = [1, 2, PushInstruction.intAdd, 3, 4, PushInstruction.intMultiply, PushInstruction.intSubtract] as [Any]
+        let program = buildProgram(tokens)
         inty.load(program: program)
         inty.run()
 
@@ -74,7 +74,7 @@ struct CruxTests {
             PushInstruction.intQuote,
             PushInstruction.codeAppend,
         ] as [Any]
-        let prog2 = Plushy.plushy2push(treeProg)
+        let prog2 = buildProgram(treeProg)
         let tree = CodeItem(prog2)
         #expect(CodeItem(tree.crux()).pretty() == "( ( 1 11 .intAdd 3 33 .intMultiply .intQuote .intQuote .codeAppend ) )")
 
@@ -95,13 +95,13 @@ struct CruxTests {
 
     @Test
     func `crux can work through contingent code`() {
-        // Built directly rather than through Plushy. `execIf` takes its branches
-        // from `.code` now, so they have to reach it before the instruction
-        // fires — whereas Plushy's `extraOpens` still emits the old shape, with
-        // the blocks immediately *after* `.execIf`, where `.code` is still empty.
-        // Plushy is deliberately frozen for compatibility, so the source order is
-        // written out here instead. Only the order moves: every expectation below
-        // is the one this test has always made, including the crux text.
+        // Built directly rather than through a bracketing builder. `execIf` takes
+        // its branches from `.code` now, so they have to reach it before the
+        // instruction fires. (The old Plushy `extraOpens` emitted the opposite
+        // shape — blocks immediately *after* `.execIf`, where `.code` was still
+        // empty — which is exactly why it was retired.) The source order is written
+        // out here instead. Only the order moves: every expectation below is the
+        // one this test has always made, including the crux text.
         let prog2: [any Item] = [
             CodeItem([IntItem(1), IntItem(11), InstructionItem(.intAdd)]),
             CodeItem([IntItem(2), IntItem(22), InstructionItem(.intSubtract)]),

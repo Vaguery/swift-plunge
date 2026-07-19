@@ -162,13 +162,7 @@ nonisolated final class Interpreter {
     init(stacks: [PushStack : Deque<any Item>] = PushStack.emptyStacks()) {
         self.stacks = stacks
     }
-    
-    init(program: [any Item]) {
-        self.stacks = PushStack.emptyStacks()
-        self.counter = 0
-        self.recorders = [:]
-    }
-        
+
     /// The single validated entry point for pushing an item onto a stack.
     /// Every stack except `.exec` is homogeneous, so pushing an item a stack
     /// does not accept can only mean a mis-tagged `Router` (a programming bug).

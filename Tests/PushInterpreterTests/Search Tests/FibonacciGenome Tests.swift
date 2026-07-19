@@ -156,20 +156,11 @@ struct FibonacciGenomeTests {
                 "ascending lengths push the largest last, so it is on top")
     }
 
-    /// Reachable through the encoding seam, which is what the Runner and the
-    /// search will use. Adding a scheme is a case and a translator, no call-site
-    /// changes — this is that promise, kept.
-    @Test func `it translates through the GenomeEncoding seam`() {
-        let program = GenomeEncoding.fibonacci.translate(genome(30))
-        #expect(program.prefix(5).allSatisfy { $0 is CodeItem })
-        #expect(GenomeEncoding.allCases.contains(.fibonacci))
-    }
-
-    /// The `[Any]` seam carries Plushy's raw token stream as well as this one, so
-    /// anything that is not an Item is not part of this encoding and is dropped
-    /// rather than crashing on a bad cast.
+    /// The `[Any]` seam carries any token stream, so anything that is not an Item
+    /// is not part of this encoding and is dropped rather than crashing on a bad
+    /// cast.
     @Test func `non-items in the array are not part of this encoding`() {
-        let messy: [Any] = [IntItem(1), PlushyControl.open, IntItem(2), "nonsense", IntItem(3)]
+        let messy: [Any] = [IntItem(1), Brace.open, IntItem(2), "nonsense", IntItem(3)]
         let program = FibonacciGenome.translate(messy)
 
         let flattened = program.flatMap { ($0 as? CodeItem)?.value ?? [$0] }

@@ -23,7 +23,7 @@ struct RunnerAcceptanceTests {
         return trace + Array(repeating: last, count: length - trace.count)
     }
 
-    // 1. creates a collection of 20 random Plushy individuals of 40 items each, converting them into programs. The programs should all contain at least one instance of `.input0` and `.input1` tokens each. One program (not genome) should also be modified after translation so that the following tokens are at its tail: `[.input0, .input1, .intMultiply, .int0, .intMultiply]`
+    // 1. creates a collection of 20 random individuals of ~40 instructions each (built directly from the public language introspection, no genome layer). The programs should all contain at least one instance of `.input0` and `.input1` tokens each. One program should also be modified so that the following tokens are at its tail: `[.input0, .input1, .intMultiply, .int0, .intMultiply]`
     // 2. sets up a collection of 10 training cases, where there are 2 integer inputs x1 = `input0` and x2 = `input1`, with values drawn uniformly from (-100...100), and an expected value of 1964 + 8 * x1 + 11 * x1 * x2
     // 3. set up one set of constants where all 10 .double and .int constants are defined, but none of the thers
     // 4. use 3 Recorders for each evaluation: One that watches the top `.int` item on that stack, one which counts the number of `ErrorItem` entries on the `.error` stack at each step, and one which reports the total number of steps executed running the program (either the number of actual steps, or the time at which the stepLimit triggered). Set the first two to fill in any missing readings with the final state of the program, if it terminates before the limit is triggered, but obviously not the step counter
@@ -46,13 +46,17 @@ struct RunnerAcceptanceTests {
         let stepLimit = 500
         let window = 200
 
-        // 1. 20 individuals: 38 random Plushy tokens + guaranteed .input0/.input1,
-        // translated to programs. Program 0 gets a modified tail.
+        // 1. 20 individuals: 38 random instructions drawn from the public language
+        // introspection, plus guaranteed .input0/.input1. No genome layer — this
+        // test stands in for the search process, which builds programs itself and
+        // hands the Runner an already-translated [any Item]. Program 0 gets a
+        // modified tail.
+        let pool = Runner().definedInstructions
         var programs: [[any Item]] = (0..<20).map { _ in
-            var genome = RandomCode.randomPlushy(38)
-            genome.append(PushInstruction.input0)
-            genome.append(PushInstruction.input1)
-            return Plushy.plushy2push(genome)
+            var program: [any Item] = (0..<38).map { _ in InstructionItem(pool.randomElement()!) as any Item }
+            program.append(InstructionItem(.input0))
+            program.append(InstructionItem(.input1))
+            return program
         }
         let tail: [PushInstruction] = [.input0, .input1, .intMultiply, .int0, .intMultiply]
         programs[0] += tail.map { InstructionItem($0) }

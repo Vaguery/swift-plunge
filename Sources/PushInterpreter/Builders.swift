@@ -105,7 +105,7 @@ public nonisolated func program(@PushProgram _ build: () -> [any Item]) -> [any 
 }
 
 /// Builds a program from a flat list of raw values, each converted with
-/// `pushItem`. For nested code, use `CodeItem` directly or a `GenomeEncoding`.
+/// `pushItem`. For nested code, use `CodeItem` directly.
 public nonisolated func program(_ tokens: [Any]) -> [any Item] {
     tokens.compactMap { pushItem($0) }
 }
