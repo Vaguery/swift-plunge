@@ -56,4 +56,23 @@ public extension Runner {
     nonisolated var alwaysSatisfiedInstructions: [PushInstruction] {
         Interpreter.alwaysSatisfied.sorted { $0.rawValue < $1.rawValue }
     }
+
+    /// The language categorized by overlapping `InstructionTrait`, each list
+    /// sorted. Unlike `instructionsByTag`, these are **advisory and overlapping**:
+    /// an instruction may appear in several lists or none. Use them to activate or
+    /// silence a whole behavioural class (e.g. `.controlFlow`, `.arithmetic`).
+    nonisolated var instructionsByTrait: [InstructionTrait: [PushInstruction]] {
+        Interpreter.sortedTraits
+    }
+
+    /// The instructions carrying `trait`, sorted.
+    nonisolated func instructions(trait: InstructionTrait) -> [PushInstruction] {
+        Interpreter.sortedTraits[trait] ?? []
+    }
+
+    /// Every trait `instruction` carries — possibly empty, since traits do not
+    /// partition the language.
+    nonisolated func traits(of instruction: PushInstruction) -> Set<InstructionTrait> {
+        Interpreter.traits(of: instruction)
+    }
 }
