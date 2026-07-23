@@ -13,32 +13,46 @@ import Foundation
 /// top or second item of some particular stack in each step the interpreter makes.
 ///
 nonisolated struct Recorder<T> {
-        
+
     let name: String
     var data: [T?] = []
+    let policy: RecordingPolicy
     var instrumentation: (Interpreter) -> T?
-    
+
     init(_ name: String,
          data: [T?] = [],
+         keeping policy: RecordingPolicy = .everyStep,
          instrumentation: @escaping (Interpreter) -> T?) {
         self.name = name
         self.data = data
+        self.policy = policy
         self.instrumentation = instrumentation
     }
-    
+
     mutating func record(interpreter: Interpreter) {
-        data.append(instrumentation(interpreter))
+        let reading = instrumentation(interpreter)
+        switch policy {
+        case .everyStep:
+            data.append(reading)
+        case .finalOnly:
+            // Hold a single reading, overwritten each step, so the trace never
+            // grows with run length.
+            if data.isEmpty { data.append(reading) } else { data[0] = reading }
+        }
     }
     
     mutating func reset() {
         data.removeAll()
     }
     
-    func reportAll(steps:Int, fillWithLast:Bool = true, trim:Bool = false) -> [T?] {
+    func reportAll(steps:Int, fillWithLast:Bool = false, trim:Bool = false) -> [T?] {
         let readings = data.count
         if readings < steps {
-            // `data.last` is nil only when nothing was recorded; with no last
-            // reading to repeat, fall through and return whatever data exists
+            // A run that stops early simply recorded fewer readings; the truncated
+            // collection *is* the record, and consumers infer no change occurs after
+            // the program halts. Opt into `fillWithLast` only if a caller genuinely
+            // needs the last reading repeated out to `steps`. (`data.last` is nil
+            // when nothing was recorded, so there is nothing to repeat.)
             if fillWithLast, let last = data.last {
                 let padding = Array(repeating: last, count: steps - readings)
                 return data + padding
@@ -73,7 +87,7 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
     mutating func reset() { _box.reset() }
     var dataAsAnyArray: [Any?] { _box.dataAsAnyArray }
     
-    func reportAll(steps: Int, fillWithLast: Bool = true, trim: Bool = false) -> [Any?] {
+    func reportAll(steps: Int, fillWithLast: Bool = false, trim: Bool = false) -> [Any?] {
         _box.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }
         
@@ -103,7 +117,7 @@ nonisolated private final class RecorderBox<T>: AnyRecorderBox {
     
     func reportAll(
         steps:Int,
-        fillWithLast:Bool = true,
+        fillWithLast:Bool = false,
         trim:Bool = false) -> [Any?] {
         base.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }

@@ -54,15 +54,34 @@ nonisolated extension RecorderTarget {
 }
 
 
+/// How much of the per-step observation stream a recorder keeps.
+///
+/// The default `.everyStep` retains one reading per step — the longitudinal trace
+/// needed to reconstruct behavior over time. `.finalOnly` keeps just the most
+/// recent reading, overwriting each step, so the recorder holds a *single* value
+/// no matter how long the run: when only the end-of-run result is wanted (error
+/// scoring reads the final top-of-stack), this avoids retaining a full trace of
+/// provenance-carrying items per run — the dominant cost when a whole population
+/// is evaluated at once.
+public nonisolated enum RecordingPolicy: Sendable, Hashable, Codable {
+    /// Keep one reading for every step (the full longitudinal trace).
+    case everyStep
+    /// Keep only the most recent reading (a single value, overwritten each step).
+    case finalOnly
+}
+
+
 /// A named `RecorderTarget`. The name identifies the collected data in an
 /// `Interpreter`'s `recorders` dictionary and in the reported results.
 public nonisolated struct RecorderSpec: Sendable, Hashable, Codable {
     public let name: String
     public let target: RecorderTarget
+    public let policy: RecordingPolicy
 
-    public init(_ name: String, observing target: RecorderTarget) {
+    public init(_ name: String, observing target: RecorderTarget, keeping policy: RecordingPolicy = .everyStep) {
         self.name = name
         self.target = target
+        self.policy = policy
     }
 }
 
@@ -72,31 +91,32 @@ nonisolated extension AnyRecorder {
     /// recorder whose closure reads the requested interpreter state each step.
     init(_ spec: RecorderSpec) {
         let name = spec.name
+        let policy = spec.policy
         switch spec.target {
         case .top(let stack):
-            self.init(Recorder<any Item>(name) { interpreter in
+            self.init(Recorder<any Item>(name, keeping: policy) { interpreter in
                 interpreter.stacks[stack]?.first
             })
         case .second(let stack):
-            self.init(Recorder<any Item>(name) { interpreter in
+            self.init(Recorder<any Item>(name, keeping: policy) { interpreter in
                 guard let items = interpreter.stacks[stack], items.count > 1
                 else { return nil }
                 return items[1]
             })
         case .count(let stack):
-            self.init(Recorder<Int>(name) { interpreter in
+            self.init(Recorder<Int>(name, keeping: policy) { interpreter in
                 interpreter.stacks[stack]?.count ?? 0
             })
         case .isEmpty(let stack):
-            self.init(Recorder<Bool>(name) { interpreter in
+            self.init(Recorder<Bool>(name, keeping: policy) { interpreter in
                 interpreter.stacks[stack]?.isEmpty ?? true
             })
         case .printout:
-            self.init(Recorder<String>(name) { interpreter in
+            self.init(Recorder<String>(name, keeping: policy) { interpreter in
                 interpreter.printout
             })
         case .counter:
-            self.init(Recorder<Int>(name) { interpreter in
+            self.init(Recorder<Int>(name, keeping: policy) { interpreter in
                 interpreter.counter
             })
         }

@@ -75,6 +75,16 @@ commitment.
 22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
 23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.
     The payoff the whole provenance exercise is for. Wants #21 first. → *Code instruction planning.markdown*
+23a. **Remove the `.isContingent` flag entirely.** The stored property — on the `Item` protocol and every
+    conforming type — was meant to track whether an item's crux depends on the input variables. Reading the
+    crux *directly* now does that job: the Runner walks the final result item's crux in the worker
+    (`cruxMentions`, surfaced as `CaseResult.cruxMentionsInput`, driven by `RunnerConfiguration.cruxInputTokens`),
+    so the flag is dead weight. Deferred because removal is a wide mechanical sweep — ~300 source sites across
+    `Items.swift`, `IteratorItem.swift`, `AnyItem`, and every `* Behaviors.swift`, **plus ~640 test
+    occurrences**. The only thing that would revive the need is **stochastic Behaviors**, where input-dependence
+    could not be read off a deterministic crux; there are none now and none planned. Removing it also **moots the
+    contingency machinery in #18** (`contingencySources`, the `Dup`-contingency sub-question) and the
+    contingency-visibility angle of #11/Q5.
 
 ## F. Decisions with a number or a semantics still open
 

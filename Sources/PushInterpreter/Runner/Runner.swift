@@ -44,12 +44,40 @@ nonisolated func evaluateOne(
         }
     }
 
+    // Summarize input-blindness here, while the result item and its provenance are
+    // still live, so the caller never has to hold the trace or walk a crux itself.
+    var cruxMentionsInput: [String: Bool] = [:]
+    if !configuration.cruxInputTokens.isEmpty {
+        for (name, trace) in traces {
+            guard case let .items(readings) = trace,
+                  let lastReading = readings.last, let item = lastReading?.item
+            else { continue }
+            cruxMentionsInput[name] = cruxMentions(item, anyOf: configuration.cruxInputTokens)
+        }
+    }
+
     return CaseResult(
         individual: individual.id,
         trainingCase: trainingCase.id,
         traces: traces,
+        cruxMentionsInput: cruxMentionsInput,
         duration: duration
     )
+}
+
+
+/// Whether an item's provenance references any of `tokens` — walking its `crux()`
+/// leaves and into any `CodeItem` leaves, since an input-bound block carries its
+/// instructions inside. The end-of-run summary behind `CaseResult.cruxMentionsInput`.
+nonisolated func cruxMentions(_ item: any Item, anyOf tokens: Set<PushInstruction>) -> Bool {
+    func walk(_ items: [any Item]) -> Bool {
+        for leaf in items {
+            if let instruction = leaf as? InstructionItem, tokens.contains(instruction.value) { return true }
+            if let block = leaf as? CodeItem, walk(block.value) { return true }
+        }
+        return false
+    }
+    return walk(item.crux())
 }
 
 
