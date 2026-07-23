@@ -190,3 +190,45 @@ nonisolated func evaluatePairings(
         return ordered.compactMap { $0 }
     }
 }
+
+
+/// The streaming twin of `evaluatePairings`: same concurrent fan-out over fresh
+/// interpreters, but each `CaseResult` is yielded the moment its task finishes,
+/// **in completion order** rather than request order. Each result carries its own
+/// `individual`/`trainingCase` ids, so an unordered stream is enough for a caller
+/// filling a grid live (e.g. the population×case heatmap). Cancelling the consumer
+/// (dropping the stream) cancels the in-flight work.
+nonisolated func evaluatePairingsStream(
+    _ pairings: [Pairing],
+    individuals: [String: Individual],
+    trainingCases: [String: TrainingCase],
+    configuration: RunnerConfiguration
+) -> AsyncStream<CaseResult> {
+    let resolved = pairings.map { pairing in
+        (pairing, individuals[pairing.individual], trainingCases[pairing.trainingCase])
+    }
+
+    return AsyncStream { continuation in
+        let task = Task {
+            await withTaskGroup(of: CaseResult.self) { group in
+                for (pairing, individual, trainingCase) in resolved {
+                    group.addTask {
+                        guard let individual, let trainingCase else {
+                            return CaseResult.unresolved(pairing)
+                        }
+                        return evaluateOne(
+                            individual: individual,
+                            trainingCase: trainingCase,
+                            configuration: configuration
+                        )
+                    }
+                }
+                for await result in group {
+                    continuation.yield(result)
+                }
+            }
+            continuation.finish()
+        }
+        continuation.onTermination = { _ in task.cancel() }
+    }
+}

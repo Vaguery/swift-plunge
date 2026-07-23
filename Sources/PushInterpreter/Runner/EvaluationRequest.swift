@@ -53,3 +53,26 @@ public nonisolated func evaluate(request: EvaluationRequest) async -> [CaseResul
         configuration: request.configuration
     )
 }
+
+
+/// The streaming twin of `evaluate(request:)`: yields each `CaseResult` as its
+/// evaluation finishes (completion order, not request order) rather than returning
+/// the whole batch at once. For a caller that fills a live view — the population×case
+/// heatmap — as the population threads report, without holding the batch. Same
+/// self-contained resolution as the batch entry point.
+public nonisolated func evaluate(streaming request: EvaluationRequest) -> AsyncStream<CaseResult> {
+    let individuals = Dictionary(
+        request.individuals.map { ($0.id, $0) },
+        uniquingKeysWith: { _, last in last }
+    )
+    let trainingCases = Dictionary(
+        request.trainingCases.map { ($0.id, $0) },
+        uniquingKeysWith: { _, last in last }
+    )
+    return evaluatePairingsStream(
+        request.pairings,
+        individuals: individuals,
+        trainingCases: trainingCases,
+        configuration: request.configuration
+    )
+}
