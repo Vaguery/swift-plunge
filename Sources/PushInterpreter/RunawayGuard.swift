@@ -28,6 +28,38 @@
 nonisolated extension Interpreter {
 
     static let runawayMarker = "RUNAWAY:"
+    static let memoryMarker  = "MEMORY:"
+
+    /// Min stack depth before the memory guard bothers weighing. A run with no
+    /// deep stack cannot be holding more than a few large items, and those are
+    /// already bounded by `maxItemWeight`; the blow-up is *accumulation*, which
+    /// always deepens some stack first.
+    static let memoryGuardFloor = 128
+
+    /// The global memory bound the local size caps do not compose into: the total
+    /// `Item.weight` live across all stacks. Checked every step, but only weighed
+    /// when a stack is deep enough to matter (cheap count gate otherwise). A run
+    /// over `maxLiveWeight` is stopped like a runaway — an error marker and an
+    /// unwound `.exec` — so a search gets a diagnosable result, not an OOM.
+    func enforceMemoryGuard() {
+        guard config.maxLiveWeight < Int.max else { return }
+        // Cheap gate: weighing is O(items), so skip it unless some stack is deep.
+        guard PushStack.allStacks.contains(where: { (stacks[$0]?.count ?? 0) > Interpreter.memoryGuardFloor })
+        else { return }
+
+        var total = 0
+        for stack in PushStack.allStacks {
+            for item in stacks[stack] ?? [] {
+                total = total.addingReportingOverflow(item.weight).0
+            }
+        }
+        guard total > config.maxLiveWeight else { return }
+
+        stacks[.error]?.prepend(
+            ErrorItem("\(Interpreter.memoryMarker) live weight \(total) exceeds maxLiveWeight \(config.maxLiveWeight)")
+        )
+        stacks[.exec]?.removeAll()   // unwind: the run loop exits once .exec is empty
+    }
 
     // Tunables. Kept here (not in InterpreterSettings) to avoid a knob
     // explosion; promote any that prove worth configuring. The trigger itself

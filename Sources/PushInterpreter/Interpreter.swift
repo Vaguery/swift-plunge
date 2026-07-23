@@ -98,6 +98,17 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // early with a `RUNAWAY:` marker. Diagnoses the cause rather than blindly
     // truncating; see `Interpreter.enforceRunawayGuard`.
     public var runawayGuardEnabled = true
+
+    // The one GLOBAL memory bound. Every other cap is local — a single item's
+    // content (`maxItemWeight`), a single stack's depth (`maxStackDepth`), one
+    // collection's length — and their sum is bounded by nothing, which is how a
+    // loop piling few-but-large items (each legal, the stack never deep enough to
+    // trip the count-based runaway guard) reaches tens of GB. This caps the SUM:
+    // the total `Item.weight` live across all stacks. A run that would exceed it is
+    // stopped with a `MEMORY:` marker, exactly as the runaway guard stops a piling
+    // loop — so `stepLimit` can rise freely for real algorithms without memory
+    // following it. `Int.max` disables the guard.
+    public var maxLiveWeight = 50_000_000
 }
 
 
@@ -338,6 +349,7 @@ nonisolated final class Interpreter {
         self.record()
         self.counter += 1
         self.enforceRunawayGuard()   // stop early on a confirmed runaway loop
+        self.enforceMemoryGuard()    // stop early on total live weight, however few the items
         // catch thrown errors from instructions
         // enforce config size limits
     }
