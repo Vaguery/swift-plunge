@@ -12,9 +12,9 @@
 /// raw name. On decode, a key that is not a valid instruction token is skipped
 /// (it cannot name a real input or constant), consistent with the Runner's
 /// degrade-don't-crash handling of malformed input.
-nonisolated enum ItemBindingCoding {
+public nonisolated enum ItemBindingCoding {
 
-    static func encode(_ bindings: [PushInstruction: any Item]) -> [String: AnyItem] {
+    public static func encode(_ bindings: [PushInstruction: any Item]) -> [String: AnyItem] {
         var encoded: [String: AnyItem] = [:]
         for (instruction, item) in bindings {
             encoded[instruction.rawValue] = AnyItem(item)
@@ -22,7 +22,7 @@ nonisolated enum ItemBindingCoding {
         return encoded
     }
 
-    static func decode(_ encoded: [String: AnyItem]) -> [PushInstruction: any Item] {
+    public static func decode(_ encoded: [String: AnyItem]) -> [PushInstruction: any Item] {
         var bindings: [PushInstruction: any Item] = [:]
         for (name, wrapper) in encoded {
             if let instruction = PushInstruction(rawValue: name) {
