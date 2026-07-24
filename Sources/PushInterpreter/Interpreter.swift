@@ -109,6 +109,17 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // loop — so `stepLimit` can rise freely for real algorithms without memory
     // following it. `Int.max` disables the guard.
     public var maxLiveWeight = 50_000_000
+
+    // Whether pushed items keep their `call` provenance (the source of `crux()`).
+    // Default true — the current behavior. When false, `push` strips every item's
+    // `call`, so the deep provenance tree never accumulates: this is the memory/time
+    // saving for a run that does not need crux for the whole population (crux is then
+    // something to invoke for a *special* individual — e.g. by re-running the best
+    // genome with this on). A call-less item's crux is `[self]`, a runnable literal
+    // producing the same value, so turning this off never changes what a program
+    // computes — only whether it can explain itself. A behavior that *reads* a crux
+    // to do its work must guard with `Interpreter.requiresProvenance(_:)`.
+    public var recordsProvenance = true
 }
 
 
@@ -199,8 +210,43 @@ nonisolated final class Interpreter {
         }
         guard self.requireAccepts(item, on: stack) else { return }
         self.stacks[stack]?.prepend(
-            self.elidingOverBudgetProvenance(self.clampingIterations(item))
+            self.strippingProvenanceIfDisabled(
+                self.elidingOverBudgetProvenance(self.clampingIterations(item))
+            )
         )
+    }
+
+
+    /// Drops an item's `call` when provenance recording is off (see
+    /// `InterpreterSettings.recordsProvenance`). A no-op when on, or when the call is
+    /// already empty. Runs last in the push pipeline, so it dominates: `clampingIterations`
+    /// still bounds a loop's *state* and `elidingOverBudgetProvenance` still applies when
+    /// on; when off, the history is simply gone. Value reproduction is untouched —
+    /// `crux()` of a call-less item is `[self]`, and iteration is driven by an iterator's
+    /// state fields, not its `call`.
+    func strippingProvenanceIfDisabled(_ item: any Item) -> any Item {
+        guard !config.recordsProvenance, !item.call.isEmpty else { return item }
+        var stripped = item
+        stripped.call = []
+        return stripped
+    }
+
+
+    /// Guard for a behavior that *reads* an item's `crux()` (its call tree) to do its
+    /// work — e.g. the planned `codeFuncFrom_Crux` (Roadmap #23), which turns a stack
+    /// item's crux into a runnable function. Such a behavior is only meaningful in a
+    /// call-active interpreter; if it runs with `recordsProvenance` off, every crux it
+    /// could read is trivial (`[self]`), so it cannot do its job. This records a
+    /// `PROVENANCE:` warning on `.error` and returns `false`, so the caller can no-op
+    /// instead of silently producing a wrong result. No behavior needs it yet; it is the
+    /// contract the first crux-consuming behavior will use:
+    ///
+    ///     guard requiresProvenance(name) else { return [] }
+    func requiresProvenance(_ name: PushInstruction) -> Bool {
+        guard !config.recordsProvenance else { return true }
+        stacks[.error]?.prepend(ErrorItem(
+            "\(Interpreter.provenanceMarker) \(name.rawValue) needs call-tree provenance, which is disabled (recordsProvenance = false)"))
+        return false
     }
 
 

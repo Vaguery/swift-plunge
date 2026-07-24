@@ -75,6 +75,12 @@ commitment.
 22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
 23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.
     The payoff the whole provenance exercise is for. Wants #21 first. → *Code instruction planning.markdown*
+    **Depends on call trees:** this (and any crux-*reading* behavior) only functions in a call-active
+    interpreter. `InterpreterSettings.recordsProvenance` can now switch call recording off (search runs
+    provenance-off for the memory/time win, recovering the best individual's crux by a targeted re-run). A
+    crux-consuming behavior must therefore guard with `Interpreter.requiresProvenance(name)` — which emits a
+    `PROVENANCE:` warning and returns false when recording is off — and no-op rather than silently reading the
+    trivial `[self]` cruxes.
 23a. **Remove the `.isContingent` flag entirely.** The stored property — on the `Item` protocol and every
     conforming type — was meant to track whether an item's crux depends on the input variables. Reading the
     crux *directly* now does that job: the Runner walks the final result item's crux in the worker

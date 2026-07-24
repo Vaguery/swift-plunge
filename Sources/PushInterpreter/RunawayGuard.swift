@@ -29,6 +29,7 @@ nonisolated extension Interpreter {
 
     static let runawayMarker = "RUNAWAY:"
     static let memoryMarker  = "MEMORY:"
+    static let provenanceMarker = "PROVENANCE:"
 
     /// Min stack depth before the memory guard bothers weighing. A run with no
     /// deep stack cannot be holding more than a few large items, and those are
