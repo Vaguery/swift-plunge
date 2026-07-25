@@ -31,12 +31,6 @@ nonisolated extension Interpreter {
     static let memoryMarker  = "MEMORY:"
     static let provenanceMarker = "PROVENANCE:"
 
-    /// Min stack depth before the memory guard bothers weighing. A run with no
-    /// deep stack cannot be holding more than a few large items, and those are
-    /// already bounded by `maxItemWeight`; the blow-up is *accumulation*, which
-    /// always deepens some stack first.
-    static let memoryGuardFloor = 128
-
     /// The global memory bound the local size caps do not compose into: the total
     /// `Item.weight` live across all stacks. Checked every step, but only weighed
     /// when a stack is deep enough to matter (cheap count gate otherwise). A run
@@ -44,22 +38,16 @@ nonisolated extension Interpreter {
     /// unwound `.exec` — so a search gets a diagnosable result, not an OOM.
     func enforceMemoryGuard() {
         guard config.maxLiveWeight < Int.max else { return }
-        // Cheap gate: weighing is O(items), so skip it unless some stack is deep.
-        guard PushStack.allStacks.contains(where: { (stacks[$0]?.count ?? 0) > Interpreter.memoryGuardFloor })
-        else { return }
+        // O(1): `liveWeight` is maintained incrementally by the stack-mutation helpers
+        // (`place`/`take…`/`clear`) and anchored at run start, so the guard no longer
+        // re-sums every stack every step — the dominant per-step cost it used to be.
+        guard liveWeight > config.maxLiveWeight else { return }
 
-        var total = 0
-        for stack in PushStack.allStacks {
-            for item in stacks[stack] ?? [] {
-                total = total.addingReportingOverflow(item.weight).0
-            }
-        }
-        guard total > config.maxLiveWeight else { return }
-
-        stacks[.error]?.prepend(
-            ErrorItem("\(Interpreter.memoryMarker) live weight \(total) exceeds maxLiveWeight \(config.maxLiveWeight)")
+        place(
+            ErrorItem("\(Interpreter.memoryMarker) live weight \(liveWeight) exceeds maxLiveWeight \(config.maxLiveWeight)"),
+            on: .error
         )
-        stacks[.exec]?.removeAll()   // unwind: the run loop exits once .exec is empty
+        clear(.exec)   // unwind: the run loop exits once .exec is empty
     }
 
     // Tunables. Kept here (not in InterpreterSettings) to avoid a knob
@@ -95,10 +83,11 @@ nonisolated extension Interpreter {
         // Control side: is a loop actually in flight on `.exec`?
         guard let looper = liveLooper() else { return }
 
-        stacks[.error]?.prepend(
-            ErrorItem("\(Interpreter.runawayMarker) .\(stack) \(symptom); \(looper) active")
+        place(
+            ErrorItem("\(Interpreter.runawayMarker) .\(stack) \(symptom); \(looper) active"),
+            on: .error
         )
-        stacks[.exec]?.removeAll()   // unwind: the run loop exits once .exec is empty
+        clear(.exec)   // unwind: the run loop exits once .exec is empty
     }
 
     /// A short description of the pathology if the top `runawayWindow` items of

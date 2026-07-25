@@ -74,7 +74,7 @@ nonisolated extension Interpreter {
                 // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
-                    interpreter.stacks[stack]!.insert(newItem, at: idx)
+                    interpreter.insert(newItem, at: idx, on: stack)
                 }
                 return []
             }
@@ -320,7 +320,7 @@ nonisolated extension Interpreter {
             name,
             takes: [],
             modifier: { (interpreter, collectedItems) in
-                interpreter.stacks[stack]!.removeAll()
+                interpreter.clear(stack)
                 return []
             }
         )
@@ -368,7 +368,7 @@ nonisolated extension Interpreter {
                 // siblings: a count past the bottom empties the stack.
                 let available = interpreter.stacks[stack]!.count
                 let number = min(available, max(rawCount.value, 0))
-                interpreter.stacks[stack]!.removeFirst(number)
+                interpreter.takeFirst(number, from: stack)
                 return []
             }
         )
@@ -420,7 +420,7 @@ nonisolated extension Interpreter {
             modifier: { (interpreter, collectedItems) in
                 // Unreachable since `alsoNeeds` — the plan will not let this run
                 // with an empty `stack`. Kept as the honest alternative to a `!`.
-                guard let oldItem = interpreter.stacks[stack]!.popFirst() else {
+                guard let oldItem = interpreter.takeFirst(from: stack) else {
                     return [
                         Router(
                             .error,
@@ -438,7 +438,7 @@ nonisolated extension Interpreter {
                 // Contingency is a separate axis and is still recorded.
                 newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
-                    interpreter.stacks[stack]!.insert(newItem, at: idx)
+                    interpreter.insert(newItem, at: idx, on: stack)
                 }
                 return []
             }
@@ -532,11 +532,10 @@ nonisolated extension Interpreter {
                 let range = interpreter.stacks[stack]!.count - 1
                 let idx = max(0, min(rawIndex.value, range))
 
-                guard range > 0 else {
+                guard range > 0, let oldItem = interpreter.take(at: idx, from: stack) else {
                     return [Router(.error, ErrorItem("\(name) on empty stack"))]
                 }
 
-                let oldItem = interpreter.stacks[stack]!.remove(at: idx)
                 var newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.

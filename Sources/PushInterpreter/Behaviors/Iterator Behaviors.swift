@@ -80,7 +80,7 @@ nonisolated extension Interpreter {
         let payloadDepth = interpreter.stacks[.exec]!.count - before
 
         let target = min(payloadDepth + max(0, burial), interpreter.stacks[.exec]!.count)
-        interpreter.stacks[.exec]!.insert(token, at: target)
+        interpreter.insert(token, at: target, on: .exec)
     }
 
     /// Every iterator that comes to rest on `.iterator` **has something to

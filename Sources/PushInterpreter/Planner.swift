@@ -173,7 +173,7 @@ nonisolated struct Planner {
         // Descending index, or removing a shallow claim shifts a deeper one out
         // from under itself. Stacks do not interfere, so one sort covers them all.
         for claim in claims.filter(\.consumed).sorted(by: { $0.index > $1.index }) {
-            interpreter.stacks[claim.stack]?.remove(at: claim.index)
+            interpreter.take(at: claim.index, from: claim.stack)
         }
     }
 

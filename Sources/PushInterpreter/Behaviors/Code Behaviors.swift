@@ -614,7 +614,7 @@ nonisolated extension Interpreter {
                 copy.isContingent = Behavior.netContingency(of: block, copy)
                 return copy
             }
-            interpreter.stacks[.exec]!.prepend(contentsOf: contents)
+            interpreter.place(contentsOf: contents, on: .exec)
             return []
         }
     )

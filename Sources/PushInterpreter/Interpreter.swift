@@ -162,6 +162,11 @@ nonisolated final class Interpreter {
     
     var behaviors: [PushInstruction: Behavior] = Interpreter.language
     var stacks: [PushStack: Deque<any Item>]
+    /// Running total of `Item.weight` (content) live across all stacks — maintained
+    /// incrementally by the mutation helpers (`place`/`take…`/`clear`), and re-anchored
+    /// by `recomputeLiveWeight()` at every run start. Lets `enforceMemoryGuard` be O(1)
+    /// per step instead of re-summing all stacks; see `RunawayGuard`.
+    private(set) var liveWeight: Int = 0
     var counter: Int = 0
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
@@ -183,6 +188,7 @@ nonisolated final class Interpreter {
     
     init(stacks: [PushStack : Deque<any Item>] = PushStack.emptyStacks()) {
         self.stacks = stacks
+        self.recomputeLiveWeight()
     }
 
     /// The single validated entry point for pushing an item onto a stack.
@@ -198,21 +204,20 @@ nonisolated final class Interpreter {
         // reports can always land.
         if stack.enforcesSizeLimits {
             if let message = self.overflow(of: item) {
-                self.stacks[.error]?.prepend(ErrorItem(message))
+                self.place(ErrorItem(message), on: .error)
                 return
             }
             if (self.stacks[stack]?.count ?? 0) >= config.maxStackDepth {
-                self.stacks[.error]?.prepend(
-                    ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)")
-                )
+                self.place(ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)"), on: .error)
                 return
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        self.stacks[stack]?.prepend(
+        self.place(
             self.strippingProvenanceIfDisabled(
                 self.elidingOverBudgetProvenance(self.clampingIterations(item))
-            )
+            ),
+            on: stack
         )
     }
 
@@ -313,9 +318,7 @@ nonisolated final class Interpreter {
     @discardableResult
     func requireAccepts(_ item: any Item, on stack: PushStack) -> Bool {
         guard stack.accepts(item) else {
-            self.stacks[.error]?.prepend(
-                ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack")
-            )
+            self.place(ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack"), on: .error)
             return false
         }
         return true
@@ -324,7 +327,80 @@ nonisolated final class Interpreter {
     func pushItem(_ item: Router) {
         self.push(item.item, to: item.stack)
     }
-    
+
+    // MARK: - Weight-accounted stack mutation
+    //
+    // Every path that adds or removes stack items goes through one of these, so the
+    // running `liveWeight` total stays exact without re-summing. `Item.weight` is
+    // content (never `call`), fixed for an item's stack lifetime, so the per-item delta
+    // is exact. `recomputeLiveWeight()` re-anchors the total at run start and after any
+    // bulk stack replacement, so an unaccounted poke (e.g. a test assigning a stack
+    // directly) is corrected before the next run rather than drifting.
+
+    /// Full O(all items) recomputation of `liveWeight`. Cheap because it runs once at
+    /// run start, not per step.
+    func recomputeLiveWeight() {
+        var total = 0
+        for stack in PushStack.allStacks {
+            for item in stacks[stack] ?? [] { total = total.addingReportingOverflow(item.weight).0 }
+        }
+        liveWeight = total
+    }
+
+    /// Prepend one item to a stack.
+    func place(_ item: any Item, on stack: PushStack) {
+        guard stacks[stack] != nil else { return }
+        stacks[stack]!.prepend(item)
+        liveWeight = liveWeight.addingReportingOverflow(item.weight).0
+    }
+
+    /// Prepend several items to a stack, front-to-back (as `prepend(contentsOf:)`).
+    func place(contentsOf items: [any Item], on stack: PushStack) {
+        guard stacks[stack] != nil else { return }
+        stacks[stack]!.prepend(contentsOf: items)
+        for item in items { liveWeight = liveWeight.addingReportingOverflow(item.weight).0 }
+    }
+
+    /// Insert one item at `index` within a stack.
+    func insert(_ item: any Item, at index: Int, on stack: PushStack) {
+        guard stacks[stack] != nil else { return }
+        stacks[stack]!.insert(item, at: index)
+        liveWeight = liveWeight.addingReportingOverflow(item.weight).0
+    }
+
+    /// Remove and return the top item of a stack, or nil if empty.
+    @discardableResult
+    func takeFirst(from stack: PushStack) -> (any Item)? {
+        guard let item = stacks[stack]?.popFirst() else { return nil }
+        liveWeight = liveWeight.subtractingReportingOverflow(item.weight).0
+        return item
+    }
+
+    /// Remove the top `n` items of a stack (clamped to its count).
+    func takeFirst(_ n: Int, from stack: PushStack) {
+        guard let deque = stacks[stack] else { return }
+        let count = Swift.min(Swift.max(0, n), deque.count)
+        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(deque[i].weight).0 }
+        stacks[stack]!.removeFirst(count)
+    }
+
+    /// Remove and return the item at `index` within a stack, or nil if out of range.
+    @discardableResult
+    func take(at index: Int, from stack: PushStack) -> (any Item)? {
+        guard let deque = stacks[stack], deque.indices.contains(index) else { return nil }
+        let item = deque[index]
+        liveWeight = liveWeight.subtractingReportingOverflow(item.weight).0
+        stacks[stack]!.remove(at: index)
+        return item
+    }
+
+    /// Remove every item from a stack.
+    func clear(_ stack: PushStack) {
+        guard let deque = stacks[stack] else { return }
+        for item in deque { liveWeight = liveWeight.subtractingReportingOverflow(item.weight).0 }
+        stacks[stack]!.removeAll()
+    }
+
     func load(inputs: [PushInstruction:any Item] = [:],
               constants: [PushInstruction:any Item] = [:],
               stacks initial: [PushStack: [any Item]] = [:],
@@ -350,10 +426,12 @@ nonisolated final class Interpreter {
         // program to run
         self.program = program
         self.stacks[.exec]!.prepend(contentsOf: program)
-        
+
         for r in recorders {
             self.recorders[r.name] = r
         }
+        // Anchor the incremental total to the freshly-loaded stacks.
+        self.recomputeLiveWeight()
     }
     
     func record() {
@@ -364,7 +442,7 @@ nonisolated final class Interpreter {
 
     func step() {
         if counter < config.stepLimit && !stacks[.exec]!.isEmpty {
-            let nextItem = stacks[.exec]!.popFirst()
+            let nextItem = self.takeFirst(from: .exec)
             if nextItem is CodeItem {
                 // Code is data until a program asks for it: a block met on
                 // `.exec` comes to rest on `.code` intact, rather than having its
@@ -423,15 +501,19 @@ nonisolated final class Interpreter {
     /// different instructions, and only the second should touch `config`.
     func run(stepLimit: Int? = nil) {
         if let stepLimit { self.config.stepLimit = stepLimit }
+        // Anchor to the current stacks: a caller may have set them up directly (many
+        // tests do) since the last load, so the incremental total starts exact here.
+        self.recomputeLiveWeight()
         while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             self.step()
         }
     }
-    
+
     func reset() {
         self.counter = 0
         self.lastRunawayCheck = -1
         self.stacks = PushStack.emptyStacks()
+        self.liveWeight = 0
         for r in self.recorders.keys {
             recorders[r]!.reset()
         }
