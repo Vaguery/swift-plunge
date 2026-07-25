@@ -5,6 +5,8 @@
 //  Created by William Tozier on 7/13/26.
 //
 
+import Foundation
+
 /// Evaluates one resolved pairing on a fresh, single-use `Interpreter`.
 ///
 /// Pure and `nonisolated`: it shares no mutable state, constructs its
@@ -169,8 +171,13 @@ nonisolated func evaluatePairings(
     }
 
     return await withTaskGroup(of: (Int, CaseResult).self) { group in
-        for (index, entry) in resolved.enumerated() {
-            let (pairing, individual, trainingCase) = entry
+        let width = concurrencyWidth(configuration, count: resolved.count)
+        var next = 0
+        func submit() {
+            guard next < resolved.count else { return }
+            let index = next
+            next += 1
+            let (pairing, individual, trainingCase) = resolved[index]
             group.addTask {
                 guard let individual, let trainingCase else {
                     return (index, CaseResult.unresolved(pairing))
@@ -183,12 +190,24 @@ nonisolated func evaluatePairings(
             }
         }
 
+        // Prime the window, then replace each finished task with the next pairing, so
+        // at most `width` runs are ever in flight (bounds peak memory and worker count).
+        for _ in 0..<width { submit() }
         var ordered = [CaseResult?](repeating: nil, count: resolved.count)
-        for await (index, result) in group {
+        while let (index, result) = await group.next() {
             ordered[index] = result
+            submit()
         }
         return ordered.compactMap { $0 }
     }
+}
+
+/// The evaluation window width: at most this many pairings run concurrently. Honors
+/// `RunnerConfiguration.maxConcurrentEvaluations`, defaulting to one per logical core,
+/// and never exceeds the pairing count or drops below 1.
+private func concurrencyWidth(_ configuration: RunnerConfiguration, count: Int) -> Int {
+    let requested = configuration.maxConcurrentEvaluations ?? ProcessInfo.processInfo.activeProcessorCount
+    return max(1, min(requested, count))
 }
 
 
@@ -211,7 +230,12 @@ nonisolated func evaluatePairingsStream(
     return AsyncStream { continuation in
         let task = Task {
             await withTaskGroup(of: CaseResult.self) { group in
-                for (pairing, individual, trainingCase) in resolved {
+                let width = concurrencyWidth(configuration, count: resolved.count)
+                var next = 0
+                func submit() {
+                    guard next < resolved.count, !Task.isCancelled else { return }
+                    let (pairing, individual, trainingCase) = resolved[next]
+                    next += 1
                     group.addTask {
                         guard let individual, let trainingCase else {
                             return CaseResult.unresolved(pairing)
@@ -223,8 +247,16 @@ nonisolated func evaluatePairingsStream(
                         )
                     }
                 }
-                for await result in group {
+
+                // Sliding window: at most `width` runs in flight. On cancellation, stop
+                // submitting and cancel the in-flight runs — with the step loop's own
+                // cancellation check (Interpreter.run) this stops promptly rather than
+                // draining every remaining pairing to completion.
+                for _ in 0..<width { submit() }
+                while let result = await group.next() {
                     continuation.yield(result)
+                    if Task.isCancelled { group.cancelAll(); break }
+                    submit()
                 }
             }
             continuation.finish()

@@ -435,8 +435,12 @@ nonisolated final class Interpreter {
     }
     
     func record() {
-        for key in recorders.keys {
-            recorders[key]?.record(interpreter: self)
+        // Iterate values, not keys: `recorders[key]?.record` would mark the dictionary
+        // as mutated and COW-copy its storage every step. `record` is non-mutating (the
+        // recorder's state is in a class box), so reading each value and recording
+        // through it copies nothing. See `AnyRecorder`.
+        for recorder in recorders.values {
+            recorder.record(interpreter: self)
         }
     }
 
@@ -505,6 +509,11 @@ nonisolated final class Interpreter {
         // tests do) since the last load, so the incremental total starts exact here.
         self.recomputeLiveWeight()
         while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
+            // Bail promptly when the evaluating task is cancelled (e.g. the search was
+            // paused), rather than draining the whole step budget. `Task.isCancelled` is
+            // a cheap atomic read; the run is nonisolated and runs inside the fan-out's
+            // child task, so this reflects that task's cancellation.
+            if Task.isCancelled { break }
             self.step()
         }
     }
@@ -514,8 +523,8 @@ nonisolated final class Interpreter {
         self.lastRunawayCheck = -1
         self.stacks = PushStack.emptyStacks()
         self.liveWeight = 0
-        for r in self.recorders.keys {
-            recorders[r]!.reset()
+        for recorder in self.recorders.values {
+            recorder.reset()
         }
     }
     

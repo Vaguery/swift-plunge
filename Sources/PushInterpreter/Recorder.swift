@@ -72,19 +72,25 @@ nonisolated struct Recorder<T> {
 //
 nonisolated protocol AnyRecorderProtocol {
     var name: String { get }
-    mutating func record(interpreter: Interpreter)
-    mutating func reset()
+    func record(interpreter: Interpreter)
+    func reset()
     var dataAsAnyArray: [Any?] { get }
 }
 
 // struct that holds any Recorder<T> recorder, compatible with [Recorder<T>] array
 //
+// `record`/`reset` are NOT `mutating`: the recorder's mutable state lives in `_box`, a
+// class, so recording mutates through the reference without changing this struct. That
+// matters in the step loop's hot path — a `mutating` call through
+// `recorders[key]?.record(...)` would mark the `recorders` dictionary as mutated and
+// COW-copy its entire storage *every step*, which profiling showed as gigabytes of
+// churn. Non-mutating, the dictionary is only read, so no copy is made.
 nonisolated struct AnyRecorder: AnyRecorderProtocol {
-    private var _box: AnyRecorderBox
-    
+    private let _box: AnyRecorderBox
+
     var name: String { _box.name }
-    mutating func record(interpreter: Interpreter) { _box.record(interpreter: interpreter) }
-    mutating func reset() { _box.reset() }
+    func record(interpreter: Interpreter) { _box.record(interpreter: interpreter) }
+    func reset() { _box.reset() }
     var dataAsAnyArray: [Any?] { _box.dataAsAnyArray }
     
     func reportAll(steps: Int, fillWithLast: Bool = false, trim: Bool = false) -> [Any?] {
