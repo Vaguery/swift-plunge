@@ -44,7 +44,25 @@ nonisolated extension Interpreter {
 
         let prints = matching { $0.hasSuffix("Print") } .union(defined.contains(.printNewline) ? [.printNewline] : [])
         let comparison = matching(hasSuffix("Eq", "GT", "GTE", "LT", "LTE"))
+        // Introspection comes from two places, and only the first is a naming
+        // family. The `…StackDepth`/`…StackIsEmpty` pair is generated for every
+        // stack and so belongs to the combinator role; the run-introspection
+        // instructions are their own small set that no convention picks out —
+        // `hasSuffix("Count")` would also catch `execDoCount`, which is a loop.
+        // So they are named, the way `.printNewline` is a few lines above.
+        //
+        // **This is why introspection is no longer a subset of the combinators.**
+        // It straddles the two: `errorStackDepth` reads like the family but is
+        // hand-written (the `.error` stack gets no generated furniture — see
+        // `Introspection Behaviors.swift`), and the counters are not furniture at
+        // all. `stackPlumbing` is still exactly the combinators that are not
+        // introspective, so the two continue to partition that role between them.
+        let runIntrospection: Set<PushInstruction> = [
+            .pushStepCount,
+            .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
+        ]
         let introspection = matching(hasSuffix("StackDepth", "StackIsEmpty"))
+            .union(runIntrospection.intersection(defined))
         let stackPlumbing = combinators.subtracting(introspection)
         let conversion = matching { name in
             (name.contains("From") && !name.hasPrefix("iteratorFrom"))

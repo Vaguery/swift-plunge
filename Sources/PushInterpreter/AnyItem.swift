@@ -57,7 +57,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case type, value
+        case type, value, errorKind
     }
 
     public init(from decoder: any Decoder) throws {
@@ -116,7 +116,11 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 burial: state.burial
             )
         case .error:
-            item = ErrorItem(try container.decode(String.self, forKey: .value))
+            // `errorKind` is absent from anything encoded before it existed, so
+            // decode it leniently and fall back to the same default `init` uses.
+            item = ErrorItem(
+                try container.decode(String.self, forKey: .value),
+                kind: try container.decodeIfPresent(ErrorKind.self, forKey: .errorKind) ?? .other)
         }
     }
 
@@ -173,6 +177,11 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case let concrete as ErrorItem:
             try container.encode(ItemKind.error, forKey: .type)
             try container.encode(concrete.value, forKey: .value)
+            // Carried rather than dropped, unlike `call`. `kind` is a fact about
+            // the error itself, not about how it came to be, and the introspection
+            // instructions that count by kind would silently under-report on
+            // anything that had crossed this boundary.
+            try container.encode(concrete.kind, forKey: .errorKind)
         default:
             throw EncodingError.invalidValue(
                 item,

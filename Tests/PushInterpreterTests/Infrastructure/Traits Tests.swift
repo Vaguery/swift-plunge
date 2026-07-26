@@ -72,16 +72,35 @@ struct TraitsTests {
         }
     }
 
-    /// Introspection and plumbing split the combinator role cleanly: together they
-    /// are exactly the furniture, and they never overlap.
+    /// Introspection and plumbing still split the combinator role cleanly, but
+    /// **introspection is no longer contained by it.**
+    ///
+    /// It used to be: introspection was exactly the generated
+    /// `…StackDepth`/`…StackIsEmpty` pair, which is furniture. The
+    /// run-introspection instructions broke that — `pushStepCount` and the three
+    /// `errorMissing…Count` report on the run rather than on a stack, and
+    /// `errorStackDepth` reads like the family but is hand-written, because
+    /// `.error` gets no generated furniture at all (`Introspection
+    /// Behaviors.swift`).
+    ///
+    /// So the invariant is now about the *intersection*: the combinators are
+    /// partitioned by plumbing and the introspective furniture, while
+    /// introspection itself reaches outside.
     @Test func `introspection and plumbing partition the combinators`() {
         let combinators = Interpreter.instructions(tagged: .combinator)
         let introspection = Interpreter.instructions(trait: .introspection)
         let plumbing = Interpreter.instructions(trait: .stackPlumbing)
-        #expect(introspection.isSubset(of: combinators))
+
         #expect(plumbing.isSubset(of: combinators))
         #expect(introspection.isDisjoint(with: plumbing))
-        #expect(introspection.union(plumbing) == combinators)
+        #expect(plumbing.union(introspection.intersection(combinators)) == combinators,
+                "plumbing and introspective furniture must still cover the role exactly")
+
+        // And the part that reaches outside is exactly the run-introspection set,
+        // named so that adding one without thinking fails here.
+        #expect(introspection.subtracting(combinators)
+                == [.pushStepCount, .errorStackDepth,
+                    .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount])
     }
 
     /// Traits are **not** a partition: categories overlap (a quote is both a

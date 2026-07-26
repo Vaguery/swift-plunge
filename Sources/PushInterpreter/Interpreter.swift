@@ -193,6 +193,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: inputBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: introspectionBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: iteratorBehaviors, intoLanguage: &starter)
@@ -252,11 +253,12 @@ nonisolated final class Interpreter {
         // reports can always land.
         if stack.enforcesSizeLimits {
             if let message = self.overflow(of: item) {
-                self.place(ErrorItem(message), on: .error)
+                self.place(ErrorItem(message, kind: .sizeRefusal), on: .error)
                 return
             }
             if (self.stacks[stack]?.count ?? 0) >= config.maxStackDepth {
-                self.place(ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)"), on: .error)
+                self.place(ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)",
+                                     kind: .sizeRefusal), on: .error)
                 return
             }
         }
@@ -366,7 +368,8 @@ nonisolated final class Interpreter {
     @discardableResult
     func requireAccepts(_ item: any Item, on stack: PushStack) -> Bool {
         guard stack.accepts(item) else {
-            self.place(ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack"), on: .error)
+            self.place(ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack",
+                                 kind: .invariant), on: .error)
             return false
         }
         return true

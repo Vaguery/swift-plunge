@@ -191,7 +191,8 @@ nonisolated class Behavior: @unchecked Sendable {
         case .short(let stack):
             self.distribute(
                 to: interpreter,
-                items: [Router(.error, ErrorItem("\(self.name) missing args: .\(stack)"))]
+                items: [Router(.error, ErrorItem("\(self.name) missing args: .\(stack)",
+                                                kind: .missingArgument))]
             )
         case .ready(let arguments, let claims):
             planner.commit(claims)

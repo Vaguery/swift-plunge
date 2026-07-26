@@ -37,6 +37,7 @@ nonisolated extension Interpreter {
                                     .error,
                                     ErrorItem(
                                         "No input for \(instructionName)",
+                                        kind: .missingInput,
                                         call: [InstructionItem(instructionName)])
                                 )
                             ]

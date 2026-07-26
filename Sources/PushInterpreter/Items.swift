@@ -787,8 +787,48 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
 
 
 
+/// Why an error was raised, as a value rather than as prose.
+///
+/// The message already says this in English, and for a long time that was the only
+/// record. Counting them needed better: `.errorMissingArgCount` and its siblings
+/// have to partition the `.error` stack exactly, and a filter on
+/// `value.contains("missing args")` would silently under-report the first time
+/// anybody reworded a message. A count that quietly drifts is worse than no count.
+///
+/// The cases split by **who noticed**, which is also what a program can act on:
+/// starvation it could fix by supplying arguments, an unbound name it could fix by
+/// binding one, and the interpreter's own refusals, which it cannot fix at all.
+public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
+    /// A Behavior refused because a stack came up short (`Behavior.act`).
+    case missingArgument
+    /// An `.inputN` with no binding.
+    case missingInput
+    /// A typed constant (`.int3`, `.vecDouble8`) with no binding.
+    case missingConstant
+    /// A push the interpreter would not accept: over a size cap, or a stack at
+    /// `maxStackDepth`.
+    case sizeRefusal
+    /// The `INVARIANT:` marker — a mis-tagged `Router`, which is a programming bug
+    /// in the interpreter rather than a program bug.
+    case invariant
+    /// The `RUNAWAY:` and `MEMORY:` markers: a run stopped early by a guard.
+    case guardStop
+    /// A Behavior's own complaint about its arguments — a negative count, a type
+    /// this kind of loop does not have — and anything not otherwise classified.
+    case other
+}
+
+
 public nonisolated struct ErrorItem: Item, Equatable {
     public var value: String
+
+    /// Why this error was raised. See `ErrorKind`.
+    ///
+    /// Deliberately **not** part of `==`, which compares `value` alone like every
+    /// other Item: two errors with the same message are the same error, and the
+    /// kind is a classification of it rather than part of its identity.
+    public var kind: ErrorKind
+
     public var call: [any Item] {
         didSet { self.callWeight = Self.weighCall(call) }
     }
@@ -797,13 +837,14 @@ public nonisolated struct ErrorItem: Item, Equatable {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    
-    public init(_ value: String, call: [any Item] = []) {
+
+    public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
         self.value = value
+        self.kind = kind
         self.call = call
         self.callWeight = Self.weighCall(call)
     }
-    
+
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
         lhs.value == rhs.value
     }

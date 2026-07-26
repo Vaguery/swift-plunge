@@ -44,7 +44,8 @@ nonisolated extension Interpreter {
         guard liveWeight > config.maxLiveWeight else { return }
 
         place(
-            ErrorItem("\(Interpreter.memoryMarker) live weight \(liveWeight) exceeds maxLiveWeight \(config.maxLiveWeight)"),
+            ErrorItem("\(Interpreter.memoryMarker) live weight \(liveWeight) exceeds maxLiveWeight \(config.maxLiveWeight)",
+                      kind: .guardStop),
             on: .error
         )
         clear(.exec)   // unwind: the run loop exits once .exec is empty
@@ -84,7 +85,8 @@ nonisolated extension Interpreter {
         guard let looper = liveLooper() else { return }
 
         place(
-            ErrorItem("\(Interpreter.runawayMarker) .\(stack) \(symptom); \(looper) active"),
+            ErrorItem("\(Interpreter.runawayMarker) .\(stack) \(symptom); \(looper) active",
+                  kind: .guardStop),
             on: .error
         )
         clear(.exec)   // unwind: the run loop exits once .exec is empty
