@@ -49,85 +49,14 @@ func blockedByCodeItemModel(_ item: any Item) -> Bool {
 }
 
 
-/// One item's provenance claim, checked by doing what it claims.
+/// `brokenClaim` and the whole crux-checking apparatus now live in
+/// `DiagnosticTools/CruxDiagnostics.swift`, so that one place decides what
+/// "broken" means for both this file's assertions and any exploratory sweep.
 ///
-/// Returns nil when the claim holds or when there is nothing to check:
-/// an empty `call` is a literal, and a literal reproduces itself trivially;
-/// an item with no resting stack is an instruction token, which executes rather
-/// than coming anywhere to rest to be compared.
-@MainActor
-func brokenClaim(
-    about item: any Item,
-    inputs: [PushInstruction: any Item],
-    constants: [PushInstruction: any Item],
-    settings: InterpreterSettings
-) -> String? {
-    guard !item.call.isEmpty else { return nil }
-    guard let resting = PushStack.defaultStack(for: item) else { return nil }
-
-    let crux = item.crux()
-
-    // **The reconstruction needs its own step budget, not the program's.**
-    //
-    // `crux()` flattens a call *DAG* into a postfix program, re-emitting a shared
-    // node once per path, so a crux is routinely far longer than the run that
-    // produced it — a loop folding an accumulator leaves one body-copy per pass.
-    // Re-running it under the original `stepLimit` cuts it off mid-way and then
-    // compares against a half-finished stack.
-    //
-    // That was not a hypothetical: it accounted for 93 of the 95 residual
-    // failures in the #27 sweep, every one of which reproduces correctly given
-    // room to finish. Budget by the size of the thing actually being run.
-    //
-    // The size caps come from `InterpreterSettings.reconstructing` for the
-    // matching reason: those caps bound a *population* run, and a reconstruction
-    // is one individual explaining itself. Without them the interpreter refuses
-    // its own reconstruction — an iterator may hold an origin larger than
-    // `maxCodePoints`, but rebuilding it pushes that origin through `.code`,
-    // where the cap does bite. That was the other 2 of the 95.
-    let room = max(settings.stepLimit, crux.count * 20)
-    let redo = Interpreter()
-    redo.config = settings.reconstructing
-    redo.config.stepLimit = room
-    redo.load(inputs: inputs, constants: constants, program: crux)
-    redo.run(stepLimit: room)
-
-    // Still unfinished? Then nothing is known about this claim — say so rather
-    // than reporting a truncated stack as a broken record.
-    guard redo.stacks[.exec]!.isEmpty else {
-        return nil
-    }
-
-    guard let reproduced = redo.stacks[resting]!.first else {
-        return "crux produced nothing on .\(resting)"
-    }
-    guard reproduced.pretty() == item.pretty() else {
-        return "crux produced \(reproduced.pretty()), wanted \(item.pretty())"
-    }
-    // Idempotence: re-running a reconstruction must reconstruct the same way,
-    // or the crux is not a fixed point and "the crux" is not well defined.
-    let again = CodeItem(reproduced.crux()).pretty()
-    guard again == CodeItem(crux).pretty() else {
-        return "crux is not a fixed point: re-running it yields \(again)"
-    }
-    // The composition invariant (Design Principles §1): a fragment leaves its
-    // value and nothing else. Checking only `.first` above is what let the
-    // multi-result stranding bug hide — the wanted value was on top *and* its
-    // sibling was underneath, which reads as a pass.
-    //
-    // `.error` is ignored: a crux may legitimately re-raise. `.exec` is known
-    // drained by the guard above.
-    var debris: [String] = []
-    for stack in PushStack.allStacks where stack != .error {
-        let found = redo.stacks[stack]!.count
-        let wanted = (stack == resting) ? 1 : 0
-        if found != wanted { debris.append(".\(stack) holds \(found), wanted \(wanted)") }
-    }
-    if !debris.isEmpty {
-        return "crux leaves debris — " + debris.joined(separator: "; ")
-    }
-    return nil
-}
+/// Read `inspectCrux` there before trusting a clean result from anything in this
+/// file: it distinguishes a claim that *holds* from one that could not be checked
+/// because the reconstruction ran out of steps, and `brokenClaim` — being a
+/// pass/fail face — reports the second as nil.
 
 
 @Suite @MainActor

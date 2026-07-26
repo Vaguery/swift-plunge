@@ -634,6 +634,28 @@ Closed from both ends now. `brokenClaim` checks for debris after the value and f
 families in §1 actually surfaced. The general lesson: **a round-trip check that reads one item off the top
 is testing the value, not the fragment.** Ask what the fragment leaves, too.
 
+### Instruments, kept separately from assertions
+
+`Acceptance Tests (Slow)/DiagnosticTools/` holds the tools an exploratory session needs, all
+`.disabled` by default because they answer "is anything wrong, and where" rather than pinning a
+behaviour. `ExploratoryCruxSweep.swift` is the worked example and the place to start.
+
+Three of them earned their keep by finding the bugs above, and the order matters:
+
+1. **`CruxSweep`** — a parameterised corpus. Sweep *several seeds*: #27 ran about 1 failure per 1,900
+   claims, and the single-seed fuzzer reported zero on the very seed a 40-seed sweep found 95 with.
+2. **`CruxFailureReport`** — tallies by *kind*, not just a count. "95 broken" said nothing; splitting it
+   into debris / not-a-fixed-point / wrong-value / produced-nothing said everything, because **a category
+   that does not move under a change is one that change did not address.**
+3. **`RootCauseFinder`** — walks each failing item's call tree down to nodes with no failing descendant.
+   One broken record poisons every ancestor, so a sweep reporting 95 failures is not reporting 95 bugs.
+   This collapsed those 95 into six causes in one run — and the two that mattered had a count of **one**
+   each. Read the singletons, not the biggest number.
+
+The fourth thing that mattered cannot be a utility: **isolate a fix by reverting it alone and re-running
+identical seeds.** That is what proved the `selecting` change was responsible rather than a seed artifact,
+and it is worth doing before believing any before/after table.
+
 When you add an instruction, the sweep enrolls it for free. When you change a *trace* test, ask first
 whether the trace or the behavior is the thing being pinned — most trace tests pin the shape of a
 continuation, and continuations are exactly what this design keeps deleting.
