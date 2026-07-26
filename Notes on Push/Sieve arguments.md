@@ -71,12 +71,17 @@ The paradigm's rule (Design Principles §1, and the law at the top of `Items.swi
 **reproduce a value on a fresh interpreter**. So the question is: does a sieved argument's record still
 do that?
 
-**It does, and it is not even contingent** — which is a stronger result than the analogy suggests.
+**It does, and it does not even depend on the stack's arrangement** — a stronger result than the analogy
+suggests.
 
 Compare `yank`, the nearest existing thing. `yank` reaches to an arbitrary depth and moves an item to the
-top. It records **nothing** (law 1: rearrangement within one stack is free) but it sets
-`isContingent = true`, because *which* item it grabbed depended on the stack's arrangement, and the crux
-cannot say "the thing that was three deep."
+top. It records **nothing** (law 1: rearrangement within one stack is free), and *which* item it grabbed
+depended on the stack's arrangement — something the crux cannot say, because there is no way to write
+"the thing that was three deep."
+
+*(This used to be phrased in terms of `isContingent`, which `yank` set to `true`. The flag has since been
+removed — *Roadmap.md* §23a — but the asymmetry it was pointing at is real and is the whole point of the
+comparison, so it is restated here without it.)*
 
 A sieve is different in exactly the way that matters: **the record names the item, not the position.**
 

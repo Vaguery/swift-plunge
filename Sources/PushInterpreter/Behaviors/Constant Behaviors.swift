@@ -33,9 +33,7 @@ nonisolated extension Interpreter {
                             // As the `.inputN` errors: records the same
                             // `[.int3]` its success branch does, because a
                             // constant slot is environment state that a re-run
-                            // supplies again. Not marked contingent — unlike
-                            // inputs, this behavior's success branch does not
-                            // mark its value either.
+                            // supplies again.
                             return [Router(.error,
                                            ErrorItem("No constant assigned for \(instructionName)",
                                                      call: [InstructionItem(instructionName)]))]

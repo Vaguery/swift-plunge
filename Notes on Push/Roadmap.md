@@ -42,8 +42,9 @@ commitment.
 10. **The sieve itself**, for matrix multiplication (find an N×4 to a 4×3). One more `Requirement` kind
     (`.reads` already showed a fifth slots in cheaply). → *Sieve arguments.md*
 11. **Q5 — should a sieved argument be visible to a program?** Found, not taken: if a program can tell
-    the difference (via contingency, or an `.xSieve` combinator), it is a language feature; if not, an
-    implementation detail. → *Sieve arguments.md*
+    the difference, it is a language feature; if not, an implementation detail. The contingency half of
+    this question is gone with `.isContingent` (#23a), so an `.xSieve` combinator is the only remaining
+    way a program could ask. → *Sieve arguments.md*
 
 ## D. Genome and search
 
@@ -63,11 +64,20 @@ commitment.
 
 ## E. Provenance open questions → *Provenance and the crux.md*
 
-18. **`contingencySources` instruction set** — sibling to `PushInstruction.iterators`; TODO on
-    `InstructionSets.swift`. Includes the long-standing sub-question: **do `DupItems`/`DupTimes` make
-    their results contingent in themselves?**
+18. ~~**`contingencySources` instruction set**~~ — **dropped with `.isContingent`** (#23a). The set only
+    had meaning as a classification of the flag, so it went with it, and so did its sub-question about
+    whether `DupItems`/`DupTimes` make their results contingent in themselves. The `InstructionSets.swift`
+    TODO that described it is deleted.
 19. **Deep identity in equality** — `xDup` copies an item's whole call tree, so same-value/same-history
     genuinely arises, but Push has no way to ask. → *Items.swift* "Equality is about values"
+19a. **~0.05% of crux claims still fail under a long fuzz** (issue #27). 95 of 177,779 claims across 40
+    seeds, and *not* caused by the #26 fix — the same failures appear with the old `selecting`. 81 of the
+    95 were recorded by `Behavior.reading` with the read stack equal to the result stack (the `swap`/`pop`
+    branch), `.boolEq` and the bool comparisons dominating. The records are structurally well-formed and
+    hand-simulate correctly, so the cause is not obvious; the failures correlate with very large cruxes
+    (~27k characters, one subexpression repeated dozens of times as `crux()` flattens a shared DAG node
+    per path), which puts provenance elision on the suspect list without any evidence for it yet. The
+    committed fuzz test runs a single seed and sees none of this — worth sweeping several.
 20. **Error-provenance inconsistency** — `.inputN`/`.intN` "not bound" errors record nothing, while the
     success path of the same instruction records `[.inputN]`. Explanatory value, not correctness.
 21. **Vector elements have no provenance** — `VecIntItem.value` is a raw `[Int]`. The one place
@@ -81,16 +91,7 @@ commitment.
     crux-consuming behavior must therefore guard with `Interpreter.requiresProvenance(name)` — which emits a
     `PROVENANCE:` warning and returns false when recording is off — and no-op rather than silently reading the
     trivial `[self]` cruxes.
-23a. **Remove the `.isContingent` flag entirely.** The stored property — on the `Item` protocol and every
-    conforming type — was meant to track whether an item's crux depends on the input variables. Reading the
-    crux *directly* now does that job: the Runner walks the final result item's crux in the worker
-    (`cruxMentions`, surfaced as `CaseResult.cruxMentionsInput`, driven by `RunnerConfiguration.cruxInputTokens`),
-    so the flag is dead weight. Deferred because removal is a wide mechanical sweep — ~300 source sites across
-    `Items.swift`, `IteratorItem.swift`, `AnyItem`, and every `* Behaviors.swift`, **plus ~640 test
-    occurrences**. The only thing that would revive the need is **stochastic Behaviors**, where input-dependence
-    could not be read off a deterministic crux; there are none now and none planned. Removing it also **moots the
-    contingency machinery in #18** (`contingencySources`, the `Dup`-contingency sub-question) and the
-    contingency-visibility angle of #11/Q5.
+23a. **Remove the `.isContingent` flag entirely.** — **done**, see Resolved below.
 
 ## F. Decisions with a number or a semantics still open
 
@@ -162,3 +163,17 @@ Left for later, with the arguments in the coverage note:
   (old Sieve Q4) — **now a stated, tested rule** (Design Principles §1, `Composition Invariant Tests`).
 - **Sieve Q1–Q3** (polymorphic collector enough? build the planner first? what bounds a sieve's cost?) —
   all answered; see *Sieve arguments.md*.
+- **The composition invariant had three unenforced cases** (issue #26) — **fixed.** Multi-result
+  Behaviors stranded the sibling their selector did not want; the iterator collectors left the body their
+  farewell hands back to `.code`; the recording peek getters left the iterator they hand back. All three
+  reproduced the right value on top of debris, which is invisible to a check that reads only `.first` —
+  so the fix is as much in the tests as the code. `Composition Invariant Tests.swift` now sweeps the whole
+  language rather than the one family it was written for, and `brokenClaim` checks for debris. A 40-seed
+  fuzz went from 971 broken claims to 95 (issue #27 is the remainder). → *Design Principles.md* §1, §16
+- **`.isContingent` removed entirely** (#23a, and with it #18's `contingencySources`). The flag marked a
+  value whose *presence* depended on something the crux did not capture. Nothing consumed it: every read
+  was either `Behavior.netContingency` propagating it to the next item or a test asserting it, and
+  `crux()` never looked at it at all. Input-dependence is now read off the crux directly (`cruxMentions`
+  → `CaseResult.cruxMentionsInput`). Removal touched 41 files, −1656/+485, and left the crux fuzzer's
+  output byte-identical — which is the evidence that the flag was inert. Only **stochastic Behaviors**
+  would revive the need; there are none, and none planned.

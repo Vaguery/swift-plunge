@@ -23,7 +23,6 @@ nonisolated extension Interpreter {
                     modifier: { (interpreter, collectedItems) in
                         if var v = interpreter.inputs[instructionName] {
                             v.call = [InstructionItem(instructionName)]
-                            v.isContingent = true
                             return [Router(.exec, v)]
                         } else {
                             // Records the same `[.inputN]` its success branch
@@ -38,9 +37,7 @@ nonisolated extension Interpreter {
                                     .error,
                                     ErrorItem(
                                         "No input for \(instructionName)",
-                                        call: [InstructionItem(instructionName)],
-                                        isContingent: true
-                                    )
+                                        call: [InstructionItem(instructionName)])
                                 )
                             ]
                         }

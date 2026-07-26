@@ -63,6 +63,24 @@ it to a tested rule (`Composition Invariant Tests.swift`, plus the crux fuzzer, 
 cruxes and is the only thing that sees a violation). **Any new Behavior whose crux leaves debris on a
 stack a sibling might read is a latent corruption; make its fragment clean.**
 
+**The rule had three unenforced cases** (issue #26, all fixed). Each satisfied the round-trip obligation
+— the wanted value was on top — while leaving something underneath it, which is invisible to a check that
+reads only `.first`:
+
+- **Multi-result Behaviors.** `selecting` gave the *topmost* result `source` unchanged, reasoning that
+  being on top needs no discard. True standalone, false composed: its sibling stayed. `selecting` now
+  clears in both directions — `PopItems` for the siblings above, `swap`-then-`pop` for those below.
+- **The iterator collectors.** `.vecFromIterator`/`.codeFromIterator` end a loop, and the farewell hands
+  the body back to `.code` (principle 5). The crux reproduced that hand-back and left it. Both now record
+  the pop; `.codeFromIterator` needs the swap form, since its own result rests on `.code` too.
+- **The recording peek getters.** `.iteratorPeekStride`/`.iteratorPeekLaps` hand their iterator back, so
+  their crux left it on `.iterator`. Both now record through `reading`.
+
+The lesson is about the *tests*, not the instructions. `Composition Invariant Tests.swift` was written
+from the case that motivated the rule — non-destructive queries — and every test in it drove
+`.vecIntLength`. Three whole families were never asked. It now sweeps the entire language, the same way
+the round-trip obligation does, so a new Behavior is checked the day it is added.
+
 ## 2. Push is mostly postfix — and a stack reverses what you wrote
 
 `2 3 .intSubtract` computes 2−3. The `2` was written first, so it is *deeper*; the `3` is on top. A
@@ -556,11 +574,22 @@ Two structural supports:
   programming bug, not a program bug, so it leaves the distinctive `INVARIANT:` marker — the one class of
   failure that means *the interpreter* is wrong.
 
-## 15. Contingency is a separate axis from provenance
+## 15. Contingency was a separate axis from provenance — and has been removed
 
-`isContingent` marks a value whose presence depended on something the crux does not capture — a
-stack-depth read, a yank from an arbitrary position. It travels alongside `call` and never inside it.
-Do not conflate them: an item can be perfectly reproducible and still contingent.
+**`isContingent` is gone.** It marked a value whose *presence* depended on something the crux did not
+capture — a stack-depth read, a yank from an arbitrary position. It travelled alongside `call`, never
+inside it, and the rule was: do not conflate them, an item can be perfectly reproducible and still
+contingent.
+
+The axis turned out to be inert. Nothing ever consumed the flag — every read was either
+`Behavior.netContingency` propagating it into the next item, or a test asserting it — and `crux()` never
+looked at it at all. The question it was standing in for, *does this value depend on the inputs*, is now
+read off the crux directly (`cruxMentions`, surfaced as `CaseResult.cruxMentionsInput`), which answers it
+from the record that already has to be correct for other reasons.
+
+Kept as a numbered section rather than deleted, because the distinction is worth not re-inventing. One
+thing would revive it: **stochastic Behaviors**, where input-dependence could not be read off a
+deterministic crux. There are none, and none planned. → *Roadmap.md* §23a
 
 ## 16. Tests are the specification, and the acceptance tests are the ones that matter
 
@@ -571,7 +600,17 @@ The tests that catch a record that *lies* are the ones that check the obligation
 crux, see whether the value comes back. `Crux RoundTrip Tests.swift` sweeps every registered Behavior
 this way, so a new instruction is covered the day it is added, and a fuzz half does the same for random
 programs. Between them they found four wrong-instruction bugs, 22 unreproducible `StackDepth` records,
-and every `xEq` comparing provenance.
+every `xEq` comparing provenance, and the multi-result stranding bug (§1, issue #26).
+
+Both halves used to share a blind spot worth remembering: each read only `.first` of the resting stack, so
+a fragment that reproduced the right value *and* left debris underneath it passed. That is exactly how #26
+survived — only the fuzzer, by composing cruxes, ever ran the debris into a later argument, and the fuzz
+half is `.disabled` by default, so in practice nothing was watching.
+
+Closed from both ends now. `brokenClaim` checks for debris after the value and fixed-point checks, and
+`Composition Invariant Tests.swift` sweeps the whole language deterministically, which is where the three
+families in §1 actually surfaced. The general lesson: **a round-trip check that reads one item off the top
+is testing the value, not the fragment.** Ask what the fragment leaves, too.
 
 When you add an instruction, the sweep enrolls it for free. When you change a *trace* test, ask first
 whether the trace or the behavior is the thing being pinned — most trace tests pin the shape of a

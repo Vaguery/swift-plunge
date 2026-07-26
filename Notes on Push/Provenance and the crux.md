@@ -276,7 +276,8 @@ is re-supplied when a crux is re-run, so naming them does reproduce the value. T
 re-running the name would find the same world.
 
 **Every `xEq` compared provenance rather than value.** `eqCombinator` compares with `isEqual(to:)`,
-which routed to `==`, which compared `value && call && isContingent`. So `2 3 .intAdd  1 4 .intAdd
+which routed to `==`, which compared `value && call && isContingent` (that third field has since been
+removed entirely — *Roadmap.md* §23a). So `2 3 .intAdd  1 4 .intAdd
 .intEq` was **false** while `5 5 .intEq` was **true**. This also made `Comparable` incoherent — `<`
 compares `value` alone, so two items both holding 5 were simultaneously not-less, not-equal and
 not-greater, which is not a strict total order. `==` is now value-only, which fixes both at once. See
@@ -368,12 +369,14 @@ containment destroys history, and law 1b says containment should not.
 
 *Indexed in `Roadmap.md` §E.*
 
-- **A `contingencySources` instruction set**, sibling to `PushInstruction.iterators`. Contingency splits
-  into sources (the ten `.inputN`, plus `DeepDup`/`Shove`/`Yank`/`YankDup`/`StackDepth`/`StackIsEmpty`
-  for every stack, which set it regardless of their arguments) and propagators (everything else, via
-  `netContingency`). The set is nearly but not exactly law 4b's group — see the TODO on
-  `InstructionSets.swift` for the two questions to settle first, including the long-standing open one
-  about whether `DupItems`/`DupTimes` make their results contingent in themselves.
+- ~~**A `contingencySources` instruction set**~~ — **dropped.** It would have split contingency into
+  sources (the ten `.inputN`, plus `DeepDup`/`Shove`/`Yank`/`YankDup`/`StackDepth`/`StackIsEmpty` for
+  every stack) and propagators (everything else, via `netContingency`), and it carried the long-standing
+  open question about whether `DupItems`/`DupTimes` make their results contingent in themselves. All of
+  it went when `.isContingent` was removed (*Roadmap.md* §23a); the `InstructionSets.swift` TODO that
+  described it is deleted. The observation underneath is still worth keeping, though: the set was *nearly
+  but not exactly* law 4b's group, because 4b asks "does the VALUE depend on transient state?" while
+  contingency asked "does the result's presence or position?" — close cousins, not the same question.
 - **Error provenance is inconsistent.** Int and Double error branches record their arguments, so an
   error's crux reproduces the error — genuinely useful. But `.inputN`/`.intN` "not bound" errors record
   nothing, even though the *success* path of the same instruction records `[.inputN]`. Both satisfy the

@@ -94,7 +94,7 @@ struct CruxTests {
     }
 
     @Test
-    func `crux can work through contingent code`() {
+    func `crux can work through conditional code`() {
         // Built directly rather than through a bracketing builder. `execIf` takes
         // its branches from `.code` now, so they have to reach it before the
         // instruction fires. (The old Plushy `extraOpens` emitted the opposite

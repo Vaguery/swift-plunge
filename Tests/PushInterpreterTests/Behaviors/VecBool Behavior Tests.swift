@@ -18,69 +18,61 @@ struct VecBoolBehaviorTests {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, true, false]),
-                         VecBoolItem([true], isContingent: true)
+                         VecBoolItem([true])
                         ])
         
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [false, true, false] [true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolButLast )")
 
         doThis(.vecBoolPop, to: inty)
         
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, true] [true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, true, false] .vecBoolButLast )")
         
         doThis(.vecBoolPop, to: inty)
         
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true] .vecBoolButLast )")
     }
     
     @Test func vecBoolConcat() {
         inty.stacks[.vecBool]!.prepend(
-            contentsOf: [VecBoolItem([], isContingent: true),
-                         VecBoolItem([false, false], isContingent: false),
-                         VecBoolItem([true, true], isContingent: false)
+            contentsOf: [VecBoolItem([]),
+                         VecBoolItem([false, false]),
+                         VecBoolItem([true, true])
                         ])
         
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] [true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false] [] .vecBoolConcat )")
         
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true] [false, false] .vecBoolConcat )")
     }
 
     @Test func vecBoolConj() {
-        loadBools(inty, bools: [true, true, true], contingent: [2])
+        loadBools(inty, bools: [true, true, true])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([false, false], isContingent: false)
+                         VecBoolItem([false, false])
                         ])
 
         doThis(.vecBoolConj, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] [false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] true .vecBoolConj )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolConj, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false] true .vecBoolConj )")
 
         doThis(.vecBoolConj, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false, true] true .vecBoolConj )")
     }
 
@@ -93,52 +85,46 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolContains, to: inty)
         #expect(stackString(inty, .bool) == "[ true false ]", "the result, atop the surviving needle")
         #expect(stackString(inty, .vecBool) == "[ [false, true] ]", "the vector survives")
-        #expect(topItem(inty, .bool).isContingent == false)
         #expect(callString(topItem(inty, .bool)) == "( [false, true] false .vecBoolContains .boolSwap .boolPop 1 .vecBoolPopItems )")
 
-        // A miss, and contingency propagates from a contingent needle.
+        // A miss.
         let miss = Interpreter()
         miss.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
-        miss.stacks[.bool]!.prepend(BoolItem(false, isContingent: true))
+        miss.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolContains, to: miss)
         #expect(stackString(miss, .bool) == "[ false false ]", "result false, needle false survives")
-        #expect(topItem(miss, .bool).isContingent == true)
     }
 
     @Test func vecBoolDrop() {
-        loadInts(inty, ints: [-3, 0, 1, -2], contingent: [2])
+        loadInts(inty, ints: [-3, 0, 1, -2])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false, false], isContingent: false)
+                         VecBoolItem([true, false, false])
                         ])
 
         doThis(.vecBoolDrop, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] -3 .vecBoolDrop )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolDrop, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 0 .vecBoolDrop )")
 
         doThis(.vecBoolDrop, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 1 .vecBoolDrop )")
 
         doThis(.vecBoolDrop, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false] -2 .vecBoolDrop )")
     }
 
     @Test func vecBoolFirst() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false], isContingent: true)
+                         VecBoolItem([true, false])
                         ])
 
         doThis(.vecBoolFirst, to: inty)
@@ -146,7 +132,6 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolFirst, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(topItem(inty, .bool).isContingent == true)
         #expect(callString(topItem(inty, .bool)) == "( [true, false] .vecBoolFirst )")
     }
 
@@ -159,34 +144,30 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .int) == "[ 1 ]", "index of false")
         #expect(stackString(inty, .vecBool) == "[ [true, false] ]", "the vector survives")
         #expect(stackString(inty, .bool) == "[ false ]", "the needle survives")
-        #expect(topItem(inty, .int).isContingent == false)
         #expect(callString(topItem(inty, .int)) == "( [true, false] false .vecBoolIndexOf 1 .boolPopItems 1 .vecBoolPopItems )")
 
         let absent = Interpreter()
         absent.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
-        absent.stacks[.bool]!.prepend(BoolItem(false, isContingent: true))
+        absent.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolIndexOf, to: absent)
         #expect(stackString(absent, .int) == "[ -1 ]")
-        #expect(topItem(absent, .int).isContingent == true)
     }
 
     @Test func vecBoolItemIsEmpty() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([false], isContingent: true)
+                         VecBoolItem([false])
                         ])
         
         doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .vecBool) == "[ [] [false] ]", "the vector survives")
-        #expect(topItem(inty, .bool).isContingent == false)
         #expect(callString(topItem(inty, .bool)) == "( [] .vecBoolItemIsEmpty 1 .vecBoolPopItems )")
 
         doThis(.vecBoolPop, to: inty)   // discard the empty to reach the next vector
 
         doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
-        #expect(topItem(inty, .bool).isContingent == true)
         #expect(callString(topItem(inty, .bool)) == "( [false] .vecBoolItemIsEmpty 1 .vecBoolPopItems )")
     }
 
@@ -325,7 +306,7 @@ struct VecBoolBehaviorTests {
     @Test func vecBoolLast() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([false, false, true], isContingent: true)
+                         VecBoolItem([false, false, true])
                         ])
 
         doThis(.vecBoolLast, to: inty)
@@ -333,14 +314,13 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolLast, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(topItem(inty, .bool).isContingent == true)
         #expect(callString(topItem(inty, .bool)) == "( [false, false, true] .vecBoolLast )")
     }
 
     @Test func vecBoolLength() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([false, false, false], isContingent: true)
+                         VecBoolItem([false, false, false])
                         ])
         
         // Non-destructive: the vector is read, not consumed. It stays on .vecBool,
@@ -348,7 +328,6 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(stackString(inty, .vecBool) == "[ [] [false, false, false] ]")   // both survive
-        #expect(topItem(inty, .int).isContingent == false)
         #expect(callString(topItem(inty, .int)) == "( [] .vecBoolLength 1 .vecBoolPopItems )")
 
         doThis(.vecBoolPop, to: inty)   // discard the empty to reach the next vector
@@ -356,12 +335,11 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolLength, to: inty)
         #expect(stackString(inty, .int) == "[ 3 0 ]")
         #expect(stackString(inty, .vecBool) == "[ [false, false, false] ]")   // still there
-        #expect(topItem(inty, .int).isContingent == true)
         #expect(callString(topItem(inty, .int)) == "( [false, false, false] .vecBoolLength 1 .vecBoolPopItems )")
     }
     
     @Test func vecBoolNth() {
-        loadInts(inty, ints: [-3, 1, 7777], contingent: [2])
+        loadInts(inty, ints: [-3, 1, 7777])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, false, true]),
@@ -376,12 +354,10 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolNth, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
-        #expect(topItem(inty, .bool).isContingent == false)
         #expect(callString(topItem(inty, .bool)) == "( [true, false, true] 1 .vecBoolNth )")
 
         doThis(.vecBoolNth, to: inty)
         #expect(stackString(inty, .bool) == "[ false false ]")
-        #expect(topItem(inty, .bool).isContingent == true)
         #expect(callString(topItem(inty, .bool)) == "( [false, false, true] 7777 .vecBoolNth )")
     }
 
@@ -392,15 +368,13 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .int) == "[ 3 ]", "three trues")
         #expect(stackString(inty, .vecBool) == "[ [true, true, true, false] ]", "the vector survives")
         #expect(stackString(inty, .bool) == "[ true ]", "the needle survives")
-        #expect(topItem(inty, .int).isContingent == false)
         #expect(callString(topItem(inty, .int)) == "( [true, true, true, false] true .vecBoolOccurrencesOf 1 .boolPopItems 1 .vecBoolPopItems )")
 
         let none = Interpreter()
         none.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
-        none.stacks[.bool]!.prepend(BoolItem(false, isContingent: true))
+        none.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolOccurrencesOf, to: none)
         #expect(stackString(none, .int) == "[ 0 ]")
-        #expect(topItem(none, .int).isContingent == true)
     }
 
     /// **The order changed here, deliberately.** This used to reverse before
@@ -413,7 +387,7 @@ struct VecBoolBehaviorTests {
     @Test func vecBoolPushAll() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false, true, true], isContingent: true),
+                         VecBoolItem([true, false, true, true]),
                         ])
 
         // An empty vector yields nothing at all — not even an iterator.
@@ -428,7 +402,6 @@ struct VecBoolBehaviorTests {
         inty.run(stepLimit: 10_000)
         // Front to back: element 3 was pushed last, so it is on top.
         #expect(stackString(inty, .bool) == "[ true true false true ]")
-        #expect(topItem(inty, .bool).isContingent == true)
         #expect(stackString(inty, .iterator) == "[ ]")
 
         // Each element names its own index rather than how far down a pile it
@@ -441,7 +414,7 @@ struct VecBoolBehaviorTests {
     }
 
     @Test func vecBoolRemove() {
-        loadBools(inty, bools: [false, false, false], contingent: [2])
+        loadBools(inty, bools: [false, false, false])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, true, false]),
@@ -450,26 +423,23 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolRemove, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [false, true, false] [true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] false .vecBoolRemove )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolRemove, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] [true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, true, false] false .vecBoolRemove )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolRemove, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, true] false .vecBoolRemove )")
     }
 
     @Test func vecBoolReplace() {
-        loadBools(inty, bools: [false, true, true, false, false, true],contingent: [4])
+        loadBools(inty, bools: [false, true, true, false, false, true])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, false, true]),
@@ -478,26 +448,23 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolReplace, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [false, false, true] [true, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] true false .vecBoolReplace )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReplace, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, true] [true, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false, true] false true .vecBoolReplace )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReplace, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, true] true false .vecBoolReplace )")
     }
 
     @Test func vecBoolReplaceFirst() {
-        loadBools(inty, bools: [false, true, true, false, false, true],contingent: [4])
+        loadBools(inty, bools: [false, true, true, false, false, true])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, false]),
@@ -506,59 +473,52 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolReplaceFirst, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [false, false] [true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] true false .vecBoolReplaceFirst )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReplaceFirst, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false] [true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false] false true .vecBoolReplaceFirst )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReplaceFirst, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true] true false .vecBoolReplaceFirst )")
     }
 
     @Test func vecBoolRest() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false, false], isContingent: true)
+                         VecBoolItem([true, false, false])
                         ])
         
         doThis(.vecBoolRest, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolRest )")
         
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolRest, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] .vecBoolRest )")
     }
     
     @Test func vecBoolReverse() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, true, false], isContingent: true)
+                         VecBoolItem([true, true, false])
                         ])
         
         doThis(.vecBoolReverse, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, true, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolReverse )")
         
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReverse, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false] .vecBoolReverse )")
     }
 
@@ -569,38 +529,34 @@ struct VecBoolBehaviorTests {
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true,true,true,true]),
                          VecBoolItem([true,true,true,true,]),
-                         VecBoolItem([true,true,true,true,], isContingent: true),
+                         VecBoolItem([true,true,true,true,]),
                         ])
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, true, true, true] [true, true, true, true] [true, true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] false 1 .vecBoolSet )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, true] [true, true, true, true] [true, true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, true, true] false 2 .vecBoolSet )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, true, true, true] [true, true, true, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, true, true] false -8 .vecBoolSet )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, true, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, true, true] false 43 .vecBoolSet )")
     }
 
     @Test func vecBoolSubVec() {
-        loadInts(inty, ints: [1,9,2,1,2,-1,1,1], contingent: [4])
+        loadInts(inty, ints: [1,9,2,1,2,-1,1,1])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, true, false, false, true]),
@@ -610,58 +566,50 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolSubVec, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, true, false, false, true] [true, true, false, false, true] [true, true, false, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] 9 1 .vecBoolSubVec )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSubVec, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false] [true, true, false, false, true] [true, true, false, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 2 .vecBoolSubVec )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSubVec, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false] [true, true, false, false, true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] -1 2 .vecBoolSubVec )")
 
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolSubVec, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 1 .vecBoolSubVec )")
     }
 
     @Test func vecBoolTake() {
-        loadInts(inty, ints: [-3, 99, 1, -1], contingent: [2])
+        loadInts(inty, ints: [-3, 99, 1, -1])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false, false], isContingent: false)
+                         VecBoolItem([true, false, false])
                         ])
        
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [] -3 .vecBoolTake )")
         
         doThis(.vecBoolPop, to: inty)
         
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false, false] ]")
-        #expect(topItem(inty, .vecBool).isContingent == false)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 99 .vecBoolTake )")
         
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 1 .vecBoolTake )")
         
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] ]")
-        #expect(topItem(inty, .vecBool).isContingent == true)
         #expect(callString(topItem(inty, .vecBool)) == "( [true] -1 .vecBoolTake )")
     }
 

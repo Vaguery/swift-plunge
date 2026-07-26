@@ -323,19 +323,51 @@ struct ProvenanceTests {
     @Test func `selecting records the pops that surface each result`() {
         let source: [any Item] = [VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll)]
 
-        // Of N results on one stack, the one at position i needs N-1-i pops: the
-        // first produced is the deepest, because `distribute` prepends each in
-        // turn. The top one needs none and records nothing extra.
+        // Of N results on one stack, the one at position i clears N-1-i siblings
+        // above it (a plain PopItems) and i siblings below it (swap-and-pop each,
+        // since a pop cannot reach under the result). The first produced is the
+        // deepest, because `distribute` prepends each in turn.
+        //
+        // Every one of these leaves exactly one item on `.int`. The top result
+        // used to record nothing extra, which reproduced its own value but
+        // stranded its siblings — see `a selected result leaves nothing behind`.
         #expect(CodeItem(Behavior.selecting(2, of: 3, on: .int, from: source)).pretty()
-            == "( [10, 20, 30] .vecIntPushAll )")
+            == "( [10, 20, 30] .vecIntPushAll .intSwap .intPop .intSwap .intPop )")
         #expect(CodeItem(Behavior.selecting(1, of: 3, on: .int, from: source)).pretty()
-            == "( [10, 20, 30] .vecIntPushAll 1 .intPopItems )")
+            == "( [10, 20, 30] .vecIntPushAll 1 .intPopItems .intSwap .intPop )")
         #expect(CodeItem(Behavior.selecting(0, of: 3, on: .int, from: source)).pretty()
             == "( [10, 20, 30] .vecIntPushAll 2 .intPopItems )")
 
         // A lone result needs no selection at all.
         #expect(CodeItem(Behavior.selecting(0, of: 1, on: .int, from: source)).pretty()
             == "( [10, 20, 30] .vecIntPushAll )")
+    }
+
+    /// The half the text assertions above cannot state: each selector must leave
+    /// **exactly one** item on the stack, or the fragment is not composable as an
+    /// argument.
+    ///
+    /// This is the check that was missing. `selecting` used to give the topmost
+    /// result `source` unchanged — correct in isolation, since the wanted value
+    /// was on top, but it stranded every sibling. Embedded in a larger crux the
+    /// debris shifted the enclosing instruction's arguments, which is how a
+    /// `.vecDoubleCut` pair silently fed the wrong operands to
+    /// `.vecDoubleReplaceSubVec`.
+    @Test func `a selected result leaves nothing behind`() {
+        let source: [any Item] = [VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll)]
+
+        for produced in 0..<3 {
+            let crux = Behavior.selecting(produced, of: 3, on: .int, from: source)
+            let redo = Interpreter()
+            redo.load(program: crux)
+            redo.run()
+            #expect(redo.stacks[.int]!.count == 1,
+                    "selecting(\(produced), of: 3) left \(stackString(redo, .int)) on .int")
+            // `pushAll` lands front-to-back (Design Principles §6), so 10 is
+            // deepest — and the deepest is `producedAt` 0, the first produced.
+            #expect((redo.stacks[.int]!.first as? IntItem)?.value == [10, 20, 30][produced],
+                    "selecting(\(produced), of: 3) surfaced the wrong one")
+        }
     }
 
     /// The instruction a law-5 record leans on. It had no test of its own.

@@ -62,8 +62,9 @@ struct CutTests {
     @Test mutating func `both vecInt pieces reproduce from their crux`() {
         let (deep, top) = cut(VecIntItem([1, 2, 3, 4, 5]), at: 2, .vecIntCut, on: .vecInt)
 
-        // The top piece records just the cut; the deep one records the discard.
-        #expect(callString(top) == "( [1, 2, 3, 4, 5] 2 .vecIntCut )")
+        // Each piece clears the other: the deep one pops the suffix off the top,
+        // the top one lifts the prefix out from under itself and pops that.
+        #expect(callString(top) == "( [1, 2, 3, 4, 5] 2 .vecIntCut .vecIntSwap .vecIntPop )")
         #expect(callString(deep) == "( [1, 2, 3, 4, 5] 2 .vecIntCut 1 .vecIntPopItems )")
 
         #expect(reproduced(top, on: .vecInt)?.pretty() == "[3, 4, 5]")
@@ -97,7 +98,7 @@ struct CutTests {
         #expect((top as? VecIntItem)?.value == [3, 4, 5])
         // And the crux records the *given* index, not the reduced one — it re-runs
         // through the same modulo, so it reproduces without pre-reducing.
-        #expect(callString(top) == "( [1, 2, 3, 4, 5] 7 .vecIntCut )")
+        #expect(callString(top) == "( [1, 2, 3, 4, 5] 7 .vecIntCut .vecIntSwap .vecIntPop )")
         #expect(reproduced(top, on: .vecInt)?.pretty() == "[3, 4, 5]")
     }
 
@@ -139,11 +140,6 @@ struct CutTests {
         #expect((top as? VecIntItem)?.value == [42])
     }
 
-    @Test mutating func `contingency propagates to both pieces`() {
-        let (deep, top) = cut(VecIntItem([1, 2, 3], isContingent: true), at: 1, .vecIntCut, on: .vecInt)
-        #expect(deep.isContingent)
-        #expect(top.isContingent)
-    }
 
 
     // MARK: - the other three vector types
@@ -200,7 +196,7 @@ struct CutTests {
 
     @Test mutating func `both string pieces reproduce from their crux`() {
         let (deep, top) = cut(StringItem("hello"), at: 2, .stringCut, on: .string)
-        #expect(callString(top) == "( \"hello\" 2 .stringCut )")
+        #expect(callString(top) == "( \"hello\" 2 .stringCut .stringSwap .stringPop )")
         #expect(callString(deep) == "( \"hello\" 2 .stringCut 1 .stringPopItems )")
         #expect(reproduced(top, on: .string)?.pretty() == "\"llo\"")
         #expect(reproduced(deep, on: .string)?.pretty() == "\"he\"")

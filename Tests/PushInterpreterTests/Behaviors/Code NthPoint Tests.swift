@@ -70,11 +70,4 @@ struct CodeNthPointTests {
         #expect(stackString(inty, .int) == "[ 0 ]")
     }
 
-    @Test func `contingency propagates from the tree or the index`() {
-        let inty = Interpreter()
-        inty.stacks[.code]!.prepend(CodeItem([IntItem(9)], isContingent: true))
-        inty.stacks[.int]!.prepend(IntItem(0))
-        doThis(.codeNthPoint, to: inty)
-        #expect(topItem(inty, .code).isContingent)
-    }
 }

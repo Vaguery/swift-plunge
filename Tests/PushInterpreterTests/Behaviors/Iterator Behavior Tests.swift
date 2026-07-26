@@ -283,9 +283,17 @@ struct IteratorBehaviorTests {
         doThis(.iteratorPeekStride, to: inty)
 
         let stride = topItem(inty, .int)
-        #expect(stride.call.count == 2)
-        #expect(stride.call.last as? InstructionItem == InstructionItem(.iteratorPeekStride))
+        // `«iter» .iteratorPeekStride 1 .iteratorPopItems` — the getter hands the
+        // iterator back, so the crux pops it and the fragment leaves only the fact.
+        #expect(stride.call.count == 4)
+        #expect(stride.call[1] as? InstructionItem == InstructionItem(.iteratorPeekStride))
+        #expect(stride.call.last as? InstructionItem == InstructionItem(.iteratorPopItems))
         #expect((rerunTop(stride.crux(), on: .int) as? IntItem)?.value == 3)
+
+        let redo = Interpreter()
+        redo.load(program: stride.crux())
+        redo.run()
+        #expect(redo.stacks[.iterator]!.isEmpty, "the crux leaves no iterator behind")
     }
 
 

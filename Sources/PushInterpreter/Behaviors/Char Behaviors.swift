@@ -28,9 +28,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .charFromDouble: \(x.value) → Int",
-                                call: [x, InstructionItem(.charFromDouble)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.charFromDouble)])
                         )
                     ]
                 }
@@ -41,9 +39,7 @@ nonisolated extension Interpreter {
                         .char,
                         CharItem(
                             c,
-                            call: [x, InstructionItem(.charFromDouble)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.charFromDouble)])
                     )
                 ]
             }
@@ -62,9 +58,7 @@ nonisolated extension Interpreter {
                         .char,
                         CharItem(
                             c,
-                            call: [x, InstructionItem(.charFromInt)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.charFromInt)])
                     )
                 ]
             }
@@ -81,9 +75,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)]))
                     )
                 ]
             }
@@ -100,9 +92,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)]))
                     )
                 ]
             }
@@ -119,9 +109,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWholeNumber,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)]),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)]))
                     )
                 ]
             }
@@ -138,9 +126,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isLetter,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)]),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)]))
                     )
                 ]
             }
@@ -157,9 +143,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWhitespace,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)]),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)]))
                     )
                 ]
             }
@@ -176,9 +160,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)]))
                     )
                 ]
             }
@@ -195,9 +177,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)]))
                     )
                 ]
             }

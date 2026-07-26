@@ -27,12 +27,6 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .bool) == "[ false true ]")
     }
 
-    @Test func `loadBools sets contingency`() {
-        loadBools(inty, bools: [false, true], contingent: [1])
-        #expect(stackString(inty, .bool) == "[ false true ]")
-        #expect(probeItemOnStack(inty,.bool,index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty,.bool,index:1)!.isContingent == true)
-    }
 
     // MARK: loadChars tests
 
@@ -46,12 +40,6 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .char) == "[ 'b' 'a' ]")
     }
 
-    @Test func `loadChars sets contingency`() {
-        loadChars(inty, chars: ["b", "a"], contingent: [1])
-        #expect(stackString(inty, .char) == "[ 'b' 'a' ]")
-        #expect(probeItemOnStack(inty,.char,index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty,.char,index:1)!.isContingent == true)
-    }
 
     // MARK: loadDoubles tests
 
@@ -65,12 +53,6 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .double) == "[ 2.0 3.4 5.67 ]")
     }
 
-    @Test func `loadDoubles sets contingency`() {
-        loadDoubles(inty, doubles: [2, 3.4, 5.67], contingent: [1])
-        #expect(stackString(inty, .double) == "[ 2.0 3.4 5.67 ]")
-        #expect(probeItemOnStack(inty,.double,index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty,.double,index:1)!.isContingent == true)
-    }
 
     // MARK: loadInts tests
 
@@ -84,12 +66,6 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .int) == "[ 2 3 5 ]")
     }
 
-    @Test func `loadInts sets contingency`() {
-        loadInts(inty, ints: [2, 3, 5], contingent: [1])
-        #expect(stackString(inty, .int) == "[ 2 3 5 ]")
-        #expect(probeItemOnStack(inty,.int,index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty,.int,index:1)!.isContingent == true)
-    }
 
     // MARK: loadStrings tests
 
@@ -103,12 +79,6 @@ struct IntyStackSetupTests {
         #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
     }
 
-    @Test func `loadStrings sets contingency`() {
-        loadStrings(inty, strings: ["2", "purple", "(ツ)"], contingent: [1])
-        #expect(stackString(inty, .string) == "[ \"2\" \"purple\" \"(ツ)\" ]")
-        #expect(probeItemOnStack(inty,.string,index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty,.string,index:1)!.isContingent == true)
-    }
     // MARK: loadCode tests
 
     @Test func `loadCode setup`() {
@@ -125,13 +95,6 @@ struct IntyStackSetupTests {
         #expect((top.value[0] as! IntItem).value == 1)
     }
 
-    @Test func `loadCode sets contingency`() {
-        loadCode(inty, code: [1, 2.2, "foo", ["a","b"]], contingent: [1])
-        #expect(stackString(inty, .code) ==
-                "[ ( 1 ) ( 2.2 ) ( \"foo\" ) ( [\"a\", \"b\"] ) ]")
-        #expect(probeItemOnStack(inty, .code, index:0)!.isContingent == false)
-        #expect(probeItemOnStack(inty, .code, index:1)!.isContingent == true)
-    }
 
     @Test func `loadCode works on nested CodeItems`() {
         loadCode(inty, code: [ [ 1, false, [2, 3.4, [5.6, true] ] ] ] )

@@ -83,6 +83,25 @@ func brokenClaim(
     guard again == CodeItem(crux).pretty() else {
         return "crux is not a fixed point: re-running it yields \(again)"
     }
+    // The composition invariant (Design Principles §1): a fragment leaves its
+    // value and nothing else. Checking only `.first` above is what let the
+    // multi-result stranding bug hide — the wanted value was on top *and* its
+    // sibling was underneath, which reads as a pass.
+    //
+    // `.error` is ignored (a crux may legitimately re-raise), and a run that did
+    // not drain `.exec` was cut short by the step limit rather than leaving
+    // debris, so it is not judged.
+    if redo.stacks[.exec]!.isEmpty {
+        var debris: [String] = []
+        for stack in PushStack.allStacks where stack != .error {
+            let found = redo.stacks[stack]!.count
+            let wanted = (stack == resting) ? 1 : 0
+            if found != wanted { debris.append(".\(stack) holds \(found), wanted \(wanted)") }
+        }
+        if !debris.isEmpty {
+            return "crux leaves debris — " + debris.joined(separator: "; ")
+        }
+    }
     return nil
 }
 

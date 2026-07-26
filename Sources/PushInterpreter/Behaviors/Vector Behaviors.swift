@@ -12,7 +12,7 @@ import DequeModule
 // and construct new scalar Items generically
 nonisolated protocol ScalarItem: Item {
     static var pushStack: PushStack { get }
-    init(_ value: Value, call: [any Item], isContingent: Bool)
+    init(_ value: Value, call: [any Item])
 }
 
 nonisolated extension BoolItem: ScalarItem {
@@ -38,7 +38,7 @@ nonisolated protocol VectorItem: Item where Value == [Element] {
     associatedtype Element
     associatedtype Scalar: ScalarItem where Scalar.Value == Element
     static var pushStack: PushStack { get }
-    init(_ value: [Element], call: [any Item], isContingent: Bool)
+    init(_ value: [Element], call: [any Item])
 }
 
 nonisolated extension VecBoolItem: VectorItem {
@@ -77,9 +77,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             x.value.dropLast(1),
-                            call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -100,9 +98,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [x, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -121,9 +117,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             y.value + x.value,
-                            call: [y, x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -146,9 +140,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 1],
                                 producing: .bool,
                                 from: [x, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            ))
                     )
                 ]
             }
@@ -172,9 +164,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 1],
                                 producing: .int,
                                 from: [x, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            ))
                     )
                 ]
             }
@@ -193,9 +183,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             Array(x.value.dropFirst(1)),
-                            call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -214,9 +202,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             Array(x.value.reversed()),
-                            call: [x, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -239,9 +225,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [x, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -264,9 +248,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [x, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -291,9 +273,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .bool,
                                 from: [x, y, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            ))
                     )
                 ]
             }
@@ -313,9 +293,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(instruction)])
                         )
                     ]
                 } else {
@@ -338,9 +316,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(instruction)])
                         )
                     ]
                 } else {
@@ -371,9 +347,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, y, InstructionItem(instruction)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [x, y, InstructionItem(instruction)])
                         )
                     ]
                 }
@@ -399,9 +373,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .int,
                                 from: [x, y, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            ))
                     )
                 ]
             }
@@ -426,9 +398,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .int,
                                 from: [x, y, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            ))
                     )
                 ]
             }
@@ -463,9 +433,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 2],
                                 producing: .bool,
                                 from: [y, x, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            ))
                     )
                 ]
             }
@@ -522,9 +490,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 2],
                                 producing: .bool,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: hay, needle)
-                        )
+                            ))
                     )
                 ]
             }
@@ -547,9 +513,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 2],
                                 producing: .int,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: hay, needle)
-                        )
+                            ))
                     )
                 ]
             }
@@ -572,9 +536,7 @@ nonisolated extension Interpreter {
                                 [V.pushStack: 2],
                                 producing: .int,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ),
-                            isContingent: Behavior.netContingency(of: hay, needle)
-                        )
+                            ))
                     )
                 ]
             }
@@ -596,9 +558,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
-                            call: [subject, needle, repl, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: subject, needle, repl)
-                        )
+                            call: [subject, needle, repl, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -618,9 +578,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
-                            call: [subject, needle, repl, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: subject, needle, repl)
-                        )
+                            call: [subject, needle, repl, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -665,9 +623,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [x, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -690,9 +646,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [x, z, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -718,9 +672,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [x, z, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -748,9 +700,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [x, z, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -782,9 +732,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [x, z, y, InstructionItem(instruction)])
                     )
                 ]
             }
@@ -826,19 +774,14 @@ nonisolated extension Interpreter {
                 let prefix = Array(x.value[0..<idx])
                 let suffix = Array(x.value[idx...])
                 let source: [any Item] = [x, y, InstructionItem(instruction)]
-                let contingent = Behavior.netContingency(of: x, y)
 
                 return [
                     Router(V.pushStack, V(
                         prefix,
-                        call: Behavior.selecting(0, of: 2, on: V.pushStack, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(0, of: 2, on: V.pushStack, from: source))),
                     Router(V.pushStack, V(
                         suffix,
-                        call: Behavior.selecting(1, of: 2, on: V.pushStack, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(1, of: 2, on: V.pushStack, from: source))),
                 ]
             }
         )
@@ -922,10 +865,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: record,
-                            isContingent: template.isContingent
-                                || elements.contains { $0.isContingent }
-                        )
+                            call: record)
                     )
                 ]
             }
@@ -988,9 +928,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: snapshotCrux(elements, readInstruction: instruction, making: V.self),
-                            isContingent: elements.contains { $0.isContingent }
-                        )
+                            call: snapshotCrux(elements, readInstruction: instruction, making: V.self))
                     )
                 ]
             }
@@ -998,9 +936,9 @@ nonisolated extension Interpreter {
     }
 
     /// Read the **whole** `X` stack into a new vector, leaving it in place. An
-    /// empty stack gives an empty vector. The result is **contingent** — it
-    /// depended on the entire stack's arrangement (like `StackDepth`) — and its
-    /// crux reconstructs via `readItems`, so it stays composable.
+    /// empty stack gives an empty vector. The result depends on the entire
+    /// stack's arrangement (like `StackDepth`), and its crux reconstructs via
+    /// `readItems`, so it stays composable.
     static func readStackBehavior<V: VectorItem>(
         _ instruction: PushInstruction,
         readItemsInstruction: PushInstruction,
@@ -1020,9 +958,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self),
-                            isContingent: true
-                        )
+                            call: snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self))
                     )
                 ]
             }
@@ -1761,8 +1697,16 @@ nonisolated extension Interpreter {
         takes: [.iterator],
         fxn: { a in
             let iterator = a[0] as! IteratorItem
-            let record: [any Item] = [iterator, InstructionItem(.vecFromIterator)]
-            let contingent = Behavior.netContingency(of: iterator)
+            // As `.codeFromIterator`: a success ends the loop and the farewell
+            // hands the body back to `.code`, so the crux must pop it or the
+            // fragment litters a stack it never landed on (Design Principles §1).
+            // A plain pop suffices here, unlike `.codeFromIterator` — a vector
+            // rests on a vec stack, never on `.code`, so the body is on top of
+            // `.code` with nothing of ours beneath it.
+            let produced: [any Item] = [iterator, InstructionItem(.vecFromIterator)]
+            let record: [any Item] = iterator.body == nil
+                ? produced
+                : produced + [IntItem(1), InstructionItem(PushStack.code.popItemsInstruction)]
 
             func refuse(_ why: String) -> [Router] {
                 [
@@ -1779,13 +1723,13 @@ nonisolated extension Interpreter {
 
             let collected: (any Item)? =
                 if let values = items as? [BoolItem] {
-                    VecBoolItem(values.map(\.value), call: record, isContingent: contingent)
+                    VecBoolItem(values.map(\.value), call: record)
                 } else if let values = items as? [IntItem] {
-                    VecIntItem(values.map(\.value), call: record, isContingent: contingent)
+                    VecIntItem(values.map(\.value), call: record)
                 } else if let values = items as? [DoubleItem] {
-                    VecDoubleItem(values.map(\.value), call: record, isContingent: contingent)
+                    VecDoubleItem(values.map(\.value), call: record)
                 } else if let values = items as? [StringItem] {
-                    VecStringItem(values.map(\.value), call: record, isContingent: contingent)
+                    VecStringItem(values.map(\.value), call: record)
                 } else {
                     nil
                 }

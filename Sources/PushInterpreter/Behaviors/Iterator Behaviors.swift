@@ -52,8 +52,7 @@ nonisolated extension Interpreter {
         }
 
         if let body = iterator.body {
-            var bodyCopy = body
-            bodyCopy.isContingent = Behavior.netContingency(of: iterator, body)
+            let bodyCopy = body
             results.append(Router(.exec, InstructionItem(.codeDo)))
             results.append(Router(.exec, bodyCopy))
         }
@@ -158,7 +157,7 @@ nonisolated extension Interpreter {
                 }
 
                 bury(
-                    InstructionItem(.iteratorPlay, isContingent: iterator.isContingent),
+                    InstructionItem(.iteratorPlay),
                     iterator.burial,
                     under: payload,
                     in: interpreter
@@ -207,7 +206,7 @@ nonisolated extension Interpreter {
                 // The continuation is a plain `.iteratorPlay`: it will read the
                 // burial now stored on the iterator, and consume no more ints.
                 bury(
-                    InstructionItem(.iteratorPlay, isContingent: iterator.isContingent),
+                    InstructionItem(.iteratorPlay),
                     burial,
                     under: payload,
                     in: interpreter
@@ -281,13 +280,19 @@ nonisolated extension Interpreter {
     /// The one getter that records provenance: there is no contained item to hand
     /// back, so the `IntItem` really is produced here, from the iterator, and law 3
     /// applies — argument first, instruction last.
+    ///
+    /// It records through `reading` because the getter hands its iterator back: a
+    /// bare `«iter» .iteratorPeekStride` reproduces the stride *and* leaves the
+    /// iterator on `.iterator`, which a same-stack sibling would then read. The
+    /// crux pops it, so the fragment leaves only the fact (Design Principles §1).
     static let iteratorPeekStride_Behavior =
         iteratorGetter_Behavior(.iteratorPeekStride) { iterator in
             IntItem(
                 iterator.stride,
-                call: [iterator, InstructionItem(.iteratorPeekStride)],
-                isContingent: iterator.isContingent
-            )
+                call: Behavior.reading(
+                    [.iterator: 1],
+                    producing: .int,
+                    from: [iterator, InstructionItem(.iteratorPeekStride)]))
         }
 
     /// The block this iterator emits each pass. Lands on `.code` as data — running
@@ -300,14 +305,16 @@ nonisolated extension Interpreter {
     ///
     /// Records like `.iteratorPeekStride`, and for the same reason: there is no
     /// contained item to hand back, so the `IntItem` really is produced here and
-    /// law 3 applies.
+    /// law 3 applies — including the `reading` cleanup that pops the iterator the
+    /// getter hands back.
     static let iteratorPeekLaps_Behavior =
         iteratorGetter_Behavior(.iteratorPeekLaps) { iterator in
             IntItem(
                 iterator.laps,
-                call: [iterator, InstructionItem(.iteratorPeekLaps)],
-                isContingent: iterator.isContingent
-            )
+                call: Behavior.reading(
+                    [.iterator: 1],
+                    producing: .int,
+                    from: [iterator, InstructionItem(.iteratorPeekLaps)]))
         }
 
 
@@ -357,7 +364,6 @@ nonisolated extension Interpreter {
                 }
 
                 iterator.call = iterator.reconstruction()
-                iterator.isContingent = Behavior.netContingency(of: iterator, a[0])
                 return iteratorBuilt(iterator)
             }
         )
@@ -526,11 +532,7 @@ nonisolated extension Interpreter {
                     call: [
                         origin, destination, stride, cursor, burial, emits, body,
                         InstructionItem(.iteratorFromIntRange),
-                    ],
-                    isContingent: Behavior.netContingency(
-                        of: origin, destination, stride, cursor, burial, emits, body
-                    )
-                )
+                    ])
                 return iteratorBuilt(iterator)
             }
         )
@@ -570,11 +572,7 @@ nonisolated extension Interpreter {
                     call: [
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
-                    ],
-                    isContingent: Behavior.netContingency(
-                        of: origin, cursor, burial, emits, body
-                    )
-                )
+                    ])
                 return iteratorBuilt(iterator)
             }
         )
@@ -635,11 +633,7 @@ nonisolated extension Interpreter {
                     call: [
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
-                    ],
-                    isContingent: Behavior.netContingency(
-                        of: origin, cursor, burial, emits, body
-                    )
-                )
+                    ])
                 return iteratorBuilt(iterator)
             }
         )
@@ -670,9 +664,7 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [origin, cursor, burial, emits, body, InstructionItem(instruction)],
-                    isContingent: Behavior.netContingency(of: origin, cursor, burial, emits, body)
-                )
+                    call: [origin, cursor, burial, emits, body, InstructionItem(instruction)])
                 return iteratorBuilt(iterator)
             }
         )
@@ -722,11 +714,7 @@ nonisolated extension Interpreter {
                     call: [
                         box, count, cursor, burial,
                         InstructionItem(name),
-                    ],
-                    isContingent: Behavior.netContingency(
-                        of: box, count, cursor, burial
-                    )
-                )
+                    ])
                 return iteratorBuilt(iterator)
             }
         )

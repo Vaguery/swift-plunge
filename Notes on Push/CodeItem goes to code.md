@@ -94,6 +94,7 @@ ask for it.
 
 It should carry over `unwrapCodeItem`'s contingency propagation (`copy.isContingent =
 netContingency(of: code, copy)`), which is the only thing that function does besides spreading.
+*(Moot as of the `.isContingent` removal — Roadmap.md §23a. `.codeDo` now only spreads.)*
 
 **Provenance:** `.codeDo` is combinatory. It moves items from a block to `.exec` without changing any
 value, so law 1 applies and it records nothing. The items it spreads keep the `call` they already had —
@@ -206,6 +207,8 @@ it never changes the `.value` of what it holds, so containment contributes nothi
 `unwrapCodeItem` already behaves this way today by dropping the wrapper's `call`; `.codeDo` inherits the
 behaviour along with the code, and also inherits the contingency propagation
 (`copy.isContingent = netContingency(of: code, copy)`), which is the only other thing that function does.
+*(That second half is moot as of the `.isContingent` removal — Roadmap.md §23a. Law 1b, the part that
+matters, is unaffected.)*
 
 Worth noting what the erasure means: after `( 1 2 ) ( 3 ) .codeAppend .codeDo`, the contents `1 2 3` do
 **not** record `.codeAppend`. That is correct — `1` was always `1`; it did not come from an append. The
@@ -276,8 +279,11 @@ design predicted it.
 
 **Contingency moved with the arguments.** A contingent *item* used to be the argument. Wrapped in a
 block it is now the block's *content*, where `netContingency` over the arguments cannot see it — so
-"a contingent code argument" means a contingent **block** now. Every test that seeded one needed that
-adjustment. Worth remembering when writing new ones.
+"a contingent code argument" meant a contingent **block**, and every test that seeded one needed that
+adjustment. *(Overtaken: `.isContingent` has since been removed entirely — Roadmap.md §23a — and the
+tests that seeded contingent blocks are gone with it. Recorded because the same shape will recur for
+anything else that propagates across arguments: wrapping a value in a block hides it from any rule that
+reads the argument list.)*
 
 ## The `.codeDo` design held
 

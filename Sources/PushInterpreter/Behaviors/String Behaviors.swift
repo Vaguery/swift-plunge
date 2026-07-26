@@ -20,9 +20,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(1)),
-                            call: [x, InstructionItem(.stringButLast)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.stringButLast)])
                     )
                 ]
             }
@@ -39,9 +37,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + x.value,
-                            call: [y, x, InstructionItem(.stringConcat)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.stringConcat)])
                     )
                 ]
             }
@@ -58,9 +54,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + String(x.value),
-                            call: [y, x, InstructionItem(.stringConjChar)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.stringConjChar)])
                     )
                 ]
             }
@@ -81,9 +75,7 @@ nonisolated extension Interpreter {
                             // resolved to different overloads across Foundation
                             // / module contexts once this code left the app target.
                             y.value.firstRange(of: x.value) != nil,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)]))
                     )
                 ]
             }
@@ -100,9 +92,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.contains(y.value),
-                            call: Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)]))
                     )
                 ]
             }
@@ -128,9 +118,7 @@ nonisolated extension Interpreter {
                                 [.string: 1, .char: 1],
                                 producing: .int,
                                 from: [y, x, InstructionItem(.stringIndexOfChar)]
-                            ),
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                            ))
                         )
                     ]
                 } else {
@@ -153,9 +141,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(toDrop)),
-                            call: [y, x, InstructionItem(.stringDrop)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.stringDrop)])
                     )
                 ]
             }
@@ -175,9 +161,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.prefix(toTake)),
-                            call: [y, x, InstructionItem(.stringTake)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.stringTake)])
                     )
                 ]
             }
@@ -194,9 +178,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)]),
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)]))
                     )
                 ]
             }
@@ -214,9 +196,7 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 c,
-                                call: [x, InstructionItem(.stringFirst)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.stringFirst)])
                         )
                     ]
                 } else {
@@ -237,9 +217,7 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 c,
-                                call: [x, InstructionItem(.stringLast)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.stringLast)])
                         )
                     ]
                 } else {
@@ -259,9 +237,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)]))
                     )
                 ]
             }
@@ -278,9 +254,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)]))
                     )
                 ]
             }
@@ -297,9 +271,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)]))
                     )
                 ]
             }
@@ -316,9 +288,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)]))
                     )
                 ]
             }
@@ -335,9 +305,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.reversed()),
-                            call: [x, InstructionItem(.stringReverse)],
-                            isContingent: Behavior.netContingency(of: x, )
-                        )
+                            call: [x, InstructionItem(.stringReverse)])
                     )
                 ]
             }
@@ -354,9 +322,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.count,
-                            call: Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)]),
-                            isContingent: Behavior.netContingency(of: x, )
-                        )
+                            call: Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)]))
                     )
                 ]
             }
@@ -373,9 +339,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromBool)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.stringFromBool)])
                     )
                 ]
             }
@@ -392,9 +356,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromChar)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.stringFromChar)])
                     )
                 ]
             }
@@ -411,9 +373,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromDouble)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.stringFromDouble)])
                     )
                 ]
             }
@@ -430,9 +390,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromInt)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.stringFromInt)])
                     )
                 ]
             }
@@ -470,9 +428,7 @@ nonisolated extension Interpreter {
                                 // value. The fuzzer found it; see "Design
                                 // Principles.md" on argument order being free only
                                 // *across* stacks.
-                                call: [x, y, InstructionItem(.stringNth)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [x, y, InstructionItem(.stringNth)])
                         )
                     ]
                 }
@@ -521,7 +477,6 @@ nonisolated extension Interpreter {
                                 producing: .int,
                                 from: [y, x, InstructionItem(.stringOccurrencesOfChar)]
                             ),
-                            isContingent: Behavior.netContingency(of: x, y),
                         )
                     )
                 ]
@@ -540,7 +495,6 @@ nonisolated extension Interpreter {
                         StringItem(
                             x.value.filter({ $0 != y.value }),
                             call: [y, x, InstructionItem(.stringRemoveChar)],
-                            isContingent: Behavior.netContingency(of: x, y),
                         )
                     )
                 ]
@@ -570,7 +524,6 @@ nonisolated extension Interpreter {
                             call: [
                                 z, y, x, InstructionItem(.stringReplaceChar),
                             ],
-                            isContingent: Behavior.netContingency(of: x, y, z),
                         )
                     )
                 ]
@@ -600,7 +553,6 @@ nonisolated extension Interpreter {
                                 z, y, x,
                                 InstructionItem(.stringReplaceFirstChar),
                             ],
-                            isContingent: Behavior.netContingency(of: x, y, z),
                         )
                     )
                 ]
@@ -625,7 +577,6 @@ nonisolated extension Interpreter {
                         StringItem(
                             z.value.replacing(y.value, with: x.value),
                             call: [z, y, x, InstructionItem(.stringReplace)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
                         )
                     )
                 ]
@@ -652,7 +603,6 @@ nonisolated extension Interpreter {
                                 maxReplacements: 1
                             ),
                             call: [z, y, x, InstructionItem(.stringReplaceFirst)],
-                            isContingent: Behavior.netContingency(of: x, y, z),
                         )
                     )
                 ]
@@ -672,7 +622,6 @@ nonisolated extension Interpreter {
                         StringItem(
                             result,
                             call: [x, InstructionItem(.stringRest)],
-                            isContingent: Behavior.netContingency(of: x),
                         )
                     )
                 ]
@@ -703,9 +652,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             result,
-                            call: [z, y, x, InstructionItem(.stringSetChar)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [z, y, x, InstructionItem(.stringSetChar)])
                     )
                 ]
             }
@@ -759,9 +706,7 @@ nonisolated extension Interpreter {
                             String(words[idx]),
                             // `[string, index]`, matching `stringNth` and the four
                             // `vecXNth` siblings.
-                            call: [x, y, InstructionItem(.stringNthWord)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [x, y, InstructionItem(.stringNthWord)])
                     )
                 ]
             }
@@ -789,18 +734,13 @@ nonisolated extension Interpreter {
                 let cut = x.value.index(x.value.startIndex, offsetBy: idx)
 
                 let source: [any Item] = [x, y, InstructionItem(.stringCut)]
-                let contingent = Behavior.netContingency(of: x, y)
                 return [
                     Router(.string, StringItem(
                         String(x.value[..<cut]),
-                        call: Behavior.selecting(0, of: 2, on: .string, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(0, of: 2, on: .string, from: source))),
                     Router(.string, StringItem(
                         String(x.value[cut...]),
-                        call: Behavior.selecting(1, of: 2, on: .string, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(1, of: 2, on: .string, from: source))),
                 ]
             }
         )
@@ -831,9 +771,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(slice),
-                            call: [x, z, y, InstructionItem(.stringSubstring)],
-                            isContingent: Behavior.netContingency(of: x, y, z)
-                        )
+                            call: [x, z, y, InstructionItem(.stringSubstring)])
                     )
                 ]
             }

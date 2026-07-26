@@ -23,7 +23,6 @@ nonisolated extension Interpreter {
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
                 var bodyCopy = body
-                bodyCopy.isContingent = x.isContingent
 
                 // Always runs the body at least once — `.exec` top→bottom is
                 // body, .codeDo.
@@ -36,15 +35,12 @@ nonisolated extension Interpreter {
                     // …then re-supplies the body to `.code` and hands off to
                     // `.execWhile`, which consults the next BOOL.
                     var yCopy2 = body
-                    yCopy2.isContingent = Behavior.netContingency(of:x,body)
 
                     results.insert(
                         Router(
                             .exec,
                             InstructionItem(
-                                .execWhile,
-                                isContingent: x.isContingent
-                            )
+                                .execWhile)
                         ),
                         at: 0
                     )
@@ -84,7 +80,6 @@ nonisolated extension Interpreter {
                 }
 
                 var origin = IntItem(0)
-                origin.isContingent = Behavior.netContingency(of: x)
 
                 return iteratorLoop(
                     kind: .counting(stride: 1),
@@ -114,7 +109,6 @@ nonisolated extension Interpreter {
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
                 var bodyCopy = body
-                bodyCopy.isContingent = Behavior.netContingency(of: x, body)
 
                 guard x.value >= 1 else {
                     // No iteration: the body is returned to where it came from,
@@ -124,7 +118,6 @@ nonisolated extension Interpreter {
                 }
 
                 var origin = IntItem(0)
-                origin.isContingent = Behavior.netContingency(of: x)
 
                 // Identical to `.execDoCount`'s iterator but for `emits`, which is
                 // the whole of the difference between the two instructions. `x` is
@@ -166,7 +159,6 @@ nonisolated extension Interpreter {
                 let (x, y, body) = (a[0] as! IntItem, a[1] as! IntItem, a[2] as! CodeItem)
 
                 var bodyCopy = body
-                bodyCopy.isContingent = Behavior.netContingency(of: x, y)
 
                 // The stride is the direction to travel, and equal bounds are a
                 // single pass either way.
@@ -200,20 +192,16 @@ nonisolated extension Interpreter {
         body: CodeItem?,
         emits: Bool
     ) -> [Router] {
-        let contingent = body.map { Behavior.netContingency(of: origin, $0) }
-            ?? origin.isContingent
         var iterator = IteratorItem(
             kind: kind,
             origin: origin,
             destination: destination,
             body: body,
-            emits: emits,
-            isContingent: contingent
-        )
+            emits: emits)
         iterator.call = iterator.reconstruction()
 
         return [
-            Router(.exec, InstructionItem(.iteratorPlay, isContingent: contingent)),
+            Router(.exec, InstructionItem(.iteratorPlay)),
             Router(.iterator, iterator),
         ]
     }
@@ -240,7 +228,6 @@ nonisolated extension Interpreter {
                 // a[2] is `then`.
                 let (x, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
                 var result = x.value ? thenBlock : elseBlock
-                result.isContingent = x.isContingent
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, result),
@@ -298,9 +285,7 @@ nonisolated extension Interpreter {
             // Each of the four runs needs its own `.codeDo`, since `.exec`
             // top→bottom is x, z, y, z and every one of them is a block. The
             // `(y z)` grouping flattens harmlessly: `.exec` is flat, so `x z (y z)`
-            // and `x z y z` execute identically. The copies carry the net
-            // contingency of all three arguments, as they did when unwrapping
-            // spread the wrapper's contingency onto its children.
+            // and `x z y z` execute identically.
             fxn: { a in
                 // Written `x y z .execS`, so off `.code` the top is z — see the
                 // note on `execIf` about the order reversing with the move from
@@ -308,9 +293,7 @@ nonisolated extension Interpreter {
                 let (x, y, z) = (a[2], a[1], a[0])
 
                 var yCopy = y
-                yCopy.isContingent = Behavior.netContingency(of: x, y, z)
                 var zCopy = z
-                zCopy.isContingent = Behavior.netContingency(of: x, y, z)
 
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
@@ -336,7 +319,6 @@ nonisolated extension Interpreter {
                 var results = [Router]()
 
                 if x.value {
-                    body.isContingent = Behavior.netContingency(of: x, body)
                     results = [
                         Router(.exec, InstructionItem(.codeDo)),
                         Router(.exec, body),
@@ -363,18 +345,14 @@ nonisolated extension Interpreter {
 
                 if x.value {
                     var bodyCopy = body
-                    bodyCopy.isContingent = x.isContingent
 
                     var yCopy2 = body
-                    yCopy2.isContingent = x.isContingent
 
                     results = [
                         Router(
                             .exec,
                             InstructionItem(
-                                .execWhile,
-                                isContingent: x.isContingent
-                            )
+                                .execWhile)
                         ),
                         Router(.exec, yCopy2),
                         Router(.exec, InstructionItem(.codeDo)),

@@ -147,4 +147,77 @@ struct CompositionInvariantTests {
         #expect(after[.int] == "[ 5 ]")
         #expect(after[.vecInt] == "[ ]", "the length's crux left no vector behind")
     }
+
+
+    // MARK: - The invariant, swept across the whole language
+    //
+    // The tests above were written from the case that motivated the rule —
+    // non-destructive queries — and every one of them drives `.vecIntLength` or a
+    // sibling. That left the rule stated, tested, and still broken for three whole
+    // families, because nothing checked the instructions nobody had thought about:
+    //
+    //  - **multi-result behaviors** (`.vecXCut`, `.stringCut`, `.codeCutRootAtGap`)
+    //    stranded the sibling result the selector did not want;
+    //  - **the iterator collectors** (`.vecFromIterator`, `.codeFromIterator`) left
+    //    the body their farewell hands back to `.code`;
+    //  - **the recording peek getters** (`.iteratorPeekStride`, `.iteratorPeekLaps`)
+    //    left the iterator they hand back on `.iterator`.
+    //
+    // None of that was visible to the round-trip sweeps, which read only `.first`
+    // of the resting stack: a fragment that reproduces the right value *and* leaves
+    // debris passes them. Only the crux fuzzer composes fragments, and it is
+    // `.disabled` by default, so in practice nothing was watching.
+    //
+    // So the rule gets swept the same way the round-trip obligation does: drive
+    // every registered Behavior and check every claim it leaves. New instructions
+    // are covered the day they are added.
+
+    /// **Every** provenance claim in the language, checked against the invariant:
+    /// run the crux on a fresh interpreter, and the item's resting stack holds
+    /// exactly it, with every other stack empty.
+    @Test func `every recorded crux leaves its value and nothing else`() {
+        let harness = CruxRoundTripTests()
+        let (inputs, constants) = harness.bindings
+
+        var checked = 0
+        var offenders: [String] = []
+
+        for name in Interpreter.language.keys.sorted(by: { $0.rawValue < $1.rawValue }) {
+            let inty = harness.seeded()
+            Interpreter.language[name]!.act(on: inty)
+
+            for (item, resting) in harness.claimsWorthChecking(in: inty) {
+                checked += 1
+                let crux = item.crux()
+
+                let redo = Interpreter()
+                redo.config.stepLimit = 10_000
+                redo.load(inputs: inputs, constants: constants, program: crux)
+                redo.run(stepLimit: 10_000)
+
+                var debris: [String] = []
+                for stack in PushStack.allStacks {
+                    let found = redo.stacks[stack]!.count
+                    let wanted = (stack == resting) ? 1 : 0
+                    if found != wanted {
+                        debris.append(".\(stack) holds \(found), wanted \(wanted)")
+                    }
+                }
+                if !debris.isEmpty {
+                    offenders.append(
+                        ".\(name) → \(item.pretty()) on .\(resting)\n"
+                        + "    crux: \(CodeItem(crux).pretty())\n"
+                        + "    " + debris.joined(separator: "; ")
+                    )
+                }
+            }
+        }
+
+        for line in offenders.prefix(20) { print(line) }
+        #expect(offenders.isEmpty,
+                "\(offenders.count) of \(checked) recorded cruxes leave debris")
+        // Guards the sweep itself, as the round-trip sweep does: if seeding stopped
+        // satisfying behaviors, the check above would pass while testing nothing.
+        #expect(checked > 300, "sweep only checked \(checked) claims — is the seeding still working?")
+    }
 }

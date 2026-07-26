@@ -245,37 +245,51 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
 
 
 nonisolated extension Behavior {
-    static func netContingency(of items:(any Item)...) -> Bool {
-        return items.map({$0.isContingent}).contains(true)
-    }
-
-
     /// The `call` for one of several results a Behavior puts on a single stack —
     /// provenance law 5 (Items.swift).
     ///
     /// `producedAt` is the result's position in the Router order, `of` is how
     /// many of this Behavior's results land on `stack`, and `from` is the source
     /// that produces them all. Because `distribute` prepends Routers one at a
-    /// time, the first produced ends up deepest, so surfacing it takes
-    /// `total - 1 - producedAt` pops — counted from the END of the results, not
-    /// from the production order.
+    /// time, the first produced ends up deepest.
     ///
-    /// The pops are recorded as ordinary items in the returned `call`, which is
-    /// why `crux()` needs no special case for multi-result instructions: it
-    /// walks the array and each element speaks for itself. The topmost result
-    /// needs no discard and gets `source` unchanged.
+    /// Running `source` puts **every** sibling on the stack, so selecting one
+    /// means clearing the other `total - 1` — in both directions:
+    ///
+    ///  - the `total - 1 - producedAt` siblings produced *after* this one sit
+    ///    above it, and a plain `PopItems` takes them;
+    ///  - the `producedAt` siblings produced *before* it sit **below** it, where
+    ///    a pop cannot reach without taking the result first. Each is lifted past
+    ///    the result by a `swap` and then popped — the same idiom `reading` uses
+    ///    to clear a read argument out from under its own result.
+    ///
+    /// Clearing downward is what makes the fragment composable. Without it the
+    /// topmost result reproduced its own value correctly but left its siblings as
+    /// debris, so the fragment was only usable in isolation: embedded as an
+    /// argument, the stranded siblings shifted every argument position of the
+    /// enclosing instruction (the composition invariant, Design Principles §1).
+    ///
+    /// The cleanup is recorded as ordinary items in the returned `call`, which is
+    /// why `crux()` needs no special case for multi-result instructions: it walks
+    /// the array and each element speaks for itself.
     static func selecting(
         _ producedAt: Int,
         of total: Int,
         on stack: PushStack,
         from source: [any Item]
     ) -> [any Item] {
-        let pops = total - 1 - producedAt
-        guard pops > 0 else { return source }
-        return source + [
-            IntItem(pops),
-            InstructionItem(stack.popItemsInstruction),
-        ]
+        var result = source
+        let above = total - 1 - producedAt
+        if above > 0 {
+            result += [IntItem(above), InstructionItem(stack.popItemsInstruction)]
+        }
+        for _ in 0..<max(0, producedAt) {
+            result += [
+                InstructionItem(stack.swapInstruction),
+                InstructionItem(stack.popInstruction),
+            ]
+        }
+        return result
     }
 
 
@@ -296,7 +310,7 @@ nonisolated extension Behavior {
     /// returns an `.int`), the result sits on **top** of the arguments it read, so
     /// a plain `PopItems` would discard the result. There the crux instead swaps
     /// each argument up past the single result and pops it — `swap` moves items
-    /// without recording contingency, so the result survives untouched. Elsewhere
+    /// without recording anything, so the result survives untouched. Elsewhere
     /// the arguments are on top and a plain `PopItems` is enough.
     ///
     /// Live execution never runs any of this (the arguments were never removed);

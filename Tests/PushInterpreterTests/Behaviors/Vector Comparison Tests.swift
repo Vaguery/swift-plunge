@@ -66,13 +66,6 @@ struct VectorComparisonTests {
         #expect(redo.stacks[.vecInt]!.isEmpty, "the crux popped both operands")
     }
 
-    @Test func `contingency propagates from either operand`() {
-        let inty = Interpreter()
-        inty.stacks[.vecInt]!.prepend(contentsOf:
-            [VecIntItem([1]), VecIntItem([2], isContingent: true)] as [any Item])
-        doThis(.vecIntLTE, to: inty)
-        #expect(topItem(inty, .bool).isContingent)
-    }
 
     @Test func `vecDouble and vecString compare lexicographically too`() {
         let d = Interpreter()

@@ -14,12 +14,11 @@ struct InputBehaviorTests {
     
    let inty = Interpreter()
 
-    @Test func `input history is contingent`() {
+    @Test func `input records its history`() {
         inty.inputs[.input2] = IntItem(17)
         Interpreter.language[.input2]!.act(on: inty)
         let result = inty.stacks[.exec]!.popFirst()! as! IntItem
         #expect(!result.call.isEmpty)
-        #expect(result.isContingent == true)
         #expect(result.value == 17)
         #expect(result.pretty() == "17")
     }
@@ -41,6 +40,5 @@ struct InputBehaviorTests {
         // The unbound error records what the bound path would have: re-running
         // `.input3` against the same environment reproduces this error.
         #expect(callString(topItem(inty, .error)) == "( .input3 )")
-        #expect(topItem(inty, .error).isContingent == true)
     }
 }

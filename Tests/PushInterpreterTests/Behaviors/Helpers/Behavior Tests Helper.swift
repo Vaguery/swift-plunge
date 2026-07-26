@@ -75,12 +75,8 @@ public func callString(_ item: any Item) -> String {
 
 @MainActor
     public func loadBools(_ inty: Interpreter,
-                          bools: [Bool],
-                          contingent: [Int] = [] ) {
-        var newStack = bools.map({BoolItem($0)})
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+                          bools: [Bool]) {
+        let newStack = bools.map({BoolItem($0)})
         inty.stacks[.bool]!.prepend(contentsOf: newStack)
     }
 
@@ -89,12 +85,8 @@ public func callString(_ item: any Item) -> String {
 
 @MainActor
     public func loadChars(_ inty: Interpreter,
-                            chars: [String],
-                            contingent: [Int] = [] ) {
-        var newStack = chars.map({ $0.first! }).map({ $0 as Character }).map({ CharItem($0) })
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+                            chars: [String]) {
+        let newStack = chars.map({ $0.first! }).map({ $0 as Character }).map({ CharItem($0) })
         inty.stacks[.char]!.prepend(contentsOf: newStack)
     }
 
@@ -117,8 +109,7 @@ public func callString(_ item: any Item) -> String {
 ///
 @MainActor
     public func loadCode(_ inty: Interpreter,
-                            code: [Any],
-                            contingent: [Int] = [] ) {
+                            code: [Any]) {
 
         func codeLoaderParser(_ item: Any) -> CodeItem {
             let parsed = buildProgram( [item] )
@@ -133,10 +124,7 @@ public func callString(_ item: any Item) -> String {
             return result
         }
 
-        var newStack = code.map({ codeLoaderParser($0) })
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+        let newStack = code.map({ codeLoaderParser($0) })
         inty.stacks[.code]!.prepend(contentsOf: newStack)
     }
 
@@ -144,12 +132,8 @@ public func callString(_ item: any Item) -> String {
 
 @MainActor
     public func loadDoubles(_ inty: Interpreter,
-                            doubles: [Double],
-                            contingent: [Int] = [] ) {
-        var newStack = doubles.map({DoubleItem($0)})
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+                            doubles: [Double]) {
+        let newStack = doubles.map({DoubleItem($0)})
         inty.stacks[.double]!.prepend(contentsOf: newStack)
     }
 
@@ -157,12 +141,8 @@ public func callString(_ item: any Item) -> String {
 
 @MainActor
     public func loadInts(_ inty: Interpreter,
-                            ints: [Int],
-                            contingent: [Int] = [] ) {
-        var newStack = ints.map({IntItem($0)})
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+                            ints: [Int]) {
+        let newStack = ints.map({IntItem($0)})
         inty.stacks[.int]!.prepend(contentsOf: newStack)
     }
 
@@ -170,12 +150,8 @@ public func callString(_ item: any Item) -> String {
 
 @MainActor
     public func loadStrings(_ inty: Interpreter,
-                            strings: [String],
-                            contingent: [Int] = [] ) {
-        var newStack = strings.map({StringItem($0)})
-        for idx in contingent {
-            newStack[idx].isContingent = true
-        }
+                            strings: [String]) {
+        let newStack = strings.map({StringItem($0)})
         inty.stacks[.string]!.prepend(contentsOf: newStack)
     }
 

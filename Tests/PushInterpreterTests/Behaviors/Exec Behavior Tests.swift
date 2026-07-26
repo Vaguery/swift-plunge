@@ -269,7 +269,7 @@ struct ExecBehaviorTests {
     }
 
     @Test func `execDoWhile acts once even if a false is found`() {
-        loadBools(inty, bools: [false, true, false], contingent: [1])
+        loadBools(inty, bools: [false, true, false])
         // 44 was the body — a code argument now, so it waits on `.code`. 33 and
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
@@ -284,12 +284,11 @@ struct ExecBehaviorTests {
         // The body copy is a duplication that stays on `.exec`, so it records no
         // provenance (law 1). It used to be tagged `index: 2`.
         #expect(topItem(inty, .exec).call.isEmpty)
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
     }
 
     @Test func `execDoWhile is a lot like execWhile when a true is found`() {
-        loadBools(inty, bools: [true, true, false], contingent: [1])
+        loadBools(inty, bools: [true, true, false])
         // 44 was the body — a code argument now, so it waits on `.code`. 33 and
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
@@ -303,8 +302,6 @@ struct ExecBehaviorTests {
         doThis(.execDoWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ( 44 ) .execWhile 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        // The guard consumed was the FIRST `true`, which is not contingent.
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
         // All four results are combinatory — two body copies and two freshly
         // minted tokens — so none records provenance.
@@ -318,7 +315,6 @@ struct ExecBehaviorTests {
         inty.step()   // .codeDo spreads it back out, so it runs
         #expect(stackString(inty, .exec) == "[ 44 ( 44 ) .execWhile 33 22 ]")
         #expect(stackString(inty, .code) == "[ ]")
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
 
         inty.step()   // 44 → .int
@@ -327,12 +323,9 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .code) == "[ ( 44 ) ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
 
-        inty.step()   // .execWhile retests — this time on the CONTINGENT true
+        inty.step()   // .execWhile retests, on the second guard
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ( 44 ) .execWhile 33 22 ]")
         #expect(stackString(inty, .bool) == "[ false ]")
-        // ...so this pass's body copy is contingent, where the first was not.
-        // Contingency follows the guard through the loop, as it always did.
-        #expect(topItem(inty, .exec).isContingent == true)
         #expect(callString(topItem(inty, .exec)) == "( )")
     }
 
@@ -347,12 +340,11 @@ struct ExecBehaviorTests {
 
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ]")
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
 
         doThis(.execFlush, to: inty)
 
-        inty.stacks[.bool]!.prepend(BoolItem(false, isContingent: false))
+        inty.stacks[.bool]!.prepend(BoolItem(false))
         // Both branches are code arguments now, so they wait on `.code`. Written
         // 44 then 3.4, i.e. `( 44 ) ( 3.4 ) .execIf`.
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
@@ -360,7 +352,6 @@ struct ExecBehaviorTests {
 
         doThis(.execIf, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 3.4 ) .codeDo ]")
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
     }
 
@@ -368,7 +359,7 @@ struct ExecBehaviorTests {
         // All three were code arguments read off `.exec`; they are blocks on
         // `.code` now. Written 44, true, 3.4 — so 3.4 ends up on top.
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
-        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)], isContingent: true))
+        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)]))
         inty.stacks[.code]!.prepend(CodeItem([DoubleItem(3.4)]))
 
         #expect(stackString(inty, .exec) == "[ ]")
@@ -381,29 +372,23 @@ struct ExecBehaviorTests {
         // All three were code arguments read off `.exec`; they are blocks on
         // `.code` now. Written 44, true, 3.4 — so 3.4 ends up on top.
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
-        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)], isContingent: true))
+        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)]))
         inty.stacks[.code]!.prepend(CodeItem([DoubleItem(3.4)]))
 
         #expect(stackString(inty, .exec) == "[ ]")
 
         // The `(y z)` continuation is emitted as two separate `.exec` items now
-        // rather than a CodeItem unwrapped on a later step. The contingency the
-        // wrapper used to spread onto its children is applied to them directly.
+        // rather than a CodeItem unwrapped on a later step.
         doThis(.execS, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ( 3.4 ) .codeDo ( true ) .codeDo ( 3.4 ) .codeDo ]")
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
-        // The contingent argument is `( true )`, now at [4] rather than [2]:
-        // a `.codeDo` sits between each block, since each has to be unwrapped
-        // to run. Both copies of it carry the net contingency of all three
-        // arguments, as they did when unwrapping spread it onto the children.
+        // The `( true )` argument is now at [4] rather than [2]: a `.codeDo`
+        // sits between each block, since each has to be unwrapped to run.
         #expect(inty.stacks[.exec]![4].pretty() == "( true )")
-        #expect(inty.stacks[.exec]![4].isContingent == true)
-        #expect(inty.stacks[.exec]![6].isContingent == true)   // the (y z) copy of z
     }
 
     @Test func execWhen() {
-        loadBools(inty, bools: [true, false], contingent: [0])
+        loadBools(inty, bools: [true, false])
         // 44 was the body — a code argument now, so it waits on `.code`. 33 and
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
@@ -414,7 +399,6 @@ struct ExecBehaviorTests {
         
         doThis(.execWhen, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo 33 22 ]")
-        #expect(topItem(inty, .exec).isContingent == true)
         #expect(callString(topItem(inty, .exec)) == "( )")
         #expect(stackString(inty, .bool) == "[ false ]")
 
@@ -429,7 +413,7 @@ struct ExecBehaviorTests {
     }
 
     @Test func `execWhile doesn't act if a false is found`() {
-        loadBools(inty, bools: [false, true, false], contingent: [1])
+        loadBools(inty, bools: [false, true, false])
         // 44 was the body — a code argument now, so it waits on `.code`. 33 and
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
@@ -444,7 +428,7 @@ struct ExecBehaviorTests {
     }
 
     @Test func `execWhile pushes several items back to .exec when true is found`() {
-        loadBools(inty, bools: [true, true, false], contingent: [1])
+        loadBools(inty, bools: [true, true, false])
         // 44 was the body — a code argument now, so it waits on `.code`. 33 and
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
@@ -456,7 +440,6 @@ struct ExecBehaviorTests {
         doThis(.execWhile, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ( 44 ) .execWhile 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        #expect(topItem(inty, .exec).isContingent == false)
         #expect(callString(topItem(inty, .exec)) == "( )")
         // Combinatory results record no provenance (laws 1 and 4). These used to
         // be tagged `index:` 0, 1, 2.
@@ -466,7 +449,7 @@ struct ExecBehaviorTests {
     @Test func execY() {
         // Code arguments live on `.code` now. Written 44, true, 1.
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
-        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)], isContingent: true))
+        inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)]))
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1)]))
         
         #expect(stackString(inty, .exec) == "[ ]")

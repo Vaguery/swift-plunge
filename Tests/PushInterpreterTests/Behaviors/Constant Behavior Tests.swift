@@ -14,12 +14,11 @@ struct ConstantBehaviorTests {
 
     let inty = Interpreter()
 
-    @Test func constantHistoryIsNotContingent() {
+    @Test func constantRecordsItsHistory() {
         inty.constants[.int2] = IntItem(17)
         Interpreter.language[.int2]!.act(on: inty)
         let result = probeItemOnStack(inty,.exec,index:0) as! IntItem
         #expect(result.call.contains(where: {($0 as! InstructionItem).value == .int2}))
-        #expect(result.isContingent == false)
         #expect(result.value == 17)
     }
 

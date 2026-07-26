@@ -21,9 +21,7 @@ nonisolated extension Interpreter {
                 let result =
                     CodeItem(
                         y.value + x.value,
-                        call: [y, x, InstructionItem(.codeAppend)],
-                        isContingent: Behavior.netContingency(of: x, y)
-                    )
+                        call: [y, x, InstructionItem(.codeAppend)])
                 return [Router(.code, result)]
             }
         )
@@ -45,9 +43,7 @@ nonisolated extension Interpreter {
                         .code,
                         CodeItem(
                             [y.denotedItem, x.denotedItem],
-                            call: [y, x, InstructionItem(.codePair)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.codePair)])
                     )
                 ]
             }
@@ -65,7 +61,6 @@ nonisolated extension Interpreter {
                 // is on top and arrives as a[1] (`else`), so a[2] is `then`.
                 let (cond, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
                 var result = cond.value ? thenBlock : elseBlock
-                result.isContingent = cond.isContingent
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, result),
@@ -82,9 +77,7 @@ nonisolated extension Interpreter {
                 let result =
                     BoolItem(
                         x.value.isEmpty,
-                        call: Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)]),
-                        isContingent: Behavior.netContingency(of: x)
-                    )
+                        call: Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)]))
                 return [Router(.bool, result)]
             }
         )
@@ -98,9 +91,7 @@ nonisolated extension Interpreter {
                 let result =
                     IntItem(
                         x.value.count,
-                        call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)]),
-                        isContingent: Behavior.netContingency(of: x)
-                    )
+                        call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)]))
                 return [Router(.int, result)]
             }
         )
@@ -121,9 +112,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.pointCount,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)]),
-                    isContingent: Behavior.netContingency(of: x)
-                ))]
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)])))]
             }
         )
 
@@ -137,9 +126,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.flatSize,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)]),
-                    isContingent: Behavior.netContingency(of: x)
-                ))]
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)])))]
             }
         )
 
@@ -152,9 +139,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.depth,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)]),
-                    isContingent: Behavior.netContingency(of: x)
-                ))]
+                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)])))]
             }
         )
 
@@ -171,9 +156,7 @@ nonisolated extension Interpreter {
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.bool, BoolItem(
                     hay.firstPointIndex(of: needle.denotedItem) != nil,
-                    call: Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)]),
-                    isContingent: Behavior.netContingency(of: hay, needle)
-                ))]
+                    call: Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)])))]
             }
         )
 
@@ -186,9 +169,7 @@ nonisolated extension Interpreter {
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.int, IntItem(
                     hay.firstPointIndex(of: needle.denotedItem) ?? -1,
-                    call: Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)]),
-                    isContingent: Behavior.netContingency(of: hay, needle)
-                ))]
+                    call: Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)])))]
             }
         )
 
@@ -204,9 +185,7 @@ nonisolated extension Interpreter {
                 guard let parent = hay.parentContaining(needle.denotedItem) else { return [] }
                 return [Router(.code, CodeItem(
                     parent.value,
-                    call: Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)]),
-                    isContingent: Behavior.netContingency(of: hay, needle)
-                ))]
+                    call: Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)])))]
             }
         )
 
@@ -233,9 +212,7 @@ nonisolated extension Interpreter {
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     boxedPointContents(x.point(at: i.value)),
-                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)]),
-                    isContingent: Behavior.netContingency(of: x, i)
-                ))]
+                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)])))]
             }
         )
 
@@ -251,9 +228,7 @@ nonisolated extension Interpreter {
                 let element = x.value[Int(i.value.magnitude % UInt(x.value.count))]
                 return [Router(.code, CodeItem(
                     boxedPointContents(element),
-                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)]),
-                    isContingent: Behavior.netContingency(of: x, i)
-                ))]
+                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)])))]
             }
         )
 
@@ -279,8 +254,7 @@ nonisolated extension Interpreter {
             reads: [.code, .int],
             fxn: { a in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                guard var point = pick(x, i.value) else { return [] }
-                point.isContingent = Behavior.netContingency(of: x, i, point)
+                guard let point = pick(x, i.value) else { return [] }
                 return [Router(.exec, point)]
             }
         )
@@ -294,7 +268,7 @@ nonisolated extension Interpreter {
             fxn: { a in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else { return [] }
-                let boxed = CodeItem(boxedPointContents(point), isContingent: Behavior.netContingency(of: x, i))
+                let boxed = CodeItem(boxedPointContents(point))
                 return [Router(.exec, InstructionItem(.codeDo)), Router(.exec, boxed)]
             }
         )
@@ -322,9 +296,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedLeaves(),
-                    call: [x, InstructionItem(.codeFlatten)],
-                    isContingent: Behavior.netContingency(of: x)
-                ))]
+                    call: [x, InstructionItem(.codeFlatten)]))]
             }
         )
 
@@ -338,9 +310,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedOnce(),
-                    call: [x, InstructionItem(.codeFlattenOnce)],
-                    isContingent: Behavior.netContingency(of: x)
-                ))]
+                    call: [x, InstructionItem(.codeFlattenOnce)]))]
             }
         )
 
@@ -359,9 +329,7 @@ nonisolated extension Interpreter {
                 let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
-                    call: [x, i, InstructionItem(.codeFlattenPoint)],
-                    isContingent: Behavior.netContingency(of: x, i)
-                ))]
+                    call: [x, i, InstructionItem(.codeFlattenPoint)]))]
             }
         )
 
@@ -375,9 +343,7 @@ nonisolated extension Interpreter {
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     x.removingPoint(at: i.value).value,
-                    call: [x, i, InstructionItem(.codeRemovePoint)],
-                    isContingent: Behavior.netContingency(of: x, i)
-                ))]
+                    call: [x, i, InstructionItem(.codeRemovePoint)]))]
             }
         )
 
@@ -401,9 +367,7 @@ nonisolated extension Interpreter {
                 let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
-                    call: [subject, needle, repl, InstructionItem(instruction)],
-                    isContingent: Behavior.netContingency(of: subject, needle, repl)
-                ))]
+                    call: [subject, needle, repl, InstructionItem(instruction)]))]
             }
         )
     }
@@ -428,18 +392,13 @@ nonisolated extension Interpreter {
                 let prefix = Array(x.value[0..<idx])
                 let suffix = Array(x.value[idx...])
                 let source: [any Item] = [x, y, InstructionItem(.codeCutRootAtGap)]
-                let contingent = Behavior.netContingency(of: x, y)
                 return [
                     Router(.code, CodeItem(
                         prefix,
-                        call: Behavior.selecting(0, of: 2, on: .code, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(0, of: 2, on: .code, from: source))),
                     Router(.code, CodeItem(
                         suffix,
-                        call: Behavior.selecting(1, of: 2, on: .code, from: source),
-                        isContingent: contingent
-                    )),
+                        call: Behavior.selecting(1, of: 2, on: .code, from: source))),
                 ]
             }
         )
@@ -500,9 +459,7 @@ nonisolated extension Interpreter {
             let result =
                 CodeItem(
                     [x],
-                    call: [x, InstructionItem(.codeWrapRoot)],
-                    isContingent: Behavior.netContingency(of: x)
-                    )
+                    call: [x, InstructionItem(.codeWrapRoot)])
             return [ Router( .code, result) ]
         }
     )
@@ -514,7 +471,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [InstructionItem(.execQuote), x]
             return [ Router(.code, result) ]
         }
@@ -528,7 +484,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [x, InstructionItem(.intQuote)]
             return [ Router(.code, result) ]
         }
@@ -541,7 +496,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [x, InstructionItem(.boolQuote)]
             return [ Router(.code, result) ]
         }
@@ -554,7 +508,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [x, InstructionItem(.stringQuote)]
             return [ Router(.code, result) ]
         }
@@ -567,7 +520,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [x, InstructionItem(.charQuote)]
             return [ Router(.code, result) ]
         }
@@ -580,7 +532,6 @@ nonisolated extension Interpreter {
         fxn: {a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x )
             result.call = [x, InstructionItem(.doubleQuote)]
             return [ Router(.code, result) ]
         }
@@ -601,8 +552,7 @@ nonisolated extension Interpreter {
     /// Provenance: combinatory, law 1b. The block's own `call` is erased with the
     /// block, and each content keeps the `call` it already had — exposed as
     /// though it had been sitting there all along, unchanged from the time it
-    /// went in. Being inside a block leaves no mark. Contingency does propagate:
-    /// a block reached contingently makes its contents contingent.
+    /// went in. Being inside a block leaves no mark.
     static let codeDo_Behavior =
     BehaviorWithSideEffects(
         .codeDo,
@@ -611,7 +561,6 @@ nonisolated extension Interpreter {
             let block = collectedItems[0] as! CodeItem
             let contents = block.value.map { item -> any Item in
                 var copy = item
-                copy.isContingent = Behavior.netContingency(of: block, copy)
                 return copy
             }
             interpreter.place(contentsOf: contents, on: .exec)
@@ -651,11 +600,16 @@ nonisolated extension Interpreter {
         takes: [.iterator],
         fxn: { a in
             let iterator = a[0] as! IteratorItem
+            // The farewell returns the body to `.code`, *under* the result. The
+            // crux has to clear it, or the fragment leaves debris on the very
+            // stack it lands on (Design Principles §1) — so it records the same
+            // swap-and-pop `reading` uses. No body, nothing to clear.
+            let record: [any Item] = [iterator, InstructionItem(.codeFromIterator)]
             let collected = CodeItem(
                 iterator.collected(),
-                call: [iterator, InstructionItem(.codeFromIterator)],
-                isContingent: Behavior.netContingency(of: iterator)
-            )
+                call: iterator.body == nil
+                    ? record
+                    : Behavior.reading([.code: 1], producing: .code, from: record))
             return Interpreter.iteratorFarewell(iterator) + [Router(.code, collected)]
         }
     )
@@ -679,7 +633,6 @@ nonisolated extension Interpreter {
         fxn: { a in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.isContingent = Behavior.netContingency(of: x)
             result.call = [x, InstructionItem(.iteratorQuote)]
             return [ Router(.code, result) ]
         }

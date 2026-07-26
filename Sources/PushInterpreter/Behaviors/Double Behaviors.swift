@@ -24,9 +24,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleAdd: \(y.value) + \(x.value)",
-                                call: [y, x, InstructionItem(.doubleAdd)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleAdd)])
                         )
                     ]
                 } else {
@@ -35,9 +33,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleAdd)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleAdd)])
                         )
                     ]
 
@@ -61,9 +57,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleQuot: \(y.value) // \(x.value)",
-                                call: [y, x, InstructionItem(.doubleQuot)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleQuot)])
                         )
                     ]
                 } else {
@@ -72,9 +66,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleQuot)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleQuot)])
                         )
                     ]
 
@@ -96,9 +88,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleDivide: \(y.value) / \(x.value)",
-                                call: [y, x, InstructionItem(.doubleDivide)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleDivide)])
                         )
                     ]
                 } else {
@@ -107,9 +97,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleDivide)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleDivide)])
                         )
                     ]
 
@@ -131,9 +119,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleMod: \(y.value) % \(x.value)",
-                                call: [y, x, InstructionItem(.doubleMod)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleMod)])
                         )
                     ]
                 } else {
@@ -142,9 +128,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleMod)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleMod)])
                         )
                     ]
 
@@ -163,9 +147,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             min(x.value, y.value),
-                            call: [y, x, InstructionItem(.doubleMin)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.doubleMin)])
                     )
                 ]
             }
@@ -182,9 +164,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             max(x.value, y.value),
-                            call: [y, x, InstructionItem(.doubleMax)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.doubleMax)])
                     )
                 ]
             }
@@ -204,9 +184,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleSubtract: \(y.value) - \(x.value)",
-                                call: [y, x, InstructionItem(.doubleSubtract)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleSubtract)])
                         )
                     ]
                 } else {
@@ -215,9 +193,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleSubtract)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleSubtract)])
                         )
                     ]
 
@@ -239,9 +215,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleMultiply: \(y.value) * \(x.value)",
-                                call: [y, x, InstructionItem(.doubleMultiply)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleMultiply)])
                         )
                     ]
                 } else {
@@ -250,9 +224,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleMultiply)],
-                                isContingent: Behavior.netContingency(of: x, y)
-                            )
+                                call: [y, x, InstructionItem(.doubleMultiply)])
                         )
                     ]
 
@@ -271,9 +243,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             Double(x.value),
-                            call: [x, InstructionItem(.doubleFromInt)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.doubleFromInt)])
                     )
                 ]
             }
@@ -290,9 +260,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)]))
                     )
                 ]
             }
@@ -309,9 +277,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)]))
                     )
                 ]
             }
@@ -328,9 +294,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)]))
                     )
                 ]
             }
@@ -347,9 +311,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)]),
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)]))
                     )
                 ]
             }
@@ -368,9 +330,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleCos: cos(\(x.value))",
-                                call: [x, InstructionItem(.doubleCos)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleCos)])
                         )
                     ]
                 } else {
@@ -379,9 +339,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleCos)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleCos)])
                         )
                     ]
                 }
@@ -401,9 +359,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleSin: sin(\(x.value))",
-                                call: [x, InstructionItem(.doubleSin)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleSin)])
                         )
                     ]
                 } else {
@@ -412,9 +368,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleSin)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleSin)])
                         )
                     ]
                 }
@@ -434,9 +388,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleTan: tan(\(x.value))",
-                                call: [x, InstructionItem(.doubleTan)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleTan)])
                         )
                     ]
                 } else {
@@ -445,9 +397,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleTan)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleTan)])
                         )
                     ]
                 }
@@ -468,9 +418,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleInc: \(x.value) + 1.0",
-                                call: [x, InstructionItem(.doubleInc)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleInc)])
                         )
                     ]
                 } else {
@@ -479,9 +427,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleInc)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleInc)])
                         )
                     ]
                 }
@@ -502,9 +448,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleDec: \(x.value) - 1.0",
-                                call: [x, InstructionItem(.doubleDec)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleDec)])
                         )
                     ]
                 } else {
@@ -513,9 +457,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleDec)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleDec)])
                         )
                     ]
                 }
@@ -533,9 +475,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             x.value ? 1.0 : 0.0,
-                            call: [x, InstructionItem(.doubleFromBool)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.doubleFromBool)])
                     )
                 ]
 
@@ -554,9 +494,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             num,
-                            call: [x, InstructionItem(.doubleFromChar)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.doubleFromChar)])
                     )
                 ]
             }
@@ -577,9 +515,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleFromString: \"\(x.value)\"",
-                                call: [x, InstructionItem(.doubleFromString)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleFromString)])
                         )
                     ]
                 } else {
@@ -588,9 +524,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 num,
-                                call: [x, InstructionItem(.doubleFromString)],
-                                isContingent: Behavior.netContingency(of: x)
-                            )
+                                call: [x, InstructionItem(.doubleFromString)])
                         )
                     ]
                 }

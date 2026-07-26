@@ -138,13 +138,10 @@ struct AnyItemCodableTests {
     @Test func `runtime fields are dropped and reset to defaults on decode`() throws {
         let dirty = IntItem(
             5,
-            call: [InstructionItem(.intAdd), IntItem(2)],
-            isContingent: true
-        )
+            call: [InstructionItem(.intAdd), IntItem(2)])
         let restored = try roundTrip(dirty)
         #expect((restored as? IntItem)?.value == 5)
         #expect(restored.call.isEmpty)
-        #expect(restored.isContingent == false)
     }
 
     // A crux result — a flattened bag of pristine value items — is Codable-ready.

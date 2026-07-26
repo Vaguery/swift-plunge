@@ -208,7 +208,6 @@ public nonisolated struct IteratorItem: Item, Pretty {
         didSet { callWeight = Self.weighCall(call) }
     }
 
-    public var isContingent: Bool
 
     public var callWeight: Int
 
@@ -221,9 +220,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
         cursor: Int = 0,
         laps: Int = 1,
         burial: Int = 0,
-        call: [any Item] = [],
-        isContingent: Bool = false
-    ) {
+        call: [any Item] = []) {
         self.value = cursor
         self.kind = kind
         self.origin = origin
@@ -237,7 +234,6 @@ public nonisolated struct IteratorItem: Item, Pretty {
         self.laps = kind.cycles ? max(1, laps) : 1
         self.burial = max(0, burial)
         self.call = call
-        self.isContingent = isContingent
         self.callWeight = Self.weighCall(call)
     }
 
@@ -346,9 +342,7 @@ nonisolated extension IteratorItem {
             guard !overflowed else { return nil }
             return IntItem(
                 current,
-                call: [origin, IntItem(offset), InstructionItem(.intAdd)],
-                isContingent: isContingent
-            )
+                call: [origin, IntItem(offset), InstructionItem(.intAdd)])
 
         // The wrap is the identity at `laps == 1`, so this one expression is both
         // the plain walk and the cycling one.
@@ -728,18 +722,14 @@ nonisolated extension IteratorItem {
             let i = s.value.index(s.value.startIndex, offsetBy: index)
             return StringItem(
                 String(s.value[i]),
-                call: record(.stringNth, .stringFromChar),
-                isContingent: isContingent
-            )
+                call: record(.stringNth, .stringFromChar))
 
         case .words:
             let chunks = sourceWords
             guard index < chunks.count else { return nil }
             return StringItem(
                 String(chunks[index]),
-                call: record(.stringNthWord),
-                isContingent: isContingent
-            )
+                call: record(.stringNthWord))
 
         // The i-th pre-order point. `.boxed` yields exactly what `codeNthPoint`
         // does — the point boxed as `.code`, recording that (nondestructive)
@@ -752,8 +742,7 @@ nonisolated extension IteratorItem {
             guard let c = origin as? CodeItem else { return nil }
             let point = c.point(at: index)
             if mode == .whole {
-                var raw = point
-                raw.isContingent = raw.isContingent || isContingent
+                let raw = point
                 return raw
             }
             let contents = (point as? CodeItem)?.value ?? [point]
@@ -763,31 +752,28 @@ nonisolated extension IteratorItem {
                     [.code: 1, .int: 1],
                     producing: .code,
                     from: [origin, IntItem(index), InstructionItem(.codeNthPoint)]
-                ),
-                isContingent: isContingent
-            )
+                ))
 
         default:
             switch origin {
             case let s as StringItem:
                 let i = s.value.index(s.value.startIndex, offsetBy: index)
-                return CharItem(s.value[i], call: record(.stringNth), isContingent: isContingent)
+                return CharItem(s.value[i], call: record(.stringNth))
             case let v as VecBoolItem:
-                return BoolItem(v.value[index], call: record(.vecBoolNth), isContingent: isContingent)
+                return BoolItem(v.value[index], call: record(.vecBoolNth))
             case let v as VecDoubleItem:
-                return DoubleItem(v.value[index], call: record(.vecDoubleNth), isContingent: isContingent)
+                return DoubleItem(v.value[index], call: record(.vecDoubleNth))
             case let v as VecIntItem:
-                return IntItem(v.value[index], call: record(.vecIntNth), isContingent: isContingent)
+                return IntItem(v.value[index], call: record(.vecIntNth))
             case let v as VecStringItem:
-                return StringItem(v.value[index], call: record(.vecStringNth), isContingent: isContingent)
+                return StringItem(v.value[index], call: record(.vecStringNth))
 
             // Law 1b: an item that goes into a block and comes back out is the
             // item that went in, so it keeps its own `call` and records nothing.
             // This is what spares the dup families an `Nth` — and it is why
             // `codeNthRoot` can stay unimplemented.
             case let c as CodeItem:
-                var element = c.value[index]
-                element.isContingent = Behavior.netContingency(of: c, element)
+                let element = c.value[index]
                 return element
 
             default:

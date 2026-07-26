@@ -104,7 +104,6 @@ public nonisolated protocol Pretty {
 public nonisolated protocol Item: Pretty, Sendable {
     associatedtype Value
     var call: [any Item] {get set}
-    var isContingent: Bool {get set}
     var value: Value {get set}
 
     /// Declared here (not only in an extension) so it dispatches dynamically
@@ -170,9 +169,9 @@ nonisolated extension Item {
 
 // MARK: - Equality is about values
 //
-// An Item's `==` compares its `value` and nothing else. Not `call`, not
-// `isContingent`: those describe how the item came to be and where it sits, not
-// what it is. `5` computed as `2 3 .intAdd` equals `5` computed as `1 4 .intAdd`,
+// An Item's `==` compares its `value` and nothing else. Not `call`: that
+// describes how the item came to be, not what it is. `5` computed as
+// `2 3 .intAdd` equals `5` computed as `1 4 .intAdd`,
 // and equals a literal `5`.
 //
 // This matters in two places:
@@ -198,7 +197,7 @@ nonisolated extension Item {
 nonisolated extension Item where Self: Equatable {
     /// Value equality, reached across the `any Item` existential. This is the
     /// language's equality — `.xEq` is built on it — so it deliberately ignores
-    /// provenance and contingency. See the note above.
+    /// provenance. See the note above.
     public func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
@@ -259,13 +258,11 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: Bool, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: Bool, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
@@ -287,13 +284,11 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: Character, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: Character, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
@@ -356,7 +351,6 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
 
     /// The number of items in this code's fully flattened `.value`: every
     /// non-code item counts as one, and a nested `CodeItem` contributes its own
@@ -369,11 +363,10 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// holds, at every level. Reuses each child's already-stored weight.
     public let weight: Int
 
-    public init(_ value: [any Item], call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: [any Item], call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
         self.weight = value.reduce(0) { $0 + $1.weight }
     }
@@ -553,13 +546,11 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: Double, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: Double, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
@@ -586,13 +577,11 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: PushInstruction, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
@@ -621,13 +610,11 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: Int, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: Int, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
@@ -655,14 +642,12 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     public let weight: Int
 
-    public init(_ value: String, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: String, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.weight = value.utf8.count
     }
     
@@ -690,14 +675,12 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     public let weight: Int
 
-    public init(_ value: [Bool], call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: [Bool], call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.weight = value.count
     }
     
@@ -722,14 +705,12 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     public let weight: Int
 
-    public init(_ value: [Double], call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: [Double], call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.weight = value.count
     }
     
@@ -753,14 +734,12 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     public let weight: Int
 
-    public init(_ value: [Int], call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: [Int], call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.weight = value.count
     }
     
@@ -785,17 +764,15 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
 
     /// Total characters across all contained strings — the "total characters"
     /// measure that a plain element count would miss. O(element count) once.
     public let weight: Int
 
-    public init(_ value: [String], call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: [String], call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
         self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
     
@@ -820,13 +797,11 @@ public nonisolated struct ErrorItem: Item, Equatable {
     /// during `init`, so the initializer sets it directly.
     public private(set) var callWeight: Int = 1
 
-    public var isContingent: Bool
     
-    public init(_ value: String, call: [any Item] = [], isContingent: Bool =  false) {
+    public init(_ value: String, call: [any Item] = []) {
         self.value = value
         self.call = call
         self.callWeight = Self.weighCall(call)
-        self.isContingent = isContingent
     }
     
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {

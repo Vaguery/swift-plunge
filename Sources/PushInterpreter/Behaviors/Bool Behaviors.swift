@@ -21,9 +21,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 && arg2,
-                            call: [y, x, InstructionItem(.boolAnd)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolAnd)])
                     )
                 ]
             }
@@ -40,9 +38,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value != 0.0,
-                            call: [x, InstructionItem(.boolFromDouble)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.boolFromDouble)])
                     )
                 ]
             }
@@ -59,9 +55,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value != 0,
-                            call: [x, InstructionItem(.boolFromInt)],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            call: [x, InstructionItem(.boolFromInt)])
                     )
                 ]
             }
@@ -78,9 +72,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value || !y.value,
-                            call: [y, x, InstructionItem(.boolIfPThenQ)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolIfPThenQ)])
                     )
                 ]
             }
@@ -97,9 +89,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !x.value || y.value,
-                            call: [y, x, InstructionItem(.boolIfQThenP)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolIfQThenP)])
                     )
                 ]
             }
@@ -117,9 +107,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !(arg1 && arg2),
-                            call: [y, x, InstructionItem(.boolNand)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolNand)])
                     )
                 ]
             }
@@ -137,9 +125,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !(arg1 || arg2),
-                            call: [y, x, InstructionItem(.boolNor)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolNor)])
                     )
                 ]
             }
@@ -159,9 +145,7 @@ nonisolated extension Interpreter {
                             call: [
                                 x,
                                 InstructionItem(.boolNot),
-                            ],
-                            isContingent: Behavior.netContingency(of: x)
-                        )
+                            ])
                     )
                 ]
             }
@@ -178,9 +162,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !y.value,
-                            call: [y, x, InstructionItem(.boolNotP)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolNotP)])
                     )
                 ]
             }
@@ -197,9 +179,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !y.value && x.value,
-                            call: [y, x, InstructionItem(.boolNotPandQ)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolNotPandQ)])
                     )
                 ]
             }
@@ -216,9 +196,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !x.value,
-                            call: [y, x, InstructionItem(.boolNotQ)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolNotQ)])
                     )
                 ]
             }
@@ -236,9 +214,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 || arg2,
-                            call: [y, x, InstructionItem(.boolOr)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolOr)])
                     )
                 ]
             }
@@ -255,9 +231,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value,
-                            call: [y, x, InstructionItem(.boolP)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolP)])
                     )
                 ]
             }
@@ -274,9 +248,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value && !x.value,
-                            call: [y, x, InstructionItem(.boolPandNotQ)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolPandNotQ)])
                     )
                 ]
             }
@@ -293,9 +265,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value,
-                            call: [y, x, InstructionItem(.boolQ)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolQ)])
                     )
                 ]
             }
@@ -313,9 +283,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 == arg2,
-                            call: [y, x, InstructionItem(.boolXnor)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolXnor)])
                     )
                 ]
             }
@@ -333,9 +301,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 != arg2,
-                            call: [y, x, InstructionItem(.boolXor)],
-                            isContingent: Behavior.netContingency(of: x, y)
-                        )
+                            call: [y, x, InstructionItem(.boolXor)])
                     )
                 ]
             }

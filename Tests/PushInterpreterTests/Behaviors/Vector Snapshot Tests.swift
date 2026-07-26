@@ -41,7 +41,6 @@ struct VectorSnapshotTests {
         #expect(stackString(inty, .int) == "[ 3 2 1 ]", "the scalars survive the read")
         // first-read (3, the top) becomes the last element — pushAll's inverse.
         #expect(stackString(inty, .vecInt) == "[ [1, 2, 3] ]")
-        #expect(topItem(inty, .vecInt).isContingent, "a whole-stack read is contingent")
     }
 
     @Test func `readStack on an empty stack gives an empty vector`() {

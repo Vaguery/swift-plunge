@@ -37,7 +37,7 @@ nonisolated struct IteratorState: Codable, Sendable {
 /// carry a synthesized conformance.
 ///
 /// Only an item's *type tag* and *value* are serialized. The runtime-only
-/// fields — `call` (provenance), `isContingent`, and `index` — are deliberately
+/// fields — `call` (provenance) and `index` — are deliberately
 /// omitted: items in a program (or a `crux` result) are pristine on those
 /// fronts, and they are reconstructed with their defaults on decode. Every
 /// `Item.value` is a JSON-native type (or, for `CodeItem`, a nested array of

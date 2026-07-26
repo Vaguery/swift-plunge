@@ -68,11 +68,9 @@ nonisolated extension Interpreter {
                     ]
                 }
                 let oldItem = interpreter.stacks[stack]![idx]
-                var newItem = oldItem
+                let newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.
-                // Contingency is a separate axis and is still recorded.
-                newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
                     interpreter.insert(newItem, at: idx, on: stack)
                 }
@@ -115,10 +113,6 @@ nonisolated extension Interpreter {
     /// Provenance: a dup changes no value, so law 1 applies and the copies keep
     /// their own `call` untouched. That is why this family needs no `Nth` — and it
     /// is why `codeNthRoot` can stay unimplemented.
-    ///
-    ///  `DupItems` introduces some tacit contingency into execution,
-    ///  but it's not entirely clear if it is making these results
-    ///  contingent in themselves?
     static func dupItemsCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -169,11 +163,6 @@ nonisolated extension Interpreter {
     ///
     /// Provenance: a dup changes no value, so law 1 applies and every copy keeps
     /// the original's `call` untouched.
-    ///
-    ///  `DupTimes` introduces some tacit contingency into execution,
-    ///  but it's not entirely clear if it is making these results
-    ///  contingent in themselves?
-    ///  TODO: work out details of this contingency definition
     static func dupTimesCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -236,9 +225,7 @@ nonisolated extension Interpreter {
                             // records nothing and is its own literal crux.
                             // Naming the instruction would reconstruct to
                             // whatever some *other* stack happened to hold.
-                            call: [],
-                            isContingent: true
-                        )
+                            call: [])
                     )
                 ]
             }
@@ -246,9 +233,8 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    // typeEq creates a new item which may be contingent, and
-    // demands multilevel comparison between `Item` instances at
-    // all attribute levels (recursively)
+    // typeEq creates a new item, and demands multilevel comparison
+    // between `Item` instances at all attribute levels (recursively)
     //
     static func eqCombinator_Behavior(
         for stack: PushStack,
@@ -294,12 +280,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             isSame,
-                            call: record,
-                            isContingent: Behavior.netContingency(
-                                of: a[0],
-                                a[1]
-                            )
-                        )
+                            call: record)
                     )
                 ]
             }
@@ -399,9 +380,6 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    //  'shove` produces a result with `isContingent = true`
-    //  because the item moved is in a new location that's contingent
-    //
     static func shoveCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -432,11 +410,9 @@ nonisolated extension Interpreter {
                 let indexRaw = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1
                 let idx = max(0, min(indexRaw.value, range))
-                var newItem = oldItem
+                let newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.
-                // Contingency is a separate axis and is still recorded.
-                newItem.isContingent = true
                 if interpreter.requireAccepts(newItem, on: stack) {
                     interpreter.insert(newItem, at: idx, on: stack)
                 }
@@ -446,8 +422,6 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    //  'stackDepth` produces a result with `isContingent = true`
-    //
     static func stackDepthCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -472,9 +446,7 @@ nonisolated extension Interpreter {
                             // literal count is its own crux, where the
                             // instruction name would reconstruct to whatever
                             // some other stack happened to hold.
-                            call: [],
-                            isContingent: true
-                        )
+                            call: [])
                     )
                 ]
             }
@@ -483,8 +455,7 @@ nonisolated extension Interpreter {
     }
 
     // swap restructures the `type` stack, but does not affect argument state
-    // and therefore has no effect on `call` or `isContingent` _unless the instruction itself_
-    // is contingent.
+    // and therefore has no effect on `call`.
     //
     static func swapCombinator_Behavior(
         for stack: PushStack,
@@ -507,9 +478,6 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    //  'yank` produces a result with `isContingent = true`
-    //  because the item moved is in a new location that's contingent
-    //
     static func yankCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -536,19 +504,14 @@ nonisolated extension Interpreter {
                     return [Router(.error, ErrorItem("\(name) on empty stack"))]
                 }
 
-                var newItem = oldItem
+                let newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.
-                // Contingency is a separate axis and is still recorded.
-                newItem.isContingent = true
                 return [Router(stack, newItem)]
             }
         )
         result[name] = inst
     }
-
-    //  'yankdup` produces a result with `isContingent = true`
-    //  because the item moved is in a new location that's contingent
 
     static func yankDupCombinator_Behavior(
         for stack: PushStack,
@@ -581,11 +544,9 @@ nonisolated extension Interpreter {
                     ]
                 }
                 let oldItem = interpreter.stacks[stack]![idx]
-                var newItem = oldItem
+                let newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.
-                // Contingency is a separate axis and is still recorded.
-                newItem.isContingent = true
                 return [Router(stack, newItem)]
             }
         )
