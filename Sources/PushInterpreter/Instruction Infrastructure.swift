@@ -322,7 +322,11 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     
     // vecString constants
     case vecString0, vecString1, vecString2, vecString3, vecString4, vecString5, vecString6, vecString7, vecString8, vecString9
-         
+
+
+    // Introspection
+    case pushStepCount, errorStackDepth, errorMissingArgCount, errorMissingInputCount, errorMissingConstantCount
+
 }
 
 typealias PI = PushInstruction
