@@ -78,9 +78,16 @@ func brokenClaim(
     // That was not a hypothetical: it accounted for 93 of the 95 residual
     // failures in the #27 sweep, every one of which reproduces correctly given
     // room to finish. Budget by the size of the thing actually being run.
+    //
+    // The size caps come from `InterpreterSettings.reconstructing` for the
+    // matching reason: those caps bound a *population* run, and a reconstruction
+    // is one individual explaining itself. Without them the interpreter refuses
+    // its own reconstruction — an iterator may hold an origin larger than
+    // `maxCodePoints`, but rebuilding it pushes that origin through `.code`,
+    // where the cap does bite. That was the other 2 of the 95.
     let room = max(settings.stepLimit, crux.count * 20)
     let redo = Interpreter()
-    redo.config = settings
+    redo.config = settings.reconstructing
     redo.config.stepLimit = room
     redo.load(inputs: inputs, constants: constants, program: crux)
     redo.run(stepLimit: room)
@@ -195,6 +202,9 @@ struct CruxRoundTripTests {
     func reproduce(_ crux: [any Item], on stack: PushStack) -> (any Item)? {
         let redo = Interpreter()
         let (inputs, constants) = bindings
+        // Relaxed caps, as `brokenClaim` uses: a reconstruction is one individual
+        // explaining itself, not a population competing for throughput.
+        redo.config = redo.config.reconstructing
         redo.config.stepLimit = 10_000
         redo.load(inputs: inputs, constants: constants, program: crux)
         redo.run(stepLimit: 10_000)
@@ -347,9 +357,12 @@ struct CruxFuzzTests {
         // `disabledTests` for why that qualifier is load-bearing. Failing cases
         // are written to disk as replayable JSON regardless, which is the
         // reproduction path that does not depend on the RNG.
-        let seed: UInt64 = 20_260_715
-        fuzzRNG = SeededRNG(seed: seed)
-        let cases = 60            // random programs generated
+        // **Several seeds, not one.** A single seed is not enough to see a rare
+        // class: the #27 failures ran about 1 in 1,900 claims, and this test on
+        // seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
+        // Seeds are spaced by a prime so consecutive streams do not overlap.
+        let seeds: [UInt64] = (0..<8).map { 20_260_715 &+ $0 &* 7919 }
+        let cases = 20            // random programs per seed
         let programItems = 150    // Plushy tokens per random genome
 
         var settings = InterpreterSettings()
@@ -366,59 +379,62 @@ struct CruxFuzzTests {
         var programsWithClaims = 0
         var findings: [String] = []
 
-        for caseIndex in 0..<cases {
-            let caseId = "crux-\(caseIndex)"
-            let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
+        for (seedIndex, seed) in seeds.enumerated() {
+            fuzzRNG = SeededRNG(seed: seed)
+            for caseIndex in 0..<cases {
+                let caseId = "crux-\(seedIndex)-\(caseIndex)"
+                let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
 
-            let inty = Interpreter()
-            inty.config = settings
-            inty.load(program: program)
-            RandomCode.setRandomInputs(in: inty)
-            RandomCode.setRandomConstants(in: inty)
-            let inputs = inty.inputs
-            let constants = inty.constants
-            inty.run(stepLimit: settings.stepLimit)
+                let inty = Interpreter()
+                inty.config = settings
+                inty.load(program: program)
+                RandomCode.setRandomInputs(in: inty)
+                RandomCode.setRandomConstants(in: inty)
+                let inputs = inty.inputs
+                let constants = inty.constants
+                inty.run(stepLimit: settings.stepLimit)
 
-            var claimsHere = 0
-            var brokenHere: [String] = []
-            for stack in PushStack.allStacks where stack != .error {
-                for item in inty.stacks[stack]! {
-                    guard !item.call.isEmpty,
-                          PushStack.defaultStack(for: item) != nil
-                    else { continue }
-                    guard !blockedByCodeItemModel(item) else { skipped += 1; continue }
-                    claimsHere += 1
-                    itemsChecked += 1
-                    if let why = brokenClaim(
-                        about: item, inputs: inputs, constants: constants, settings: settings
-                    ) {
-                        brokenHere.append("  .\(stack) \(item.pretty()): \(why)\n     crux: \(CodeItem(item.crux()).pretty())")
+                var claimsHere = 0
+                var brokenHere: [String] = []
+                for stack in PushStack.allStacks where stack != .error {
+                    for item in inty.stacks[stack]! {
+                        guard !item.call.isEmpty,
+                              PushStack.defaultStack(for: item) != nil
+                        else { continue }
+                        guard !blockedByCodeItemModel(item) else { skipped += 1; continue }
+                        claimsHere += 1
+                        itemsChecked += 1
+                        if let why = brokenClaim(
+                            about: item, inputs: inputs, constants: constants, settings: settings
+                        ) {
+                            brokenHere.append("  .\(stack) \(item.pretty()): \(why)\n     crux: \(CodeItem(item.crux()).pretty())")
+                        }
                     }
                 }
-            }
-            if claimsHere > 0 { programsWithClaims += 1 }
+                if claimsHere > 0 { programsWithClaims += 1 }
 
-            if !brokenHere.isEmpty {
-                // Written to disk before reporting, so a case survives even if a
-                // later one takes the process down.
-                let individual = Individual(id: caseId, program: program, constants: constants)
-                let request = EvaluationRequest(
-                    individuals: [individual],
-                    trainingCases: [TrainingCase(id: caseId, inputs: inputs)],
-                    pairings: [Pairing(individual: caseId, trainingCase: caseId)],
-                    configuration: RunnerConfiguration(settings: settings)
-                )
-                let url = dir.appending(path: "\(caseId).json")
-                try? encoder.encode(request).write(to: url)
-                findings.append(
-                    "\(caseId): \(brokenHere.count) of \(claimsHere) claims broken → \(url.path)\n"
-                    + brokenHere.prefix(5).joined(separator: "\n")
-                )
+                if !brokenHere.isEmpty {
+                    // Written to disk before reporting, so a case survives even if a
+                    // later one takes the process down.
+                    let individual = Individual(id: caseId, program: program, constants: constants)
+                    let request = EvaluationRequest(
+                        individuals: [individual],
+                        trainingCases: [TrainingCase(id: caseId, inputs: inputs)],
+                        pairings: [Pairing(individual: caseId, trainingCase: caseId)],
+                        configuration: RunnerConfiguration(settings: settings)
+                    )
+                    let url = dir.appending(path: "\(caseId).json")
+                    try? encoder.encode(request).write(to: url)
+                    findings.append(
+                        "\(caseId): \(brokenHere.count) of \(claimsHere) claims broken → \(url.path)\n"
+                        + brokenHere.prefix(5).joined(separator: "\n")
+                    )
+                }
             }
         }
 
-        log("crux fuzz (seed \(seed)): \(itemsChecked) claims across "
-            + "\(programsWithClaims)/\(cases) programs; \(findings.count) programs with broken claims "
+        log("crux fuzz (\(seeds.count) seeds × \(cases)): \(itemsChecked) claims across "
+            + "\(programsWithClaims)/\(seeds.count * cases) programs; \(findings.count) programs with broken claims "
             + "(\(skipped) skipped, blocked on the CodeItem model)")
         for finding in findings.prefix(10) { log(finding) }
         if findings.count > 10 { log("… and \(findings.count - 10) more") }

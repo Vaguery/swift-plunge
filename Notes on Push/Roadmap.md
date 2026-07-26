@@ -70,28 +70,16 @@ commitment.
     TODO that described it is deleted.
 19. **Deep identity in equality** — `xDup` copies an item's whole call tree, so same-value/same-history
     genuinely arises, but Push has no way to ask. → *Items.swift* "Equality is about values"
-19a. **~0.05% of crux claims still fail under a long fuzz** (issue #27). 95 of 177,779 claims across 40
-    seeds, and *not* caused by the #26 fix — the same failures appear with the old `selecting`. 81 of the
-    95 were recorded by `Behavior.reading` with the read stack equal to the result stack (the `swap`/`pop`
-    branch), `.boolEq` and the bool comparisons dominating. The records are structurally well-formed and
-    hand-simulate correctly, so the cause is not obvious; the failures correlate with very large cruxes
-    (~27k characters, one subexpression repeated dozens of times as `crux()` flattens a shared DAG node
-    per path), which puts provenance elision on the suspect list without any evidence for it yet. The
-    committed fuzz test runs a single seed and sees none of this — worth sweeping several.
-20. **Error-provenance inconsistency** — `.inputN`/`.intN` "not bound" errors record nothing, while the
-    success path of the same instruction records `[.inputN]`. Explanatory value, not correctness.
-21. **Vector elements have no provenance** — `VecIntItem.value` is a raw `[Int]`. The one place
-    containment destroys history, against law 1b. Costs addressability, not correctness. **Blocks #23.**
-22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
-23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.
-    The payoff the whole provenance exercise is for. Wants #21 first. → *Code instruction planning.markdown*
-    **Depends on call trees:** this (and any crux-*reading* behavior) only functions in a call-active
-    interpreter. `InterpreterSettings.recordsProvenance` can now switch call recording off (search runs
-    provenance-off for the memory/time win, recovering the best individual's crux by a targeted re-run). A
-    crux-consuming behavior must therefore guard with `Interpreter.requiresProvenance(name)` — which emits a
-    `PROVENANCE:` warning and returns false when recording is off — and no-op rather than silently reading the
-    trivial `[self]` cruxes.
-23a. **Remove the `.isContingent` flag entirely.** — **done**, see Resolved below.
+19a. **~0.05% of crux claims failed under a long fuzz** (issue #27) — **resolved, 95 → 0.** Almost all of
+    it was the checker, not the language: `brokenClaim` re-ran each crux under the *program's* `stepLimit`,
+    but a crux flattens a call DAG per path and is routinely far longer than the run that built it, so the
+    reconstruction was cut off and compared against a half-finished stack (93 of 95). Two more were the
+    size caps refusing the interpreter's own reconstruction, fixed by relaxing them for replay
+    (`InterpreterSettings.reconstructing`) — the caps bound a population's throughput, and a
+    reconstruction is one individual explaining itself. The last was a real provenance bug: a **cycling**
+    walker recorded itself cursor-first, and a cursor live at `laps == 7` is past the end at the
+    `laps == 1` a constructor starts with, so the rebuild was refused as spent. It now builds at cursor 0,
+    sets laps, then carries the cursor. → *Design Principles.md* §1
 
 ## F. Decisions with a number or a semantics still open
 

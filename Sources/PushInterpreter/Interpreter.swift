@@ -120,6 +120,54 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // computes — only whether it can explain itself. A behavior that *reads* a crux
     // to do its work must guard with `Interpreter.requiresProvenance(_:)`.
     public var recordsProvenance = true
+
+
+    /// The same policy, relaxed for **reconstruction** — re-running one item's
+    /// crux rather than running a population.
+    ///
+    /// The size caps above are a *throughput* compromise, not a semantic one:
+    /// they exist so a whole population evaluates in reasonable time and space.
+    /// A single individual, re-run on its own to explain itself, is not competing
+    /// for that budget and can afford far more.
+    ///
+    /// Without this the interpreter can refuse its own reconstruction. A walking
+    /// `IteratorItem` may hold a 2,432-point origin block and rest on `.iterator`
+    /// quite legally — `SizeLimits.overflow(of:)` only measures `flatSize` when
+    /// the item *is* a `CodeItem`, and an iterator is not. But
+    /// `IteratorItem.reconstruction()` re-pushes that origin **through `.code`**,
+    /// where the cap does apply, so the constructor loses its argument and the
+    /// crux rebuilds nothing. The record was honest; only the replay budget was
+    /// wrong. (Reachable the same way through `maxVectorLength` and
+    /// `maxStringLength`, via an iterator walking an oversized collection.)
+    ///
+    /// **Three things deliberately do not move**, because each would change what
+    /// the replay computes rather than what it is allowed to hold:
+    ///
+    ///  - `maxIterations` — a counted loop's span is clamped at construction, and
+    ///    the crux records the clamped bounds. Allowing more passes here would run
+    ///    a *different* loop than the one that produced the value.
+    ///  - `maxCallWeight` — provenance elided in the original run must elide the
+    ///    same way in the replay, or the reproduced item carries more history than
+    ///    the original and the fixed-point check fails on a difference this policy
+    ///    introduced.
+    ///  - `stepLimit` — a crux flattens a call DAG per path and is routinely far
+    ///    longer than the run that built it, so its budget belongs to whoever
+    ///    knows the crux's length. Size it there.
+    ///
+    /// `maxLiveWeight` rises but stays finite: it is the one global memory bound,
+    /// and the point of relaxing is to survive a large *legitimate* value, not to
+    /// remove the backstop that stops a runaway from taking the process down.
+    public var reconstructing: InterpreterSettings {
+        var relaxed = self
+        relaxed.maxStringLength = maxStringLength * 1_000
+        relaxed.maxVectorLength = maxVectorLength * 1_000
+        relaxed.maxCodePoints   = maxCodePoints   * 1_000
+        relaxed.maxCodeDepth    = maxCodeDepth    * 1_000
+        relaxed.maxItemWeight   = maxItemWeight   * 1_000
+        relaxed.maxStackDepth   = maxStackDepth   * 100
+        relaxed.maxLiveWeight   = maxLiveWeight   * 20
+        return relaxed
+    }
 }
 
 

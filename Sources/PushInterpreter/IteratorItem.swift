@@ -604,23 +604,52 @@ nonisolated extension IteratorItem {
         // A walking iterator needs no bounds: its end is its origin's own length.
         // The origin lands on its own stack, so only the two cursor-ish ints share
         // `.int`, and `burial` is written last and so arrives on top.
-        // The one record that is two instructions long, and only when it has to
-        // be: `laps` is the single piece of state no constructor takes, so a
-        // cycling walk rebuilds itself and then says how far round it goes. At
-        // `laps == 1` — every iterator that never asked — the suffix is absent and
-        // the record is exactly what it always was.
+        //
+        // `laps` is the single piece of state no constructor takes, so a cycling
+        // walk has to rebuild itself and then say how far round it goes. At
+        // `laps == 1` — every iterator that never asked — the record is exactly
+        // what a constructor takes and nothing more.
         case .letters, .words, .elements, .points:
             guard let name = walkingConstructor else { return [] }
-            let built: [any Item] = [
+            guard laps > 1 else {
+                return [
+                    origin,
+                    IntItem(value),
+                    IntItem(burial),
+                    BoolItem(emits),
+                    body ?? CodeItem([]),
+                    InstructionItem(name),
+                ]
+            }
+            // **A cycling walk cannot be rebuilt cursor-first.** `value` counts
+            // through all `laps` passes over the source, so a cursor perfectly
+            // live at `laps == 7` is past the end at the `laps == 1` a constructor
+            // starts with — and `iteratorBuilt` refuses a spent iterator at the
+            // door, on the reasoning that a spent one cannot exist so no crux need
+            // reproduce one. True of the *destination* state, false of this
+            // intermediate one: the rebuild was asking for an iterator that is
+            // only spent because it has not been told about its laps yet. The
+            // constructor errored, `.iteratorSetLaps` then found no iterator to
+            // set, and the crux rebuilt nothing at all.
+            //
+            // So build at cursor 0 — always live, since an iterator with nothing
+            // to emit at 0 could never have been constructed in the first place —
+            // then say how far round it goes, then carry the cursor to where it
+            // actually is. Each setter re-derives `call` and re-checks liveness,
+            // so the rebuilt iterator records this same shape and the crux is a
+            // fixed point.
+            return [
                 origin,
-                IntItem(value),
+                IntItem(0),
                 IntItem(burial),
                 BoolItem(emits),
                 body ?? CodeItem([]),
                 InstructionItem(name),
+                IntItem(laps),
+                InstructionItem(.iteratorSetLaps),
+                IntItem(value),
+                InstructionItem(.iteratorSetCounter),
             ]
-            guard laps > 1 else { return built }
-            return built + [IntItem(laps), InstructionItem(.iteratorSetLaps)]
 
         // The box is what lets one constructor serve all thirteen stacks: a
         // CodeItem can hold any item, and law 1b says taking it back out gives

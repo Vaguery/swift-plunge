@@ -81,6 +81,28 @@ from the case that motivated the rule — non-destructive queries — and every 
 `.vecIntLength`. Three whole families were never asked. It now sweeps the entire language, the same way
 the round-trip obligation does, so a new Behavior is checked the day it is added.
 
+### Reconstruction is not a run: it gets its own budget
+
+Re-running a crux is not the same activity as running a program, and giving it the program's limits made
+the checker report bugs that were not there (issue #27 — 95 apparent failures, 93 of them this).
+
+- **Steps.** `crux()` flattens a call *DAG* per path, so a crux is routinely far longer than the run that
+  built it: a loop folding an accumulator leaves one body-copy per pass. Median crux among those failures
+  was 6,849 items against a 3,000-step budget. Budget by `crux.count`, and if the reconstruction still
+  does not drain `.exec`, report *nothing known* rather than judging a half-finished stack.
+- **Size.** The size caps bound a *population* run — they are a throughput compromise, not a semantic one.
+  A single individual re-run to explain itself is not competing for that budget, so
+  `InterpreterSettings.reconstructing` relaxes them. Without it the interpreter refuses its own
+  reconstruction: an `IteratorItem` may hold an origin bigger than `maxCodePoints` (the cap only measures
+  `flatSize` when the item *is* a `CodeItem`), but rebuilding pushes that origin through `.code`, where
+  the cap bites.
+
+Three settings deliberately do **not** relax, because each would change what the replay computes rather
+than what it may hold: `maxIterations` (a counted loop's span is clamped at construction and the crux
+records the clamped bounds), `maxCallWeight` (provenance elided originally must elide identically, or the
+fixed-point check fails on a difference the policy introduced), and `stepLimit` (sized by the caller, who
+knows the crux's length).
+
 ## 2. Push is mostly postfix — and a stack reverses what you wrote
 
 `2 3 .intSubtract` computes 2−3. The `2` was written first, so it is *deeper*; the `3` is on top. A

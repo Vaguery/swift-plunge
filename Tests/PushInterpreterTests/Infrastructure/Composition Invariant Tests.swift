@@ -191,6 +191,7 @@ struct CompositionInvariantTests {
                 let crux = item.crux()
 
                 let redo = Interpreter()
+                redo.config = redo.config.reconstructing
                 redo.config.stepLimit = 10_000
                 redo.load(inputs: inputs, constants: constants, program: crux)
                 redo.run(stepLimit: 10_000)
