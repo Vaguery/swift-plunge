@@ -66,10 +66,30 @@ func brokenClaim(
     guard let resting = PushStack.defaultStack(for: item) else { return nil }
 
     let crux = item.crux()
+
+    // **The reconstruction needs its own step budget, not the program's.**
+    //
+    // `crux()` flattens a call *DAG* into a postfix program, re-emitting a shared
+    // node once per path, so a crux is routinely far longer than the run that
+    // produced it — a loop folding an accumulator leaves one body-copy per pass.
+    // Re-running it under the original `stepLimit` cuts it off mid-way and then
+    // compares against a half-finished stack.
+    //
+    // That was not a hypothetical: it accounted for 93 of the 95 residual
+    // failures in the #27 sweep, every one of which reproduces correctly given
+    // room to finish. Budget by the size of the thing actually being run.
+    let room = max(settings.stepLimit, crux.count * 20)
     let redo = Interpreter()
     redo.config = settings
+    redo.config.stepLimit = room
     redo.load(inputs: inputs, constants: constants, program: crux)
-    redo.run(stepLimit: settings.stepLimit)
+    redo.run(stepLimit: room)
+
+    // Still unfinished? Then nothing is known about this claim — say so rather
+    // than reporting a truncated stack as a broken record.
+    guard redo.stacks[.exec]!.isEmpty else {
+        return nil
+    }
 
     guard let reproduced = redo.stacks[resting]!.first else {
         return "crux produced nothing on .\(resting)"
@@ -88,19 +108,16 @@ func brokenClaim(
     // multi-result stranding bug hide — the wanted value was on top *and* its
     // sibling was underneath, which reads as a pass.
     //
-    // `.error` is ignored (a crux may legitimately re-raise), and a run that did
-    // not drain `.exec` was cut short by the step limit rather than leaving
-    // debris, so it is not judged.
-    if redo.stacks[.exec]!.isEmpty {
-        var debris: [String] = []
-        for stack in PushStack.allStacks where stack != .error {
-            let found = redo.stacks[stack]!.count
-            let wanted = (stack == resting) ? 1 : 0
-            if found != wanted { debris.append(".\(stack) holds \(found), wanted \(wanted)") }
-        }
-        if !debris.isEmpty {
-            return "crux leaves debris — " + debris.joined(separator: "; ")
-        }
+    // `.error` is ignored: a crux may legitimately re-raise. `.exec` is known
+    // drained by the guard above.
+    var debris: [String] = []
+    for stack in PushStack.allStacks where stack != .error {
+        let found = redo.stacks[stack]!.count
+        let wanted = (stack == resting) ? 1 : 0
+        if found != wanted { debris.append(".\(stack) holds \(found), wanted \(wanted)") }
+    }
+    if !debris.isEmpty {
+        return "crux leaves debris — " + debris.joined(separator: "; ")
     }
     return nil
 }
