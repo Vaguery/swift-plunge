@@ -1,8 +1,21 @@
 #  Missing Code instructions
 
-> **Status (2026-07-18): built** (branch `codeTreeInstructions`) — every `code*` instruction below is
-> implemented **except the four gap-based ops** (`codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`,
-> `codeWrapPoints`), postponed to a dedicated gap-model design pass. `codeGather` was renamed
+> **Status (2026-07-26): complete** — every `code*` instruction below is implemented, the four
+> gap-based ops (`codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`, `codeWrapPoints`) included.
+> They waited on the gap-model design pass, which is now `CodeGaps.swift`; read that file's header
+> for the model and **ignore the "flat Plushy" wording in the four sketches below**, which predates
+> the removal of that genome type and its code-making mechanism. The model is stated natively as a
+> `CodeItem` operation and depends on no genome layer.
+>
+> Two semantics were decided in that pass and are worth having here:
+>
+> - **A cut preserves every leaf, in order.** The pieces are repaired — an unclosed block is closed,
+>   an unmatched close dropped — so nothing is lost. Nesting *on the cut path* does change, which
+>   means cut-then-`codeAppend` is the identity only for a gap between root elements, as
+>   `codeCutRootAtGap` always was. A block split in two cannot reassemble.
+> - **`codeFlattenRange` leaves enclosing blocks alone.** A block flattens iff its head or tail gap
+>   falls in the range, so a block that merely contains the range keeps its shape. Otherwise a
+>   one-gap range would flatten the whole tree, since the root encloses every range. `codeGather` was renamed
 > **`codePair`** (wrap two items into `(x y)`) and `codeFlattenOnce` added. The singleton-unwrap
 > convention (a one-element block denotes its element) lets code needles name leaves — Design Principles
 > §7b. A later pass added the `.exec` point-access family beyond the list below —

@@ -7,8 +7,10 @@
 
 import DequeModule
 
-// Remaining unimplemented (gap-based ops deferred to a later batch):
-//   codeCutAtGap, codeInsertAtGap, codeWrapPoints, codeFlattenRange
+// The `.code` instruction set is complete. The four gap-based ops that stood
+// unimplemented longest — codeCutAtGap, codeInsertAtGap, codeWrapPoints,
+// codeFlattenRange — are under "Tree-wide gap surgery" below, on the model in
+// `CodeGaps.swift`.
 
 nonisolated extension Interpreter {
 
@@ -403,6 +405,120 @@ nonisolated extension Interpreter {
             }
         )
 
+    // MARK: - Tree-wide gap surgery
+    //
+    // The four instructions that name a position *between* things rather than a
+    // point. The model — what a gap is, why the root's own boundary is not one,
+    // and why rebuilding repairs rather than refuses — is in `CodeGaps.swift`.
+    // Read that first; these four are thin on top of it.
+
+    /// Split the **whole tree** at the indexed gap — `codeCutRootAtGap`'s sibling,
+    /// reaching inside nested blocks rather than only between root elements.
+    /// Prefix deeper, suffix on top; law-5 multi-result crux.
+    ///
+    /// **Leaves are preserved exactly**, in order, across the two pieces. Nesting
+    /// on the cut path is not: a block the cut passes through becomes one block in
+    /// each piece, so cut-then-`codeAppend` is the identity only when the gap
+    /// happens to fall between root elements. That is a property of cutting trees;
+    /// see the note in `CodeGaps.swift`.
+    static let codeCutAtGap_Behavior =
+        Behavior(
+            .codeCutAtGap,
+            takes: [.code, .int],
+            fxn: { a in
+                let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
+                let tokens = x.gapTokens
+                let idx = x.gapIndex(y.value)
+                let source: [any Item] = [x, y, InstructionItem(.codeCutAtGap)]
+                return [
+                    Router(.code, CodeItem(
+                        CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
+                        call: Behavior.selecting(0, of: 2, on: .code, from: source))),
+                    Router(.code, CodeItem(
+                        CodeItem.rebuilt(from: Array(tokens[idx...])).value,
+                        call: Behavior.selecting(1, of: 2, on: .code, from: source))),
+                ]
+            }
+        )
+
+    /// Splice one block into another's tree at the indexed gap.
+    ///
+    /// Written `subject insert n .codeInsertAtGap`, so the subject is deeper — the
+    /// argument order `codeReplaceFirstPoint` already uses. The insertion is
+    /// **denoted** (`denotedItem`, singleton-unwrap), like every other code
+    /// instruction that names a target: `( 5 )` inserts the bare leaf `5`,
+    /// `( ( 5 ) )` inserts the block `( 5 )`.
+    static let codeInsertAtGap_Behavior =
+        Behavior(
+            .codeInsertAtGap,
+            takes: [.code, .code, .int],
+            fxn: { a in
+                let (insert, subject, n) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! IntItem)
+                var tokens = subject.gapTokens
+                let idx = subject.gapIndex(n.value)
+                let denoted = insert.denotedItem
+                let spliced: [CodeToken] = (denoted as? CodeItem)
+                    .map { [.open] + $0.gapTokens + [.close] } ?? [.item(denoted)]
+                tokens.insert(contentsOf: spliced, at: idx)
+                return [Router(.code, CodeItem(
+                    CodeItem.rebuilt(from: tokens).value,
+                    call: [subject, insert, n, InstructionItem(.codeInsertAtGap)]))]
+            }
+        )
+
+    /// Open a new block at one gap and close it at another, then rebuild.
+    ///
+    /// The two indices are **sorted**, so a reversed pair wraps the same span
+    /// rather than producing nonsense — monotone, like every other clamp here.
+    /// Equal indices give an empty block at that gap, which needs no special case.
+    ///
+    /// A wrap that crosses an existing block's boundary leaves the token stream
+    /// unbalanced; `rebuilt(from:)` repairs it, which is the whole reason that
+    /// function is total.
+    static let codeWrapPoints_Behavior =
+        Behavior(
+            .codeWrapPoints,
+            takes: [.code, .int, .int],
+            fxn: { a in
+                // `top` is the last int written and `deep` the first, so the crux
+                // has to name them `deep top` — law 3 records in *written* order.
+                // Getting that backwards is invisible to the value here, since the
+                // pair is sorted below, and shows up only as a crux that is not a
+                // fixed point. Which is exactly how the fuzzer found it.
+                let (x, top, deep) = (a[0] as! CodeItem, a[1] as! IntItem, a[2] as! IntItem)
+                var tokens = x.gapTokens
+                let (lo, hi) = { let p = [x.gapIndex(top.value), x.gapIndex(deep.value)].sorted()
+                                 return (p[0], p[1]) }()
+                // The higher index first, so inserting there cannot shift the lower.
+                tokens.insert(.close, at: hi)
+                tokens.insert(.open, at: lo)
+                return [Router(.code, CodeItem(
+                    CodeItem.rebuilt(from: tokens).value,
+                    call: [x, deep, top, InstructionItem(.codeWrapPoints)]))]
+            }
+        )
+
+    /// Flatten every block the gap range reaches into, and only those.
+    ///
+    /// A block goes iff its head or tail gap falls inside the range. One that
+    /// merely *encloses* the range keeps its shape, and so does one entirely
+    /// outside it — so the effect stays where the program pointed. Indices are
+    /// sorted, as in `codeWrapPoints`.
+    static let codeFlattenRange_Behavior =
+        Behavior(
+            .codeFlattenRange,
+            takes: [.code, .int, .int],
+            fxn: { a in
+                // `deep top`, not `top deep` — see the note on `codeWrapPoints`.
+                let (x, top, deep) = (a[0] as! CodeItem, a[1] as! IntItem, a[2] as! IntItem)
+                let (lo, hi) = { let p = [x.gapIndex(top.value), x.gapIndex(deep.value)].sorted()
+                                 return (p[0], p[1]) }()
+                return [Router(.code, CodeItem(
+                    x.flatteningBlocks(inGapRange: lo, through: hi).value,
+                    call: [x, deep, top, InstructionItem(.codeFlattenRange)]))]
+            }
+        )
+
     /// Iterate a block's **root** elements, running the mouse once per element —
     /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing
     /// `.elements`-over-CodeItem walk. `code MOUSE .codeIterateRoot`: the mouse is
@@ -666,6 +782,10 @@ nonisolated extension Interpreter {
         .codeFlatten : codeFlatten_Behavior,
         .codeFlattenOnce : codeFlattenOnce_Behavior,
         .codeFlattenPoint : codeFlattenPoint_Behavior,
+        .codeCutAtGap : codeCutAtGap_Behavior,
+        .codeInsertAtGap : codeInsertAtGap_Behavior,
+        .codeWrapPoints : codeWrapPoints_Behavior,
+        .codeFlattenRange : codeFlattenRange_Behavior,
         .codeRemovePoint : codeRemovePoint_Behavior,
         .codeReplaceAllPoints : codeReplaceAllPoints_Behavior,
         .codeReplaceFirstPoint : codeReplaceFirstPoint_Behavior,

@@ -158,6 +158,13 @@ Left for later, with the arguments in the coverage note:
   so the fix is as much in the tests as the code. `Composition Invariant Tests.swift` now sweeps the whole
   language rather than the one family it was written for, and `brokenClaim` checks for debris. A 40-seed
   fuzz went from 971 broken claims to 95 (issue #27 is the remainder). → *Design Principles.md* §1, §16
+- **The `.code` instruction set is complete**, and with it every name in `PushInstruction`: 608 of 608
+  now have Behaviors. The last four were the gap-based ops, which waited on a model for naming a
+  position *between* things in a tree rather than a point — now `CodeGaps.swift`, generalizing
+  `codeCutRootAtGap`'s "N items have N+1 gaps" from the root array to the whole tree, so head and tail
+  are addressable at every level. Five introspection instructions (`pushStepCount`, `errorStackDepth`,
+  the three `errorMissing…Count`) landed alongside, with `ErrorKind` to make the counts exact.
+  → *Code instruction planning.md*, *Introspection Behaviors.swift*
 - **`.isContingent` removed entirely** (#23a, and with it #18's `contingencySources`). The flag marked a
   value whose *presence* depended on something the crux did not capture. Nothing consumed it: every read
   was either `Behavior.netContingency` propagating it to the next item or a test asserting it, and
