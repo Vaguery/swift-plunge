@@ -191,6 +191,56 @@ struct IteratorCyclingTests {
     /// (`maxVectorLength` bounds it instead). So a cycling walk over a source
     /// already longer than the ceiling falls back to a single lap rather than to
     /// nothing.
+    /// **A clamp must never leave a resting iterator spent.**
+    ///
+    /// `iteratorBuilt` approves a live iterator, and only then does the push
+    /// boundary clamp it — so a clamp measured from the loop's *start* could shrink
+    /// the end to somewhere the cursor had already passed, and the result came to
+    /// rest with nothing to emit. Its crux then could not rebuild it, which is how
+    /// a 40-seed sweep found this: 2 broken claims in 154,364, both
+    /// `.iteratorRepeatingIntoExec`.
+    ///
+    /// The budget is now "at most `maxIterations` **more** passes", measured from
+    /// the cursor. For a cursor of 0 — every loop that was stepped rather than
+    /// hand-built — nothing changes, which is why this went unseen.
+    @Test func `clamping a hand-built cursor does not strand it`() {
+        let inty = Interpreter()
+        inty.config.maxIterations = 100
+        inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
+        // takes: [.code, .int, .int, .int] — written deepest-first: count, cursor, burial.
+        inty.stacks[.int]!.prepend(contentsOf:
+            [IntItem(88), IntItem(25_046), IntItem(30_000)] as [any Item])
+        doThis(.iteratorRepeatingIntoExec, to: inty)
+
+        let landed = inty.stacks[.iterator]!.first as! IteratorItem
+        #expect(!landed.isSpent, "a resting iterator has something to emit")
+        #expect(landed.promisedPasses == 100, "100 more passes, not 100 in total")
+        #expect((landed.destination as? IntItem)?.value == 25_146)
+        #expect(landed.value == 25_046, "and the cursor is where the program put it")
+
+        // The crux of an iterator that can exist must rebuild it.
+        let redo = Interpreter()
+        redo.config.maxIterations = 100
+        redo.load(program: landed.crux())
+        redo.run()
+        #expect(stackString(redo, .iterator) == stackString(inty, .iterator))
+    }
+
+    /// The clamp stays a fixed point: having budgeted from the cursor, asking
+    /// again finds nothing left to cut.
+    @Test func `clamping is idempotent from a moved cursor`() {
+        let inty = Interpreter()
+        inty.config.maxIterations = 100
+        inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
+        inty.stacks[.int]!.prepend(contentsOf:
+            [IntItem(0), IntItem(25_046), IntItem(30_000)] as [any Item])
+        doThis(.iteratorRepeatingIntoExec, to: inty)
+
+        let landed = inty.stacks[.iterator]!.first as! IteratorItem
+        #expect(landed.clamped(toPasses: 100) == nil,
+                "already within budget, so nothing to clamp — and no wasted copy")
+    }
+
     @Test func `a source longer than the ceiling falls back to one lap, not none`() {
         let inty = Interpreter()
         inty.push(cycling(2, over: Array(1...1_000)), to: .iterator)
