@@ -82,6 +82,28 @@ nonisolated extension Interpreter {
         let controlFlow = matching { $0.hasPrefix("code") || $0.hasPrefix("exec") }
             .subtracting(combinators).subtracting(prints)
 
+        // `.looping` and `.branching` are carved out of the control-flow family
+        // rather than replacing it: `.controlFlow` below stays their union plus the
+        // quotes, so a caller that silenced "control flow" still silences the same
+        // set it always did.
+        let looping = matching { name in
+            name.contains("Iterate")
+                || name.hasPrefix("execDo")
+                || ["execWhile", "execY", "iteratorPlay", "iteratorPlayDelayed"].contains(name)
+        }
+        let branching = matching { ["execIf", "execWhen", "codeIf"].contains($0) }
+
+        // Type domains. Nested on purpose — a vector is a collection — and stated
+        // rather than left implicit, since "silence the collections" is a coarser
+        // request than "silence the vectors" and both get asked.
+        let vector = matching { $0.hasPrefix("vec") }
+        let collection = vector.union(matching { $0.hasPrefix("string") })
+
+        // Authoritative, like `.query`: the exact complement of `alwaysSatisfied`.
+        // This is the *derived* half of "can raise an error" — refusal before the
+        // body runs. The declared half is `InstructionTag.fallible`.
+        let canStarve = Set(language.filter { !$0.value.requirements.isEmpty }.keys)
+
         // Authoritative: reads/needs its argument without popping it.
         let query = Set(language.filter { _, behavior in
             !behavior.readStacks.isEmpty
@@ -98,6 +120,11 @@ nonisolated extension Interpreter {
             .introspection: introspection,
             .stackPlumbing: stackPlumbing,
             .controlFlow: controlFlow,
+            .looping: looping,
+            .branching: branching,
+            .vector: vector,
+            .collection: collection,
+            .canStarve: canStarve,
         ]
     }()
 

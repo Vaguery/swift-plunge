@@ -999,6 +999,9 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .code],
+            // All four `vecXIterate` at once — the factory is the right place for a
+            // family judgment, because there is then no way to tag three of four.
+            tags: [.reEntrant],
             fxn: { a in
                 let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }
@@ -1687,6 +1690,7 @@ nonisolated extension Interpreter {
     Behavior(
         .vecFromIterator,
         takes: [.iterator],
+        tags: [.fallible],
         fxn: { a in
             let iterator = a[0] as! IteratorItem
             // As `.codeFromIterator`: a success ends the loop and the farewell

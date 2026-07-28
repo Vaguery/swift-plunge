@@ -147,6 +147,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .iteratorPlay,
             takes: [.iterator],
+            tags: [.reEntrant],
             modifier: { (interpreter, collectedItems) in
                 let iterator = collectedItems[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
@@ -190,6 +191,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .iteratorPlayDelayed,
             takes: [.int, .iterator],
+            tags: [.reEntrant],
             modifier: { (interpreter, collectedItems) in
                 let burial = (collectedItems[0] as! IntItem).value
                 var iterator = collectedItems[1] as! IteratorItem
@@ -346,6 +348,10 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [source, .iterator],
+            // Every setter can refuse the value it was handed — `iteratorSetEnd`
+            // on a walking iterator has no end to set — so the whole family is
+            // fallible, tagged once here.
+            tags: [.fallible],
             fxn: { a in
                 var iterator = a[1] as! IteratorItem
 
@@ -380,6 +386,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorRestart,
             takes: [.iterator],
+            tags: [.fallible],
             fxn: { a in
                 var iterator = a[0] as! IteratorItem
                 iterator.value = 0
@@ -512,6 +519,11 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorFromIntRange,
             takes: [.int, .int, .int, .int, .int, .bool, .code],
+            // Roadmap #17: measured to starve close to 100% of the time in random
+            // programs — ~7 arguments is more than a genome reliably assembles. Still
+            // correct, and still what a hand-built crux uses; just dead weight in a
+            // draw. Tagged in the factory so the whole family moves together.
+            tags: [.cruxOnly],
             fxn: { a in
                 // `.int` is a stack, so the last argument written is on top:
                 // `origin dest stride cursor burial` arrives reversed.
@@ -557,6 +569,11 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [source, .int, .int, .bool, .code],
+            // Roadmap #17: measured to starve close to 100% of the time in random
+            // programs — ~7 arguments is more than a genome reliably assembles. Still
+            // correct, and still what a hand-built crux uses; just dead weight in a
+            // draw. Tagged in the factory so the whole family moves together.
+            tags: [.cruxOnly],
             fxn: { a in
                 let origin = a[0]
                 let (burial, cursor) = (a[1] as! IntItem, a[2] as! IntItem)
@@ -618,6 +635,11 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [.code, .code, .int, .int, .bool],
+            // Roadmap #17: measured to starve close to 100% of the time in random
+            // programs — ~7 arguments is more than a genome reliably assembles. Still
+            // correct, and still what a hand-built crux uses; just dead weight in a
+            // draw. Tagged in the factory so the whole family moves together.
+            tags: [.cruxOnly],
             fxn: { a in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
@@ -653,6 +675,11 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [.code, .code, .int, .int, .bool],
+            // Roadmap #17: measured to starve close to 100% of the time in random
+            // programs — ~7 arguments is more than a genome reliably assembles. Still
+            // correct, and still what a hand-built crux uses; just dead weight in a
+            // draw. Tagged in the factory so the whole family moves together.
+            tags: [.cruxOnly],
             fxn: { a in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
@@ -694,6 +721,12 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [.code, .int, .int, .int],
+            // `.fallible` too: it refuses an empty block.
+            // Roadmap #17: measured to starve close to 100% of the time in random
+            // programs — ~7 arguments is more than a genome reliably assembles. Still
+            // correct, and still what a hand-built crux uses; just dead weight in a
+            // draw. Tagged in the factory so the whole family moves together.
+            tags: [.cruxOnly, .fallible],
             fxn: { a in
                 let box = a[0] as! CodeItem
                 let (burial, cursor, count) = (

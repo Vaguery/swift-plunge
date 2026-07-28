@@ -1,0 +1,151 @@
+//
+//  Instruction Tag Tests.swift
+//  PushInterpreterTests
+//
+//  The declared channel — the only classification here that *can* be wrong, which
+//  is what these are for.
+//
+//  Two kinds of check, and the difference is the point:
+//
+//  - A tag that duplicates something already derived must be **asserted to agree
+//    with it**. Those are checkable and so must be checked rather than trusted.
+//  - A tag that is a judgment — `.risky` — is unfalsifiable by construction. Its
+//    guard is the recorded rationale, not a test. There is deliberately no test
+//    below that tries to "verify" it, and adding one would be a category error.
+//
+
+@testable import PushInterpreter
+import Testing
+import DequeModule
+
+
+@Suite @MainActor
+struct InstructionTagTests {
+
+    // MARK: - The channel itself
+
+    /// Every shipped tag says what it means and where its judgment came from —
+    /// §13's rule for limits, applied to categories. A tag with no stated reason is
+    /// indistinguishable from cargo.
+    @Test func `every shipped tag records a rationale`() {
+        for tag in InstructionTag.known {
+            #expect(!tag.summary.isEmpty, "\(tag.rawValue) has no summary")
+            #expect(!tag.rationale.contains("No rationale recorded"),
+                    "\(tag.rawValue) has no rationale")
+            #expect(!Interpreter.instructions(declaring: tag).isEmpty,
+                    "\(tag.rawValue) is declared by nothing — either tag something or drop it")
+        }
+    }
+
+    /// The vocabulary is open, so a caller can mint one for a single experiment
+    /// without a library release. An unknown tag is not an error; it simply has
+    /// nothing declared and says so.
+    @Test func `a locally minted tag is legal and empty`() {
+        let mine = InstructionTag("myExperiment")
+        #expect(Interpreter.instructions(declaring: mine).isEmpty)
+        #expect(mine.provenance == .chosen, "someone made it up on purpose")
+        #expect(mine.rationale.contains("No rationale recorded"))
+    }
+
+    /// Tags overlap — the whole reason they are not a partition. `iteratorRepeating`
+    /// both starves in practice and refuses empty blocks.
+    @Test func `tags overlap`() {
+        let both = Interpreter.declaredTags(of: .iteratorRepeating)
+        #expect(both.contains(.cruxOnly))
+        #expect(both.contains(.fallible))
+    }
+
+
+    // MARK: - reEntrant, and the set it replaced
+
+    /// `.reEntrant` is exactly what `PushInstruction.iterators` used to spell out by
+    /// hand, which is the check that the retirement lost nothing. The alias now
+    /// reads the tag, so this also pins that the runaway guard still sees the same
+    /// instructions it always did.
+    @Test func `reEntrant is the set the hand-written list used to hold`() {
+        let expected: Set<PushInstruction> = [
+            .execDoWhile, .execWhile, .execY,
+            .codeIteratePoints, .codeIterateEmitPoints, .codeIterateDoPoints, .codeIterateRoot,
+            .iteratorPlay, .iteratorPlayDelayed,
+            .stringIterate,
+            .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
+        ]
+        #expect(Interpreter.instructions(declaring: .reEntrant) == expected)
+        #expect(PushInstruction.iterators == expected, "the alias still agrees")
+    }
+
+    /// Every re-entrant instruction drives a loop, so every one of them should also
+    /// carry the derived `.looping` trait. **This is the honesty guard**: the two
+    /// channels reach the same conclusion by different routes — one declared at the
+    /// behavior, one computed from names — so a disagreement means one of them is
+    /// wrong and neither can hide it.
+    @Test func `reEntrant agrees with the derived looping trait`() {
+        let declared = Interpreter.instructions(declaring: .reEntrant)
+        let derived = Interpreter.instructions(trait: .looping)
+        let strays = declared.subtracting(derived).map(\.rawValue).sorted()
+        #expect(strays.isEmpty, "declared re-entrant but not derived as looping: \(strays)")
+    }
+
+
+    // MARK: - cruxOnly
+
+    /// Roadmap #17: the iterator constructors want so many arguments that they
+    /// starve in practice. Blocked for a long time on having nowhere to declare it.
+    @Test func `cruxOnly covers the iterator constructors`() {
+        let tagged = Interpreter.instructions(declaring: .cruxOnly)
+        #expect(tagged.count == 15, "13 iteratorFrom… plus 2 iteratorRepeating…")
+        for name in tagged {
+            #expect(name.rawValue.hasPrefix("iteratorFrom")
+                    || name.rawValue.hasPrefix("iteratorRepeating"),
+                    "\(name) is tagged cruxOnly but is not a constructor")
+        }
+    }
+
+    /// The claim behind the tag, checked rather than asserted: these really do want
+    /// far more arguments than anything else in the language.
+    @Test func `the cruxOnly constructors really are argument-hungry`() {
+        for name in Interpreter.instructions(declaring: .cruxOnly) {
+            let wanted = Interpreter.language[name]!.staticNeeds.values.reduce(0, +)
+            #expect(wanted >= 4, "\(name) wants only \(wanted) — is it really dead weight?")
+        }
+    }
+
+
+    // MARK: - fallible, and the line it draws
+
+    /// `.fallible` is refusal **after** the body runs; `.canStarve` is refusal
+    /// before it. Two questions, so two channels — and the derived one is not a
+    /// hand-declared restatement of something already computable.
+    @Test func `fallible and canStarve are different questions`() {
+        let fallible = Interpreter.instructions(declaring: .fallible)
+        let starve = Interpreter.instructions(trait: .canStarve)
+
+        #expect(fallible.contains(.intQuot), "divide by zero")
+        #expect(fallible.contains(.doubleDivide), "divide by zero")
+        #expect(fallible.contains(.intAdd), "overflow")
+        #expect(fallible.contains(.charFromDouble), "overflow converting a double")
+        #expect(!fallible.contains(.intDup), "a dup cannot refuse anything")
+
+        // canStarve is the exact complement of alwaysSatisfied — derived, so this
+        // cannot drift.
+        #expect(starve.isDisjoint(with: Interpreter.alwaysSatisfied))
+        #expect(starve.union(Interpreter.alwaysSatisfied) == Set(Interpreter.language.keys))
+
+        // They overlap heavily and neither contains the other, which is what makes
+        // them worth having separately.
+        #expect(!fallible.isSubset(of: Interpreter.alwaysSatisfied))
+    }
+
+    /// **The combinators are deliberately not fallible.** Five families carry an
+    /// "on empty stack" guard in their bodies, but each declares
+    /// `alsoNeeds: [stack: 2]`, so the Planner refuses first and the guard cannot
+    /// fire. Tagging them would describe a branch no program can reach — which is
+    /// why this tag is `.inspected` rather than something a grep for `ErrorItem`
+    /// could have produced.
+    @Test func `unreachable error branches are not tagged fallible`() {
+        for name: PushInstruction in [.intYank, .doubleShove, .stringYankDup, .codeDeepDup] {
+            #expect(!Interpreter.declaredTags(of: name).contains(.fallible),
+                    "\(name)'s empty-stack guard sits behind alsoNeeds and cannot fire")
+        }
+    }
+}

@@ -84,6 +84,14 @@ nonisolated class Behavior: @unchecked Sendable {
 
     let transformer: @Sendable ([any Item]) -> [Router]
 
+    /// Declared judgment about this instruction — see `InstructionTag`.
+    ///
+    /// **The one channel here that can be wrong**, and deliberately so: it carries
+    /// what `requirements` cannot know. Empty for most instructions; a factory that
+    /// generates a family tags the whole family in one line, which is better than
+    /// per-instruction because there is then no way to tag eleven of twelve.
+    let tags: Set<InstructionTag>
+
 
     /// The common form: consume one item from each of `takes`, and require —
     /// without consuming — `alsoNeeds` more.
@@ -101,6 +109,7 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
+        tags: Set<InstructionTag> = [],
         fxn: @escaping @Sendable ([any Item]) -> [Router]
     ) {
         // `takes` first: an index is popped before the stack it indexes into is
@@ -111,6 +120,7 @@ nonisolated class Behavior: @unchecked Sendable {
             requires: takes.map { Requirement.takes($0) }
                 + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
                     .map { Requirement.needs($0.key, count: $0.value) },
+            tags: tags,
             fxn: fxn
         )
     }
@@ -126,19 +136,22 @@ nonisolated class Behavior: @unchecked Sendable {
     convenience init(
         _ label: PushInstruction,
         reads: [PushStack],
+        tags: Set<InstructionTag> = [],
         fxn: @escaping @Sendable ([any Item]) -> [Router]
     ) {
-        self.init(label, requires: reads.map { Requirement.reads($0) }, fxn: fxn)
+        self.init(label, requires: reads.map { Requirement.reads($0) }, tags: tags, fxn: fxn)
     }
 
     /// The general form, for a Behavior whose requirements are not all static.
     init(
         _ label: PushInstruction,
         requires: [Requirement],
+        tags: Set<InstructionTag> = [],
         fxn: @escaping @Sendable ([any Item]) -> [Router]
     ) {
         self.name = label
         self.requirements = requires
+        self.tags = tags
         self.transformer = fxn
     }
 
@@ -218,6 +231,7 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
         _ label: PushInstruction,
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
+        tags: Set<InstructionTag> = [],
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
         self.init(
@@ -225,6 +239,7 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
             requires: takes.map { Requirement.takes($0) }
                 + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
                     .map { Requirement.needs($0.key, count: $0.value) },
+            tags: tags,
             modifier: modifier
         )
     }
@@ -232,10 +247,11 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
     init(
         _ label: PushInstruction,
         requires: [Requirement],
+        tags: Set<InstructionTag> = [],
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
         self.directModifier = modifier
-        super.init(label, requires: requires, fxn: {_ in return []})
+        super.init(label, requires: requires, tags: tags, fxn: {_ in return []})
     }
 
     override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {

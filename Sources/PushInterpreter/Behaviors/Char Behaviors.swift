@@ -14,6 +14,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charFromDouble,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
 

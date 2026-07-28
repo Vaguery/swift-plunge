@@ -45,6 +45,27 @@ public extension Runner {
         Interpreter.sortedRoles[role] ?? []
     }
 
+    /// The language indexed by **declared tag** — the judgment channel.
+    ///
+    /// Unlike roles and traits, these are declared at each `Behavior` rather than
+    /// derived, so they are the only classification here that can be *wrong*. That
+    /// is the price of carrying what `requirements` cannot know: that `.execY` is
+    /// risky, or that the iterator constructors starve. Each tag records where its
+    /// judgment came from — ask `InstructionTag.provenance` and `.rationale`.
+    nonisolated var instructionsByDeclaredTag: [InstructionTag: [PushInstruction]] {
+        Interpreter.sortedDeclaredTags
+    }
+
+    /// The instructions declaring `tag`, sorted.
+    nonisolated func instructions(declaring tag: InstructionTag) -> [PushInstruction] {
+        Interpreter.sortedDeclaredTags[tag] ?? []
+    }
+
+    /// Every tag `instruction` declares — usually none.
+    nonisolated func declaredTags(of instruction: PushInstruction) -> Set<InstructionTag> {
+        Interpreter.declaredTags(of: instruction)
+    }
+
     // MARK: - Renamed
     //
     // **Unavailable rather than deprecated, deliberately.** `InstructionTag` used

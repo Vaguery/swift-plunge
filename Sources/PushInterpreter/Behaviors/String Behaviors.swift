@@ -801,6 +801,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringIterate,
             takes: [.string, .code],
+            tags: [.reEntrant],
             fxn: { a in
                 let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }

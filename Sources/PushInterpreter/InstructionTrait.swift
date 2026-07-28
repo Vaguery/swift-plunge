@@ -49,7 +49,32 @@ public nonisolated enum InstructionTrait: String, Sendable, Codable, Hashable, C
     case stackPlumbing
     /// Manipulates `.code` / `.exec` — the conditionals, combinators (K/S/Y), and
     /// looping forms that make control flow, plus the quotes that feed them.
+    ///
+    /// Deliberately kept as the **union** of `.looping`, `.branching` and the rest
+    /// of the `code`/`exec` families, rather than being narrowed when those two
+    /// were split out of it, so nothing that asked for "control flow" quietly
+    /// started getting less.
     case controlFlow
+    /// Runs its argument more than once — the `…Iterate` families, the `execDo…`
+    /// forms, `execWhile`/`execDoWhile`/`execY`, and the iterator's own play
+    /// tokens. A subset of `.controlFlow`.
+    case looping
+    /// Chooses between two continuations — `execIf`, `execWhen`, `codeIf`. Also a
+    /// subset of `.controlFlow`, and disjoint from `.looping`.
+    case branching
+    /// Works on a `vec…` stack. A type domain rather than a style, and included
+    /// because "silence the vectors" is a thing a search owner actually asks for.
+    case vector
+    /// Works on a collection — `.vector` plus the `string…` family. Strictly
+    /// contains `.vector`.
+    case collection
+    /// **Can be refused before it runs**, for want of the arguments it declares.
+    ///
+    /// Exactly the complement of `Interpreter.alwaysSatisfied`, and derived from
+    /// `requirements`, so it cannot drift. The other half of "can raise an error"
+    /// is `InstructionTag.fallible` — refusal *after* the body runs — which is a
+    /// judgment and lives in the declared channel.
+    case canStarve
 
     /// A one-line description, for tooltips / legends in a UI.
     public var summary: String {
@@ -63,6 +88,11 @@ public nonisolated enum InstructionTrait: String, Sendable, Codable, Hashable, C
         case .introspection:    "Reports runtime dynamics (stack depth / emptiness)."
         case .stackPlumbing:    "Shuffles a stack: dup, swap, rot, pop, flush, …"
         case .controlFlow:      "Manipulates code / exec: conditionals, loops, quotes."
+        case .looping:          "Runs its argument more than once."
+        case .branching:        "Chooses between two continuations."
+        case .vector:           "Works on a vector stack."
+        case .collection:       "Works on a collection: vectors and strings."
+        case .canStarve:        "Can be refused before it runs, for want of arguments."
         }
     }
 }

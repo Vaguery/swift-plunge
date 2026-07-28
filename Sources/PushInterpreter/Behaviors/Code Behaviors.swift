@@ -528,6 +528,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeIterateRoot,
             takes: [.code, .code],
+            tags: [.reEntrant],
             fxn: { a in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }
@@ -550,6 +551,9 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [.code, .code],
+            // The whole generated family is re-entrant — tagging in the factory is
+            // what makes it impossible to tag two of the three.
+            tags: [.reEntrant],
             fxn: { a in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return Interpreter.iteratorLoop(

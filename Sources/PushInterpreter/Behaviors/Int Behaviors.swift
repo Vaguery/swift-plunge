@@ -13,6 +13,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intAdd,
             takes: [.int, .int],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
@@ -46,6 +47,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intSubtract,
             takes: [.int, .int],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
@@ -78,6 +80,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intMultiply,
             takes: [.int, .int],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
@@ -144,6 +147,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intQuot,
             takes: [.int, .int],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
@@ -188,6 +192,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intMod,
             takes: [.int, .int],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
@@ -299,6 +304,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intInc,
             takes: [.int],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! IntItem)
                 let (result, hasOverflowed) = x.value.addingReportingOverflow(1)
@@ -329,6 +335,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intDec,
             takes: [.int],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! IntItem)
                 let (result, hasOverflowed) = x.value
@@ -419,6 +426,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intFromDouble,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
 

@@ -14,6 +14,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleAdd,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -45,6 +46,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleQuot,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -78,6 +80,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleDivide,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -109,6 +112,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleMod,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -174,6 +178,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleSubtract,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -205,6 +210,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleMultiply,
             takes: [.double, .double],
+            tags: [.fallible],
             fxn: { a in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
@@ -321,6 +327,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleCos,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
                 let result = cos(x.value)
@@ -350,6 +357,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleSin,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
                 let result = sin(x.value)
@@ -379,6 +387,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleTan,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
                 let result = tan(x.value)
@@ -408,6 +417,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleInc,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
                 let result = x.value + 1.0
@@ -438,6 +448,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleDec,
             takes: [.double],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! DoubleItem)
                 let result = x.value - 1.0
@@ -504,6 +515,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleFromString,
             takes: [.string],
+            tags: [.fallible],
             fxn: { a in
                 let (x) = (a[0] as! StringItem)
                 let num = Double(x.value) ?? 0.0

@@ -12,22 +12,17 @@
 nonisolated public extension PushInstruction {
 
     /// Instructions that drive iteration by re-pushing a continuation of
-    /// themselves onto `.exec`. While such a loop is in flight its instruction
-    /// sits somewhere down `.exec`, waiting to run the next pass — the control-
-    /// side signal the runaway guard uses to confirm that a fast-filling stack
-    /// is being fed by an active loop rather than a large one-shot computation.
+    /// themselves onto `.exec` — **now derived from the `.reEntrant` tag**, which
+    /// each such behavior declares at its own definition.
     ///
-    /// `.execDoCount`/`.execDoRange`/`.execDoTimes` are deliberately **not** here:
-    /// they no longer re-push themselves. Each now builds an `IteratorItem` and
-    /// hands it to `.iteratorPlay`, so `.iteratorPlay` is what sits on `.exec` for
-    /// the life of one of their loops, and it is the signal instead.
-    /// `.iteratorPlayDelayed` shoves its next copy further down `.exec` rather than
-    /// directly under its payload, which is exactly the shape this set describes.
-    static let iterators: Set<PushInstruction> = [
-        .execDoWhile, .execWhile, .execY,
-        .codeIteratePoints, .codeIterateEmitPoints, .codeIterateDoPoints, .codeIterateRoot,
-        .iteratorPlay, .iteratorPlayDelayed,
-        .stringIterate,
-        .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
-    ]
+    /// This used to be typed out here by hand, which is the drift problem the tag
+    /// channel exists to fix: a set living far from the definitions it describes
+    /// has no way to notice when one of them changes. It survives as a name because
+    /// the runaway guard and four test files read it; they can move to
+    /// `Interpreter.instructions(declaring: .reEntrant)` separately rather than in
+    /// the same change that moved the judgment.
+    ///
+    /// Computed once, not per call: `RunawayGuard` asks this on every step.
+    static let iterators: Set<PushInstruction> =
+        Interpreter.instructions(declaring: .reEntrant)
 }

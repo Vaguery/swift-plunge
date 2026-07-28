@@ -15,6 +15,7 @@ nonisolated extension Interpreter {
         Behavior(
             .execDoWhile,
             takes: [.bool, .code],
+            tags: [.reEntrant],
             // Provenance: every result here is combinatory. The body copies are
             // duplications of the block (law 1b — containment leaves no mark),
             // and the `.execWhile` and `.codeDo` tokens are freshly minted
@@ -258,6 +259,7 @@ nonisolated extension Interpreter {
         Behavior(
             .execY,
             takes: [.code],
+            tags: [.reEntrant, .risky],
             // Law 1 throughout: the block is duplicated and the `.execY` and
             // `.codeDo` tokens are freshly minted.
             //
@@ -332,6 +334,7 @@ nonisolated extension Interpreter {
         Behavior(
             .execWhile,
             takes: [.bool, .code],
+            tags: [.reEntrant],
             // Provenance: as `execDoWhile` — body copies (laws 1 and 1b) and
             // freshly minted continuation tokens (law 4). Nothing is derived.
             //
