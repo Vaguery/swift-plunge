@@ -67,7 +67,7 @@ struct PublicAPITests {
         // The typed introspection surface a caller uses to shape an Experiment:
         // the whole set, and the tag partition (which must sum back to the whole).
         #expect(runner.definedInstructions.contains(.intAdd))
-        let byTag = runner.instructionsByTag
+        let byTag = runner.instructionsByRole
         #expect(byTag[.constant]?.isEmpty == false)
         #expect(byTag.values.map(\.count).reduce(0, +) == runner.definedInstructions.count)
     }

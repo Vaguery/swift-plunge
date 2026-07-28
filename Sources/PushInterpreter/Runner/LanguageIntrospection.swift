@@ -26,17 +26,46 @@ public extension Runner {
         Interpreter.language.keys.sorted { $0.rawValue < $1.rawValue }
     }
 
-    /// The language partitioned into its named subsets — `.constant`, `.input`,
-    /// `.combinator`, `.other` — each list sorted. The four are a true partition:
-    /// every defined instruction appears in exactly one. Count them for a
-    /// by-type breakdown (`instructionsByTag.mapValues(\.count)`).
-    nonisolated var instructionsByTag: [InstructionTag: [PushInstruction]] {
-        Interpreter.sortedTags
+    /// The language partitioned by **where each instruction is defined** —
+    /// `.constant`, `.input`, `.combinator`, `.comparison`, `.other` — each list
+    /// sorted. The five are a true partition: every defined instruction appears in
+    /// exactly one. Count them for a by-role breakdown
+    /// (`instructionsByRole.mapValues(\.count)`).
+    ///
+    /// Read `InstructionRole`'s own note before leaning on these as *semantic*
+    /// categories: a role is derived from the dictionary that registers a behavior,
+    /// so it is honest about the code and only as meaningful as the dictionaries
+    /// are curated to be.
+    nonisolated var instructionsByRole: [InstructionRole: [PushInstruction]] {
+        Interpreter.sortedRoles
     }
 
-    /// The instructions carrying `tag`, sorted.
-    nonisolated func instructions(tagged tag: InstructionTag) -> [PushInstruction] {
-        Interpreter.sortedTags[tag] ?? []
+    /// The instructions carrying `role`, sorted.
+    nonisolated func instructions(role: InstructionRole) -> [PushInstruction] {
+        Interpreter.sortedRoles[role] ?? []
+    }
+
+    // MARK: - Renamed
+    //
+    // **Unavailable rather than deprecated, deliberately.** `InstructionTag` used
+    // to name this partition and now names a different thing entirely — the
+    // declared, overlapping judgment vocabulary. A deprecation warning can be
+    // ignored for a release, and ignoring it here would mean a caller keeping a
+    // compiling `instructionsByTag` whose meaning had silently changed underneath
+    // it. A compile error naming its replacement is much the cheaper outcome, and
+    // is the API-level form of the same rule that keeps derived and declared
+    // classification in separate channels.
+
+    @available(*, unavailable, renamed: "instructionsByRole",
+               message: "renamed: this is the role partition. `InstructionTag` now names the declared judgment tags, which are a different set — see `declaredTags(of:)`.")
+    nonisolated var instructionsByTag: [InstructionRole: [PushInstruction]] {
+        Interpreter.sortedRoles
+    }
+
+    @available(*, unavailable, renamed: "instructions(role:)",
+               message: "renamed: this is the role partition. `InstructionTag` now names the declared judgment tags — see `instructions(declaring:)`.")
+    nonisolated func instructions(tagged role: InstructionRole) -> [PushInstruction] {
+        Interpreter.sortedRoles[role] ?? []
     }
 
     /// The instructions that **consume** `stack` — pop items from it — sorted.

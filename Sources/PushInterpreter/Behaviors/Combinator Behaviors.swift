@@ -8,25 +8,36 @@
 import DequeModule
 
 nonisolated extension Interpreter {
-    static var combinatorBehaviors: [PushInstruction: Behavior] {
-        let theseStacks: [PushStack] = [
-            .bool,
-            .int,
-            .double,
-            .char,
-            .string,
-            .code,
-            .exec,
-            .vecInt,
-            .vecBool,
-            .vecDouble,
-            .vecString,
-            .iterator,
-        ]
 
+    /// The twelve stacks that get generated families — the furniture here, and the
+    /// `…Eq` comparisons in `Comparison Behaviors.swift`.
+    ///
+    /// **`.error` is deliberately absent.** It gets no generated family at all,
+    /// because a program that could pop or reorder its own errors could hide a
+    /// failed instruction from whatever scores it; `errorStackDepth` is the single
+    /// read-only exception. See `Introspection Behaviors.swift`.
+    ///
+    /// Shared rather than written twice, so the two factories cannot drift apart
+    /// about which stacks exist.
+    static let generatedFamilyStacks: [PushStack] = [
+        .bool,
+        .int,
+        .double,
+        .char,
+        .string,
+        .code,
+        .exec,
+        .vecInt,
+        .vecBool,
+        .vecDouble,
+        .vecString,
+        .iterator,
+    ]
+
+    static var combinatorBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
-        for s in theseStacks {
+        for s in generatedFamilyStacks {
             result.merge(
                 combinators(for: s),
                 uniquingKeysWith: { (first, _) in first }
@@ -562,7 +573,9 @@ nonisolated extension Interpreter {
         dupItemsCombinator_Behavior(for: stack, into: &result)
         dupTimesCombinator_Behavior(for: stack, into: &result)
         stackIsEmptyCombinator_Behavior(for: stack, into: &result)
-        eqCombinator_Behavior(for: stack, into: &result)
+        // `eqCombinator_Behavior` is NOT called here. Equality is not furniture,
+        // and being generated beside dup/pop/swap is the only reason it was ever
+        // roled as such. `Comparison Behaviors.swift` calls the same factory.
         flushCombinator_Behavior(for: stack, into: &result)
         popCombinator_Behavior(for: stack, into: &result)
         popItemsCombinator_Behavior(for: stack, into: &result)

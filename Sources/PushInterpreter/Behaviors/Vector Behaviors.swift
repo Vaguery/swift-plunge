@@ -1338,10 +1338,6 @@ nonisolated extension Interpreter {
         .vecDoubleReplaceFirstSubVec : vecDoubleReplaceFirstSubVec_Behavior,
         .vecDoubleReadItems : vecDoubleReadItems_Behavior,
         .vecDoubleReadStack : vecDoubleReadStack_Behavior,
-        .vecDoubleLT : vecDoubleLT_Behavior,
-        .vecDoubleLTE : vecDoubleLTE_Behavior,
-        .vecDoubleGT : vecDoubleGT_Behavior,
-        .vecDoubleGTE : vecDoubleGTE_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
     ]
 
@@ -1512,10 +1508,6 @@ nonisolated extension Interpreter {
         .vecIntReplaceFirstSubVec : vecIntReplaceFirstSubVec_Behavior,
         .vecIntReadItems : vecIntReadItems_Behavior,
         .vecIntReadStack : vecIntReadStack_Behavior,
-        .vecIntLT : vecIntLT_Behavior,
-        .vecIntLTE : vecIntLTE_Behavior,
-        .vecIntGT : vecIntGT_Behavior,
-        .vecIntGTE : vecIntGTE_Behavior,
         .vecIntTake : vecIntTake_Behavior,
     ]
 
@@ -1783,10 +1775,6 @@ nonisolated extension Interpreter {
         .vecStringReplaceFirstSubVec : vecStringReplaceFirstSubVec_Behavior,
         .vecStringReadItems : vecStringReadItems_Behavior,
         .vecStringReadStack : vecStringReadStack_Behavior,
-        .vecStringLT : vecStringLT_Behavior,
-        .vecStringLTE : vecStringLTE_Behavior,
-        .vecStringGT : vecStringGT_Behavior,
-        .vecStringGTE : vecStringGTE_Behavior,
         .vecStringTake : vecStringTake_Behavior,
     ]
 

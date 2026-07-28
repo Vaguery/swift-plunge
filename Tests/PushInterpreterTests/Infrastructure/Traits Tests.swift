@@ -87,7 +87,7 @@ struct TraitsTests {
     /// partitioned by plumbing and the introspective furniture, while
     /// introspection itself reaches outside.
     @Test func `introspection and plumbing partition the combinators`() {
-        let combinators = Interpreter.instructions(tagged: .combinator)
+        let combinators = Interpreter.instructions(role: .combinator)
         let introspection = Interpreter.instructions(trait: .introspection)
         let plumbing = Interpreter.instructions(trait: .stackPlumbing)
 

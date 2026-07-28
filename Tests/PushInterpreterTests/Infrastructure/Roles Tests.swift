@@ -21,17 +21,46 @@ struct TagsTests {
     /// lands there rather than vanishing. If this fails, every mix built on the
     /// tags is measuring something other than what it says.
     @Test func `the tags partition the language`() {
-        let union = InstructionTag.allCases.reduce(into: Set<PushInstruction>()) {
-            $0.formUnion(Interpreter.instructions(tagged: $1))
+        let union = InstructionRole.allCases.reduce(into: Set<PushInstruction>()) {
+            $0.formUnion(Interpreter.instructions(role: $1))
         }
         #expect(union == Set(Interpreter.language.keys), "every instruction is tagged")
 
-        for a in InstructionTag.allCases {
-            for b in InstructionTag.allCases where a != b {
-                let overlap = Interpreter.instructions(tagged: a)
-                    .intersection(Interpreter.instructions(tagged: b))
+        for a in InstructionRole.allCases {
+            for b in InstructionRole.allCases where a != b {
+                let overlap = Interpreter.instructions(role: a)
+                    .intersection(Interpreter.instructions(role: b))
                 #expect(overlap.isEmpty, "\(a) and \(b) both claim \(overlap.map(\.rawValue))")
             }
+        }
+    }
+
+    /// **The two channels must agree about comparisons.**
+    ///
+    /// The role answers "where is it defined" and the trait answers "what does it
+    /// compute", and for this one category they are deliberately the same set — so
+    /// "is `intGT` a comparison?" has one answer rather than two. Nothing enforces
+    /// that automatically: the role comes from `comparisonBehaviors`, a curated
+    /// dictionary, and the trait from a name suffix. This is the check that catches
+    /// a comparison registered into the wrong dictionary, which is the one failure
+    /// the arrangement is open to.
+    @Test func `the comparison role and the comparison trait are the same set`() {
+        let role = Interpreter.instructions(role: .comparison)
+        let trait = Interpreter.instructions(trait: .comparison)
+        let roleOnly = role.subtracting(trait).map(\.rawValue).sorted()
+        let traitOnly = trait.subtracting(role).map(\.rawValue).sorted()
+        #expect(role == trait, "role-only: \(roleOnly); trait-only: \(traitOnly)")
+    }
+
+    /// The specific misclassification this branch existed to fix: `…Eq` was
+    /// generated in the same per-stack loop as dup and swap, so the role called it
+    /// furniture and `.stackPlumbing` — *combinators minus introspection* —
+    /// inherited that and described `.intEq` as "only shuffling a stack".
+    @Test func `equality is not furniture`() {
+        for eq: PushInstruction in [.intEq, .boolEq, .stringEq, .codeEq, .execEq] {
+            #expect(Interpreter.instructions(role: .comparison).contains(eq))
+            #expect(!Interpreter.instructions(role: .combinator).contains(eq))
+            #expect(!Interpreter.instructions(trait: .stackPlumbing).contains(eq))
         }
     }
 
@@ -39,41 +68,45 @@ struct TagsTests {
     /// a silent shift means the language changed shape under a diagnostic that
     /// reports in percentages.
     @Test func `the partition sizes are what the notes say`() {
-        #expect(Interpreter.instructions(tagged: .constant).count == 80)
-        #expect(Interpreter.instructions(tagged: .input).count == 10)
-        #expect(Interpreter.instructions(tagged: .combinator).count == 180)
+        #expect(Interpreter.instructions(role: .constant).count == 80)
+        #expect(Interpreter.instructions(role: .input).count == 10)
+        // 168, not the 180 it was: the 12 `…Eq` moved to `.comparison`, where they
+        // always belonged. See `Comparison Behaviors.swift`.
+        #expect(Interpreter.instructions(role: .combinator).count == 168)
+        #expect(Interpreter.instructions(role: .comparison).count == 40,
+                "12 Eq + 28 orderings")
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.
         // (The exact fraction drifts as `.other` grows with each new instruction;
         // the load-bearing facts are the three fixed counts above.)
         let notEnvironment = Interpreter.language.count
-            - Interpreter.instructions(tagged: .constant).count
-            - Interpreter.instructions(tagged: .input).count
-        let furniture = Double(Interpreter.instructions(tagged: .combinator).count)
+            - Interpreter.instructions(role: .constant).count
+            - Interpreter.instructions(role: .input).count
+        let furniture = Double(Interpreter.instructions(role: .combinator).count)
             / Double(notEnvironment)
         #expect(furniture > 0.30 && furniture < 0.42)
     }
 
     @Test func `the tags hold what their names claim`() {
-        #expect(Interpreter.instructions(tagged: .constant).contains(.int3))
-        #expect(Interpreter.instructions(tagged: .input).contains(.input7))
-        #expect(Interpreter.instructions(tagged: .combinator).contains(.intDup))
-        #expect(Interpreter.instructions(tagged: .other).contains(.intAdd))
+        #expect(Interpreter.instructions(role: .constant).contains(.int3))
+        #expect(Interpreter.instructions(role: .input).contains(.input7))
+        #expect(Interpreter.instructions(role: .combinator).contains(.intDup))
+        #expect(Interpreter.instructions(role: .other).contains(.intAdd))
 
         // And that the remainder really is a remainder: computing instructions
         // land in `.other` whatever stack they belong to.
-        #expect(Interpreter.instructions(tagged: .other).contains(.vecFromIterator))
-        #expect(Interpreter.instructions(tagged: .other).contains(.codeFromIterator))
+        #expect(Interpreter.instructions(role: .other).contains(.vecFromIterator))
+        #expect(Interpreter.instructions(role: .other).contains(.codeFromIterator))
     }
 
     /// A `Set` iterates in a per-process random order, so drawing from one is not
     /// reproducible even with a seeded RNG. This is the sorted form that fixes it,
     /// and the test that says it is really sorted.
     @Test func `the sampling form is sorted and complete`() {
-        for tag in InstructionTag.allCases {
-            let sorted = Interpreter.sortedTags[tag]!
-            #expect(sorted.count == Interpreter.instructions(tagged: tag).count)
+        for tag in InstructionRole.allCases {
+            let sorted = Interpreter.sortedRoles[tag]!
+            #expect(sorted.count == Interpreter.instructions(role: tag).count)
             #expect(sorted == sorted.sorted { $0.rawValue < $1.rawValue }, "\(tag) is not sorted")
         }
     }
@@ -124,8 +157,8 @@ struct TagsTests {
     @Test func `the always-satisfied set is the environment and the measurers`() {
         let safe = Interpreter.alwaysSatisfied
 
-        #expect(safe.isSuperset(of: Interpreter.instructions(tagged: .constant)))
-        #expect(safe.isSuperset(of: Interpreter.instructions(tagged: .input)))
+        #expect(safe.isSuperset(of: Interpreter.instructions(role: .constant)))
+        #expect(safe.isSuperset(of: Interpreter.instructions(role: .input)))
         #expect(safe.contains(.intStackDepth), "measuring an empty stack is a fine answer")
         #expect(safe.contains(.intFlush))
         #expect(safe.contains(.intStackIsEmpty))

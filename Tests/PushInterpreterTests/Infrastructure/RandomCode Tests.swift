@@ -20,45 +20,58 @@ import Testing
 struct RandomCodeTests {
 
     /// Realized proportions of a large sample, by tag.
-    func composition(of mix: InstructionMix, draws: Int = 20_000) -> [InstructionTag: Double] {
+    func composition(of mix: InstructionMix, draws: Int = 20_000) -> [InstructionRole: Double] {
         fuzzRNG = SeededRNG(seed: 424_242)
-        var counts: [InstructionTag: Int] = [:]
+        var counts: [InstructionRole: Int] = [:]
         for _ in 0..<draws {
             let token = RandomCode.randomInstruction(from: mix)
-            let tag = InstructionTag.allCases.first {
-                Interpreter.instructions(tagged: $0).contains(token)
+            let tag = InstructionRole.allCases.first {
+                Interpreter.instructions(role: $0).contains(token)
             }!
             counts[tag, default: 0] += 1
         }
         return counts.mapValues { Double($0) / Double(draws) }
     }
 
-    /// Sampling is uniform *within* a tag and weighted *between* them — so this is
+    /// The number of roles, which every expected proportion below is a function of.
+    ///
+    /// **Written as arithmetic rather than as literals on purpose.** These read
+    /// more plainly as "0.25", "0.333", "0.222" — and did, until `.comparison`
+    /// arrived and every one of them was wrong at once, saying nothing about what
+    /// had changed. A share is `weight / total-weight`, so that is what they say.
+    var roleCount: Double { Double(InstructionRole.allCases.count) }
+
+    /// Sampling is uniform *within* a role and weighted *between* them — so this is
     /// the test that a mix is not quietly re-weighted by how many instructions a
-    /// tag happens to contain.
+    /// role happens to contain.
     @Test func `equal shares really are equal`() {
         let realized = composition(of: .equalShares)
-        for tag in InstructionTag.allCases {
-            #expect(abs((realized[tag] ?? 0) - 0.25) < 0.02,
-                    "\(tag) drew \(realized[tag] ?? 0), wanted 0.25")
+        let want = 1 / roleCount
+        for role in InstructionRole.allCases {
+            #expect(abs((realized[role] ?? 0) - want) < 0.02,
+                    "\(role) drew \(realized[role] ?? 0), wanted \(want)")
         }
     }
 
-    /// A third to the target, the remainder three ways.
-    @Test func `enriched is a third against two-ninths`() {
+    /// Weights 3 : 2 each — so the target takes `3 / (3 + 2(n-1))` and the rest
+    /// share the remainder evenly.
+    @Test func `enriched weights the target three against two`() {
         let realized = composition(of: .enriched(.combinator))
-        #expect(abs((realized[.combinator] ?? 0) - 0.333) < 0.02)
-        for tag in InstructionTag.allCases where tag != .combinator {
-            #expect(abs((realized[tag] ?? 0) - 0.222) < 0.02, "\(tag)")
+        let total = 3 + 2 * (roleCount - 1)
+        #expect(abs((realized[.combinator] ?? 0) - 3 / total) < 0.02)
+        for role in InstructionRole.allCases where role != .combinator {
+            #expect(abs((realized[role] ?? 0) - 2 / total) < 0.02, "\(role)")
         }
     }
 
-    /// A ninth to the target, the remainder three ways — 29.6% each, not 30%.
-    @Test func `depleted is a ninth against the remainder split three ways`() {
+    /// Weights 3 : 8 each — the mirror of `enriched`, moving the same role by the
+    /// same unit in the other direction.
+    @Test func `depleted weights the target three against eight`() {
         let realized = composition(of: .depleted(.constant))
-        #expect(abs((realized[.constant] ?? 0) - 0.111) < 0.02)
-        for tag in InstructionTag.allCases where tag != .constant {
-            #expect(abs((realized[tag] ?? 0) - 0.296) < 0.02, "\(tag)")
+        let total = 3 + 8 * (roleCount - 1)
+        #expect(abs((realized[.constant] ?? 0) - 3 / total) < 0.02)
+        for role in InstructionRole.allCases where role != .constant {
+            #expect(abs((realized[role] ?? 0) - 8 / total) < 0.02, "\(role)")
         }
     }
 
@@ -73,8 +86,8 @@ struct RandomCodeTests {
     @Test func `the language's own shape is not neutral`() {
         let realized = composition(of: .uniformOverLanguage)
         let total = Double(Interpreter.language.count)
-        func fraction(_ tag: InstructionTag) -> Double {
-            Double(Interpreter.instructions(tagged: tag).count) / total
+        func fraction(_ tag: InstructionRole) -> Double {
+            Double(Interpreter.instructions(role: tag).count) / total
         }
         #expect(abs((realized[.combinator] ?? 0) - fraction(.combinator)) < 0.02)
         #expect(abs((realized[.constant] ?? 0) - fraction(.constant)) < 0.02)
@@ -90,13 +103,29 @@ struct RandomCodeTests {
         #expect(abs((realized[.other] ?? 0) - 0.5) < 0.03)
     }
 
-    @Test func `the standard sweep is nine mixes plus the control`() {
+    /// The sweep is the balanced centre, each role enriched and depleted in turn,
+    /// and the language-shaped control — so it grows by two whenever a role is
+    /// added, which `.comparison` did.
+    @Test func `the standard sweep covers every role in both directions`() {
         let names = InstructionMix.standardSweep.map(\.name)
-        #expect(names.count == 10)
+        #expect(names.count == 2 * InstructionRole.allCases.count + 2)
         #expect(names.first == "equal")
-        #expect(names.contains("combinator-rich"))
-        #expect(names.contains("combinator-poor"))
         #expect(names.last == "language-shaped")
+        for role in InstructionRole.allCases {
+            #expect(names.contains("\(role.rawValue)-rich"), "\(role) never enriched")
+            #expect(names.contains("\(role.rawValue)-poor"), "\(role) never depleted")
+        }
+    }
+
+    /// Adding a role without adding it to `.equalShares` would draw it at weight
+    /// **zero** — `randomRole()` filters to `weights[role] > 0` — so the
+    /// instructions would silently vanish from every generated program. This is the
+    /// check that catches that, and it is why `.comparison` had to be added there.
+    @Test func `every role is reachable under equal shares`() {
+        let realized = composition(of: .equalShares)
+        for role in InstructionRole.allCases {
+            #expect((realized[role] ?? 0) > 0, "\(role) is never drawn")
+        }
     }
 
 

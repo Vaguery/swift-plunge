@@ -187,12 +187,8 @@ nonisolated extension Interpreter {
     [
         .charFromDouble : charFromDouble_behavior,
         .charFromInt : charFromInt_Behavior,
-        .charGT : charGT_Behavior,
-        .charGTE : charGTE_Behavior,
         .charIsDigit : charIsDigit_Behavior,
         .charIsLetter : charIsLetter_Behavior,
         .charIsWhitespace : charIsWhitespace_Behavior,
-        .charLT : charLT_Behavior,
-        .charLTE : charLTE_Behavior,
     ]
 }

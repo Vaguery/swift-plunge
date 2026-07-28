@@ -57,15 +57,23 @@ nonisolated(unsafe) var fuzzRNG = SeededRNG(seed: 0)
 /// nobody knows the right proportions of environment, furniture and work.
 /// `.equalShares` is a guess, not a finding.
 nonisolated struct InstructionMix: Sendable {
-    var weights: [InstructionTag: Double]
+    var weights: [InstructionRole: Double]
 
-    init(_ weights: [InstructionTag: Double]) {
+    init(_ weights: [InstructionRole: Double]) {
         self.weights = weights
     }
 
     /// Equal shares of constants, inputs, combinators and everything else.
+    /// Equal shares of every role — constants, inputs, combinators, comparisons
+    /// and everything else.
+    ///
+    /// **A role missing from this dictionary is drawn at weight zero**, not at some
+    /// default: `randomRole()` filters to `weights[role] > 0`. So adding a role case
+    /// without adding it here silently removes those instructions from every
+    /// generated program. That is why `.comparison` appears below, and why a test
+    /// asserts every role is reachable under this mix.
     static let equalShares = InstructionMix([
-        .constant: 1, .input: 1, .combinator: 1, .other: 1,
+        .constant: 1, .input: 1, .combinator: 1, .comparison: 1, .other: 1,
     ])
 
     /// Draw in proportion to how many instructions each tag holds — i.e. exactly
@@ -73,29 +81,31 @@ nonisolated struct InstructionMix: Sendable {
     /// 34% combinators and 15% constants because that is the shape of the
     /// language, which nobody chose.
     static let uniformOverLanguage = InstructionMix(
-        Dictionary(uniqueKeysWithValues: InstructionTag.allCases.map {
-            ($0, Double(Interpreter.instructions(tagged: $0).count))
+        Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map {
+            ($0, Double(Interpreter.instructions(role: $0).count))
         })
     )
 
-    /// One tag at a **third**, the remainder split three ways: 33.3% / 22.2% ×3.
-    /// (Weights 3:2:2:2 — ninths.)
-    static func enriched(_ tag: InstructionTag) -> InstructionMix {
+    /// One role weighted **3**, every other **2** — so the target takes
+    /// `3 / (3 + 2(n-1))` of the draw and the rest share the remainder evenly.
+    ///
+    /// Stated as a ratio rather than a percentage because the percentage depends on
+    /// how many roles there are: it was 33.3% / 22.2% ×3 with four roles and is
+    /// 27.3% / 18.2% ×4 with five. The ratio is the thing that was chosen.
+    static func enriched(_ role: InstructionRole) -> InstructionMix {
         InstructionMix(Dictionary(uniqueKeysWithValues:
-            InstructionTag.allCases.map { ($0, $0 == tag ? 3.0 : 2.0) }))
+            InstructionRole.allCases.map { ($0, $0 == role ? 3.0 : 2.0) }))
     }
 
-    /// One tag at a **ninth**, the remainder split three ways: 11.1% / 29.6% ×3.
-    /// (Weights 3:8:8:8 — twenty-sevenths, which is what "an eighth-ninth each"
-    /// comes to.)
+    /// One role weighted **3**, every other **8** — the mirror of `enriched`,
+    /// moving the same role by the same unit in the opposite direction.
     ///
-    /// Deliberately not 10/30/30/30: the target is a ninth of the draw, and the
-    /// other three share what is left rather than each taking a flat 30%. The
-    /// arithmetic difference is small; the symmetry with `enriched` is the point,
-    /// since both then move the same tag by the same unit in opposite directions.
-    static func depleted(_ tag: InstructionTag) -> InstructionMix {
+    /// The symmetry is the point, which is why this is a ratio and not a round
+    /// percentage: the target takes `3 / (3 + 8(n-1))` and the others share what is
+    /// left, rather than each being handed a flat share chosen by hand.
+    static func depleted(_ role: InstructionRole) -> InstructionMix {
         InstructionMix(Dictionary(uniqueKeysWithValues:
-            InstructionTag.allCases.map { ($0, $0 == tag ? 3.0 : 8.0) }))
+            InstructionRole.allCases.map { ($0, $0 == role ? 3.0 : 8.0) }))
     }
 
     /// The nine mixes the diagnostic sweeps: the balanced centre, plus each tag
@@ -107,22 +117,22 @@ nonisolated struct InstructionMix: Sendable {
     /// is what drawing from `language.keys` gives you, and it is nobody's choice.
     static let standardSweep: [(name: String, mix: InstructionMix)] =
         [("equal", .equalShares)]
-        + InstructionTag.allCases.map { ("\($0.rawValue)-rich", .enriched($0)) }
-        + InstructionTag.allCases.map { ("\($0.rawValue)-poor", .depleted($0)) }
+        + InstructionRole.allCases.map { ("\($0.rawValue)-rich", .enriched($0)) }
+        + InstructionRole.allCases.map { ("\($0.rawValue)-poor", .depleted($0)) }
         + [("language-shaped", .uniformOverLanguage)]
 
-    /// A tag, chosen by weight. `InstructionTag.allCases` has a fixed order, so a
+    /// A role, chosen by weight. `InstructionRole.allCases` has a fixed order, so a
     /// seed reproduces the same draws.
-    func randomTag() -> InstructionTag {
-        let live = InstructionTag.allCases.compactMap { tag -> (InstructionTag, Double)? in
-            guard let weight = weights[tag], weight > 0 else { return nil }
-            return (tag, weight)
+    func randomRole() -> InstructionRole {
+        let live = InstructionRole.allCases.compactMap { role -> (InstructionRole, Double)? in
+            guard let weight = weights[role], weight > 0 else { return nil }
+            return (role, weight)
         }
         guard let last = live.last else { return .other }
         var roll = Double.random(in: 0..<live.reduce(0) { $0 + $1.1 }, using: &fuzzRNG)
-        for (tag, weight) in live {
+        for (role, weight) in live {
             roll -= weight
-            if roll < 0 { return tag }
+            if roll < 0 { return role }
         }
         return last.0
     }
@@ -153,9 +163,9 @@ public nonisolated enum RandomCode {
 
     /// A tag by weight, then uniformly within it.
     static func randomInstruction(from mix: InstructionMix) -> PushInstruction {
-        let tag = mix.randomTag()
+        let role = mix.randomRole()
         // The tags partition the language and none is empty; there is a test.
-        return Interpreter.sortedTags[tag]!.randomElement(using: &fuzzRNG)!
+        return Interpreter.sortedRoles[role]!.randomElement(using: &fuzzRNG)!
     }
 
     /// A flat gene stream: **instruction tokens only.**
@@ -234,11 +244,11 @@ public nonisolated enum RandomCode {
     /// Drawn from the tag rather than by rebuilding the token's name from parts,
     /// so it cannot invent a constant the language does not have.
     static func randomConstant() -> PushInstruction {
-        Interpreter.sortedTags[.constant]!.randomElement(using: &fuzzRNG)!
+        Interpreter.sortedRoles[.constant]!.randomElement(using: &fuzzRNG)!
     }
 
     static func randomInput() -> PushInstruction {
-        Interpreter.sortedTags[.input]!.randomElement(using: &fuzzRNG)!
+        Interpreter.sortedRoles[.input]!.randomElement(using: &fuzzRNG)!
     }
 
     /// A random *value*, for binding to an input or a constant — **not a gene.**

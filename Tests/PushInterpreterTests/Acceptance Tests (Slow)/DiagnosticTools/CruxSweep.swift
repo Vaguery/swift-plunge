@@ -60,7 +60,7 @@ struct SweptItem {
 /// A parameterised corpus of random programs.
 ///
 /// Every field is a knob an investigation has wanted at least once. `mix` is the
-/// least obvious: it reweights the generated programs by `InstructionTag`, so
+/// least obvious: it reweights the generated programs by `InstructionRole`, so
 /// `.enriched(.other)` buys more computing and less stack furniture.
 ///
 /// Note what it *cannot* do. The tags are `.constant`, `.input`, `.combinator` and

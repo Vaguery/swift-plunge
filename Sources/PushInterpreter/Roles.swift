@@ -9,14 +9,25 @@
 //  answers rather than string-matching exercises.
 //
 
-/// A named subset of the language.
+/// **Where an instruction is defined** — the dictionary that registers it — used
+/// as the language's role partition.
 ///
-/// **These four partition it**, which is the property that makes them worth
+/// **These five partition it**, which is the property that makes them worth
 /// having: every instruction is in exactly one, `.other` is the remainder by
 /// construction, and a test asserts it. Add a dictionary to `Interpreter.language`
-/// without tagging it and the instruction lands in `.other` — never nowhere.
+/// without classifying it and the instruction lands in `.other` — never nowhere.
 ///
-/// Adding a tag is one case here and one line in `Interpreter.tags`. Most of the
+/// **A role is only as honest as the dictionaries are.** Being derived from them
+/// means it cannot silently drift from what the language holds — but it also means
+/// a role says "this is where the behavior was registered", which is a fact about
+/// code organization and only *becomes* a fact about instructions if the
+/// dictionaries are curated to make it one. That is not automatic, and it was
+/// wrong once: every `…Eq` was roled `.combinator` purely because
+/// `eqCombinator_Behavior` sat in the same generator loop as dup and swap. Treat
+/// these as **provisionally** disjoint — the partition is a property worth keeping,
+/// not evidence that the categories are natural.
+///
+/// Adding a role is one case here and one line in `Interpreter.roles`. Most of the
 /// interesting ones need no declaration at all: **anything about what an
 /// instruction *needs* is already computable**, because a Behavior's
 /// `requirements` say so (see `instructions(consuming:)`).
@@ -29,7 +40,7 @@
 /// stacks. Worth doing one day: the robustness sweep already drives every
 /// behavior in the language, so a declaration that lied about its Routers could
 /// be caught there rather than trusted.
-public nonisolated enum InstructionTag: String, Sendable, Codable, Hashable, CaseIterable {
+public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, CaseIterable {
     /// The 80 environment constants — `int0…int9`, `vecString0…9`, and so on.
     /// They read a binding rather than computing anything, and take no arguments,
     /// so they can never starve.
@@ -39,13 +50,27 @@ public nonisolated enum InstructionTag: String, Sendable, Codable, Hashable, Cas
     case input
 
     /// The language's furniture: dup, swap, rot, pop, flush, yank, shove,
-    /// stackDepth… — the ~15 that exist for every stack, 180 in all.
+    /// stackDepth… — the ~14 that exist for every stack.
+    ///
+    /// **Furniture only.** `…Eq` used to be generated into this family and so was
+    /// roled here; it is a `.comparison` now, and the `.stackPlumbing` trait —
+    /// defined as this role minus its introspective measurements — stopped
+    /// describing `.intEq` as an instruction that "only shuffles a stack".
     ///
     /// **Worth knowing before drawing uniformly: this is 41% of everything that
     /// is not a constant or an input.** "Sample a random instruction" mostly
     /// samples furniture, which is why it earns a partition of its own rather than
     /// being left in `.other` to dominate it silently.
     case combinator
+
+    /// Ordering and equality — the 12 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
+    ///
+    /// Exactly the `.comparison` **trait**, which is the point: the two channels
+    /// answer "where is it defined" and "what does it compute" and here they agree,
+    /// so "is `intGT` a comparison?" has one answer. `Instruction Role Tests`
+    /// asserts the equality, which is what catches a comparison registered into the
+    /// wrong dictionary.
+    case comparison
 
     /// Everything else — the instructions that actually compute. The remainder,
     /// defined by subtraction so nothing can fall through the cracks.
@@ -58,34 +83,37 @@ nonisolated extension Interpreter {
     /// The language, partitioned. Built once, beside `language` itself, and
     /// derived from the behavior dictionaries rather than from name prefixes — so
     /// a tag cannot drift out of step with what the language actually holds.
-    static let tags: [InstructionTag: Set<PushInstruction>] = {
+    static let roles: [InstructionRole: Set<PushInstruction>] = {
         let constants = Set(constantBehaviors.keys)
         let inputs = Set(inputBehaviors.keys)
         let combinators = Set(combinatorBehaviors.keys)
+        let comparisons = Set(comparisonBehaviors.keys)
         return [
             .constant: constants,
             .input: inputs,
             .combinator: combinators,
+            .comparison: comparisons,
             .other: Set(language.keys)
                 .subtracting(constants)
                 .subtracting(inputs)
-                .subtracting(combinators),
+                .subtracting(combinators)
+                .subtracting(comparisons),
         ]
     }()
 
-    /// The tokens carrying `tag`, **sorted** — the form to draw from.
+    /// The tokens carrying `role`, **sorted** — the form to draw from.
     ///
     /// A `Set` cannot be sampled reproducibly: its iteration order is per-process
     /// random, exactly like `Dictionary.keys`, so `randomElement(using: seededRNG)`
     /// over one is *not* deterministic across runs. That bug has been paid for
     /// once already (see `RandomCode.allInstructions`). Sorting by `rawValue` is
     /// the fix, and it belongs here rather than at each call site.
-    static let sortedTags: [InstructionTag: [PushInstruction]] =
-        tags.mapValues { $0.sorted { $0.rawValue < $1.rawValue } }
+    static let sortedRoles: [InstructionRole: [PushInstruction]] =
+        roles.mapValues { $0.sorted { $0.rawValue < $1.rawValue } }
 
-    /// The instructions carrying `tag`, for membership and set algebra.
-    static func instructions(tagged tag: InstructionTag) -> Set<PushInstruction> {
-        tags[tag] ?? []
+    /// The instructions carrying `role`, for membership and set algebra.
+    static func instructions(role: InstructionRole) -> Set<PushInstruction> {
+        roles[role] ?? []
     }
 
     /// The instructions that **consume** `stack` — remove items from it —

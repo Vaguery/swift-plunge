@@ -83,7 +83,7 @@ struct ExploratoryCruxSweep {
 
     /// **Hunt a suspected class on purpose** rather than waiting to stumble on it.
     ///
-    /// `.enriched(_:)` concentrates one `InstructionTag` at a third of the draw.
+    /// `.enriched(_:)` concentrates one `InstructionRole` at a third of the draw.
     /// `.other` is the tag that computes — everything that is not a constant, an
     /// input, or stack furniture — so enriching it is the closest available lever
     /// for "more work per program, less shuffling".
