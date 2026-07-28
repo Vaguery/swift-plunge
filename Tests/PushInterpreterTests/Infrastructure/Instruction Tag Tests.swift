@@ -9,9 +9,12 @@
 //
 //  - A tag that duplicates something already derived must be **asserted to agree
 //    with it**. Those are checkable and so must be checked rather than trusted.
-//  - A tag that is a judgment — `.risky` — is unfalsifiable by construction. Its
-//    guard is the recorded rationale, not a test. There is deliberately no test
-//    below that tries to "verify" it, and adding one would be a category error.
+//  - A tag that is a judgment — `.risky` — cannot be *proved* by a unit test, but
+//    that is not the same as unfalsifiable. `InstructionRiskProfile` measures how
+//    often a program containing an instruction ends badly, and the numbers are
+//    recorded in the tag's rationale. What does not belong here is a fast
+//    assertion pretending to settle it; what does belong is the membership check
+//    below, which pins the *decision* the measurement led to.
 //
 
 @testable import PushInterpreter
@@ -84,6 +87,24 @@ struct InstructionTagTests {
         let derived = Interpreter.instructions(trait: .looping)
         let strays = declared.subtracting(derived).map(\.rawValue).sorted()
         #expect(strays.isEmpty, "declared re-entrant but not derived as looping: \(strays)")
+    }
+
+
+    /// The decision the measurement led to, pinned so it cannot drift back.
+    ///
+    /// `.execS` is the interesting one: it reads like `.execY`'s sibling, sits
+    /// beside it in the enum, and a downstream app had already quarantined the two
+    /// together. It duplicates its argument but never re-pushes itself, so it
+    /// cannot iterate — and it measures at z = 1.0 against baseline, which is
+    /// noise. See `InstructionRiskProfile` for the numbers.
+    @Test func `risky is execY and deliberately not execS`() {
+        let risky = Interpreter.instructions(declaring: .risky)
+        #expect(risky.contains(.execY))
+        #expect(!risky.contains(.execS),
+                "execS duplicates but does not re-enter; measured indistinguishable from baseline")
+        #expect(!risky.contains(.execK))
+        #expect(InstructionTag.risky.provenance == .measured,
+                "no longer merely inherited — the numbers are in the rationale")
     }
 
 

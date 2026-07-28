@@ -42,8 +42,15 @@
 //
 //  A tag that *is* checkable must be checked rather than trusted: if one ever
 //  duplicates something `requirements` or the traits already know, a test asserts
-//  they agree (`Instruction Tag Tests`). `.risky` is unfalsifiable by construction,
-//  and its guard is the recorded rationale, not a test. Do not try to "verify" it.
+//  they agree (`Instruction Tag Tests`).
+//
+//  **And check the ones that look uncheckable, too.** `.risky` was written here as
+//  unfalsifiable — a judgment inherited from other implementations, guarded only by
+//  its rationale. That was too quick. It is not *provable*, but it is measurable:
+//  `InstructionRiskProfile` compares how often a program containing an instruction
+//  ends badly against one that does not, and the answer was decisive enough to keep
+//  `.execS` out of the set that a downstream app had already put it in. A judgment
+//  worth declaring is usually worth trying to measure before declaring it.
 //
 
 /// Where a tag's judgment came from — the §13 taxonomy, applied to categories
@@ -77,9 +84,19 @@ public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, S
     /// only a runaway if something is actively feeding it.
     public static let reEntrant = InstructionTag("reEntrant")
 
-    /// Known to make trouble in an evolving population — deep recursion, runaway
-    /// self-application — in implementations that have run far more generations
-    /// than this one has.
+    /// Known to make trouble — deep recursion, runaway self-application.
+    ///
+    /// **Measured here, not only inherited.** A program containing `.execY` hits
+    /// the step limit 76% of the time against a 32% baseline (z = 14 over 2,500
+    /// random programs); `.execS`, which looks like it belongs in the same pile,
+    /// comes in at 36% — one standard error, i.e. nothing. Re-run
+    /// `InstructionRiskProfile` before adding to this set, and before believing
+    /// anyone who already did.
+    ///
+    /// What that measurement can and cannot settle is worth keeping straight: it
+    /// shows correlation with a bad ending in *random* programs, which is grounds
+    /// for the tag. Whether something destabilises an evolving *population* — what
+    /// this tag is finally about — only a long search can answer.
     public static let risky = InstructionTag("risky")
 
     /// Wants so many arguments that it starves in practice, so it is dead weight
@@ -127,7 +144,7 @@ public nonisolated extension InstructionTag {
     var provenance: TagProvenance {
         switch self {
         case .reEntrant: .inspected
-        case .risky:     .inherited
+        case .risky:     .measured
         case .cruxOnly:  .measured
         case .fallible:  .inspected
         default:         .chosen
@@ -142,9 +159,10 @@ public nonisolated extension InstructionTag {
             + "put a copy of themselves back on .exec. Replaces the hand-written "
             + "`PushInstruction.iterators`, which said the same thing far from any definition."
         case .risky:
-            "Inherited from Clojush and Push3 experience, not measured here. This interpreter "
-            + "has not run enough generations to have an opinion of its own, and saying so is "
-            + "the difference between a finding and a rumour."
+            "Suggested by Clojush and Push3 experience, then measured here: .execY hits the "
+            + "step limit 76% of the time against a 32% baseline, z = 14 over 2,500 random "
+            + "programs. The same measurement is what keeps .execS out — it looks like it "
+            + "belongs and scores z = 1.0, which is noise. See InstructionRiskProfile."
         case .cruxOnly:
             "Measured: the ~12 iteratorFrom… constructors want ~7 arguments and starve close to "
             + "100% of the time in random programs (Roadmap #17)."
