@@ -22,14 +22,16 @@ nonisolated extension PushStack {
 nonisolated extension Interpreter {
 
     /// The element count of a vector item, or `nil` for non-vector items.
+    ///
+    /// Exact-type tests first (see `PushStack.accepts`), so the common case — a
+    /// scalar — costs pointer compares rather than four failed casts.
     func vectorLength(of item: any Item) -> Int? {
-        switch item {
-        case let v as VecIntItem: v.value.count
-        case let v as VecDoubleItem: v.value.count
-        case let v as VecBoolItem: v.value.count
-        case let v as VecStringItem: v.value.count
-        default: nil
-        }
+        let type = Swift.type(of: item)
+        if type == VecIntItem.self, let vector = item as? VecIntItem { return vector.value.count }
+        if type == VecDoubleItem.self, let vector = item as? VecDoubleItem { return vector.value.count }
+        if type == VecBoolItem.self, let vector = item as? VecBoolItem { return vector.value.count }
+        if type == VecStringItem.self, let vector = item as? VecStringItem { return vector.value.count }
+        return nil
     }
 
     /// Reports why an item is too large to push, or `nil` if it is within limits.
@@ -44,11 +46,19 @@ nonisolated extension Interpreter {
         if let length = vectorLength(of: item), length > config.maxVectorLength {
             return "vector length \(length) exceeds maxVectorLength \(config.maxVectorLength)"
         }
-        if let string = item as? StringItem, string.value.count > config.maxStringLength {
-            return "string length \(string.value.count) exceeds maxStringLength \(config.maxStringLength)"
+        let type = Swift.type(of: item)
+        // `utf8.count` is O(1) and never less than the character count, so a string
+        // under the cap in bytes is under it in characters, and only a long one pays
+        // for the O(n) character count.
+        if type == StringItem.self, let string = (item as? StringItem)?.value {
+            if string.utf8.count > config.maxStringLength, string.count > config.maxStringLength {
+                return "string length \(string.count) exceeds maxStringLength \(config.maxStringLength)"
+            }
         }
-        if let code = item as? CodeItem, code.flatSize > config.maxCodePoints {
-            return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
+        if type == CodeItem.self, let code = item as? CodeItem {
+            if code.flatSize > config.maxCodePoints {
+                return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
+            }
         }
         // The recursive backstop: catches nested content the per-dimension caps
         // above miss (a vector of long strings, code whose leaves are large).

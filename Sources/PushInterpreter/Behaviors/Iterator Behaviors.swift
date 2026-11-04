@@ -78,7 +78,11 @@ nonisolated extension Interpreter {
         }
         let payloadDepth = interpreter.stacks[.exec]!.count - before
 
-        let target = min(payloadDepth + max(0, burial), interpreter.stacks[.exec]!.count)
+        // Saturating: a program can set any burial up to `Int.max`, and a plain `+`
+        // would trap the whole process. A depth that large means "at the bottom",
+        // which the `min` already says.
+        let (depth, overflowed) = payloadDepth.addingReportingOverflow(max(0, burial))
+        let target = min(overflowed ? Int.max : depth, interpreter.stacks[.exec]!.count)
         interpreter.insert(token, at: target, on: .exec)
     }
 
@@ -523,7 +527,7 @@ nonisolated extension Interpreter {
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
-            tags: [.cruxOnly],
+            tags: [.cruxOnly, .fallible],
             fxn: { a in
                 // `.int` is a stack, so the last argument written is on top:
                 // `origin dest stride cursor burial` arrives reversed.
@@ -532,6 +536,27 @@ nonisolated extension Interpreter {
                     a[3] as! IntItem, a[4] as! IntItem
                 )
                 let (emits, body) = (a[5] as! BoolItem, a[6] as! CodeItem)
+
+                // A counter that never moves never arrives: with stride 0 the value
+                // stays at `origin` forever, `promisedPasses` has no span to clamp,
+                // and `.codeFromIterator` once collected one until the process ran
+                // out of memory. `execDoRange` can never build one (it steps by ±1),
+                // so this constructor is the only door, and it stays shut.
+                // An explicit error result, as `.intQuot` gives for a zero divisor:
+                // the arguments are consumed and the refusal records them.
+                guard stride.value != 0 else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Zero stride .iteratorFromIntRange: \(origin.value) to \(destination.value) by 0",
+                                call: [
+                                    origin, destination, stride, cursor, burial, emits, body,
+                                    InstructionItem(.iteratorFromIntRange)
+                                ])
+                        )
+                    ]
+                }
 
                 let iterator = IteratorItem(
                     kind: .counting(stride: stride.value),

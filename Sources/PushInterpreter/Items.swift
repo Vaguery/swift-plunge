@@ -820,7 +820,26 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
 
 
 public nonisolated struct ErrorItem: Item, Equatable {
-    public var value: String
+    /// The message. Read as text everywhere, but stored as data for the one error
+    /// that is raised constantly — an instruction starved of arguments, the most
+    /// common event in a random program — whose text is only built when someone
+    /// reads it. Profiling found that formatting it eagerly cost ~4% of all
+    /// interpreter time, nearly always for a message nobody reads.
+    public var value: String {
+        get {
+            switch message {
+            case .text(let text): text
+            case .missingArguments(let instruction, let stack): "\(instruction) missing args: .\(stack)"
+            }
+        }
+        set { message = .text(newValue) }
+    }
+
+    enum Message: Sendable {
+        case text(String)
+        case missingArguments(PushInstruction, PushStack)
+    }
+    private var message: Message
 
     /// Why this error was raised. See `ErrorKind`.
     ///
@@ -839,10 +858,18 @@ public nonisolated struct ErrorItem: Item, Equatable {
 
 
     public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
-        self.value = value
+        self.message = .text(value)
         self.kind = kind
         self.call = call
         self.callWeight = Self.weighCall(call)
+    }
+
+    /// A starved instruction's refusal: `intAdd missing args: .int`, built on read.
+    init(missingArgumentsFor instruction: PushInstruction, on stack: PushStack) {
+        self.message = .missingArguments(instruction, stack)
+        self.kind = .missingArgument
+        self.call = []
+        self.callWeight = Self.weighCall([])
     }
 
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {

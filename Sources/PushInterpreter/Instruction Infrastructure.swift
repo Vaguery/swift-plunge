@@ -331,3 +331,45 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
 
 typealias PI = PushInstruction
 
+nonisolated extension PushInstruction: CustomStringConvertible {
+    /// The case name, so interpolating an instruction never falls back to runtime
+    /// reflection (profiling caught it in the step loop). Raw values are the case
+    /// names, so the text is unchanged.
+    public var description: String { rawValue }
+}
+
+nonisolated extension PushInstruction {
+    /// This instruction's position in `allCases` — its slot in a `BehaviorTable`.
+    ///
+    /// Read straight from the enum's storage, which for a payload-free enum is the
+    /// case's declaration index: `allCases` order, with nothing to maintain when a
+    /// case is added. `Stack Ordinal Tests` pins the assumption; `unsafeBitCast`
+    /// traps if the enum ever outgrows two bytes. The point is to avoid hashing:
+    /// the enum is String-backed and hashes its raw string.
+    @inline(__always)
+    var ordinal: Int { Int(unsafeBitCast(self, to: UInt16.self)) }
+}
+
+/// Which `Behavior` runs for each instruction: an array in `PushInstruction.allCases`
+/// order, addressed by `ordinal`. It reads like the dictionary it replaced —
+/// `behaviors[.intAdd]`, `behaviors[.intAdd] = nil` to disable one — but a lookup
+/// is an index, not a String hash.
+///
+/// Built from `Interpreter.language` once; copies share storage until one is
+/// edited, so handing the same table to every interpreter in a batch is free.
+nonisolated struct BehaviorTable: Sendable {
+    private var slots: [Behavior?]
+
+    init(_ language: [PushInstruction: Behavior], disabling disabled: Set<PushInstruction> = []) {
+        var slots = [Behavior?](repeating: nil, count: PushInstruction.allCases.count)
+        for (instruction, behavior) in language where !disabled.contains(instruction) {
+            slots[instruction.ordinal] = behavior
+        }
+        self.slots = slots
+    }
+
+    subscript(instruction: PushInstruction) -> Behavior? {
+        @inline(__always) get { slots[instruction.ordinal] }
+        set { slots[instruction.ordinal] = newValue }
+    }
+}

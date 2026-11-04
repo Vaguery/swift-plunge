@@ -118,22 +118,18 @@ nonisolated struct Planner {
     func plan(_ requirements: [Requirement]) -> GatherPlan {
         var arguments: [any Item] = []
         var claims: [Claim] = []
-
-        /// The topmost index on `stack` that no earlier requirement has claimed.
-        /// Nothing is removed while planning, so the second `.int` argument is at
-        /// index 1 rather than index 0.
-        func nextFree(_ stack: PushStack) -> Int {
-            var index = 0
-            while claims.contains(where: { $0.stack == stack && $0.index == index }) {
-                index += 1
-            }
-            return index
-        }
+        /// How many items each stack has had claimed so far. Every requirement kind
+        /// claims the topmost unclaimed index, so a stack's claims are always the
+        /// contiguous run 0..<n — and the next free index is simply n. (This used to
+        /// re-scan every claim for each candidate index, which made an N-element
+        /// `.takesMany` cost O(N³) inside a single step.)
+        var claimedCount: [PushStack: Int] = [:]
 
         func claim(_ stack: PushStack, consuming: Bool) -> (any Item)? {
-            let index = nextFree(stack)
+            let index = claimedCount[stack, default: 0]
             guard let item = item(at: index, on: stack) else { return nil }
             claims.append(Claim(stack: stack, index: index, consumed: consuming))
+            claimedCount[stack] = index + 1
             return item
         }
 

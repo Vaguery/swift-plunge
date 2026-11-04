@@ -455,7 +455,7 @@ nonisolated extension Interpreter {
         guard !needle.isEmpty else { return 0 }
         guard needle.count <= hay.count else { return nil }
         for start in 0...(hay.count - needle.count) {
-            if Array(hay[start..<start + needle.count]) == needle { return start }
+            if hay[start..<start + needle.count].elementsEqual(needle) { return start }
         }
         return nil
     }
@@ -467,7 +467,7 @@ nonisolated extension Interpreter {
         var count = 0
         var i = 0
         while i <= hay.count - needle.count {
-            if Array(hay[i..<i + needle.count]) == needle { count += 1; i += needle.count }
+            if hay[i..<i + needle.count].elementsEqual(needle) { count += 1; i += needle.count }
             else { i += 1 }
         }
         return count
@@ -597,7 +597,7 @@ nonisolated extension Interpreter {
         while i < hay.count {
             if (!firstOnly || !replaced),
                i <= hay.count - needle.count,
-               Array(hay[i..<i + needle.count]) == needle {
+               hay[i..<i + needle.count].elementsEqual(needle) {
                 result.append(contentsOf: repl)
                 i += needle.count
                 replaced = true
@@ -1711,7 +1711,9 @@ nonisolated extension Interpreter {
                 ]
             }
 
-            let items = iterator.collected()
+            guard let items = iterator.collected() else {
+                return refuse("iterator emits more than \(IteratorItem.collectionLimit) items")
+            }
             // Unreachable while a spent iterator cannot rest on a stack, but the
             // type of an empty collection is a question with no answer, and
             // guessing it is worse than saying so.

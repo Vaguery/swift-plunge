@@ -128,13 +128,22 @@ public nonisolated struct IteratorItem: Item, Pretty {
     public var value: Int
 
     /// How `value` projects into the emitted item.
-    public var kind: IteratorKind
+    public var kind: IteratorKind {
+        didSet { source = SourceView(kind: kind, origin: origin) }
+    }
 
     /// The start value, or the collection being walked. **Fixed for the life of
     /// the loop**, which is precisely why provenance stays O(1) — and it keeps
     /// its own `call`, so the crux can still say how a computed bound was
     /// arrived at.
-    public var origin: any Item
+    public var origin: any Item {
+        didSet { source = SourceView(kind: kind, origin: origin) }
+    }
+
+    /// What a walk reads from `origin`, worked out once — see `SourceView`. Kept in
+    /// step with `origin` and `kind` by their observers; never part of equality,
+    /// encoding or weight, since it holds nothing `origin` does not already say.
+    private(set) var source: SourceView
 
     /// The end bound. `nil` for the kinds whose end derives from the origin
     /// itself — `.elements` runs out when the collection does.
@@ -235,6 +244,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
         self.burial = max(0, burial)
         self.call = call
         self.callWeight = Self.weighCall(call)
+        self.source = SourceView(kind: kind, origin: origin)
     }
 
     /// The content this iterator holds, for the `maxItemWeight` budget: its
@@ -588,17 +598,35 @@ nonisolated extension IteratorItem {
     /// it could ever rest on a stack to be collected. A plain walk's length is a
     /// fact about data already bounded by `maxVectorLength`/`maxStringLength`. And
     /// the result is a vector, so the push gate measures it once more on the way
-    /// out. Nothing here has to pick a number.
-    func collected() -> [any Item] {
+    /// out.
+    ///
+    /// **And yet it carries a backstop**, because "every kind is already bounded"
+    /// turned out to be a claim about the clamping rules rather than a fact about
+    /// this loop. A counting iterator with stride 0 promised no passes
+    /// (`promisedPasses` is nil for it), so it was never clamped, and its value
+    /// never reaches its end — so this loop ran forever, inside one step, where
+    /// `stepLimit` cannot see it. One such program hung a whole search. A played
+    /// loop is protected by `stepLimit`; this one is protected by
+    /// `collectionLimit` instead. Over it, the answer is `nil`, and the caller
+    /// refuses rather than handing back a silently truncated sequence.
+    func collected() -> [any Item]? {
         var items: [any Item] = []
         var cursor = self
         while let projected = cursor.projection() {
+            guard items.count < IteratorItem.collectionLimit else { return nil }
             items.append(projected)
             guard cursor.hasNextPass else { break }
             cursor = cursor.stepped()
         }
         return items
     }
+
+    /// The most items `collected()` will gather before refusing. Tied to the
+    /// default `maxItemWeight`, because a collection longer than that weighs more
+    /// than it (every item weighs at least 1) and the push gate would refuse it
+    /// anyway — so under default settings this changes no result, it only stops
+    /// a collection that would never end from being computed at all.
+    static let collectionLimit = InterpreterSettings().maxItemWeight
 
     /// This iterator advanced by one pass, with provenance for its new state.
     func stepped() -> IteratorItem {
@@ -734,32 +762,11 @@ nonisolated extension IteratorItem {
 nonisolated extension IteratorItem {
 
     /// The whitespace-delimited chunks of a string origin. `.words` only.
-    var sourceWords: [Substring] {
-        (origin as? StringItem)?.value.split { $0.isWhitespace } ?? []
-    }
+    var sourceWords: [Substring] { source.words }
 
     /// How many things this iterator's cursor can address. Zero for anything that
     /// is not a source it knows how to walk.
-    var sourceCount: Int {
-        switch kind {
-        case .words:
-            return sourceWords.count
-        case .points:
-            // The whole pre-order point count (root included), not the root
-            // length — that is the difference between `.points` and `.elements`.
-            return (origin as? CodeItem)?.pointCount ?? 0
-        default:
-            switch origin {
-            case let s as StringItem:    return s.value.count
-            case let v as VecBoolItem:   return v.value.count
-            case let v as VecDoubleItem: return v.value.count
-            case let v as VecIntItem:    return v.value.count
-            case let v as VecStringItem: return v.value.count
-            case let c as CodeItem:      return c.value.count
-            default:                     return 0
-            }
-        }
-    }
+    var sourceCount: Int { source.count }
 
     /// The element at `index`, recording the instruction that honestly reproduces
     /// it — `origin index .vecBoolNth` — which is O(1) and, crucially,
@@ -776,14 +783,13 @@ nonisolated extension IteratorItem {
         // A one-character *string*, not a char: `stringParseToLetters`. Two
         // instructions to reproduce, still O(1).
         case .letters:
-            guard let s = origin as? StringItem else { return nil }
-            let i = s.value.index(s.value.startIndex, offsetBy: index)
+            guard index < source.characters.count else { return nil }
             return StringItem(
-                String(s.value[i]),
+                String(source.characters[index]),
                 call: record(.stringNth, .stringFromChar))
 
         case .words:
-            let chunks = sourceWords
+            let chunks = source.words
             guard index < chunks.count else { return nil }
             return StringItem(
                 String(chunks[index]),
@@ -797,8 +803,8 @@ nonisolated extension IteratorItem {
         // point on, keeping its own provenance (law 1b) so it rests wherever its
         // type belongs.
         case .points(let mode):
-            guard let c = origin as? CodeItem else { return nil }
-            let point = c.point(at: index)
+            guard index < source.points.count else { return nil }
+            let point = source.points[index]
             if mode == .whole {
                 let raw = point
                 return raw
@@ -814,9 +820,9 @@ nonisolated extension IteratorItem {
 
         default:
             switch origin {
-            case let s as StringItem:
-                let i = s.value.index(s.value.startIndex, offsetBy: index)
-                return CharItem(s.value[i], call: record(.stringNth))
+            case is StringItem:
+                guard index < source.characters.count else { return nil }
+                return CharItem(source.characters[index], call: record(.stringNth))
             case let v as VecBoolItem:
                 return BoolItem(v.value[index], call: record(.vecBoolNth))
             case let v as VecDoubleItem:
@@ -838,5 +844,58 @@ nonisolated extension IteratorItem {
                 return nil
             }
         }
+    }
+}
+
+
+/// What an iterator walks, read out of its `origin` once rather than on every pass.
+///
+/// A pass used to recount its source several times (`isSpent`, `hasNextPass`,
+/// `wrappedCursor`, `element(at:)`), and for strings, words and code trees every
+/// count was O(n): a string's characters counted from the start, its words
+/// re-split into a fresh array, a tree re-walked into a fresh pre-order list. A
+/// whole walk was quadratic. This holds the count and the indexable view, so a pass
+/// is O(1). Rebuilt whenever `origin` or `kind` changes.
+nonisolated struct SourceView: Sendable {
+    /// How many elements one lap emits — what `sourceCount` reports.
+    let count: Int
+    /// A string origin's characters, indexable (`.letters`, and `.elements`).
+    let characters: [Character]
+    /// A string origin's whitespace-separated words (`.words`).
+    let words: [Substring]
+    /// A code origin's pre-order points, root first (`.points`).
+    let points: [any Item]
+
+    init(kind: IteratorKind, origin: any Item) {
+        var characters: [Character] = []
+        var words: [Substring] = []
+        var points: [any Item] = []
+        let count: Int
+        switch kind {
+        case .words:
+            words = (origin as? StringItem)?.value.split { $0.isWhitespace } ?? []
+            count = words.count
+        case .points:
+            // The whole pre-order point count (root included), not the root
+            // length — that is the difference between `.points` and `.elements`.
+            points = (origin as? CodeItem)?.preorderPoints ?? []
+            count = points.count
+        default:
+            switch origin {
+            case let s as StringItem:
+                characters = Array(s.value)
+                count = characters.count
+            case let v as VecBoolItem:   count = v.value.count
+            case let v as VecDoubleItem: count = v.value.count
+            case let v as VecIntItem:    count = v.value.count
+            case let v as VecStringItem: count = v.value.count
+            case let c as CodeItem:      count = c.value.count
+            default:                     count = 0
+            }
+        }
+        self.count = count
+        self.characters = characters
+        self.words = words
+        self.points = points
     }
 }

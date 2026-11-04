@@ -17,16 +17,17 @@ import Foundation
 nonisolated func evaluateOne(
     individual: Individual,
     trainingCase: TrainingCase,
-    configuration: RunnerConfiguration
+    configuration: RunnerConfiguration,
+    behaviors: BehaviorTable? = nil
 ) -> CaseResult {
     let interpreter = Interpreter()
     interpreter.config = configuration.settings
 
     // Disabling a behavior leaves its instruction defined-but-unimplemented, so
-    // the step loop routes it to an ErrorItem rather than acting on it.
-    for disabled in configuration.disabledBehaviors {
-        interpreter.behaviors[disabled] = nil
-    }
+    // the step loop routes it to an ErrorItem rather than acting on it. A batch
+    // builds that table once and passes it in (`behaviorTable(for:)`), so each
+    // evaluation shares it instead of editing a copy of its own.
+    interpreter.behaviors = behaviors ?? behaviorTable(for: configuration)
 
     interpreter.load(
         inputs: trainingCase.inputs,
@@ -67,6 +68,14 @@ nonisolated func evaluateOne(
     )
 }
 
+
+/// The behavior table a configuration runs with: the whole language, less any
+/// `disabledBehaviors`. Shared as-is when nothing is disabled.
+nonisolated func behaviorTable(for configuration: RunnerConfiguration) -> BehaviorTable {
+    configuration.disabledBehaviors.isEmpty
+        ? Interpreter.languageTable
+        : BehaviorTable(Interpreter.language, disabling: configuration.disabledBehaviors)
+}
 
 /// Whether an item's provenance references any of `tokens` — walking its `crux()`
 /// leaves and into any `CodeItem` leaves, since an input-bound block carries its
@@ -170,6 +179,7 @@ nonisolated func evaluatePairings(
         (pairing, individuals[pairing.individual], trainingCases[pairing.trainingCase])
     }
 
+    let behaviors = behaviorTable(for: configuration)
     return await withTaskGroup(of: (Int, CaseResult).self) { group in
         let width = concurrencyWidth(configuration, count: resolved.count)
         var next = 0
@@ -185,7 +195,8 @@ nonisolated func evaluatePairings(
                 return (index, evaluateOne(
                     individual: individual,
                     trainingCase: trainingCase,
-                    configuration: configuration
+                    configuration: configuration,
+                    behaviors: behaviors
                 ))
             }
         }
@@ -227,6 +238,7 @@ nonisolated func evaluatePairingsStream(
         (pairing, individuals[pairing.individual], trainingCases[pairing.trainingCase])
     }
 
+    let behaviors = behaviorTable(for: configuration)
     return AsyncStream { continuation in
         let task = Task {
             await withTaskGroup(of: CaseResult.self) { group in
@@ -243,7 +255,8 @@ nonisolated func evaluatePairingsStream(
                         return evaluateOne(
                             individual: individual,
                             trainingCase: trainingCase,
-                            configuration: configuration
+                            configuration: configuration,
+                            behaviors: behaviors
                         )
                     }
                 }

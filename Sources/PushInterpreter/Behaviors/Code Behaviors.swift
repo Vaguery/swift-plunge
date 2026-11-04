@@ -679,11 +679,7 @@ nonisolated extension Interpreter {
         takes: [.code],
         modifier: { (interpreter, collectedItems) in
             let block = collectedItems[0] as! CodeItem
-            let contents = block.value.map { item -> any Item in
-                var copy = item
-                return copy
-            }
-            interpreter.place(contentsOf: contents, on: .exec)
+            interpreter.place(contentsOf: block.value, on: .exec)
             return []
         }
     )
@@ -718,15 +714,25 @@ nonisolated extension Interpreter {
     Behavior(
         .codeFromIterator,
         takes: [.iterator],
+        tags: [.fallible],
         fxn: { a in
             let iterator = a[0] as! IteratorItem
             // The farewell returns the body to `.code`, *under* the result. The
             // crux has to clear it, or the fragment leaves debris on the very
             // stack it lands on (Design Principles §1) — so it records the same
             // swap-and-pop `reading` uses. No body, nothing to clear.
+            // Over `collectionLimit` the sequence has no answer worth computing: refuse
+            // as `.vecFromIterator` does, handing the iterator back untouched.
+            guard let items = iterator.collected() else {
+                return [
+                    Router(.iterator, iterator),
+                    Router(.error, ErrorItem(
+                        "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items"))
+                ]
+            }
             let record: [any Item] = [iterator, InstructionItem(.codeFromIterator)]
             let collected = CodeItem(
-                iterator.collected(),
+                items,
                 call: iterator.body == nil
                     ? record
                     : Behavior.reading([.code: 1], producing: .code, from: record))

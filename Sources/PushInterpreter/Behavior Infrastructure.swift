@@ -153,7 +153,21 @@ nonisolated class Behavior: @unchecked Sendable {
         self.requirements = requires
         self.tags = tags
         self.transformer = fxn
+        (self.directTakes, self.directTakeCounts) = Behavior.directPlan(for: requires)
     }
+
+    /// Where each argument sits, for a Behavior whose every requirement is a plain
+    /// `.takes` — most of the language. `nil` otherwise.
+    ///
+    /// Such a plan never depends on the stacks' contents: the k-th `.takes` of a
+    /// stack is always that stack's index k, exactly as the `Planner` would claim
+    /// it. So it is worked out once here, and `act` can check depths, read the
+    /// arguments, and drop them without building a plan per instruction (which
+    /// profiling found was an eighth of all interpreter time).
+    let directTakes: [DirectTake]?
+    /// How many items each stack gives up, for the direct path.
+    let directTakeCounts: [(stack: PushStack, count: Int)]
+
 
 
     /// What this Behavior would need of an interpreter, resolved against its
@@ -168,6 +182,11 @@ nonisolated class Behavior: @unchecked Sendable {
         if case .ready = plan(on: interpreter) { true } else { false }
     }
 
+
+    /// The refusal for an instruction that came up short on `stack`.
+    func missingArguments(on stack: PushStack) -> Router {
+        Router(.error, ErrorItem(missingArgumentsFor: self.name, on: stack))
+    }
 
     func distribute(to interpreter: Interpreter, items: [Router]) {
         for i in items {
@@ -199,14 +218,25 @@ nonisolated class Behavior: @unchecked Sendable {
     /// The prefix is unchanged, so anything matching on `"missing args"` still
     /// matches.
     final func act(on interpreter: Interpreter) {
+        if let directTakes {
+            // The same outcome the Planner reaches, without planning: refuse on the
+            // first argument that is not there, naming its stack; otherwise read
+            // every argument, then take them all (each stack's claims are its top
+            // n items, so dropping n is exactly what `commit` would remove).
+            for take in directTakes where take.index >= interpreter.stacks[take.stack]?.count ?? 0 {
+                self.distribute(to: interpreter, items: [missingArguments(on: take.stack)])
+                return
+            }
+            let arguments = directTakes.map { interpreter.stacks[$0.stack]![$0.index] }
+            for (stack, count) in directTakeCounts { interpreter.takeFirst(count, from: stack) }
+            self.distribute(to: interpreter, items: self.computeResults(from: arguments, on: interpreter))
+            return
+        }
+
         let planner = Planner(for: interpreter)
         switch planner.plan(requirements) {
         case .short(let stack):
-            self.distribute(
-                to: interpreter,
-                items: [Router(.error, ErrorItem("\(self.name) missing args: .\(stack)",
-                                                kind: .missingArgument))]
-            )
+            self.distribute(to: interpreter, items: [missingArguments(on: stack)])
         case .ready(let arguments, let claims):
             planner.commit(claims)
             self.distribute(
@@ -334,13 +364,17 @@ nonisolated extension Behavior {
     /// it exists only in the recorded `call`, so re-running the crux on a fresh
     /// interpreter leaves the fact and nothing else. Stacks are sorted for a
     /// deterministic, reproducible crux.
+    ///
+    /// `reads` is written as a dictionary literal (`[.code: 1]`) but taken as
+    /// `KeyValuePairs`, which keeps the literal and skips building a hashed
+    /// dictionary on every query.
     static func reading(
-        _ reads: [PushStack: Int],
+        _ reads: KeyValuePairs<PushStack, Int>,
         producing resultStack: PushStack,
         from source: [any Item]
     ) -> [any Item] {
         var result = source
-        for (stack, count) in reads.sorted(by: { "\($0.key)" < "\($1.key)" }) where count > 0 {
+        for (stack, count) in reads.sorted(by: { $0.key.rawValue < $1.key.rawValue }) where count > 0 {
             if stack == resultStack {
                 // The result is on top, the `count` arguments just beneath it.
                 // Lift each argument past the result and pop it.

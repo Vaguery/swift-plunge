@@ -22,7 +22,7 @@ struct CodeIteratePointsTests {
     /// emits, front to back.
     func emittedPoints(_ code: CodeItem) -> [String] {
         let it = IteratorItem(kind: .points(.boxed), origin: code, body: nil, emits: true)
-        return it.collected().map { $0.pretty() }
+        return it.collected()?.map { $0.pretty() } ?? []
     }
 
     @Test func `points emits every node pre-order, each boxed as code`() {
@@ -39,9 +39,9 @@ struct CodeIteratePointsTests {
         #expect(emittedPoints(CodeItem([])) == ["( )"])
     }
 
-    @Test func `each emitted point records the codeNthPoint crux and reproduces`() {
+    @Test func `each emitted point records the codeNthPoint crux and reproduces`() throws {
         let it = IteratorItem(kind: .points(.boxed), origin: tree, body: nil, emits: true)
-        let points = it.collected()
+        let points = try #require(it.collected())
         // point 2 is the leaf 1, boxed as ( 1 )
         let leafPoint = points[2]
         #expect(leafPoint.pretty() == "( 1 )")

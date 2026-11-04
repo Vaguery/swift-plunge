@@ -209,9 +209,13 @@ nonisolated final class Interpreter {
     
     
     static let defaultSettings = InterpreterSettings()
-    
-    var behaviors: [PushInstruction: Behavior] = Interpreter.language
-    var stacks: [PushStack: Deque<any Item>]
+
+    /// `language` as an array-backed table, built once and shared by every
+    /// interpreter (copies share storage until one disables something).
+    static let languageTable = BehaviorTable(language)
+
+    var behaviors: BehaviorTable = Interpreter.languageTable
+    var stacks: StackSet
     /// Running total of `Item.weight` (content) live across all stacks — maintained
     /// incrementally by the mutation helpers (`place`/`take…`/`clear`), and re-anchored
     /// by `recomputeLiveWeight()` at every run start. Lets `enforceMemoryGuard` be O(1)
@@ -236,7 +240,7 @@ nonisolated final class Interpreter {
         recorders.keys.sorted()
     }
     
-    init(stacks: [PushStack : Deque<any Item>] = PushStack.emptyStacks()) {
+    init(stacks: StackSet = PushStack.emptyStacks()) {
         self.stacks = stacks
         self.recomputeLiveWeight()
     }
@@ -348,8 +352,8 @@ nonisolated final class Interpreter {
     /// than a claim; `maxVectorLength`/`maxStringLength` bound those.
     func clampingIterations(_ item: any Item) -> any Item {
         guard
-            let iterator = item as? IteratorItem,
-            let held = iterator.clamped(toPasses: config.maxIterations)
+            type(of: item) == IteratorItem.self,
+            let held = (item as! IteratorItem).clamped(toPasses: config.maxIterations)
         else { return item }
         return held
     }
@@ -430,26 +434,29 @@ nonisolated final class Interpreter {
 
     /// Remove the top `n` items of a stack (clamped to its count).
     func takeFirst(_ n: Int, from stack: PushStack) {
-        guard let deque = stacks[stack] else { return }
-        let count = Swift.min(Swift.max(0, n), deque.count)
-        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(deque[i].weight).0 }
+        // Reads and removal both go through the subscript, never through a local
+        // copy of the deque: a second reference alive at the mutation would force
+        // copy-on-write to duplicate the whole stack.
+        let count = Swift.min(Swift.max(0, n), stacks[stack]?.count ?? 0)
+        guard count > 0 else { return }
+        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(stacks[stack]![i].weight).0 }
         stacks[stack]!.removeFirst(count)
     }
 
     /// Remove and return the item at `index` within a stack, or nil if out of range.
     @discardableResult
     func take(at index: Int, from stack: PushStack) -> (any Item)? {
-        guard let deque = stacks[stack], deque.indices.contains(index) else { return nil }
-        let item = deque[index]
+        // In place, for the reason given at `takeFirst(_:from:)`.
+        guard index >= 0, index < stacks[stack]?.count ?? 0 else { return nil }
+        let item = stacks[stack]!.remove(at: index)
         liveWeight = liveWeight.subtractingReportingOverflow(item.weight).0
-        stacks[stack]!.remove(at: index)
         return item
     }
 
     /// Remove every item from a stack.
     func clear(_ stack: PushStack) {
-        guard let deque = stacks[stack] else { return }
-        for item in deque { liveWeight = liveWeight.subtractingReportingOverflow(item.weight).0 }
+        guard let count = stacks[stack]?.count, count > 0 else { return }
+        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(stacks[stack]![i].weight).0 }
         stacks[stack]!.removeAll()
     }
 
@@ -468,8 +475,11 @@ nonisolated final class Interpreter {
         }
         loadConstants(constants)
 
-        // initial stack items if any
-        self.stacks = PushStack.emptyStacks()
+        // initial stack items if any — starting from empty stacks. A fresh
+        // interpreter already has them, so only a reused one pays for new ones.
+        if PushStack.allCases.contains(where: { !(self.stacks[$0]?.isEmpty ?? true) }) {
+            self.stacks = PushStack.emptyStacks()
+        }
         for (stack, items) in initial {
             let accepted = items.filter { self.requireAccepts($0, on: stack) }
             self.stacks[stack]!.prepend(contentsOf: accepted)
@@ -499,7 +509,9 @@ nonisolated final class Interpreter {
     func step() {
         if counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             let nextItem = self.takeFirst(from: .exec)
-            if nextItem is CodeItem {
+            // Exact-type tests rather than `is` casts: see `PushStack.accepts`.
+            let nextType = nextItem.map { type(of: $0) }
+            if nextType == CodeItem.self {
                 // Code is data until a program asks for it: a block met on
                 // `.exec` comes to rest on `.code` intact, rather than having its
                 // contents scattered back onto `.exec` to run. `.codeDo` is the
@@ -510,7 +522,7 @@ nonisolated final class Interpreter {
                 // unwrapping here used to discard it, so an `.input` bound to a
                 // block lost its provenance the moment it scattered.
                 self.push(nextItem!, to: .code)
-            } else if nextItem is InstructionItem {
+            } else if nextType == InstructionItem.self {
                 let action = (nextItem as! InstructionItem).value
                 if let behavior = self.behaviors[action] {
                     behavior.act(on: self)
