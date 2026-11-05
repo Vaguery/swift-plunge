@@ -117,12 +117,7 @@ struct ProvenanceOffParityTests {
                 builders.append(".\(name): \((returned + left).prefix(3).joined(separator: ", "))")
             }
         }
-        print("provenance gate: \(builders.count) behaviors still build provenance with recording off")
-        // MIGRATION: Behaviors are being moved behind `recording(…)` one file at a
-        // time; this becomes a plain expectation once the last one lands.
-        withKnownIssue("Behaviors not yet gated by recording(…)", isIntermittent: true) {
-            #expect(builders.isEmpty,
-                    "these build provenance with recording off (\(builders.count)):\n\(builders.joined(separator: "\n"))")
-        }
+        #expect(builders.isEmpty,
+                "these build provenance with recording off (\(builders.count)):\n\(builders.joined(separator: "\n"))")
     }
 }

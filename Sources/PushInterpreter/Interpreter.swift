@@ -273,27 +273,12 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        self.place(
-            self.strippingProvenanceIfDisabled(
-                self.elidingOverBudgetProvenance(self.clampingIterations(item))
-            ),
-            on: stack
-        )
-    }
-
-
-    /// Drops an item's `call` when provenance recording is off (see
-    /// `InterpreterSettings.recordsProvenance`). A no-op when on, or when the call is
-    /// already empty. Runs last in the push pipeline, so it dominates: `clampingIterations`
-    /// still bounds a loop's *state* and `elidingOverBudgetProvenance` still applies when
-    /// on; when off, the history is simply gone. Value reproduction is untouched —
-    /// `crux()` of a call-less item is `[self]`, and iteration is driven by an iterator's
-    /// state fields, not its `call`.
-    func strippingProvenanceIfDisabled(_ item: any Item) -> any Item {
-        guard !config.recordsProvenance, !item.call.isEmpty else { return item }
-        var stripped = item
-        stripped.call = []
-        return stripped
+        // No provenance stripping here: with `recordsProvenance` off, Behaviors never
+        // build a `call` in the first place (every provenance expression is written
+        // inside `recording(…)`; see `ProvenanceRecording`), so there is nothing to
+        // strip. `Provenance Off Parity Tests` holds the whole language to that.
+        // An item loaded from outside keeps whatever `call` it was handed.
+        self.place(self.elidingOverBudgetProvenance(self.clampingIterations(item)), on: stack)
     }
 
 
