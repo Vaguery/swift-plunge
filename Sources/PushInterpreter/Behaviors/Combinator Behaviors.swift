@@ -122,8 +122,8 @@ nonisolated extension Interpreter {
     /// their original order (principle 6).
     ///
     /// Provenance: a dup changes no value, so law 1 applies and the copies keep
-    /// their own `call` untouched. That is why this family needs no `Nth` — and it
-    /// is why `codeNthRoot` can stay unimplemented.
+    /// their own `call` untouched. That is why this family needs no `Nth` to
+    /// explain its copies.
     static func dupItemsCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]

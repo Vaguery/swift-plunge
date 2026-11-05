@@ -841,8 +841,8 @@ nonisolated extension IteratorItem {
 
             // Law 1b: an item that goes into a block and comes back out is the
             // item that went in, so it keeps its own `call` and records nothing.
-            // This is what spares the dup families an `Nth` — and it is why
-            // `codeNthRoot` can stay unimplemented.
+            // This is what spares the dup families an `Nth`: their copies need no
+            // record of where they came from.
             case let c as CodeItem:
                 let element = c.value[index]
                 return element

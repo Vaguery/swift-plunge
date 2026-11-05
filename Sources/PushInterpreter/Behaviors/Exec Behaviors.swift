@@ -23,19 +23,17 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
-                var bodyCopy = body
 
                 // Always runs the body at least once — `.exec` top→bottom is
                 // body, .codeDo.
                 var results = [
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, bodyCopy),
+                    Router(.exec, body),
                 ]
 
                 if x.value {
                     // …then re-supplies the body to `.code` and hands off to
                     // `.execWhile`, which consults the next BOOL.
-                    var yCopy2 = body
 
                     results.insert(
                         Router(
@@ -45,7 +43,7 @@ nonisolated extension Interpreter {
                         ),
                         at: 0
                     )
-                    results.insert(Router(.exec, yCopy2), at: 1)
+                    results.insert(Router(.exec, body), at: 1)
                 }
                 return results
             }
@@ -67,7 +65,7 @@ nonisolated extension Interpreter {
             //
             // Provenance: the iterator records how to rebuild itself (see
             // `IteratorItem.reconstruction`); the `.iteratorPlay` token is freshly
-            // minted (law 4). `newEndPoint` is the literal 0 whatever the arguments
+            // minted (law 4). `origin` is the literal 0 whatever the arguments
             // were, so it is its own crux and records nothing.
             fxn: { a, recording in
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
@@ -80,7 +78,7 @@ nonisolated extension Interpreter {
                     ]
                 }
 
-                var origin = IntItem(0)
+                let origin = IntItem(0)
 
                 return iteratorLoop(
                     kind: .counting(stride: 1),
@@ -109,16 +107,15 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
-                var bodyCopy = body
 
                 guard x.value >= 1 else {
                     // No iteration: the body is returned to where it came from,
                     // which is now `.code`. It stays data rather than running,
                     // which is the whole point of the CodeItem change.
-                    return [Router(.code, bodyCopy)]
+                    return [Router(.code, body)]
                 }
 
-                var origin = IntItem(0)
+                let origin = IntItem(0)
 
                 // Identical to `.execDoCount`'s iterator but for `emits`, which is
                 // the whole of the difference between the two instructions. `x` is
@@ -129,7 +126,7 @@ nonisolated extension Interpreter {
                     kind: .counting(stride: 1),
                     origin: origin,
                     destination: x,
-                    body: bodyCopy,
+                    body: body,
                     emits: false, recording: recording
                 )
             }
@@ -159,7 +156,6 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x, y, body) = (a[0] as! IntItem, a[1] as! IntItem, a[2] as! CodeItem)
 
-                var bodyCopy = body
 
                 // The stride is the direction to travel, and equal bounds are a
                 // single pass either way.
@@ -169,7 +165,7 @@ nonisolated extension Interpreter {
                     kind: .counting(stride: direction),
                     origin: y,
                     destination: x,
-                    body: bodyCopy,
+                    body: body,
                     emits: true, recording: recording
                 )
             }
@@ -229,7 +225,7 @@ nonisolated extension Interpreter {
                 // the 2 at a[1]), so `( then ) ( else ) .execIf` keeps that:
                 // a[2] is `then`.
                 let (x, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
-                var result = x.value ? thenBlock : elseBlock
+                let result = x.value ? thenBlock : elseBlock
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, result),
@@ -295,14 +291,12 @@ nonisolated extension Interpreter {
                 // `.exec`.
                 let (x, y, z) = (a[2], a[1], a[0])
 
-                var yCopy = y
-                var zCopy = z
 
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, zCopy),
+                    Router(.exec, z),
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, yCopy),
+                    Router(.exec, y),
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, z),
                     Router(.exec, InstructionItem(.codeDo)),
@@ -348,9 +342,7 @@ nonisolated extension Interpreter {
                 var results = [Router]()
 
                 if x.value {
-                    var bodyCopy = body
 
-                    var yCopy2 = body
 
                     results = [
                         Router(
@@ -358,9 +350,9 @@ nonisolated extension Interpreter {
                             InstructionItem(
                                 .execWhile)
                         ),
-                        Router(.exec, yCopy2),
+                        Router(.exec, body),
                         Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, bodyCopy),
+                        Router(.exec, body),
                     ]
                 }
                 return results
