@@ -253,7 +253,7 @@ nonisolated extension Interpreter {
     /// record nothing.
     static func iteratorGetter_Behavior(
         _ name: PushInstruction,
-        reading field: @escaping @Sendable (IteratorItem) -> (any Item)?
+        reading field: @escaping @Sendable (IteratorItem, ProvenanceRecording) -> (any Item)?
     ) -> Behavior {
         Behavior(
             name,
@@ -261,7 +261,7 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 var results = [Router(.iterator, iterator)]
-                if let item = field(iterator),
+                if let item = field(iterator, recording),
                    let resting = PushStack.defaultStack(for: item) {
                     results.append(Router(resting, item))
                 }
@@ -274,12 +274,12 @@ nonisolated extension Interpreter {
     /// that item belongs to, so it is `.int` for a counting loop and `.string` or a
     /// vector stack for one walking a collection.
     static let iteratorPeekStart_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStart) { $0.origin }
+        iteratorGetter_Behavior(.iteratorPeekStart) { iterator, _ in iterator.origin }
 
     /// Where the loop ends. A `.elements` iterator has no end bound of its own —
     /// its end is its source's length — so this emits nothing for one.
     static let iteratorPeekEnd_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekEnd) { $0.destination }
+        iteratorGetter_Behavior(.iteratorPeekEnd) { iterator, _ in iterator.destination }
 
     /// The step between passes; `1` for an iterator walking a collection.
     ///
@@ -292,19 +292,19 @@ nonisolated extension Interpreter {
     /// iterator on `.iterator`, which a same-stack sibling would then read. The
     /// crux pops it, so the fragment leaves only the fact (Design Principles §1).
     static let iteratorPeekStride_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStride) { iterator in
+        iteratorGetter_Behavior(.iteratorPeekStride) { iterator, recording in
             IntItem(
                 iterator.stride,
-                call: Behavior.reading(
+                call: recording(Behavior.reading(
                     [.iterator: 1],
                     producing: .int,
-                    from: [iterator, InstructionItem(.iteratorPeekStride)]))
+                    from: [iterator, InstructionItem(.iteratorPeekStride)])))
         }
 
     /// The block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
     static let iteratorPeekBody_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekBody) { $0.body }
+        iteratorGetter_Behavior(.iteratorPeekBody) { iterator, _ in iterator.body }
 
     /// How many times this iterator goes round its source — `1` for anything that
     /// does not cycle, which is most iterators and every counting one.
@@ -314,13 +314,13 @@ nonisolated extension Interpreter {
     /// law 3 applies — including the `reading` cleanup that pops the iterator the
     /// getter hands back.
     static let iteratorPeekLaps_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekLaps) { iterator in
+        iteratorGetter_Behavior(.iteratorPeekLaps) { iterator, recording in
             IntItem(
                 iterator.laps,
-                call: Behavior.reading(
+                call: recording(Behavior.reading(
                     [.iterator: 1],
                     producing: .int,
-                    from: [iterator, InstructionItem(.iteratorPeekLaps)]))
+                    from: [iterator, InstructionItem(.iteratorPeekLaps)])))
         }
 
 
@@ -550,10 +550,10 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Zero stride .iteratorFromIntRange: \(origin.value) to \(destination.value) by 0",
-                                call: [
+                                call: recording([
                                     origin, destination, stride, cursor, burial, emits, body,
                                     InstructionItem(.iteratorFromIntRange)
-                                ])
+                                ]))
                         )
                     ]
                 }
@@ -566,10 +566,10 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [
+                    call: recording([
                         origin, destination, stride, cursor, burial, emits, body,
                         InstructionItem(.iteratorFromIntRange),
-                    ])
+                    ]))
                 return iteratorBuilt(iterator)
             }
         )
@@ -611,10 +611,10 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [
+                    call: recording([
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
-                    ])
+                    ]))
                 return iteratorBuilt(iterator)
             }
         )
@@ -677,10 +677,10 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [
+                    call: recording([
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
-                    ])
+                    ]))
                 return iteratorBuilt(iterator)
             }
         )
@@ -716,7 +716,7 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [origin, cursor, burial, emits, body, InstructionItem(instruction)])
+                    call: recording([origin, cursor, burial, emits, body, InstructionItem(instruction)]))
                 return iteratorBuilt(iterator)
             }
         )
@@ -769,10 +769,10 @@ nonisolated extension Interpreter {
                     emits: true,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: [
+                    call: recording([
                         box, count, cursor, burial,
                         InstructionItem(name),
-                    ])
+                    ]))
                 return iteratorBuilt(iterator)
             }
         )
