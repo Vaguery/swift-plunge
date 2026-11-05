@@ -140,7 +140,28 @@ public nonisolated protocol Item: Pretty, Sendable {
     /// this whole exercise exists to remove.
     var callWeight: Int {get}
 
+    /// How deeply `call` nests: 0 for a literal, one more than the deepest child
+    /// otherwise. Maintained alongside `callWeight` (packed with it in a
+    /// `CallMeasure`) for the same reason: a long chain must not cost a walk per
+    /// push. `Interpreter.push` elides provenance deeper than `maxCallDepth`,
+    /// because releasing or walking a tree costs a stack frame per level, and a
+    /// concurrency worker thread's stack is small (see `maxCallDepth`).
+    var callDepth: Int {get}
+
     func isEqual(to other: any Item) -> Bool
+}
+
+/// An item's `callWeight` and `callDepth`, packed into the 8 bytes `callWeight`
+/// alone used to take. That matters: a small item (`IntItem` is a value, its
+/// `call` and this) must stay within the three words an `any Item` stores inline,
+/// or every one of them is boxed on the heap. Both halves saturate at
+/// `UInt32.max`, far above any budget.
+public nonisolated struct CallMeasure: Sendable, Hashable {
+    public let weight: UInt32
+    public let depth: UInt32
+
+    /// A literal: an empty `call`, weight 1, depth 0.
+    public static let literal = CallMeasure(weight: 1, depth: 0)
 }
 
 nonisolated extension Item {
@@ -149,7 +170,7 @@ nonisolated extension Item {
     public var weight: Int { 1 }
 
 
-    /// The `callWeight` for a freshly assigned `call`. Each child already stores
+    /// The `callWeight` and `callDepth` for a freshly assigned `call`. Each child already stores
     /// its own, so this is O(call.count) — not O(chain) — which is what keeps
     /// maintaining it cheap.
     ///
@@ -157,13 +178,16 @@ nonisolated extension Item {
     /// counted once per path can in principle exceed `Int.max` even though the
     /// stored graph is small. Saturating keeps the over-budget check firing;
     /// wrapping would make it silently pass.
-    static func weighCall(_ call: [any Item]) -> Int {
-        var total = 1
+    static func measureCall(_ call: [any Item]) -> CallMeasure {
+        var weight: UInt32 = 1
+        var deepest: UInt32 = 0
         for child in call {
-            let (sum, overflowed) = total.addingReportingOverflow(child.callWeight)
-            total = overflowed ? Int.max : sum
+            let (sum, overflowed) = weight.addingReportingOverflow(UInt32(clamping: child.callWeight))
+            weight = overflowed ? .max : sum
+            deepest = max(deepest, UInt32(clamping: child.callDepth))
         }
-        return total
+        let depth: UInt32 = call.isEmpty ? 0 : (deepest == .max ? .max : deepest + 1)
+        return CallMeasure(weight: weight, depth: depth)
     }
 }
 
@@ -215,7 +239,24 @@ nonisolated extension Item {
         // over-budget `call` (Interpreter.push) is always safe: it costs the
         // explanation, never the correctness of the reconstruction.
         if self.call.isEmpty { return [self] }
-        return self.call.flatMap { $0.crux() }
+        // **Iterative, not recursive.** A call tree can legally nest thousands deep
+        // (a long run's loop counter, say — `maxCallWeight` bounds its size, not its
+        // depth), and recursion one Swift frame per level overflowed the small stack
+        // of a concurrency worker thread, killing the whole process (found by the
+        // dual-mode stress run: depth 2,463). This walks the same tree in the same
+        // left-to-right order with an explicit stack, so depth costs heap, not stack.
+        // Every leaf is an item with an empty `call`, exactly as the recursive form
+        // bottomed out.
+        var leaves: [any Item] = []
+        var pending: [any Item] = self.call.reversed()
+        while let next = pending.popLast() {
+            if next.call.isEmpty {
+                leaves.append(next)
+            } else {
+                pending.append(contentsOf: next.call.reversed())
+            }
+        }
+        return leaves
     }
 }
 
@@ -251,18 +292,20 @@ public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 public nonisolated struct BoolItem: Item, Equatable, Pretty {
     public var value: Bool
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     
     public init(_ value: Bool, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
     
     public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
@@ -277,18 +320,20 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
 public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     public var value: Character
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     
     public init(_ value: Character, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
     
     public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
@@ -344,12 +389,14 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// above. This is the only heterogeneous container in the language.
     public var value: [any Item]
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
 
     /// The number of items in this code's fully flattened `.value`: every
@@ -363,12 +410,22 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// holds, at every level. Reuses each child's already-stored weight.
     public let weight: Int
 
+    /// How deeply blocks nest inside this one: 0 for an empty block, 1 for a flat
+    /// one, one more per level — `(1 (2 3))` is 2. Computed once from the
+    /// children's stored depths, like `flatSize`, so `maxCodeDepth` can be checked
+    /// at every push without a walk. Weight cannot stand in for it: wrapping a
+    /// block again adds a level and no weight.
+    public let nestingDepth: Int
+
     public init(_ value: [any Item], call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
         self.weight = value.reduce(0) { $0 + $1.weight }
+        self.nestingDepth = value.isEmpty
+            ? 0
+            : 1 + (value.lazy.compactMap { ($0 as? CodeItem)?.nestingDepth }.max() ?? 0)
     }
 
     public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
@@ -443,9 +500,7 @@ nonisolated extension CodeItem {
 
     /// The maximum nesting depth: root is 0, each nested block adds one.
     /// `(1 (2 3))` is 2, a flat block is 1, an empty block is 0.
-    var depth: Int {
-        1 + (value.map { ($0 as? CodeItem)?.depth ?? 0 }.max() ?? -1)
-    }
+    var depth: Int { nestingDepth }
 
     /// Every leaf, left to right — the fully flattened contents. Empty blocks
     /// contribute nothing. `(1 (2 3) ())` → `[1, 2, 3]`.
@@ -539,18 +594,20 @@ nonisolated extension CodeItem {
 public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     public var value: Double
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     
     public init(_ value: Double, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
     
     public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
@@ -570,18 +627,20 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public var value: PushInstruction
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     
     public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
     
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
@@ -603,18 +662,20 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     public var value: Int
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     
     public init(_ value: Int, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
     
     public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
@@ -635,19 +696,21 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     public var value: String
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     public let weight: Int
 
     public init(_ value: String, call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.weight = value.utf8.count
     }
     
@@ -668,19 +731,21 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     public var value: [Bool]
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Bool], call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.weight = value.count
     }
     
@@ -698,19 +763,21 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
 public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     public var value: [Double]
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Double], call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.weight = value.count
     }
     
@@ -727,19 +794,21 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
 public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     public var value: [Int]
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Int], call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.weight = value.count
     }
     
@@ -757,12 +826,14 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
 public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     public var value: [String]
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
 
     /// Total characters across all contained strings — the "total characters"
@@ -772,7 +843,7 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     public init(_ value: [String], call: [any Item] = []) {
         self.value = value
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
     
@@ -849,19 +920,21 @@ public nonisolated struct ErrorItem: Item, Equatable {
     public var kind: ErrorKind
 
     public var call: [any Item] {
-        didSet { self.callWeight = Self.weighCall(call) }
+        didSet { self.callMeasure = Self.measureCall(call) }
     }
 
     /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
     /// during `init`, so the initializer sets it directly.
-    public private(set) var callWeight: Int = 1
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
 
     public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
         self.message = .text(value)
         self.kind = kind
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
     }
 
     /// A starved instruction's refusal: `intAdd missing args: .int`, built on read.
@@ -869,7 +942,7 @@ public nonisolated struct ErrorItem: Item, Equatable {
         self.message = .missingArguments(instruction, stack)
         self.kind = .missingArgument
         self.call = []
-        self.callWeight = Self.weighCall([])
+        self.callMeasure = .literal
     }
 
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {

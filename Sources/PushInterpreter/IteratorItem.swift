@@ -214,11 +214,13 @@ public nonisolated struct IteratorItem: Item, Pretty {
     public var burial: Int
 
     public var call: [any Item] {
-        didSet { callWeight = Self.weighCall(call) }
+        didSet { callMeasure = Self.measureCall(call) }
     }
 
 
-    public var callWeight: Int
+    public private(set) var callMeasure = CallMeasure.literal
+    public var callWeight: Int { Int(callMeasure.weight) }
+    public var callDepth: Int { Int(callMeasure.depth) }
 
     public init(
         kind: IteratorKind,
@@ -243,7 +245,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
         self.laps = kind.cycles ? max(1, laps) : 1
         self.burial = max(0, burial)
         self.call = call
-        self.callWeight = Self.weighCall(call)
+        self.callMeasure = Self.measureCall(call)
         self.source = SourceView(kind: kind, origin: origin)
     }
 

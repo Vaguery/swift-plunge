@@ -65,6 +65,15 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // the last unbounded dimension in the system; `maxIterations` below now holds
     // that title, since nothing bounded what a loop CLAIMS.
     public var maxCallWeight   : Int = 10_000
+    // DERIVED from the stack a concurrency worker thread gets (512 KB), and NOT a
+    // preference. The deepest provenance a pushed item may keep, elided like
+    // `maxCallWeight`. Weight bounds a call tree's size, not its depth (a chain
+    // grows ~2 per level), and every walk *and every release* of a tree costs a
+    // stack frame per level: the dual-mode stress run killed the process
+    // releasing a 2,463-deep tree on a worker thread, and dropping a 5,000-deep
+    // chain there crashes outright (2,000 does not). 1,000 leaves room for frames
+    // larger than that measurement's. Raise it only for runs on big-stack threads.
+    public var maxCallDepth    : Int = 1_000
     // DERIVED from `stepLimit`, and NOT a preference. The most passes any single
     // COUNTED loop may promise — the last unbounded dimension there was:
     // `stepLimit` bounds the work a loop does, but nothing bounded what one loop
@@ -156,6 +165,10 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     ///    same way in the replay, or the reproduced item carries more history than
     ///    the original and the fixed-point check fails on a difference this policy
     ///    introduced.
+    ///  - `maxCallDepth` and `maxCodeDepth` — not budgets but stack safety: a
+    ///    replay runs on the same kind of thread, so it can afford no more depth
+    ///    than the original, and an original item never needed more than its run
+    ///    allowed.
     ///  - `stepLimit` — a crux flattens a call DAG per path and is routinely far
     ///    longer than the run that built it, so its budget belongs to whoever
     ///    knows the crux's length. Size it there.
@@ -168,7 +181,6 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
         relaxed.maxStringLength = maxStringLength * 1_000
         relaxed.maxVectorLength = maxVectorLength * 1_000
         relaxed.maxCodePoints   = maxCodePoints   * 1_000
-        relaxed.maxCodeDepth    = maxCodeDepth    * 1_000
         relaxed.maxItemWeight   = maxItemWeight   * 1_000
         relaxed.maxStackDepth   = maxStackDepth   * 100
         relaxed.maxLiveWeight   = maxLiveWeight   * 20
@@ -325,7 +337,8 @@ nonisolated final class Interpreter {
     /// which is acceptable: those behaviors (`deepDup`, `shove`) are
     /// provenance-transparent under law 1, so they cannot grow a `call`.
     func elidingOverBudgetProvenance(_ item: any Item) -> any Item {
-        guard item.callWeight > config.maxCallWeight else { return item }
+        guard item.callWeight > config.maxCallWeight || item.callDepth > config.maxCallDepth
+        else { return item }
         var lightened = item
         lightened.call = []
         return lightened

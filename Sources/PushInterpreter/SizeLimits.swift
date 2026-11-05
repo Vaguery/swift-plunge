@@ -59,6 +59,12 @@ nonisolated extension Interpreter {
             if code.flatSize > config.maxCodePoints {
                 return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
             }
+            // Stack safety rather than size: walking or releasing a block costs a
+            // stack frame per level, and wrapping adds a level without adding
+            // points or weight, so neither cap above sees it.
+            if code.nestingDepth > config.maxCodeDepth {
+                return "code depth \(code.nestingDepth) exceeds maxCodeDepth \(config.maxCodeDepth)"
+            }
         }
         // The recursive backstop: catches nested content the per-dimension caps
         // above miss (a vector of long strings, code whose leaves are large).
