@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct IntBehaviorTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
     
     @Test func intAdd() {
         loadInts(inty, ints: [9, 11, 7])

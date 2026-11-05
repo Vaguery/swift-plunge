@@ -110,16 +110,22 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // following it. `Int.max` disables the guard.
     public var maxLiveWeight = 50_000_000
 
-    // Whether pushed items keep their `call` provenance (the source of `crux()`).
-    // Default true — the current behavior. When false, `push` strips every item's
-    // `call`, so the deep provenance tree never accumulates: this is the memory/time
-    // saving for a run that does not need crux for the whole population (crux is then
-    // something to invoke for a *special* individual — e.g. by re-running the best
-    // genome with this on). A call-less item's crux is `[self]`, a runnable literal
-    // producing the same value, so turning this off never changes what a program
-    // computes — only whether it can explain itself. A behavior that *reads* a crux
-    // to do its work must guard with `Interpreter.requiresProvenance(_:)`.
-    public var recordsProvenance = true
+    // Whether Behaviors record `call` provenance (the source of `crux()`).
+    //
+    // **Default false.** Off, no Behavior builds a `call` at all: every provenance
+    // expression is written inside `recording(…)` (see `ProvenanceRecording`), which
+    // is never evaluated, so the run pays nothing for explanations it does not want —
+    // neither the time to build the call tree nor the memory a loop would accumulate.
+    // Crux is something to ask for when a task needs it: re-running a *special*
+    // individual (the best genome) with this on, a crux-reading search operator, a
+    // Runner asked for `cruxInputTokens` (which turns it on for that run).
+    //
+    // A call-less item's crux is `[self]`, a runnable literal producing the same value,
+    // so this never changes what a program computes — only whether it can explain
+    // itself. `Provenance Off Parity Tests` holds the whole language to that. A
+    // behavior that *reads* a crux to do its work must guard with
+    // `Interpreter.requiresProvenance(_:)`.
+    public var recordsProvenance = false
 
 
     /// The same policy, relaxed for **reconstruction** — re-running one item's

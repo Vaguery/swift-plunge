@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct VecBoolBehaviorTests {
     
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
     
     @Test func vecBoolButLast() {
         inty.stacks[.vecBool]!.prepend(
@@ -88,7 +88,7 @@ struct VecBoolBehaviorTests {
         #expect(callString(topItem(inty, .bool)) == "( [false, true] false .vecBoolContains .boolSwap .boolPop 1 .vecBoolPopItems )")
 
         // A miss.
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         miss.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
         miss.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolContains, to: miss)
@@ -146,7 +146,7 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [true, false] false .vecBoolIndexOf 1 .boolPopItems 1 .vecBoolPopItems )")
 
-        let absent = Interpreter()
+        let absent = Interpreter.recordingProvenance()
         absent.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
         absent.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolIndexOf, to: absent)
@@ -370,7 +370,7 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .bool) == "[ true ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [true, true, true, false] true .vecBoolOccurrencesOf 1 .boolPopItems 1 .vecBoolPopItems )")
 
-        let none = Interpreter()
+        let none = Interpreter.recordingProvenance()
         none.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
         none.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolOccurrencesOf, to: none)

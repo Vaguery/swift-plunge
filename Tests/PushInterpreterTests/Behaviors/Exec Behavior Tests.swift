@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct ExecBehaviorTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     /// `.execDoCount` used to rewrite itself into an `.execDoRange` continuation
     /// and let that do the counting, re-pushing both bounds onto `.int` every
@@ -61,7 +61,7 @@ struct ExecBehaviorTests {
     /// Counting 0 toward `x` is exactly `x` passes, because the range stops one
     /// short of its destination.
     @Test func `execDoCount runs its body exactly count times`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(5),
             CodeItem([BoolItem(true)]),
@@ -187,7 +187,7 @@ struct ExecBehaviorTests {
     /// The loop index is genuinely derived, and its record names its origin and
     /// its offset — bounded, and independent of how many passes have run.
     @Test func `execDoRange indices record origin and offset`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(7), IntItem(4), CodeItem([]), InstructionItem(.execDoRange),
         ])
@@ -255,7 +255,7 @@ struct ExecBehaviorTests {
 
     /// "Do the body, x times" — and the count never leaks onto `.int`.
     @Test func `execDoTimes runs its body exactly count times, silently`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(33),
             CodeItem([BoolItem(true)]),

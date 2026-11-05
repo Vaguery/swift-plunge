@@ -93,7 +93,7 @@ struct CruxSweep {
         self.seeds = seeds
         self.casesPerSeed = casesPerSeed
         self.programItems = programItems
-        var s = InterpreterSettings()
+        var s = InterpreterSettings.recordingProvenance   // it checks cruxes
         s.stepLimit = stepLimit
         self.settings = s
         self.mix = mix
@@ -124,7 +124,7 @@ struct CruxSweep {
                 let program = FibonacciGenome.translate(
                     RandomCode.randomProgram(programItems, mix: mix))
 
-                let inty = Interpreter()
+                let inty = Interpreter.recordingProvenance()
                 inty.config = settings
                 inty.load(program: program)
                 RandomCode.setRandomInputs(in: inty)

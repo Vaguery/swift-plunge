@@ -27,7 +27,7 @@ import DequeModule
 struct VecFromIteratorTests {
 
     func loaded(_ iterator: IteratorItem) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(iterator)
         return inty
     }
@@ -54,7 +54,7 @@ struct VecFromIteratorTests {
     /// needs a vecInt to shape a vecInt. This is the instruction that opens the
     /// closed system (Stack economics, part 1).
     @Test func `a counting iterator collects into a vecInt`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(0), IntItem(4), IntItem(1),     // 0 → 4 by 1
             IntItem(0), IntItem(0),                 // cursor, burial
@@ -293,7 +293,7 @@ struct VecFromIteratorTests {
     /// `push`, long before this saw it — so a wild counting loop collects 101
     /// items, not four billion, and this instruction never had to know.
     @Test func `a claim was already clamped before it could be collected`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.push(
             IteratorItem(
                 kind: .counting(stride: 1),
@@ -355,7 +355,7 @@ struct VecFromIteratorTests {
         #expect(CodeItem(vector.crux()).pretty()
                 == "( [4, 5, 6] 0 0 true ( ) .iteratorFromVecInt .vecFromIterator )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: vector.crux())
         redo.run()
         #expect(stackString(redo, .vecInt) == "[ [4, 5, 6] ]")
@@ -374,7 +374,7 @@ struct VecFromIteratorTests {
 
         #expect(stackString(inty, .vecInt) == "[ [3, 4] ]")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: inty.stacks[.vecInt]!.first!.crux())
         redo.run()
         #expect(stackString(redo, .vecInt) == "[ [3, 4] ]")

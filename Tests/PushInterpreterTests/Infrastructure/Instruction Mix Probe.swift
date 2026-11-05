@@ -264,7 +264,7 @@ struct InstructionMixProbe {
 
     /// Run one program and fold its outcome into `cell`.
     func runOne(into cell: inout Cell, mix: InstructionMix, length: Int, settings: InterpreterSettings) {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config = settings
         inty.load(program: FibonacciGenome.translate(RandomCode.randomProgram(length, mix: mix)))
         RandomCode.setRandomConstants(in: inty)

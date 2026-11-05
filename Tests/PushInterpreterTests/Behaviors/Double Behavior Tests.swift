@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct DoubleBehaviorTests {
 
-    let inty = Interpreter()
+    let inty = Interpreter.recordingProvenance()
 
     @Test func doubleAdd() {
         loadDoubles(inty, doubles: [3.25, 4.25, -6.25])

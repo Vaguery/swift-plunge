@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct CombinatorBehaviorTests {
 
-    let inty = Interpreter()
+    let inty = Interpreter.recordingProvenance()
 
     @Test func `combinator DeepDup works`() {
         loadInts(inty, ints: [2, 10, 0, -4, 4])
@@ -151,7 +151,7 @@ struct CombinatorBehaviorTests {
     /// The whole point of the change: the work is bounded by the ordinary budgets,
     /// so a full stack reports being full rather than being refused in advance.
     @Test func `DupTimes fills a stack and says so`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxStackDepth = 20
         inty.load(program: [DoubleItem(1.1), IntItem(500), InstructionItem(.doubleDupTimes)])
         inty.run(stepLimit: 10_000)
@@ -184,7 +184,7 @@ struct CombinatorBehaviorTests {
         // These five reach into their own stack without declaring it in `takes:`.
         for instruction in [PushInstruction.doubleDeepDup, .doubleDupTimes,
                             .doubleShove, .doubleYank, .doubleYankDup] {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.int]!.prepend(IntItem(5))     // an index…
             // …and .double is empty, so there is nothing to act on.
 
@@ -214,7 +214,7 @@ struct CombinatorBehaviorTests {
         #expect(Interpreter.language[.intDupTimes]!.staticNeeds == [.int: 2])
 
         // A single item is not enough to yank: one int for the index, two to work on.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(0), IntItem(7)] as [any Item])
         #expect(Interpreter.language[.intYank]!.isSatisfied(by: inty) == false)
         doThis(.intYank, to: inty)

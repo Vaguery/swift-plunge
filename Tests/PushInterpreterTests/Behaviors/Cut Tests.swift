@@ -27,7 +27,7 @@ import DequeModule
 @Suite @MainActor
 struct CutTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     /// Load a vector and an index, cut, and return `(deeperPiece, topPiece)`.
     func cut(_ vector: any Item, at index: Int, _ instruction: PushInstruction, on stack: PushStack)
@@ -42,7 +42,7 @@ struct CutTests {
     /// top of its resting stack. This is the check the sweep does not do for the
     /// deep piece.
     func reproduced(_ item: any Item, on stack: PushStack) -> (any Item)? {
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: item.crux())
         redo.run()
         return redo.stacks[stack]!.first
@@ -109,7 +109,7 @@ struct CutTests {
         let (deep, _) = cut(VecIntItem([1, 2, 3, 4, 5]), at: -3, .vecIntCut, on: .vecInt)
         #expect((deep as? VecIntItem)?.value == [1, 2, 3])
 
-        inty = Interpreter()
+        inty = Interpreter.recordingProvenance()
         let (d2, t2) = cut(VecIntItem([1, 2, 3, 4, 5]), at: .min, .vecIntCut, on: .vecInt)
         // Int.min.magnitude % 5 == 3
         #expect((d2 as? VecIntItem)?.value == [1, 2, 3])
@@ -176,7 +176,7 @@ struct CutTests {
             (VecStringItem(["w", "x", "y", "z"]), .vecString, .vecStringCut, .vecStringConcat),
         ]
         for (vector, stack, cutInstr, concatInstr) in cases {
-            inty = Interpreter()
+            inty = Interpreter.recordingProvenance()
             let before = vector.pretty()
             _ = cut(vector, at: 3, cutInstr, on: stack)
             doThis(concatInstr, to: inty)
@@ -214,7 +214,7 @@ struct CutTests {
         #expect((deep as? StringItem)?.value == "hel")
         #expect((top as? StringItem)?.value == "lo")
 
-        inty = Interpreter()
+        inty = Interpreter.recordingProvenance()
         let (d2, t2) = cut(StringItem(""), at: 3, .stringCut, on: .string)
         #expect((d2 as? StringItem)?.value == "")
         #expect((t2 as? StringItem)?.value == "")

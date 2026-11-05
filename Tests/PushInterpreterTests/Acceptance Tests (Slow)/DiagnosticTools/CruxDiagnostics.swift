@@ -159,7 +159,7 @@ func inspectCrux(
 
     let crux = item.crux()
     let room = max(settings.stepLimit, crux.count * stepScale)
-    let redo = Interpreter()
+    let redo = Interpreter.recordingProvenance()
     redo.config = settings.reconstructing
     redo.config.stepLimit = room
     redo.load(inputs: inputs, constants: constants, program: crux)

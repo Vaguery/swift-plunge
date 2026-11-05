@@ -23,7 +23,7 @@ struct VectorSnapshotTests {
 
     /// Reproduce an item from its crux on a fresh interpreter; return the vecInt.
     func reproduced(_ item: any Item) -> [Int]? {
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: item.crux())
         redo.run()
         return (redo.stacks[.vecInt]!.first as? VecIntItem)?.value
@@ -33,7 +33,7 @@ struct VectorSnapshotTests {
     // MARK: - readStack
 
     @Test func `readStack snapshots the whole stack and leaves it`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // .int top-first: [3, 2, 1]  (pushed 1, then 2, then 3)
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(2), IntItem(1)] as [any Item])
         doThis(.vecIntReadStack, to: inty)
@@ -44,13 +44,13 @@ struct VectorSnapshotTests {
     }
 
     @Test func `readStack on an empty stack gives an empty vector`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         doThis(.vecIntReadStack, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] ]")
     }
 
     @Test func `a readStack vector reproduces via readItems, debris-free`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(2), IntItem(1)] as [any Item])
         doThis(.vecIntReadStack, to: inty)
         let vec = topItem(inty, .vecInt)
@@ -62,7 +62,7 @@ struct VectorSnapshotTests {
 
         #expect(reproduced(vec) == [1, 2, 3])
         // debris-free: nothing left on .int
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: vec.crux())
         redo.run()
         #expect(redo.stacks[.int]!.isEmpty, "the crux popped the scalars it read")
@@ -72,13 +72,13 @@ struct VectorSnapshotTests {
     /// stack it would swallow an unrelated item sitting beneath. Reconstructing via
     /// readItems reads exactly k, so a marker below survives.
     @Test func `the readStack crux does not swallow pre-existing stack debris`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(2), IntItem(1)] as [any Item])
         doThis(.vecIntReadStack, to: inty)
         let vec = topItem(inty, .vecInt)
 
         // Run the crux with a marker already on .int beneath where the scalars land.
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.stacks[.int]!.prepend(IntItem(999))   // marker
         redo.load(program: vec.crux())   // NOTE: load resets stacks — see below
         redo.run()
@@ -93,7 +93,7 @@ struct VectorSnapshotTests {
     // MARK: - readItems
 
     @Test func `readItems snapshots the top N and leaves them`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(2), IntItem(1)] as [any Item])
         loadInts(inty, ints: [2])   // N = 2, on top
         doThis(.vecIntReadItems, to: inty)
@@ -104,7 +104,7 @@ struct VectorSnapshotTests {
     }
 
     @Test func `readItems clamps N to what is present`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(2), IntItem(1)] as [any Item])
         loadInts(inty, ints: [10])   // asks for 10, only 2 present
         doThis(.vecIntReadItems, to: inty)
@@ -112,7 +112,7 @@ struct VectorSnapshotTests {
         #expect(stackString(inty, .int) == "[ 2 1 ]", "scalars untouched")
 
         // N = 0 → empty vector.
-        let zero = Interpreter()
+        let zero = Interpreter.recordingProvenance()
         zero.stacks[.int]!.prepend(IntItem(5))
         loadInts(zero, ints: [0])
         doThis(.vecIntReadItems, to: zero)
@@ -120,13 +120,13 @@ struct VectorSnapshotTests {
     }
 
     @Test func `readItems is a fixed point`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(7), IntItem(8), IntItem(9)] as [any Item])
         loadInts(inty, ints: [2])
         doThis(.vecIntReadItems, to: inty)
         let vec = topItem(inty, .vecInt)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: vec.crux())
         redo.run()
         #expect(CodeItem(redo.stacks[.vecInt]!.first!.crux()).pretty()
@@ -137,18 +137,18 @@ struct VectorSnapshotTests {
     // MARK: - the other types
 
     @Test func `snapshots work for every vector type`() {
-        let b = Interpreter()
+        let b = Interpreter.recordingProvenance()
         b.stacks[.bool]!.prepend(contentsOf: [BoolItem(true), BoolItem(false)] as [any Item])
         doThis(.vecBoolReadStack, to: b)
         #expect(stackString(b, .vecBool) == "[ [false, true] ]")
         #expect(stackString(b, .bool) == "[ true false ]", "bools survive")
 
-        let d = Interpreter()
+        let d = Interpreter.recordingProvenance()
         d.stacks[.double]!.prepend(contentsOf: [DoubleItem(2.5), DoubleItem(1.5)] as [any Item])
         doThis(.vecDoubleReadStack, to: d)
         #expect(stackString(d, .vecDouble) == "[ [1.5, 2.5] ]")
 
-        let s = Interpreter()
+        let s = Interpreter.recordingProvenance()
         s.stacks[.string]!.prepend(contentsOf: [StringItem("b"), StringItem("a")] as [any Item])
         loadInts(s, ints: [2])
         doThis(.vecStringReadItems, to: s)

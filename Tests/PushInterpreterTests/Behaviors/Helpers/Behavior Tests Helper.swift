@@ -50,15 +50,32 @@ public func callString(_ item: any Item) -> String {
     CodeItem(item.call).pretty()
 }
 
+/// Runs `instruction` on `interpreter`.
+///
+/// When `interpreter` records provenance, the same instruction also runs on an
+/// off-recording twin of it (`offRecordingTwin()`), and the two must leave
+/// identical values. That splits every mixed test in two without writing it
+/// twice: its `callString`/`crux` assertions check what is recorded with
+/// recording on, and this checks that turning recording off — the default, and
+/// what a search runs — computes exactly the same thing.
 @MainActor
-    public func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
+    public func doThis(_ instruction:PushInstruction, to interpreter: Interpreter,
+                       sourceLocation: SourceLocation = #_sourceLocation) {
+        let twin = interpreter.config.recordsProvenance ? interpreter.offRecordingTwin() : nil
         Interpreter.language[instruction]!.act(on: interpreter)
+        if let twin {
+            Interpreter.language[instruction]!.act(on: twin)
+            #expect(twin.valueSignature == interpreter.valueSignature,
+                    ".\(instruction) computes differently with provenance recording off",
+                    sourceLocation: sourceLocation)
+        }
     }
 
 @MainActor
-    public func doThisMany(times: Int, _ instruction:PushInstruction, to interpreter: Interpreter) {
+    public func doThisMany(times: Int, _ instruction:PushInstruction, to interpreter: Interpreter,
+                           sourceLocation: SourceLocation = #_sourceLocation) {
         for _ in 0..<times {
-            Interpreter.language[instruction]!.act(on: interpreter)
+            doThis(instruction, to: interpreter, sourceLocation: sourceLocation)
         }
     }
 

@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct BoolBehaviorTests {
 
-    let inty = Interpreter()
+    let inty = Interpreter.recordingProvenance()
 
     @Test func boolAnd() {
         loadBools(inty, bools: [true, true, true, false, false, true, false, false])

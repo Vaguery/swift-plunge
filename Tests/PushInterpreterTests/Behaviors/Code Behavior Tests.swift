@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct CodeBehaviorTests {
 
-    let inty = Interpreter()
+    let inty = Interpreter.recordingProvenance()
 
     @Test func codeAppend() {
         loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]])

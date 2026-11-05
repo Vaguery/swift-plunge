@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct InputBehaviorTests {
     
-   let inty = Interpreter()
+   let inty = Interpreter.recordingProvenance()
 
     @Test func `input records its history`() {
         inty.inputs[.input2] = IntItem(17)

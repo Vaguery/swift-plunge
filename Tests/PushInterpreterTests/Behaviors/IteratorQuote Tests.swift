@@ -45,7 +45,7 @@ struct IteratorQuoteTests {
     // MARK: - out and back
 
     @Test func `quoting parks the loop on code`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(counting())
         doThis(.iteratorQuote, to: inty)
 
@@ -57,7 +57,7 @@ struct IteratorQuoteTests {
     /// onto `.exec`; an iterator is not an instruction, so `pushDefault` routes it
     /// home to `.iterator`.
     @Test func `codeDo gives the loop back`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(counting(cursor: 2))
         inty.stacks[.exec] = Deque([
             InstructionItem(.iteratorQuote),
@@ -75,7 +75,7 @@ struct IteratorQuoteTests {
     /// parked loop. Here the token fires while the loop is boxed, finds nothing,
     /// and says so — then the loop comes back and finishes.
     @Test func `a parked loop is out of a pending continuation's reach`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(counting())
         inty.stacks[.exec] = Deque([
             InstructionItem(.iteratorQuote),
@@ -98,7 +98,7 @@ struct IteratorQuoteTests {
         iterator.body = CodeItem([StringItem("tick")])
         iterator.call = iterator.reconstruction()
 
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(iterator)
         inty.stacks[.exec] = Deque([
             InstructionItem(.iteratorQuote),
@@ -118,7 +118,7 @@ struct IteratorQuoteTests {
     /// block reproduces a loop **at the cursor it was parked at** — which is the
     /// whole point of shelving one.
     @Test func `a parked loop reproduces itself, cursor and all`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(counting(cursor: 2))
         doThis(.iteratorQuote, to: inty)
 
@@ -126,7 +126,7 @@ struct IteratorQuoteTests {
         #expect(CodeItem(block.crux()).pretty()
                 == "( 0 4 1 2 0 true ( ) .iteratorFromIntRange .iteratorQuote )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: block.crux())
         redo.run()
 

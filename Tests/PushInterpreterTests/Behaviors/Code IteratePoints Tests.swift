@@ -46,7 +46,7 @@ struct CodeIteratePointsTests {
         let leafPoint = points[2]
         #expect(leafPoint.pretty() == "( 1 )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: leafPoint.crux())
         redo.run()
         #expect(redo.stacks[.code]!.first!.pretty() == "( 1 )", "reproduces the boxed point")
@@ -55,7 +55,7 @@ struct CodeIteratePointsTests {
 
     @Test func `codeIteratePoints plays a bodyless walk to completion`() {
         // ( 1 2 ): points 0:(1 2) 1:1 2:2 → three points, each boxed to .code.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             CodeItem([IntItem(1), IntItem(2)]),   // the tree (deeper)
             CodeItem([]),                         // empty mouse (top)
@@ -71,7 +71,7 @@ struct CodeIteratePointsTests {
         it.call = it.reconstruction()
         #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodePoints"))
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: it.crux())
         redo.run()
         let rebuilt = redo.stacks[.iterator]!.first as? IteratorItem

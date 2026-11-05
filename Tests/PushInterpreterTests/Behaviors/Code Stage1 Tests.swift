@@ -15,7 +15,7 @@ import DequeModule
 struct CodeStage1Tests {
 
     @Test func `codePair wraps two blocks, nesting preserved`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // push y=(c d) then x=(a b) so x is on top (a[0]=x, a[1]=y)
         inty.stacks[.code]!.prepend(contentsOf:
             [CodeItem([StringItem("a"), StringItem("b")]),
@@ -29,7 +29,7 @@ struct CodeStage1Tests {
         // ( 1 ) ( 2 3 ) .codePair → ( 1 ( 2 3 ) ): the singleton ( 1 ) contributes
         // the bare leaf 1, the two-element ( 2 3 ) stays a block. Loaded as a
         // program so the reading order matches the plan's example.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             CodeItem([IntItem(1)]),               // ( 1 ), deeper
             CodeItem([IntItem(2), IntItem(3)]),   // ( 2 3 ), on top
@@ -40,18 +40,18 @@ struct CodeStage1Tests {
     }
 
     @Test func `codePair on empty blocks`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(contentsOf: [CodeItem([]), CodeItem([])] as [any Item])
         doThis(.codePair, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ( ) ) ]")
     }
 
     @Test func `codePair reproduces from its crux`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(contentsOf: [CodeItem([IntItem(1)]), CodeItem([IntItem(2)])] as [any Item])
         doThis(.codePair, to: inty)
         let result = topItem(inty, .code)
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: result.crux())
         redo.run()
         #expect(stackString(redo, .code) == stackString(inty, .code))
@@ -60,7 +60,7 @@ struct CodeStage1Tests {
     @Test func `codeIf runs the chosen block, true takes then`() {
         // Loaded as a program: the two blocks land on .code, the bool on .bool,
         // then codeIf reads them. `then` is written first, so it is a[2].
-        let prog = Interpreter()
+        let prog = Interpreter.recordingProvenance()
         prog.load(program: [
             CodeItem([IntItem(1)]),   // goes to .code
             CodeItem([IntItem(2)]),   // goes to .code
@@ -70,7 +70,7 @@ struct CodeStage1Tests {
         prog.run()
         #expect(stackString(prog, .int) == "[ 1 ]", "true → then block ran")
 
-        let f = Interpreter()
+        let f = Interpreter.recordingProvenance()
         f.load(program: [
             CodeItem([IntItem(1)]),
             CodeItem([IntItem(2)]),

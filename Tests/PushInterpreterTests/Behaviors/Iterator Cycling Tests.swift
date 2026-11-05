@@ -40,7 +40,7 @@ struct IteratorCyclingTests {
     }
 
     func loaded(_ iterator: IteratorItem) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(iterator)
         inty.stacks[.exec] = Deque([InstructionItem(.iteratorPlay)] as [any Item])
         return inty
@@ -102,7 +102,7 @@ struct IteratorCyclingTests {
                 "an iterator that never asked pays nothing for the feature")
 
         let cycler = cycling(4, cursor: 2)
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: cycler.reconstruction())
         inty.run()
 
@@ -180,7 +180,7 @@ struct IteratorCyclingTests {
     /// The clamp cuts the laps, never the source: 40 laps of 3 is 120 emissions,
     /// so it comes back to 33 — 99, the most whole laps that fit under 100.
     @Test func `a wildly cycling walk is clamped at push`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.push(cycling(40), to: .iterator)
 
         #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33)
@@ -204,7 +204,7 @@ struct IteratorCyclingTests {
     /// the cursor. For a cursor of 0 — every loop that was stepped rather than
     /// hand-built — nothing changes, which is why this went unseen.
     @Test func `clamping a hand-built cursor does not strand it`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxIterations = 100
         inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
         // takes: [.code, .int, .int, .int] — written deepest-first: count, cursor, burial.
@@ -219,7 +219,7 @@ struct IteratorCyclingTests {
         #expect(landed.value == 25_046, "and the cursor is where the program put it")
 
         // The crux of an iterator that can exist must rebuild it.
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.config.maxIterations = 100
         redo.load(program: landed.crux())
         redo.run()
@@ -229,7 +229,7 @@ struct IteratorCyclingTests {
     /// The clamp stays a fixed point: having budgeted from the cursor, asking
     /// again finds nothing left to cut.
     @Test func `clamping is idempotent from a moved cursor`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxIterations = 100
         inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
         inty.stacks[.int]!.prepend(contentsOf:
@@ -242,7 +242,7 @@ struct IteratorCyclingTests {
     }
 
     @Test func `a source longer than the ceiling falls back to one lap, not none`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.push(cycling(2, over: Array(1...1_000)), to: .iterator)
 
         let landed = inty.stacks[.iterator]!.first as? IteratorItem
@@ -292,7 +292,7 @@ struct IteratorCyclingTests {
         #expect(absurd.totalEmissions == Int.max)
         #expect(!absurd.isSpent, "still has plenty to emit")
 
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.push(absurd, to: .iterator)
         #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33, "and the clamp catches it")
     }

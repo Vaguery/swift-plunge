@@ -17,7 +17,7 @@ struct CruxCompressionTests {
 
     /// Run `program` and return the end-of-run top of `.double`.
     private func topDouble(after program: [any Item]) async -> Double? {
-        let config = RunnerConfiguration(settings: InterpreterSettings(),
+        let config = RunnerConfiguration(settings: .recordingProvenance,
                                          recorders: [RecorderSpec("r", observing: .top(.double))])
         let request = EvaluationRequest(
             individuals: [Individual(id: "i", program: program, constants: [:])],
@@ -38,7 +38,7 @@ struct CruxCompressionTests {
     }
 
     private func foldResultItem(times: Int) async -> (any Item)? {
-        let config = RunnerConfiguration(settings: InterpreterSettings(),
+        let config = RunnerConfiguration(settings: .recordingProvenance,
                                          recorders: [RecorderSpec("r", observing: .top(.double))])
         let request = EvaluationRequest(
             individuals: [Individual(id: "i", program: foldProgram(times: times), constants: [:])],

@@ -116,7 +116,7 @@ struct CruxRoundTripTests {
     /// cannot find its arguments produces only an ErrorItem, which tests
     /// nothing.
     func seeded(depth: Int = 4) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         let (inputs, constants) = bindings
         var initial: [PushStack: [any Item]] = [:]
         for stack in PushStack.allStacks where stack != .error {
@@ -129,7 +129,7 @@ struct CruxRoundTripTests {
     /// Runs `crux` on a clean interpreter (same bindings) and returns whatever
     /// comes to rest on `stack`.
     func reproduce(_ crux: [any Item], on stack: PushStack) -> (any Item)? {
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         let (inputs, constants) = bindings
         // Relaxed caps, as `brokenClaim` uses: a reconstruction is one individual
         // explaining itself, not a population competing for throughput.
@@ -294,7 +294,7 @@ struct CruxFuzzTests {
         let cases = 20            // random programs per seed
         let programItems = 150    // Plushy tokens per random genome
 
-        var settings = InterpreterSettings()
+        var settings = InterpreterSettings.recordingProvenance   // it checks cruxes
         settings.stepLimit = 3_000
 
         let dir = FileManager.default.temporaryDirectory.appending(path: "push-crux-fuzz")
@@ -314,7 +314,7 @@ struct CruxFuzzTests {
                 let caseId = "crux-\(seedIndex)-\(caseIndex)"
                 let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
 
-                let inty = Interpreter()
+                let inty = Interpreter.recordingProvenance()
                 inty.config = settings
                 inty.load(program: program)
                 RandomCode.setRandomInputs(in: inty)

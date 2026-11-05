@@ -68,7 +68,7 @@ struct CodeGapTests {
     // MARK: - codeCutAtGap
 
     @Test func `cutAtGap splits inside a nested block, suffix on top`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         inty.stacks[.int]!.prepend(IntItem(3))       // between 2 and 3
         doThis(.codeCutAtGap, to: inty)
@@ -81,7 +81,7 @@ struct CodeGapTests {
     @Test func `cutAtGap preserves every leaf in order, at every gap`() {
         let want = leaves(nested)
         for gap in 0..<nested.gapCount {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(nested)
             inty.stacks[.int]!.prepend(IntItem(gap))
             doThis(.codeCutAtGap, to: inty)
@@ -94,14 +94,14 @@ struct CodeGapTests {
     }
 
     @Test func `cutAtGap reaches both extremes`() {
-        let head = Interpreter()
+        let head = Interpreter.recordingProvenance()
         head.stacks[.code]!.prepend(nested)
         head.stacks[.int]!.prepend(IntItem(0))
         doThis(.codeCutAtGap, to: head)
         #expect(stackString(head, .code) == "[ ( 1 ( 2 3 ) 4 ) ( ) ]",
                 "empty prefix deeper, whole suffix on top")
 
-        let tail = Interpreter()
+        let tail = Interpreter.recordingProvenance()
         tail.stacks[.code]!.prepend(nested)
         tail.stacks[.int]!.prepend(IntItem(6))
         doThis(.codeCutAtGap, to: tail)
@@ -113,7 +113,7 @@ struct CodeGapTests {
     /// `codeCutRootAtGap` does — the gap model generalizes that case rather than
     /// replacing it.
     @Test func `a root-level cut still rejoins under codeAppend`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         inty.stacks[.int]!.prepend(IntItem(1))       // between 1 and the block
         doThis(.codeCutAtGap, to: inty)
@@ -125,7 +125,7 @@ struct CodeGapTests {
     /// the documented limit it is rather than a bug. A block split in two cannot
     /// reassemble; the leaves survive, the nesting does not.
     @Test func `an interior cut does not rejoin, and that is the documented limit`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         inty.stacks[.int]!.prepend(IntItem(3))       // inside ( 2 3 )
         doThis(.codeCutAtGap, to: inty)
@@ -140,7 +140,7 @@ struct CodeGapTests {
 
     @Test func `insertAtGap reaches head, tail, and inside a nested block`() {
         func insert(_ gap: Int) -> String {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf:
                 [CodeItem([IntItem(9)]), nested] as [any Item])   // insert on top, subject deeper
             inty.stacks[.int]!.prepend(IntItem(gap))
@@ -157,7 +157,7 @@ struct CodeGapTests {
     /// the replace family: a one-element block contributes its bare element.
     @Test func `insertAtGap denotes its insertion`() {
         func insert(_ block: CodeItem) -> String {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf:
                 [block, CodeItem([IntItem(1)])] as [any Item])
             inty.stacks[.int]!.prepend(IntItem(0))
@@ -175,7 +175,7 @@ struct CodeGapTests {
     // MARK: - codeWrapPoints
 
     @Test func `wrapPoints opens at the lower gap and closes at the higher`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(1)] as [any Item])
         doThis(.codeWrapPoints, to: inty)
@@ -184,7 +184,7 @@ struct CodeGapTests {
 
     @Test func `wrapPoints sorts its indices, so a reversed pair wraps the same span`() {
         func wrap(_ n: Int, _ m: Int) -> String {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
             // a[1] is the top .int, a[2] the one beneath.
             inty.stacks[.int]!.prepend(contentsOf: [IntItem(n), IntItem(m)] as [any Item])
@@ -195,7 +195,7 @@ struct CodeGapTests {
     }
 
     @Test func `wrapPoints with equal indices inserts an empty block`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(1), IntItem(1)] as [any Item])
         doThis(.codeWrapPoints, to: inty)
@@ -205,7 +205,7 @@ struct CodeGapTests {
     /// A wrap crossing an existing boundary unbalances the token run; the repair
     /// in `rebuilt(from:)` is what makes it land as a tree rather than fail.
     @Test func `wrapPoints across a nested boundary is repaired`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         // Open at gap 1 (before the block), close at gap 3 (inside it).
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(1)] as [any Item])
@@ -230,7 +230,7 @@ struct CodeGapTests {
         // deep tokens: 0 open 1 open 2 3 close 4 close 5
         // gap:        0 1    2 3    4 5 6     7 8     9 10
         // inner block ( 2 3 ): head 4, tail 6.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(deep)
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(6), IntItem(4)] as [any Item])
         doThis(.codeFlattenRange, to: inty)
@@ -242,7 +242,7 @@ struct CodeGapTests {
     /// shape — otherwise a one-gap range would flatten the whole tree, since the
     /// root encloses every range.
     @Test func `flattenRange leaves an enclosing block alone`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(deep)
         // A range entirely inside ( 2 3 ) and touching neither of its ends.
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(5), IntItem(5)] as [any Item])
@@ -252,7 +252,7 @@ struct CodeGapTests {
     }
 
     @Test func `flattenRange leaves a block entirely outside the range alone`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         // Gaps 5..6 are past the nested block entirely (its head 2, tail 4).
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(6), IntItem(5)] as [any Item])
@@ -263,7 +263,7 @@ struct CodeGapTests {
     @Test func `flattenRange never loses a leaf`() {
         for lo in 0..<deep.gapCount {
             for hi in lo..<deep.gapCount {
-                let inty = Interpreter()
+                let inty = Interpreter.recordingProvenance()
                 inty.stacks[.code]!.prepend(deep)
                 inty.stacks[.int]!.prepend(contentsOf: [IntItem(hi), IntItem(lo)] as [any Item])
                 doThis(.codeFlattenRange, to: inty)
@@ -281,7 +281,7 @@ struct CodeGapTests {
     /// test is that an over-large result is *refused and reported*, not that it
     /// crashes or silently lands.
     @Test func `an oversized result is refused at the push boundary`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxCodePoints = 4
         inty.stacks[.code]!.prepend(contentsOf:
             [CodeItem([IntItem(7), IntItem(8), IntItem(9)]),          // insert (top)
@@ -301,7 +301,7 @@ struct CodeGapTests {
     /// of its fragments compose. The round-trip and composition sweeps enroll all
     /// four automatically; these pin the recorded text.
     @Test func `the gap instructions record what rebuilds them`() {
-        let cut = Interpreter()
+        let cut = Interpreter.recordingProvenance()
         cut.stacks[.code]!.prepend(nested)
         cut.stacks[.int]!.prepend(IntItem(3))
         doThis(.codeCutAtGap, to: cut)
@@ -311,7 +311,7 @@ struct CodeGapTests {
         #expect(callString(probeItemOnStack(cut, .code, index: 1)!)
                 == "( ( 1 ( 2 3 ) 4 ) 3 .codeCutAtGap 1 .codePopItems )")
 
-        let wrap = Interpreter()
+        let wrap = Interpreter.recordingProvenance()
         wrap.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         wrap.stacks[.int]!.prepend(contentsOf: [IntItem(2), IntItem(0)] as [any Item])
         doThis(.codeWrapPoints, to: wrap)

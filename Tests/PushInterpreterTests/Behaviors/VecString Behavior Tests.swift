@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct VecStringBehaviorTests {
     
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     @Test func vecStringButLast() {
         inty.stacks[.vecString]!.prepend(
@@ -87,7 +87,7 @@ struct VecStringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"a\" ]", "the needle survives the read")
         #expect(callString(topItem(inty, .bool)) == "( [\"a\", \"b\", \"c\"] \"a\" .vecStringContains 1 .stringPopItems 1 .vecStringPopItems )")
 
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         miss.stacks[.vecString]!.prepend(VecStringItem([]))
         miss.stacks[.string]!.prepend(StringItem("-"))
         doThis(.vecStringContains, to: miss)
@@ -139,7 +139,7 @@ struct VecStringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"b\" ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [\"a\", \"b\", \"c\"] \"b\" .vecStringIndexOf 1 .stringPopItems 1 .vecStringPopItems )")
 
-        let absent = Interpreter()
+        let absent = Interpreter.recordingProvenance()
         absent.stacks[.vecString]!.prepend(VecStringItem(["x", "y", "z"]))
         absent.stacks[.string]!.prepend(StringItem("7"))
         doThis(.vecStringIndexOf, to: absent)
@@ -351,7 +351,7 @@ struct VecStringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"o\" ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [\"o\", \"o\", \"o\", \"o\", \"o\"] \"o\" .vecStringOccurrencesOf 1 .stringPopItems 1 .vecStringPopItems )")
 
-        let none = Interpreter()
+        let none = Interpreter.recordingProvenance()
         none.stacks[.vecString]!.prepend(VecStringItem(["o", "o", "o", "o", "o"]))
         none.stacks[.string]!.prepend(StringItem("x"))
         doThis(.vecStringOccurrencesOf, to: none)

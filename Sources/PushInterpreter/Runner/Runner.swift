@@ -22,6 +22,12 @@ nonisolated func evaluateOne(
 ) -> CaseResult {
     let interpreter = Interpreter()
     interpreter.config = configuration.settings
+    // `cruxMentionsInput` is read off each result's crux, so asking for it means
+    // recording provenance for this run, whatever the settings say. Without it
+    // every crux would be the bare value and the answer a silent `false`.
+    if !configuration.cruxInputTokens.isEmpty {
+        interpreter.config.recordsProvenance = true
+    }
 
     // Disabling a behavior leaves its instruction defined-but-unimplemented, so
     // the step loop routes it to an ErrorItem rather than acting on it. A batch

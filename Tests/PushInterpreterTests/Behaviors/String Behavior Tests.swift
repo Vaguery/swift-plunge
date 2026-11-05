@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct StringBehaviorTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     @Test func stringButLast() {
         loadStrings(inty, strings: ["", "abcd"])
@@ -70,7 +70,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"bc\" \"abcd\" ]", "both survive the read")
         #expect(callString(topItem(inty, .bool)) == "( \"abcd\" \"bc\" .stringContains 2 .stringPopItems )")
 
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         loadStrings(miss, strings: ["xy", "abcd"])
         doThis(.stringContains, to: miss)
         #expect(stackString(miss, .bool) == "[ false ]")
@@ -86,7 +86,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ 'b' ]", "the char survives the read")
         #expect(callString(topItem(inty, .bool)) == "( 'b' \"abcd\" .stringContainsChar 1 .charPopItems 1 .stringPopItems )")
 
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         loadChars(miss, chars: ["x"])
         loadStrings(miss, strings: ["abcd"])
         doThis(.stringContainsChar, to: miss)
@@ -259,7 +259,7 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( 'b' \"abcd\" .stringIndexOfChar 1 .charPopItems 1 .stringPopItems )")
 
         // Not found → nothing is pushed (the operands still survive).
-        let absent = Interpreter()
+        let absent = Interpreter.recordingProvenance()
         loadChars(absent, chars: ["z"])
         loadStrings(absent, strings: ["abcd"])
         doThis(.stringIndexOfChar, to: absent)
@@ -542,7 +542,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ 'o' ]", "the char survives")
         #expect(callString(topItem(inty, .int)) == "( 'o' \"boo\" .stringOccurrencesOfChar 1 .charPopItems 1 .stringPopItems )")
 
-        let none = Interpreter()
+        let none = Interpreter.recordingProvenance()
         loadChars(none, chars: ["f"])
         loadStrings(none, strings: ["bee"])
         doThis(.stringOccurrencesOfChar, to: none)
@@ -587,7 +587,7 @@ struct StringBehaviorTests {
         // out of and how far to dig.
         for (depth, expected) in [(0, "e"), (1, "v"), (2, "i"), (3, "l")] {
             let letter = inty.stacks[.string]![depth]
-            let redo = Interpreter()
+            let redo = Interpreter.recordingProvenance()
             redo.load(program: letter.crux())
             redo.run(stepLimit: 10_000)
             #expect(stackString(redo, .string) == "[ \"\(expected)\" ]",

@@ -29,7 +29,7 @@ struct CompositionInvariantTests {
     /// Every stack a fresh interpreter holds after running `program`, rendered —
     /// so "only .int is non-empty" is one comparison.
     func stacksAfter(_ program: [any Item]) -> [PushStack: String] {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: program)
         inty.run()
         var result = [PushStack: String]()
@@ -43,7 +43,7 @@ struct CompositionInvariantTests {
     // MARK: - live keeps the argument; the crux cleans it up
 
     @Test func `a non-destructive query keeps its argument alive`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3]))
         doThis(.vecIntLength, to: inty)
 
@@ -56,7 +56,7 @@ struct CompositionInvariantTests {
     /// **only the fact's stack is non-empty.** The vector the query read is popped
     /// by the crux even though live execution kept it.
     @Test func `a query's crux leaves its value and nothing else`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3]))
         doThis(.vecIntLength, to: inty)
         let length = topItem(inty, .int)
@@ -69,12 +69,12 @@ struct CompositionInvariantTests {
     }
 
     @Test func `the query crux is a fixed point`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([4, 5, 6, 7]))
         doThis(.vecIntLength, to: inty)
         let length = topItem(inty, .int)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: length.crux())
         redo.run()
         #expect(CodeItem(topItem(redo, .int).crux()).pretty()
@@ -90,7 +90,7 @@ struct CompositionInvariantTests {
     /// length's crux fragment must pop the `a` it read, or the composed crux would
     /// leave `a` on top of `b` and `nth` would read `a` — a different, wrong value.
     @Test func `a composed query reproduces the value, not the debris`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // a = [8,8] on top (the thing measured), b = [50,60,70] below (the nth
         // target). prepend(contentsOf:) puts the first element on top.
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([8, 8]),
@@ -106,7 +106,7 @@ struct CompositionInvariantTests {
         // The crux of that 70 must reproduce 70 — which requires the length
         // fragment's cleanup pop to remove `a` so `nth` reads `b`. Without it the
         // crux would leave `a` on top and reproduce nth(a) = 8.
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: answer.crux())
         redo.run()
         #expect((topItem(redo, .int) as? IntItem)?.value == 70,
@@ -120,7 +120,7 @@ struct CompositionInvariantTests {
     /// the count up past the needle instead. This checks the swap-cleanup crux
     /// leaves only the count.
     @Test func `a query whose result shares a stack with its argument still cleans up`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([7, 7, 7, 4]))
         inty.stacks[.int]!.prepend(IntItem(7))
         doThis(.vecIntOccurrencesOf, to: inty)
@@ -135,7 +135,7 @@ struct CompositionInvariantTests {
     /// A query nested inside a query: `len(v)` feeds an `.intGT` comparison later.
     /// Every fragment must stay debris-free for the whole to reproduce.
     @Test func `a query feeding a comparison composes cleanly`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3, 4, 5]))
         inty.stacks[.int]!.prepend(IntItem(3))
         doThis(.vecIntLength, to: inty)   // 5, vector survives; .int = [5, 3]
@@ -190,7 +190,7 @@ struct CompositionInvariantTests {
                 checked += 1
                 let crux = item.crux()
 
-                let redo = Interpreter()
+                let redo = Interpreter.recordingProvenance()
                 redo.config = redo.config.reconstructing
                 redo.config.stepLimit = 10_000
                 redo.load(inputs: inputs, constants: constants, program: crux)

@@ -58,11 +58,15 @@ struct LiveWeightInvariantTests {
         return total
     }
 
-    @Test func `liveWeight equals a full recompute after every step`() {
+    /// Run with provenance recording off (the default, what a search runs) and on:
+    /// the weights involved are content-only, so the invariant must hold either way.
+    @Test(arguments: [false, true])
+    func `liveWeight equals a full recompute after every step`(recordsProvenance: Bool) {
         let all = Runner().definedInstructions
         let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
         var settings = InterpreterSettings()
         settings.stepLimit = 2_000
+        settings.recordsProvenance = recordsProvenance
 
         let tranches: [UInt64] = [0x1234, 0xBEEF, 0xC0FFEE, 0xD00D]
         let perTranche = 25

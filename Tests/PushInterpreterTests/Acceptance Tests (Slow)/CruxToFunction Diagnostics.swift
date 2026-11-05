@@ -109,7 +109,7 @@ struct CruxToFunctionDiagnostics {
         intArg: Int? = nil,
         stepLimit: Int = 1500
     ) -> Int? {
-        let sandbox = Interpreter()
+        let sandbox = Interpreter.recordingProvenance()
         var stacks: [PushStack: [any Item]] = [:]
         if let intArg { stacks[.int] = [IntItem(intArg)] }
         sandbox.load(inputs: inputs, constants: constants, stacks: stacks, program: program)
@@ -120,7 +120,7 @@ struct CruxToFunctionDiagnostics {
     /// A fresh random environment (all constants + inputs bound), returned as two
     /// dictionaries so the same bindings can be reused when re-running a curry.
     func freshEnvironment() -> (constants: [PushInstruction: any Item], inputs: [PushInstruction: any Item]) {
-        let seed = Interpreter()
+        let seed = Interpreter.recordingProvenance()
         RandomCode.setRandomConstants(in: seed)
         return (seed.constants, seed.inputs)
     }
@@ -181,7 +181,7 @@ struct CruxToFunctionDiagnostics {
                 let constants = distinctIntConstants()
                 let program = randomArithmeticProgram(leaves: n)
 
-                let host = Interpreter()
+                let host = Interpreter.recordingProvenance()
                 host.load(constants: constants, program: program)
                 host.run(stepLimit: 500)
                 guard let item = host.stacks[.int]!.first else { continue }
@@ -269,7 +269,7 @@ struct CruxToFunctionDiagnostics {
             }
 
             // Frame it as "an arbitrary CodeItem, run": quote and codeDo.
-            let host = Interpreter()
+            let host = Interpreter.recordingProvenance()
             host.load(inputs: inputs, constants: constants,
                       program: [CodeItem(program), InstructionItem(.codeDo)])
             host.run(stepLimit: 3000)
@@ -345,7 +345,7 @@ struct CruxToFunctionDiagnostics {
             inputs[Self.input1] = IntItem(RandomCode.randomInt(50))
             let program = RandomCode.randomProgram(40, mix: mix)
 
-            let host = Interpreter()
+            let host = Interpreter.recordingProvenance()
             host.load(inputs: inputs, constants: constants, program: program)
             host.run(stepLimit: 3000)
 
@@ -395,7 +395,7 @@ struct CruxToFunctionDiagnostics {
         // body folds the two. No new instruction, no `.function` stack.
 
         func reduce(_ vec: [Int], _ op: PushInstruction, init acc: Int) -> Int? {
-            let it = Interpreter()
+            let it = Interpreter.recordingProvenance()
             it.load(stacks: [
                 .int: [IntItem(acc)],
                 .vecInt: [VecIntItem(vec)],
@@ -411,7 +411,7 @@ struct CruxToFunctionDiagnostics {
 
         // Init-free: pass 0's `.intAdd` underflows and no-ops, seeding e0. Works,
         // but leans on the underflow-noop — the "accidental" form.
-        let noSeed = Interpreter()
+        let noSeed = Interpreter.recordingProvenance()
         noSeed.load(stacks: [
             .vecInt: [VecIntItem([1, 2, 3])],
             .code: [CodeItem([InstructionItem(.intAdd)])],
@@ -422,7 +422,7 @@ struct CruxToFunctionDiagnostics {
         // Map as a side-effect: `( 3 .intAdd )` over [1,2,3] leaves 4,5,6 on `.int`
         // (top-to-bottom 6,5,4). Collecting these into a NEW vector is the one
         // missing piece — map-collect / the pseudofunction accumulator (#A.2).
-        let mapper = Interpreter()
+        let mapper = Interpreter.recordingProvenance()
         mapper.load(stacks: [
             .vecInt: [VecIntItem([1, 2, 3])],
             .code: [CodeItem([IntItem(3), InstructionItem(.intAdd)])],

@@ -23,7 +23,7 @@ struct SubVectorTests {
     /// haystack on top (a[0]=haystack), needle beneath (a[1]=needle) — matching
     /// the element `contains`, where the collection is the top argument.
     func loadSearch(_ hay: [Int], _ needle: [Int]) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem(hay), VecIntItem(needle)] as [any Item])
         return inty
     }
@@ -81,7 +81,7 @@ struct SubVectorTests {
         doThis(.vecIntIndexOfSubVec, to: inty)
         let result = topItem(inty, .int)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: result.crux())
         redo.run()
         #expect(stackString(redo, .int) == "[ 1 ]")
@@ -93,7 +93,7 @@ struct SubVectorTests {
 
     /// subject deepest, needle, replacement on top (a[0]=repl, a[1]=needle, a[2]=subject).
     func loadReplace(_ subject: [Int], _ needle: [Int], _ repl: [Int]) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf:
             [VecIntItem(repl), VecIntItem(needle), VecIntItem(subject)] as [any Item])
         return inty
@@ -135,7 +135,7 @@ struct SubVectorTests {
         doThis(.vecIntReplaceSubVec, to: inty)
         let result = topItem(inty, .vecInt)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: result.crux())
         redo.run()
         #expect(stackString(redo, .vecInt) == "[ [1, 9, 9] ]")
@@ -146,21 +146,21 @@ struct SubVectorTests {
 
     @Test func `the family is generic across all four vector types`() {
         // string subvectors — haystack on top
-        let s = Interpreter()
+        let s = Interpreter.recordingProvenance()
         s.stacks[.vecString]!.prepend(contentsOf:
             [VecStringItem(["a", "b", "c"]), VecStringItem(["b"])] as [any Item])
         doThis(.vecStringContainsSubVec, to: s)
         #expect((topItem(s, .bool) as! BoolItem).value)
 
         // bool subvectors — haystack on top
-        let b = Interpreter()
+        let b = Interpreter.recordingProvenance()
         b.stacks[.vecBool]!.prepend(contentsOf:
             [VecBoolItem([false, true, false, true]), VecBoolItem([true, false])] as [any Item])
         doThis(.vecBoolIndexOfSubVec, to: b)
         #expect((topItem(b, .int) as! IntItem).value == 1)
 
         // double replace
-        let d = Interpreter()
+        let d = Interpreter.recordingProvenance()
         d.stacks[.vecDouble]!.prepend(contentsOf:
             [VecDoubleItem([0.0]), VecDoubleItem([2.0]), VecDoubleItem([1.0, 2.0, 3.0])] as [any Item])
         doThis(.vecDoubleReplaceSubVec, to: d)

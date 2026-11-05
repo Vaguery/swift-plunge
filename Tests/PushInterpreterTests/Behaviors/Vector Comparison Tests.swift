@@ -21,7 +21,7 @@ struct VectorComparisonTests {
     /// Push `y` (deeper) and `x` (on top), run the instruction, return the bool.
     /// The behavior compares `y OP x`.
     func compareInt(_ y: [Int], _ x: [Int], _ instr: PushInstruction) -> Bool {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem(x), VecIntItem(y)] as [any Item])
         doThis(instr, to: inty)
         return (topItem(inty, .bool) as! BoolItem).value
@@ -44,7 +44,7 @@ struct VectorComparisonTests {
     }
 
     @Test func `a comparison survives both operands and cleans up its crux`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([9]), VecIntItem([1, 1, 1])] as [any Item])
         // x = [9] (top), y = [1,1,1]. GT asks "y > x": [1,1,1] > [9] is false.
         doThis(.vecIntGT, to: inty)
@@ -54,12 +54,12 @@ struct VectorComparisonTests {
     }
 
     @Test func `a comparison crux reproduces debris-free`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([1, 2]), VecIntItem([1, 2, 3])] as [any Item])
         doThis(.vecIntLT, to: inty)   // y=[1,2,3], x=[1,2]; "y < x" false
         let result = topItem(inty, .bool)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: result.crux())
         redo.run()
         #expect(stackString(redo, .bool) == "[ false ]")
@@ -68,7 +68,7 @@ struct VectorComparisonTests {
 
 
     @Test func `vecDouble and vecString compare lexicographically too`() {
-        let d = Interpreter()
+        let d = Interpreter.recordingProvenance()
         d.stacks[.vecDouble]!.prepend(contentsOf:
             [VecDoubleItem([0.0, 0.0, 0.0]), VecDoubleItem([9.9, 8.8])] as [any Item])
         // x = [0,0,0] top, y = [9.9,8.8]. GT: y > x → [9.9,8.8] > [0,0,0] → true.
@@ -76,7 +76,7 @@ struct VectorComparisonTests {
         #expect((topItem(d, .bool) as! BoolItem).value)
         #expect(callString(topItem(d, .bool)) == "( [9.9, 8.8] [0.0, 0.0, 0.0] .vecDoubleGT 2 .vecDoublePopItems )")
 
-        let s = Interpreter()
+        let s = Interpreter.recordingProvenance()
         s.stacks[.vecString]!.prepend(contentsOf:
             [VecStringItem(["b"]), VecStringItem(["a", "z"])] as [any Item])
         // x = ["b"] top, y = ["a","z"]. LT: y < x → ["a","z"] < ["b"] → "a"<"b" → true.

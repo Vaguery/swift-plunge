@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct VecIntBehaviorTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
     
     
     @Test func vecIntButLast() {
@@ -89,7 +89,7 @@ struct VecIntBehaviorTests {
         #expect(callString(topItem(inty, .bool)) == "( [9, 99, 999] 9 .vecIntContains 1 .intPopItems 1 .vecIntPopItems )")
 
         // A miss on an empty vector.
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         miss.stacks[.vecInt]!.prepend(VecIntItem([]))
         miss.stacks[.int]!.prepend(IntItem(7777))
         doThis(.vecIntContains, to: miss)
@@ -145,7 +145,7 @@ struct VecIntBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 99 .vecIntIndexOf .intSwap .intPop 1 .vecIntPopItems )")
 
         // Absent → -1.
-        let absent = Interpreter()
+        let absent = Interpreter.recordingProvenance()
         absent.stacks[.vecInt]!.prepend(VecIntItem([9, 99, 999]))
         absent.stacks[.int]!.prepend(IntItem(7777))
         doThis(.vecIntIndexOf, to: absent)
@@ -402,7 +402,7 @@ struct VecIntBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( [9, 9, 9, 9, 9] 9 .vecIntOccurrencesOf .intSwap .intPop 1 .vecIntPopItems )")
 
         // None present → 0.
-        let none = Interpreter()
+        let none = Interpreter.recordingProvenance()
         none.stacks[.vecInt]!.prepend(VecIntItem([9, 9, 9, 9, 9]))
         none.stacks[.int]!.prepend(IntItem(-99))
         doThis(.vecIntOccurrencesOf, to: none)
@@ -459,7 +459,7 @@ struct VecIntBehaviorTests {
     /// The property that fixes the order: Construct undoes PushAll exactly.
     @Test func `vecIntConstruct is the inverse of vecIntPushAll`() {
         let original = VecIntItem([1, 22, 333])
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [original, InstructionItem(.vecIntPushAll)])
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .int) == "[ 333 22 1 ]")
@@ -505,7 +505,7 @@ struct VecIntBehaviorTests {
     /// The point of it: a vector's contents can now be **computed**, where before
     /// they could only ever be rearranged.
     @Test func `vecIntConstruct builds a vector out of computed elements`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(2), IntItem(3), InstructionItem(.intAdd),      // 5
             IntItem(10), IntItem(4), InstructionItem(.intSubtract), // 6

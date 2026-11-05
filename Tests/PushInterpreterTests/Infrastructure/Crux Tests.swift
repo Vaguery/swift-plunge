@@ -31,7 +31,7 @@ struct CruxTests {
         Interpreter.language[instruction]!.act(on: interpreter)
     }
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     @Test func `crux can be constructed`() {
         let tokens = [1, 2, PushInstruction.intAdd, 3, 4, PushInstruction.intMultiply, PushInstruction.intSubtract] as [Any]

@@ -57,7 +57,7 @@ struct IntrospectionInstructionTests {
             .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
         ]
         for name in introspection {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.error]!.prepend(contentsOf: [
                 ErrorItem("first", kind: .missingArgument),
                 ErrorItem("second", kind: .missingInput),
@@ -75,11 +75,11 @@ struct IntrospectionInstructionTests {
     // MARK: - What they report
 
     @Test func `errorStackDepth counts what is on the error stack`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         Interpreter.language[.errorStackDepth]!.act(on: inty)
         #expect((topItem(inty, .int) as! IntItem).value == 0, "a fresh interpreter has made no mistakes")
 
-        let dirty = Interpreter()
+        let dirty = Interpreter.recordingProvenance()
         dirty.stacks[.error]!.prepend(contentsOf: [
             ErrorItem("a"), ErrorItem("b"), ErrorItem("c"),
         ] as [any Item])
@@ -88,7 +88,7 @@ struct IntrospectionInstructionTests {
     }
 
     @Test func `the missing-count instructions partition by kind`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.error]!.prepend(contentsOf: [
             ErrorItem("intAdd missing args: .int", kind: .missingArgument),
             ErrorItem("intSubtract missing args: .int", kind: .missingArgument),
@@ -100,7 +100,7 @@ struct IntrospectionInstructionTests {
         for (name, expected) in [(PushInstruction.errorMissingArgCount, 2),
                                  (.errorMissingInputCount, 1),
                                  (.errorMissingConstantCount, 1)] {
-            let probe = Interpreter()
+            let probe = Interpreter.recordingProvenance()
             probe.stacks[.error] = inty.stacks[.error]
             Interpreter.language[name]!.act(on: probe)
             #expect((topItem(probe, .int) as! IntItem).value == expected,
@@ -111,7 +111,7 @@ struct IntrospectionInstructionTests {
     /// The counts have to track errors the interpreter *actually* raised, not just
     /// hand-built ones — which is what pins the `kind:` tags at each raising site.
     @Test func `a starved instruction is counted as a missing argument`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [InstructionItem(.intAdd)])   // nothing on .int to add
         inty.run()
 
@@ -121,7 +121,7 @@ struct IntrospectionInstructionTests {
     }
 
     @Test func `an unbound input is counted as a missing input`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [InstructionItem(.input3)])   // never bound
         inty.run()
 
@@ -130,7 +130,7 @@ struct IntrospectionInstructionTests {
     }
 
     @Test func `an unbound constant is counted as a missing constant`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [InstructionItem(.int2)])     // never bound
         inty.run()
 
@@ -139,7 +139,7 @@ struct IntrospectionInstructionTests {
     }
 
     @Test func `pushStepCount reports the steps taken so far`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [IntItem(1), IntItem(2), IntItem(3),
                             InstructionItem(.pushStepCount)])
         inty.run()
@@ -164,7 +164,7 @@ struct IntrospectionInstructionTests {
             .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
         ]
         for name in names {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.error]!.prepend(ErrorItem("x", kind: .missingArgument))
             Interpreter.language[name]!.act(on: inty)
             #expect(topItem(inty, .int).call.isEmpty,

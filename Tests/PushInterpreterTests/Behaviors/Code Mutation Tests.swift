@@ -20,7 +20,7 @@ struct CodeMutationTests {
     let tree = CodeItem([CodeItem([IntItem(1), IntItem(2)]), IntItem(3)])
 
     func onTree(_ instr: PushInstruction, _ code: CodeItem, int: Int? = nil) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(code)
         if let int { inty.stacks[.int]!.prepend(IntItem(int)) }
         doThis(instr, to: inty)
@@ -70,7 +70,7 @@ struct CodeMutationTests {
 
     /// subject deepest, needle, replacement on top.
     func replace(_ instr: PushInstruction, _ subject: CodeItem, _ needle: CodeItem, _ repl: CodeItem) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(contentsOf: [repl, needle, subject] as [any Item])
         doThis(instr, to: inty)
         return inty
@@ -108,7 +108,7 @@ struct CodeMutationTests {
                                  (.codeFlattenPoint, tree, 1)] as [(PushInstruction, CodeItem, Int?)] {
             let inty = onTree(instr, code, int: i)
             let result = topItem(inty, .code)
-            let redo = Interpreter()
+            let redo = Interpreter.recordingProvenance()
             redo.load(program: result.crux())
             redo.run()
             #expect(stackString(redo, .code) == stackString(inty, .code), "\(instr) crux")

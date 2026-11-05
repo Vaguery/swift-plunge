@@ -2,11 +2,12 @@
 //  Provenance Toggle Tests.swift
 //  PushInterpreterTests
 //
-//  `recordsProvenance` off strips every pushed item's `call`, so the deep call tree
-//  never accumulates. This must save memory without changing any value a program
-//  computes, and without breaking loops (whose iteration is state-driven, not
-//  call-driven). The default (on) leaves the whole existing crux system untouched —
-//  covered by the 419-behaviour round-trip elsewhere.
+//  With `recordsProvenance` off (the default) no Behavior builds a `call`, so the
+//  deep call tree never exists. This must save memory without changing any value a
+//  program computes, and without breaking loops (whose iteration is state-driven,
+//  not call-driven). Turned on, the whole existing crux system is untouched —
+//  covered by the round-trip sweep elsewhere, and language-wide by
+//  `Provenance Off Parity Tests`.
 //
 
 @testable import PushInterpreter

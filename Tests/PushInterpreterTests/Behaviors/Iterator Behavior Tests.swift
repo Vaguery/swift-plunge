@@ -39,7 +39,7 @@ struct IteratorBehaviorTests {
     }
 
     func loaded(_ iterator: IteratorItem, exec: [any Item] = []) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(iterator)
         inty.stacks[.exec] = Deque(exec)
         return inty
@@ -290,7 +290,7 @@ struct IteratorBehaviorTests {
         #expect(stride.call.last as? InstructionItem == InstructionItem(.iteratorPopItems))
         #expect((rerunTop(stride.crux(), on: .int) as? IntItem)?.value == 3)
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: stride.crux())
         redo.run()
         #expect(redo.stacks[.iterator]!.isEmpty, "the crux leaves no iterator behind")
@@ -300,7 +300,7 @@ struct IteratorBehaviorTests {
     // MARK: - Construction, and the crux
 
     @Test func `iteratorFromIntRange builds an iterator without running it`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // origin dest stride cursor burial emits (body)
         inty.load(program: [
             IntItem(2), IntItem(8), IntItem(3), IntItem(1), IntItem(0),
@@ -320,7 +320,7 @@ struct IteratorBehaviorTests {
     /// lets one constructor serve both a sequence and a loop. A crux writes `( )`
     /// for a bodyless iterator and gets nil back.
     @Test func `an empty body is normalized to no body`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(0), IntItem(5), IntItem(1), IntItem(0), IntItem(0),
             BoolItem(true),
@@ -393,7 +393,7 @@ struct IteratorBehaviorTests {
     /// The iterator is visible to the body, on an ordinary stack, so the body can
     /// take it away. The loop then stops, loudly, rather than hanging.
     @Test func `a body that steals the iterator ends the loop with an error`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(0), IntItem(50),
             CodeItem([InstructionItem(.iteratorFlush)]),
@@ -423,7 +423,7 @@ struct IteratorBehaviorTests {
     // MARK: - Repeating, and the dup families
 
     @Test func `a repeating iterator emits its origin over and over`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             CodeItem([IntItem(7)]), IntItem(4), IntItem(0), IntItem(0),
             InstructionItem(.iteratorRepeating),
@@ -442,7 +442,7 @@ struct IteratorBehaviorTests {
     /// The box is what lets one constructor serve all thirteen stacks. Law 1b: an
     /// item that goes into a block and comes back out is the item that went in.
     @Test func `a repeating iterator's crux reproduces it`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             DoubleItem(2.5), IntItem(3), InstructionItem(.doubleDupTimes),
         ])
@@ -458,7 +458,7 @@ struct IteratorBehaviorTests {
     /// A dup changes no value, so law 1 applies: every copy keeps the original's
     /// record untouched, which is why this family needs no `Nth` at all.
     @Test func `dup copies keep the original's provenance`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(2), IntItem(3), InstructionItem(.intAdd),   // 5, with a record
             IntItem(2), InstructionItem(.intDupTimes),
@@ -488,7 +488,7 @@ struct IteratorBehaviorTests {
     /// price of one uniform mechanism; see "Notes on Push/The first-class
     /// iterator.md".
     @Test func `execDupItems walks a box of heterogeneous pending code`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.exec] = Deque([
             InstructionItem(.execDupItems), IntItem(7), InstructionItem(.intInc),
             BoolItem(true),
@@ -628,7 +628,7 @@ struct IteratorBehaviorTests {
     /// — which is what it should be, and is reachable only from inside a body
     /// since a spent iterator does not exist to be restarted.
     @Test func `a body can restart its own loop forever`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 400
         inty.load(program: [
             IntItem(0), IntItem(4),
@@ -675,7 +675,7 @@ struct IteratorBehaviorTests {
     /// emit.** A constructor is the one door a spent one could walk in through,
     /// since it takes its state verbatim rather than deriving it.
     @Test func `a constructor refuses to build a spent iterator`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // cursor 99 on a 0→3 range: nothing left to emit.
         inty.load(program: [
             IntItem(0), IntItem(3), IntItem(1), IntItem(99), IntItem(0), BoolItem(true),
@@ -692,7 +692,7 @@ struct IteratorBehaviorTests {
     /// `100 % 100 = 0` cannot be climbed by anything.
     @Test func `maxIterations clamps a loop's span rather than mangling it`() {
         func endOf(_ destination: Int, limit: Int = 100) -> Int? {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.config.maxIterations = limit
             inty.load(program: [
                 IntItem(0), IntItem(destination), CodeItem([]),
@@ -711,7 +711,7 @@ struct IteratorBehaviorTests {
     /// Clamping a *descending* loop moves its destination UP: the rule is about
     /// the span, not the number.
     @Test func `maxIterations clamps the span, not the destination`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxIterations = 10
         inty.load(program: [
             IntItem(500), IntItem(0), CodeItem([]), InstructionItem(.execDoRange),
@@ -725,7 +725,7 @@ struct IteratorBehaviorTests {
     /// A collection's length is a fact, not a claim — so the budget does not touch
     /// it. A walking iterator has no destination for a clamp to move.
     @Test func `maxIterations does not truncate a walk over data`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxIterations = 3
         inty.load(program: [
             VecIntItem(Array(0..<40)), CodeItem([]), InstructionItem(.vecIntIterate),
@@ -740,7 +740,7 @@ struct IteratorBehaviorTests {
     /// safe because it is a fixed point: reconstructing a clamped iterator and
     /// pushing it again must not clamp it further.
     @Test func `the clamp is idempotent, so a clamped crux round-trips`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.maxIterations = 100
         inty.load(program: [
             IntItem(0), IntItem(999_999), CodeItem([]), InstructionItem(.execDoRange),
@@ -759,7 +759,7 @@ struct IteratorBehaviorTests {
     /// nothing in particular while another walks it — and a body can build one.
     /// Nested loops are just two iterators resting on the same stack.
     @Test func `a loop body can run a loop of its own`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // Outer: 0→3. Inner, per pass: 0→3 again, pushing a `true` each time.
         inty.load(program: [
             IntItem(0), IntItem(3),
@@ -782,7 +782,7 @@ struct IteratorBehaviorTests {
     /// The inner loop rests *on top of* the outer one for its duration, and the
     /// outer one is still there underneath, untouched, when it ends.
     @Test func `a nested loop stacks its iterator above the outer one`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(0), IntItem(9),
             CodeItem([
@@ -820,7 +820,7 @@ struct IteratorBehaviorTests {
     /// continuation finds. This is deliberate — the type is first-class so that a
     /// program can get hold of it — and the failure mode is an ErrorItem.
     @Test func `an inner loop can strand the outer one's continuation`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // The body flushes `.iterator`, so the outer loop's own iterator goes
         // with it and its continuation finds nothing.
         inty.load(program: [
@@ -861,7 +861,7 @@ struct IteratorBehaviorTests {
     /// out by law 1b — the items that went in — and land on `.iterator`, derived
     /// from their own type with no `into:` needed.
     @Test func `an iterator can walk a block of iterators`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         let box = CodeItem([
             counting(from: 0, to: 3),
             counting(from: 7, to: 9),
@@ -890,7 +890,7 @@ struct IteratorBehaviorTests {
     }
 
     func rerunTop(_ crux: [any Item], on stack: PushStack) -> (any Item)? {
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.config.stepLimit = 20_000
         redo.load(program: crux)
         redo.run(stepLimit: 20_000)

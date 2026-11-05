@@ -37,7 +37,7 @@ struct Item_tests {
 @Suite @MainActor
 struct History_tests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     
 //    @Test func extractingEntireCrux() {

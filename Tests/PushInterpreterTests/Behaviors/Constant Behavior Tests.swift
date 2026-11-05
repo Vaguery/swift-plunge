@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct ConstantBehaviorTests {
 
-    let inty = Interpreter()
+    let inty = Interpreter.recordingProvenance()
 
     @Test func constantRecordsItsHistory() {
         inty.constants[.int2] = IntItem(17)

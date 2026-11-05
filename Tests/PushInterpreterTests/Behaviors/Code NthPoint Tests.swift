@@ -20,7 +20,7 @@ struct CodeNthPointTests {
 
     /// index on top of .int, code below it on .code.
     func nth(_ instr: PushInstruction, _ code: CodeItem, _ i: Int) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(code)
         inty.stacks[.int]!.prepend(IntItem(i))
         doThis(instr, to: inty)
@@ -49,7 +49,7 @@ struct CodeNthPointTests {
         let result = topItem(inty, .code)
         #expect(result.pretty() == "( 2 )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: result.crux())
         redo.run()
         #expect(redo.stacks[.code]!.first!.pretty() == "( 2 )")

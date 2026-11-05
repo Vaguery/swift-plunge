@@ -107,7 +107,7 @@ struct ProvenanceCostBenchmark {
     }
 
     private func run(_ program: [any Item], recordsProvenance: Bool, regime: Regime) -> Interpreter {
-        let interpreter = Interpreter()
+        let interpreter = Interpreter.recordingProvenance()
         interpreter.config = settings(recordsProvenance: recordsProvenance, regime: regime)
         interpreter.load(inputs: [:], constants: [:], program: program)
         interpreter.run()

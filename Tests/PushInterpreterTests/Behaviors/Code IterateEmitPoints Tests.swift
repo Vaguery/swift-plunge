@@ -45,7 +45,7 @@ struct CodeIterateEmitPointsTests {
 
     @Test func `emitPoints routes leaves to their own stacks, blocks to code`() {
         // A bodyless walk played to completion: each point routed whole.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             tree,             // deeper
             CodeItem([]),     // empty mouse, on top
@@ -60,7 +60,7 @@ struct CodeIterateEmitPointsTests {
     }
 
     @Test func `doPoints runs each point, blocks unwrapped`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             tree,
             CodeItem([]),
@@ -79,10 +79,10 @@ struct CodeIterateEmitPointsTests {
 
     @Test func `doPoints equals emitPoints on a flat block of leaves`() {
         let flat = CodeItem([IntItem(1), IntItem(2), IntItem(3)])
-        let doInty = Interpreter()
+        let doInty = Interpreter.recordingProvenance()
         doInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateDoPoints)])
         doInty.run()
-        let emitInty = Interpreter()
+        let emitInty = Interpreter.recordingProvenance()
         emitInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateEmitPoints)])
         emitInty.run()
         // Only difference would be block handling; the sole block here is the root,
@@ -97,7 +97,7 @@ struct CodeIterateEmitPointsTests {
         var it = IteratorItem(kind: .points(.whole), origin: tree, body: nil, emits: true)
         it.call = it.reconstruction()
         #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeEmitPoints"))
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: it.crux())
         redo.run()
         let rebuilt = redo.stacks[.iterator]!.first as? IteratorItem
@@ -108,7 +108,7 @@ struct CodeIterateEmitPointsTests {
         var it = IteratorItem(kind: .points(.unwrapped), origin: tree, body: nil, emits: true)
         it.call = it.reconstruction()
         #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeDoPoints"))
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: it.crux())
         redo.run()
         let rebuilt = redo.stacks[.iterator]!.first as? IteratorItem

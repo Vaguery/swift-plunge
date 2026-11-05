@@ -38,7 +38,7 @@ struct ProvenanceTests {
 
     /// Runs `item.crux()` on a fresh interpreter and reports the top of `stack`.
     func rerun(_ crux: [any Item], reading stack: PushStack) -> (any Item)? {
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.config.stepLimit = 20_000
         redo.load(program: crux)
         redo.run(stepLimit: 20_000)
@@ -46,7 +46,7 @@ struct ProvenanceTests {
     }
 
     func loopedRange(_ iterations: Int, body: [any Item] = []) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
         // A test that wants a long loop says so — `maxIterations` holds one to 100
         // passes by default, which is the point of it.
@@ -98,7 +98,7 @@ struct ProvenanceTests {
     }
 
     @Test func `a descending loop folds to a negative offset`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
         // A test that wants a long loop says so — `maxIterations` holds one to 100
         // passes by default, which is the point of it.
@@ -142,7 +142,7 @@ struct ProvenanceTests {
     /// Stepped by hand because `run(stepLimit:)` ignores its argument and reads
     /// `config.stepLimit` instead.
     func midLoop() -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // This one is about encapsulation, not about the iteration budget, so it
         // asks for the room to keep its 200 rather than being clamped to 100.
         inty.config.maxIterations = 20_000
@@ -178,7 +178,7 @@ struct ProvenanceTests {
     /// the loop index and adds it in, so the sum's history really does gain a
     /// level per iteration. Nothing can fold that — it is honest.
     func accumulate(_ iterations: Int, maxCallWeight: Int) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
         // A test that wants a long loop says so — `maxIterations` holds one to 100
         // passes by default, which is the point of it.
@@ -255,7 +255,7 @@ struct ProvenanceTests {
             if takingAPosition.contains(shuffle) { program.append(IntItem(0)) }
             program.append(InstructionItem(shuffle))
 
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.load(inputs: [.input0: IntItem(7)], program: program)
             inty.run()
 
@@ -267,7 +267,7 @@ struct ProvenanceTests {
     }
 
     @Test func `an unbound input's error records what would reproduce it`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [InstructionItem(.input3)])   // nothing bound
         inty.run()
         let failed = inty.stacks[.error]!.first!
@@ -277,14 +277,14 @@ struct ProvenanceTests {
         // binding outlives the run and is re-supplied, so naming the instruction
         // reproduces the failure. (Law 4b's counterpart: `.boolStackDepth` reads
         // *transient* state and so records nothing instead.)
-        let again = Interpreter()
+        let again = Interpreter.recordingProvenance()
         again.load(program: failed.crux())
         again.run()
         #expect(again.stacks[.error]!.first?.pretty() == failed.pretty())
 
         // And that is the point of naming the dependency rather than freezing the
         // outcome: the same source against a bound environment yields the value.
-        let bound = Interpreter()
+        let bound = Interpreter.recordingProvenance()
         bound.load(inputs: [.input3: IntItem(42)], program: failed.crux())
         bound.run()
         #expect((bound.stacks[.int]!.first as? IntItem)?.value == 42)
@@ -294,7 +294,7 @@ struct ProvenanceTests {
     @Test func `quoting across stacks IS recorded`() {
         // The counterpart to law 1: `.intQuote` moves the value to `.code`, so a
         // crux that dropped it would leave an int where a code item belongs.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(2), IntItem(3), InstructionItem(.intAdd),
             InstructionItem(.intQuote),
@@ -358,7 +358,7 @@ struct ProvenanceTests {
 
         for produced in 0..<3 {
             let crux = Behavior.selecting(produced, of: 3, on: .int, from: source)
-            let redo = Interpreter()
+            let redo = Interpreter.recordingProvenance()
             redo.load(program: crux)
             redo.run()
             #expect(redo.stacks[.int]!.count == 1,
@@ -372,7 +372,7 @@ struct ProvenanceTests {
 
     /// The instruction a law-5 record leans on. It had no test of its own.
     @Test func `PopItems discards that many items from its stack`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(10), IntItem(20), IntItem(30), IntItem(2),
             InstructionItem(.intPopItems),
@@ -382,12 +382,12 @@ struct ProvenanceTests {
 
         // Clamped rather than an error, like its DupItems/Yank siblings: a count
         // past the bottom empties the stack, and a negative one does nothing.
-        let deep = Interpreter()
+        let deep = Interpreter.recordingProvenance()
         deep.load(program: [IntItem(10), IntItem(999), InstructionItem(.intPopItems)])
         deep.run()
         #expect(stackString(deep, .int) == "[ ]")
 
-        let negative = Interpreter()
+        let negative = Interpreter.recordingProvenance()
         negative.load(program: [IntItem(10), IntItem(-4), InstructionItem(.intPopItems)])
         negative.run()
         #expect(stackString(negative, .int) == "[ 10 ]")
@@ -414,7 +414,7 @@ struct ProvenanceTests {
     @Test func `a result composes into a later computation`() {
         // The composition property: each crux fragment leaves its value on top,
         // so fragments concatenate postfix without interfering.
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll),
             InstructionItem(.intAdd),

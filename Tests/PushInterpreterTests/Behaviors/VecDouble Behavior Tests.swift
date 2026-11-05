@@ -12,7 +12,7 @@ import DequeModule
 @Suite @MainActor
 struct VecDoubleBehaviorTests {
 
-    var inty = Interpreter()
+    var inty = Interpreter.recordingProvenance()
 
     @Test func vecDoubleButLast() {
         inty.stacks[.vecDouble]!.prepend(
@@ -87,7 +87,7 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 9.0 ]", "the needle survives the read")
         #expect(callString(topItem(inty, .bool)) == "( [9.0, 99.0, 999.0] 9.0 .vecDoubleContains 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        let miss = Interpreter()
+        let miss = Interpreter.recordingProvenance()
         miss.stacks[.vecDouble]!.prepend(VecDoubleItem([]))
         miss.stacks[.double]!.prepend(DoubleItem(7777))
         doThis(.vecDoubleContains, to: miss)
@@ -141,7 +141,7 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 99.0 ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] 99.0 .vecDoubleIndexOf 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        let absent = Interpreter()
+        let absent = Interpreter.recordingProvenance()
         absent.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 99, 999]))
         absent.stacks[.double]!.prepend(DoubleItem(7777))
         doThis(.vecDoubleIndexOf, to: absent)
@@ -353,7 +353,7 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 9.0 ]", "the needle survives")
         #expect(callString(topItem(inty, .int)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] 9.0 .vecDoubleOccurrencesOf 1 .doublePopItems 1 .vecDoublePopItems )")
 
-        let none = Interpreter()
+        let none = Interpreter.recordingProvenance()
         none.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 9, 9, 9, 9]))
         none.stacks[.double]!.prepend(DoubleItem(-99))
         doThis(.vecDoubleOccurrencesOf, to: none)

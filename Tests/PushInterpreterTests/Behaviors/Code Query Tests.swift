@@ -20,7 +20,7 @@ struct CodeQueryTests {
     let tree = CodeItem([CodeItem([IntItem(1), IntItem(2)]), IntItem(3)])
 
     func loaded(_ code: CodeItem) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(code)
         return inty
     }
@@ -53,7 +53,7 @@ struct CodeQueryTests {
     @Test func `contains checks any point, root included`() {
         // haystack on top (a[0]), target below (a[1])
         func contains(_ hay: CodeItem, _ target: any Item) -> Bool {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [hay, target as! CodeItem] as [any Item])
             doThis(.codeContains, to: inty)
             return (topItem(inty, .bool) as! BoolItem).value
@@ -64,7 +64,7 @@ struct CodeQueryTests {
     }
 
     @Test func `contains survives both operands and cleans its crux`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         let target = CodeItem([IntItem(1), IntItem(2)])
         inty.stacks[.code]!.prepend(contentsOf: [tree, target] as [any Item])
         doThis(.codeContains, to: inty)
@@ -73,7 +73,7 @@ struct CodeQueryTests {
         #expect(callString(topItem(inty, .bool))
                 == "( ( 1 2 ) ( ( 1 2 ) 3 ) .codeContains 2 .codePopItems )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: topItem(inty, .bool).crux())
         redo.run()
         #expect(stackString(redo, .bool) == "[ true ]")
@@ -82,7 +82,7 @@ struct CodeQueryTests {
 
     @Test func `a singleton needle finds a leaf; double-wrap finds the singleton subtree`() {
         func idxOf(_ hay: CodeItem, _ needle: CodeItem) -> Int {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [hay, needle] as [any Item])
             doThis(.codeIndexOfPoint, to: inty)
             return (topItem(inty, .int) as! IntItem).value
@@ -95,7 +95,7 @@ struct CodeQueryTests {
 
     @Test func `indexOfPoint returns pre-order index or -1`() {
         func idx(_ hay: CodeItem, _ target: CodeItem) -> Int {
-            let inty = Interpreter()
+            let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [hay, target] as [any Item])
             doThis(.codeIndexOfPoint, to: inty)
             return (topItem(inty, .int) as! IntItem).value
@@ -105,7 +105,7 @@ struct CodeQueryTests {
     }
 
     @Test func `container returns the parent, and its crux (a code result) cleans up via swap`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         let target = CodeItem([IntItem(1), IntItem(2)])   // a root-level element
         inty.stacks[.code]!.prepend(contentsOf: [tree, target] as [any Item])
         doThis(.codeContainer, to: inty)
@@ -117,14 +117,14 @@ struct CodeQueryTests {
         let container = topItem(inty, .code)
         #expect(callString(container)
                 == "( ( 1 2 ) ( ( 1 2 ) 3 ) .codeContainer .codeSwap .codePop .codeSwap .codePop )")
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: container.crux())
         redo.run()
         #expect(stackString(redo, .code) == "[ ( ( 1 2 ) 3 ) ]", "reproduces just the container")
     }
 
     @Test func `container of a leaf (singleton needle) is its inner block`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // needle ( 1 ) denotes the leaf 1, whose parent is the inner block ( 1 2 ).
         inty.stacks[.code]!.prepend(contentsOf: [tree, CodeItem([IntItem(1)])] as [any Item])
         doThis(.codeContainer, to: inty)
@@ -133,7 +133,7 @@ struct CodeQueryTests {
     }
 
     @Test func `container of an absent needle pushes nothing`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         // needle ( 9 ) denotes leaf 9, which the tree does not contain.
         inty.stacks[.code]!.prepend(contentsOf: [tree, CodeItem([IntItem(9)])] as [any Item])
         doThis(.codeContainer, to: inty)

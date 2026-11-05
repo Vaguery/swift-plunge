@@ -22,7 +22,7 @@ import DequeModule
 struct CodeFromIteratorTests {
 
     func loaded(_ iterator: IteratorItem) -> Interpreter {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.stacks[.iterator]!.prepend(iterator)
         return inty
     }
@@ -111,7 +111,7 @@ struct CodeFromIteratorTests {
     /// scarcest resource. Two ints in, a four-point block out, and nothing on the
     /// stack it came from.
     @Test func `a counting iterator makes code out of ints`() {
-        let inty = Interpreter()
+        let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(0), IntItem(4), IntItem(1),
             IntItem(0), IntItem(0),
@@ -178,7 +178,7 @@ struct CodeFromIteratorTests {
         #expect(CodeItem(block.crux()).pretty()
                 == "( [4, 5, 6] 0 0 true ( ) .iteratorFromVecInt .codeFromIterator )")
 
-        let redo = Interpreter()
+        let redo = Interpreter.recordingProvenance()
         redo.load(program: block.crux())
         redo.run()
         #expect(stackString(redo, .code) == "[ ( 4 5 6 ) ]")
