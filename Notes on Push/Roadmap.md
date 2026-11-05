@@ -107,6 +107,13 @@ commitment.
     whose body queues thousands ahead of its iterator is not diagnosed. Long deferred, still fine to
     defer.
 
+36. **Compressing huge values** — store "X nested N" / "N copies of X" compactly, with representative
+    instructions (`.codeNest`, `.codeRepeat`, tagged `.cruxOnly`) that a compressed value prints and
+    reconstructs as, the way an iterator's crux is its constructor. Level 1 (generalized
+    `CruxCompression`) needs no language change and comes first; Level 2 waits on measuring which
+    instructions produce the stress run's huge items. After the current speed-up round.
+    → *Compressing huge values.md*
+
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
 The clear-cut vector cases are built (comparisons, sub-vector search/replace, read-only constructors).
