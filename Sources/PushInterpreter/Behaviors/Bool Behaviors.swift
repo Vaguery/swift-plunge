@@ -21,7 +21,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 && arg2,
-                            call: [y, x, InstructionItem(.boolAnd)])
+                            call: recording([y, x, InstructionItem(.boolAnd)]))
                     )
                 ]
             }
@@ -38,7 +38,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value != 0.0,
-                            call: [x, InstructionItem(.boolFromDouble)])
+                            call: recording([x, InstructionItem(.boolFromDouble)]))
                     )
                 ]
             }
@@ -55,7 +55,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value != 0,
-                            call: [x, InstructionItem(.boolFromInt)])
+                            call: recording([x, InstructionItem(.boolFromInt)]))
                     )
                 ]
             }
@@ -72,7 +72,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value || !y.value,
-                            call: [y, x, InstructionItem(.boolIfPThenQ)])
+                            call: recording([y, x, InstructionItem(.boolIfPThenQ)]))
                     )
                 ]
             }
@@ -89,7 +89,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !x.value || y.value,
-                            call: [y, x, InstructionItem(.boolIfQThenP)])
+                            call: recording([y, x, InstructionItem(.boolIfQThenP)]))
                     )
                 ]
             }
@@ -107,7 +107,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !(arg1 && arg2),
-                            call: [y, x, InstructionItem(.boolNand)])
+                            call: recording([y, x, InstructionItem(.boolNand)]))
                     )
                 ]
             }
@@ -125,7 +125,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !(arg1 || arg2),
-                            call: [y, x, InstructionItem(.boolNor)])
+                            call: recording([y, x, InstructionItem(.boolNor)]))
                     )
                 ]
             }
@@ -142,10 +142,10 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !x.value,
-                            call: [
+                            call: recording([
                                 x,
                                 InstructionItem(.boolNot),
-                            ])
+                            ]))
                     )
                 ]
             }
@@ -162,7 +162,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !y.value,
-                            call: [y, x, InstructionItem(.boolNotP)])
+                            call: recording([y, x, InstructionItem(.boolNotP)]))
                     )
                 ]
             }
@@ -179,7 +179,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !y.value && x.value,
-                            call: [y, x, InstructionItem(.boolNotPandQ)])
+                            call: recording([y, x, InstructionItem(.boolNotPandQ)]))
                     )
                 ]
             }
@@ -196,7 +196,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             !x.value,
-                            call: [y, x, InstructionItem(.boolNotQ)])
+                            call: recording([y, x, InstructionItem(.boolNotQ)]))
                     )
                 ]
             }
@@ -214,7 +214,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 || arg2,
-                            call: [y, x, InstructionItem(.boolOr)])
+                            call: recording([y, x, InstructionItem(.boolOr)]))
                     )
                 ]
             }
@@ -231,7 +231,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value,
-                            call: [y, x, InstructionItem(.boolP)])
+                            call: recording([y, x, InstructionItem(.boolP)]))
                     )
                 ]
             }
@@ -248,7 +248,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value && !x.value,
-                            call: [y, x, InstructionItem(.boolPandNotQ)])
+                            call: recording([y, x, InstructionItem(.boolPandNotQ)]))
                     )
                 ]
             }
@@ -265,7 +265,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value,
-                            call: [y, x, InstructionItem(.boolQ)])
+                            call: recording([y, x, InstructionItem(.boolQ)]))
                     )
                 ]
             }
@@ -283,7 +283,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 == arg2,
-                            call: [y, x, InstructionItem(.boolXnor)])
+                            call: recording([y, x, InstructionItem(.boolXnor)]))
                     )
                 ]
             }
@@ -301,7 +301,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             arg1 != arg2,
-                            call: [y, x, InstructionItem(.boolXor)])
+                            call: recording([y, x, InstructionItem(.boolXor)]))
                     )
                 ]
             }
