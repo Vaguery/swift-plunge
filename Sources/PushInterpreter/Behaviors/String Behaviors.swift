@@ -20,7 +20,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(1)),
-                            call: [x, InstructionItem(.stringButLast)])
+                            call: recording([x, InstructionItem(.stringButLast)]))
                     )
                 ]
             }
@@ -37,7 +37,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + x.value,
-                            call: [y, x, InstructionItem(.stringConcat)])
+                            call: recording([y, x, InstructionItem(.stringConcat)]))
                     )
                 ]
             }
@@ -54,7 +54,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + String(x.value),
-                            call: [y, x, InstructionItem(.stringConjChar)])
+                            call: recording([y, x, InstructionItem(.stringConjChar)]))
                     )
                 ]
             }
@@ -75,7 +75,7 @@ nonisolated extension Interpreter {
                             // resolved to different overloads across Foundation
                             // / module contexts once this code left the app target.
                             y.value.firstRange(of: x.value) != nil,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)]))
+                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)])))
                     )
                 ]
             }
@@ -92,7 +92,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.contains(y.value),
-                            call: Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)]))
+                            call: recording(Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)])))
                     )
                 ]
             }
@@ -114,11 +114,11 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 intIdx,
-                                call: Behavior.reading(
+                                call: recording(Behavior.reading(
                                 [.string: 1, .char: 1],
                                 producing: .int,
                                 from: [y, x, InstructionItem(.stringIndexOfChar)]
-                            ))
+                            )))
                         )
                     ]
                 } else {
@@ -141,7 +141,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(toDrop)),
-                            call: [y, x, InstructionItem(.stringDrop)])
+                            call: recording([y, x, InstructionItem(.stringDrop)]))
                     )
                 ]
             }
@@ -161,7 +161,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.prefix(toTake)),
-                            call: [y, x, InstructionItem(.stringTake)])
+                            call: recording([y, x, InstructionItem(.stringTake)]))
                     )
                 ]
             }
@@ -178,7 +178,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)]))
+                            call: recording(Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)])))
                     )
                 ]
             }
@@ -196,7 +196,7 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 c,
-                                call: [x, InstructionItem(.stringFirst)])
+                                call: recording([x, InstructionItem(.stringFirst)]))
                         )
                     ]
                 } else {
@@ -217,7 +217,7 @@ nonisolated extension Interpreter {
                             .char,
                             CharItem(
                                 c,
-                                call: [x, InstructionItem(.stringLast)])
+                                call: recording([x, InstructionItem(.stringLast)]))
                         )
                     ]
                 } else {
@@ -237,7 +237,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)]))
+                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)])))
                     )
                 ]
             }
@@ -254,7 +254,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)]))
+                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)])))
                     )
                 ]
             }
@@ -271,7 +271,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)]))
+                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)])))
                     )
                 ]
             }
@@ -288,7 +288,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)]))
+                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)])))
                     )
                 ]
             }
@@ -305,7 +305,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.reversed()),
-                            call: [x, InstructionItem(.stringReverse)])
+                            call: recording([x, InstructionItem(.stringReverse)]))
                     )
                 ]
             }
@@ -322,7 +322,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.count,
-                            call: Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)]))
+                            call: recording(Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)])))
                     )
                 ]
             }
@@ -339,7 +339,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromBool)])
+                            call: recording([x, InstructionItem(.stringFromBool)]))
                     )
                 ]
             }
@@ -356,7 +356,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromChar)])
+                            call: recording([x, InstructionItem(.stringFromChar)]))
                     )
                 ]
             }
@@ -373,7 +373,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromDouble)])
+                            call: recording([x, InstructionItem(.stringFromDouble)]))
                     )
                 ]
             }
@@ -390,7 +390,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: [x, InstructionItem(.stringFromInt)])
+                            call: recording([x, InstructionItem(.stringFromInt)]))
                     )
                 ]
             }
@@ -428,7 +428,7 @@ nonisolated extension Interpreter {
                                 // value. The fuzzer found it; see "Design
                                 // Principles.md" on argument order being free only
                                 // *across* stacks.
-                                call: [x, y, InstructionItem(.stringNth)])
+                                call: recording([x, y, InstructionItem(.stringNth)]))
                         )
                     ]
                 }
@@ -472,11 +472,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.filter({ $0 == y.value }).count,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [.string: 1, .char: 1],
                                 producing: .int,
                                 from: [y, x, InstructionItem(.stringOccurrencesOfChar)]
-                            ),
+                            )),
                         )
                     )
                 ]
@@ -494,7 +494,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             x.value.filter({ $0 != y.value }),
-                            call: [y, x, InstructionItem(.stringRemoveChar)],
+                            call: recording([y, x, InstructionItem(.stringRemoveChar)]),
                         )
                     )
                 ]
@@ -521,9 +521,9 @@ nonisolated extension Interpreter {
                                 String(z.value),
                                 with: String(y.value)
                             ),
-                            call: [
+                            call: recording([
                                 z, y, x, InstructionItem(.stringReplaceChar),
-                            ],
+                            ]),
                         )
                     )
                 ]
@@ -549,10 +549,10 @@ nonisolated extension Interpreter {
                                 with: String(y.value),
                                 maxReplacements: 1
                             ),
-                            call: [
+                            call: recording([
                                 z, y, x,
                                 InstructionItem(.stringReplaceFirstChar),
-                            ],
+                            ]),
                         )
                     )
                 ]
@@ -576,7 +576,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             z.value.replacing(y.value, with: x.value),
-                            call: [z, y, x, InstructionItem(.stringReplace)],
+                            call: recording([z, y, x, InstructionItem(.stringReplace)]),
                         )
                     )
                 ]
@@ -602,7 +602,7 @@ nonisolated extension Interpreter {
                                 with: x.value,
                                 maxReplacements: 1
                             ),
-                            call: [z, y, x, InstructionItem(.stringReplaceFirst)],
+                            call: recording([z, y, x, InstructionItem(.stringReplaceFirst)]),
                         )
                     )
                 ]
@@ -621,7 +621,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             result,
-                            call: [x, InstructionItem(.stringRest)],
+                            call: recording([x, InstructionItem(.stringRest)]),
                         )
                     )
                 ]
@@ -652,7 +652,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             result,
-                            call: [z, y, x, InstructionItem(.stringSetChar)])
+                            call: recording([z, y, x, InstructionItem(.stringSetChar)]))
                     )
                 ]
             }
@@ -706,7 +706,7 @@ nonisolated extension Interpreter {
                             String(words[idx]),
                             // `[string, index]`, matching `stringNth` and the four
                             // `vecXNth` siblings.
-                            call: [x, y, InstructionItem(.stringNthWord)])
+                            call: recording([x, y, InstructionItem(.stringNthWord)]))
                     )
                 ]
             }
@@ -737,10 +737,10 @@ nonisolated extension Interpreter {
                 return [
                     Router(.string, StringItem(
                         String(x.value[..<cut]),
-                        call: Behavior.selecting(0, of: 2, on: .string, from: source))),
+                        call: recording(Behavior.selecting(0, of: 2, on: .string, from: source)))),
                     Router(.string, StringItem(
                         String(x.value[cut...]),
-                        call: Behavior.selecting(1, of: 2, on: .string, from: source))),
+                        call: recording(Behavior.selecting(1, of: 2, on: .string, from: source)))),
                 ]
             }
         )
@@ -771,7 +771,7 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(slice),
-                            call: [x, z, y, InstructionItem(.stringSubstring)])
+                            call: recording([x, z, y, InstructionItem(.stringSubstring)]))
                     )
                 ]
             }
