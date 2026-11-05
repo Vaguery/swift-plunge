@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intAdd: \(y.value) + \(x.value)",
-                                call: [y, x, InstructionItem(.intAdd)])
+                                call: recording([y, x, InstructionItem(.intAdd)]))
                         )
                     ]
                 } else {
@@ -36,7 +36,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [y, x, InstructionItem(.intAdd)])
+                                call: recording([y, x, InstructionItem(.intAdd)]))
                         )
                     ]
                 }
@@ -60,7 +60,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intSubtract: \(y.value) - \(x.value)",
-                                call: [y, x, InstructionItem(.intSubtract)])
+                                call: recording([y, x, InstructionItem(.intSubtract)]))
                         )
                     ]
                 } else {
@@ -69,7 +69,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [y, x, InstructionItem(.intSubtract)])
+                                call: recording([y, x, InstructionItem(.intSubtract)]))
                         )
                     ]
                 }
@@ -93,7 +93,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intMultiply: \(y.value) * \(x.value)",
-                                call: [y, x, InstructionItem(.intMultiply)])
+                                call: recording([y, x, InstructionItem(.intMultiply)]))
                         )
                     ]
                 } else {
@@ -102,7 +102,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [y, x, InstructionItem(.intMultiply)])
+                                call: recording([y, x, InstructionItem(.intMultiply)]))
                         )
                     ]
                 }
@@ -120,7 +120,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             max(y.value, x.value),
-                            call: [y, x, InstructionItem(.intMax)])
+                            call: recording([y, x, InstructionItem(.intMax)]))
                     )
                 ]
             }
@@ -137,7 +137,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             min(y.value, x.value),
-                            call: [y, x, InstructionItem(.intMin)])
+                            call: recording([y, x, InstructionItem(.intMin)]))
                     )
                 ]
             }
@@ -163,7 +163,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Divide by zero .intQuot: \(y.value) / \(x.value)",
-                                call: [y, x, InstructionItem(.intQuot)])
+                                call: recording([y, x, InstructionItem(.intQuot)]))
                         )
                     ]
                 } else if hasOverflowed {
@@ -172,7 +172,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intQuot: \(y.value) / \(x.value)",
-                                call: [y, x, InstructionItem(.intQuot)])
+                                call: recording([y, x, InstructionItem(.intQuot)]))
                         )
                     ]
                 } else {
@@ -181,7 +181,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [y, x, InstructionItem(.intQuot)])
+                                call: recording([y, x, InstructionItem(.intQuot)]))
                         )
                     ]
                 }
@@ -207,7 +207,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Divide by zero .intMod: \(y.value) % \(x.value)",
-                                call: [y, x, InstructionItem(.intMod)])
+                                call: recording([y, x, InstructionItem(.intMod)]))
                         )
                     ]
                 } else if hasOverflowed {
@@ -216,7 +216,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intMod: \(y.value) % \(x.value)",
-                                call: [y, x, InstructionItem(.intMod)])
+                                call: recording([y, x, InstructionItem(.intMod)]))
                         )
                     ]
                 } else {
@@ -225,7 +225,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [y, x, InstructionItem(.intMod)])
+                                call: recording([y, x, InstructionItem(.intMod)]))
                         )
                     ]
                 }
@@ -243,7 +243,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value > x.value,
-                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGT)]))
+                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGT)])))
                     )
                 ]
             }
@@ -260,7 +260,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value >= x.value,
-                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGTE)]))
+                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGTE)])))
                     )
                 ]
             }
@@ -277,7 +277,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value <= x.value,
-                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLTE)]))
+                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLTE)])))
                     )
                 ]
             }
@@ -294,7 +294,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y.value < x.value,
-                            call: Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLT)]))
+                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLT)])))
                     )
                 ]
             }
@@ -315,7 +315,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intInc: \(x.value) + 1»",
-                                call: [x, InstructionItem(.intInc)])
+                                call: recording([x, InstructionItem(.intInc)]))
                         )
                     ]
                 } else {
@@ -324,7 +324,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [x, InstructionItem(.intInc)])
+                                call: recording([x, InstructionItem(.intInc)]))
                         )
                     ]
                 }
@@ -347,7 +347,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intDec: \(x.value) - 1»",
-                                call: [x, InstructionItem(.intDec)])
+                                call: recording([x, InstructionItem(.intDec)]))
                         )
                     ]
                 } else {
@@ -356,7 +356,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 result,
-                                call: [x, InstructionItem(.intDec)])
+                                call: recording([x, InstructionItem(.intDec)]))
                         )
                     ]
                 }
@@ -374,7 +374,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value ? 1 : 0,
-                            call: [x, InstructionItem(.intFromBool)])
+                            call: recording([x, InstructionItem(.intFromBool)]))
                     )
                 ]
             }
@@ -392,7 +392,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 Int(v),
-                                call: [c, InstructionItem(.intFromChar)])
+                                call: recording([c, InstructionItem(.intFromChar)]))
                         )
                     ]
                 } else {
@@ -413,7 +413,7 @@ nonisolated extension Interpreter {
                             .int,
                             IntItem(
                                 v,
-                                call: [s, InstructionItem(.intFromString)])
+                                call: recording([s, InstructionItem(.intFromString)]))
                         )
                     ]
                 } else {
@@ -440,7 +440,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .intFromDouble: \(x.value) → Int",
-                                call: [x, InstructionItem(.intFromDouble)])
+                                call: recording([x, InstructionItem(.intFromDouble)]))
                         )
                     ]
                 }
@@ -450,7 +450,7 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             Int(x.value),
-                            call: [x, InstructionItem(.intFromDouble)])
+                            call: recording([x, InstructionItem(.intFromDouble)]))
                     )
                 ]
             }
