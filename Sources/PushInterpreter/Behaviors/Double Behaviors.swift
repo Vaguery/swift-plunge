@@ -25,7 +25,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleAdd: \(y.value) + \(x.value)",
-                                call: [y, x, InstructionItem(.doubleAdd)])
+                                call: recording([y, x, InstructionItem(.doubleAdd)]))
                         )
                     ]
                 } else {
@@ -34,7 +34,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleAdd)])
+                                call: recording([y, x, InstructionItem(.doubleAdd)]))
                         )
                     ]
 
@@ -59,7 +59,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleQuot: \(y.value) // \(x.value)",
-                                call: [y, x, InstructionItem(.doubleQuot)])
+                                call: recording([y, x, InstructionItem(.doubleQuot)]))
                         )
                     ]
                 } else {
@@ -68,7 +68,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleQuot)])
+                                call: recording([y, x, InstructionItem(.doubleQuot)]))
                         )
                     ]
 
@@ -91,7 +91,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleDivide: \(y.value) / \(x.value)",
-                                call: [y, x, InstructionItem(.doubleDivide)])
+                                call: recording([y, x, InstructionItem(.doubleDivide)]))
                         )
                     ]
                 } else {
@@ -100,7 +100,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleDivide)])
+                                call: recording([y, x, InstructionItem(.doubleDivide)]))
                         )
                     ]
 
@@ -123,7 +123,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleMod: \(y.value) % \(x.value)",
-                                call: [y, x, InstructionItem(.doubleMod)])
+                                call: recording([y, x, InstructionItem(.doubleMod)]))
                         )
                     ]
                 } else {
@@ -132,7 +132,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleMod)])
+                                call: recording([y, x, InstructionItem(.doubleMod)]))
                         )
                     ]
 
@@ -151,7 +151,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             min(x.value, y.value),
-                            call: [y, x, InstructionItem(.doubleMin)])
+                            call: recording([y, x, InstructionItem(.doubleMin)]))
                     )
                 ]
             }
@@ -168,7 +168,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             max(x.value, y.value),
-                            call: [y, x, InstructionItem(.doubleMax)])
+                            call: recording([y, x, InstructionItem(.doubleMax)]))
                     )
                 ]
             }
@@ -189,7 +189,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleSubtract: \(y.value) - \(x.value)",
-                                call: [y, x, InstructionItem(.doubleSubtract)])
+                                call: recording([y, x, InstructionItem(.doubleSubtract)]))
                         )
                     ]
                 } else {
@@ -198,7 +198,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleSubtract)])
+                                call: recording([y, x, InstructionItem(.doubleSubtract)]))
                         )
                     ]
 
@@ -221,7 +221,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleMultiply: \(y.value) * \(x.value)",
-                                call: [y, x, InstructionItem(.doubleMultiply)])
+                                call: recording([y, x, InstructionItem(.doubleMultiply)]))
                         )
                     ]
                 } else {
@@ -230,7 +230,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [y, x, InstructionItem(.doubleMultiply)])
+                                call: recording([y, x, InstructionItem(.doubleMultiply)]))
                         )
                     ]
 
@@ -249,7 +249,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             Double(x.value),
-                            call: [x, InstructionItem(.doubleFromInt)])
+                            call: recording([x, InstructionItem(.doubleFromInt)]))
                     )
                 ]
             }
@@ -266,7 +266,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)]))
+                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)])))
                     )
                 ]
             }
@@ -283,7 +283,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)]))
+                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)])))
                     )
                 ]
             }
@@ -300,7 +300,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)]))
+                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)])))
                     )
                 ]
             }
@@ -317,7 +317,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)]))
+                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)])))
                     )
                 ]
             }
@@ -337,7 +337,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleCos: cos(\(x.value))",
-                                call: [x, InstructionItem(.doubleCos)])
+                                call: recording([x, InstructionItem(.doubleCos)]))
                         )
                     ]
                 } else {
@@ -346,7 +346,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleCos)])
+                                call: recording([x, InstructionItem(.doubleCos)]))
                         )
                     ]
                 }
@@ -367,7 +367,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleSin: sin(\(x.value))",
-                                call: [x, InstructionItem(.doubleSin)])
+                                call: recording([x, InstructionItem(.doubleSin)]))
                         )
                     ]
                 } else {
@@ -376,7 +376,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleSin)])
+                                call: recording([x, InstructionItem(.doubleSin)]))
                         )
                     ]
                 }
@@ -397,7 +397,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleTan: tan(\(x.value))",
-                                call: [x, InstructionItem(.doubleTan)])
+                                call: recording([x, InstructionItem(.doubleTan)]))
                         )
                     ]
                 } else {
@@ -406,7 +406,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleTan)])
+                                call: recording([x, InstructionItem(.doubleTan)]))
                         )
                     ]
                 }
@@ -428,7 +428,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleInc: \(x.value) + 1.0",
-                                call: [x, InstructionItem(.doubleInc)])
+                                call: recording([x, InstructionItem(.doubleInc)]))
                         )
                     ]
                 } else {
@@ -437,7 +437,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleInc)])
+                                call: recording([x, InstructionItem(.doubleInc)]))
                         )
                     ]
                 }
@@ -459,7 +459,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleDec: \(x.value) - 1.0",
-                                call: [x, InstructionItem(.doubleDec)])
+                                call: recording([x, InstructionItem(.doubleDec)]))
                         )
                     ]
                 } else {
@@ -468,7 +468,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 result,
-                                call: [x, InstructionItem(.doubleDec)])
+                                call: recording([x, InstructionItem(.doubleDec)]))
                         )
                     ]
                 }
@@ -486,7 +486,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             x.value ? 1.0 : 0.0,
-                            call: [x, InstructionItem(.doubleFromBool)])
+                            call: recording([x, InstructionItem(.doubleFromBool)]))
                     )
                 ]
 
@@ -505,7 +505,7 @@ nonisolated extension Interpreter {
                         .double,
                         DoubleItem(
                             num,
-                            call: [x, InstructionItem(.doubleFromChar)])
+                            call: recording([x, InstructionItem(.doubleFromChar)]))
                     )
                 ]
             }
@@ -527,7 +527,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .doubleFromString: \"\(x.value)\"",
-                                call: [x, InstructionItem(.doubleFromString)])
+                                call: recording([x, InstructionItem(.doubleFromString)]))
                         )
                     ]
                 } else {
@@ -536,7 +536,7 @@ nonisolated extension Interpreter {
                             .double,
                             DoubleItem(
                                 num,
-                                call: [x, InstructionItem(.doubleFromString)])
+                                call: recording([x, InstructionItem(.doubleFromString)]))
                         )
                     ]
                 }
