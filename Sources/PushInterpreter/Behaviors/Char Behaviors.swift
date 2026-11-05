@@ -29,7 +29,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Overflow in .charFromDouble: \(x.value) → Int",
-                                call: [x, InstructionItem(.charFromDouble)])
+                                call: recording([x, InstructionItem(.charFromDouble)]))
                         )
                     ]
                 }
@@ -40,7 +40,7 @@ nonisolated extension Interpreter {
                         .char,
                         CharItem(
                             c,
-                            call: [x, InstructionItem(.charFromDouble)])
+                            call: recording([x, InstructionItem(.charFromDouble)]))
                     )
                 ]
             }
@@ -59,7 +59,7 @@ nonisolated extension Interpreter {
                         .char,
                         CharItem(
                             c,
-                            call: [x, InstructionItem(.charFromInt)])
+                            call: recording([x, InstructionItem(.charFromInt)]))
                     )
                 ]
             }
@@ -76,7 +76,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y > x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)]))
+                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)])))
                     )
                 ]
             }
@@ -93,7 +93,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y >= x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)]))
+                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)])))
                     )
                 ]
             }
@@ -110,7 +110,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWholeNumber,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)]))
+                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)])))
                     )
                 ]
             }
@@ -127,7 +127,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isLetter,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)]))
+                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)])))
                     )
                 ]
             }
@@ -144,7 +144,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isWhitespace,
-                            call: Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)]))
+                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)])))
                     )
                 ]
             }
@@ -161,7 +161,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y < x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)]))
+                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)])))
                     )
                 ]
             }
@@ -178,7 +178,7 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             y <= x,
-                            call: Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)]))
+                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)])))
                     )
                 ]
             }
