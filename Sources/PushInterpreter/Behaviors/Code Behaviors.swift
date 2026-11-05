@@ -23,7 +23,7 @@ nonisolated extension Interpreter {
                 let result =
                     CodeItem(
                         y.value + x.value,
-                        call: [y, x, InstructionItem(.codeAppend)])
+                        call: recording([y, x, InstructionItem(.codeAppend)]))
                 return [Router(.code, result)]
             }
         )
@@ -45,7 +45,7 @@ nonisolated extension Interpreter {
                         .code,
                         CodeItem(
                             [y.denotedItem, x.denotedItem],
-                            call: [y, x, InstructionItem(.codePair)])
+                            call: recording([y, x, InstructionItem(.codePair)]))
                     )
                 ]
             }
@@ -79,7 +79,7 @@ nonisolated extension Interpreter {
                 let result =
                     BoolItem(
                         x.value.isEmpty,
-                        call: Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)]))
+                        call: recording(Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)])))
                 return [Router(.bool, result)]
             }
         )
@@ -93,7 +93,7 @@ nonisolated extension Interpreter {
                 let result =
                     IntItem(
                         x.value.count,
-                        call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)]))
+                        call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)])))
                 return [Router(.int, result)]
             }
         )
@@ -114,7 +114,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.pointCount,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)])))]
+                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)]))))]
             }
         )
 
@@ -128,7 +128,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.flatSize,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)])))]
+                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)]))))]
             }
         )
 
@@ -141,7 +141,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.depth,
-                    call: Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)])))]
+                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)]))))]
             }
         )
 
@@ -158,7 +158,7 @@ nonisolated extension Interpreter {
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.bool, BoolItem(
                     hay.firstPointIndex(of: needle.denotedItem) != nil,
-                    call: Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)])))]
+                    call: recording(Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)]))))]
             }
         )
 
@@ -171,7 +171,7 @@ nonisolated extension Interpreter {
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.int, IntItem(
                     hay.firstPointIndex(of: needle.denotedItem) ?? -1,
-                    call: Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)])))]
+                    call: recording(Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)]))))]
             }
         )
 
@@ -187,7 +187,7 @@ nonisolated extension Interpreter {
                 guard let parent = hay.parentContaining(needle.denotedItem) else { return [] }
                 return [Router(.code, CodeItem(
                     parent.value,
-                    call: Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)])))]
+                    call: recording(Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)]))))]
             }
         )
 
@@ -214,7 +214,7 @@ nonisolated extension Interpreter {
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     boxedPointContents(x.point(at: i.value)),
-                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)])))]
+                    call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)]))))]
             }
         )
 
@@ -230,7 +230,7 @@ nonisolated extension Interpreter {
                 let element = x.value[Int(i.value.magnitude % UInt(x.value.count))]
                 return [Router(.code, CodeItem(
                     boxedPointContents(element),
-                    call: Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)])))]
+                    call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)]))))]
             }
         )
 
@@ -298,7 +298,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedLeaves(),
-                    call: [x, InstructionItem(.codeFlatten)]))]
+                    call: recording([x, InstructionItem(.codeFlatten)])))]
             }
         )
 
@@ -312,7 +312,7 @@ nonisolated extension Interpreter {
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedOnce(),
-                    call: [x, InstructionItem(.codeFlattenOnce)]))]
+                    call: recording([x, InstructionItem(.codeFlattenOnce)])))]
             }
         )
 
@@ -331,7 +331,7 @@ nonisolated extension Interpreter {
                 let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
-                    call: [x, i, InstructionItem(.codeFlattenPoint)]))]
+                    call: recording([x, i, InstructionItem(.codeFlattenPoint)])))]
             }
         )
 
@@ -345,7 +345,7 @@ nonisolated extension Interpreter {
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     x.removingPoint(at: i.value).value,
-                    call: [x, i, InstructionItem(.codeRemovePoint)]))]
+                    call: recording([x, i, InstructionItem(.codeRemovePoint)])))]
             }
         )
 
@@ -369,7 +369,7 @@ nonisolated extension Interpreter {
                 let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
-                    call: [subject, needle, repl, InstructionItem(instruction)]))]
+                    call: recording([subject, needle, repl, InstructionItem(instruction)])))]
             }
         )
     }
@@ -397,10 +397,10 @@ nonisolated extension Interpreter {
                 return [
                     Router(.code, CodeItem(
                         prefix,
-                        call: Behavior.selecting(0, of: 2, on: .code, from: source))),
+                        call: recording(Behavior.selecting(0, of: 2, on: .code, from: source)))),
                     Router(.code, CodeItem(
                         suffix,
-                        call: Behavior.selecting(1, of: 2, on: .code, from: source))),
+                        call: recording(Behavior.selecting(1, of: 2, on: .code, from: source)))),
                 ]
             }
         )
@@ -433,10 +433,10 @@ nonisolated extension Interpreter {
                 return [
                     Router(.code, CodeItem(
                         CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
-                        call: Behavior.selecting(0, of: 2, on: .code, from: source))),
+                        call: recording(Behavior.selecting(0, of: 2, on: .code, from: source)))),
                     Router(.code, CodeItem(
                         CodeItem.rebuilt(from: Array(tokens[idx...])).value,
-                        call: Behavior.selecting(1, of: 2, on: .code, from: source))),
+                        call: recording(Behavior.selecting(1, of: 2, on: .code, from: source)))),
                 ]
             }
         )
@@ -462,7 +462,7 @@ nonisolated extension Interpreter {
                 tokens.insert(contentsOf: spliced, at: idx)
                 return [Router(.code, CodeItem(
                     CodeItem.rebuilt(from: tokens).value,
-                    call: [subject, insert, n, InstructionItem(.codeInsertAtGap)]))]
+                    call: recording([subject, insert, n, InstructionItem(.codeInsertAtGap)])))]
             }
         )
 
@@ -494,7 +494,7 @@ nonisolated extension Interpreter {
                 tokens.insert(.open, at: lo)
                 return [Router(.code, CodeItem(
                     CodeItem.rebuilt(from: tokens).value,
-                    call: [x, deep, top, InstructionItem(.codeWrapPoints)]))]
+                    call: recording([x, deep, top, InstructionItem(.codeWrapPoints)])))]
             }
         )
 
@@ -515,7 +515,7 @@ nonisolated extension Interpreter {
                                  return (p[0], p[1]) }()
                 return [Router(.code, CodeItem(
                     x.flatteningBlocks(inGapRange: lo, through: hi).value,
-                    call: [x, deep, top, InstructionItem(.codeFlattenRange)]))]
+                    call: recording([x, deep, top, InstructionItem(.codeFlattenRange)])))]
             }
         )
 
@@ -579,7 +579,7 @@ nonisolated extension Interpreter {
             let result =
                 CodeItem(
                     [x],
-                    call: [x, InstructionItem(.codeWrapRoot)])
+                    call: recording([x, InstructionItem(.codeWrapRoot)]))
             return [ Router( .code, result) ]
         }
     )
@@ -591,7 +591,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [InstructionItem(.execQuote), x]
+            result.call = recording([InstructionItem(.execQuote), x])
             return [ Router(.code, result) ]
         }
     )
@@ -604,7 +604,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.intQuote)]
+            result.call = recording([x, InstructionItem(.intQuote)])
             return [ Router(.code, result) ]
         }
     )
@@ -616,7 +616,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.boolQuote)]
+            result.call = recording([x, InstructionItem(.boolQuote)])
             return [ Router(.code, result) ]
         }
     )
@@ -628,7 +628,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.stringQuote)]
+            result.call = recording([x, InstructionItem(.stringQuote)])
             return [ Router(.code, result) ]
         }
     )
@@ -640,7 +640,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.charQuote)]
+            result.call = recording([x, InstructionItem(.charQuote)])
             return [ Router(.code, result) ]
         }
     )
@@ -652,7 +652,7 @@ nonisolated extension Interpreter {
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.doubleQuote)]
+            result.call = recording([x, InstructionItem(.doubleQuote)])
             return [ Router(.code, result) ]
         }
     )
@@ -730,12 +730,14 @@ nonisolated extension Interpreter {
                         "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items"))
                 ]
             }
-            let record: [any Item] = [iterator, InstructionItem(.codeFromIterator)]
-            let collected = CodeItem(
-                items,
-                call: iterator.body == nil
-                    ? record
-                    : Behavior.reading([.code: 1], producing: .code, from: record))
+            // A function, so it is only built when recording.
+            func record() -> [any Item] {
+                let produced: [any Item] = [iterator, InstructionItem(.codeFromIterator)]
+                return iterator.body == nil
+                    ? produced
+                    : Behavior.reading([.code: 1], producing: .code, from: produced)
+            }
+            let collected = CodeItem(items, call: recording(record()))
             return Interpreter.iteratorFarewell(iterator) + [Router(.code, collected)]
         }
     )
@@ -759,7 +761,7 @@ nonisolated extension Interpreter {
         fxn: { a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
-            result.call = [x, InstructionItem(.iteratorQuote)]
+            result.call = recording([x, InstructionItem(.iteratorQuote)])
             return [ Router(.code, result) ]
         }
     )
