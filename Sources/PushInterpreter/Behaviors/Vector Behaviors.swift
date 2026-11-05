@@ -77,7 +77,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             x.value.dropLast(1),
-                            call: [x, InstructionItem(instruction)])
+                            call: recording([x, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -98,7 +98,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)])
+                            call: recording([x, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -117,7 +117,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             y.value + x.value,
-                            call: [y, x, InstructionItem(instruction)])
+                            call: recording([y, x, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -136,11 +136,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             x.value.isEmpty,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 1],
                                 producing: .bool,
                                 from: [x, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -160,11 +160,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             x.value.count,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 1],
                                 producing: .int,
                                 from: [x, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -183,7 +183,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             Array(x.value.dropFirst(1)),
-                            call: [x, InstructionItem(instruction)])
+                            call: recording([x, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -202,7 +202,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             Array(x.value.reversed()),
-                            call: [x, InstructionItem(instruction)])
+                            call: recording([x, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -225,7 +225,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)])
+                            call: recording([x, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -248,7 +248,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)])
+                            call: recording([x, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -269,11 +269,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             result,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .bool,
                                 from: [x, y, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -293,7 +293,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, InstructionItem(instruction)])
+                                call: recording([x, InstructionItem(instruction)]))
                         )
                     ]
                 } else {
@@ -316,7 +316,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, InstructionItem(instruction)])
+                                call: recording([x, InstructionItem(instruction)]))
                         )
                     ]
                 } else {
@@ -347,7 +347,7 @@ nonisolated extension Interpreter {
                             V.Scalar.pushStack,
                             V.Scalar(
                                 result,
-                                call: [x, y, InstructionItem(instruction)])
+                                call: recording([x, y, InstructionItem(instruction)]))
                         )
                     ]
                 }
@@ -369,11 +369,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             result,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .int,
                                 from: [x, y, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -394,11 +394,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             result,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 1, V.Scalar.pushStack: 1],
                                 producing: .int,
                                 from: [x, y, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -429,11 +429,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             satisfied(y.value, x.value),
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 2],
                                 producing: .bool,
                                 from: [y, x, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -486,11 +486,11 @@ nonisolated extension Interpreter {
                         .bool,
                         BoolItem(
                             firstSubIndex(hay.value, needle.value) != nil,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 2],
                                 producing: .bool,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -509,11 +509,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             firstSubIndex(hay.value, needle.value) ?? -1,
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 2],
                                 producing: .int,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -532,11 +532,11 @@ nonisolated extension Interpreter {
                         .int,
                         IntItem(
                             subCount(hay.value, needle.value),
-                            call: Behavior.reading(
+                            call: recording(Behavior.reading(
                                 [V.pushStack: 2],
                                 producing: .int,
                                 from: [needle, hay, InstructionItem(instruction)]
-                            ))
+                            )))
                     )
                 ]
             }
@@ -558,7 +558,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
-                            call: [subject, needle, repl, InstructionItem(instruction)])
+                            call: recording([subject, needle, repl, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -578,7 +578,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
-                            call: [subject, needle, repl, InstructionItem(instruction)])
+                            call: recording([subject, needle, repl, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -623,7 +623,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, y, InstructionItem(instruction)])
+                            call: recording([x, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -646,7 +646,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)])
+                            call: recording([x, z, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -672,7 +672,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)])
+                            call: recording([x, z, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -700,7 +700,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)])
+                            call: recording([x, z, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -732,7 +732,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             result,
-                            call: [x, z, y, InstructionItem(instruction)])
+                            call: recording([x, z, y, InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -778,10 +778,10 @@ nonisolated extension Interpreter {
                 return [
                     Router(V.pushStack, V(
                         prefix,
-                        call: Behavior.selecting(0, of: 2, on: V.pushStack, from: source))),
+                        call: recording(Behavior.selecting(0, of: 2, on: V.pushStack, from: source)))),
                     Router(V.pushStack, V(
                         suffix,
-                        call: Behavior.selecting(1, of: 2, on: V.pushStack, from: source))),
+                        call: recording(Behavior.selecting(1, of: 2, on: V.pushStack, from: source)))),
                 ]
             }
         )
@@ -857,15 +857,13 @@ nonisolated extension Interpreter {
                 // element first — the same order `pushAll` would put them back in.
                 let elements: [V.Scalar] = a.dropFirst().map { $0 as! V.Scalar }.reversed()
 
-                let record: [any Item] =
-                    [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]
-
                 return [
                     Router(
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: record)
+                            call: recording(
+                                [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]))
                     )
                 ]
             }
@@ -928,7 +926,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: snapshotCrux(elements, readInstruction: instruction, making: V.self))
+                            call: interpreter.recording(snapshotCrux(elements, readInstruction: instruction, making: V.self)))
                     )
                 ]
             }
@@ -958,7 +956,7 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self))
+                            call: interpreter.recording(snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self)))
                     )
                 ]
             }
@@ -1699,10 +1697,13 @@ nonisolated extension Interpreter {
             // A plain pop suffices here, unlike `.codeFromIterator` — a vector
             // rests on a vec stack, never on `.code`, so the body is on top of
             // `.code` with nothing of ours beneath it.
-            let produced: [any Item] = [iterator, InstructionItem(.vecFromIterator)]
-            let record: [any Item] = iterator.body == nil
-                ? produced
-                : produced + [IntItem(1), InstructionItem(PushStack.code.popItemsInstruction)]
+            // A function, so it is only built when recording.
+            func record() -> [any Item] {
+                let produced: [any Item] = [iterator, InstructionItem(.vecFromIterator)]
+                return iterator.body == nil
+                    ? produced
+                    : produced + [IntItem(1), InstructionItem(PushStack.code.popItemsInstruction)]
+            }
 
             func refuse(_ why: String) -> [Router] {
                 [
@@ -1722,13 +1723,13 @@ nonisolated extension Interpreter {
 
             let collected: (any Item)? =
                 if let values = items as? [BoolItem] {
-                    VecBoolItem(values.map(\.value), call: record)
+                    VecBoolItem(values.map(\.value), call: recording(record()))
                 } else if let values = items as? [IntItem] {
-                    VecIntItem(values.map(\.value), call: record)
+                    VecIntItem(values.map(\.value), call: recording(record()))
                 } else if let values = items as? [DoubleItem] {
-                    VecDoubleItem(values.map(\.value), call: record)
+                    VecDoubleItem(values.map(\.value), call: recording(record()))
                 } else if let values = items as? [StringItem] {
-                    VecStringItem(values.map(\.value), call: record)
+                    VecStringItem(values.map(\.value), call: recording(record()))
                 } else {
                     nil
                 }
