@@ -536,7 +536,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: nil),
                     origin: x,
                     body: mouse,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -560,7 +560,7 @@ nonisolated extension Interpreter {
                     kind: .points(mode),
                     origin: x,
                     body: mouse,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -723,7 +723,7 @@ nonisolated extension Interpreter {
             // swap-and-pop `reading` uses. No body, nothing to clear.
             // Over `collectionLimit` the sequence has no answer worth computing: refuse
             // as `.vecFromIterator` does, handing the iterator back untouched.
-            guard let items = iterator.collected() else {
+            guard let items = iterator.collected(recording: recording) else {
                 return [
                     Router(.iterator, iterator),
                     Router(.error, ErrorItem(

@@ -149,7 +149,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: stack.isHeterogeneous ? stack : nil),
                     origin: box,
                     body: nil,
-                    emits: true
+                    emits: true, recording: interpreter.recording
                 )
             }
         )
@@ -205,7 +205,7 @@ nonisolated extension Interpreter {
                     origin: item,
                     destination: IntItem(howMany),
                     body: nil,
-                    emits: true
+                    emits: true, recording: interpreter.recording
                 )
             }
         )

@@ -976,7 +976,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: nil),
                     origin: x,
                     body: nil,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -1009,7 +1009,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: nil),
                     origin: x,
                     body: mouse,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -1711,7 +1711,8 @@ nonisolated extension Interpreter {
                 ]
             }
 
-            guard let items = iterator.collected() else {
+            // Only the values are kept, so the collected items need no provenance.
+            guard let items = iterator.collected(recording: .off) else {
                 return refuse("iterator emits more than \(IteratorItem.collectionLimit) items")
             }
             // Unreachable while a spent iterator cannot rest on a stack, but the

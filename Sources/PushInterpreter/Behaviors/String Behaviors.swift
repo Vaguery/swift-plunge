@@ -456,7 +456,7 @@ nonisolated extension Interpreter {
                     kind: .letters,
                     origin: x,
                     body: nil,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -678,7 +678,7 @@ nonisolated extension Interpreter {
                     kind: .words,
                     origin: x,
                     body: nil,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -809,7 +809,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: nil),
                     origin: x,
                     body: mouse,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -838,7 +838,7 @@ nonisolated extension Interpreter {
                     kind: .elements(into: nil),
                     origin: s,
                     body: nil,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )

@@ -343,7 +343,10 @@ nonisolated extension IteratorItem {
     /// `[origin, IntItem(offset), .intAdd]`, whose crux is `y0 999 .intAdd`. This
     /// is where the old provenance-only folding node used to be needed, and is
     /// why it no longer is.
-    func projection() -> (any Item)? {
+    ///
+    /// With `recording` off the counter carries no `call` (the offset is still
+    /// computed: its overflow guard decides whether there is a projection at all).
+    func projection(recording: ProvenanceRecording) -> (any Item)? {
         switch kind {
         case .counting:
             guard let current = currentValue() else { return nil }
@@ -352,13 +355,13 @@ nonisolated extension IteratorItem {
             guard !overflowed else { return nil }
             return IntItem(
                 current,
-                call: [origin, IntItem(offset), InstructionItem(.intAdd)])
+                call: recording([origin, IntItem(offset), InstructionItem(.intAdd)]))
 
         // The wrap is the identity at `laps == 1`, so this one expression is both
         // the plain walk and the cycling one.
         case .elements, .letters, .words, .points:
             guard let index = wrappedCursor else { return nil }
-            return element(at: index)
+            return element(at: index, recording: recording)
 
         // A dup: the copy IS the argument, so law 1 applies and it records
         // nothing. This is why the whole `xDupTimes` family needs no `Nth`.
@@ -522,7 +525,7 @@ nonisolated extension IteratorItem {
     /// **Idempotent**, which is what lets it live at the push boundary without
     /// breaking `crux()`: a clamped iterator is a fixed point, so reconstructing
     /// one and pushing it again changes nothing.
-    func clamped(toPasses limit: Int) -> IteratorItem? {
+    func clamped(toPasses limit: Int, recording: ProvenanceRecording) -> IteratorItem? {
         let ceiling = max(0, limit)
         guard let promised = promisedPasses, promised > ceiling else { return nil }
 
@@ -566,7 +569,7 @@ nonisolated extension IteratorItem {
         // ceiling; this is the backstop for the degenerate one (`maxIterations`
         // of 0), where declining to clamp is better than stranding.
         guard !clamped.isSpent else { return nil }
-        clamped.call = clamped.reconstruction()
+        clamped.call = recording(clamped.reconstruction())
         return clamped
     }
 
@@ -609,14 +612,17 @@ nonisolated extension IteratorItem {
     /// loop is protected by `stepLimit`; this one is protected by
     /// `collectionLimit` instead. Over it, the answer is `nil`, and the caller
     /// refuses rather than handing back a silently truncated sequence.
-    func collected() -> [any Item]? {
+    ///
+    /// `recording` decides whether the collected items carry provenance; the
+    /// cursor's own steps never need any, since nothing outside this loop sees it.
+    func collected(recording: ProvenanceRecording) -> [any Item]? {
         var items: [any Item] = []
         var cursor = self
-        while let projected = cursor.projection() {
+        while let projected = cursor.projection(recording: recording) {
             guard items.count < IteratorItem.collectionLimit else { return nil }
             items.append(projected)
             guard cursor.hasNextPass else { break }
-            cursor = cursor.stepped()
+            cursor = cursor.stepped(recording: .off)
         }
         return items
     }
@@ -628,11 +634,12 @@ nonisolated extension IteratorItem {
     /// a collection that would never end from being computed at all.
     static let collectionLimit = InterpreterSettings().maxItemWeight
 
-    /// This iterator advanced by one pass, with provenance for its new state.
-    func stepped() -> IteratorItem {
+    /// This iterator advanced by one pass, with provenance for its new state when
+    /// `recording` is on.
+    func stepped(recording: ProvenanceRecording) -> IteratorItem {
         var next = self
         next.value = value + 1
-        next.call = next.reconstruction()
+        next.call = recording(next.reconstruction())
         return next
     }
 
@@ -772,7 +779,7 @@ nonisolated extension IteratorItem {
     /// it — `origin index .vecBoolNth` — which is O(1) and, crucially,
     /// independent of how many passes have run. Order within the record is free:
     /// every `Nth` takes its two arguments from *different* stacks.
-    func element(at index: Int) -> (any Item)? {
+    func element(at index: Int, recording: ProvenanceRecording) -> (any Item)? {
         guard index >= 0, index < sourceCount else { return nil }
         let cursor = IntItem(index)
         func record(_ names: PushInstruction...) -> [any Item] {
@@ -786,14 +793,14 @@ nonisolated extension IteratorItem {
             guard index < source.characters.count else { return nil }
             return StringItem(
                 String(source.characters[index]),
-                call: record(.stringNth, .stringFromChar))
+                call: recording(record(.stringNth, .stringFromChar)))
 
         case .words:
             let chunks = source.words
             guard index < chunks.count else { return nil }
             return StringItem(
                 String(chunks[index]),
-                call: record(.stringNthWord))
+                call: recording(record(.stringNthWord)))
 
         // The i-th pre-order point. `.boxed` yields exactly what `codeNthPoint`
         // does — the point boxed as `.code`, recording that (nondestructive)
@@ -812,25 +819,25 @@ nonisolated extension IteratorItem {
             let contents = (point as? CodeItem)?.value ?? [point]
             return CodeItem(
                 contents,
-                call: Behavior.reading(
+                call: recording(Behavior.reading(
                     [.code: 1, .int: 1],
                     producing: .code,
                     from: [origin, IntItem(index), InstructionItem(.codeNthPoint)]
-                ))
+                )))
 
         default:
             switch origin {
             case is StringItem:
                 guard index < source.characters.count else { return nil }
-                return CharItem(source.characters[index], call: record(.stringNth))
+                return CharItem(source.characters[index], call: recording(record(.stringNth)))
             case let v as VecBoolItem:
-                return BoolItem(v.value[index], call: record(.vecBoolNth))
+                return BoolItem(v.value[index], call: recording(record(.vecBoolNth)))
             case let v as VecDoubleItem:
-                return DoubleItem(v.value[index], call: record(.vecDoubleNth))
+                return DoubleItem(v.value[index], call: recording(record(.vecDoubleNth)))
             case let v as VecIntItem:
-                return IntItem(v.value[index], call: record(.vecIntNth))
+                return IntItem(v.value[index], call: recording(record(.vecIntNth)))
             case let v as VecStringItem:
-                return StringItem(v.value[index], call: record(.vecStringNth))
+                return StringItem(v.value[index], call: recording(record(.vecStringNth)))
 
             // Law 1b: an item that goes into a block and comes back out is the
             // item that went in, so it keeps its own `call` and records nothing.

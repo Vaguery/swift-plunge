@@ -76,19 +76,19 @@ struct IteratorCyclingTests {
     /// This is the invariant the crux rests on.
     @Test func `the cursor is monotone and only the projection wraps`() {
         var iterator = cycling(3)
-        for _ in 0..<4 { iterator = iterator.stepped() }
+        for _ in 0..<4 { iterator = iterator.stepped(recording: .on) }
 
         #expect(iterator.value == 4, "four passes taken, not one lap and one over")
         #expect(iterator.wrappedCursor == 1)
-        #expect((iterator.projection() as? IntItem)?.value == 2, "element 1 of [1, 2, 3]")
+        #expect((iterator.projection(recording: .on) as? IntItem)?.value == 2, "element 1 of [1, 2, 3]")
     }
 
     /// An element of the third lap records exactly what an element of the first
     /// does — because it *is* the same element, and `origin 1 .vecIntNth` says so
     /// without caring how many passes have run. Cycling costs provenance nothing.
     @Test func `a wrapped element records the same Nth as its first lap`() {
-        let first = cycling(3, cursor: 1).projection()
-        let third = cycling(3, cursor: 7).projection()
+        let first = cycling(3, cursor: 1).projection(recording: .on)
+        let third = cycling(3, cursor: 7).projection(recording: .on)
 
         #expect(first!.isEqual(to: third!))
         #expect(CodeItem(third!.crux()).pretty() == "( [1, 2, 3] 1 .vecIntNth )")
@@ -237,7 +237,7 @@ struct IteratorCyclingTests {
         doThis(.iteratorRepeatingIntoExec, to: inty)
 
         let landed = inty.stacks[.iterator]!.first as! IteratorItem
-        #expect(landed.clamped(toPasses: 100) == nil,
+        #expect(landed.clamped(toPasses: 100, recording: .on) == nil,
                 "already within budget, so nothing to clamp — and no wasted copy")
     }
 
@@ -254,8 +254,8 @@ struct IteratorCyclingTests {
     /// through `push`, so an iterator that changed on the way back in would not
     /// reproduce itself.
     @Test func `clamping a clamped iterator changes nothing`() {
-        #expect(cycling(40).clamped(toPasses: 100)?.laps == 33)
-        #expect(cycling(33).clamped(toPasses: 100) == nil, "already under; nothing to do")
+        #expect(cycling(40).clamped(toPasses: 100, recording: .on)?.laps == 33)
+        #expect(cycling(33).clamped(toPasses: 100, recording: .on) == nil, "already under; nothing to do")
     }
 
 
@@ -269,7 +269,7 @@ struct IteratorCyclingTests {
 
         #expect(empty.isSpent)
         #expect(empty.wrappedCursor == nil)
-        #expect(empty.projection() == nil)
+        #expect(empty.projection(recording: .on) == nil)
 
         // And the whole way through the interpreter, which is where a trap would
         // actually be fatal.

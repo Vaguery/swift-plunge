@@ -87,7 +87,7 @@ nonisolated extension Interpreter {
                     origin: origin,
                     destination: x,
                     body: body,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -130,7 +130,7 @@ nonisolated extension Interpreter {
                     origin: origin,
                     destination: x,
                     body: bodyCopy,
-                    emits: false
+                    emits: false, recording: recording
                 )
             }
         )
@@ -170,7 +170,7 @@ nonisolated extension Interpreter {
                     origin: y,
                     destination: x,
                     body: bodyCopy,
-                    emits: true
+                    emits: true, recording: recording
                 )
             }
         )
@@ -191,7 +191,8 @@ nonisolated extension Interpreter {
         origin: any Item,
         destination: (any Item)? = nil,
         body: CodeItem?,
-        emits: Bool
+        emits: Bool,
+        recording: ProvenanceRecording
     ) -> [Router] {
         var iterator = IteratorItem(
             kind: kind,
@@ -199,7 +200,7 @@ nonisolated extension Interpreter {
             destination: destination,
             body: body,
             emits: emits)
-        iterator.call = iterator.reconstruction()
+        iterator.call = recording(iterator.reconstruction())
 
         return [
             Router(.exec, InstructionItem(.iteratorPlay)),

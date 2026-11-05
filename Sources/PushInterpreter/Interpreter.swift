@@ -358,7 +358,7 @@ nonisolated final class Interpreter {
     func clampingIterations(_ item: any Item) -> any Item {
         guard
             type(of: item) == IteratorItem.self,
-            let held = (item as! IteratorItem).clamped(toPasses: config.maxIterations)
+            let held = (item as! IteratorItem).clamped(toPasses: config.maxIterations, recording: recording)
         else { return item }
         return held
     }

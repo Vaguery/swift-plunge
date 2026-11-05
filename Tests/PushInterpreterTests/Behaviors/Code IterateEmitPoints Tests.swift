@@ -22,7 +22,7 @@ struct CodeIterateEmitPointsTests {
     /// What a bodyless walk of `mode` emits over `code`, front to back.
     func emitted(_ code: CodeItem, _ mode: PointsEmission) -> [String] {
         IteratorItem(kind: .points(mode), origin: code, body: nil, emits: true)
-            .collected()?.map { $0.pretty() } ?? []
+            .collected(recording: .on)?.map { $0.pretty() } ?? []
     }
 
     @Test func `whole hands each point on unboxed`() {

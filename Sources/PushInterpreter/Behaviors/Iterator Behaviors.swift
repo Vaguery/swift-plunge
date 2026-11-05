@@ -26,10 +26,10 @@ nonisolated extension Interpreter {
     /// Provenance: the body copy is combinatory (laws 1 and 1b) and the `.codeDo`
     /// token is freshly minted (law 4), so neither records anything. The
     /// projection carries its own record; see `IteratorItem.projection`.
-    static func iteratorPass(_ iterator: IteratorItem) -> [Router] {
+    static func iteratorPass(_ iterator: IteratorItem, recording: ProvenanceRecording) -> [Router] {
         var results = [Router]()
 
-        if iterator.emits, let projected = iterator.projection() {
+        if iterator.emits, let projected = iterator.projection(recording: recording) {
             if case .points(.unwrapped) = iterator.kind {
                 // Do: the boxed point runs. A block met on `.exec` only rests on
                 // `.code` (it does not spill), so `.codeDo` is what unwraps it —
@@ -122,9 +122,9 @@ nonisolated extension Interpreter {
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
-                var results = iteratorPass(iterator)
+                var results = iteratorPass(iterator, recording: recording)
                 if iterator.hasNextPass {
-                    results.append(Router(.iterator, iterator.stepped()))
+                    results.append(Router(.iterator, iterator.stepped(recording: recording)))
                 } else {
                     results.append(contentsOf: iteratorFarewell(iterator))
                 }
@@ -156,7 +156,7 @@ nonisolated extension Interpreter {
                 let iterator = collectedItems[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
-                let payload = iteratorPass(iterator)
+                let payload = iteratorPass(iterator, recording: interpreter.recording)
                 guard iterator.hasNextPass else {
                     return payload + iteratorFarewell(iterator)
                 }
@@ -167,7 +167,7 @@ nonisolated extension Interpreter {
                     under: payload,
                     in: interpreter
                 )
-                return [Router(.iterator, iterator.stepped())]
+                return [Router(.iterator, iterator.stepped(recording: interpreter.recording))]
             }
         )
 
@@ -201,13 +201,13 @@ nonisolated extension Interpreter {
                 var iterator = collectedItems[1] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
-                let payload = iteratorPass(iterator)
+                let payload = iteratorPass(iterator, recording: interpreter.recording)
                 guard burial >= 0, iterator.hasNextPass else {
                     return payload + iteratorFarewell(iterator)
                 }
 
                 iterator.burial = burial
-                iterator.call = iterator.reconstruction()
+                // (No `call` here: `stepped` below records the new state anyway.)
 
                 // The continuation is a plain `.iteratorPlay`: it will read the
                 // burial now stored on the iterator, and consume no more ints.
@@ -217,7 +217,7 @@ nonisolated extension Interpreter {
                     under: payload,
                     in: interpreter
                 )
-                return [Router(.iterator, iterator.stepped())]
+                return [Router(.iterator, iterator.stepped(recording: interpreter.recording))]
             }
         )
 
@@ -231,7 +231,7 @@ nonisolated extension Interpreter {
                 guard !iterator.isSpent, iterator.hasNextPass else {
                     return iteratorFarewell(iterator)
                 }
-                return [Router(.iterator, iterator.stepped())]
+                return [Router(.iterator, iterator.stepped(recording: recording))]
             }
         )
 
@@ -373,7 +373,7 @@ nonisolated extension Interpreter {
                     return iteratorFarewell(iterator)
                 }
 
-                iterator.call = iterator.reconstruction()
+                iterator.call = recording(iterator.reconstruction())
                 return iteratorBuilt(iterator)
             }
         )
@@ -396,7 +396,7 @@ nonisolated extension Interpreter {
                 iterator.value = 0
                 // A loop can always run its first pass — an iterator with nothing
                 // to emit at cursor 0 could never have been built.
-                iterator.call = iterator.reconstruction()
+                iterator.call = recording(iterator.reconstruction())
                 return iteratorBuilt(iterator)
             }
         )

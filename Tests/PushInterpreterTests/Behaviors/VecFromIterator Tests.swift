@@ -368,7 +368,7 @@ struct VecFromIteratorTests {
     @Test func `a partly-run loop collects and reproduces its tail`() {
         var iterator = walking(VecIntItem([1, 2, 3, 4]))
         iterator.call = iterator.reconstruction()
-        iterator = iterator.stepped().stepped()
+        iterator = iterator.stepped(recording: .on).stepped(recording: .on)
         let inty = loaded(iterator)
         doThis(.vecFromIterator, to: inty)
 
