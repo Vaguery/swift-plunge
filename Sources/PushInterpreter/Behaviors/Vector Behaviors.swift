@@ -70,7 +70,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 return [
                     Router(
@@ -89,7 +89,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 var result = x.value
                 result.append(y.value)
@@ -110,7 +110,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V)
                 return [
                     Router(
@@ -129,7 +129,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 return [
                     Router(
@@ -153,7 +153,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 return [
                     Router(
@@ -176,7 +176,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 return [
                     Router(
@@ -195,7 +195,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 return [
                     Router(
@@ -214,7 +214,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
                 let range = x.value.count
                 let idx = range - (min(range, max(y.value, 0)))
@@ -237,7 +237,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
                 let range = x.value.count
                 let idx = (min(range, max(y.value, 0)))
@@ -261,7 +261,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.contains(y.value)
                 return [
@@ -285,7 +285,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 if let result = x.value.first {
                     return [
@@ -308,7 +308,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 if let result = x.value.last {
                     return [
@@ -332,7 +332,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
                 let range = x.value.count
                 if range == 0 {
@@ -361,7 +361,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.firstIndex(of: y.value) ?? -1
                 return [
@@ -386,7 +386,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 let result = x.value.count(where: { $0 == y.value })
                 return [
@@ -422,7 +422,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V)
                 return [
                     Router(
@@ -479,7 +479,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (hay, needle) = (a[0] as! V, a[1] as! V)
                 return [
                     Router(
@@ -502,7 +502,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (hay, needle) = (a[0] as! V, a[1] as! V)
                 return [
                     Router(
@@ -525,7 +525,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (hay, needle) = (a[0] as! V, a[1] as! V)
                 return [
                     Router(
@@ -551,7 +551,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (repl, needle, subject) = (a[0] as! V, a[1] as! V, a[2] as! V)
                 return [
                     Router(
@@ -571,7 +571,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.pushStack, V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (repl, needle, subject) = (a[0] as! V, a[1] as! V, a[2] as! V)
                 return [
                     Router(
@@ -614,7 +614,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
                 var result = x.value
                 result.removeAll(where: { $0 == y.value })
@@ -638,7 +638,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.Scalar.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (a[0] as! V, a[1] as! V.Scalar, a[2] as! V.Scalar)
                 let result = x.value.map({ $0 == z.value ? y.value : $0 })
                 return [
@@ -661,7 +661,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, V.Scalar.pushStack, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (a[0] as! V, a[1] as! V.Scalar, a[2] as! V.Scalar)
                 var result = x.value
                 if let idx = result.firstIndex(where: { $0 == z.value }) {
@@ -687,7 +687,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int, V.Scalar.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (a[0] as! V, a[1] as! IntItem, a[2] as! V.Scalar)
                 var result = x.value
                 if result.count > 0 {
@@ -717,7 +717,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (a[0] as! V, a[1] as! IntItem, a[2] as! IntItem)
                 var result = x.value
 
@@ -764,7 +764,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
                 let count = x.value.count
                 // `.magnitude` (a UInt) avoids `abs(Int.min)` trapping; the modulo
@@ -851,7 +851,7 @@ nonisolated extension Interpreter {
                     (args[0] as? V)?.value.count ?? 0
                 }),
             ],
-            fxn: { a in
+            fxn: { a, recording in
                 let template = a[0] as! V
                 // Top-first out of the planner, so reversing puts the first-written
                 // element first — the same order `pushAll` would put them back in.
@@ -969,7 +969,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! V
                 guard !x.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(
@@ -1002,7 +1002,7 @@ nonisolated extension Interpreter {
             // All four `vecXIterate` at once — the factory is the right place for a
             // family judgment, because there is then no way to tag three of four.
             tags: [.reEntrant],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(
@@ -1691,7 +1691,7 @@ nonisolated extension Interpreter {
         .vecFromIterator,
         takes: [.iterator],
         tags: [.fallible],
-        fxn: { a in
+        fxn: { a, recording in
             let iterator = a[0] as! IteratorItem
             // As `.codeFromIterator`: a success ends the loop and the farewell
             // hands the body back to `.code`, so the crux must pop it or the

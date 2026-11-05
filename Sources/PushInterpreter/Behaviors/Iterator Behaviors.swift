@@ -118,7 +118,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorStep,
             takes: [.iterator],
-            fxn: { a in
+            fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
 
@@ -226,7 +226,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorPopState,
             takes: [.iterator],
-            fxn: { a in
+            fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent, iterator.hasNextPass else {
                     return iteratorFarewell(iterator)
@@ -258,7 +258,7 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [.iterator],
-            fxn: { a in
+            fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 var results = [Router(.iterator, iterator)]
                 if let item = field(iterator),
@@ -356,7 +356,7 @@ nonisolated extension Interpreter {
             // on a walking iterator has no end to set — so the whole family is
             // fallible, tagged once here.
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 var iterator = a[1] as! IteratorItem
 
                 // A refusal hands the iterator back untouched and says why: the
@@ -391,7 +391,7 @@ nonisolated extension Interpreter {
             .iteratorRestart,
             takes: [.iterator],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 var iterator = a[0] as! IteratorItem
                 iterator.value = 0
                 // A loop can always run its first pass — an iterator with nothing
@@ -528,7 +528,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly, .fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 // `.int` is a stack, so the last argument written is on top:
                 // `origin dest stride cursor burial` arrives reversed.
                 let (burial, cursor, stride, destination, origin) = (
@@ -599,7 +599,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly],
-            fxn: { a in
+            fxn: { a, recording in
                 let origin = a[0]
                 let (burial, cursor) = (a[1] as! IntItem, a[2] as! IntItem)
                 let (emits, body) = (a[3] as! BoolItem, a[4] as! CodeItem)
@@ -665,7 +665,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly],
-            fxn: { a in
+            fxn: { a, recording in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
                 let emits = a[4] as! BoolItem
@@ -705,7 +705,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly],
-            fxn: { a in
+            fxn: { a, recording in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
                 let emits = a[4] as! BoolItem
@@ -752,7 +752,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly, .fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let box = a[0] as! CodeItem
                 let (burial, cursor, count) = (
                     a[1] as! IntItem, a[2] as! IntItem, a[3] as! IntItem

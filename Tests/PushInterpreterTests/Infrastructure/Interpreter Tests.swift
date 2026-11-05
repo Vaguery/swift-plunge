@@ -25,7 +25,7 @@ struct InterpreterTests {
         [.bool: [BoolItem(false)]]
     
     
-    let fakeAdd = Behavior(.intAdd, takes: [], fxn: {_ in [Router(.error, ErrorItem("I haz no stick"))]})
+    let fakeAdd = Behavior(.intAdd, takes: [], fxn: { _, _ in [Router(.error, ErrorItem("I haz no stick"))] })
 
 
     @Test func `new interpreter has reasonable defaults`() {

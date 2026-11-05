@@ -232,6 +232,11 @@ nonisolated final class Interpreter {
     // pre-seeding of nil slots is needed.
     var constants: [PushInstruction: any Item] = [:]
     var config: InterpreterSettings = Interpreter.defaultSettings
+
+    /// Whether this run records provenance, as Behaviors receive it: pure ones as
+    /// their transformer's second argument, side-effecting ones by asking the
+    /// interpreter they are handed.
+    var recording: ProvenanceRecording { ProvenanceRecording(isOn: config.recordsProvenance) }
     var program: [any Item] = []
     var printout: String = ""
     // Use AnyRecorder for type erasure of Recorder generic type

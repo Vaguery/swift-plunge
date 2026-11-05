@@ -14,7 +14,7 @@ nonisolated extension Interpreter {
             .intAdd,
             takes: [.int, .int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
                 let (result, hasOverflowed) = y.value.addingReportingOverflow(
@@ -48,7 +48,7 @@ nonisolated extension Interpreter {
             .intSubtract,
             takes: [.int, .int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
                 let (result, hasOverflowed) = y.value
@@ -81,7 +81,7 @@ nonisolated extension Interpreter {
             .intMultiply,
             takes: [.int, .int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
                 let (result, hasOverflowed) = y.value
@@ -113,7 +113,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intMax,
             takes: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -130,7 +130,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intMin,
             takes: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -148,7 +148,7 @@ nonisolated extension Interpreter {
             .intQuot,
             takes: [.int, .int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
                 let (result, hasOverflowed) = y.value.dividedReportingOverflow(
@@ -193,7 +193,7 @@ nonisolated extension Interpreter {
             .intMod,
             takes: [.int, .int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
 
                 let (result, hasOverflowed) = y.value
@@ -236,7 +236,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intGT,
             reads: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -253,7 +253,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intGTE,
             reads: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -270,7 +270,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intLTE,
             reads: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -287,7 +287,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intLT,
             reads: [.int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
                 return [
                     Router(
@@ -305,7 +305,7 @@ nonisolated extension Interpreter {
             .intInc,
             takes: [.int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 let (result, hasOverflowed) = x.value.addingReportingOverflow(1)
 
@@ -336,7 +336,7 @@ nonisolated extension Interpreter {
             .intDec,
             takes: [.int],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 let (result, hasOverflowed) = x.value
                     .subtractingReportingOverflow(1)
@@ -367,7 +367,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intFromBool,
             takes: [.bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! BoolItem)
                 return [
                     Router(
@@ -384,7 +384,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intFromChar,
             takes: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (c) = (a[0] as! CharItem)
                 if let v = c.value.asciiValue {
                     return [
@@ -405,7 +405,7 @@ nonisolated extension Interpreter {
         Behavior(
             .intFromString,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (s) = (a[0] as! StringItem)
                 if let v = Int(s.value) {
                     return [
@@ -427,7 +427,7 @@ nonisolated extension Interpreter {
             .intFromDouble,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
 
                 // Int(x.value) traps on non-finite or out-of-Int-range doubles

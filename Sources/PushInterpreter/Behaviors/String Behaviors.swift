@@ -13,7 +13,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringButLast,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 return [
                     Router(
@@ -30,7 +30,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringConcat,
             takes: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -47,7 +47,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringConjChar,
             takes: [.string, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (y, x) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -64,7 +64,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringContains,
             reads: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -85,7 +85,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringContainsChar,
             reads: [.string, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -102,7 +102,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringIndexOfChar,
             reads: [.string, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 if let idx = x.value.firstIndex(of: y.value) {
                     let intIdx = x.value.distance(
@@ -133,7 +133,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringDrop,
             takes: [.string, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 let toDrop = max(0, y.value)
                 return [
@@ -153,7 +153,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringTake,
             takes: [.string, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 let toTake = max(0, y.value)
                 return [
@@ -171,7 +171,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringItemIsEmpty,
             reads: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 return [
                     Router(
@@ -188,7 +188,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFirst,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 if let c = x.value.first {
                     return [
@@ -209,7 +209,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringLast,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 if let c = x.value.last {
                     return [
@@ -230,7 +230,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringLTE,
             reads: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -247,7 +247,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringLT,
             reads: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -264,7 +264,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringGT,
             reads: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -281,7 +281,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringGTE,
             reads: [.string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
                 return [
                     Router(
@@ -298,7 +298,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringReverse,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 return [
                     Router(
@@ -315,7 +315,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringLength,
             reads: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 return [
                     Router(
@@ -332,7 +332,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFromBool,
             takes: [.bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! BoolItem)
                 return [
                     Router(
@@ -349,7 +349,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFromChar,
             takes: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CharItem)
                 return [
                     Router(
@@ -366,7 +366,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFromDouble,
             takes: [.double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 return [
                     Router(
@@ -383,7 +383,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFromInt,
             takes: [.int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 return [
                     Router(
@@ -400,7 +400,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringNth,
             takes: [.string, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 if x.value.isEmpty {
                     return []
@@ -449,7 +449,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringParseToLetters,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! StringItem
                 guard !x.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(
@@ -465,7 +465,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringOccurrencesOfChar,
             reads: [.string, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -487,7 +487,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringRemoveChar,
             takes: [.string, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -507,7 +507,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringReplaceChar,
             takes: [.string, .char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (
                     a[0] as! StringItem,
                     a[1] as! CharItem,
@@ -534,7 +534,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringReplaceFirstChar,
             takes: [.string, .char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (
                     a[0] as! StringItem,
                     a[1] as! CharItem,
@@ -565,7 +565,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringReplace,
             takes: [.string, .string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (
                     a[0] as! StringItem,  // replacement
                     a[1] as! StringItem,  // target
@@ -587,7 +587,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringReplaceFirst,
             takes: [.string, .string, .string],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (
                     a[0] as! StringItem,  // replacement
                     a[1] as! StringItem,  // target
@@ -613,7 +613,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringRest,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 var (x) = (a[0] as! StringItem)
                 let result = String(x.value.dropFirst(1))
                 return [
@@ -632,7 +632,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringSetChar,
             takes: [.string, .int, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 var (x, y, z) = (
                     a[0] as! StringItem,
                     a[1] as! IntItem,
@@ -670,7 +670,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringSplit,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! StringItem
                 guard !x.value.split(whereSeparator: { $0.isWhitespace }).isEmpty
                 else { return [] }
@@ -694,7 +694,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringNthWord,
             takes: [.string, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 let words = x.value.split { $0.isWhitespace }
                 guard !words.isEmpty else { return [] }
@@ -727,7 +727,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringCut,
             takes: [.string, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 let count = x.value.count
                 let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
@@ -749,7 +749,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringSubstring,
             takes: [.string, .int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (
                     a[0] as! StringItem,
                     a[1] as! IntItem,
@@ -802,7 +802,7 @@ nonisolated extension Interpreter {
             .stringIterate,
             takes: [.string, .code],
             tags: [.reEntrant],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(
@@ -831,7 +831,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringPushAllChars,
             takes: [.string],
-            fxn: { a in
+            fxn: { a, recording in
                 let s = a[0] as! StringItem
                 guard !s.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(

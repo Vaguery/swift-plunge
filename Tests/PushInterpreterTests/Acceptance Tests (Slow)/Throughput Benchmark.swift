@@ -62,7 +62,7 @@ struct ThroughputBenchmark {
     }
 
     /// The settings `Experiment.settings` hands the search in PlungeGP.
-    private func searchSettings(recordsProvenance: Bool) -> InterpreterSettings {
+    func searchSettings(recordsProvenance: Bool) -> InterpreterSettings {
         var settings = InterpreterSettings()
         settings.stepLimit = 1_000
         settings.maxLiveWeight = 256_000
@@ -90,7 +90,7 @@ struct ThroughputBenchmark {
     }
 
     /// The fixed, seeded program set every measurement here runs.
-    private func benchmarkPrograms() -> [[any Item]] {
+    func benchmarkPrograms() -> [[any Item]] {
         let all = Runner().definedInstructions
         let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
         var programs: [[any Item]] = []

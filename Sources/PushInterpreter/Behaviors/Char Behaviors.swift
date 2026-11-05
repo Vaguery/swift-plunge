@@ -15,7 +15,7 @@ nonisolated extension Interpreter {
             .charFromDouble,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
 
                 // Int(x.value) traps on non-finite or out-of-Int-range doubles,
@@ -51,7 +51,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charFromInt,
             takes: [.int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 let c = Character(UnicodeScalar(abs(x.value % 95) + 32)!)
                 return [
@@ -69,7 +69,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charGT,
             reads: [.char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -86,7 +86,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charGTE,
             reads: [.char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -103,7 +103,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charIsDigit,
             reads: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CharItem)
                 return [
                     Router(
@@ -120,7 +120,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charIsLetter,
             reads: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CharItem)
                 return [
                     Router(
@@ -137,7 +137,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charIsWhitespace,
             reads: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CharItem)
                 return [
                     Router(
@@ -154,7 +154,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charLT,
             reads: [.char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
                     Router(
@@ -171,7 +171,7 @@ nonisolated extension Interpreter {
         Behavior(
             .charLTE,
             reads: [.char, .char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
                 return [
                     Router(

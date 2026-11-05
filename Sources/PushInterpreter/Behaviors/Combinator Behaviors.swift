@@ -103,7 +103,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack],
-            fxn: { a in
+            fxn: { a, recording in
                 return [Router(stack, a[0]), Router(stack, a[0])]
             }
         )
@@ -266,7 +266,7 @@ nonisolated extension Interpreter {
             requires: isExec
                 ? [Requirement.takes(stack), Requirement.takes(stack)]
                 : [Requirement.reads(stack), Requirement.reads(stack)],
-            fxn: { a in
+            fxn: { a, recording in
                 let isSame = a[0].isEqual(to: a[1])
                 // Provenance law 3b (Items.swift): `.execEq` reads its arguments
                 // from `.exec` — the next two things ahead of it in the program,
@@ -331,7 +331,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack],
-            fxn: { _ in return [] }
+            fxn: { _, _ in return [] }
         )
         result[name] = inst
     }
@@ -379,7 +379,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack, stack, stack],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y, z) = (a[0], a[1], a[2])
                 return [
                     Router(stack, y),
@@ -480,7 +480,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack, stack],
-            fxn: { a in
+            fxn: { a, recording in
                 return [
                     Router(stack, a[0]), Router(stack, a[1]),
                 ]

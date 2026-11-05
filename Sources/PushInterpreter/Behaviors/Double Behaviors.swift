@@ -15,7 +15,7 @@ nonisolated extension Interpreter {
             .doubleAdd,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 let result = y.value + x.value
@@ -47,7 +47,7 @@ nonisolated extension Interpreter {
             .doubleQuot,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 var result =
@@ -81,7 +81,7 @@ nonisolated extension Interpreter {
             .doubleDivide,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 var result = (y.value / x.value)
@@ -113,7 +113,7 @@ nonisolated extension Interpreter {
             .doubleMod,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 var result = (y.value.truncatingRemainder(dividingBy: x.value))
@@ -144,7 +144,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleMin,
             takes: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -161,7 +161,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleMax,
             takes: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -179,7 +179,7 @@ nonisolated extension Interpreter {
             .doubleSubtract,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 let result = y.value - x.value
@@ -211,7 +211,7 @@ nonisolated extension Interpreter {
             .doubleMultiply,
             takes: [.double, .double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
 
                 let result = y.value * x.value
@@ -242,7 +242,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleFromInt,
             takes: [.int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 return [
                     Router(
@@ -259,7 +259,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleGT,
             reads: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -276,7 +276,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleGTE,
             reads: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -293,7 +293,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleLTE,
             reads: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -310,7 +310,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleLT,
             reads: [.double, .double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
                 return [
                     Router(
@@ -328,7 +328,7 @@ nonisolated extension Interpreter {
             .doubleCos,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 let result = cos(x.value)
                 if result.isInfinite || result.isNaN {
@@ -358,7 +358,7 @@ nonisolated extension Interpreter {
             .doubleSin,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 let result = sin(x.value)
                 if result.isInfinite || result.isNaN {
@@ -388,7 +388,7 @@ nonisolated extension Interpreter {
             .doubleTan,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 let result = tan(x.value)
                 if result.isInfinite || result.isNaN {
@@ -418,7 +418,7 @@ nonisolated extension Interpreter {
             .doubleInc,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 let result = x.value + 1.0
 
@@ -449,7 +449,7 @@ nonisolated extension Interpreter {
             .doubleDec,
             takes: [.double],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 let result = x.value - 1.0
 
@@ -479,7 +479,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleFromBool,
             takes: [.bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! BoolItem)
                 return [
                     Router(
@@ -497,7 +497,7 @@ nonisolated extension Interpreter {
         Behavior(
             .doubleFromChar,
             takes: [.char],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CharItem)
                 let num = (x.value.isASCII ? Double(x.value.asciiValue!) : 0.0)
                 return [
@@ -516,7 +516,7 @@ nonisolated extension Interpreter {
             .doubleFromString,
             takes: [.string],
             tags: [.fallible],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 let num = Double(x.value) ?? 0.0
                 // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;

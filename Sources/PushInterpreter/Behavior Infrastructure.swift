@@ -82,7 +82,11 @@ nonisolated class Behavior: @unchecked Sendable {
         return result
     }
 
-    let transformer: @Sendable ([any Item]) -> [Router]
+    /// Computes the results from the arguments. The second argument says whether
+    /// to record provenance: every `call` a transformer builds is written inside
+    /// `recording(…)`, which skips it entirely when recording is off (see
+    /// `ProvenanceRecording`).
+    let transformer: @Sendable ([any Item], ProvenanceRecording) -> [Router]
 
     /// Declared judgment about this instruction — see `InstructionTag`.
     ///
@@ -110,7 +114,7 @@ nonisolated class Behavior: @unchecked Sendable {
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         tags: Set<InstructionTag> = [],
-        fxn: @escaping @Sendable ([any Item]) -> [Router]
+        fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         // `takes` first: an index is popped before the stack it indexes into is
         // measured, so `intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
@@ -137,7 +141,7 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         reads: [PushStack],
         tags: Set<InstructionTag> = [],
-        fxn: @escaping @Sendable ([any Item]) -> [Router]
+        fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         self.init(label, requires: reads.map { Requirement.reads($0) }, tags: tags, fxn: fxn)
     }
@@ -147,7 +151,7 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         requires: [Requirement],
         tags: Set<InstructionTag> = [],
-        fxn: @escaping @Sendable ([any Item]) -> [Router]
+        fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         self.name = label
         self.requirements = requires
@@ -198,9 +202,10 @@ nonisolated class Behavior: @unchecked Sendable {
     /// The single seam subclasses vary: pure behaviors run their `transformer`,
     /// while `BehaviorWithSideEffects` mutates the interpreter directly. Keeping
     /// this apart from `act` lets the surrounding pipeline — arg-gathering,
-    /// distribution, and future Interpreter-mode hooks — be written just once.
+    /// distribution, and Interpreter-mode hooks — be written just once. The one
+    /// such hook today is provenance recording, decided per interpreter.
     func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {
-        self.transformer(arguments)
+        self.transformer(arguments, interpreter.recording)
     }
 
 
@@ -281,7 +286,7 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
         self.directModifier = modifier
-        super.init(label, requires: requires, tags: tags, fxn: {_ in return []})
+        super.init(label, requires: requires, tags: tags, fxn: { _, _ in return [] })
     }
 
     override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {

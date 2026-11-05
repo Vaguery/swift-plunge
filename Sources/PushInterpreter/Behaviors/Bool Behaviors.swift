@@ -13,7 +13,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolAnd,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [
@@ -31,7 +31,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolFromDouble,
             takes: [.double],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! DoubleItem)
                 return [
                     Router(
@@ -48,7 +48,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolFromInt,
             takes: [.int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
                 return [
                     Router(
@@ -65,7 +65,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolIfPThenQ,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -82,7 +82,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolIfQThenP,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -99,7 +99,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNand,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [
@@ -117,7 +117,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNor,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [
@@ -135,7 +135,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNot,
             takes: [.bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! BoolItem)
                 return [
                     Router(
@@ -155,7 +155,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNotP,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -172,7 +172,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNotPandQ,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -189,7 +189,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolNotQ,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -206,7 +206,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolOr,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [
@@ -224,7 +224,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolP,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -241,7 +241,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolPandNotQ,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -258,7 +258,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolQ,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 return [
                     Router(
@@ -275,7 +275,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolXnor,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [
@@ -293,7 +293,7 @@ nonisolated extension Interpreter {
         Behavior(
             .boolXor,
             takes: [.bool, .bool],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
                 let (arg1, arg2) = (x.value, y.value)
                 return [

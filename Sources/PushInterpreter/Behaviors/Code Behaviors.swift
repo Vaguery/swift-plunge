@@ -18,7 +18,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeAppend,
             takes: [.code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let result =
                     CodeItem(
@@ -38,7 +38,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codePair,
             takes: [.code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [
                     Router(
@@ -58,7 +58,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeIf,
             takes: [.bool, .code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 // Like execIf: `( then ) ( else ) .codeIf` — the last-written block
                 // is on top and arrives as a[1] (`else`), so a[2] is `then`.
                 let (cond, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
@@ -74,7 +74,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeItemIsEmpty,
             reads: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CodeItem)
                 let result =
                     BoolItem(
@@ -88,7 +88,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeLengthRoot,
             reads: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x) = (a[0] as! CodeItem)
                 let result =
                     IntItem(
@@ -110,7 +110,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeLengthPoints,
             reads: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.pointCount,
@@ -124,7 +124,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeWidth,
             reads: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.flatSize,
@@ -137,7 +137,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeDepth,
             reads: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! CodeItem
                 return [Router(.int, IntItem(
                     x.depth,
@@ -151,7 +151,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeContains,
             reads: [.code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 // a[0] is the haystack (top), a[1] the needle block. The needle
                 // is *denoted* for the search (singleton-unwrap), but the crux
                 // must re-push the original block so re-running denotes it again.
@@ -167,7 +167,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeIndexOfPoint,
             reads: [.code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return [Router(.int, IntItem(
                     hay.firstPointIndex(of: needle.denotedItem) ?? -1,
@@ -182,7 +182,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeContainer,
             reads: [.code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 guard let parent = hay.parentContaining(needle.denotedItem) else { return [] }
                 return [Router(.code, CodeItem(
@@ -210,7 +210,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeNthPoint,
             reads: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     boxedPointContents(x.point(at: i.value)),
@@ -224,7 +224,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeNthRoot,
             reads: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard !x.value.isEmpty else { return [] }
                 let element = x.value[Int(i.value.magnitude % UInt(x.value.count))]
@@ -254,7 +254,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else { return [] }
                 return [Router(.exec, point)]
@@ -267,7 +267,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             reads: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else { return [] }
                 let boxed = CodeItem(boxedPointContents(point))
@@ -294,7 +294,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeFlatten,
             takes: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedLeaves(),
@@ -308,7 +308,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeFlattenOnce,
             takes: [.code],
-            fxn: { a in
+            fxn: { a, recording in
                 let x = a[0] as! CodeItem
                 return [Router(.code, CodeItem(
                     x.flattenedOnce(),
@@ -322,7 +322,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeFlattenPoint,
             takes: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 let point = x.point(at: i.value)
                 let flattened: any Item =
@@ -341,7 +341,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeRemovePoint,
             takes: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 return [Router(.code, CodeItem(
                     x.removingPoint(at: i.value).value,
@@ -362,7 +362,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [.code, .code, .code],
-            fxn: { a in
+            fxn: { a, recording in
                 // a[0]=replacement (top), a[1]=needle, a[2]=subject (deepest).
                 let (repl, needle, subject) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! CodeItem)
                 let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
@@ -383,7 +383,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeCutRootAtGap,
             takes: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
                 // Gaps, not elements: a root of N items has N+1 gaps, from 0
                 // (before everything → empty prefix) to N (after everything →
@@ -425,7 +425,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeCutAtGap,
             takes: [.code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
                 let tokens = x.gapTokens
                 let idx = x.gapIndex(y.value)
@@ -452,7 +452,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeInsertAtGap,
             takes: [.code, .code, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 let (insert, subject, n) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! IntItem)
                 var tokens = subject.gapTokens
                 let idx = subject.gapIndex(n.value)
@@ -479,7 +479,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeWrapPoints,
             takes: [.code, .int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 // `top` is the last int written and `deep` the first, so the crux
                 // has to name them `deep top` — law 3 records in *written* order.
                 // Getting that backwards is invisible to the value here, since the
@@ -508,7 +508,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeFlattenRange,
             takes: [.code, .int, .int],
-            fxn: { a in
+            fxn: { a, recording in
                 // `deep top`, not `top deep` — see the note on `codeWrapPoints`.
                 let (x, top, deep) = (a[0] as! CodeItem, a[1] as! IntItem, a[2] as! IntItem)
                 let (lo, hi) = { let p = [x.gapIndex(top.value), x.gapIndex(deep.value)].sorted()
@@ -529,7 +529,7 @@ nonisolated extension Interpreter {
             .codeIterateRoot,
             takes: [.code, .code],
             tags: [.reEntrant],
-            fxn: { a in
+            fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [] }
                 return Interpreter.iteratorLoop(
@@ -554,7 +554,7 @@ nonisolated extension Interpreter {
             // The whole generated family is re-entrant — tagging in the factory is
             // what makes it impossible to tag two of the three.
             tags: [.reEntrant],
-            fxn: { a in
+            fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return Interpreter.iteratorLoop(
                     kind: .points(mode),
@@ -574,7 +574,7 @@ nonisolated extension Interpreter {
     Behavior(
         .codeWrapRoot,
         takes: [.code],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0] as! CodeItem)
             let result =
                 CodeItem(
@@ -588,7 +588,7 @@ nonisolated extension Interpreter {
     Behavior(
         .execQuote,
         takes: [.exec],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [InstructionItem(.execQuote), x]
@@ -601,7 +601,7 @@ nonisolated extension Interpreter {
     Behavior(
         .intQuote,
         takes: [.int],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.intQuote)]
@@ -613,7 +613,7 @@ nonisolated extension Interpreter {
     Behavior(
         .boolQuote,
         takes: [.bool],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.boolQuote)]
@@ -625,7 +625,7 @@ nonisolated extension Interpreter {
     Behavior(
         .stringQuote,
         takes: [.string],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.stringQuote)]
@@ -637,7 +637,7 @@ nonisolated extension Interpreter {
     Behavior(
         .charQuote,
         takes: [.char],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.charQuote)]
@@ -649,7 +649,7 @@ nonisolated extension Interpreter {
     Behavior(
         .doubleQuote,
         takes: [.double],
-        fxn: {a in
+        fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.doubleQuote)]
@@ -715,7 +715,7 @@ nonisolated extension Interpreter {
         .codeFromIterator,
         takes: [.iterator],
         tags: [.fallible],
-        fxn: { a in
+        fxn: { a, recording in
             let iterator = a[0] as! IteratorItem
             // The farewell returns the body to `.code`, *under* the result. The
             // crux has to clear it, or the fragment leaves debris on the very
@@ -756,7 +756,7 @@ nonisolated extension Interpreter {
     Behavior(
         .iteratorQuote,
         takes: [.iterator],
-        fxn: { a in
+        fxn: { a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
             result.call = [x, InstructionItem(.iteratorQuote)]
