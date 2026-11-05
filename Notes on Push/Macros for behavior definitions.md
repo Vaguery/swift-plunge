@@ -2,6 +2,17 @@
 
 *A design proposal. Nothing here is built. Branch: `macroExploration`.*
 
+> **Status, 2026-11-05.** Phase 2 of the speed-up separated calculation from provenance *without*
+> macros: every transformer now receives a `ProvenanceRecording`, and every `call` is written inside
+> `recording(…)` (an unevaluated `@autoclosure` when recording is off). See *Provenance and the crux.md*,
+> "Recording only when asked". A macro was weighed and deferred. It would help only the ~170
+> hand-written simple Behaviors. The hard cases (exec continuations record nothing; iterator provenance
+> lives in `IteratorItem`; 442 of 608 Behaviors come from runtime factories; `reading`/`selecting`
+> depend on routing) are out of a per-Behavior macro's reach. And swift-syntax costs build time,
+> toolchain coupling and consumer-side macro trust. Stage 1 below would now derive `recording([...])`
+> rather than a bare `call`; the counts in "The case" predate it (now 7,353 lines, 200 `call:` sites,
+> 608 instructions).
+
 ## The case
 
 `Sources/PushInterpreter/Behaviors/` is 7,342 of the library's 12,918 lines, and most of it is not

@@ -388,10 +388,55 @@ containment destroys history, and law 1b says containment should not.
 
 - `vecXPushAll` puts element 0 on top; `stringPushAllChars` puts the *last* char on top. A real
   semantic inconsistency between siblings, but changing it changes language semantics. Flagged only.
-- `==` walks the entire provenance DAG, so it is O(chain). Bounded chains make this tolerable.
+- ~~`==` walks the entire provenance DAG.~~ No longer: equality is value-only (`isEqual`), and ignores
+  `call` entirely.
 - `RecordedTrace` and `RecorderSpec` both claim in comments to retain `call` provenance for downstream
   analysis. They do not — `AnyItem` drops it. Either the comments are wrong or the export is missing;
   the unimplemented `codeFuncFrom_Crux` family in `Code instruction planning.markdown` suggests the
   latter was the plan.
 - `execWhile` records its continuation as `.execDoWhile`, following the klapaucius note it was ported
   from. Now moot for provenance (both are combinatory and record nothing), but the naming remains.
+
+## Recording only when asked (Phase 2, 2026-11-05)
+
+Provenance is now built **only when a run asks for it**. `InterpreterSettings.recordsProvenance`
+defaults to `false`, and with it off no Behavior builds a `call` at all. Previously every Behavior built
+its call tree and `push` stripped it afterwards (the strip existed to stop loops accumulating memory).
+
+**The seam.** Every Behavior's transformer receives a `ProvenanceRecording` alongside its arguments
+(`([any Item], ProvenanceRecording) -> [Router]`; side-effecting Behaviors read
+`interpreter.recording`). Every provenance expression is written inside it:
+
+```swift
+IntItem(y.value + x.value, call: recording([y, x, InstructionItem(.intAdd)]))
+```
+
+The argument is an `@autoclosure`, so when recording is off it is never evaluated: no array, no
+`Behavior.reading`/`selecting` sort, no iterator `reconstruction()`. Calculation is ordinary code; the
+provenance is the marked, unevaluated expression. `IteratorItem`'s `projection`, `element(at:)`,
+`collected`, `stepped` and `clamped` take the same argument (required, so no caller can forget), and
+`Interpreter.iteratorLoop` gates the one reconstruction 43 looping Behaviors share.
+
+**What guarantees it** (`Infrastructure/Provenance Off Parity Tests.swift`):
+- every Behavior, seeded 0, 1 and 4 deep, leaves identical stacks, weights and live weight with
+  recording on and off;
+- the throughput benchmark's 200 seeded programs run identically both ways;
+- with recording off no Behavior's results carry a `call` at any depth (inside blocks and iterators
+  too). This replaced the strip.
+
+Behavior tests that pin provenance construct `Interpreter.recordingProvenance()`, and the test helper
+`doThis` re-runs each instruction on an off-recording twin and requires identical values. So every
+mixed value-and-provenance test checks both modes. The Runner turns recording on for an evaluation that
+asks for `cruxInputTokens`, since that answer is read off the crux.
+
+**Cost.** Throughput benchmark (release, 129,615 steps): recording off 605 -> about 553 ns/step (~9%);
+on 610 -> about 580 (from waste removed in passing: `collected()` no longer reconstructs its private
+cursor each pass, and `iteratorPlayDelayed` no longer builds a reconstruction that `stepped()`
+overwrote). On the loop-heavy Provenance Cost Benchmark, run time is about 1.03x faster with recording
+off. Building call trees was never the dominant cost; the remaining profile is mostly `any Item`
+boxing.
+
+**Why not a macro (yet).** Considered for this change and deferred; see *Macros for behavior
+definitions.md*. The gate gives every Behavior one explicit provenance seam, which a later macro could
+emit exactly as written by hand.
+
