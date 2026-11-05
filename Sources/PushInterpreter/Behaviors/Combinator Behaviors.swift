@@ -278,20 +278,22 @@ nonisolated extension Interpreter {
                 // The non-destructive forms clean up the two operands they read so
                 // the crux reproduces just the bool (`Behavior.reading`); `.execEq`
                 // consumed its operands, so it records them plainly.
-                let record: [any Item] =
+                // A function, so it is only built when recording.
+                func record() -> [any Item] {
                     isExec
-                    ? [InstructionItem(name), a[0], a[1]]
-                    : Behavior.reading(
-                        [stack: 2],
-                        producing: .bool,
-                        from: [a[1], a[0], InstructionItem(name)]
-                    )
+                        ? [InstructionItem(name), a[0], a[1]]
+                        : Behavior.reading(
+                            [stack: 2],
+                            producing: .bool,
+                            from: [a[1], a[0], InstructionItem(name)]
+                        )
+                }
                 return [
                     Router(
                         .bool,
                         BoolItem(
                             isSame,
-                            call: record)
+                            call: recording(record()))
                     )
                 ]
             }

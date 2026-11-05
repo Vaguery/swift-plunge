@@ -22,7 +22,7 @@ nonisolated extension Interpreter {
                     takes: [],
                     modifier: { (interpreter, collectedItems) in
                         if var v = interpreter.inputs[instructionName] {
-                            v.call = [InstructionItem(instructionName)]
+                            v.call = interpreter.recording([InstructionItem(instructionName)])
                             return [Router(.exec, v)]
                         } else {
                             // Records the same `[.inputN]` its success branch
@@ -38,7 +38,7 @@ nonisolated extension Interpreter {
                                     ErrorItem(
                                         "No input for \(instructionName)",
                                         kind: .missingInput,
-                                        call: [InstructionItem(instructionName)])
+                                        call: interpreter.recording([InstructionItem(instructionName)]))
                                 )
                             ]
                         }

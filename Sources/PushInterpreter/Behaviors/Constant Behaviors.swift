@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
                     takes: [],
                     modifier: { (interpreter, collectedItems) in
                         if var v = interpreter.constants[instructionName] {
-                            v.call = [InstructionItem(instructionName)]
+                            v.call = interpreter.recording([InstructionItem(instructionName)])
                             return [Router(.exec, v)]
                         } else {
                             // As the `.inputN` errors: records the same
@@ -37,7 +37,7 @@ nonisolated extension Interpreter {
                             return [Router(.error,
                                            ErrorItem("No constant assigned for \(instructionName)",
                                                      kind: .missingConstant,
-                                                     call: [InstructionItem(instructionName)]))]
+                                                     call: interpreter.recording([InstructionItem(instructionName)])))]
                         }
                     })
             }
