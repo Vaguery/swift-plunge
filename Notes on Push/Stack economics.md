@@ -72,7 +72,8 @@ body came off `.exec`, where the program supplied it for free. Now `execDoRange`
 out of `.code` **cannot loop at all** — and it has ~11 ways to refill against 38 ways to drain.
 
 If evolvability is the goal (§15), this is the first place to look. `codeGather` and `codeWrapPoints` are
-enumerated but unimplemented, and either would be a real source.
+enumerated but unimplemented, and either would be a real source. *(Both built since: `codeGather` as
+`codePair`, plus `codeWrapPoints`, and `codeFromIterator` also builds blocks. Noted 2026-11-06.)*
 
 ## 2. A program cannot create a vector at all — only reshape one it was given
 
@@ -87,6 +88,9 @@ That is the whole list. Across all 38 `vecInt*` instructions, every other one ne
 with and most return a smaller one. `vecIntConj` looks like a builder but appends an int to an *existing*
 vector. There is no `vecIntFromInt`, no `vecIntGather`, no empty-vector constructor. `vecIntPushAll` runs
 the other way — and now that it is an iterator, one element at a time.
+
+*(Overtaken since by `.vecXConstruct`, `.vecFromIterator` and the read-only `.vecXReadItems`/`ReadStack`;
+see § Opened below. Noted 2026-11-06.)*
 
 **So the vector stacks are closed systems.** Whatever a program is handed as an input, a constant or a
 literal, it can reshape forever; the moment it flushes them, no instruction in the language can make
@@ -296,6 +300,10 @@ instructions guaranteed an argument.
 ## What this suggests, in rough order
 
 Not decisions — the trade-offs belong to whoever picks these up.
+
+*(Noted 2026-11-06: 1–3 are done. Vectors have sources (`.vecXReadItems`/`ReadStack`, `.vecFromIterator`).
+The crux-only set is the `.cruxOnly` tag on 15 constructors, not an `InstructionSets` entry, and
+`contingencySources` was dropped (Roadmap #18). `.code` has `codePair` (the planned `codeGather`).)*
 
 1. **Give the vectors a source.** Something like `vecIntGather`, or an empty-vector constant. Right now
    the only vector a program can ever have is one it was handed, which makes the whole vector half of the

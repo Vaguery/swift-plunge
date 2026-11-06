@@ -223,7 +223,7 @@ So: **an instruction must not consume arguments proportional to the work it does
 originally re-read its delay every pass, which meant a thousand-pass loop ate a thousand `.int`s. That was
 a dead end. It now reads once and stores the depth on the iterator, and the loop continues with a token
 that consumes nothing. If for some algorithmic reason the depth needs to change, a separate instruction
-(not yet written) can do that at lower risk.
+(not yet written) can do that at lower risk. *(Since written: `.iteratorSetDepth`. Noted 2026-11-06.)*
 
 Two corollaries, both measured rather than guessed ("Stack economics.md"):
 

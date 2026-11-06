@@ -48,7 +48,7 @@ every case:
 `laps` makes a walk go round its source again — `[a b c]` cycled three times emits `a b c a b c a b c`.
 It is an **attribute rather than a kind**, which is the whole reason it costs nothing: at `laps == 1` the
 wrap is the identity, so one expression serves both and there is no second code path to keep honest. It
-composes with `.points` for free when that lands.
+composes with `.points` for free when that lands. *(`.points` is built; noted 2026-11-06.)*
 
 **The cursor does not rewind, and that is the design.** Only the index wraps. Resetting the cursor to 0
 at the end of a lap is observably identical *this pass* and wrong forever after:
@@ -281,7 +281,8 @@ other ending pays. A *refusal* hands the whole iterator back, as the setters do.
 
 The iterator follow-ons — `.points(into:)`, map/filter (the accumulator work), `.sampling(steps:)`, a
 real `.codeIterate` — are in the single roadmap: see `Roadmap.md` §A. The `.points` architecture is
-worked out here; the rest are one-liners there.
+worked out here; the rest are one-liners there. *(Noted 2026-11-06: `.points` and a real `.codeIterate`
+are built (`codeIteratePoints`, `codeIterateRoot`); map/filter and `.sampling` are not.)*
 
 ## Fixed in passing
 

@@ -1,6 +1,11 @@
 # Macros for behavior definitions
 
 *A design proposal. Nothing here is built. Branch: `macroExploration`.*
+*(Correction, 2026-11-06: Stage 0 and the Stage 1c tag work are built: `InstructionTag` as an open struct
+with `TagProvenance`, `InstructionRole`, and `InstructionSets.iterators` derived from `.reEntrant`. Roadmap
+#17's tags are applied, and the four gap instructions are built, so the "enum↔registry diff" below is now
+empty. `Tags.swift` became `Roles.swift`, `InstructionTag.swift` and `Traits.swift`. Stages 1a/1b, 2 and 3
+are not built.)*
 
 > **Status, 2026-11-05.** Phase 2 of the speed-up separated calculation from provenance *without*
 > macros: every transformer now receives a `ProvenanceRecording`, and every `call` is written inside

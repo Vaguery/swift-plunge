@@ -14,6 +14,9 @@
 > family (root + points level — wants `.points`), pattern-as-first-class-item (research), and the
 > `Substring`/`SubVec` naming reconciliation (left alone — cosmetic churn). The prose below is the
 > original proposal, kept for its arguments.
+>
+> *(Noted 2026-11-06: the code partitioning/search family is built since, with the `.points` iterator and
+> the gap instructions (`CodeGaps.swift`). The other deferrals stand.)*
 
 ---
 

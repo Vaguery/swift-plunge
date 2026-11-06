@@ -7,6 +7,10 @@ resolution into its home note.
 Nothing here is urgent unless a dependency says so. Ordering within a section is rough interest, not
 commitment.
 
+> **Cross-repo overview (2026-11-06):** PlungeGP's `Notes and Planning/Open directions.md` collates every open
+> item from these notes, the app's notes and both repos' code, including the many interpreter items that
+> have no number here. This Roadmap stays the authority for numbered language work.
+
 ---
 
 ## A. Language features not yet built
@@ -30,7 +34,9 @@ commitment.
 
 ## B. Non-destructive-query follow-ups
 
-8. **Retrofit the iterator `Peek` getters** to cleanup-pop cruxes. They already leave debris on the
+8. ~~**Retrofit the iterator `Peek` getters** to cleanup-pop cruxes.~~ **BUILT** (noted 2026-11-06):
+   `.iteratorPeekStride` and `.iteratorPeekLaps` record through `Behavior.reading`
+   (*Iterator Behaviors.swift*; see also Resolved, issue #26). They already leave debris on the
    argument stack — the first latent violators of the composition invariant (Design Principles §1) — and
    `Behavior.reading` fixes them with the same helper the queries use.
 9. **Borderline element-access / selection** (`vecXNth`, `stringNth`, `xMax`/`xMin`) — an opt-in second
@@ -49,7 +55,7 @@ commitment.
 ## D. Genome and search
 
 12. **ForestGenome** — the evolvable genome: block lengths carried as genes, on the shared
-    `BlockPacking`. Placeholder exists. → *Stack economics.md* Part 3
+    `BlockPacking`. Placeholder exists (since 2026-07-19 in PlungeGP's `Genome Reference/`, not here). → *Stack economics.md* Part 3
 13. **BB9 genome** — placeholder, undesigned. (Worth keeping alive? — flagged as marginal.)
 14. **A genome-length sweep** — the obvious next diagnostic; the Fibonacci cliff makes length
     high-leverage. → *Stack economics.md* Part 3 "does not answer"
@@ -61,6 +67,9 @@ commitment.
 17. **A `crux-only` instruction set** — the ~12 `iteratorFromX` constructors want ~7 arguments and starve
     ~100% of the time, so they are dead weight in an evolvable genome. `InstructionTag` now exists;
     tagging this set is the remaining step. → *Provenance and the crux.md* TODO
+    **Tag BUILT** (noted 2026-11-06): `.cruxOnly` is on 15 constructors (13 `iteratorFrom…`, 2
+    `iteratorRepeating…`), asserted in *Instruction Tag Tests*. What's left is on the consumer side: nothing
+    in PlungeGP reads the tag yet, and its `essential` preset still includes nine of them.
 
 ## E. Provenance open questions → *Provenance and the crux.md*
 
@@ -80,6 +89,24 @@ commitment.
     walker recorded itself cursor-first, and a cursor live at `laps == 7` is past the end at the
     `laps == 1` a constructor starts with, so the rebuild was refused as spent. It now builds at cursor 0,
     sets laps, then carries the cursor. → *Design Principles.md* §1
+
+*#20–23 were dropped by accident in the #27 commit (`81af0cd`) and are still cited elsewhere; restored
+2026-11-06 with their original text and a current status.*
+
+20. **Error-provenance inconsistency** — `.inputN`/`.intN` "not bound" errors record nothing, while the
+    success path of the same instruction records `[.inputN]`. Explanatory value, not correctness.
+    **FIXED since:** both record `[InstructionItem(name)]` (*Input Behaviors.swift*, *Constant Behaviors.swift*).
+21. **Vector elements have no provenance** — `VecIntItem.value` is a raw `[Int]`. The one place
+    containment destroys history, against law 1b. Costs addressability, not correctness. **Blocks #23.**
+22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
+    Still true across `Codable` (in memory the trace keeps `call`).
+23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.
+    The payoff the whole provenance exercise is for. Wants #21 first. → *Code instruction planning.md*
+    **Depends on call trees:** a crux-consuming behavior must guard with `Interpreter.requiresProvenance(name)`
+    and no-op when recording is off. The *CruxToFunction Diagnostics* found substituting an input is the
+    faithful curry and deleting a leaf gives a repositioned function (*Map and reduce from a crux-function.md*);
+    which one is canonical is open.
+23a. **Remove the `.isContingent` flag entirely.** — **done**, see Resolved below.
 
 ## F. Decisions with a number or a semantics still open
 
@@ -137,7 +164,8 @@ Left for later, with the arguments in the coverage note:
 32. **Chunking** (fixed windows, overlapping/non-overlapping) — needs a **new `IteratorKind`**; `stride`
     is honoured only by `.counting` today (the `.points` kind now exists as a further precedent, and its
     `PointsEmission` mode shows a kind carrying an emission variant without new kinds). Overlaps #A.1.
-33. **Code gap-based ops** — `codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`, `codeWrapPoints` —
+33. ~~**Code gap-based ops**~~ **BUILT** (noted 2026-11-06; see Resolved, `CodeGaps.swift`). Original
+    entry: `codeCutAtGap`, `codeInsertAtGap`, `codeFlattenRange`, `codeWrapPoints` —
     **the only unbuilt code instructions left**, postponed for a **gap coordinate model** design pass (how
     positions *between* points are numbered; child-array splice vs Plushy Open/Close-with-repair). The rest
     of the code batch is **built** (`Code instruction planning.md`, branch `codeTreeInstructions`): every
