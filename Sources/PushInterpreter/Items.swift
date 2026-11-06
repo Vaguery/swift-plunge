@@ -148,6 +148,14 @@ public nonisolated protocol Item: Pretty, Sendable {
     /// concurrency worker thread's stack is small (see `maxCallDepth`).
     var callDepth: Int {get}
 
+    /// How deeply other items nest inside this one's *value*, counting every
+    /// container: blocks inside blocks, and blocks and iterators inside each other
+    /// (an iterator's origin, destination and body; an iterator quoted into a
+    /// block). 0 for a scalar. Cached by the containers at construction, so
+    /// `maxCodeDepth` can be enforced at every push without a walk, and so no walk
+    /// or release can recurse deeper than it on a small worker-thread stack.
+    var nestingDepth: Int {get}
+
     func isEqual(to other: any Item) -> Bool
 }
 
@@ -168,6 +176,9 @@ nonisolated extension Item {
     // Default for scalar items (Bool, Int, Double, Char, Instruction, Error):
     // one unit each. Container types override with a stored, memoized weight.
     public var weight: Int { 1 }
+
+    /// Scalars hold nothing: depth 0. Containers store their own.
+    public var nestingDepth: Int { 0 }
 
 
     /// The `callWeight` and `callDepth` for a freshly assigned `call`. Each child already stores
@@ -410,11 +421,15 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// holds, at every level. Reuses each child's already-stored weight.
     public let weight: Int
 
-    /// How deeply blocks nest inside this one: 0 for an empty block, 1 for a flat
-    /// one, one more per level — `(1 (2 3))` is 2. Computed once from the
-    /// children's stored depths, like `flatSize`, so `maxCodeDepth` can be checked
-    /// at every push without a walk. Weight cannot stand in for it: wrapping a
-    /// block again adds a level and no weight.
+    /// How deeply blocks nest inside this one, counting blocks only: 0 for an
+    /// empty block, 1 for a flat one, one more per level — `(1 (2 3))` is 2. This
+    /// is what `.codeDepth` reports. Computed once from the children, like
+    /// `flatSize`.
+    public let blockDepth: Int
+
+    /// `Item.nestingDepth`: like `blockDepth`, but counting iterators too (a block
+    /// holding a quoted iterator whose body is a block…). The one `maxCodeDepth`
+    /// enforces. Weight cannot stand in for it: wrapping adds a level and no weight.
     public let nestingDepth: Int
 
     public init(_ value: [any Item], call: [any Item] = []) {
@@ -423,22 +438,22 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
         self.callMeasure = Self.measureCall(call)
         self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
         self.weight = value.reduce(0) { $0 + $1.weight }
+        self.blockDepth = value.isEmpty
+            ? 0
+            : 1 + (value.lazy.compactMap { ($0 as? CodeItem)?.blockDepth }.max() ?? 0)
         self.nestingDepth = value.isEmpty
             ? 0
-            : 1 + (value.lazy.compactMap { ($0 as? CodeItem)?.nestingDepth }.max() ?? 0)
+            : 1 + (value.lazy.map(\.nestingDepth).max() ?? 0)
     }
 
     public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
         lhs.value == rhs.value
     }
     
+    /// `( a b c )`. Rendered by `NestedRendering`, which walks nested blocks and
+    /// iterators with an explicit stack rather than recursing.
     public func pretty() -> String {
-        var result = "( "
-        for i in value {
-            result += "\(i.pretty()) "
-        }
-        result += ")"
-        return result
+        NestedRendering.render(self)
     }
 
 
@@ -500,7 +515,7 @@ nonisolated extension CodeItem {
 
     /// The maximum nesting depth: root is 0, each nested block adds one.
     /// `(1 (2 3))` is 2, a flat block is 1, an empty block is 0.
-    var depth: Int { nestingDepth }
+    var depth: Int { blockDepth }
 
     /// Every leaf, left to right — the fully flattened contents. Empty blocks
     /// contribute nothing. `(1 (2 3) ())` → `[1, 2, 3]`.

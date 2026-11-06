@@ -101,4 +101,41 @@ struct DeepStructureSafetyTests {
         #expect(deepest <= bound)
         #expect(refusals > 0, "the over-deep wrap is refused, not silently built")
     }
+
+    /// Blocks and iterators nested inside each other, `rounds` times: each round
+    /// puts the block into an iterator and quotes that iterator into a block, two
+    /// levels at a time. (A runaway guard rendering this, thousands deep, killed a
+    /// worker thread in the second dual-mode stress run.)
+    func alternating(rounds: Int) -> CodeItem {
+        var block = CodeItem([IntItem(1)])
+        for _ in 0..<rounds {
+            let iterator = IteratorItem(kind: .repeating(into: nil), origin: block,
+                                        destination: IntItem(3), emits: true)
+            block = CodeItem([iterator])
+        }
+        return block
+    }
+
+    @Test func `nesting through iterators counts toward maxCodeDepth`() {
+        let block = alternating(rounds: 600)
+        #expect(block.nestingDepth == 1 + 2 * 600)
+        #expect(block.blockDepth == 1, "`.codeDepth` still counts blocks only")
+        let inty = Interpreter()
+        inty.push(block, to: .code)
+        #expect(inty.stacks[.code]!.isEmpty, "over-deep alternation is refused")
+        #expect(inty.stacks[.error]!.contains { $0.pretty().contains("maxCodeDepth") })
+        inty.push(alternating(rounds: 400), to: .code)
+        #expect(inty.stacks[.code]!.count == 1, "within the limit it is accepted")
+    }
+
+    /// At the default limit, rendering and releasing must be safe on a worker
+    /// thread: that is what the limit is for.
+    @Test func `structure nested to the limit renders and releases on a worker thread`() async {
+        let length = await Task.detached {
+            let block = alternating(rounds: InterpreterSettings().maxCodeDepth / 2)
+            return block.pretty().count
+        }.value
+        #expect(length > 0)
+    }
 }
+

@@ -59,12 +59,15 @@ nonisolated extension Interpreter {
             if code.flatSize > config.maxCodePoints {
                 return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
             }
-            // Stack safety rather than size: walking or releasing a block costs a
-            // stack frame per level, and wrapping adds a level without adding
-            // points or weight, so neither cap above sees it.
-            if code.nestingDepth > config.maxCodeDepth {
-                return "code depth \(code.nestingDepth) exceeds maxCodeDepth \(config.maxCodeDepth)"
-            }
+        }
+        // Stack safety rather than size: walking or releasing nested structure
+        // costs a stack frame per level, and wrapping adds a level without adding
+        // points or weight, so no cap above sees it. Counted through iterators as
+        // well as blocks: an iterator holds blocks and is quoted into them, and
+        // that alternation nested thousands deep killed a worker thread rendering
+        // it (the second dual-mode stress run, in the runaway guard).
+        if item.nestingDepth > config.maxCodeDepth {
+            return "nesting depth \(item.nestingDepth) exceeds maxCodeDepth \(config.maxCodeDepth)"
         }
         // The recursive backstop: catches nested content the per-dimension caps
         // above miss (a vector of long strings, code whose leaves are large).

@@ -137,7 +137,10 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// its own `call`, so the crux can still say how a computed bound was
     /// arrived at.
     public var origin: any Item {
-        didSet { source = SourceView(kind: kind, origin: origin) }
+        didSet {
+            source = SourceView(kind: kind, origin: origin)
+            nestingDepth = Self.depth(origin, destination, body)
+        }
     }
 
     /// What a walk reads from `origin`, worked out once — see `SourceView`. Kept in
@@ -147,7 +150,9 @@ public nonisolated struct IteratorItem: Item, Pretty {
 
     /// The end bound. `nil` for the kinds whose end derives from the origin
     /// itself — `.elements` runs out when the collection does.
-    public var destination: (any Item)?
+    public var destination: (any Item)? {
+        didSet { nestingDepth = Self.depth(origin, destination, body) }
+    }
 
     /// Emitted to `.code` each pass, for the `.codeDo` beside it to run.
     ///
@@ -161,7 +166,17 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// one constructor per source serve both forms, because a crux can emit `( )`
     /// for a bodyless iterator and get nil back. An empty body is a no-op body,
     /// so nothing is lost by conflating them.
-    public var body: CodeItem?
+    public var body: CodeItem? {
+        didSet { nestingDepth = Self.depth(origin, destination, body) }
+    }
+
+    /// `Item.nestingDepth`: one more than the deepest of what this iterator holds.
+    /// Maintained by the observers above (and set in `init`), so it is O(1) to read.
+    public private(set) var nestingDepth: Int = 1
+
+    static func depth(_ origin: any Item, _ destination: (any Item)?, _ body: CodeItem?) -> Int {
+        1 + max(origin.nestingDepth, destination?.nestingDepth ?? 0, body?.nestingDepth ?? 0)
+    }
 
     /// Whether a pass pushes its projection at all. `execDoRange` leaves its
     /// index on `.int` for the body to read; `execDoTimes` deliberately does not.
@@ -247,6 +262,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
         self.call = call
         self.callMeasure = Self.measureCall(call)
         self.source = SourceView(kind: kind, origin: origin)
+        self.nestingDepth = Self.depth(origin, destination, self.body)
     }
 
     /// The content this iterator holds, for the `maxItemWeight` budget: its
@@ -292,17 +308,23 @@ public nonisolated struct IteratorItem: Item, Pretty {
         }
     }
 
+    /// `«origin→destination by stride @cursor ↻laps silent ⤓burial body»`, with
+    /// the optional parts present only when they say something. Rendered by
+    /// `NestedRendering`, since origin and body can hold blocks holding iterators.
     public func pretty() -> String {
-        let where_ = destination.map { "\(origin.pretty())→\($0.pretty())" }
-            ?? origin.pretty()
+        NestedRendering.render(self)
+    }
+
+    /// The fixed text between the destination and the body: stride, cursor, laps,
+    /// the silent flag and the burial.
+    var prettyMiddle: String {
         let by = switch kind {
             case .counting(let stride): " by \(stride)"
             default:                    ""
         }
-        let doing = body.map { " \($0.pretty())" } ?? ""
         let deep = burial > 0 ? " ⤓\(burial)" : ""
         let round = laps > 1 ? " ↻\(laps)" : ""
-        return "«\(where_)\(by) @\(value)\(round)\(emits ? "" : " silent")\(deep)\(doing)»"
+        return "\(by) @\(value)\(round)\(emits ? "" : " silent")\(deep)"
     }
 }
 
