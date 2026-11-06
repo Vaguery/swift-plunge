@@ -94,6 +94,31 @@ What has to be got right:
 - **Both recording modes still agree.** The value parity sweeps and the dual-mode stress run must stay
   green: compression is a value representation, so it has to behave identically with provenance off.
 
+## The first candidate: deep wrapping
+
+The stress run's deepest states are "x nested N deep", built by `.codeWrapRoot` (Push3's `CODE.WRAP`) in
+a loop body. Two ways to give that shape the iterator treatment, solving different halves:
+
+- **A `.nesting` iterator kind**, like `.repeating` for the dup family: origin `x`, count `N`, each pass
+  emitting `x` wrapped one level deeper. This fixes the *history*: its crux is its constructor, O(1),
+  instead of a chain of wraps that runs into `maxCallDepth` and loses its explanation. But what it emits is
+  still an N-deep block, and every stress-run failure was about the *value* (rendering at size × depth,
+  release recursion, `maxCodeDepth` refusals).
+- **Compression inside `.codeWrapRoot` itself** fixes the *value*. Evolved programs make deep blocks by
+  wrapping in loops, not by calling a new instruction, so the compressor has to live in the wrap: wrapping
+  a value stored as "x nested N" gives "x nested N+1", in O(1). This is construction-time compression,
+  aimed at the one shape that dominated.
+
+They meet in the printed form. **The representative needs no new instruction:**
+`( x ) ( .codeWrapRoot ) N .execDoTimes` is already runnable Push. Replaying it re-wraps step by step, and
+because the wrap compresses, the replay rebuilds the same compact value: the fixed point an iterator's
+reconstruction has. A dedicated `.codeNest` would only be a shorter spelling. With nests stored compactly,
+`maxCodeDepth` can go back to being a budget rather than the stack-safety bound it became in Phase 2,
+because a compact nest costs no stack to release or render.
+
+The `.nesting` iterator then stays optional: for programs that want each level as it is built, tagged
+`.cruxOnly` like the other iterator constructors.
+
 ## Before building Level 2: measure what to compress
 
 The shapes above are inferred from what huge states looked like, not from where they came from. Before
