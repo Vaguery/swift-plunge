@@ -85,6 +85,9 @@ nonisolated extension Interpreter {
     /// `"No input for input3"`) are diagnostics for a human and nothing enforces
     /// them, so a substring match would have gone quietly wrong the first time one
     /// was reworded — and a tally that drifts is worse than no tally.
+    ///
+    /// The count comes from `StackSet.errorCount(of:)`, which keeps a running
+    /// tally rather than scanning `.error` (unbounded) on every call.
     static func errorCount_Behavior(
         _ name: PushInstruction,
         counting kind: ErrorKind
@@ -93,8 +96,7 @@ nonisolated extension Interpreter {
             name,
             takes: [],
             modifier: { (interpreter, _) in
-                let n = interpreter.stacks[.error]!
-                    .reduce(0) { $0 + (($1 as? ErrorItem)?.kind == kind ? 1 : 0) }
+                let n = interpreter.stacks.errorCount(of: kind)
                 return [Router(.int, IntItem(n, call: []))]
             }
         )

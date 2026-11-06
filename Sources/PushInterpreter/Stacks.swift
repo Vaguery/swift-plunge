@@ -88,6 +88,10 @@ nonisolated extension PushStack {
 nonisolated struct StackSet: Sendable {
     private var slots: [Deque<any Item>?]
 
+    /// Per-kind counts of the errors on `.error`, for the `errorCount*`
+    /// instructions. See `errorCount(of:)`.
+    private var errorTally = ErrorTally()
+
     init() {
         slots = Array(repeating: Deque(), count: PushStack.allCases.count)
     }
@@ -95,7 +99,44 @@ nonisolated struct StackSet: Sendable {
     subscript(stack: PushStack) -> Deque<any Item>? {
         @inline(__always) get { slots[stack.ordinal] }
         @inline(__always) _modify { yield &slots[stack.ordinal] }
-        @inline(__always) set { slots[stack.ordinal] = newValue ?? Deque() }
+        @inline(__always) set {
+            slots[stack.ordinal] = newValue ?? Deque()
+            if stack == .error { errorTally = ErrorTally() }
+        }
+    }
+
+    /// How many errors of `kind` are on `.error`, in amortized O(1).
+    ///
+    /// Counting by scanning cost O(depth) per call, and `.error` is exempt from
+    /// every size limit, so it keeps growing through a long run: two stress-run
+    /// programs spent minutes in `errorCount*` this way. Keeping a tally on every
+    /// push would charge every error (and starved instructions raise one
+    /// constantly) for a query that is rare. So the tally is **lazy**: it covers
+    /// the bottom `counted` errors, and each query counts only the ones pushed
+    /// since the last.
+    ///
+    /// That rests on how `.error` changes: only `Interpreter.place` and
+    /// `requiresProvenance` write it, both prepending at the top, and no
+    /// instruction can pop or rearrange it. So the bottom `counted` errors are
+    /// the ones already tallied. If `.error` is shorter than `counted`, it was
+    /// emptied or replaced, and the tally starts over. Replacing the whole set
+    /// (`reset`, `load`) or assigning the `.error` slot starts it over as well.
+    /// *Error Tally Tests* hold it to a full recount.
+    mutating func errorCount(of kind: ErrorKind) -> Int {
+        let errors = slots[PushStack.error.ordinal] ?? Deque()
+        if errors.count < errorTally.counted { errorTally = ErrorTally() }
+        for i in 0..<(errors.count - errorTally.counted) {
+            if let error = errors[i] as? ErrorItem { errorTally.counts[error.kind, default: 0] += 1 }
+        }
+        errorTally.counted = errors.count
+        return errorTally.counts[kind] ?? 0
+    }
+
+    /// The tally behind `errorCount(of:)`: how many errors, counted from the
+    /// bottom of `.error`, are in `counts`.
+    private struct ErrorTally: Sendable {
+        var counted = 0
+        var counts: [ErrorKind: Int] = [:]
     }
 
     /// Every stack, in `allCases` order.
