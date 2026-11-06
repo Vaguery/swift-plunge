@@ -159,6 +159,22 @@ public nonisolated protocol Item: Pretty, Sendable {
     func isEqual(to other: any Item) -> Bool
 }
 
+nonisolated extension Item {
+    /// This item as a `T` when its type is exactly `T`, else `nil`, without a
+    /// runtime cast.
+    ///
+    /// Called on an `any Item`, the existential is opened, so `Self` is the item's
+    /// concrete type: the test is a metadata pointer compare, and on a match the
+    /// value is reinterpreted with `unsafeBitCast`, which is exact because `Self` *is*
+    /// `T`. `as?`/`as!` out of an existential instead call `swift_dynamicCast`, which
+    /// the Phase 4 profile found on every push and every step. Exact type, not `is`,
+    /// for the reason given at `PushStack.accepts`.
+    @inline(__always)
+    func exactly<T: Item>(_: T.Type) -> T? {
+        Self.self == T.self ? unsafeBitCast(self, to: T.self) : nil
+    }
+}
+
 /// An item's `callWeight` and `callDepth`, packed into the 8 bytes `callWeight`
 /// alone used to take. That matters: a small item (`IntItem` is a value, its
 /// `call` and this) must stay within the three words an `any Item` stores inline,

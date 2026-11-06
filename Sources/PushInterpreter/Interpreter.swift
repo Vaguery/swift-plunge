@@ -372,8 +372,8 @@ nonisolated final class Interpreter {
     /// than a claim; `maxVectorLength`/`maxStringLength` bound those.
     func clampingIterations(_ item: any Item) -> any Item {
         guard
-            type(of: item) == IteratorItem.self,
-            let held = (item as! IteratorItem).clamped(toPasses: config.maxIterations, recording: recording)
+            let iterator = item.exactly(IteratorItem.self),
+            let held = iterator.clamped(toPasses: config.maxIterations, recording: recording)
         else { return item }
         return held
     }
@@ -542,8 +542,7 @@ nonisolated final class Interpreter {
                 // unwrapping here used to discard it, so an `.input` bound to a
                 // block lost its provenance the moment it scattered.
                 self.push(nextItem!, to: .code)
-            } else if nextType == InstructionItem.self {
-                let action = (nextItem as! InstructionItem).value
+            } else if let action = nextItem?.exactly(InstructionItem.self)?.value {
                 if let behavior = self.behaviors[action] {
                     behavior.act(on: self)
                 } else {

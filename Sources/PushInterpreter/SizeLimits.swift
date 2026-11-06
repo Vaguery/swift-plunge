@@ -22,15 +22,18 @@ nonisolated extension PushStack {
 nonisolated extension Interpreter {
 
     /// The element count of a vector item, or `nil` for non-vector items.
-    ///
-    /// Exact-type tests first (see `PushStack.accepts`), so the common case — a
-    /// scalar — costs pointer compares rather than four failed casts.
-    func vectorLength(of item: any Item) -> Int? {
-        let type = Swift.type(of: item)
-        if type == VecIntItem.self, let vector = item as? VecIntItem { return vector.value.count }
-        if type == VecDoubleItem.self, let vector = item as? VecDoubleItem { return vector.value.count }
-        if type == VecBoolItem.self, let vector = item as? VecBoolItem { return vector.value.count }
-        if type == VecStringItem.self, let vector = item as? VecStringItem { return vector.value.count }
+    func vectorLength(of item: any Item) -> Int? { Self.vectorLength(item) }
+
+    /// Generic over the item's concrete type, so the existential is opened once at
+    /// the call and each type test is a metadata pointer compare. A matching type is
+    /// then read with `unsafeBitCast`, which is exact because `T` *is* that type.
+    /// Before, each test was followed by an `as?` cast out of the existential, a
+    /// runtime `swift_dynamicCast` on every push (Phase 4 profile).
+    private static func vectorLength<T: Item>(_ item: T) -> Int? {
+        if T.self == VecIntItem.self { return unsafeBitCast(item, to: VecIntItem.self).value.count }
+        if T.self == VecDoubleItem.self { return unsafeBitCast(item, to: VecDoubleItem.self).value.count }
+        if T.self == VecBoolItem.self { return unsafeBitCast(item, to: VecBoolItem.self).value.count }
+        if T.self == VecStringItem.self { return unsafeBitCast(item, to: VecStringItem.self).value.count }
         return nil
     }
 
@@ -42,20 +45,24 @@ nonisolated extension Interpreter {
     /// value is refused at the push boundary; the instruction's other results
     /// are unaffected. Stack depth and numeric magnitude are intentionally not
     /// limited here.
-    func overflow(of item: any Item) -> String? {
-        if let length = vectorLength(of: item), length > config.maxVectorLength {
+    func overflow(of item: any Item) -> String? { overflow(ofOpened: item) }
+
+    /// `overflow(of:)` with the existential opened; see `vectorLength(_:)`.
+    private func overflow<T: Item>(ofOpened item: T) -> String? {
+        if let length = Self.vectorLength(item), length > config.maxVectorLength {
             return "vector length \(length) exceeds maxVectorLength \(config.maxVectorLength)"
         }
-        let type = Swift.type(of: item)
         // `utf8.count` is O(1) and never less than the character count, so a string
         // under the cap in bytes is under it in characters, and only a long one pays
         // for the O(n) character count.
-        if type == StringItem.self, let string = (item as? StringItem)?.value {
+        if T.self == StringItem.self {
+            let string = unsafeBitCast(item, to: StringItem.self).value
             if string.utf8.count > config.maxStringLength, string.count > config.maxStringLength {
                 return "string length \(string.count) exceeds maxStringLength \(config.maxStringLength)"
             }
         }
-        if type == CodeItem.self, let code = item as? CodeItem {
+        if T.self == CodeItem.self {
+            let code = unsafeBitCast(item, to: CodeItem.self)
             if code.flatSize > config.maxCodePoints {
                 return "code size \(code.flatSize) exceeds maxCodePoints \(config.maxCodePoints)"
             }
