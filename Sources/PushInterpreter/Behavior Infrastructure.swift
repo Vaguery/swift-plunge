@@ -232,8 +232,17 @@ nonisolated class Behavior: @unchecked Sendable {
                 self.distribute(to: interpreter, items: [missingArguments(on: take.stack)])
                 return
             }
-            let arguments = directTakes.map { interpreter.stacks[$0.stack]![$0.index] }
-            for (stack, count) in directTakeCounts { interpreter.takeFirst(count, from: stack) }
+            // The arguments' weight is taken off `liveWeight` *before* they are
+            // copied out. Reading `weight` from a stack item makes Swift project its
+            // box mutably, which copies the whole item if the box is shared, as it
+            // is once `arguments` holds it: a copy of every boxed argument on every
+            // step (Phase 4 profile). Read first, the stack is the only owner.
+            for (stack, count) in directTakeCounts { interpreter.unweigh(top: count, of: stack) }
+            // Present: every index was just checked against its stack's depth.
+            let arguments = ItemArray.make(count: directTakes.count) {
+                interpreter.stacks.item(at: directTakes[$0].index, on: directTakes[$0].stack)!
+            }
+            for (stack, count) in directTakeCounts { interpreter.stacks[stack]!.removeFirst(count) }
             self.distribute(to: interpreter, items: self.computeResults(from: arguments, on: interpreter))
             return
         }

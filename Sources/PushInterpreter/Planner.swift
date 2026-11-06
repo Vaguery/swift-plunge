@@ -175,8 +175,6 @@ nonisolated struct Planner {
 
     /// The one place that knows a stack is something you can index into.
     private func item(at index: Int, on stack: PushStack) -> (any Item)? {
-        guard let contents = interpreter.stacks[stack], index < contents.count
-        else { return nil }
-        return contents[index]
+        interpreter.stacks.item(at: index, on: stack)
     }
 }

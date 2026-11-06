@@ -284,7 +284,25 @@ nonisolated final class Interpreter {
     /// does not accept can only mean a mis-tagged `Router` (a programming bug).
     /// Trap immediately rather than corrupt the stack and defer the failure to
     /// some later `as!` in an unrelated Behavior.
+    @inline(__always)
     func push(_ item: any Item, to stack: PushStack) {
+        push(BoxedItem(item: item), to: stack)
+    }
+
+    /// An `any Item` carried in a struct, so the optimizer leaves `push`'s body alone.
+    ///
+    /// Given a bare `any Item` parameter, the optimizer rewrites `push` into a generic
+    /// function specialized for each caller's concrete type (`push(ErrorItem(…),
+    /// to: .error)`; the `Tf4e` symbols). The specialized body then has to make a
+    /// fresh `any Item` for every helper it hands the item to (`requireAccepts`,
+    /// `overflow`, `place`, …), and an item too big for an existential's three inline
+    /// words (a block, an error, an iterator) gets a new heap box each time: several
+    /// allocations per push, which the Phase 4 profile found. Through the struct, a
+    /// concrete caller boxes the item once, at the call, and the box is passed along.
+    struct BoxedItem { let item: any Item }
+
+    private func push(_ boxed: BoxedItem, to stack: PushStack) {
+        let item = boxed.item
         // Refuse an oversized push at the boundary: an item too large by itself,
         // or one that would exceed the stack's depth, is replaced by an
         // ErrorItem on .error while the surrounding instruction's other results
@@ -423,11 +441,17 @@ nonisolated final class Interpreter {
         liveWeight = total
     }
 
-    /// Prepend one item to a stack.
+    /// Prepend one item to a stack. Through a `BoxedItem`, for the reason given
+    /// there: specialized on a bare `any Item`, the body re-boxed every boxed item.
+    @inline(__always)
     func place(_ item: any Item, on stack: PushStack) {
+        place(BoxedItem(item: item), on: stack)
+    }
+
+    private func place(_ boxed: BoxedItem, on stack: PushStack) {
         guard stacks[stack] != nil else { return }
-        stacks[stack]!.prepend(item)
-        liveWeight = liveWeight.addingReportingOverflow(item.weight).0
+        liveWeight = liveWeight.addingReportingOverflow(boxed.item.weight).0
+        stacks[stack]!.prepend(boxed.item)
     }
 
     /// Prepend several items to a stack, front-to-back (as `prepend(contentsOf:)`).
@@ -459,8 +483,15 @@ nonisolated final class Interpreter {
         // copy-on-write to duplicate the whole stack.
         let count = Swift.min(Swift.max(0, n), stacks[stack]?.count ?? 0)
         guard count > 0 else { return }
-        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(stacks[stack]![i].weight).0 }
+        liveWeight = liveWeight.subtractingReportingOverflow(stacks.weight(ofTop: count, on: stack)).0
         stacks[stack]!.removeFirst(count)
+    }
+
+    /// Take the top `count` items of a stack off `liveWeight` without removing them:
+    /// the first half of `takeFirst(_:from:)`, for `Behavior.act`, which removes them
+    /// itself once it has read them. `count` must not exceed the stack's depth.
+    func unweigh(top count: Int, of stack: PushStack) {
+        liveWeight = liveWeight.subtractingReportingOverflow(stacks.weight(ofTop: count, on: stack)).0
     }
 
     /// Remove and return the item at `index` within a stack, or nil if out of range.
@@ -476,7 +507,7 @@ nonisolated final class Interpreter {
     /// Remove every item from a stack.
     func clear(_ stack: PushStack) {
         guard let count = stacks[stack]?.count, count > 0 else { return }
-        for i in 0..<count { liveWeight = liveWeight.subtractingReportingOverflow(stacks[stack]![i].weight).0 }
+        liveWeight = liveWeight.subtractingReportingOverflow(stacks.weight(ofTop: count, on: stack)).0
         stacks[stack]!.removeAll()
     }
 

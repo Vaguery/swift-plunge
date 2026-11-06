@@ -228,14 +228,15 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// persists for the life of the loop.
     public var burial: Int
 
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public init(
         kind: IteratorKind,
@@ -259,8 +260,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
         // can never disagree with a span the iterator already stores.
         self.laps = kind.cycles ? max(1, laps) : 1
         self.burial = max(0, burial)
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.source = SourceView(kind: kind, origin: origin)
         self.nestingDepth = Self.depth(origin, destination, self.body)
     }

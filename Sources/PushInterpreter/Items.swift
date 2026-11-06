@@ -188,6 +188,54 @@ public nonisolated struct CallMeasure: Sendable, Hashable {
     public static let literal = CallMeasure(weight: 1, depth: 0)
 }
 
+/// An item's provenance, its `call` and that call's `CallMeasure`, behind one
+/// optional reference: `nil`, and so free, for a literal.
+///
+/// **Why one reference.** An `any Item` holds a value of up to three words (24
+/// bytes) inline; anything larger is put in a heap box, allocated each time such a
+/// value is made into an `any Item` and freed with it. `call` (8 bytes) plus its
+/// measure (8) left only one word for the value, so every string, character,
+/// vector and error was boxed, which the Phase 4 profile found among the largest
+/// per-step costs. With recording off (the search) every `call` is empty, so this is
+/// `nil` and costs nothing to make or copy. With recording on, a non-empty `call`
+/// costs one more allocation, for the box.
+///
+/// The box is immutable; assigning `call` replaces it, so items keep value
+/// semantics.
+nonisolated struct CallStorage: Sendable {
+    private final class Box: Sendable {
+        let call: [any Item]
+        let measure: CallMeasure
+        init(call: [any Item], measure: CallMeasure) { self.call = call; self.measure = measure }
+    }
+    private let box: Box?
+
+    static let literal = CallStorage(box: nil)
+    private init(box: Box?) { self.box = box }
+
+    init(_ call: [any Item]) {
+        box = call.isEmpty ? nil : Box(call: call, measure: CallMeasure.of(call))
+    }
+
+    var call: [any Item] { box?.call ?? [] }
+    var measure: CallMeasure { box?.measure ?? .literal }
+}
+
+nonisolated extension CallMeasure {
+    /// The measure of a `call`; see `Item.measureCall`.
+    static func of(_ call: [any Item]) -> CallMeasure {
+        var weight: UInt32 = 1
+        var deepest: UInt32 = 0
+        for child in call {
+            let (sum, overflowed) = weight.addingReportingOverflow(UInt32(clamping: child.callWeight))
+            weight = overflowed ? .max : sum
+            deepest = max(deepest, UInt32(clamping: child.callDepth))
+        }
+        let depth: UInt32 = call.isEmpty ? 0 : (deepest == .max ? .max : deepest + 1)
+        return CallMeasure(weight: weight, depth: depth)
+    }
+}
+
 nonisolated extension Item {
     // Default for scalar items (Bool, Int, Double, Char, Instruction, Error):
     // one unit each. Container types override with a stored, memoized weight.
@@ -205,17 +253,7 @@ nonisolated extension Item {
     /// counted once per path can in principle exceed `Int.max` even though the
     /// stored graph is small. Saturating keeps the over-budget check firing;
     /// wrapping would make it silently pass.
-    static func measureCall(_ call: [any Item]) -> CallMeasure {
-        var weight: UInt32 = 1
-        var deepest: UInt32 = 0
-        for child in call {
-            let (sum, overflowed) = weight.addingReportingOverflow(UInt32(clamping: child.callWeight))
-            weight = overflowed ? .max : sum
-            deepest = max(deepest, UInt32(clamping: child.callDepth))
-        }
-        let depth: UInt32 = call.isEmpty ? 0 : (deepest == .max ? .max : deepest + 1)
-        return CallMeasure(weight: weight, depth: depth)
-    }
+    static func measureCall(_ call: [any Item]) -> CallMeasure { CallMeasure.of(call) }
 }
 
 // MARK: - Equality is about values
@@ -318,21 +356,20 @@ public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 
 public nonisolated struct BoolItem: Item, Equatable, Pretty {
     public var value: Bool
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     
     public init(_ value: Bool, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
@@ -346,21 +383,20 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
 
 public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     public var value: Character
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     
     public init(_ value: Character, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
@@ -415,15 +451,15 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// **Anything, in any mixture, nested to any depth** — see "The universal box"
     /// above. This is the only heterogeneous container in the language.
     public var value: [any Item]
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
     /// The number of items in this code's fully flattened `.value`: every
@@ -450,8 +486,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
 
     public init(_ value: [any Item], call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
         self.weight = value.reduce(0) { $0 + $1.weight }
         self.blockDepth = value.isEmpty
@@ -624,21 +659,20 @@ nonisolated extension CodeItem {
 
 public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     public var value: Double
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     
     public init(_ value: Double, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
@@ -657,21 +691,20 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
 
 public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public var value: PushInstruction
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     
     public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
@@ -692,21 +725,20 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
 
 public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     public var value: Int
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     
     public init(_ value: Int, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
@@ -726,23 +758,24 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
 
 public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     public var value: String
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
-
-    public let weight: Int
+    /// The string's UTF-8 length, which a native `String` stores, so this is O(1).
+    /// Not cached: a stored copy would put a `StringItem` over the three words an
+    /// `any Item` holds inline (see `CallStorage`).
+    public var weight: Int { value.utf8.count }
 
     public init(_ value: String, call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
-        self.weight = value.utf8.count
+        self.callStorage = CallStorage(call)
     }
     
     public static func == (lhs: StringItem, rhs: StringItem) -> Bool {
@@ -761,22 +794,21 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
 
 public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     public var value: [Bool]
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Bool], call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.weight = value.count
     }
     
@@ -793,22 +825,21 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
 
 public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     public var value: [Double]
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Double], call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.weight = value.count
     }
     
@@ -824,22 +855,21 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
 
 public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     public var value: [Int]
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
 
     public init(_ value: [Int], call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.weight = value.count
     }
     
@@ -856,15 +886,15 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
 
 public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     public var value: [String]
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
     public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
     }
-
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
     /// Total characters across all contained strings — the "total characters"
@@ -873,8 +903,7 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
 
     public init(_ value: [String], call: [any Item] = []) {
         self.value = value
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.callStorage = CallStorage(call)
         self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
     
@@ -930,16 +959,27 @@ public nonisolated struct ErrorItem: Item, Equatable {
     public var value: String {
         get {
             switch message {
-            case .text(let text): text
+            case .text(let text): text.text
             case .missingArguments(let instruction, let stack): "\(instruction) missing args: .\(stack)"
             }
         }
-        set { message = .text(newValue) }
+        set { message = .text(Text(text: newValue, kind: kind)) }
     }
 
+    /// The message, and with it the kind, in one word plus a tag. A free-text
+    /// message and its kind sit behind a reference (`Text`) so that an `ErrorItem`
+    /// fits the three words an `any Item` holds inline (see `CallStorage`): the
+    /// common error, a starved instruction's, then costs no allocation at all. A
+    /// free-text one costs one, as its `String` usually did anyway.
     enum Message: Sendable {
-        case text(String)
+        case text(Text)
         case missingArguments(PushInstruction, PushStack)
+    }
+
+    final class Text: Sendable {
+        let text: String
+        let kind: ErrorKind
+        init(text: String, kind: ErrorKind) { self.text = text; self.kind = kind }
     }
     private var message: Message
 
@@ -948,32 +988,36 @@ public nonisolated struct ErrorItem: Item, Equatable {
     /// Deliberately **not** part of `==`, which compares `value` alone like every
     /// other Item: two errors with the same message are the same error, and the
     /// kind is a classification of it rather than part of its identity.
-    public var kind: ErrorKind
-
-    public var call: [any Item] {
-        didSet { self.callMeasure = Self.measureCall(call) }
+    public var kind: ErrorKind {
+        get {
+            switch message {
+            case .text(let text): text.kind
+            case .missingArguments: .missingArgument
+            }
+        }
+        set { message = .text(Text(text: value, kind: newValue)) }
     }
 
-    /// See `Item.callWeight`. Maintained on assignment; `didSet` does not fire
-    /// during `init`, so the initializer sets it directly.
-    public private(set) var callMeasure = CallMeasure.literal
-    public var callWeight: Int { Int(callMeasure.weight) }
-    public var callDepth: Int { Int(callMeasure.depth) }
+    /// This item's provenance, behind one optional reference; see `CallStorage`.
+    private var callStorage = CallStorage.literal
+    public var call: [any Item] {
+        get { callStorage.call }
+        set { callStorage = CallStorage(newValue) }
+    }
+    public var callMeasure: CallMeasure { callStorage.measure }
+    public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
     public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
-        self.message = .text(value)
-        self.kind = kind
-        self.call = call
-        self.callMeasure = Self.measureCall(call)
+        self.message = .text(Text(text: value, kind: kind))
+        self.callStorage = CallStorage(call)
     }
 
     /// A starved instruction's refusal: `intAdd missing args: .int`, built on read.
     init(missingArgumentsFor instruction: PushInstruction, on stack: PushStack) {
         self.message = .missingArguments(instruction, stack)
-        self.kind = .missingArgument
-        self.call = []
-        self.callMeasure = .literal
+        self.callStorage = .literal
     }
 
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {

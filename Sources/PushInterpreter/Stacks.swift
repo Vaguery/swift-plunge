@@ -77,6 +77,26 @@ nonisolated extension PushStack {
     }
 }
 
+/// Builds an `[any Item]` by initializing its storage in place.
+///
+/// `map` and `append` store each element through the standard library's
+/// `_appendElementAssumeUniqueAndCapacity`, which the optimizer specializes from
+/// taking an `any Item` to a generic over the opened type (the `Tf4…e` symbols).
+/// For an item held in a heap box (a block, an iterator) that means making the box
+/// unique, which copies the item when an argument shares it, then copying the
+/// value out and boxing it afresh in the array: two allocations and a full copy
+/// per argument, on every step (Phase 4 profile). `initialize(to:)` is inlined,
+/// so the existential is copied as it is, which for a box is one retain.
+nonisolated enum ItemArray {
+    @inline(__always)
+    static func make(count: Int, _ element: (Int) -> any Item) -> [any Item] {
+        [any Item](unsafeUninitializedCapacity: count) { buffer, initialized in
+            for index in 0..<count { (buffer.baseAddress! + index).initialize(to: element(index)) }
+            initialized = count
+        }
+    }
+}
+
 /// The interpreter's stacks: one `Deque` per `PushStack`, held in an array in
 /// `allCases` order and addressed by `PushStack.ordinal`.
 ///
@@ -103,6 +123,35 @@ nonisolated struct StackSet: Sendable {
             slots[stack.ordinal] = newValue ?? Deque()
             if stack == .error { errorTally = ErrorTally() }
         }
+    }
+
+    /// The item at `index` on `stack` (0 is the top), or nil past the bottom.
+    ///
+    /// A plain read. `stacks[stack]![index]` goes through the subscript's mutating
+    /// accessor, and a mutable access to an item held in a heap box (a block, an
+    /// iterator) copies the whole item if anything else shares the box, as an
+    /// argument array does. The Phase 4 profile found that copy in every
+    /// `Behavior.act`.
+    func item(at index: Int, on stack: PushStack) -> (any Item)? {
+        guard let deque = slots[stack.ordinal], index >= 0, index < deque.count else { return nil }
+        return deque[index]
+    }
+
+    /// The summed `weight` of a stack's top `count` items (wrapping, as `liveWeight`
+    /// is kept), for the weight accounting of a removal.
+    ///
+    /// A read, on purpose. Summing through `stacks[stack]![i].weight` in the
+    /// interpreter went through the subscript's mutating accessor, and a mutable
+    /// access to an item held in a heap box (a block, an iterator) makes the box
+    /// unique first: with a Behavior's argument array still holding the same box,
+    /// that copied the whole item just to read one integer of it (Phase 4 profile).
+    func weight(ofTop count: Int, on stack: PushStack) -> Int {
+        guard let deque = slots[stack.ordinal] else { return 0 }
+        var total = 0
+        for index in 0..<Swift.min(count, deque.count) {
+            total = total.addingReportingOverflow(deque[index].weight).0
+        }
+        return total
     }
 
     /// The first stack in `PushStack.allStacks` order that is subject to size limits
