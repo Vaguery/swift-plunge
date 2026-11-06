@@ -269,7 +269,20 @@ nonisolated final class Interpreter {
     var program: [any Item] = []
     var printout: String = ""
     // Use AnyRecorder for type erasure of Recorder generic type
-    var recorders: [String: AnyRecorder] = [:]
+    var recorders: [String: AnyRecorder] = [:] {
+        didSet {
+            everyStepRecorders = recorders.values.filter { $0.policy == .everyStep }
+            finalOnlyRecorders = recorders.values.filter { $0.policy == .finalOnly }
+        }
+    }
+    /// `recorders` split by policy, as arrays, for the step loop. A `.finalOnly`
+    /// recorder keeps only its last reading, and nothing changes between a run's
+    /// last step and its end, so `run` takes that reading once, at the end, rather
+    /// than after every step (`deferringFinalOnly`). Called directly, `step` still
+    /// records both kinds.
+    private var everyStepRecorders: [AnyRecorder] = []
+    private var finalOnlyRecorders: [AnyRecorder] = []
+    private var deferringFinalOnly = false
     var recorderNames: [String] {
         recorders.keys.sorted()
     }
@@ -552,7 +565,14 @@ nonisolated final class Interpreter {
         // as mutated and COW-copy its storage every step. `record` is non-mutating (the
         // recorder's state is in a class box), so reading each value and recording
         // through it copies nothing. See `AnyRecorder`.
-        for recorder in recorders.values {
+        for recorder in everyStepRecorders {
+            recorder.record(interpreter: self)
+        }
+        if !deferringFinalOnly { recordFinalOnly() }
+    }
+
+    private func recordFinalOnly() {
+        for recorder in finalOnlyRecorders {
             recorder.record(interpreter: self)
         }
     }
@@ -622,14 +642,22 @@ nonisolated final class Interpreter {
         // Anchor to the current stacks: a caller may have set them up directly (many
         // tests do) since the last load, so the incremental total starts exact here.
         self.recomputeLiveWeight()
+        let firstStep = counter
+        deferringFinalOnly = true
+        defer { deferringFinalOnly = false }
         while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
             // Bail promptly when the evaluating task is cancelled (e.g. the search was
-            // paused), rather than draining the whole step budget. `Task.isCancelled` is
-            // a cheap atomic read; the run is nonisolated and runs inside the fan-out's
-            // child task, so this reflects that task's cancellation.
-            if Task.isCancelled { break }
+            // paused), rather than draining the whole step budget. The run is
+            // nonisolated and runs inside the fan-out's child task, so this reflects
+            // that task's cancellation. Asked every 256 steps rather than every step,
+            // where it was about 3% of step time; a cancelled run is abandoned, so
+            // when it stops changes no result.
+            if counter & 0xFF == 0, Task.isCancelled { break }
             self.step()
         }
+        // The reading each `.finalOnly` recorder would have taken after the last
+        // step, taken once. No step, no reading, exactly as when each step recorded.
+        if counter > firstStep { recordFinalOnly() }
     }
 
     func reset() {

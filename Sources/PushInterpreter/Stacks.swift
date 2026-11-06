@@ -59,6 +59,14 @@ nonisolated extension PushStack {
     @inline(__always)
     var ordinal: Int { Int(unsafeBitCast(self, to: UInt8.self)) }
 
+    /// The stack at `ordinal`, the inverse of `ordinal`. `ordinal` must be below
+    /// `allCases.count` (checked in debug builds only: this runs on every step).
+    @inline(__always)
+    init(ordinal: Int) {
+        assert(ordinal >= 0 && ordinal < PushStack.allCases.count)
+        self = unsafeBitCast(UInt8(ordinal), to: PushStack.self)
+    }
+
     /// Every stack's pop/swap/popItems instruction, looked up once at launch
     /// rather than by building a name and searching 608 raw values per call.
     /// `.error` has none of the three, so its entries are nil.
@@ -157,13 +165,25 @@ nonisolated struct StackSet: Sendable {
     /// The first stack in `PushStack.allStacks` order that is subject to size limits
     /// and holds more than `depth` items: the runaway guard's per-step gate.
     ///
-    /// It runs on every step while every stack is shallow, so it reads the slots'
-    /// counts in place. The closure it replaced, over `PushStack.allStacks` with
-    /// `stacks[$0]?.count`, copied each stack's `Deque` out of its slot (a retain and
-    /// a release) and cost more than the rest of `step()` in a profile.
-    func firstLimitedStack(deeperThan depth: Int) -> PushStack? {
-        for ordinal in Self.limitedOrdinalsInOrder where slots[ordinal].map({ $0.count > depth }) == true {
-            return PushStack.allCases[ordinal]
+    /// It runs on every step, and nearly always finds nothing, so that case touches
+    /// nothing but the slots' counts:
+    /// - **`mutating`, though it only reads.** Called on the interpreter's stored
+    ///   `stacks`, a non-mutating method gets a copy of the struct, which retains
+    ///   the slot array; a mutating one works in place. (The closure this replaced
+    ///   also copied every stack's `Deque` out of its slot.)
+    /// - **Ordinal order first.** The sorted order (a static array, retained to
+    ///   walk) matters only for choosing among deep stacks, so it is read only
+    ///   when one exists.
+    mutating func firstLimitedStack(deeperThan depth: Int) -> PushStack? {
+        var anyDeep = false
+        for ordinal in slots.indices where (slots[ordinal]?.count ?? 0) > depth
+            && PushStack(ordinal: ordinal).enforcesSizeLimits {
+            anyDeep = true
+            break
+        }
+        guard anyDeep else { return nil }
+        for ordinal in Self.limitedOrdinalsInOrder where (slots[ordinal]?.count ?? 0) > depth {
+            return PushStack(ordinal: ordinal)
         }
         return nil
     }

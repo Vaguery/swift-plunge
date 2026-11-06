@@ -75,6 +75,7 @@ nonisolated protocol AnyRecorderProtocol {
     func record(interpreter: Interpreter)
     func reset()
     var dataAsAnyArray: [Any?] { get }
+    var policy: RecordingPolicy { get }
 }
 
 // struct that holds any Recorder<T> recorder, compatible with [Recorder<T>] array
@@ -89,6 +90,7 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
     private let _box: AnyRecorderBox
 
     var name: String { _box.name }
+    var policy: RecordingPolicy { _box.policy }
     func record(interpreter: Interpreter) { _box.record(interpreter: interpreter) }
     func reset() { _box.reset() }
     var dataAsAnyArray: [Any?] { _box.dataAsAnyArray }
@@ -106,6 +108,7 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
 //
 nonisolated private protocol AnyRecorderBox: AnyObject {
     var name: String { get }
+    var policy: RecordingPolicy { get }
     func record(interpreter: Interpreter)
     func reset()
     var dataAsAnyArray: [Any?] { get }
@@ -117,6 +120,7 @@ nonisolated private protocol AnyRecorderBox: AnyObject {
 nonisolated private final class RecorderBox<T>: AnyRecorderBox {
     var base: Recorder<T>
     var name: String { base.name }
+    var policy: RecordingPolicy { base.policy }
     func record(interpreter: Interpreter) { base.record(interpreter: interpreter) }
     func reset() { base.reset() }
     var dataAsAnyArray: [Any?] { base.data.map { $0 } }
