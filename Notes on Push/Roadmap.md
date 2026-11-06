@@ -114,6 +114,11 @@ commitment.
     instructions produce the stress run's huge items. After the current speed-up round.
     → *Compressing huge values.md*
 
+37. **Structured data types** — think about Matrix, trees (n-ary, binary, red/black and AVL, heaps),
+    spatial trees (quadtrees, octrees, k-d), graphs, sets and maps, with diverse instruction families and
+    traversal iterator kinds, for graph algorithms and recursive processes. Likely waits on the type
+    registry / `@PushItem` work, since adding a type costs ~28 edits today. → *Structured data types.md*
+
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
 The clear-cut vector cases are built (comparisons, sub-vector search/replace, read-only constructors).
