@@ -639,16 +639,77 @@ nonisolated extension IteratorItem {
     ///
     /// `recording` decides whether the collected items carry provenance; the
     /// cursor's own steps never need any, since nothing outside this loop sees it.
-    func collected(recording: ProvenanceRecording) -> [any Item]? {
+    ///
+    /// **A refusal costs nothing.** Walking up to the limit before refusing cost
+    /// about 20 ms, and a program that retries in a loop paid it every pass: one
+    /// stress-run program spent 44 minutes in `.codeFromIterator` this way. So an
+    /// iterator that provably emits more than `limit` is refused before any
+    /// walking (`certainlyEmitsMore(than:)`), and the walk below decides only the
+    /// cases that check cannot.
+    func collected(recording: ProvenanceRecording,
+                   limit: Int = IteratorItem.collectionLimit) -> [any Item]? {
+        guard !certainlyEmitsMore(than: limit) else { return nil }
+        return collectedByWalking(recording: recording, limit: limit)
+    }
+
+    /// `collected` without the precheck: the definition the precheck has to agree
+    /// with (*Iterator Collection Precheck Tests*).
+    func collectedByWalking(recording: ProvenanceRecording, limit: Int) -> [any Item]? {
         var items: [any Item] = []
         var cursor = self
         while let projected = cursor.projection(recording: recording) {
-            guard items.count < IteratorItem.collectionLimit else { return nil }
+            guard items.count < limit else { return nil }
             items.append(projected)
             guard cursor.hasNextPass else { break }
             cursor = cursor.stepped(recording: .off)
         }
         return items
+    }
+
+    /// Whether collecting from the cursor would certainly gather more than `limit`
+    /// items, decided in O(1). Only `true` is a promise: `false` means "walk and
+    /// see", which is then bounded by about `limit` passes.
+    ///
+    /// It works from a **lower bound** on the emissions left, which is exact for
+    /// every kind except a counting loop whose offset `value × stride` overflows
+    /// before it reaches its end (pass counts near `Int.max / |stride|`). That edge
+    /// is why it is a bound and not a count. A spent iterator never rests on a
+    /// stack (`iteratorBuilt`), so it is left to the walk rather than reasoned
+    /// about.
+    func certainlyEmitsMore(than limit: Int) -> Bool {
+        guard limit >= 0, !isSpent, let atLeast = emissionsLowerBound else { return false }
+        return atLeast > UInt(limit)
+    }
+
+    /// A lower bound on how many items are left to emit from the cursor, for a
+    /// live iterator; nil when its state is malformed. Saturates rather than
+    /// overflowing.
+    private var emissionsLowerBound: UInt? {
+        switch kind {
+        case .repeating:
+            // Projects at value, value + 1, …, end − 1.
+            guard let end = (destination as? IntItem)?.value, end > value, value >= 0 else { return nil }
+            return UInt(bitPattern: end &- value)
+        case .elements, .letters, .words, .points:
+            guard let total = totalEmissions, total > value, value >= 0 else { return nil }
+            return UInt(total - value)
+        case .counting(let stride):
+            guard let current = currentValue(), let end = (destination as? IntItem)?.value else { return nil }
+            let distance = end >= current
+                ? UInt(bitPattern: end &- current)
+                : UInt(bitPattern: current &- end)
+            // Stride 0 never moves: `hasNextPass` holds forever unless it starts at
+            // its end. (`promisedPasses` is nil for it, so it was never clamped.)
+            guard stride != 0 else { return distance == 0 ? 1 : .max }
+            // Emits `current`, then steps while more than one stride remains:
+            // ⌈distance / |stride|⌉ passes, and at least one.
+            let toEnd = distance == 0 ? 1 : (distance - 1) / stride.magnitude + 1
+            // The offset `value × stride` must stay representable; past that the
+            // projection is nil and the walk stops early.
+            let representable = UInt(Int.max) / stride.magnitude
+            guard representable >= UInt(value) else { return 1 }
+            return min(toEnd, representable - UInt(value) + 1)
+        }
     }
 
     /// The most items `collected()` will gather before refusing. Tied to the
