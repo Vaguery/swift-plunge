@@ -119,6 +119,12 @@ commitment.
     traversal iterator kinds, for graph algorithms and recursive processes. Likely waits on the type
     registry / `@PushItem` work, since adding a type costs ~28 edits today. → *Structured data types.md*
 
+38. **Compressed stacks** — a live top window of real items over compressed segments (runs,
+    progressions, cycles, named by the iterator kinds that would emit them), so low-complexity overflow
+    is stored compactly; `.error` gets an archive (per-kind and per-instruction counts, marker flags)
+    instead of a cap. First a stack-composition probe, to measure how compressible stacks really are.
+    After the current speed-up round. → *Compressed stacks.md*
+
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
 The clear-cut vector cases are built (comparisons, sub-vector search/replace, read-only constructors).
