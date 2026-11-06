@@ -36,7 +36,7 @@ struct ThroughputBenchmark {
     /// A genome-sized random program: mostly instructions drawn from the whole defined
     /// language, with literals and small blocks mixed in, and a modest loop bias so
     /// control flow is present (as it is in the app's Numbers/Strings presets).
-    private func randomProgram(length: Int, all: [PushInstruction], loopers: [PushInstruction],
+    func randomProgram(length: Int, all: [PushInstruction], loopers: [PushInstruction],
                                using rng: inout SeededRNG) -> [any Item] {
         var program: [any Item] = []
         for _ in 0..<length {

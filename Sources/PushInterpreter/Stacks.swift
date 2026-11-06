@@ -105,6 +105,22 @@ nonisolated struct StackSet: Sendable {
         }
     }
 
+    /// The first stack in `PushStack.allStacks` order that is subject to size limits
+    /// and holds more than `depth` items: the runaway guard's per-step gate.
+    ///
+    /// It runs on every step while every stack is shallow, so it reads the slots'
+    /// counts in place. The closure it replaced, over `PushStack.allStacks` with
+    /// `stacks[$0]?.count`, copied each stack's `Deque` out of its slot (a retain and
+    /// a release) and cost more than the rest of `step()` in a profile.
+    func firstLimitedStack(deeperThan depth: Int) -> PushStack? {
+        for ordinal in Self.limitedOrdinalsInOrder where slots[ordinal].map({ $0.count > depth }) == true {
+            return PushStack.allCases[ordinal]
+        }
+        return nil
+    }
+
+    private static let limitedOrdinalsInOrder = PushStack.allStacks.filter(\.enforcesSizeLimits).map(\.ordinal)
+
     /// How many errors of `kind` are on `.error`, in amortized O(1).
     ///
     /// Counting by scanning cost O(depth) per call, and `.error` is exempt from

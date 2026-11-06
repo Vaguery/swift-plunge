@@ -232,24 +232,35 @@ nonisolated final class Interpreter {
     /// interpreter (copies share storage until one disables something).
     static let languageTable = BehaviorTable(language)
 
-    var behaviors: BehaviorTable = Interpreter.languageTable
-    var stacks: StackSet
+    // MARK: Per-run state, without dynamic exclusivity checks
+    //
+    // `@exclusivity(unchecked)` drops the runtime check (`swift_beginAccess` /
+    // `swift_endAccess`) Swift makes on every access to a class's stored property it
+    // can't prove exclusive, which is nearly every access from a Behavior. Those
+    // checks were about a tenth of all step time (Phase 4 profile). It is safe because
+    // an `Interpreter` is confined to one task for a run, and no Behavior holds an
+    // `inout` access to one of these across a call that reaches the same property.
+    // The debug test suite still runs with the checks for every other property, and
+    // the parity snapshots confirm unchanged results.
+
+    @exclusivity(unchecked) var behaviors: BehaviorTable = Interpreter.languageTable
+    @exclusivity(unchecked) var stacks: StackSet
     /// Running total of `Item.weight` (content) live across all stacks — maintained
     /// incrementally by the mutation helpers (`place`/`take…`/`clear`), and re-anchored
     /// by `recomputeLiveWeight()` at every run start. Lets `enforceMemoryGuard` be O(1)
     /// per step instead of re-summing all stacks; see `RunawayGuard`.
-    private(set) var liveWeight: Int = 0
-    var counter: Int = 0
+    @exclusivity(unchecked) private(set) var liveWeight: Int = 0
+    @exclusivity(unchecked) var counter: Int = 0
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
-    var lastRunawayCheck = -1
+    @exclusivity(unchecked) var lastRunawayCheck = -1
     var inputs: [PushInstruction:any Item] = [:]
     // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
     // the constant behavior emits an ErrorItem for that case at runtime, so no
     // pre-seeding of nil slots is needed.
     var constants: [PushInstruction: any Item] = [:]
-    var config: InterpreterSettings = Interpreter.defaultSettings
+    @exclusivity(unchecked) var config: InterpreterSettings = Interpreter.defaultSettings
 
     /// Whether this run records provenance, as Behaviors receive it: pure ones as
     /// their transformer's second argument, side-effecting ones by asking the

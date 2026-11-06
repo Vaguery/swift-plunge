@@ -74,9 +74,7 @@ nonisolated extension Interpreter {
         // Cheap gate: is any homogeneous stack past the observation trigger?
         // Iterate in sorted order so which stack we report is deterministic.
         let trigger = max(Interpreter.runawayFloor, config.maxStackDepth / 10)
-        guard let stack = PushStack.allStacks.first(where: {
-            $0.enforcesSizeLimits && (stacks[$0]?.count ?? 0) > trigger
-        }) else { return }
+        guard let stack = stacks.firstLimitedStack(deeperThan: trigger) else { return }
         lastRunawayCheck = counter
 
         // Data side: does the recent top look like a loop is pumping it?
