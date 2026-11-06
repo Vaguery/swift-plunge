@@ -202,7 +202,7 @@ nonisolated extension Interpreter {
 
     /// Box a point as a `.code` result: a sub-block as-is, a leaf wrapped once.
     static func boxedPointContents(_ point: any Item) -> [any Item] {
-        (point as? CodeItem)?.value ?? [point]
+        (point.exactly(CodeItem.self))?.value ?? [point]
     }
 
     /// The pre-order point at the `.int` index (root at 0), yielded as `.code`.
@@ -326,9 +326,9 @@ nonisolated extension Interpreter {
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 let point = x.point(at: i.value)
                 let flattened: any Item =
-                    (point as? CodeItem).map { CodeItem($0.flattenedLeaves()) } ?? point
+                    (point.exactly(CodeItem.self)).map { CodeItem($0.flattenedLeaves()) } ?? point
                 let rebuilt = x.replacingPoint(at: i.value, with: flattened)
-                let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
+                let result = (rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
                     call: recording([x, i, InstructionItem(.codeFlattenPoint)])))]
@@ -366,7 +366,7 @@ nonisolated extension Interpreter {
                 // a[0]=replacement (top), a[1]=needle, a[2]=subject (deepest).
                 let (repl, needle, subject) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! CodeItem)
                 let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
-                let result = (rebuilt as? CodeItem) ?? CodeItem([rebuilt])
+                let result = (rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])
                 return [Router(.code, CodeItem(
                     result.value,
                     call: recording([subject, needle, repl, InstructionItem(instruction)])))]
@@ -457,7 +457,7 @@ nonisolated extension Interpreter {
                 var tokens = subject.gapTokens
                 let idx = subject.gapIndex(n.value)
                 let denoted = insert.denotedItem
-                let spliced: [CodeToken] = (denoted as? CodeItem)
+                let spliced: [CodeToken] = (denoted.exactly(CodeItem.self))
                     .map { [.open] + $0.gapTokens + [.close] } ?? [.item(denoted)]
                 tokens.insert(contentsOf: spliced, at: idx)
                 return [Router(.code, CodeItem(

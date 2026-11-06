@@ -427,7 +427,7 @@ nonisolated extension Interpreter {
     /// arrives boxed in a code block, the same universal channel
     /// `.iteratorRepeating` uses, and law 1b hands back exactly what went in.
     static func unboxed(_ item: any Item) -> (any Item)? {
-        (item as? CodeItem)?.value.first
+        (item.exactly(CodeItem.self))?.value.first
     }
 
     /// Where the loop counts from, or the collection it walks. `( 5 ) …`

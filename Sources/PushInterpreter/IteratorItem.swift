@@ -901,7 +901,7 @@ nonisolated extension IteratorItem {
                 let raw = point
                 return raw
             }
-            let contents = (point as? CodeItem)?.value ?? [point]
+            let contents = (point.exactly(CodeItem.self))?.value ?? [point]
             return CodeItem(
                 contents,
                 call: recording(Behavior.reading(
@@ -970,7 +970,7 @@ nonisolated struct SourceView: Sendable {
         case .points:
             // The whole pre-order point count (root included), not the root
             // length — that is the difference between `.points` and `.elements`.
-            points = (origin as? CodeItem)?.preorderPoints ?? []
+            points = (origin.exactly(CodeItem.self))?.preorderPoints ?? []
             count = points.count
         default:
             switch origin {

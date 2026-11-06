@@ -64,7 +64,7 @@ nonisolated extension CodeItem {
         var out: [CodeToken] = []
         func walk(_ items: [any Item]) {
             for item in items {
-                if let block = item as? CodeItem {
+                if let block = item.exactly(CodeItem.self) {
                     out.append(.open)
                     walk(block.value)
                     out.append(.close)
@@ -137,7 +137,7 @@ nonisolated extension CodeItem {
         func rebuild(_ block: CodeItem) -> [any Item] {
             var out: [any Item] = []
             for child in block.value {
-                guard let sub = child as? CodeItem else {
+                guard let sub = child.exactly(CodeItem.self) else {
                     cursor += 1            // a leaf token
                     out.append(child)
                     continue

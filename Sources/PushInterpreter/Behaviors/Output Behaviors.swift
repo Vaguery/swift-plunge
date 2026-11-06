@@ -14,7 +14,7 @@ nonisolated extension Interpreter {
             .printNewline,
             takes: [],
             modifier: { (interpreter, _) in
-                interpreter.printout.append("\n")
+                interpreter.printText("\n")
                 return []
             }
         )
@@ -25,7 +25,7 @@ nonisolated extension Interpreter {
             takes: [.bool],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! BoolItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -36,7 +36,7 @@ nonisolated extension Interpreter {
             takes: [.iterator],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! IteratorItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -47,7 +47,7 @@ nonisolated extension Interpreter {
             takes: [.exec],
             modifier: { (interpreter, args) in
                 let (x) = args[0]
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -58,7 +58,7 @@ nonisolated extension Interpreter {
             takes: [.double],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! DoubleItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -69,7 +69,7 @@ nonisolated extension Interpreter {
             takes: [.char],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! CharItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -80,7 +80,7 @@ nonisolated extension Interpreter {
             takes: [.int],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! IntItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -91,7 +91,7 @@ nonisolated extension Interpreter {
             takes: [.string],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! StringItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -102,7 +102,7 @@ nonisolated extension Interpreter {
             takes: [.vecBool],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecBoolItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -113,7 +113,7 @@ nonisolated extension Interpreter {
             takes: [.vecDouble],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecDoubleItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -124,7 +124,7 @@ nonisolated extension Interpreter {
             takes: [.vecInt],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecIntItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -135,7 +135,7 @@ nonisolated extension Interpreter {
             takes: [.vecString],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecStringItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )
@@ -146,7 +146,7 @@ nonisolated extension Interpreter {
             takes: [.code],
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! CodeItem
-                interpreter.printout.append("\(x.pretty())\n")
+                interpreter.printItem(x)
                 return []
             }
         )

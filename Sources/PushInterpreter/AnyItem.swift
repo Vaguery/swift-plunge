@@ -98,7 +98,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             let state = try container.decode(IteratorState.self, forKey: .value)
             var body: CodeItem?
             if let encoded = state.body?.item {
-                guard let block = encoded as? CodeItem else {
+                guard let block = encoded.exactly(CodeItem.self) else {
                     throw DecodingError.dataCorruptedError(
                         forKey: .value, in: container,
                         debugDescription: "an iterator's body must be a code block, got \(type(of: encoded))"

@@ -26,7 +26,7 @@ nonisolated enum NestedRendering {
             case .text(let text):
                 output += text
             case .item(let item):
-                if let block = item as? CodeItem {
+                if let block = item.exactly(CodeItem.self) {
                     // `( ` then each child followed by a space, then `)`.
                     var pieces: [Piece] = [.text("( ")]
                     pieces.reserveCapacity(block.value.count * 2 + 2)

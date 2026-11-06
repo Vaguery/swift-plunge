@@ -487,14 +487,25 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     public init(_ value: [any Item], call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
-        self.flatSize = value.reduce(0) { $0 + (($1 as? CodeItem)?.flatSize ?? 1) }
-        self.weight = value.reduce(0) { $0 + $1.weight }
-        self.blockDepth = value.isEmpty
-            ? 0
-            : 1 + (value.lazy.compactMap { ($0 as? CodeItem)?.blockDepth }.max() ?? 0)
-        self.nestingDepth = value.isEmpty
-            ? 0
-            : 1 + (value.lazy.map(\.nestingDepth).max() ?? 0)
+        // One pass, and no runtime casts (`exactly`; see `Item.exactly(_:)`): an edit
+        // rebuilds every block on its path, so this runs for most points of a block a
+        // code instruction touches, and four passes with two `as?` casts per element
+        // were most of what a code edit on a large block cost.
+        var flatSize = 0, weight = 0, deepestBlock = 0, deepestNesting = 0
+        for element in value {
+            weight += element.weight
+            deepestNesting = Swift.max(deepestNesting, element.nestingDepth)
+            if let block = element.exactly(CodeItem.self) {
+                flatSize += block.flatSize
+                deepestBlock = Swift.max(deepestBlock, block.blockDepth)
+            } else {
+                flatSize += 1
+            }
+        }
+        self.flatSize = flatSize
+        self.weight = weight
+        self.blockDepth = value.isEmpty ? 0 : 1 + deepestBlock
+        self.nestingDepth = value.isEmpty ? 0 : 1 + deepestNesting
     }
 
     public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
@@ -545,7 +556,7 @@ nonisolated extension CodeItem {
         var out: [any Item] = []
         func walk(_ node: any Item) {
             out.append(node)
-            if let block = node as? CodeItem { for child in block.value { walk(child) } }
+            if let block = node.exactly(CodeItem.self) { for child in block.value { walk(child) } }
         }
         walk(self)
         return out
@@ -554,7 +565,7 @@ nonisolated extension CodeItem {
     /// The total number of pre-order points, including the root. `( (1 2) 3 )` is
     /// 5. Recursive: a leaf is 1, a CodeItem is 1 + its children's counts.
     var pointCount: Int {
-        1 + value.reduce(0) { $0 + (($1 as? CodeItem)?.pointCount ?? 1) }
+        1 + value.reduce(0) { $0 + (($1.exactly(CodeItem.self))?.pointCount ?? 1) }
     }
 
     /// The pre-order point at `index`, taken `magnitude % pointCount` so any int
@@ -571,13 +582,13 @@ nonisolated extension CodeItem {
     /// Every leaf, left to right — the fully flattened contents. Empty blocks
     /// contribute nothing. `(1 (2 3) ())` → `[1, 2, 3]`.
     func flattenedLeaves() -> [any Item] {
-        value.flatMap { ($0 as? CodeItem)?.flattenedLeaves() ?? [$0] }
+        value.flatMap { ($0.exactly(CodeItem.self))?.flattenedLeaves() ?? [$0] }
     }
 
     /// One level of flattening: each root element that is a CodeItem is replaced
     /// by *its* elements, no deeper. `(1 (2 (3 4)) 5)` → `(1 2 (3 4) 5)`.
     func flattenedOnce() -> [any Item] {
-        value.flatMap { ($0 as? CodeItem)?.value ?? [$0] }
+        value.flatMap { ($0.exactly(CodeItem.self))?.value ?? [$0] }
     }
 
     /// The first pre-order index whose point equals `target` (by value), or nil.
@@ -592,7 +603,7 @@ nonisolated extension CodeItem {
         func search(_ block: CodeItem) -> CodeItem? {
             for child in block.value {
                 if child.isEqual(to: target) { return block }
-                if let cb = child as? CodeItem, let hit = search(cb) { return hit }
+                if let cb = child.exactly(CodeItem.self), let hit = search(cb) { return hit }
             }
             return nil
         }
@@ -609,7 +620,7 @@ nonisolated extension CodeItem {
             let here = counter
             counter += 1
             if here == target { return replacement }   // subtree discarded
-            guard let block = node as? CodeItem else { return node }
+            guard let block = node.exactly(CodeItem.self) else { return node }
             return CodeItem(block.value.map { rebuild($0) })
         }
         return rebuild(self)
@@ -628,10 +639,10 @@ nonisolated extension CodeItem {
                 counter += 1
                 if here == target {
                     // drop it; skip its subtree in the counter
-                    if let cb = child as? CodeItem { counter += cb.pointCount - 1 }
+                    if let cb = child.exactly(CodeItem.self) { counter += cb.pointCount - 1 }
                     continue
                 }
-                kept.append((child as? CodeItem).map { rebuild($0) } ?? child)
+                kept.append((child.exactly(CodeItem.self)).map { rebuild($0) } ?? child)
             }
             return CodeItem(kept)
         }
@@ -649,7 +660,7 @@ nonisolated extension CodeItem {
                 done = true
                 return repl
             }
-            guard let block = node as? CodeItem else { return node }
+            guard let block = node.exactly(CodeItem.self) else { return node }
             return CodeItem(block.value.map { rebuild($0) })
         }
         return rebuild(self)

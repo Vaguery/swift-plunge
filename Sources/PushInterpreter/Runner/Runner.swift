@@ -90,7 +90,7 @@ nonisolated func cruxMentions(_ item: any Item, anyOf tokens: Set<PushInstructio
     func walk(_ items: [any Item]) -> Bool {
         for leaf in items {
             if let instruction = leaf as? InstructionItem, tokens.contains(instruction.value) { return true }
-            if let block = leaf as? CodeItem, walk(block.value) { return true }
+            if let block = leaf.exactly(CodeItem.self), walk(block.value) { return true }
         }
         return false
     }
