@@ -24,7 +24,7 @@ import Foundation
 
 
 /// A deterministic RNG (SplitMix64) so a fuzz run reproduces exactly from its
-/// seed. Every random choice here draws from the shared `fuzzRNG`.
+/// seed. Every random choice here draws from `fuzzRNG`.
 nonisolated struct SeededRNG: RandomNumberGenerator {
     private var state: UInt64
     init(seed: UInt64) { state = seed }
@@ -37,15 +37,40 @@ nonisolated struct SeededRNG: RandomNumberGenerator {
     }
 }
 
-/// The shared RNG for every random draw here.
+/// A seeded generator that one fuzz run can own. A reference, so the draws a
+/// scope makes advance the one generator that scope installed.
+nonisolated final class FuzzRNGBox: @unchecked Sendable {
+    var rng: SeededRNG
+    init(seed: UInt64) { rng = SeededRNG(seed: seed) }
+}
+
+/// Which generator `fuzzRNG` draws from, per task.
 ///
-/// **A single mutable global, which is why fuzz suites must run alone**: Swift
-/// Testing runs suites in parallel, and a concurrent drawer breaks the seed. Each
-/// carries a `disabledTests` toggle for exactly this reason. It is global rather
-/// than injected because otherwise every call site threads an RNG through, and
-/// this is scaffolding — but if these are ever to run in parallel, this is the
-/// thing to fix first.
-nonisolated(unsafe) var fuzzRNG = SeededRNG(seed: 0)
+/// **Scoped, so fuzz runs can share a test pass.** Swift Testing runs suites in
+/// parallel, and when every draw came from one mutable global a concurrent drawer
+/// broke the seed: the crux fuzz drew 21,123 claims on one run and 17,016 on the
+/// next from the same seed, so each fuzz suite had to be disabled and run alone.
+/// A run that installs its own box with `withFuzzSeed` draws only from it, and is
+/// reproducible whatever else is running. Code that installs nothing shares
+/// `shared`, exactly as before (and is as unreproducible in parallel as before).
+nonisolated enum FuzzRNGScope {
+    static let shared = FuzzRNGBox(seed: 0)
+    @TaskLocal static var current: FuzzRNGBox = shared
+}
+
+/// Runs `body` with every random draw here coming from a fresh generator seeded
+/// with `seed`, isolated from every other task. The way a fuzz run should seed.
+func withFuzzSeed<T>(_ seed: UInt64, _ body: () throws -> T) rethrows -> T {
+    try FuzzRNGScope.$current.withValue(FuzzRNGBox(seed: seed), operation: body)
+}
+
+/// The RNG for every random draw here: the current scope's (see `FuzzRNGScope`).
+/// A computed variable, so the many `using: &fuzzRNG` call sites are unchanged,
+/// and assigning `fuzzRNG = SeededRNG(seed:)` reseeds the current scope's box.
+nonisolated var fuzzRNG: SeededRNG {
+    get { FuzzRNGScope.current.rng }
+    set { FuzzRNGScope.current.rng = newValue }
+}
 
 
 /// How to divide random draws between the named parts of the language.
@@ -58,10 +83,38 @@ nonisolated(unsafe) var fuzzRNG = SeededRNG(seed: 0)
 /// `.equalShares` is a guess, not a finding.
 nonisolated struct InstructionMix: Sendable {
     var weights: [InstructionRole: Double]
+    /// An extra pool drawn beside the roles, with its own weight: how a mix
+    /// concentrates a family that cuts across roles, such as the loops.
+    /// Empty by default, and then it changes nothing about any draw.
+    var focus: [PushInstruction] = []
+    var focusWeight: Double = 0
 
     init(_ weights: [InstructionRole: Double]) {
         self.weights = weights
     }
+
+    init(_ weights: [InstructionRole: Double], focus: [PushInstruction], weight: Double) {
+        self.weights = weights
+        self.focus = focus
+        self.focusWeight = weight
+    }
+
+    /// The instructions that run a body again and again: every `.reEntrant`
+    /// instruction (the iterates, the while loops, `.execY`, `.iteratorPlay`) plus
+    /// the three counted loops that build an iterator and hand it to
+    /// `.iteratorPlay`. Sorted, so a seed reproduces.
+    static let loopInstructions: [PushInstruction] =
+        (Interpreter.instructions(declaring: .reEntrant)
+            .union([.execDoRange, .execDoTimes, .execDoCount]))
+            .sorted { $0.rawValue < $1.rawValue }
+
+    /// Equal shares of every role, plus the loops at twice a role's share: about
+    /// two draws in seven are a loop. **Loops are where provenance is hardest**
+    /// (long histories, elision, the clamp), and no other mix concentrates them;
+    /// the crux fuzz runs under this as well as `.equalShares`.
+    static let loopHeavy = InstructionMix(
+        Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map { ($0, 1.0) }),
+        focus: loopInstructions, weight: 2)
 
     /// Equal shares of constants, inputs, combinators and everything else.
     /// Equal shares of every role — constants, inputs, combinators, comparisons
@@ -161,8 +214,15 @@ public nonisolated enum RandomCode {
         allInstructions.randomElement(using: &fuzzRNG)!
     }
 
-    /// A tag by weight, then uniformly within it.
+    /// A tag by weight, then uniformly within it. A mix's `focus` pool, if any,
+    /// is drawn first, in proportion to its weight against the roles' total.
     static func randomInstruction(from mix: InstructionMix) -> PushInstruction {
+        if mix.focusWeight > 0, let pick = mix.focus.randomElement(using: &fuzzRNG) {
+            let roleTotal = mix.weights.values.filter { $0 > 0 }.reduce(0, +)
+            if Double.random(in: 0..<(roleTotal + mix.focusWeight), using: &fuzzRNG) < mix.focusWeight {
+                return pick
+            }
+        }
         let role = mix.randomRole()
         // The tags partition the language and none is empty; there is a test.
         return Interpreter.sortedRoles[role]!.randomElement(using: &fuzzRNG)!
