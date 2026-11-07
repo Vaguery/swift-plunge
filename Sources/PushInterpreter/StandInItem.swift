@@ -31,6 +31,10 @@
 /// - `.elided`: the history existed but was over the `maxCallWeight` or
 ///   `maxCallDepth` budget, so it was dropped at the push boundary. Prints as
 ///   `.intAdd_elidedAs_4537`.
+/// - `.minted`: a constant the instruction supplies itself, such as the 0 a
+///   `.execDoTimes` counts from. No history is lost (the instruction *is* the
+///   cause), but without the mark it would be indistinguishable from a
+///   substitution. Prints as `.execDoTimes_minted_0`.
 ///
 /// **It is a literal leaf.** Its own `call` is always empty, so `crux()` emits it
 /// unchanged and every downstream crux carries it, which is what lets a probe
@@ -47,6 +51,8 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         case observed
         /// Over the provenance budget, and dropped at the push boundary.
         case elided
+        /// A constant the instruction supplies itself; nothing is lost.
+        case minted
     }
 
     /// The literal this stands in for, without a history of its own.
@@ -94,6 +100,7 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         let verb = switch reason {
         case .observed: "actuallyWas"
         case .elided: "elidedAs"
+        case .minted: "minted"
         }
         return ".\(name)_\(verb)_\(value.pretty())"
     }
@@ -110,11 +117,24 @@ nonisolated extension Item {
     /// literal, and the stand-in marks it as one and names its cause.
     @inline(__always)
     func observed(by source: PushInstruction?, _ recording: ProvenanceRecording) -> Self {
+        marked(.observed, by: source, recording)
+    }
+
+    /// This item, recorded as a constant `source` supplies itself (`.minted`): its
+    /// `call` is a single stand-in when recording, empty otherwise.
+    @inline(__always)
+    func minted(by source: PushInstruction, _ recording: ProvenanceRecording) -> Self {
+        marked(.minted, by: source, recording)
+    }
+
+    @inline(__always)
+    private func marked(_ reason: StandInItem.Reason, by source: PushInstruction?,
+                        _ recording: ProvenanceRecording) -> Self {
         // The "missing args" error is the commonest event in a random program, so
         // the search (recording off) must pay nothing here, not even a copy.
         guard recording.isOn else { return self }
         var marked = self
-        marked.call = recording([StandInItem(standingInFor: self, source: source, reason: .observed)])
+        marked.call = [StandInItem(standingInFor: self, source: source, reason: reason)]
         return marked
     }
 }

@@ -1708,7 +1708,7 @@ nonisolated extension Interpreter {
             func refuse(_ why: String) -> [Router] {
                 [
                     Router(.iterator, iterator),
-                    Router(.error, ErrorItem("vecFromIterator: \(why)")),
+                    Router(.error, ErrorItem("vecFromIterator: \(why)").observed(by: .vecFromIterator, recording)),
                 ]
             }
 

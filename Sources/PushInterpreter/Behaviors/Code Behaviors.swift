@@ -263,14 +263,26 @@ nonisolated extension Interpreter {
     }
 
     /// Emit a point to `.exec` unwrapped — box it and let `.codeDo` run it.
-    static func doNthBehavior(_ instruction: PushInstruction, point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?) -> Behavior {
+    ///
+    /// The box is a **new** block, and a block met on `.exec` comes to rest on
+    /// `.code` before `.codeDo` takes it, so it can be left there as a result (a
+    /// run that stops between the two steps). It is exactly the block `twin`
+    /// (`.codeNthPoint`/`.codeNthRoot`) produces, so it records that history.
+    static func doNthBehavior(
+        _ instruction: PushInstruction,
+        point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?,
+        twin: PushInstruction
+    ) -> Behavior {
         Behavior(
             instruction,
             reads: [.code, .int],
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else { return [] }
-                let boxed = CodeItem(boxedPointContents(point))
+                let boxed = CodeItem(
+                    boxedPointContents(point),
+                    call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code,
+                                                     from: [x, i, InstructionItem(twin)])))
                 return [Router(.exec, InstructionItem(.codeDo)), Router(.exec, boxed)]
             }
         )
@@ -282,9 +294,9 @@ nonisolated extension Interpreter {
     }
 
     static let codeEmitNthPoint_Behavior = emitNthBehavior(.codeEmitNthPoint, point: pointPicker)
-    static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker)
+    static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker, twin: .codeNthPoint)
     static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker)
-    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker)
+    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codeNthRoot)
 
     // MARK: - Flatten and point mutation (transforms, consume)
 
@@ -727,7 +739,8 @@ nonisolated extension Interpreter {
                 return [
                     Router(.iterator, iterator),
                     Router(.error, ErrorItem(
-                        "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items"))
+                        "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items")
+                        .observed(by: .codeFromIterator, recording))
                 ]
             }
             // A function, so it is only built when recording.

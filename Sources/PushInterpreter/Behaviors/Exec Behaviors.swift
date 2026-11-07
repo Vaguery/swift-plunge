@@ -78,7 +78,9 @@ nonisolated extension Interpreter {
                     ]
                 }
 
-                let origin = IntItem(0)
+                // The count starts at a 0 this instruction supplies itself: a
+                // minted constant, marked so a crux says where it came from.
+                let origin = IntItem(0).minted(by: .execDoCount, recording)
 
                 return iteratorLoop(
                     kind: .counting(stride: 1),
@@ -115,7 +117,7 @@ nonisolated extension Interpreter {
                     return [Router(.code, body)]
                 }
 
-                let origin = IntItem(0)
+                let origin = IntItem(0).minted(by: .execDoTimes, recording)
 
                 // Identical to `.execDoCount`'s iterator but for `emits`, which is
                 // the whole of the difference between the two instructions. `x` is

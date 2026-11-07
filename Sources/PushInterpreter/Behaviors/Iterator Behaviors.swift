@@ -364,7 +364,7 @@ nonisolated extension Interpreter {
                 if let complaint = setting(&iterator, a[0]) {
                     return [
                         Router(.iterator, iterator),
-                        Router(.error, ErrorItem(complaint)),
+                        Router(.error, ErrorItem(complaint).observed(by: name, recording)),
                     ]
                 }
                 // Nothing left to emit, so the loop is over — and hands its body
@@ -374,7 +374,7 @@ nonisolated extension Interpreter {
                 }
 
                 iterator.call = recording(iterator.reconstruction())
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: name, recording)
             }
         )
     }
@@ -397,7 +397,7 @@ nonisolated extension Interpreter {
                 // A loop can always run its first pass — an iterator with nothing
                 // to emit at cursor 0 could never have been built.
                 iterator.call = recording(iterator.reconstruction())
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: .iteratorRestart, recording)
             }
         )
 
@@ -412,9 +412,14 @@ nonisolated extension Interpreter {
     ///
     /// Nothing is lost by refusing. A spent iterator cannot exist, so no crux ever
     /// needs to reproduce one.
-    static func iteratorBuilt(_ iterator: IteratorItem) -> [Router] {
+    ///
+    /// The refusal is recorded as observed by the constructor (a stand-in), like
+    /// every other refusal: its crux replays the error and names its cause.
+    static func iteratorBuilt(
+        _ iterator: IteratorItem, by name: PushInstruction, _ recording: ProvenanceRecording
+    ) -> [Router] {
         guard !iterator.isSpent else {
-            return [Router(.error, ErrorItem("\(iterator.pretty()) has nothing to emit"))]
+            return [Router(.error, ErrorItem("\(iterator.pretty()) has nothing to emit").observed(by: name, recording))]
         }
         return [Router(.iterator, iterator)]
     }
@@ -570,7 +575,7 @@ nonisolated extension Interpreter {
                         origin, destination, stride, cursor, burial, emits, body,
                         InstructionItem(.iteratorFromIntRange),
                     ]))
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: .iteratorFromIntRange, recording)
             }
         )
 
@@ -615,7 +620,7 @@ nonisolated extension Interpreter {
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
                     ]))
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: name, recording)
             }
         )
     }
@@ -681,7 +686,7 @@ nonisolated extension Interpreter {
                         origin, cursor, burial, emits, body,
                         InstructionItem(name),
                     ]))
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: name, recording)
             }
         )
     }
@@ -717,7 +722,7 @@ nonisolated extension Interpreter {
                     cursor: cursor.value,
                     burial: burial.value,
                     call: recording([origin, cursor, burial, emits, body, InstructionItem(instruction)]))
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: instruction, recording)
             }
         )
     }
@@ -758,7 +763,8 @@ nonisolated extension Interpreter {
                     a[1] as! IntItem, a[2] as! IntItem, a[3] as! IntItem
                 )
                 guard let origin = box.value.first else {
-                    return [Router(.error, ErrorItem("\(name) needs an item in its block"))]
+                    return [Router(.error, ErrorItem("\(name) needs an item in its block")
+                        .observed(by: name, recording))]
                 }
 
                 let iterator = IteratorItem(
@@ -773,7 +779,7 @@ nonisolated extension Interpreter {
                         box, count, cursor, burial,
                         InstructionItem(name),
                     ]))
-                return iteratorBuilt(iterator)
+                return iteratorBuilt(iterator, by: name, recording)
             }
         )
     }
