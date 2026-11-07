@@ -13,6 +13,49 @@ commitment.
 
 ---
 
+## P. First priority (2026-11-07): provenance completeness
+
+Every item on every stack must be recoverable from a runnable Push program derived from the run, and any part
+that can't be derived must say so. The rule: a crux reproduces its value on its stack, and every literal that
+stands in for a lost history is a marked **stand-in**: it runs as that literal, names its cause
+(`.boolStackDepth_actuallyWas_4`), and appears in every downstream crux. The audit, the loopholes and the full
+rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First priority and § 6. Order of work:
+
+1. Stand-ins: the item type; state reads (law 4b) record them; elision leaves them. Remove `execEq` (#26).
+2. Measure: a completeness probe, and the round-trip sweep always-on and large on its own seeded generator,
+   with a loop-heavy mix. `.execDoRange` becomes inclusive first (#25), since it changes range cruxes.
+3. Provenance compression replaces elision (generalized `CruxCompression`, looped-provenance steps 2–4); then
+   retire `maxIterations` (#24).
+4. Per-element provenance for vectors **and strings** (#21), as a parallel array filled only when recording.
+5. Opt-in history encoding in `AnyItem` (#22).
+6. Crux-to-function, both forms (#23).
+
+A representation-neutral derivation graph, for other GP representations, is a later project.
+
+### Rulings on numbered items (2026-11-07; decided, not yet built unless struck)
+
+- **#2** map/reduce: a map element whose function leaves no result passes through unchanged. **filter** is
+  designed alongside (no result counts as false).
+- **#9** member reads (`vecXNth`, `stringNth`, `xMax`/`xMin`) become non-destructive.
+- **#11** sieve Q5 stays parked until matrices exist.
+- **#12 ForestGenome and #15 (mix under Forest): dropped.**
+- **#13** BB9 is kept, to be designed later.
+- **#21** element provenance: a parallel per-element array, filled only when recording. Strings too.
+- **#22** opt-in history encoding in `AnyItem`.
+- **#23** both forms, as two instructions: substitute an input, and delete the leaf.
+- **#24** retire `maxIterations` once provenance compression lands.
+- **#25** `.execDoRange` becomes **inclusive**: |span|+1 passes (`4 4` → 4; `4 7` → 7, 6, 5, 4). Today it makes
+  max(1, |span|) passes. `.execDoCount`/`.execDoTimes` keep their pass counts.
+- **#26** `execEq` is removed; `( A ) ( B ) .codeEq` asks the same.
+- **#29a** closed: not taken.
+- **#37** new types vs a richer `CodeItem` is decided when taken up.
+- **Also:** build `codeDoIf` alongside `codeIf`; rewrite `Specifications/exec.md` to match the code; defer the
+  Macros note's open questions as a block (the `.error` combinators keep their trap); "general non-destructive
+  execution" is closed as subsumed by the query convention; open registration of consumer instructions and
+  types is wanted, and any registered instruction must obey the crux rule and be covered by the round-trip check.
+
+---
+
 ## A. Language features not yet built
 
 1. ~~**`.points(into:)`** — the depth-first code-tree walk~~ **BUILT** (`codeIteratePoints`, the `.points`

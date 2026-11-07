@@ -317,7 +317,7 @@ The crux-only set is the `.cruxOnly` tag on 15 constructors, not an `Instruction
    than it looked from Part 1 alone. It will bite a program that gets past its opening, which is exactly
    the program a search is trying to find.
 4. **Watch `.int`.** Not a bug, but the per-stack combinators are 84 draws on one shared channel, and it
-   is empty 63.5% of the time it is wanted. That is the starvation mechanism made concrete, from both
+   is empty 63.5% of the time it is wanted *(48.6% after the Part 2 re-measurement; noted 2026-11-07)*. That is the starvation mechanism made concrete, from both
    ends at once.
 5. Nothing needs doing about `.bool` structurally — but note the ~53% empirical shortfall is among the worst
    in the language, and it is an *opening* problem, not a steady-state one.

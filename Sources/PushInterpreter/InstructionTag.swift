@@ -36,9 +36,9 @@
 //  Design Principles §13 requires a limit to record whether its number is chosen,
 //  inherited, or derived, *"because a number with no stated reason is
 //  indistinguishable from cargo."* A judgment tag is the same object and gets the
-//  same discipline. `.risky` on `.execY` is **inherited** — from Clojush and Push3
-//  experience, not measured here — and saying so is the difference between a
-//  finding and a rumour.
+//  same discipline. `.risky` on `.execY` was first **inherited** — from Clojush and
+//  Push3 experience — and has since been **measured** here (see `.risky` below);
+//  saying which is the difference between a finding and a rumour.
 //
 //  A tag that *is* checkable must be checked rather than trusted: if one ever
 //  duplicates something `requirements` or the traits already know, a test asserts
