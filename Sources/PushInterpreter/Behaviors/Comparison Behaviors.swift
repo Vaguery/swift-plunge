@@ -2,7 +2,7 @@
 //  Comparison Behaviors.swift
 //  PushInterpreter
 //
-//  **The 40 instructions that order or equate two values and hand back a `.bool`.**
+//  **The 39 instructions that order or equate two values and hand back a `.bool`.**
 //
 //  This file holds no behavior bodies. It is a *registration* file, and that is the
 //  whole point of it: `InstructionRole` is derived from which dictionary defines an
@@ -29,7 +29,7 @@
 //
 //  So the registrations move and the definitions do not, and the two channels now
 //  agree exactly: the `.comparison` **role** and the `.comparison` **trait** are the
-//  same 40 instructions. `Instruction Role Tests` asserts that, which is what
+//  same 39 instructions. `Instruction Role Tests` asserts that, which is what
 //  catches a future comparison registered into the wrong dictionary — the one
 //  failure this arrangement is open to.
 //
@@ -38,7 +38,7 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    /// The 40 comparisons: 12 `…Eq`, generated per stack, and 28 orderings.
+    /// The 39 comparisons: 11 `…Eq`, generated per stack, and 28 orderings.
     static var comparisonBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
@@ -48,7 +48,9 @@ nonisolated extension Interpreter {
         //
         // `.error` is absent, as it is from the combinator loop: the error stack
         // gets no generated family at all (see `Introspection Behaviors.swift`).
-        for stack in Self.generatedFamilyStacks {
+        // `.exec` is absent too: `execEq` was removed, since `( A ) ( B ) .codeEq`
+        // asks the same question now that blocks land on `.code` (Roadmap #26).
+        for stack in Self.generatedFamilyStacks where stack != .exec {
             eqCombinator_Behavior(for: stack, into: &result)
         }
 

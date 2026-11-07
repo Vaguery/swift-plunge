@@ -39,7 +39,7 @@ import Testing
 ///
 /// It used to skip two shapes, both closed by the CodeItem change:
 /// cruxes leaning on `execEq` (whose postfix `call` could not reach `.exec`
-/// arguments — now prefix, provenance law 3b), and bare code blocks (which
+/// arguments; `execEq` has since been removed), and bare code blocks (which
 /// scattered onto `.exec` instead of reaching `.code` — now they come to rest
 /// there intact, so a block genuinely *is* its own crux).
 @MainActor
@@ -173,9 +173,9 @@ struct CruxRoundTripTests {
     ///   `CodeItem` was the exception, because a block in a program unwrapped onto
     ///   `.exec` and scattered instead of reaching `.code`. Now it comes to rest
     ///   there intact, and `( 2 3 ) ( 1 2 ) .codeAppend` finds what it needs.
-    /// - `execEq` — its arguments still come from `.exec`, which is right, but its
-    ///   crux has to be **prefix** to say so (provenance law 3b). `.execEq 3 3`
-    ///   reproduces; `3 3 .execEq` lets the literals fall to `.int` first.
+    /// - `execEq` — its crux had to be **prefix** (provenance law 3b), which
+    ///   reproduced single-item operands only. It was removed (Roadmap #26):
+    ///   `( A ) ( B ) .codeEq` asks the same question.
     ///
     /// Both halves of the assertion below matter: this fails if the set grows
     /// *and* if an entry silently starts passing. That is how the change was

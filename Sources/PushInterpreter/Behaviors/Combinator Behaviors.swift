@@ -256,44 +256,26 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Eq")!
-        // `.execEq` stays destructive: its two operands are the pending program
-        // continuation on `.exec`, not values to keep — "leaving them alive" would
-        // mean letting them run, which is not reuse. Every other Eq is a
-        // non-destructive query that reads its two operands and leaves them.
-        let isExec = stack == .exec
+        // Every Eq is a non-destructive query: it reads its two operands and
+        // leaves them. (`.execEq`, the one destructive form, was removed; see
+        // `comparisonBehaviors`.)
         inst = Behavior(
             name,
-            requires: isExec
-                ? [Requirement.takes(stack), Requirement.takes(stack)]
-                : [Requirement.reads(stack), Requirement.reads(stack)],
+            requires: [Requirement.reads(stack), Requirement.reads(stack)],
             fxn: { a, recording in
                 let isSame = a[0].isEqual(to: a[1])
-                // Provenance law 3b (Items.swift): `.execEq` reads its arguments
-                // from `.exec` — the next two things ahead of it in the program,
-                // not values waiting on a stack behind it — so the source that
-                // re-runs it is `.execEq 3 3`, prefix. Every other stack's Eq is
-                // postfix like everything else. Push is not uniformly postfix,
-                // and a crux has to be written the way `.exec` reads it.
-                //
-                // The non-destructive forms clean up the two operands they read so
-                // the crux reproduces just the bool (`Behavior.reading`); `.execEq`
-                // consumed its operands, so it records them plainly.
-                // A function, so it is only built when recording.
-                func record() -> [any Item] {
-                    isExec
-                        ? [InstructionItem(name), a[0], a[1]]
-                        : Behavior.reading(
-                            [stack: 2],
-                            producing: .bool,
-                            from: [a[1], a[0], InstructionItem(name)]
-                        )
-                }
+                // The crux cleans up the two operands it read, so it reproduces
+                // just the bool (`Behavior.reading`).
                 return [
                     Router(
                         .bool,
                         BoolItem(
                             isSame,
-                            call: recording(record()))
+                            call: recording(Behavior.reading(
+                                [stack: 2],
+                                producing: .bool,
+                                from: [a[1], a[0], InstructionItem(name)]
+                            )))
                     )
                 ]
             }

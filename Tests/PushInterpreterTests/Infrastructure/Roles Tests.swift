@@ -57,7 +57,7 @@ struct TagsTests {
     /// furniture and `.stackPlumbing` — *combinators minus introspection* —
     /// inherited that and described `.intEq` as "only shuffling a stack".
     @Test func `equality is not furniture`() {
-        for eq: PushInstruction in [.intEq, .boolEq, .stringEq, .codeEq, .execEq] {
+        for eq: PushInstruction in [.intEq, .boolEq, .stringEq, .codeEq] {
             #expect(Interpreter.instructions(role: .comparison).contains(eq))
             #expect(!Interpreter.instructions(role: .combinator).contains(eq))
             #expect(!Interpreter.instructions(trait: .stackPlumbing).contains(eq))
@@ -73,8 +73,9 @@ struct TagsTests {
         // 168, not the 180 it was: the 12 `…Eq` moved to `.comparison`, where they
         // always belonged. See `Comparison Behaviors.swift`.
         #expect(Interpreter.instructions(role: .combinator).count == 168)
-        #expect(Interpreter.instructions(role: .comparison).count == 40,
-                "12 Eq + 28 orderings")
+        // 39, not 40: `execEq` was removed (Roadmap #26).
+        #expect(Interpreter.instructions(role: .comparison).count == 39,
+                "11 Eq + 28 orderings")
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.
@@ -147,9 +148,9 @@ struct TagsTests {
         #expect(Interpreter.instructions(consuming: .int).contains(.intAdd))
         #expect(!Interpreter.instructions(reading: .int).contains(.intAdd))
 
-        // `.execEq` stayed destructive, so it consumes `.exec` rather than reading.
-        #expect(Interpreter.instructions(consuming: .exec).contains(.execEq))
-        #expect(!Interpreter.instructions(reading: .exec).contains(.execEq))
+        // Every `…Eq` reads; none consumes (`.execEq`, the destructive one, is gone).
+        #expect(Interpreter.instructions(reading: .int).contains(.intEq))
+        #expect(!Interpreter.instructions(consuming: .int).contains(.intEq))
     }
 
     /// "What can never starve?" — a question worth being able to ask in a language

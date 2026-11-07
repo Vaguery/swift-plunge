@@ -68,7 +68,7 @@ nonisolated extension PushStack {
     }
 
     /// Every stack's pop/swap/popItems instruction, looked up once at launch
-    /// rather than by building a name and searching 608 raw values per call.
+    /// rather than by building a name and searching every instruction's raw value per call.
     /// `.error` has none of the three, so its entries are nil.
     private static let popItemsByOrdinal = allCases.map { PushInstruction(rawValue: "\($0.rawValue)PopItems") }
     private static let swapByOrdinal = allCases.map { PushInstruction(rawValue: "\($0.rawValue)Swap") }

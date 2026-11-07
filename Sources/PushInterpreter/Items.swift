@@ -62,9 +62,10 @@ public nonisolated protocol Pretty {
 //     uniformly postfix, and this is the important quirk. An `.exec` argument is
 //     not waiting on a stack behind the instruction — it is the next thing ahead
 //     of it in the program, so the source that re-runs it must read
-//     `.execEq 3 3`, not `3 3 .execEq`. Reconstructed source is executed from
+//     `.execQuote 3`, not `3 .execQuote`. Reconstructed source is executed from
 //     `.exec` like any other program, so it has to be written the way `.exec`
-//     reads it. `execQuote` and `execEq` are the two that record this way.
+//     reads it. `execQuote` is the one that records this way (`execEq` did too,
+//     and was removed because a prefix crux cannot reproduce a derived operand).
 //
 //  4. A freshly minted instruction token records nothing. Its crux is itself.
 //

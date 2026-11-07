@@ -63,7 +63,7 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
     /// being left in `.other` to dominate it silently.
     case combinator
 
-    /// Ordering and equality — the 12 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
+    /// Ordering and equality — the 11 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
     ///
     /// Exactly the `.comparison` **trait**, which is the point: the two channels
     /// answer "where is it defined" and "what does it compute" and here they agree,

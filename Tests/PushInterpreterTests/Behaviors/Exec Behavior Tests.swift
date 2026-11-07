@@ -477,15 +477,17 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .int) == "[ 1 ]")
     }
 
-    @Test func `execEq works with inputs (bug fix)`() {
-        inty.stacks[.exec]!.prepend(InstructionItem(.input0))
-        inty.stacks[.exec]!.prepend(InstructionItem(.input0))
-        inty.stacks[.exec]!.prepend(InstructionItem(.execEq))
+    /// `execEq` was removed (2026-11-07, Roadmap #26): blocks now land on `.code`
+    /// intact, so `( A ) ( B ) .codeEq` asks whether two pending things are the
+    /// same, and its crux is an ordinary postfix one. This replaces
+    /// `execEq works with inputs (bug fix)`.
+    @Test func `execEq is gone, and codeEq asks the same question`() {
+        #expect(PushInstruction(rawValue: "execEq") == nil)
 
-        #expect(stackString(inty, .exec) == "[ .execEq .input0 .input0 ]")
-
-        inty.step()
-        #expect(stackString(inty, .exec) == "[ ]")
+        inty.stacks[.exec]!.prepend(InstructionItem(.codeEq))
+        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input0)]))
+        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input0)]))
+        while !inty.stacks[.exec]!.isEmpty { inty.step() }
         #expect(stackString(inty, .bool) == "[ true ]")
     }
 

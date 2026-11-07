@@ -102,9 +102,10 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     //
     case execDoCount, execDoRange, execDoTimes, execDoWhile, execIf, execK, execS, execWhen, execWhile, execY
     
-    // exec comparison
-    case execEq
-    
+    // exec comparison: none. `execEq` was removed (2026-11-07): with blocks landing
+    // on `.code` intact, `( A ) ( B ) .codeEq` asks the same question, and its
+    // prefix crux could not reproduce derived operands (Roadmap #26).
+
     // exec conversion
     
     // exec combinators

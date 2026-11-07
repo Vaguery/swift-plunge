@@ -236,8 +236,7 @@ struct CombinatorBehaviorTests {
 
     @Test func `combinator Eq works`() {
         // `xEq` is now a non-destructive query: it reads both operands and leaves
-        // them, so the crux pops the two it read to reproduce just the bool. (Only
-        // `.execEq` still consumes — its operands are the pending continuation.)
+        // them, so the crux pops the two it read to reproduce just the bool.
         loadInts(inty, ints: [9, 38, 4, -4, -7, -7])   // 9 on top
 
         doThis(.intEq, to: inty)
