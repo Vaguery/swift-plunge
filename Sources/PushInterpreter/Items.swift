@@ -215,18 +215,19 @@ public nonisolated struct CallMeasure: Sendable, Hashable {
 ///
 /// **Members** ride in the same box (2026-11-07). A vector's or string's elements
 /// are raw values, so they cannot carry a history of their own; when recording,
-/// the container keeps the items that went in, one slot per element, for the
+/// the container keeps each element's origin, as a piece table (`Pieces`), for the
 /// extraction instructions to hand back (the containment law, `Containment`). Only
 /// an item with a `call` keeps them: a literal's elements are addressed from the
 /// literal, and assigning a new `call` (elision, a stand-in) drops them with the
-/// history they belong to. They cost no memory beyond the slots themselves,
-/// because every member is also reachable from the container's `call`.
+/// history they belong to. They cost little memory beyond the runs themselves,
+/// because every source and item they name is also reachable from the
+/// container's `call`.
 nonisolated struct CallStorage: Sendable {
     private final class Box: Sendable {
         let call: [any Item]
         let measure: CallMeasure
-        let members: Members?
-        init(call: [any Item], measure: CallMeasure, members: Members?) {
+        let members: Pieces?
+        init(call: [any Item], measure: CallMeasure, members: Pieces?) {
             self.call = call; self.measure = measure; self.members = members
         }
     }
@@ -235,13 +236,13 @@ nonisolated struct CallStorage: Sendable {
     static let literal = CallStorage(box: nil)
     private init(box: Box?) { self.box = box }
 
-    init(_ call: [any Item], members: Members? = nil) {
+    init(_ call: [any Item], members: Pieces? = nil) {
         box = call.isEmpty ? nil : Box(call: call, measure: CallMeasure.of(call), members: members)
     }
 
     var call: [any Item] { box?.call ?? [] }
     var measure: CallMeasure { box?.measure ?? .literal }
-    var members: Members? { box?.members }
+    var members: Pieces? { box?.members }
 }
 
 nonisolated extension CallMeasure {
@@ -808,9 +809,8 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     /// `any Item` holds inline (see `CallStorage`).
     public var weight: Int { value.utf8.count }
 
-    /// The `CharItem`s that went in, one slot per character, when recording; see
-    /// `Containment`.
-    var members: Members? { callStorage.members }
+    /// Where each character came from, when recording; see `Pieces`.
+    var members: Pieces? { callStorage.members }
 
     /// `members`, if given, must line up with the characters. Character boundaries
     /// can move when strings are joined (a combining mark after a letter), so a
@@ -820,7 +820,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
         self.init(value, call: call, members: nil)
     }
 
-    init(_ value: String, call: [any Item], members: Members?) {
+    init(_ value: String, call: [any Item], members: Pieces?) {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { Containment.aligned($0, with: Array(value)) })
     }
@@ -853,15 +853,14 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
 
     public let weight: Int
 
-    /// The items that went in, one slot per element, when recording; see
-    /// `Containment`.
-    var members: Members? { callStorage.members }
+    /// Where each element came from, when recording; see `Pieces`.
+    var members: Pieces? { callStorage.members }
 
     public init(_ value: [Bool], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
 
-    init(_ value: [Bool], call: [any Item], members: Members?) {
+    init(_ value: [Bool], call: [any Item], members: Pieces?) {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
@@ -892,15 +891,14 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
 
     public let weight: Int
 
-    /// The items that went in, one slot per element, when recording; see
-    /// `Containment`.
-    var members: Members? { callStorage.members }
+    /// Where each element came from, when recording; see `Pieces`.
+    var members: Pieces? { callStorage.members }
 
     public init(_ value: [Double], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
 
-    init(_ value: [Double], call: [any Item], members: Members?) {
+    init(_ value: [Double], call: [any Item], members: Pieces?) {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
@@ -930,15 +928,14 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
 
     public let weight: Int
 
-    /// The items that went in, one slot per element, when recording; see
-    /// `Containment`.
-    var members: Members? { callStorage.members }
+    /// Where each element came from, when recording; see `Pieces`.
+    var members: Pieces? { callStorage.members }
 
     public init(_ value: [Int], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
 
-    init(_ value: [Int], call: [any Item], members: Members?) {
+    init(_ value: [Int], call: [any Item], members: Pieces?) {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
@@ -972,15 +969,14 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     /// measure that a plain element count would miss. O(element count) once.
     public let weight: Int
 
-    /// The `StringItem`s that went in, one slot per element, when recording; see
-    /// `Containment`.
-    var members: Members? { callStorage.members }
+    /// Where each element came from, when recording; see `Pieces`.
+    var members: Pieces? { callStorage.members }
 
     public init(_ value: [String], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
 
-    init(_ value: [String], call: [any Item], members: Members?) {
+    init(_ value: [String], call: [any Item], members: Pieces?) {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.reduce(0) { $0 + $1.utf8.count }

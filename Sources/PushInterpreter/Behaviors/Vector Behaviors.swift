@@ -38,28 +38,35 @@ nonisolated protocol VectorItem: HoldsMembers where Value == [Element] {
     associatedtype Element
     associatedtype Scalar: ScalarItem where Scalar.Value == Element
     static var pushStack: PushStack { get }
+    /// The instruction that takes element `k` out: an element's address in its
+    /// source names it (`Pieces`).
+    static var nthInstruction: PushInstruction { get }
     init(_ value: [Element], call: [any Item])
-    init(_ value: [Element], call: [any Item], members: Members?)
+    init(_ value: [Element], call: [any Item], members: Pieces?)
 }
 
 nonisolated extension VecBoolItem: VectorItem {
     typealias Scalar = BoolItem
     static var pushStack: PushStack { .vecBool }
+    static var nthInstruction: PushInstruction { .vecBoolNth }
 }
 
 nonisolated extension VecDoubleItem: VectorItem {
     typealias Scalar = DoubleItem
     static var pushStack: PushStack { .vecDouble }
+    static var nthInstruction: PushInstruction { .vecDoubleNth }
 }
 
 nonisolated extension VecIntItem: VectorItem {
     typealias Scalar = IntItem
     static var pushStack: PushStack { .vecInt }
+    static var nthInstruction: PushInstruction { .vecIntNth }
 }
 
 nonisolated extension VecStringItem: VectorItem {
     typealias Scalar = StringItem
     static var pushStack: PushStack { .vecString }
+    static var nthInstruction: PushInstruction { .vecStringNth }
 }
 
 
@@ -79,7 +86,7 @@ nonisolated extension Interpreter {
                         V(
                             x.value.dropLast(1),
                             call: recording([x, InstructionItem(instruction)]),
-                            members: recording.members(x.slots.dropLast(1)))
+                            members: recording.pieces(x.origins().dropLast(1)))
                     )
                 ]
             }
@@ -101,7 +108,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, y, InstructionItem(instruction)]),
-                            members: recording.members(x.slots + [Containment.slot(y)]))
+                            members: recording.pieces(x.origins() + [Origin.item(y)]))
                     )
                 ]
             }
@@ -121,7 +128,7 @@ nonisolated extension Interpreter {
                         V(
                             y.value + x.value,
                             call: recording([y, x, InstructionItem(instruction)]),
-                            members: recording.members(y.slots + x.slots))
+                            members: recording.pieces(y.origins(0) + x.origins(1)))
                     )
                 ]
             }
@@ -188,7 +195,7 @@ nonisolated extension Interpreter {
                         V(
                             Array(x.value.dropFirst(1)),
                             call: recording([x, InstructionItem(instruction)]),
-                            members: recording.members(Array(x.slots.dropFirst(1))))
+                            members: recording.pieces(Array(x.origins().dropFirst(1))))
                     )
                 ]
             }
@@ -208,7 +215,7 @@ nonisolated extension Interpreter {
                         V(
                             Array(x.value.reversed()),
                             call: recording([x, InstructionItem(instruction)]),
-                            members: recording.members(x.slots.reversed()))
+                            members: recording.pieces(x.origins().reversed()))
                     )
                 ]
             }
@@ -232,7 +239,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, y, InstructionItem(instruction)]),
-                            members: recording.members(Array(x.slots.dropLast(idx))))
+                            members: recording.pieces(Array(x.origins().dropLast(idx))))
                     )
                 ]
             }
@@ -256,7 +263,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, y, InstructionItem(instruction)]),
-                            members: recording.members(Array(x.slots.dropFirst(idx))))
+                            members: recording.pieces(Array(x.origins().dropFirst(idx))))
                     )
                 ]
             }
@@ -300,7 +307,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             V.Scalar.pushStack,
-                            x.member(at: 0) ?? V.Scalar(
+                            x.traced(at: 0, recording) ?? V.Scalar(
                                 result,
                                 call: recording([x, InstructionItem(instruction)]))
                         )
@@ -323,7 +330,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             V.Scalar.pushStack,
-                            x.member(at: x.value.count - 1) ?? V.Scalar(
+                            x.traced(at: x.value.count - 1, recording) ?? V.Scalar(
                                 result,
                                 call: recording([x, InstructionItem(instruction)]))
                         )
@@ -354,7 +361,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             V.Scalar.pushStack,
-                            x.member(at: idx) ?? V.Scalar(
+                            x.traced(at: idx, recording) ?? V.Scalar(
                                 result,
                                 call: recording([x, y, InstructionItem(instruction)]))
                         )
@@ -568,7 +575,7 @@ nonisolated extension Interpreter {
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
                             call: recording([subject, needle, repl, InstructionItem(instruction)]),
-                            members: recording.members(
+                            members: recording.pieces(
                                 replacingSubSlots(subject, needle, repl, firstOnly: false)))
                     )
                 ]
@@ -590,7 +597,7 @@ nonisolated extension Interpreter {
                         V(
                             replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
                             call: recording([subject, needle, repl, InstructionItem(instruction)]),
-                            members: recording.members(
+                            members: recording.pieces(
                                 replacingSubSlots(subject, needle, repl, firstOnly: true)))
                     )
                 ]
@@ -606,7 +613,7 @@ nonisolated extension Interpreter {
         replacingSub(hay, needle, repl, firstOnly: firstOnly, by: ==)
     }
 
-    /// `replacingSub`, comparing with `same`: the one scan, so the members of a
+    /// `replacingSub`, comparing with `same`: the one scan, so the origins of a
     /// result (`replacingSubSlots`) cannot drift from its values.
     static func replacingSub<T>(
         _ hay: [T], _ needle: [T], _ repl: [T], firstOnly: Bool, by same: (T, T) -> Bool
@@ -630,13 +637,13 @@ nonisolated extension Interpreter {
         return result
     }
 
-    /// The members of `replacingSub`'s result: each element's slot travels with
+    /// The origins of `replacingSub`'s result: each element's origin travels with
     /// it, from the subject or from the replacement. Called only when recording.
-    static func replacingSubSlots<V: VectorItem>(_ hay: V, _ needle: V, _ repl: V, firstOnly: Bool) -> Members
+    static func replacingSubSlots<V: VectorItem>(_ hay: V, _ needle: V, _ repl: V, firstOnly: Bool) -> [Origin]
     where V.Element: Equatable {
-        typealias Slotted = (value: V.Element, slot: (any Item)?)
-        func slotted(_ vector: V) -> [Slotted] { zip(vector.value, vector.slots).map { ($0, $1) } }
-        return replacingSub(slotted(hay), slotted(needle), slotted(repl), firstOnly: firstOnly) {
+        typealias Slotted = (value: V.Element, slot: Origin)
+        func slotted(_ vector: V, _ tag: Int) -> [Slotted] { zip(vector.value, vector.origins(tag)).map { ($0, $1) } }
+        return replacingSub(slotted(hay, 0), slotted(needle, 2), slotted(repl, 1), firstOnly: firstOnly) {
             $0.value == $1.value
         }.map(\.slot)
     }
@@ -656,8 +663,8 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, y, InstructionItem(instruction)]),
-                            members: recording.members(
-                                zip(x.value, x.slots).filter { $0.0 != y.value }.map(\.1)))
+                            members: recording.pieces(
+                                zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1)))
                     )
                 ]
             }
@@ -681,8 +688,8 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, z, y, InstructionItem(instruction)]),
-                            members: recording.members(
-                                zip(x.value, x.slots).map { $0.0 == z.value ? Containment.slot(y) : $0.1 }))
+                            members: recording.pieces(
+                                zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 }))
                     )
                 ]
             }
@@ -704,9 +711,9 @@ nonisolated extension Interpreter {
                 if let idx = first {
                     result[idx] = y.value
                 }
-                func members() -> Members {
-                    var slots = x.slots
-                    if let idx = first { slots[idx] = Containment.slot(y) }
+                func members() -> [Origin] {
+                    var slots = x.origins()
+                    if let idx = first { slots[idx] = Origin.item(y) }
                     return slots
                 }
                 return [
@@ -715,7 +722,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, z, y, InstructionItem(instruction)]),
-                            members: recording.members(members()))
+                            members: recording.pieces(members()))
                     )
                 ]
             }
@@ -738,9 +745,9 @@ nonisolated extension Interpreter {
                 if let idx {
                     result[idx] = z.value
                 }
-                func members() -> Members {
-                    var slots = x.slots
-                    if let idx { slots[idx] = Containment.slot(z) }
+                func members() -> [Origin] {
+                    var slots = x.origins()
+                    if let idx { slots[idx] = Origin.item(z) }
                     return slots
                 }
                 return [
@@ -749,7 +756,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, z, y, InstructionItem(instruction)]),
-                            members: recording.members(members()))
+                            members: recording.pieces(members()))
                     )
                 ]
             }
@@ -784,7 +791,7 @@ nonisolated extension Interpreter {
                         V(
                             result,
                             call: recording([x, z, y, InstructionItem(instruction)]),
-                            members: recording.members(span.map { Array(x.slots[$0]) } ?? []))
+                            members: recording.pieces(span.map { Array(x.origins()[$0]) } ?? []))
                     )
                 ]
             }
@@ -831,11 +838,11 @@ nonisolated extension Interpreter {
                     Router(V.pushStack, V(
                         prefix,
                         call: recording(Behavior.selecting(0, of: 2, on: V.pushStack, from: source)),
-                        members: recording.members(Array(x.slots[0..<idx])))),
+                        members: recording.pieces(Array(x.origins()[0..<idx])))),
                     Router(V.pushStack, V(
                         suffix,
                         call: recording(Behavior.selecting(1, of: 2, on: V.pushStack, from: source)),
-                        members: recording.members(Array(x.slots[idx...])))),
+                        members: recording.pieces(Array(x.origins()[idx...])))),
                 ]
             }
         )
@@ -918,7 +925,7 @@ nonisolated extension Interpreter {
                             elements.map(\.value),
                             call: recording(
                                 [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]),
-                            members: recording.members(elements.map { Containment.slot($0) }))
+                            members: recording.pieces(elements.map { Origin.item($0) }))
                     )
                 ]
             }
@@ -982,7 +989,7 @@ nonisolated extension Interpreter {
                         V(
                             elements.map(\.value),
                             call: interpreter.recording(snapshotCrux(elements, readInstruction: instruction, making: V.self)),
-                            members: interpreter.recording.members(elements.map { Containment.slot($0) }))
+                            members: interpreter.recording.pieces(elements.map { Origin.item($0) }))
                     )
                 ]
             }
@@ -1013,7 +1020,7 @@ nonisolated extension Interpreter {
                         V(
                             elements.map(\.value),
                             call: interpreter.recording(snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self)),
-                            members: interpreter.recording.members(elements.map { Containment.slot($0) }))
+                            members: interpreter.recording.pieces(elements.map { Origin.item($0) }))
                     )
                 ]
             }
@@ -1770,7 +1777,7 @@ nonisolated extension Interpreter {
             }
 
             // The items are collected with their histories when recording, so each
-            // element keeps its own as a member (`Containment`).
+            // element's origin is the item it was (`Pieces`).
             guard let items = iterator.collected(recording: recording) else {
                 return refuse("iterator emits more than \(IteratorItem.collectionLimit) items")
             }
@@ -1779,7 +1786,7 @@ nonisolated extension Interpreter {
             // guessing it is worse than saying so.
             guard !items.isEmpty else { return refuse("\(iterator.pretty()) emitted nothing") }
 
-            let members = recording.members(items.map { Containment.slot($0) })
+            let members = recording.pieces(items.map { Origin.item($0) })
             let collected: (any Item)? =
                 if let values = items as? [BoolItem] {
                     VecBoolItem(values.map(\.value), call: recording(record()), members: members)

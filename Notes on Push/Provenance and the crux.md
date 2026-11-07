@@ -326,8 +326,9 @@ came out of has a stand-in in its history (equal shares: 5.6% → 8.4%).
 
 **Vector and string elements** are the same law in a different shape (Roadmap #21, ruling P5). Their
 elements are raw values, not items, so they cannot keep a history unless the container holds one for
-them. When recording, a vector or string now keeps its **members**: one slot per element, holding the
-item that went in if it went in with a history, else nothing. They live in the container's provenance box
+them. When recording, a vector or string now keeps its **members**: first one slot per element, holding
+the item that went in if it went in with a history, else nothing; then, the same day, a piece table
+(below). They live in the container's provenance box
 (`CallStorage`), so an item's inline size does not grow, and the search builds none.
 
 - **In:** conj, set, replace, construct, `readItems`/`readStack`, `vecFromIterator`, `stringConjChar`,
@@ -354,10 +355,28 @@ changed 5 items in about 5,500 under the other two mixes. Under `.containerHeavy
 histories (`.stringPopItems` stand-ins: an element pulled out of a long-built string dragged the whole
 string's history with it).
 
-**Not taken (yet):** an element born in a *constant* still has no member, so out of `A B .vecIntConcat`
-it is addressed from the concatenation rather than from `A`. A grouped form (each source with the runs
-of positions that came from it, like a piece table) would address it from its true source and store a
-long concatenation in a few entries; see the note on representation in Roadmap #21.
+**A piece table (same day, the user's suggestion).** Most elements come from a few sources, so the
+per-element slots became runs (`Pieces`): each run is either one item that went in, or a span of
+positions of the **source** container the elements were born in, stepping forward or backward. Building
+a container out of another one's elements carries their origins over, so an element is always addressed
+from its source, never from an intermediate concatenation: the 4 out of `[1 2] [3 4] .vecIntConcat
+.vecIntReverse .vecIntFirst` replays as `[3, 4] 1 .vecIntNth`, and an element of a bound constant names
+the constant (`.vecInt3 1 .vecIntNth`). A container with no members is a source. Lookups are a binary
+search over the runs.
+
+Under `.containerHeavy` this moved derived from 85.3% to 85.6%, elision from 1.5% to 1.3% and the mean
+crux length from 65.6 to 63.5, with 0 broken. How well it groups depends on how the elements got in:
+
+| mix | vectors and strings with members | elements | runs | of which single items |
+|---|---|---|---|---|
+| equal shares | 901 | 7,954 | 1,304 | 493 |
+| loop-heavy | 1,505 | 14,899 | 9,233 | 8,292 |
+| container-heavy | 2,144 | 23,683 | 17,864 | 16,136 |
+
+Elements born in a source group well, 4 to 9 per span. Elements that went in one at a time (conj,
+construct, readStack, collecting an iterator) are one run each, no worse than the slots were. Grouping
+*those* means recognizing a pattern in their histories (a counting loop's `origin k .intAdd`), which is
+provenance compression, step 3.
 
 ## What checking the law actually found
 

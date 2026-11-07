@@ -54,11 +54,14 @@ struct CruxCompleteness {
     /// A few unmarked and bound-contents items, to show what slipped through.
     private(set) var examples: [Completeness: [String]] = [:]
     /// Value-stack items whose crux takes something out of a container by its
-    /// address (`v k .vecIntNth`, `s .stringFirst`, `b k .codeEmitNthRoot`): the
-    /// fallback when the element went in with no history to keep (`Containment`).
+    /// address (`v k .vecIntNth`, `s .stringFirst`, `b k .codeEmitNthRoot`): an
+    /// element that was born in its container rather than put there (`Containment`).
     private(set) var addressed = 0
     /// The total crux length of the value-stack items with a history, for a mean.
     private(set) var cruxLeaves = 0
+    /// Vectors and strings left with members, the elements they cover, and the
+    /// runs those take (`Pieces`): how well the piece table groups by source.
+    private(set) var pieceTables = (containers: 0, elements: 0, runs: 0, items: 0)
 
     static func isAddress(_ leaf: any Item) -> Bool {
         leaf.exactly(InstructionItem.self).map { addressInstructions.contains($0.value) } ?? false
@@ -128,7 +131,7 @@ struct CruxCompleteness {
                     continue
                 }
                 let crux = item.crux()
-                if group == .values { measure(crux) }
+                if group == .values { measure(crux); measure(item) }
                 let standIns = crux.compactMap { $0.exactly(StandInItem.self) }
                 let losing = standIns.filter { $0.reason != .minted }
                 let kind: Completeness =
@@ -153,6 +156,14 @@ struct CruxCompleteness {
     }
 
     /// Counts a value-stack item's crux toward the mean length and the addressed.
+    private mutating func measure(_ item: any Item) {
+        guard let pieces = (item as? any HoldsMembers)?.members else { return }
+        pieceTables.containers += 1
+        pieceTables.elements += pieces.count
+        pieceTables.runs += pieces.runs.count
+        pieceTables.items += pieces.runs.count { if case .item = $0 { true } else { false } }
+    }
+
     private mutating func measure(_ crux: [any Item]) {
         cruxLeaves += crux.count
         if crux.contains(where: Self.isAddress) { addressed += 1 }
@@ -175,6 +186,10 @@ struct CruxCompleteness {
                 let derivedItems = max(1, total - count(.programLiteral, in: group))
                 let mean = (Double(cruxLeaves) / Double(derivedItems)).formatted(.number.precision(.fractionLength(1)))
                 lines.append("    taken out by address: \(percent(addressed, of: total)); mean crux length \(mean)")
+                let tables = pieceTables
+                lines.append("    members: \(tables.containers) vectors and strings, "
+                             + "\(tables.elements) elements in \(tables.runs) runs "
+                             + "(\(tables.items) of them single items that went in)")
             }
             let top = (standInSources[group] ?? [:])
                 .sorted { $0.value > $1.value || ($0.value == $1.value && $0.key < $1.key) }.prefix(6)

@@ -128,9 +128,49 @@ struct ContainmentTests {
 
     @Test func `members that do not line up with the characters are dropped`() {
         let acute = CharItem("\u{301}", call: [IntItem(769), InstructionItem(.charFromInt)])
+        let pieces = Pieces([.item(CharItem("e")), .item(acute)])
         // "e" and a combining acute are one character, "é", not two.
-        #expect(Containment.aligned([nil, acute], with: Array("e\u{301}")) == nil)
-        #expect(Containment.aligned([nil, acute], with: ["e", "\u{301}"]) != nil)
+        #expect(Containment.aligned(pieces, with: Array("e\u{301}")) == nil)
+        #expect(Containment.aligned(pieces, with: ["e", "\u{301}"]) != nil)
+        #expect(Containment.aligned(pieces, with: ["e", "x"]) == nil)
+    }
+
+    // MARK: The piece table
+
+    @Test func `an element is addressed from the source it was born in, through any rearrangement`() {
+        // Concatenated, reversed, then the first: the 4 that was born in [3, 4].
+        let inty = run([VecIntItem([1, 2]), VecIntItem([3, 4]), InstructionItem(.vecIntConcat),
+                        InstructionItem(.vecIntReverse), InstructionItem(.vecIntFirst)])
+        let four = topItem(inty, .int)
+        #expect(four.pretty() == "4")
+        #expect(CodeItem(four.crux()).pretty() == "( [3, 4] 1 .vecIntNth )")
+        #expect(holds(four))
+    }
+
+    @Test func `a bound constant's element names the constant`() {
+        let inty = Interpreter.recordingProvenance()
+        inty.load(inputs: [:], constants: [.vecInt3: VecIntItem([10, 20, 30])],
+                  program: [InstructionItem(.vecInt3), VecIntItem([5]), InstructionItem(.vecIntConcat),
+                            InstructionItem(.vecIntPushAll)])
+        inty.run(stepLimit: 1_000)
+        #expect(stackString(inty, .int) == "[ 5 30 20 10 ]")
+        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty() == "( .vecInt3 1 .vecIntNth )")
+    }
+
+    @Test func `runs merge where positions continue, and lookups cross runs`() {
+        let source = VecIntItem(Array(0..<100), call: [InstructionItem(.vecInt3)])
+        // Reversed whole: one run, stepping back.
+        let reversed = Pieces(source.origins().reversed())
+        #expect(reversed.runs.count == 1)
+        if case .element(_, let position, _)? = reversed.origin(at: 0) { #expect(position == 99) }
+        // A source, an item, the source again: three runs, and each lookup lands.
+        let five = IntItem(5, call: [IntItem(2), IntItem(3), InstructionItem(.intAdd)])
+        let mixed = Pieces(Array(source.origins(0)[0..<10]) + [.item(five)] + Array(source.origins(1)[50..<60]))
+        #expect(mixed.runs.count == 3)
+        #expect(mixed.count == 21)
+        if case .item(let item)? = mixed.origin(at: 10) { #expect(item.pretty() == "5") }
+        if case .element(_, let position, _)? = mixed.origin(at: 15) { #expect(position == 54) }
+        #expect(mixed.origin(at: 21) == nil)
     }
 
     @Test func `with recording off nothing is built`() {

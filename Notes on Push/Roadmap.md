@@ -56,7 +56,9 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    (was 70.6% / 76.7%); 0 broken. The fuzz now asserts both stay at zero.
    **Vector and string members BUILT (2026-11-07)**: a per-element slot array in the provenance box, filled
    only when recording; extraction hands back the member, else the address. A third fuzz mix,
-   `.containerHeavy`, exercises them: elision 5.2% → 1.5%, derived 81.5% → 85.3%, 0 broken.
+   `.containerHeavy`, exercises them: elision 5.2% → 1.5%, derived 81.5% → 85.3%, 0 broken. Then a
+   **piece table** (`Pieces`): origins stored as runs, each element addressed from its source; elision
+   1.3%, derived 85.6%.
 5. Opt-in history encoding in `AnyItem` (#22).
 6. Crux-to-function, both forms (#23).
 
@@ -71,11 +73,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
 - **#12 ForestGenome and #15 (mix under Forest): dropped.**
 - **#13** BB9 is kept, to be designed later.
 - **#21** (**done**) element provenance: a parallel per-element array, filled only when recording. Strings too.
-  *Representation, open:* most elements come from a few sources (a constant, a concatenation of two), so
-  a grouped form, each source with the runs of positions taken from it (a piece table), would be smaller
-  for long vectors and would also address an element born in a constant from that constant rather than
-  from the vector it ended up in. Everything reads members through `member(at:)`, so it can replace the
-  array without touching the behaviors.
+  *Representation:* **a piece table (built 2026-11-07, the user's suggestion).** Runs of one item that
+  went in, or of a source container's positions, so an element born in a constant is addressed from the
+  constant. Elements that went in one at a time stay one run each; grouping those is compression (step 3).
 - **#22** opt-in history encoding in `AnyItem`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
 - **#24** retire `maxIterations` once provenance compression lands.
