@@ -259,41 +259,30 @@ struct CruxRoundTripTests {
 @Suite @MainActor
 struct CruxFuzzTests {
 
-    // nonisolated so the `.disabled(if:)` trait can read it from the @Test
-    // macro's Sendable context under Swift 6 language mode
-    //
-    // Disabled by default, like every other fuzz test here — and for a reason
-    // worth knowing rather than by convention alone. `fuzzRNG` is a
-    // `nonisolated(unsafe)` global, and Swift Testing runs suites in parallel, so
-    // any other enabled test that draws from it (today: `Stress_Tests.set random
-    // constants works`, via `setRandomConstants`) consumes this test's stream
-    // mid-generation. Left enabled it is not reproducible: observed runs drew
-    // 21,123 claims and 17,016 from the same seed.
-    //
-    // To run it (~2s): set this false AND run it alone —
-    // `swift test --filter CruxFuzzTests` — because a filter alone only skips it,
-    // and running it alongside the suite is what breaks the seed.
-    //
-    // The deterministic half of this file, the per-Behavior sweep above, needs no
-    // RNG and stays enabled.
-    nonisolated static let disabledTests = true
+    /// **Always on** (since 2026-11-07, Roadmap §P step 2). It used to be disabled
+    /// by default and run alone, because every draw came from one mutable global
+    /// generator that any parallel suite could consume mid-generation (observed:
+    /// 21,123 claims on one run, 17,016 on the next, same seed). Each seed now
+    /// runs inside its own `withFuzzSeed` scope, so the stream is this test's
+    /// alone and the run reproduces whatever else is running.
+    ///
+    /// **Large, by ruling**: many seeds under two mixes, the balanced
+    /// `.equalShares` and `.loopHeavy`, because loops are where provenance is
+    /// hardest and no other generator concentrates them. A single seed is not
+    /// enough to see a rare class: the #27 failures ran about 1 in 1,900 claims,
+    /// and seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
+    static let seeds: [UInt64] = (0..<40).map { 20_260_715 &+ $0 &* 7919 }
+    // 40 seeds × 5 programs × 2 mixes is about 200,000 replayed claims, 16× the
+    // old disabled fuzz, in about 30 s alone. 20 per seed took about 2 minutes.
+    static let casesPerSeed = 5       // random programs per seed, per mix
+    static let programItems = 150     // instruction tokens per random genome
 
     /// Replaces the old `random programs produce legible cruxes`, which printed
     /// cruxes for a human to eyeball and asserted nothing.
-    @Test(.disabled(if: CruxFuzzTests.disabledTests))
-    func `every item a random program leaves has a runnable crux`() {
-        // Reproduces exactly when this test runs alone; see the note on
-        // `disabledTests` for why that qualifier is load-bearing. Failing cases
-        // are written to disk as replayable JSON regardless, which is the
-        // reproduction path that does not depend on the RNG.
-        // **Several seeds, not one.** A single seed is not enough to see a rare
-        // class: the #27 failures ran about 1 in 1,900 claims, and this test on
-        // seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
-        // Seeds are spaced by a prime so consecutive streams do not overlap.
-        let seeds: [UInt64] = (0..<8).map { 20_260_715 &+ $0 &* 7919 }
-        let cases = 20            // random programs per seed
-        let programItems = 150    // Plushy tokens per random genome
-
+    @Test(arguments: [("equal shares", InstructionMix.equalShares), ("loop-heavy", InstructionMix.loopHeavy)])
+    func `every item a random program leaves has a runnable crux`(name: String, mix: InstructionMix) {
+        // Failing cases are written to disk as replayable JSON, a reproduction
+        // path that does not depend on the generator at all.
         var settings = InterpreterSettings.recordingProvenance   // it checks cruxes
         settings.stepLimit = 3_000
 
@@ -303,46 +292,29 @@ struct CruxFuzzTests {
 
         func log(_ message: String) { print(message); fflush(stdout) }
 
-        var itemsChecked = 0
-        var skipped = 0
-        var programsWithClaims = 0
+        var tally = CruxCompleteness()
         var findings: [String] = []
 
-        for (seedIndex, seed) in seeds.enumerated() {
-            fuzzRNG = SeededRNG(seed: seed)
-            for caseIndex in 0..<cases {
-                let caseId = "crux-\(seedIndex)-\(caseIndex)"
-                let program = FibonacciGenome.translate(RandomCode.randomProgram(programItems))
+        for (seedIndex, seed) in Self.seeds.enumerated() {
+            withFuzzSeed(seed) {
+                for caseIndex in 0..<Self.casesPerSeed {
+                    let caseId = "crux-\(name.replacing(" ", with: "-"))-\(seedIndex)-\(caseIndex)"
+                    let program = FibonacciGenome.translate(RandomCode.randomProgram(Self.programItems, mix: mix))
 
-                let inty = Interpreter.recordingProvenance()
-                inty.config = settings
-                inty.load(program: program)
-                RandomCode.setRandomInputs(in: inty)
-                RandomCode.setRandomConstants(in: inty)
-                let inputs = inty.inputs
-                let constants = inty.constants
-                inty.run(stepLimit: settings.stepLimit)
+                    let inty = Interpreter.recordingProvenance()
+                    inty.config = settings
+                    inty.load(program: program)
+                    RandomCode.setRandomInputs(in: inty)
+                    RandomCode.setRandomConstants(in: inty)
+                    let inputs = inty.inputs
+                    let constants = inty.constants
+                    inty.run(stepLimit: settings.stepLimit)
 
-                var claimsHere = 0
-                var brokenHere: [String] = []
-                for stack in PushStack.allStacks where stack != .error {
-                    for item in inty.stacks[stack]! {
-                        guard !item.call.isEmpty,
-                              PushStack.defaultStack(for: item) != nil
-                        else { continue }
-                        guard !blockedByCodeItemModel(item) else { skipped += 1; continue }
-                        claimsHere += 1
-                        itemsChecked += 1
-                        if let why = brokenClaim(
-                            about: item, inputs: inputs, constants: constants, settings: settings
-                        ) {
-                            brokenHere.append("  .\(stack) \(item.pretty()): \(why)\n     crux: \(CodeItem(item.crux()).pretty())")
-                        }
-                    }
-                }
-                if claimsHere > 0 { programsWithClaims += 1 }
+                    let brokenBefore = tally.broken.count
+                    tally.record(inty, program: program, inputs: inputs, constants: constants, settings: settings)
+                    let brokenHere = tally.broken[brokenBefore...]
+                    guard !brokenHere.isEmpty else { continue }
 
-                if !brokenHere.isEmpty {
                     // Written to disk before reporting, so a case survives even if a
                     // later one takes the process down.
                     let individual = Individual(id: caseId, program: program, constants: constants)
@@ -355,22 +327,34 @@ struct CruxFuzzTests {
                     let url = dir.appending(path: "\(caseId).json")
                     try? encoder.encode(request).write(to: url)
                     findings.append(
-                        "\(caseId): \(brokenHere.count) of \(claimsHere) claims broken → \(url.path)\n"
-                        + brokenHere.prefix(5).joined(separator: "\n")
+                        "\(caseId): \(brokenHere.count) claims broken → \(url.path)\n  "
+                        + brokenHere.prefix(5).joined(separator: "\n  ")
                     )
                 }
             }
         }
 
-        log("crux fuzz (\(seeds.count) seeds × \(cases)): \(itemsChecked) claims across "
-            + "\(programsWithClaims)/\(seeds.count * cases) programs; \(findings.count) programs with broken claims "
-            + "(\(skipped) skipped, blocked on the CodeItem model)")
+        log(tally.report("\(name), \(Self.seeds.count) seeds × \(Self.casesPerSeed) programs"))
         for finding in findings.prefix(10) { log(finding) }
         if findings.count > 10 { log("… and \(findings.count - 10) more") }
 
         #expect(findings.isEmpty, "\(findings.count) random programs left items whose crux does not reproduce them")
+        // Contents of a container with no history of their own: the structural
+        // code edits (codeWrapPoints, codeCutAtGap, codeInsertAtGap,
+        // codeRemovePoint, codeReplaceAllPoints) rebuild the blocks along their
+        // edit path without recording them, and `.codeDo` later unwraps one. The
+        // same class as `boundContents` and vector elements (Roadmap #21), to be
+        // closed together in §P step 4. Known, so it is reported, not failed;
+        // when step 4 lands this stops occurring and the known issue says so.
+        if tally.count(.unmarked) > 0 {
+            let detail = "\(tally.count(.unmarked)) items with no history that the program never contained: "
+                + "\(tally.examples[.unmarked] ?? [])"
+            withKnownIssue("unmarked container contents; Roadmap §P step 4") {
+                Issue.record(Comment(rawValue: detail))
+            }
+        }
         // Guards the test itself: a generator change that stopped producing
-        // provenance would make the check above vacuous.
-        #expect(itemsChecked > 100, "only \(itemsChecked) claims checked — is the generator still producing provenance?")
+        // provenance would make the checks above vacuous.
+        #expect(tally.holds > 1_000, "only \(tally.holds) claims held; is the generator still producing provenance?")
     }
 }

@@ -627,7 +627,8 @@ every `xEq` comparing provenance, and the multi-result stranding bug (§1, issue
 Both halves used to share a blind spot worth remembering: each read only `.first` of the resting stack, so
 a fragment that reproduced the right value *and* left debris underneath it passed. That is exactly how #26
 survived — only the fuzzer, by composing cruxes, ever ran the debris into a later argument, and the fuzz
-half is `.disabled` by default, so in practice nothing was watching.
+half was `.disabled` by default, so in practice nothing was watching. *(Since 2026-11-07 it is always on,
+on its own seeded generator, and reports crux completeness too; see Roadmap §P step 2.)*
 
 Closed from both ends now. `brokenClaim` checks for debris after the value and fixed-point checks, and
 `Composition Invariant Tests.swift` sweeps the whole language deterministically, which is where the three

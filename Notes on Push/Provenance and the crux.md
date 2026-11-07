@@ -265,11 +265,14 @@ contained. Nothing could count how much of a run's provenance was really derived
 - **It runs as the literal it replaces.** On `.exec` it pushes a copy of its value whose `call` is the
   stand-in, so a replay reproduces the original item exactly, history included.
 - **It names its cause**: the instruction that observed or produced the value (or the interpreter, for
-  its own diagnostics), and why the history is missing, `.observed` or `.elided`.
+  its own diagnostics), and why: `.observed`, `.elided` or `.minted`.
   - `.boolStackDepth_actuallyWas_4`: a state read (law 4b).
   - `.intAdd_actuallyWas_« ‼️ intAdd missing args: .int »`: an error from transient stack state.
   - `.interpreter_actuallyWas_« ‼️ string length 6 exceeds maxStringLength 3 »`: an interpreter diagnostic.
   - `.intAdd_elidedAs_4537`: an over-budget history.
+  - `.execDoTimes_minted_0`: a constant the instruction supplies itself (`.minted`, added the same day).
+    Nothing is lost, since the instruction *is* the cause, but without the mark the counter's first value
+    could not be told from a substitution. The completeness probe counts `.minted` as fully derived.
 - **It is a literal leaf.** Its own `call` is always empty, so `crux()` emits it unchanged, and it
   appears in every crux computed from it: `8 .intStackDepth_actuallyWas_2 .intAdd`.
 - **It has no stack of its own**, like an instruction; it only rests on `.exec`, and `AnyItem` encodes
@@ -301,6 +304,11 @@ test here, and the reason is worth knowing rather than inheriting: `fuzzRNG` is 
 global, and Swift Testing runs suites in parallel, so any other enabled test drawing from it consumes
 the fuzzer's stream mid-generation. Enabled, it drew 21,123 claims on one run and 17,016 on the next
 from the same seed. Fuzz tests here must be run alone to be reproducible.
+
+*(Changed 2026-11-07: the crux fuzz is now always on. Each seed draws from its own generator in a
+`withFuzzSeed` scope, so parallel suites cannot consume its stream; it runs 40 seeds × 5 programs under a
+balanced and a loop-heavy mix and reports how complete every crux is. Other fuzz suites still share the
+global generator and still run alone until they adopt the scope.)*
 
 They immediately found two things worth recording.
 

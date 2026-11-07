@@ -25,11 +25,32 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    **BUILT** 2026-11-07: `StandInItem`; state reads, transient-state errors and interpreter diagnostics
    record `.observed` stand-ins, and elision leaves an `.elided` one. → *Provenance and the crux.md*
    § Stand-ins. `execEq` removed.
-2. Measure: a completeness probe, and the round-trip sweep always-on and large on its own seeded generator,
-   with a loop-heavy mix. (`.execDoRange` became inclusive first, #25, **done** 2026-11-07.)
+2. ~~Measure: a completeness probe, and the round-trip sweep always-on and large on its own seeded generator,
+   with a loop-heavy mix.~~ **BUILT** 2026-11-07 (and `.execDoRange` became inclusive first, #25). The crux
+   fuzz is always on, each seed in its own `withFuzzSeed` scope, 40 seeds × 5 programs under `.equalShares`
+   and `.loopHeavy`, and `CruxCompleteness` classifies every item left on a result stack.
+   **Baseline** (value stacks; `.error` is ~100% "missing args" stand-ins by design):
+
+   | mix | items | derived | observed | elided | program literal | bound-value contents | unmarked |
+   |---|---|---|---|---|---|---|---|
+   | equal shares | 23,759 | 70.6% | 5.6% | 0.0% | 6.5% | **17.3%** | 0 |
+   | loop-heavy | 85,529 | 76.7% | 5.8% | 0.2% | 2.5% | **14.7%** | 9 |
+
+   182,202 replays, 0 broken, 0 cut off by the step budget. Fixed on the way: the iterator constructors' and
+   setters' refusals and the `…FromIterator` refusals now record stand-ins; `.codeDoNthPoint`/`…Root` box a
+   point as a new block and now record it as `.codeNthPoint`/`…Root` would; and a third stand-in reason,
+   `.minted`, marks a constant an instruction supplies itself (the 0 `.execDoTimes`/`.execDoCount` count from).
+   **Found:** the largest gap is not elision but **container contents with no history of their own** (next).
 3. Provenance compression replaces elision (generalized `CruxCompression`, looped-provenance steps 2–4); then
    retire `maxIterations` (#24).
 4. Per-element provenance for vectors **and strings** (#21), as a parallel array filled only when recording.
+   **Widened by step 2's finding to code blocks**: an item with no history inside a container that has one
+   (a block bound to `.input3`, then unwrapped; the blocks the structural code edits rebuild along their
+   path) comes out as a bare literal and loses its link to the container, so a crux can look input-blind
+   when it is not. 15–17% of value-stack items. Candidate rule: when such an item is taken *out* of a
+   container (`.codeDo`, the emit/iterate family), record it relative to the container (`C k .codeEmitNthRoot`
+   for root element k). The 9 unmarked items in the baseline are this class; the fuzz records them as a
+   known issue until this lands.
 5. Opt-in history encoding in `AnyItem` (#22).
 6. Crux-to-function, both forms (#23).
 
