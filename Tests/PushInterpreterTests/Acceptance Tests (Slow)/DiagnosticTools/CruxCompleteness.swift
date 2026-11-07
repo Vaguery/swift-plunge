@@ -3,8 +3,7 @@
 //  PushInterpreterTests
 //
 //  How much of what a run leaves on its stacks can explain itself. Roadmap §P,
-//  step 2 (2026-11-07): the baseline that provenance compression (step 3) is to
-//  improve.
+//  step 2 (2026-11-07): the baseline the later steps are measured against.
 //
 
 @testable import PushInterpreter
@@ -26,7 +25,9 @@
 ///   program text, or is a bound input or constant value itself.
 /// - `boundContents`: an item with no history found *inside* a bound input or
 ///   constant value (a block bound to `.input3`, unwrapped). It reproduces, but
-///   its crux has lost the link to the binding: a known loophole, not yet closed.
+///   its crux has lost the link to the binding. Closed by the containment law
+///   (`Containment`, §P step 4): such an item now records its address, so this
+///   should stay at zero.
 /// - `unmarked`: an item with no history found nowhere in the program or the
 ///   bindings. That is an unmarked substitution, the loophole stand-ins exist
 ///   to close, so this should stay at zero.

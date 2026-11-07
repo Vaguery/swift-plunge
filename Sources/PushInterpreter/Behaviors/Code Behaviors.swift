@@ -246,8 +246,10 @@ nonisolated extension Interpreter {
     //          contents run. Identical to Emit for a leaf.
     //
     // They emit existing items (law 1b / combinatory), so they record no crux of
-    // their own — the routed items carry their own provenance. The index is taken
-    // `magnitude % count`.
+    // their own — the routed items carry their own provenance. An item with no
+    // history of its own, out of a block that has one, records its address
+    // instead: `x i .codeEmitNthRoot` and the clean-up (`Containment`). The index is
+    // taken `magnitude % count`.
 
     /// Emit a point to `.exec` as-is (whole).
     static func emitNthBehavior(_ instruction: PushInstruction, point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?) -> Behavior {
@@ -257,7 +259,7 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else { return [] }
-                return [Router(.exec, point)]
+                return [Router(.exec, Containment.takenOut(point, of: x, at: i, by: instruction, recording))]
             }
         )
     }
@@ -685,13 +687,19 @@ nonisolated extension Interpreter {
     /// block, and each content keeps the `call` it already had — exposed as
     /// though it had been sitting there all along, unchanged from the time it
     /// went in. Being inside a block leaves no mark.
+    ///
+    /// **Except on what was born there** (2026-11-07). A content with no history
+    /// of its own, out of a block that has one (a block bound to `.input3`, or one
+    /// a structural edit rebuilt), records its address, `block k .codeEmitNthRoot`
+    /// and the clean-up, so its crux keeps the link to the block. See
+    /// `Containment`.
     static let codeDo_Behavior =
     BehaviorWithSideEffects(
         .codeDo,
         takes: [.code],
         modifier: { (interpreter, collectedItems) in
             let block = collectedItems[0] as! CodeItem
-            interpreter.place(contentsOf: block.value, on: .exec)
+            interpreter.place(contentsOf: Containment.contents(of: block, interpreter.recording), on: .exec)
             return []
         }
     )

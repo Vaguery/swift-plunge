@@ -291,6 +291,42 @@ mutable binding where a stand-in is an immutable label. The envelope keeps the s
 can share it. Under every storage design being considered, a variable read that hands back the bound
 item's own history needs no stand-in; stand-ins arise only for facts *about* the bindings.
 
+## Containment (2026-11-07)
+
+Law 1b says an item that goes into a block and comes back out is the item that went in, history intact.
+It says nothing about an item that was **born inside** a block and never went in: the contents of a block
+bound to `.input3`, the leaf a `.codeNthRoot` box holds, the inner block `.codeWrapPoints` makes when it
+rebuilds `( 1 2 3 )` as `( 1 ( 2 3 ) )`. Such an item has no history, so `.codeDo` used to hand it out
+bare. It reproduced its value, but its crux had lost the link to its container, so a result that depended
+on `.input3` could have a crux that never mentioned it. The step-2 probe measured this as the largest gap
+left: 15–17% of the items random programs leave on value stacks, plus the few rebuilt blocks that were
+the only items with no trace at all.
+
+**The containment law** (`Containment`): an item taken out of a container keeps its own history; if it
+has none and the container has one, it records its **address**, the container, the position and the
+instruction that takes it out from there, with the clean-up every non-destructive read records:
+
+    .input3 1 .codeEmitNthRoot 1 .codePopItems .intSwap .intPop      ← the 6 out of ( 5 6 ), bound to .input3
+
+- **Where.** `.codeDo` (root position, as `.codeEmitNthRoot`), the emit instructions themselves, and the
+  iterator's element emission (`.codeEmitNthRoot` for a root walk, `.codeEmitNthPoint` for a tree walk).
+  Every unwrap goes through `.codeDo`, so there is nowhere else a block's contents come out.
+- **It is a fixed point.** The address is exactly what the emit instruction records, so replaying it
+  reproduces the item with the same history.
+- **A literal container's contents stay literals.** A block with no history is in the program text, and
+  so is everything in it, so its contents come out bare, as before.
+- **It costs the search nothing**: the check is behind `recording.isOn`.
+- **It is representation-neutral.** Any container that can say "the thing at position k" can address its
+  contents, and every representation with containers needs it.
+
+After it (same 40 seeds × 5 programs × 2 mixes): bound-value contents 0, unmarked 0, and derived up from
+70.6% to 85.1% (equal shares) and from 76.7% to 92.1% (loop-heavy). Elision is unchanged (≤ 0.2%), and all
+199,510 replays hold. Some of the former bound contents now count as *observed*, because the block they
+came out of has a stand-in in its history (equal shares: 5.6% → 8.4%).
+
+Vector and string elements are the same law in a different shape: their elements are raw values, not
+items, so they cannot keep a history unless the container holds one for them (Roadmap #21, next).
+
 ## What checking the law actually found
 
 Two acceptance tests check the obligation by *doing* it (`Crux RoundTrip Tests.swift`): one sweeps every
@@ -371,6 +407,8 @@ intact instead of unwrapping it onto `.exec` (and `.exec` instructions take thei
   `unwrapCodeItem` currently discards a block's `call` and `index` on unwrap (which is why `execIf`'s
   recorded `call` is already dead code today), and an `.input` bound to a code block currently loses its
   `[.input1]` provenance the moment it unwraps.
+  *(2026-11-07: half true. The block kept its provenance, but its contents still came out bare when it
+  was unwrapped; closed by the containment law, § Containment.)*
 
 ## A known leak: vector elements have no provenance of their own
 

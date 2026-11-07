@@ -41,6 +41,11 @@ public nonisolated protocol Pretty {
 //     exposing them as though they had been sitting there all along. This is
 //     what `.codeDo` does.
 //
+//     An item BORN inside a block rather than put there (the contents of a
+//     block bound to `.input3`, a block a structural edit rebuilt) has no history
+//     to keep. Taken out of a block that has one, it records its ADDRESS instead:
+//     `block k .codeEmitNthRoot` and the clean-up. See `Containment`.
+//
 //     The same holds for CONTAINMENT IN AN ITERATOR: an `IteratorItem` keeps the
 //     bounds and body it was built from, and the getters (`.iteratorPeekStart`,
 //     `.iteratorPeekEnd`, `.iteratorPeekBody`) hand back the very items that went in, so

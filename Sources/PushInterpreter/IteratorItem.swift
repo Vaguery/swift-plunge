@@ -898,8 +898,8 @@ nonisolated extension IteratorItem {
             guard index < source.points.count else { return nil }
             let point = source.points[index]
             if mode == .whole {
-                let raw = point
-                return raw
+                guard let tree = origin.exactly(CodeItem.self) else { return point }
+                return Containment.takenOut(point, of: tree, at: cursor, by: .codeEmitNthPoint, recording)
             }
             let contents = (point.exactly(CodeItem.self))?.value ?? [point]
             return CodeItem(
@@ -927,10 +927,10 @@ nonisolated extension IteratorItem {
             // Law 1b: an item that goes into a block and comes back out is the
             // item that went in, so it keeps its own `call` and records nothing.
             // This is what spares the dup families an `Nth`: their copies need no
-            // record of where they came from.
+            // record of where they came from. One born in the block records its
+            // address instead (`Containment`).
             case let c as CodeItem:
-                let element = c.value[index]
-                return element
+                return Containment.takenOut(c.value[index], of: c, at: cursor, by: .codeEmitNthRoot, recording)
 
             default:
                 return nil

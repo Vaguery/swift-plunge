@@ -51,6 +51,9 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    container (`.codeDo`, the emit/iterate family), record it relative to the container (`C k .codeEmitNthRoot`
    for root element k). The 9 unmarked items in the baseline are this class; the fuzz records them as a
    known issue until this lands.
+   **Code contents BUILT (2026-11-07)**: the containment law (`Containment.swift`; § Containment in
+   *Provenance and the crux.md*). Bound-value contents and unmarked items both 0; derived 85.1% / 92.1%
+   (was 70.6% / 76.7%); 0 broken. The fuzz now asserts both stay at zero. Vector and string elements next.
 5. Opt-in history encoding in `AnyItem` (#22).
 6. Crux-to-function, both forms (#23).
 

@@ -339,20 +339,15 @@ struct CruxFuzzTests {
         if findings.count > 10 { log("… and \(findings.count - 10) more") }
 
         #expect(findings.isEmpty, "\(findings.count) random programs left items whose crux does not reproduce them")
-        // Contents of a container with no history of their own: the structural
-        // code edits (codeWrapPoints, codeCutAtGap, codeInsertAtGap,
-        // codeRemovePoint, codeReplaceAllPoints) rebuild the blocks along their
-        // edit path without recording them, and `.codeDo` later unwraps one. The
-        // same class as `boundContents` and vector elements (Roadmap #21), to be
-        // closed together in §P step 4. Known, so it is reported, not failed;
-        // when step 4 lands this stops occurring and the known issue says so.
-        if tally.count(.unmarked) > 0 {
-            let detail = "\(tally.count(.unmarked)) items with no history that the program never contained: "
-                + "\(tally.examples[.unmarked] ?? [])"
-            withKnownIssue("unmarked container contents; Roadmap §P step 4") {
-                Issue.record(Comment(rawValue: detail))
-            }
-        }
+        // No item with no history may come out of a container that has one: it
+        // records its address instead (the containment law, `Containment`, §P
+        // step 4). Before that law, the contents of bound blocks were 15–17% of
+        // value-stack items, and blocks the structural code edits rebuild along
+        // their path left a few with no trace at all.
+        #expect(tally.count(.boundContents) == 0,
+                "contents of bound values taken out bare: \(tally.examples[.boundContents] ?? [])")
+        #expect(tally.count(.unmarked) == 0,
+                "items with no history that the program never contained: \(tally.examples[.unmarked] ?? [])")
         // Guards the test itself: a generator change that stopped producing
         // provenance would make the checks above vacuous.
         #expect(tally.holds > 1_000, "only \(tally.holds) claims held; is the generator still producing provenance?")
