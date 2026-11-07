@@ -266,20 +266,26 @@ struct CruxFuzzTests {
     /// runs inside its own `withFuzzSeed` scope, so the stream is this test's
     /// alone and the run reproduces whatever else is running.
     ///
-    /// **Large, by ruling**: many seeds under two mixes, the balanced
-    /// `.equalShares` and `.loopHeavy`, because loops are where provenance is
-    /// hardest and no other generator concentrates them. A single seed is not
+    /// **Large, by ruling**: many seeds under three mixes, the balanced
+    /// `.equalShares`, `.loopHeavy`, because loops are where provenance is
+    /// hardest and no other generator concentrates them, and `.containerHeavy`,
+    /// because vector and string members are exercised by nothing else. A single seed is not
     /// enough to see a rare class: the #27 failures ran about 1 in 1,900 claims,
     /// and seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
     static let seeds: [UInt64] = (0..<40).map { 20_260_715 &+ $0 &* 7919 }
-    // 40 seeds × 5 programs × 2 mixes is about 200,000 replayed claims, 16× the
-    // old disabled fuzz, in about 30 s alone. 20 per seed took about 2 minutes.
+    // 40 seeds × 5 programs × 3 mixes is about 250,000 replayed claims, 20× the
+    // old disabled fuzz, in about 47 s alone. 20 per seed took about 2 minutes
+    // with two mixes.
     static let casesPerSeed = 5       // random programs per seed, per mix
     static let programItems = 150     // instruction tokens per random genome
 
     /// Replaces the old `random programs produce legible cruxes`, which printed
     /// cruxes for a human to eyeball and asserted nothing.
-    @Test(arguments: [("equal shares", InstructionMix.equalShares), ("loop-heavy", InstructionMix.loopHeavy)])
+    @Test(arguments: [
+        ("equal shares", InstructionMix.equalShares),
+        ("loop-heavy", InstructionMix.loopHeavy),
+        ("container-heavy", InstructionMix.containerHeavy)
+    ])
     func `every item a random program leaves has a runnable crux`(name: String, mix: InstructionMix) {
         // Failing cases are written to disk as replayable JSON, a reproduction
         // path that does not depend on the generator at all.

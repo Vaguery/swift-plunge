@@ -72,3 +72,93 @@ nonisolated enum Containment {
         }
     }
 }
+
+// MARK: - Members: the elements of vectors and strings
+
+/// The items that went into a vector or string, one slot per element: the item,
+/// if it went in with a history of its own, else `nil`. Kept only when recording,
+/// in the container's `CallStorage` (Roadmap #21, ruling P5: "a parallel
+/// per-element provenance array").
+///
+/// A block's contents are items, so they keep their histories without help. A
+/// vector's or string's elements are raw values, so the container keeps the items
+/// for them. The extraction instructions then hand back the item that went in,
+/// exactly as `.codeEmitNthRoot` hands back a block's content, and fall back to the
+/// address (`v k .vecIntNth`) for an element with no member. Either way the crux is
+/// a fixed point. What the member adds is *addressability*: an element's crux is
+/// its own history, not the whole vector's history plus a selection.
+typealias Members = [(any Item)?]
+
+/// A container whose elements can have members: the four vectors and `StringItem`.
+nonisolated protocol HoldsMembers: Item {
+    var members: Members? { get }
+}
+
+nonisolated extension VecBoolItem: HoldsMembers {}
+nonisolated extension VecDoubleItem: HoldsMembers {}
+nonisolated extension VecIntItem: HoldsMembers {}
+nonisolated extension VecStringItem: HoldsMembers {}
+nonisolated extension StringItem: HoldsMembers {}
+
+nonisolated extension HoldsMembers {
+    /// The item that went in at `index`, if it went in with a history.
+    @inline(__always)
+    func member(at index: Int) -> (any Item)? {
+        guard let members, members.indices.contains(index) else { return nil }
+        return members[index]
+    }
+}
+
+nonisolated extension VectorItem {
+    /// One slot per element, for building another vector out of this one: the
+    /// members if there are any, else empty slots. Called only when recording.
+    var slots: Members { members ?? Members(repeating: nil, count: value.count) }
+}
+
+nonisolated extension StringItem {
+    /// One slot per character, as `VectorItem.slots`. O(n): called only when
+    /// recording.
+    var slots: Members { members ?? Members(repeating: nil, count: value.count) }
+
+    /// The slots of `piece`, a substring of this string's `value` (a word, say).
+    /// Called only when recording.
+    func slots(of piece: Substring) -> Members {
+        guard let members else { return [] }
+        let start = value.distance(from: value.startIndex, to: piece.startIndex)
+        let end = start + piece.count
+        guard start >= 0, end <= members.count else { return [] }
+        return Array(members[start..<end])
+    }
+}
+
+nonisolated extension Containment {
+    /// The slot for an item going into a vector or string: the item itself if it
+    /// has a history to keep, else `nil` (it will be addressed from the container).
+    @inline(__always)
+    static func slot(_ item: any Item) -> (any Item)? {
+        item.call.isEmpty ? nil : item
+    }
+
+    /// `members` if they line up with `characters`, slot for slot and value for
+    /// value; `nil` otherwise. Joining strings can move a character boundary (a
+    /// combining mark after a letter), and a list that does not line up must not
+    /// hand back the wrong character's history.
+    static func aligned(_ members: Members, with characters: [Character]) -> Members? {
+        guard members.count == characters.count else { return nil }
+        for (member, character) in zip(members, characters) {
+            if let member, member.exactly(CharItem.self)?.value != character { return nil }
+        }
+        return members
+    }
+}
+
+nonisolated extension ProvenanceRecording {
+    /// Members for a new vector or string, built only when recording, and `nil`
+    /// when no element has one (the common case, which then costs nothing more).
+    @inline(__always)
+    func members(_ build: @autoclosure () -> Members) -> Members? {
+        guard isOn else { return nil }
+        let built = build()
+        return built.contains { $0 != nil } ? built : nil
+    }
+}

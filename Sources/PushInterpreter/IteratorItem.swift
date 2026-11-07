@@ -873,19 +873,26 @@ nonisolated extension IteratorItem {
 
         switch kind {
         // A one-character *string*, not a char: `stringParseToLetters`. Two
-        // instructions to reproduce, still O(1).
+        // instructions to reproduce, still O(1). Built exactly as `.stringNth` then
+        // `.stringFromChar` would build it, members included, so a replay of
+        // anything taken out of it agrees with the original.
         case .letters:
             guard index < source.characters.count else { return nil }
+            let character = source.characters[index]
+            let char = (origin as? StringItem)?.member(at: index)
+                ?? CharItem(character, call: recording(record(.stringNth)))
             return StringItem(
-                String(source.characters[index]),
-                call: recording(record(.stringNth, .stringFromChar)))
+                String(character),
+                call: recording([char, InstructionItem(.stringFromChar)]),
+                members: recording.members([Containment.slot(char)]))
 
         case .words:
             let chunks = source.words
-            guard index < chunks.count else { return nil }
+            guard index < chunks.count, let text = origin as? StringItem else { return nil }
             return StringItem(
                 String(chunks[index]),
-                call: recording(record(.stringNthWord)))
+                call: recording(record(.stringNthWord)),
+                members: recording.members(text.slots(of: chunks[index])))
 
         // The i-th pre-order point. `.boxed` yields exactly what `codeNthPoint`
         // does — the point boxed as `.code`, recording that (nondestructive)
@@ -910,19 +917,22 @@ nonisolated extension IteratorItem {
                     from: [origin, IntItem(index), InstructionItem(.codeNthPoint)]
                 )))
 
+        // A vector's or string's element is the item that went in, if it kept a
+        // history (a member, `Containment`); otherwise its address.
         default:
             switch origin {
-            case is StringItem:
+            case let text as StringItem:
                 guard index < source.characters.count else { return nil }
-                return CharItem(source.characters[index], call: recording(record(.stringNth)))
+                return text.member(at: index)
+                    ?? CharItem(source.characters[index], call: recording(record(.stringNth)))
             case let v as VecBoolItem:
-                return BoolItem(v.value[index], call: recording(record(.vecBoolNth)))
+                return v.member(at: index) ?? BoolItem(v.value[index], call: recording(record(.vecBoolNth)))
             case let v as VecDoubleItem:
-                return DoubleItem(v.value[index], call: recording(record(.vecDoubleNth)))
+                return v.member(at: index) ?? DoubleItem(v.value[index], call: recording(record(.vecDoubleNth)))
             case let v as VecIntItem:
-                return IntItem(v.value[index], call: recording(record(.vecIntNth)))
+                return v.member(at: index) ?? IntItem(v.value[index], call: recording(record(.vecIntNth)))
             case let v as VecStringItem:
-                return StringItem(v.value[index], call: recording(record(.vecStringNth)))
+                return v.member(at: index) ?? StringItem(v.value[index], call: recording(record(.vecStringNth)))
 
             // Law 1b: an item that goes into a block and comes back out is the
             // item that went in, so it keeps its own `call` and records nothing.

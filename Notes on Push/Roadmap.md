@@ -53,7 +53,10 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    known issue until this lands.
    **Code contents BUILT (2026-11-07)**: the containment law (`Containment.swift`; § Containment in
    *Provenance and the crux.md*). Bound-value contents and unmarked items both 0; derived 85.1% / 92.1%
-   (was 70.6% / 76.7%); 0 broken. The fuzz now asserts both stay at zero. Vector and string elements next.
+   (was 70.6% / 76.7%); 0 broken. The fuzz now asserts both stay at zero.
+   **Vector and string members BUILT (2026-11-07)**: a per-element slot array in the provenance box, filled
+   only when recording; extraction hands back the member, else the address. A third fuzz mix,
+   `.containerHeavy`, exercises them: elision 5.2% → 1.5%, derived 81.5% → 85.3%, 0 broken.
 5. Opt-in history encoding in `AnyItem` (#22).
 6. Crux-to-function, both forms (#23).
 
@@ -67,7 +70,12 @@ A representation-neutral derivation graph, for other GP representations, is a la
 - **#11** sieve Q5 stays parked until matrices exist.
 - **#12 ForestGenome and #15 (mix under Forest): dropped.**
 - **#13** BB9 is kept, to be designed later.
-- **#21** element provenance: a parallel per-element array, filled only when recording. Strings too.
+- **#21** (**done**) element provenance: a parallel per-element array, filled only when recording. Strings too.
+  *Representation, open:* most elements come from a few sources (a constant, a concatenation of two), so
+  a grouped form, each source with the runs of positions taken from it (a piece table), would be smaller
+  for long vectors and would also address an element born in a constant from that constant rather than
+  from the vector it ended up in. Everything reads members through `member(at:)`, so it can replace the
+  array without touching the behaviors.
 - **#22** opt-in history encoding in `AnyItem`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
 - **#24** retire `maxIterations` once provenance compression lands.
@@ -166,8 +174,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
 20. **Error-provenance inconsistency** — `.inputN`/`.intN` "not bound" errors record nothing, while the
     success path of the same instruction records `[.inputN]`. Explanatory value, not correctness.
     **FIXED since:** both record `[InstructionItem(name)]` (*Input Behaviors.swift*, *Constant Behaviors.swift*).
-21. **Vector elements have no provenance** — `VecIntItem.value` is a raw `[Int]`. The one place
+21. ~~**Vector elements have no provenance**~~ — `VecIntItem.value` is a raw `[Int]`. The one place
     containment destroys history, against law 1b. Costs addressability, not correctness. **Blocks #23.**
+    **DONE 2026-11-07:** members (§P step 4).
 22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
     Still true across `Codable` (in memory the trace keeps `call`).
 23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.

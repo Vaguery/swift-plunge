@@ -20,7 +20,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(1)),
-                            call: recording([x, InstructionItem(.stringButLast)]))
+                            call: recording([x, InstructionItem(.stringButLast)]),
+                            members: recording.members(x.slots.dropLast(1)))
                     )
                 ]
             }
@@ -37,7 +38,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + x.value,
-                            call: recording([y, x, InstructionItem(.stringConcat)]))
+                            call: recording([y, x, InstructionItem(.stringConcat)]),
+                            members: recording.members(y.slots + x.slots))
                     )
                 ]
             }
@@ -54,7 +56,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             y.value + String(x.value),
-                            call: recording([y, x, InstructionItem(.stringConjChar)]))
+                            call: recording([y, x, InstructionItem(.stringConjChar)]),
+                            members: recording.members(y.slots + [Containment.slot(x)]))
                     )
                 ]
             }
@@ -141,7 +144,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.dropLast(toDrop)),
-                            call: recording([y, x, InstructionItem(.stringDrop)]))
+                            call: recording([y, x, InstructionItem(.stringDrop)]),
+                            members: recording.members(x.slots.dropLast(toDrop)))
                     )
                 ]
             }
@@ -161,7 +165,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.prefix(toTake)),
-                            call: recording([y, x, InstructionItem(.stringTake)]))
+                            call: recording([y, x, InstructionItem(.stringTake)]),
+                            members: recording.members(Array(x.slots.prefix(toTake))))
                     )
                 ]
             }
@@ -191,10 +196,11 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 if let c = x.value.first {
+                    // The char that went in, if it kept a history (`Containment`).
                     return [
                         Router(
                             .char,
-                            CharItem(
+                            x.member(at: 0) ?? CharItem(
                                 c,
                                 call: recording([x, InstructionItem(.stringFirst)]))
                         )
@@ -215,7 +221,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             .char,
-                            CharItem(
+                            lastMember(of: x) ?? CharItem(
                                 c,
                                 call: recording([x, InstructionItem(.stringLast)]))
                         )
@@ -305,7 +311,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(x.value.reversed()),
-                            call: recording([x, InstructionItem(.stringReverse)]))
+                            call: recording([x, InstructionItem(.stringReverse)]),
+                            members: recording.members(x.slots.reversed()))
                     )
                 ]
             }
@@ -356,7 +363,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             "\(x.value)",
-                            call: recording([x, InstructionItem(.stringFromChar)]))
+                            call: recording([x, InstructionItem(.stringFromChar)]),
+                            members: recording.members([Containment.slot(x)]))
                     )
                 ]
             }
@@ -414,7 +422,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             .char,
-                            CharItem(
+                            x.member(at: moduloIdx) ?? CharItem(
                                 c,
                                 // `[string, index]`, matching the four `vecXNth`
                                 // siblings. This used to be `[index, string]` —
@@ -495,6 +503,8 @@ nonisolated extension Interpreter {
                         StringItem(
                             x.value.filter({ $0 != y.value }),
                             call: recording([y, x, InstructionItem(.stringRemoveChar)]),
+                            members: recording.members(
+                                zip(x.value, x.slots).filter { $0.0 != y.value }.map(\.1)),
                         )
                     )
                 ]
@@ -524,6 +534,8 @@ nonisolated extension Interpreter {
                             call: recording([
                                 z, y, x, InstructionItem(.stringReplaceChar),
                             ]),
+                            members: recording.members(
+                                zip(x.value, x.slots).map { $0.0 == z.value ? Containment.slot(y) : $0.1 }),
                         )
                     )
                 ]
@@ -553,6 +565,7 @@ nonisolated extension Interpreter {
                                 z, y, x,
                                 InstructionItem(.stringReplaceFirstChar),
                             ]),
+                            members: recording.members(replacingFirstSlot(of: z.value, in: x, with: y)),
                         )
                     )
                 ]
@@ -577,6 +590,7 @@ nonisolated extension Interpreter {
                         StringItem(
                             z.value.replacing(y.value, with: x.value),
                             call: recording([z, y, x, InstructionItem(.stringReplace)]),
+                            members: recording.members(replacingSubstringSlots(z, y, x, firstOnly: false)),
                         )
                     )
                 ]
@@ -603,6 +617,7 @@ nonisolated extension Interpreter {
                                 maxReplacements: 1
                             ),
                             call: recording([z, y, x, InstructionItem(.stringReplaceFirst)]),
+                            members: recording.members(replacingSubstringSlots(z, y, x, firstOnly: true)),
                         )
                     )
                 ]
@@ -622,6 +637,7 @@ nonisolated extension Interpreter {
                         StringItem(
                             result,
                             call: recording([x, InstructionItem(.stringRest)]),
+                            members: recording.members(Array(x.slots.dropFirst(1))),
                         )
                     )
                 ]
@@ -639,20 +655,28 @@ nonisolated extension Interpreter {
                     a[2] as! CharItem
                 )
                 var result = x.value
+                var position: Int?
                 if result.count > 0 {
                     let moduloIdx = (max(0, y.value) % result.count)
+                    position = moduloIdx
                     let idx = result.index(
                         result.startIndex,
                         offsetBy: moduloIdx
                     )
                     result.replaceSubrange(idx...idx, with: String(z.value))
                 }
+                func members() -> Members {
+                    var slots = x.slots
+                    if let position { slots[position] = Containment.slot(z) }
+                    return slots
+                }
                 return [
                     Router(
                         .string,
                         StringItem(
                             result,
-                            call: recording([z, y, x, InstructionItem(.stringSetChar)]))
+                            call: recording([z, y, x, InstructionItem(.stringSetChar)]),
+                            members: recording.members(members()))
                     )
                 ]
             }
@@ -706,7 +730,8 @@ nonisolated extension Interpreter {
                             String(words[idx]),
                             // `[string, index]`, matching `stringNth` and the four
                             // `vecXNth` siblings.
-                            call: recording([x, y, InstructionItem(.stringNthWord)]))
+                            call: recording([x, y, InstructionItem(.stringNthWord)]),
+                            members: recording.members(x.slots(of: words[idx])))
                     )
                 ]
             }
@@ -737,10 +762,12 @@ nonisolated extension Interpreter {
                 return [
                     Router(.string, StringItem(
                         String(x.value[..<cut]),
-                        call: recording(Behavior.selecting(0, of: 2, on: .string, from: source)))),
+                        call: recording(Behavior.selecting(0, of: 2, on: .string, from: source)),
+                        members: recording.members(Array(x.slots.prefix(idx))))),
                     Router(.string, StringItem(
                         String(x.value[cut...]),
-                        call: recording(Behavior.selecting(1, of: 2, on: .string, from: source)))),
+                        call: recording(Behavior.selecting(1, of: 2, on: .string, from: source)),
+                        members: recording.members(Array(x.slots.dropFirst(idx))))),
                 ]
             }
         )
@@ -771,7 +798,8 @@ nonisolated extension Interpreter {
                         .string,
                         StringItem(
                             String(slice),
-                            call: recording([x, z, y, InstructionItem(.stringSubstring)]))
+                            call: recording([x, z, y, InstructionItem(.stringSubstring)]),
+                            members: recording.members(x.slots(of: slice)))
                     )
                 ]
             }
@@ -842,6 +870,38 @@ nonisolated extension Interpreter {
                 )
             }
         )
+
+    // MARK: - Members (`Containment`)
+
+    /// The member for a string's last character, if it has one.
+    static func lastMember(of x: StringItem) -> (any Item)? {
+        guard let members = x.members else { return nil }
+        return members.last ?? nil
+    }
+
+    /// `x`'s slots with the first `target` character's slot replaced by `char`'s,
+    /// as `.stringReplaceFirstChar` replaces the character. Called only when
+    /// recording.
+    static func replacingFirstSlot(of target: Character, in x: StringItem, with char: CharItem) -> Members {
+        var slots = x.slots
+        if let position = Array(x.value).firstIndex(of: target) { slots[position] = Containment.slot(char) }
+        return slots
+    }
+
+    /// The members of `.stringReplace`/`.stringReplaceFirst`'s result: each
+    /// character's slot travels with it, from the subject or the replacement. The
+    /// same left-to-right scan as the vectors' sub-vector replace; where it would
+    /// not line up with Swift's own `replacing` (an empty target), the result's
+    /// alignment check drops the members. Called only when recording.
+    static func replacingSubstringSlots(
+        _ subject: StringItem, _ target: StringItem, _ replacement: StringItem, firstOnly: Bool
+    ) -> Members {
+        typealias Slotted = (value: Character, slot: (any Item)?)
+        func slotted(_ string: StringItem) -> [Slotted] { zip(string.value, string.slots).map { ($0, $1) } }
+        return replacingSub(slotted(subject), slotted(target), slotted(replacement), firstOnly: firstOnly) {
+            $0.value == $1.value
+        }.map(\.slot)
+    }
 
     static let stringBehaviors:[PushInstruction : Behavior] =
         [

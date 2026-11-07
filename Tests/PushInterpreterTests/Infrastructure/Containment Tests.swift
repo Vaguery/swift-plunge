@@ -81,9 +81,63 @@ struct ContainmentTests {
         #expect(holds(inner))
     }
 
+    // MARK: Members: vector and string elements
+
+    private let five: [any Item] = [IntItem(2), IntItem(3), InstructionItem(.intAdd)]
+    private let letterFromInt: [any Item] = [IntItem(65), InstructionItem(.charFromInt)]
+
+    @Test func `a vector element that went in with a history comes out with it`() {
+        let inty = run([VecIntItem([])] + five
+                       + [InstructionItem(.vecIntConj), IntItem(0), InstructionItem(.vecIntNth)])
+        let element = topItem(inty, .int)
+        #expect(CodeItem(element.crux()).pretty() == "( 2 3 .intAdd )")
+        #expect(holds(element))
+    }
+
+    @Test func `members travel with their elements through rearrangement and iteration`() {
+        // [ 9 5 ] reversed is [ 5 9 ]; its first element is the computed 5.
+        let reversed = run([VecIntItem([9])] + five + [InstructionItem(.vecIntConj),
+                           InstructionItem(.vecIntReverse), InstructionItem(.vecIntFirst)])
+        #expect(CodeItem(topItem(reversed, .int).crux()).pretty() == "( 2 3 .intAdd )")
+        // Pushed out one per pass by the iterator: the last element ends up on top.
+        let pushed = run([VecIntItem([9])] + five + [InstructionItem(.vecIntConj), InstructionItem(.vecIntPushAll)])
+        #expect(stackString(pushed, .int) == "[ 5 9 ]")
+        #expect(CodeItem(topItem(pushed, .int).crux()).pretty() == "( 2 3 .intAdd )")
+        #expect(pushed.stacks[.int]!.allSatisfy { holds($0) })
+    }
+
+    @Test func `an element with no member is addressed from its vector`() {
+        let inty = run([VecIntItem([7])] + five
+                       + [InstructionItem(.vecIntConj), IntItem(0), InstructionItem(.vecIntNth)])
+        let seven = topItem(inty, .int)
+        #expect(seven.pretty() == "7")
+        #expect(seven.crux().contains { ($0 as? InstructionItem)?.value == .vecIntNth })
+        #expect(holds(seven))
+    }
+
+    @Test func `a string's characters keep their members, letters included`() {
+        let last = run([StringItem("x")] + letterFromInt
+                       + [InstructionItem(.stringConjChar), InstructionItem(.stringLast)])
+        #expect(CodeItem(topItem(last, .char).crux()).pretty() == "( 65 .charFromInt )")
+        let letters = run([StringItem("x")] + letterFromInt + [InstructionItem(.stringConjChar),
+                          InstructionItem(.stringParseToLetters)])
+        #expect(stackString(letters, .string) == "[ \"a\" \"x\" ]")
+        #expect(CodeItem(topItem(letters, .string).crux()).pretty() == "( 65 .charFromInt .stringFromChar )")
+        #expect(letters.stacks[.string]!.allSatisfy { holds($0) })
+    }
+
+    @Test func `members that do not line up with the characters are dropped`() {
+        let acute = CharItem("\u{301}", call: [IntItem(769), InstructionItem(.charFromInt)])
+        // "e" and a combining acute are one character, "é", not two.
+        #expect(Containment.aligned([nil, acute], with: Array("e\u{301}")) == nil)
+        #expect(Containment.aligned([nil, acute], with: ["e", "\u{301}"]) != nil)
+    }
+
     @Test func `with recording off nothing is built`() {
         let inty = run([InstructionItem(.input3), InstructionItem(.codeDo)], recording: false)
         #expect(stackString(inty, .int) == "[ 6 5 ]")
         #expect(inty.stacks[.int]!.allSatisfy { $0.call.isEmpty })
+        let vector = run([VecIntItem([])] + five + [InstructionItem(.vecIntConj)], recording: false)
+        #expect((topItem(vector, .vecInt) as? VecIntItem)?.members == nil)
     }
 }

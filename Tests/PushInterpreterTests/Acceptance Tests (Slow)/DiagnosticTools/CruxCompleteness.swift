@@ -53,6 +53,28 @@ struct CruxCompleteness {
     private(set) var standInSources: [Group: [String: Int]] = [:]
     /// A few unmarked and bound-contents items, to show what slipped through.
     private(set) var examples: [Completeness: [String]] = [:]
+    /// Value-stack items whose crux takes something out of a container by its
+    /// address (`v k .vecIntNth`, `s .stringFirst`, `b k .codeEmitNthRoot`): the
+    /// fallback when the element went in with no history to keep (`Containment`).
+    private(set) var addressed = 0
+    /// The total crux length of the value-stack items with a history, for a mean.
+    private(set) var cruxLeaves = 0
+
+    static func isAddress(_ leaf: any Item) -> Bool {
+        leaf.exactly(InstructionItem.self).map { addressInstructions.contains($0.value) } ?? false
+    }
+
+    /// The instructions that take an element out of a container by position.
+    static let addressInstructions: Set<PushInstruction> = {
+        var names: Set<PushInstruction> = [.stringNth, .stringFirst, .stringLast, .stringNthWord,
+                                           .codeEmitNthRoot, .codeEmitNthPoint]
+        for prefix in ["vecBool", "vecDouble", "vecInt", "vecString"] {
+            for suffix in ["Nth", "First", "Last"] {
+                if let name = PushInstruction(rawValue: prefix + suffix) { names.insert(name) }
+            }
+        }
+        return names
+    }()
 
     func count(_ kind: Completeness, in group: Group? = nil) -> Int {
         let groups = group.map { [$0] } ?? Group.allCases
@@ -105,7 +127,9 @@ struct CruxCompleteness {
                     }
                     continue
                 }
-                let standIns = item.crux().compactMap { $0.exactly(StandInItem.self) }
+                let crux = item.crux()
+                if group == .values { measure(crux) }
+                let standIns = crux.compactMap { $0.exactly(StandInItem.self) }
                 let losing = standIns.filter { $0.reason != .minted }
                 let kind: Completeness =
                     losing.contains { $0.reason == .elided } ? .elided
@@ -128,6 +152,12 @@ struct CruxCompleteness {
         }
     }
 
+    /// Counts a value-stack item's crux toward the mean length and the addressed.
+    private mutating func measure(_ crux: [any Item]) {
+        cruxLeaves += crux.count
+        if crux.contains(where: Self.isAddress) { addressed += 1 }
+    }
+
     /// A short report: per group, the classes as shares of its items and the
     /// commonest stand-in sources; then the replay verdicts.
     func report(_ title: String) -> String {
@@ -141,6 +171,11 @@ struct CruxCompleteness {
             lines.append("  \(group.rawValue): \(total) items")
             let classes = Completeness.allCases.map { "\($0.rawValue) \(percent(count($0, in: group), of: total))" }
             lines.append("    " + classes.joined(separator: ", "))
+            if group == .values {
+                let derivedItems = max(1, total - count(.programLiteral, in: group))
+                let mean = (Double(cruxLeaves) / Double(derivedItems)).formatted(.number.precision(.fractionLength(1)))
+                lines.append("    taken out by address: \(percent(addressed, of: total)); mean crux length \(mean)")
+            }
             let top = (standInSources[group] ?? [:])
                 .sorted { $0.value > $1.value || ($0.value == $1.value && $0.key < $1.key) }.prefix(6)
             if !top.isEmpty {

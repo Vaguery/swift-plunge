@@ -324,8 +324,40 @@ After it (same 40 seeds × 5 programs × 2 mixes): bound-value contents 0, unmar
 199,510 replays hold. Some of the former bound contents now count as *observed*, because the block they
 came out of has a stand-in in its history (equal shares: 5.6% → 8.4%).
 
-Vector and string elements are the same law in a different shape: their elements are raw values, not
-items, so they cannot keep a history unless the container holds one for them (Roadmap #21, next).
+**Vector and string elements** are the same law in a different shape (Roadmap #21, ruling P5). Their
+elements are raw values, not items, so they cannot keep a history unless the container holds one for
+them. When recording, a vector or string now keeps its **members**: one slot per element, holding the
+item that went in if it went in with a history, else nothing. They live in the container's provenance box
+(`CallStorage`), so an item's inline size does not grow, and the search builds none.
+
+- **In:** conj, set, replace, construct, `readItems`/`readStack`, `vecFromIterator`, `stringConjChar`,
+  `stringSetChar`, `stringReplaceChar`, `stringFromChar`. **Rearranged** with their elements: slices,
+  reverse, cut, concat, remove, sub-vector and substring replacement, words.
+- **Out:** first, last, nth, and the iterator (pushAll, iterate, letters) hand back the member if there
+  is one, else the address as before (`v k .vecIntNth`). An element's crux is then its own history, not
+  the whole vector's plus a selection, which is what crux-to-function (#23) needs.
+- **Strings check alignment.** Joining strings can merge characters (a combining mark after a letter), so
+  members that do not line up character for character are dropped, and the characters are addressed.
+- **The fixed point** needs every producer to attach the members a replay would attach, so a letter is
+  built exactly as `.stringNth` then `.stringFromChar` build it.
+
+Measured with a third fuzz mix, `.containerHeavy` (the vector and string instructions at twice a role's
+share), because random programs almost never put a computed element in and take it out again: members
+changed 5 items in about 5,500 under the other two mixes. Under `.containerHeavy`, members off → on:
+
+| | derived | elided | taken out by address | mean crux length |
+|---|---|---|---|---|
+| members off | 81.5% | 5.2% | 30.3% | 69.9 |
+| members on | 85.3% | 1.5% | 29.0% | 65.6 |
+
+51,972 replays, 0 broken. Most of the elision members remove came from law-5 selections over long string
+histories (`.stringPopItems` stand-ins: an element pulled out of a long-built string dragged the whole
+string's history with it).
+
+**Not taken (yet):** an element born in a *constant* still has no member, so out of `A B .vecIntConcat`
+it is addressed from the concatenation rather than from `A`. A grouped form (each source with the runs
+of positions that came from it, like a piece table) would address it from its true source and store a
+long concatenation in a few entries; see the note on representation in Roadmap #21.
 
 ## What checking the law actually found
 
@@ -411,6 +443,8 @@ intact instead of unwrapping it onto `.exec` (and `.exec` instructions take thei
   was unwrapped; closed by the containment law, § Containment.)*
 
 ## A known leak: vector elements have no provenance of their own
+
+*(Closed 2026-11-07 by members: see § Containment. The analysis below is kept as the reason.)*
 
 `CodeItem.value` is `[any Item]`, so a block's contents keep their own `call` — which is what law 1b
 rests on: an item goes into a block and comes out unchanged, history intact.

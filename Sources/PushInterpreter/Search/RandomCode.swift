@@ -116,6 +116,23 @@ nonisolated struct InstructionMix: Sendable {
         Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map { ($0, 1.0) }),
         focus: loopInstructions, weight: 2)
 
+    /// The vector and string instructions that are not combinators: the ones that
+    /// put elements in, rearrange them and take them out. Sorted, so a seed
+    /// reproduces.
+    static let containerInstructions: [PushInstruction] =
+        Interpreter.instructions(role: .other).union(Interpreter.instructions(role: .comparison))
+            .filter { $0.rawValue.hasPrefix("vec") || $0.rawValue.hasPrefix("string") }
+            .sorted { $0.rawValue < $1.rawValue }
+
+    /// Equal shares of every role, plus the vector and string instructions at
+    /// twice a role's share. **Members** (`Containment`) only matter when a
+    /// program puts a computed element into a container and takes it out again,
+    /// which a balanced mix almost never does; the crux fuzz runs under this so
+    /// the fixed-point check covers them.
+    static let containerHeavy = InstructionMix(
+        Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map { ($0, 1.0) }),
+        focus: containerInstructions, weight: 2)
+
     /// Equal shares of constants, inputs, combinators and everything else.
     /// Equal shares of every role — constants, inputs, combinators, comparisons
     /// and everything else.

@@ -567,12 +567,14 @@ struct StringBehaviorTests {
 
         #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
         // A one-character *string*, so two instructions to reproduce — still O(1),
-        // and it names no other letter.
-        #expect(callString(topItem(inty, .string))
+        // and it names no other letter. Built as `.stringNth` then `.stringFromChar`
+        // build it (2026-11-07, for members; see `Containment`), so the char is a
+        // node of its own in `call`, and the crux reads the same as before.
+        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
             == "( \"live\" 3 .stringNth .stringFromChar )")
 
         doThis(.stringPop, to: inty)
-        #expect(callString(topItem(inty, .string))
+        #expect(CodeItem(topItem(inty, .string).crux()).pretty()
             == "( \"live\" 2 .stringNth .stringFromChar )")
     }
 
