@@ -14,7 +14,8 @@ The **crux** answers that. It is built from the `Item.call` recorded when an ite
 the `call`s of those items, recursively.
 
 > **The obligation.** Running an item's crux on a fresh interpreter reproduces that item's value, on
-> that item's stack.
+> that item's stack. **And every literal that stands in for a lost history is marked** (a *stand-in*;
+> see § Stand-ins). *(The second sentence was added 2026-11-07.)*
 
 That is the whole contract. Note what it does *not* say: it is **not a trace**. It does not have to
 say what happened. It has to be *runnable*, and it has to *land the value in the right place*.
@@ -241,15 +242,51 @@ Genuine accumulation that is *not* a loop counter — `x 1 .intAdd` in a loop bo
 no folding rule can help.
 
 `call` is bounded by a weight budget, mirroring how `Item.weight` and `maxItemWeight` bound value
-content. When an item's `callWeight` exceeds `maxCallWeight`, its `call` is set to `[]` at the push
-boundary.
+content. When an item's `callWeight` exceeds `maxCallWeight` (or its depth `maxCallDepth`), its `call`
+is replaced at the push boundary by a single **elided stand-in**, `.intAdd_elidedAs_4537` (§ Stand-ins).
+*(Until 2026-11-07 it was set to `[]`, which left a bare literal no one could tell from a literal in the
+program.)*
 
-**This can never break the obligation.** `crux()` returns `[self]` for an empty `call`, and a bare
-literal *is* a runnable program producing that value. Elision costs the story, never the correctness.
-That asymmetry is what makes an aggressive budget safe.
+**This can never break the obligation.** A stand-in *is* a runnable program producing that value, and
+it says it stands in for a dropped history. Elision costs the story, never the correctness, and now the
+loss is visible. That asymmetry is what makes an aggressive budget safe. It is the last resort:
+provenance compression is to replace it (Roadmap §P step 3).
 
 It is deliberately *not* an error: unlike `overflow(of:)`, which refuses the push and emits an
 `ErrorItem`, elision pushes the item normally and merely forgets where it came from.
+
+## Stand-ins (2026-11-07)
+
+A bare literal satisfies the first half of the obligation for any item, which is exactly why it was a
+loophole: elision and law 4b both substituted literals, and the result looked like a literal the program
+contained. Nothing could count how much of a run's provenance was really derived. A **stand-in**
+(`StandInItem`) is the mark.
+
+- **It runs as the literal it replaces.** On `.exec` it pushes a copy of its value whose `call` is the
+  stand-in, so a replay reproduces the original item exactly, history included.
+- **It names its cause**: the instruction that observed or produced the value (or the interpreter, for
+  its own diagnostics), and why the history is missing, `.observed` or `.elided`.
+  - `.boolStackDepth_actuallyWas_4`: a state read (law 4b).
+  - `.intAdd_actuallyWas_« ‼️ intAdd missing args: .int »`: an error from transient stack state.
+  - `.interpreter_actuallyWas_« ‼️ string length 6 exceeds maxStringLength 3 »`: an interpreter diagnostic.
+  - `.intAdd_elidedAs_4537`: an over-budget history.
+- **It is a literal leaf.** Its own `call` is always empty, so `crux()` emits it unchanged, and it
+  appears in every crux computed from it: `8 .intStackDepth_actuallyWas_2 .intAdd`.
+- **It has no stack of its own**, like an instruction; it only rests on `.exec`, and `AnyItem` encodes
+  it (a nested item plus its label).
+- **It is not forbidden in code.** In an evolved program it is a labelled constant, so no "crux-only,
+  illegal in code" category is needed.
+- **It costs the search nothing.** It is built only inside `recording(…)`, so with provenance off no
+  stand-in is ever made (`observed(by:_:)` returns at once).
+
+A stand-in carries the cause's *name*, not the cause. A fuller record (say, the cruxes of the items a
+`StackDepth` counted) could ride along later as a non-running annotation, without claiming to reproduce
+anything.
+
+**Overlap with local variables.** A future `.ref` (Roadmap #39) also wraps one item under a name: a
+mutable binding where a stand-in is an immutable label. The envelope keeps the shape generic so the two
+can share it. Under every storage design being considered, a variable read that hands back the bound
+item's own history needs no stand-in; stand-ins arise only for facts *about* the bindings.
 
 ## What checking the law actually found
 

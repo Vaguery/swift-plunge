@@ -27,11 +27,12 @@
 //  has to live somewhere that a future "add the missing combinators" sweep will
 //  not quietly undo. `Introspection Instruction Tests.swift` asserts the absence.
 //
-//  ## Provenance: all of these record nothing
+//  ## Provenance: all of these record a stand-in
 //
 //  Every result here reads **transient execution state** — a step count, a stack's
-//  depth, a tally of failures — so provenance law 4b applies and none of them
-//  records a `call`. The literal number is its own crux.
+//  depth, a tally of failures — so provenance law 4b applies: each records a
+//  stand-in, the literal number marked as observed (`.pushStepCount_actuallyWas_12`).
+//  It replays as the literal, and says where it came from. See `StandInItem`.
 //
 //  Recording the instruction name instead would be a lie of exactly the kind the
 //  round-trip sweep exists to catch: `.errorStackDepth` re-run on a fresh
@@ -61,7 +62,7 @@ nonisolated extension Interpreter {
             .pushStepCount,
             takes: [],
             modifier: { (interpreter, _) in
-                [Router(.int, IntItem(interpreter.counter, call: []))]
+                [Router(.int, IntItem(interpreter.counter).observed(by: .pushStepCount, interpreter.recording))]
             }
         )
 
@@ -73,7 +74,8 @@ nonisolated extension Interpreter {
             .errorStackDepth,
             takes: [],
             modifier: { (interpreter, _) in
-                [Router(.int, IntItem(interpreter.stacks[.error]!.count, call: []))]
+                let depth = IntItem(interpreter.stacks[.error]!.count)
+                return [Router(.int, depth.observed(by: .errorStackDepth, interpreter.recording))]
             }
         )
 
@@ -97,7 +99,7 @@ nonisolated extension Interpreter {
             takes: [],
             modifier: { (interpreter, _) in
                 let n = interpreter.stacks.errorCount(of: kind)
-                return [Router(.int, IntItem(n, call: []))]
+                return [Router(.int, IntItem(n).observed(by: name, interpreter.recording))]
             }
         )
     }

@@ -21,7 +21,10 @@ stands in for a lost history is a marked **stand-in**: it runs as that literal, 
 (`.boolStackDepth_actuallyWas_4`), and appears in every downstream crux. The audit, the loopholes and the full
 rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First priority and § 6. Order of work:
 
-1. Stand-ins: the item type; state reads (law 4b) record them; elision leaves them. Remove `execEq` (#26).
+1. ~~Stand-ins: the item type; state reads (law 4b) record them; elision leaves them. Remove `execEq` (#26).~~
+   **BUILT** 2026-11-07: `StandInItem`; state reads, transient-state errors and interpreter diagnostics
+   record `.observed` stand-ins, and elision leaves an `.elided` one. → *Provenance and the crux.md*
+   § Stand-ins. `execEq` removed.
 2. Measure: a completeness probe, and the round-trip sweep always-on and large on its own seeded generator,
    with a loop-heavy mix. `.execDoRange` becomes inclusive first (#25), since it changes range cruxes.
 3. Provenance compression replaces elision (generalized `CruxCompression`, looped-provenance steps 2–4); then
@@ -194,6 +197,17 @@ A representation-neutral derivation graph, for other GP representations, is a la
     is stored compactly; `.error` gets an archive (per-kind and per-instruction counts, marker flags)
     instead of a cap. First a stack-composition probe, to measure how compressible stacks really are.
     After the current speed-up round. → *Compressed stacks.md*
+
+39. **Local variables (`.ref`)** — noted 2026-11-07; nothing built. Push will need a way to create,
+    assign and read a local variable; earlier implementations used a `.ref` type that could hold any item.
+    **How the interpreter stores the bindings is not settled.** Earlier variants used a dictionary keyed by
+    `.ref`, a collection of stacks (one per variable), or a container item like a `.code` block. For
+    provenance: if a read hands back the bound item's own history (binding as containment, law 1b), the
+    variable is transparent under all three, and no stand-in is needed. If a read records only
+    `[ref, .read]`, replay on a fresh interpreter finds no binding, so the assignment must travel with the
+    crux (or a stand-in mark it). Questions *about* the bindings (bound?, how many?) are state reads, so
+    stand-ins. A ref and a stand-in share a shape (one item under a name), and the `AnyItem` envelope keeps
+    it generic so they can share it. → *Provenance and the crux.md* § Stand-ins
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

@@ -154,11 +154,12 @@ struct IntrospectionInstructionTests {
 
     // MARK: - Provenance
 
-    /// Law 4b: a reading of transient execution state records nothing, so the
-    /// literal number is its own crux. Recording the instruction name would
-    /// reconstruct to whatever a *fresh* interpreter happened to hold — which for
-    /// every one of these is zero.
-    @Test func `introspection results record no provenance`() {
+    /// Law 4b: a reading of transient execution state records a stand-in, the
+    /// literal number marked as observed by the instruction. Recording the
+    /// instruction name would reconstruct to whatever a *fresh* interpreter
+    /// happened to hold, which for every one of these is zero. (Was
+    /// `introspection results record no provenance`, before stand-ins.)
+    @Test func `introspection results record a stand-in`() {
         let names: [PushInstruction] = [
             .pushStepCount, .errorStackDepth,
             .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
@@ -167,8 +168,10 @@ struct IntrospectionInstructionTests {
             let inty = Interpreter.recordingProvenance()
             inty.stacks[.error]!.prepend(ErrorItem("x", kind: .missingArgument))
             Interpreter.language[name]!.act(on: inty)
-            #expect(topItem(inty, .int).call.isEmpty,
-                    "\(name) recorded a call, which cannot reproduce on a fresh interpreter")
+            let call = topItem(inty, .int).call
+            let standIn = call.first.flatMap { $0 as? StandInItem }
+            #expect(call.count == 1 && standIn?.source == name && standIn?.reason == .observed,
+                    "\(name) should record one stand-in naming itself, got \(call.map { $0.pretty() })")
         }
     }
 }

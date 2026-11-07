@@ -70,10 +70,14 @@ public nonisolated protocol Pretty {
 //  4. A freshly minted instruction token records nothing. Its crux is itself.
 //
 //  4b. A result read from transient EXECUTION state rather than from arguments
-//     records nothing either — its crux is the literal value it observed.
-//     `.boolStackDepth` reported 4 because `.bool` happened to be 4 deep;
-//     re-running `.boolStackDepth` says nothing about that, but the literal `4`
-//     reproduces it exactly. (Contrast `.input3` and `.int7`, which read the
+//     records a STAND-IN: the literal value it observed, marked as observed and
+//     naming the instruction (`StandInItem`). `.boolStackDepth` reported 4
+//     because `.bool` happened to be 4 deep; re-running `.boolStackDepth` says
+//     nothing about that, but the literal reproduces it exactly, and the stand-in
+//     (`.boolStackDepth_actuallyWas_4`) says it is a literal standing in for a
+//     history, not one the program contained. The same goes for errors that
+//     depend on transient stack state ("missing args", "on empty stack") and for
+//     the interpreter's own diagnostics. (Contrast `.input3` and `.int7`, which read the
 //     *environment*: those bindings outlive the run and are re-supplied when a
 //     crux is re-run, so naming them reproduces the value and they do record.)
 //     The test is whether re-running the name would find the same world.
@@ -301,9 +305,10 @@ nonisolated extension Item {
     /// tells Behaviors to record.
     public func crux() -> [any Item] {
         // An empty `call` means "I am a literal", and a literal is already a
-        // runnable program producing itself. This is also why eliding an
-        // over-budget `call` (Interpreter.push) is always safe: it costs the
-        // explanation, never the correctness of the reconstruction.
+        // runnable program producing itself. A literal that stands in for a lost
+        // history is a `StandInItem`, which is also a leaf (its `call` is empty),
+        // so it appears in the crux as itself, marked. That is how eliding an
+        // over-budget `call` (Interpreter.push) stays safe *and* visible.
         if self.call.isEmpty { return [self] }
         // **Iterative, not recursive.** A call tree can legally nest thousands deep
         // (a long run's loop counter, say — `maxCallWeight` bounds its size, not its

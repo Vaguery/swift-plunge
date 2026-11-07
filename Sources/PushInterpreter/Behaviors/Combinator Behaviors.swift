@@ -74,7 +74,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("\(name) on empty stack")
+                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
                         )
                     ]
                 }
@@ -195,7 +195,8 @@ nonisolated extension Interpreter {
                 // Unreachable since `alsoNeeds` — the plan will not let this run
                 // with an empty `stack`. Kept as the honest alternative to a `!`.
                 guard let item = interpreter.stacks[stack]!.first else {
-                    return [Router(.error, ErrorItem("\(name) on empty stack"))]
+                    return [Router(.error, ErrorItem("\(name) on empty stack")
+                        .observed(by: name, interpreter.recording))]
                 }
                 // A non-positive count copies nothing, and says nothing about it.
                 guard howMany > 0 else { return [] }
@@ -229,14 +230,13 @@ nonisolated extension Interpreter {
                 return [
                     Router(
                         .bool,
-                        BoolItem(
-                            empty,
-                            // Provenance law 4b (Items.swift): this reads
-                            // transient execution state, not arguments, so it
-                            // records nothing and is its own literal crux.
-                            // Naming the instruction would reconstruct to
-                            // whatever some *other* stack happened to hold.
-                            call: [])
+                        // Provenance law 4b (Items.swift): this reads transient
+                        // execution state, not arguments, so it records a
+                        // stand-in (`.boolStackIsEmpty_actuallyWas_true`): the
+                        // literal, marked as observed. Naming the instruction
+                        // would reconstruct to whatever a *fresh* interpreter's
+                        // stack held.
+                        BoolItem(empty).observed(by: name, interpreter.recording)
                     )
                 ]
             }
@@ -397,7 +397,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("\(name) on empty stack")
+                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
                         )
                     ]
                 }
@@ -434,14 +434,12 @@ nonisolated extension Interpreter {
                 return [
                     Router(
                         .int,
-                        IntItem(
-                            c,
-                            // Provenance law 4b (Items.swift): a reading of
-                            // transient execution state records nothing — the
-                            // literal count is its own crux, where the
-                            // instruction name would reconstruct to whatever
-                            // some other stack happened to hold.
-                            call: [])
+                        // Provenance law 4b (Items.swift): a reading of
+                        // transient execution state records a stand-in
+                        // (`.intStackDepth_actuallyWas_4`), the literal count
+                        // marked as observed. The instruction name would
+                        // reconstruct to whatever a fresh interpreter held.
+                        IntItem(c).observed(by: name, interpreter.recording)
                     )
                 ]
             }
@@ -496,7 +494,8 @@ nonisolated extension Interpreter {
                 let idx = max(0, min(rawIndex.value, range))
 
                 guard range > 0, let oldItem = interpreter.take(at: idx, from: stack) else {
-                    return [Router(.error, ErrorItem("\(name) on empty stack"))]
+                    return [Router(.error, ErrorItem("\(name) on empty stack")
+                        .observed(by: name, interpreter.recording))]
                 }
 
                 let newItem = oldItem
@@ -534,7 +533,7 @@ nonisolated extension Interpreter {
                     return [
                         Router(
                             .error,
-                            ErrorItem("\(name) on empty stack")
+                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
                         )
                     ]
                 }

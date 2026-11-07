@@ -45,7 +45,7 @@ nonisolated extension Interpreter {
 
         place(
             ErrorItem("\(Interpreter.memoryMarker) live weight \(liveWeight) exceeds maxLiveWeight \(config.maxLiveWeight)",
-                      kind: .guardStop),
+                      kind: .guardStop).observed(by: nil, recording),
             on: .error
         )
         clear(.exec)   // unwind: the run loop exits once .exec is empty
@@ -84,7 +84,7 @@ nonisolated extension Interpreter {
 
         place(
             ErrorItem("\(Interpreter.runawayMarker) .\(stack) \(symptom); \(looper) active",
-                  kind: .guardStop),
+                  kind: .guardStop).observed(by: nil, recording),
             on: .error
         )
         clear(.exec)   // unwind: the run loop exits once .exec is empty

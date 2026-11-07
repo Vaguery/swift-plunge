@@ -8,7 +8,19 @@
 /// The concrete `Item` types, used as a Codable type tag.
 nonisolated enum ItemKind: String, Codable, Sendable {
     case bool, char, code, double, instruction, int, string
-    case vecBool, vecDouble, vecInt, vecString, iterator, error
+    case vecBool, vecDouble, vecInt, vecString, iterator, error, standIn
+}
+
+/// Everything a `StandInItem` needs to be rebuilt: the literal it stands in for,
+/// nested as an `AnyItem` (as an iterator's origin is), and its label. Value
+/// content, not history: a stand-in *is* the marked literal, so encoding it does
+/// not breach the envelope's rule against serializing provenance. Kept generic (a
+/// nested item plus a label) so a future local-variable type can share the shape
+/// (Roadmap #39).
+nonisolated struct StandInState: Codable, Sendable {
+    var value: AnyItem
+    var source: PushInstruction?
+    var reason: StandInItem.Reason
 }
 
 
@@ -115,6 +127,9 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 cursor: state.cursor,
                 burial: state.burial
             )
+        case .standIn:
+            let state = try container.decode(StandInState.self, forKey: .value)
+            item = StandInItem(standingInFor: state.value.item, source: state.source, reason: state.reason)
         case .error:
             // `errorKind` is absent from anything encoded before it existed, so
             // decode it leniently and fall back to the same default `init` uses.
@@ -172,6 +187,12 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                     emits: concrete.emits,
                     burial: concrete.burial
                 ),
+                forKey: .value
+            )
+        case let concrete as StandInItem:
+            try container.encode(ItemKind.standIn, forKey: .type)
+            try container.encode(
+                StandInState(value: AnyItem(concrete.value), source: concrete.source, reason: concrete.reason),
                 forKey: .value
             )
         case let concrete as ErrorItem:

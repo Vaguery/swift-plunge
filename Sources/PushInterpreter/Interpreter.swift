@@ -55,8 +55,9 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     public var maxItemWeight   : Int = 100_000
     // CHOSEN, and the most forgiving number here: over-budget provenance is
     // ELIDED rather than refused, and eliding costs the explanation but never the
-    // value — `crux()` returns `[self]` for an empty call, and a bare literal is
-    // already a runnable program producing that value. So being wrong in either
+    // value — the elided history is replaced by a stand-in (`StandInItem`), a
+    // marked literal that is already a runnable program producing that value and
+    // that says it is one. So being wrong in either
     // direction is cheap, which is exactly why the budget can afford to be
     // aggressive. See `Interpreter.elidingOverBudgetProvenance`.
     //
@@ -353,12 +354,12 @@ nonisolated final class Interpreter {
         // reports can always land.
         if stack.enforcesSizeLimits {
             if let message = self.overflow(of: item) {
-                self.place(ErrorItem(message, kind: .sizeRefusal), on: .error)
+                self.place(ErrorItem(message, kind: .sizeRefusal).observed(by: nil, recording), on: .error)
                 return
             }
             if (self.stacks[stack]?.count ?? 0) >= config.maxStackDepth {
                 self.place(ErrorItem(".\(stack) is full at maxStackDepth \(config.maxStackDepth)",
-                                     kind: .sizeRefusal), on: .error)
+                                     kind: .sizeRefusal).observed(by: nil, recording), on: .error)
                 return
             }
         }
@@ -395,10 +396,15 @@ nonisolated final class Interpreter {
     ///
     /// Deliberately not an error, and deliberately not a refusal — unlike
     /// `overflow(of:)`, which rejects the push. The item is still perfectly
-    /// good; only its history is too expensive to keep. Forgetting that history
-    /// cannot break the reconstruction, because `crux()` returns `[self]` for an
-    /// empty `call` and a bare literal already reproduces the value. So the item
-    /// stops explaining where it came from and becomes a constant instead.
+    /// good; only its history is too expensive to keep. The history is replaced by
+    /// a single **elided stand-in** (`StandInItem`, `.intAdd_elidedAs_4537`): a
+    /// literal that reproduces the value, names the instruction that produced it,
+    /// and says the history was dropped, so the loss is visible and countable
+    /// rather than indistinguishable from a literal in the program. Weight 2 and
+    /// depth 1, so it never trips the budget again.
+    ///
+    /// The last resort, not the plan: provenance compression is to replace it
+    /// (Roadmap §P, step 3).
     ///
     /// This is the honest-growth backstop: the provenance law removes the
     /// spurious growth and `IteratorItem` folds loop counters, but a value that
@@ -412,8 +418,16 @@ nonisolated final class Interpreter {
         guard item.callWeight > config.maxCallWeight || item.callDepth > config.maxCallDepth
         else { return item }
         var lightened = item
-        lightened.call = []
+        lightened.call = [StandInItem(standingInFor: item, source: Self.producer(in: item.call), reason: .elided)]
         return lightened
+    }
+
+    /// The instruction that produced an item, read off its `call`: the last
+    /// element when it is an instruction (postfix, provenance law 3), else the
+    /// first (prefix, law 3b), else `nil`. Names the cause on an elided stand-in.
+    static func producer(in call: [any Item]) -> PushInstruction? {
+        if let last = call.last?.exactly(InstructionItem.self) { return last.value }
+        return call.first?.exactly(InstructionItem.self)?.value
     }
 
     /// Holds a loop to `maxIterations` passes, the third budget beside
@@ -455,7 +469,7 @@ nonisolated final class Interpreter {
     func requireAccepts(_ item: any Item, on stack: PushStack) -> Bool {
         guard stack.accepts(item) else {
             self.place(ErrorItem("\(Interpreter.invariantMarker) \(type(of: item)) rejected by .\(stack) stack",
-                                 kind: .invariant), on: .error)
+                                 kind: .invariant).observed(by: nil, recording), on: .error)
             return false
         }
         return true
@@ -630,10 +644,15 @@ nonisolated final class Interpreter {
                     // an enumerated instruction with no registered behavior
                     // (e.g. planned-but-unimplemented) must not crash the loop
                     self.push(
-                        ErrorItem("\(action) is an unknown instruction"),
+                        ErrorItem("\(action) is an unknown instruction").observed(by: action, recording),
                         to: .error
                     )
                 }
+            } else if let standIn = nextItem?.exactly(StandInItem.self) {
+                // A stand-in runs as the literal it replaces, and that literal's
+                // history is the stand-in, so a replay reproduces the original
+                // item exactly. See `StandInItem`.
+                self.pushDefault(standIn.released(recording))
             } else {
                 self.pushDefault(nextItem!)
             }

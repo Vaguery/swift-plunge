@@ -188,8 +188,11 @@ nonisolated class Behavior: @unchecked Sendable {
 
 
     /// The refusal for an instruction that came up short on `stack`.
-    func missingArguments(on stack: PushStack) -> Router {
-        Router(.error, ErrorItem(missingArgumentsFor: self.name, on: stack))
+    /// Recorded as observed by the instruction (a stand-in): it depends on transient
+    /// stack state, so re-running the instruction on a fresh interpreter would not
+    /// reproduce it (provenance law 4b).
+    func missingArguments(on stack: PushStack, _ recording: ProvenanceRecording) -> Router {
+        Router(.error, ErrorItem(missingArgumentsFor: self.name, on: stack).observed(by: self.name, recording))
     }
 
     func distribute(to interpreter: Interpreter, items: [Router]) {
@@ -229,7 +232,7 @@ nonisolated class Behavior: @unchecked Sendable {
             // every argument, then take them all (each stack's claims are its top
             // n items, so dropping n is exactly what `commit` would remove).
             for take in directTakes where take.index >= interpreter.stacks[take.stack]?.count ?? 0 {
-                self.distribute(to: interpreter, items: [missingArguments(on: take.stack)])
+                self.distribute(to: interpreter, items: [missingArguments(on: take.stack, interpreter.recording)])
                 return
             }
             // The arguments' weight is taken off `liveWeight` *before* they are
@@ -250,7 +253,7 @@ nonisolated class Behavior: @unchecked Sendable {
         let planner = Planner(for: interpreter)
         switch planner.plan(requirements) {
         case .short(let stack):
-            self.distribute(to: interpreter, items: [missingArguments(on: stack)])
+            self.distribute(to: interpreter, items: [missingArguments(on: stack, interpreter.recording)])
         case .ready(let arguments, let claims):
             planner.commit(claims)
             self.distribute(

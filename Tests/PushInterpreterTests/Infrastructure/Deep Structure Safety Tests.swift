@@ -61,7 +61,11 @@ struct DeepStructureSafetyTests {
         var item = IntItem(0)
         for i in 1...5 { item = IntItem(i, call: [item, InstructionItem(.intInc)]) }   // depth 5
         inty.push(item, to: .int)
-        #expect(inty.stacks[.int]!.first!.call.isEmpty, "over-deep provenance is dropped, as over-weight is")
+        // Over-deep provenance is dropped, as over-weight is, and a stand-in marks
+        // the drop and names the instruction that produced the value.
+        let call = inty.stacks[.int]!.first!.call
+        #expect(call.count == 1)
+        #expect(call.first?.pretty() == ".intInc_elidedAs_5")
         #expect((inty.stacks[.int]!.first as? IntItem)?.value == 5, "the value is kept")
     }
 
