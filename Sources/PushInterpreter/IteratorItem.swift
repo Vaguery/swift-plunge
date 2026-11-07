@@ -461,13 +461,13 @@ nonisolated extension IteratorItem {
 
     /// Whether another pass follows the one at the current cursor.
     ///
-    /// The counting rule preserves `execDoRange`'s existing behavior exactly, and
-    /// that behavior is **not** inclusive of the destination, whatever the docs
-    /// say: `4 7 .execDoRange` emits 7, 6, 5 and stops, because the old base case
-    /// fired at `|current − dest| ≤ 1` *having already emitted* `current`.
-    /// Generalizing that to `|dest − current| > |stride|` is bit-for-bit
-    /// identical at stride ±1, and extends sensibly to wider strides (0→10 by 3
-    /// emits 0, 3, 6, 9).
+    /// The counting engine is **exclusive** of its destination: an iterator from 7
+    /// toward 4 emits 7, 6, 5 and stops, the rule `|dest − current| > |stride|`,
+    /// which extends sensibly to wider strides (0→10 by 3 emits 0, 3, 6, 9).
+    /// `execDoCount`, `execDoTimes` and `iteratorFromIntRange` use it as is.
+    /// `.execDoRange` is *inclusive* (since 2026-11-07, Roadmap #25, as in Push3):
+    /// it hands the engine a destination one step past the program's, so
+    /// `4 7 .execDoRange` emits 7, 6, 5, 4.
     ///
     /// The subtraction can overflow — `Int.min` to `Int.max` — and an overflowing
     /// difference means the two are as far apart as it is possible to be, so it
@@ -607,10 +607,10 @@ nonisolated extension IteratorItem {
     ///
     /// It follows the **same protocol a played pass does** — emit at the cursor,
     /// stop when `hasNextPass` says the last one has gone by — rather than reading
-    /// `isSpent` and running one further. That is not a detail: `execDoRange` is
-    /// deliberately *not* inclusive of its destination, so a collector that used
-    /// the other rule would hand back a longer sequence than the same iterator
-    /// emits when played, and the language would contradict itself.
+    /// `isSpent` and running one further. That is not a detail: the counting engine
+    /// is exclusive of its destination, so a collector that used the other rule
+    /// would hand back a longer sequence than the same iterator emits when played,
+    /// and the language would contradict itself.
     ///
     /// **`emits` is ignored**, deliberately. That flag exists so a counted loop's
     /// index does not litter `.int` while its body runs; collecting has no body

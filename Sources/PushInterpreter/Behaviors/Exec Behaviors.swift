@@ -156,15 +156,28 @@ nonisolated extension Interpreter {
             fxn: { a, recording in
                 let (x, y, body) = (a[0] as! IntItem, a[1] as! IntItem, a[2] as! CodeItem)
 
-
                 // The stride is the direction to travel, and equal bounds are a
                 // single pass either way.
                 let direction = y.value <= x.value ? 1 : -1
 
+                // **Inclusive of the destination** (2026-11-07, Roadmap #25), as
+                // in Push3: `4 7 .execDoRange` emits 7, 6, 5, 4, and equal bounds
+                // make one pass. The counting engine stops *before* its
+                // destination, and `execDoCount`, `execDoTimes`,
+                // `iteratorFromIntRange` and the collectors keep that, so this
+                // hands the engine a destination one step past `x`. That bound is
+                // a new value, and records `x direction .intAdd`. At the edge of
+                // `Int` it saturates to `x` itself, which costs the final pass only
+                // there, and keeps `x`'s own history (law 1: value unchanged).
+                let (past, overflowed) = x.value.addingReportingOverflow(direction)
+                let destination = overflowed
+                    ? x
+                    : IntItem(past, call: recording([x, IntItem(direction), InstructionItem(.intAdd)]))
+
                 return iteratorLoop(
                     kind: .counting(stride: direction),
                     origin: y,
-                    destination: x,
+                    destination: destination,
                     body: body,
                     emits: true, recording: recording
                 )

@@ -26,7 +26,7 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    record `.observed` stand-ins, and elision leaves an `.elided` one. → *Provenance and the crux.md*
    § Stand-ins. `execEq` removed.
 2. Measure: a completeness probe, and the round-trip sweep always-on and large on its own seeded generator,
-   with a loop-heavy mix. `.execDoRange` becomes inclusive first (#25), since it changes range cruxes.
+   with a loop-heavy mix. (`.execDoRange` became inclusive first, #25, **done** 2026-11-07.)
 3. Provenance compression replaces elision (generalized `CruxCompression`, looped-provenance steps 2–4); then
    retire `maxIterations` (#24).
 4. Per-element provenance for vectors **and strings** (#21), as a parallel array filled only when recording.
@@ -47,7 +47,7 @@ A representation-neutral derivation graph, for other GP representations, is a la
 - **#22** opt-in history encoding in `AnyItem`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
 - **#24** retire `maxIterations` once provenance compression lands.
-- **#25** `.execDoRange` becomes **inclusive**: |span|+1 passes (`4 4` → 4; `4 7` → 7, 6, 5, 4). Today it makes
+- **#25** (**done**) `.execDoRange` becomes **inclusive**: |span|+1 passes (`4 4` → 4; `4 7` → 7, 6, 5, 4). Today it makes
   max(1, |span|) passes. `.execDoCount`/`.execDoTimes` keep their pass counts.
 - **#26** `execEq` is removed; `( A ) ( B ) .codeEq` asks the same.
 - **#29a** closed: not taken.
@@ -158,8 +158,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
 
 24. **`maxIterations = 100`** — the one judgment-call number; flagged for review. → *Keeping loops
     human-sized.md*
-25. **`.execDoRange` inclusive of its destination?** Currently exclusive (`4 7` → 7, 6, 5). A Push3
-    compatibility question, deliberately left open. → *The first-class iterator.md*
+25. ~~**`.execDoRange` inclusive of its destination?**~~ **DONE** 2026-11-07: inclusive, as in Push3
+    (`4 7` → 7, 6, 5, 4; `4 4` → 4). It was max(1, |span|) passes, now |span|+1. → *The first-class iterator.md*
 26. **`execEq` permanent known gap** — leave as-is / record-nothing (law 4b) / restrict to single-item
     argument cruxes. → *CodeItem goes to code.md*
 27. **Coarsening (stride = span / budget)** for ranges — more expressive than the clamp; revisit when

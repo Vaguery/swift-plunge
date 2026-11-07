@@ -185,7 +185,13 @@ Two results, both better than expected — see "Provenance and the crux.md" for 
 `.iteratorPeekStride` is the exception that shows the rule — no contained item to give back, so it records
 under law 3.
 
-## The destination is excluded (a real bug, found here)
+## The destination was excluded (a real bug, found here)
+
+> **Changed 2026-11-07 (Roadmap #25): `.execDoRange` is now inclusive, as in Push3.** `4 7 .execDoRange`
+> emits 7, 6, 5, 4, and `4 4` emits 4. It used to make max(1, |span|) passes: equal bounds still made one,
+> so `3 4` and `4 4` both emitted only 4. The counting *engine* stays exclusive, and `execDoCount`,
+> `execDoTimes` and `iteratorFromIntRange` keep using it as is; `.execDoRange` hands it a destination one
+> step past the program's. The history below is how the exclusive rule was found.
 
 `4 7 .execDoRange` emits **7, 6, 5** — never 4. The old base case fired at `|current − dest| ≤ 1`
 *having already emitted* `current`, so the last index is one short of the destination. Both

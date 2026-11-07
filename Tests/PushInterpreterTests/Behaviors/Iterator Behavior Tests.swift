@@ -702,9 +702,11 @@ struct IteratorBehaviorTests {
             return ((inty.stacks[.iterator]!.first as? IteratorItem)?.destination as? IntItem)?.value
         }
 
-        #expect(endOf(5) == 5)              // untouched
-        #expect(endOf(100) == 100)          // exactly at the limit: untouched
-        #expect(endOf(101) == 100)          // saturates…
+        // `.execDoRange` is inclusive (2026-11-07), so the iterator's exclusive
+        // end sits one past the program's: `0 5` makes six passes, end 6.
+        #expect(endOf(5) == 6)              // untouched
+        #expect(endOf(99) == 100)           // exactly at the limit (100 passes): untouched
+        #expect(endOf(100) == 100)          // 101 passes asked: saturates…
         #expect(endOf(999_999) == 100)      // …and stays saturated
     }
 
@@ -771,9 +773,9 @@ struct IteratorBehaviorTests {
         ])
         inty.run(stepLimit: 10_000)
 
-        // Three outer passes (0,1,2 — the end is excluded), each running three
-        // inner ones: nine bodies.
-        #expect(inty.stacks[.bool]!.count == 9)
+        // Four outer passes (0…3, inclusive since 2026-11-07), each running four
+        // inner ones: sixteen bodies.
+        #expect(inty.stacks[.bool]!.count == 16)
         // Both loops finished and cleaned up after themselves.
         #expect(stackString(inty, .iterator) == "[ ]")
         #expect(inty.stacks[.error]!.isEmpty)
@@ -804,8 +806,9 @@ struct IteratorBehaviorTests {
         // loop able to interfere with an outer one.
         let inner = inty.stacks[.iterator]![0] as! IteratorItem
         let outer = inty.stacks[.iterator]![1] as! IteratorItem
-        #expect((inner.destination as? IntItem)?.value == 9)
-        #expect((outer.destination as? IntItem)?.value == 9)
+        // One past 9: the range is inclusive, and the engine stops before its end.
+        #expect((inner.destination as? IntItem)?.value == 10)
+        #expect((outer.destination as? IntItem)?.value == 10)
 
         // Running on: the inner loop finishes and leaves the outer one behind,
         // untouched and still going.
