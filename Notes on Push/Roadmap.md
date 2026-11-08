@@ -291,6 +291,21 @@ A representation-neutral derivation graph, for other GP representations, is a la
     Not yet well formed: `.exec` continuations, `.iterator` as one type, and the shape effects of the
     direct-write combinators. A type-level map is a hypergraph with cycles; backward chaining builds the DAG.
 
+42. **Every Behavior returns its intended output or an error** — **RULED 2026-11-08** → *Error audit and
+    Behavior classes (2026-11-08).md*. The ~23 silent failures, the arbitrary conversions
+    (`doubleFromString` → 0.0, `charFromInt` mod 95) and the `-1` "not found" sentinels become errors.
+    Character codes are Unicode scalar values both ways. Out-of-range indices **clamp** in every family
+    (nth, set, cut, code points and gaps), replacing today's modulo, as Design Principles §12 says; only
+    an empty collection errors. (A same-day ruling for modulo was reversed; negative indices counted from
+    the end were considered and declined.) Item indices clamp to 0…N−1, gap indices to 0…N. Two gap bugs
+    to fix with it: `vecXCut`/`stringCut` wrap mod N, so the tail gap is unreachable, and `xShove` clamps
+    to 0…c−1 where it should be 0…c, so it never reaches the bottom and is a no-op on a two-item stack.
+
+43. **Behavior classes** — **RULED 2026-11-08**, same note. Five classes: operations, structural rules,
+    context reads, control (continuation writes) and channels. Declare each Behavior's class first, with a
+    whole-set test; then replace `BehaviorWithSideEffects` with one narrower form per class. Not rewriting
+    the direct-write combinators as pops and pushes.
+
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
 The clear-cut vector cases are built (comparisons, sub-vector search/replace, read-only constructors).

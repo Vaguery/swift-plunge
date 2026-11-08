@@ -488,6 +488,13 @@ This generalises past loops. Any transformation the language quietly applies to 
 should preserve order, because §17 says a random program must be able to improve by degrees. A chaotic
 transformation is indistinguishable from noise, and evolution cannot optimise noise.
 
+**It covers positions as well as counts** (ruled 2026-11-08, Roadmap #42). An index into a vector, a
+string or a block clamps exactly as a stack depth does: below 0 is the first position, past the end the
+last. Wrapping an index looks harmless because every int becomes a valid address, but it makes
+`100 .vecIntNth` a different element for every input length, so a program cannot mean the same thing
+on two test cases. A clamp means "the last" on all of them. Only an empty collection, where no position
+exists, is an error.
+
 ### A limit is configuration, not vocabulary
 
 `.execDoFew`/`.execDoSome` put the magnitude **in the instruction name**, where it could not be tuned,
