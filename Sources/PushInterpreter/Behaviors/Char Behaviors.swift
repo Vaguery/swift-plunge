@@ -20,201 +20,54 @@ nonisolated extension Interpreter {
         return Character(scalar)
     }
 
+    // Typed operations (Roadmap #44): arguments in written order, so `y x .charLT`
+    // is `{ y, x in y < x }`. A thrown `Refusal` becomes an error.
+
     /// Truncates toward zero, then reads the result as a Unicode scalar value.
     static let charFromDouble_behavior =
-        Behavior(
-            .charFromDouble,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-
-                // Int(x.value) traps on non-finite or out-of-Int-range doubles,
-                // so guard the conversion first.
-                guard x.value.isFinite,
-                    x.value >= Double(Int.min),
-                    x.value < Double(Int.max)
-                else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .charFromDouble: \(x.value) → Int",
-                                call: recording([x, InstructionItem(.charFromDouble)]))
-                        )
-                    ]
-                }
-
-                guard let c = character(scalar: Int(x.value)) else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Not a Unicode scalar in .charFromDouble: \(x.value)",
-                                kind: .conversion,
-                                call: recording([x, InstructionItem(.charFromDouble)]))
-                        )
-                    ]
-                }
-                return [
-                    Router(
-                        .char,
-                        CharItem(
-                            c,
-                            call: recording([x, InstructionItem(.charFromDouble)]))
-                    )
-                ]
+        Behavior.operation(.charFromDouble, takes: DoubleItem.self, gives: CharItem.self) { x throws(Refusal) in
+            // Int(x) traps on non-finite or out-of-Int-range doubles,
+            // so guard the conversion first.
+            guard x.isFinite, x >= Double(Int.min), x < Double(Int.max) else {
+                throw Refusal("Overflow in .charFromDouble: \(x) → Int")
             }
-        )
+            guard let c = character(scalar: Int(x)) else {
+                throw Refusal("Not a Unicode scalar in .charFromDouble: \(x)", kind: .conversion)
+            }
+            return c
+        }
 
     /// The character with this Unicode scalar value; an error if there is none.
     static let charFromInt_Behavior =
-        Behavior(
-            .charFromInt,
-            takes: [.int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                guard let c = character(scalar: x.value) else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Not a Unicode scalar in .charFromInt: \(x.value)",
-                                kind: .conversion,
-                                call: recording([x, InstructionItem(.charFromInt)]))
-                        )
-                    ]
-                }
-                return [
-                    Router(
-                        .char,
-                        CharItem(
-                            c,
-                            call: recording([x, InstructionItem(.charFromInt)]))
-                    )
-                ]
+        Behavior.operation(.charFromInt, takes: IntItem.self, gives: CharItem.self) { x throws(Refusal) in
+            guard let c = character(scalar: x) else {
+                throw Refusal("Not a Unicode scalar in .charFromInt: \(x)", kind: .conversion)
             }
-        )
+            return c
+        }
 
+    // Comparisons and classifications are non-destructive queries: the operands
+    // survive, and the result's crux clears them away (`Behavior.reading`).
     static let charGT_Behavior =
-        Behavior(
-            .charGT,
-            reads: [.char, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y > x,
-                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charGT, reads: CharItem.self, CharItem.self, gives: BoolItem.self) { y, x in y > x }
 
     static let charGTE_Behavior =
-        Behavior(
-            .charGTE,
-            reads: [.char, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y >= x,
-                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charGTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charGTE, reads: CharItem.self, CharItem.self, gives: BoolItem.self) { y, x in y >= x }
 
     static let charIsDigit_Behavior =
-        Behavior(
-            .charIsDigit,
-            reads: [.char],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isWholeNumber,
-                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsDigit)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charIsDigit, reads: CharItem.self, gives: BoolItem.self) { x in x.isWholeNumber }
 
     static let charIsLetter_Behavior =
-        Behavior(
-            .charIsLetter,
-            reads: [.char],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isLetter,
-                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsLetter)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charIsLetter, reads: CharItem.self, gives: BoolItem.self) { x in x.isLetter }
 
     static let charIsWhitespace_Behavior =
-        Behavior(
-            .charIsWhitespace,
-            reads: [.char],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isWhitespace,
-                            call: recording(Behavior.reading([.char: 1], producing: .bool, from: [x, InstructionItem(.charIsWhitespace)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charIsWhitespace, reads: CharItem.self, gives: BoolItem.self) { x in x.isWhitespace }
 
     static let charLT_Behavior =
-        Behavior(
-            .charLT,
-            reads: [.char, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y < x,
-                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charLT, reads: CharItem.self, CharItem.self, gives: BoolItem.self) { y, x in y < x }
 
     static let charLTE_Behavior =
-        Behavior(
-            .charLTE,
-            reads: [.char, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CharItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y <= x,
-                            call: recording(Behavior.reading([.char: 2], producing: .bool, from: [y, x, InstructionItem(.charLTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.charLTE, reads: CharItem.self, CharItem.self, gives: BoolItem.self) { y, x in y <= x }
 
     static let charBehaviors:[PushInstruction : Behavior] =
     [

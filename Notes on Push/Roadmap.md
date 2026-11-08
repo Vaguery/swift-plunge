@@ -326,6 +326,15 @@ A representation-neutral derivation graph, for other GP representations, is a la
     write the casts and `Router` once, make an operation's result type data (#41), make partiality a
     `throw` (#42), and derive `call` from the declared arguments. A throwaway prototype compiled and ran
     under Swift 6. The macro-free half of what new types need (*Extensibility goal*).
+    **Started 2026-11-08**: `Behavior.operation(_:takes:|reads:gives:)` in *Typed Operations.swift*, with
+    `ValueItem` (a type's home stack and initializer), `Refusal` (a thrown error, auto-tagged `.fallible`),
+    `WrittenOrder` (requirements and `call` from the declared order: stacks by first appearance, each
+    deepest first, which reproduced every hand-written `call`), and `Behavior.gives` (the result stack, for
+    #41). Converted: all int, double, bool and char operations (64), with identical messages and cruxes;
+    release throughput unchanged. Not yet: string, vector, code and iterator operations, many of which
+    return existing items (`traced`), carry element `members`, or give several results — the constructor
+    would need those forms first. Open: `doubleGTE`/`doubleLTE` are true when an operand is NaN (they
+    inherit `!(y < x)` from `Comparable`); kept as it was, flagged for a ruling.
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

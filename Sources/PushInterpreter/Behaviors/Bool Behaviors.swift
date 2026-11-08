@@ -9,303 +9,60 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
+    // Typed operations (Roadmap #44): arguments in written order, so in
+    // `p q .boolPandNotQ` the closure is `{ p, q in p && !q }`. Here `y` is the
+    // deeper (first-written) argument, `x` the top.
+
     static let boolAnd_Behavior =
-        Behavior(
-            .boolAnd,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            arg1 && arg2,
-                            call: recording([y, x, InstructionItem(.boolAnd)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolAnd, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x && y }
 
     static let boolFromDouble_Behavior =
-        Behavior(
-            .boolFromDouble,
-            takes: [.double],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value != 0.0,
-                            call: recording([x, InstructionItem(.boolFromDouble)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolFromDouble, takes: DoubleItem.self, gives: BoolItem.self) { x in x != 0.0 }
 
     static let boolFromInt_Behavior =
-        Behavior(
-            .boolFromInt,
-            takes: [.int],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value != 0,
-                            call: recording([x, InstructionItem(.boolFromInt)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolFromInt, takes: IntItem.self, gives: BoolItem.self) { x in x != 0 }
 
     static let boolIfPThenQ_Behavior =
-        Behavior(
-            .boolIfPThenQ,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value || !y.value,
-                            call: recording([y, x, InstructionItem(.boolIfPThenQ)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolIfPThenQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x || !y }
 
     static let boolIfQThenP_Behavior =
-        Behavior(
-            .boolIfQThenP,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !x.value || y.value,
-                            call: recording([y, x, InstructionItem(.boolIfQThenP)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolIfQThenP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !x || y }
 
     static let boolNand_Behavior =
-        Behavior(
-            .boolNand,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !(arg1 && arg2),
-                            call: recording([y, x, InstructionItem(.boolNand)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNand, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !(x && y) }
 
     static let boolNor_Behavior =
-        Behavior(
-            .boolNor,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !(arg1 || arg2),
-                            call: recording([y, x, InstructionItem(.boolNor)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNor, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !(x || y) }
 
     static let boolNot_Behavior =
-        Behavior(
-            .boolNot,
-            takes: [.bool],
-            fxn: { a, recording in
-                let (x) = (a[0] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !x.value,
-                            call: recording([
-                                x,
-                                InstructionItem(.boolNot),
-                            ]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNot, takes: BoolItem.self, gives: BoolItem.self) { x in !x }
 
     static let boolNotP_Behavior =
-        Behavior(
-            .boolNotP,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !y.value,
-                            call: recording([y, x, InstructionItem(.boolNotP)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNotP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !y }
 
     static let boolNotPandQ_Behavior =
-        Behavior(
-            .boolNotPandQ,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !y.value && x.value,
-                            call: recording([y, x, InstructionItem(.boolNotPandQ)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNotPandQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !y && x }
 
     static let boolNotQ_Behavior =
-        Behavior(
-            .boolNotQ,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            !x.value,
-                            call: recording([y, x, InstructionItem(.boolNotQ)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolNotQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !x }
 
     static let boolOr_Behavior =
-        Behavior(
-            .boolOr,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            arg1 || arg2,
-                            call: recording([y, x, InstructionItem(.boolOr)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolOr, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x || y }
 
     static let boolP_Behavior =
-        Behavior(
-            .boolP,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value,
-                            call: recording([y, x, InstructionItem(.boolP)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in y }
 
     static let boolPandNotQ_Behavior =
-        Behavior(
-            .boolPandNotQ,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value && !x.value,
-                            call: recording([y, x, InstructionItem(.boolPandNotQ)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolPandNotQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in y && !x }
 
     static let boolQ_Behavior =
-        Behavior(
-            .boolQ,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value,
-                            call: recording([y, x, InstructionItem(.boolQ)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x }
 
     static let boolXnor_Behavior =
-        Behavior(
-            .boolXnor,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            arg1 == arg2,
-                            call: recording([y, x, InstructionItem(.boolXnor)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolXnor, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x == y }
 
     static let boolXor_Behavior =
-        Behavior(
-            .boolXor,
-            takes: [.bool, .bool],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! BoolItem, a[1] as! BoolItem)
-                let (arg1, arg2) = (x.value, y.value)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            arg1 != arg2,
-                            call: recording([y, x, InstructionItem(.boolXor)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.boolXor, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x != y }
 
     static let boolBehaviors: [PushInstruction: Behavior] =
         [

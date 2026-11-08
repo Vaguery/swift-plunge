@@ -9,473 +9,111 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
+    // Typed operations (Roadmap #44): arguments in written order, so `y x .intSubtract`
+    // is `{ y, x in y - x }`. A thrown `Refusal` becomes an error.
+
     static let intAdd_Behavior =
-        Behavior(
-            .intAdd,
-            takes: [.int, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-
-                let (result, hasOverflowed) = y.value.addingReportingOverflow(
-                    x.value
-                )
-
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intAdd: \(y.value) + \(x.value)",
-                                call: recording([y, x, InstructionItem(.intAdd)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.intAdd)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intAdd, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            let (result, overflowed) = y.addingReportingOverflow(x)
+            guard !overflowed else { throw Refusal("Overflow in .intAdd: \(y) + \(x)") }
+            return result
+        }
 
     static let intSubtract_Behavior =
-        Behavior(
-            .intSubtract,
-            takes: [.int, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-
-                let (result, hasOverflowed) = y.value
-                    .subtractingReportingOverflow(x.value)
-
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intSubtract: \(y.value) - \(x.value)",
-                                call: recording([y, x, InstructionItem(.intSubtract)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.intSubtract)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intSubtract, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            let (result, overflowed) = y.subtractingReportingOverflow(x)
+            guard !overflowed else { throw Refusal("Overflow in .intSubtract: \(y) - \(x)") }
+            return result
+        }
 
     static let intMultiply_Behavior =
-        Behavior(
-            .intMultiply,
-            takes: [.int, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-
-                let (result, hasOverflowed) = y.value
-                    .multipliedReportingOverflow(by: x.value)
-
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intMultiply: \(y.value) * \(x.value)",
-                                call: recording([y, x, InstructionItem(.intMultiply)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.intMultiply)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intMultiply, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            let (result, overflowed) = y.multipliedReportingOverflow(by: x)
+            guard !overflowed else { throw Refusal("Overflow in .intMultiply: \(y) * \(x)") }
+            return result
+        }
 
     static let intMax_Behavior =
-        Behavior(
-            .intMax,
-            takes: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            max(y.value, x.value),
-                            call: recording([y, x, InstructionItem(.intMax)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intMax, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in max(y, x) }
 
     static let intMin_Behavior =
-        Behavior(
-            .intMin,
-            takes: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            min(y.value, x.value),
-                            call: recording([y, x, InstructionItem(.intMin)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intMin, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in min(y, x) }
 
+    // The zero divisor is checked first: dividing by zero also reports overflow.
     static let intQuot_Behavior =
-        Behavior(
-            .intQuot,
-            takes: [.int, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-
-                let (result, hasOverflowed) = y.value.dividedReportingOverflow(
-                    by: x.value
-                )
-
-                // check the zero divisor first: dividedReportingOverflow(by: 0)
-                // also reports overflow, so this must precede the overflow branch
-                if x.value == 0 {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Divide by zero .intQuot: \(y.value) / \(x.value)",
-                                call: recording([y, x, InstructionItem(.intQuot)]))
-                        )
-                    ]
-                } else if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intQuot: \(y.value) / \(x.value)",
-                                call: recording([y, x, InstructionItem(.intQuot)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.intQuot)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intQuot, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            guard x != 0 else { throw Refusal("Divide by zero .intQuot: \(y) / \(x)") }
+            let (result, overflowed) = y.dividedReportingOverflow(by: x)
+            guard !overflowed else { throw Refusal("Overflow in .intQuot: \(y) / \(x)") }
+            return result
+        }
 
     static let intMod_Behavior =
-        Behavior(
-            .intMod,
-            takes: [.int, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
+        Behavior.operation(.intMod, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            guard x != 0 else { throw Refusal("Divide by zero .intMod: \(y) % \(x)") }
+            let (result, overflowed) = y.remainderReportingOverflow(dividingBy: x)
+            guard !overflowed else { throw Refusal("Overflow in .intMod: \(y) % \(x)") }
+            return result
+        }
 
-                let (result, hasOverflowed) = y.value
-                    .remainderReportingOverflow(dividingBy: x.value)
-
-                // check the zero divisor first: remainderReportingOverflow(dividingBy: 0)
-                // also reports overflow, so this must precede the overflow branch
-                if x.value == 0 {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Divide by zero .intMod: \(y.value) % \(x.value)",
-                                call: recording([y, x, InstructionItem(.intMod)]))
-                        )
-                    ]
-                } else if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intMod: \(y.value) % \(x.value)",
-                                call: recording([y, x, InstructionItem(.intMod)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.intMod)]))
-                        )
-                    ]
-                }
-            }
-        )
-
+    // Comparisons are non-destructive queries: both operands survive, and the
+    // result's crux clears them away (`Behavior.reading`).
     static let intGT_Behavior =
-        Behavior(
-            .intGT,
-            reads: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value > x.value,
-                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intGT, reads: IntItem.self, IntItem.self, gives: BoolItem.self) { y, x in y > x }
 
     static let intGTE_Behavior =
-        Behavior(
-            .intGTE,
-            reads: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value >= x.value,
-                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intGTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intGTE, reads: IntItem.self, IntItem.self, gives: BoolItem.self) { y, x in y >= x }
 
     static let intLTE_Behavior =
-        Behavior(
-            .intLTE,
-            reads: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value <= x.value,
-                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intLTE, reads: IntItem.self, IntItem.self, gives: BoolItem.self) { y, x in y <= x }
 
     static let intLT_Behavior =
-        Behavior(
-            .intLT,
-            reads: [.int, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! IntItem, a[1] as! IntItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y.value < x.value,
-                            call: recording(Behavior.reading([.int: 2], producing: .bool, from: [y, x, InstructionItem(.intLT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intLT, reads: IntItem.self, IntItem.self, gives: BoolItem.self) { y, x in y < x }
 
     static let intInc_Behavior =
-        Behavior(
-            .intInc,
-            takes: [.int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                let (result, hasOverflowed) = x.value.addingReportingOverflow(1)
-
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intInc: \(x.value) + 1»",
-                                call: recording([x, InstructionItem(.intInc)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([x, InstructionItem(.intInc)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intInc, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
+            let (result, overflowed) = x.addingReportingOverflow(1)
+            guard !overflowed else { throw Refusal("Overflow in .intInc: \(x) + 1»") }
+            return result
+        }
 
     static let intDec_Behavior =
-        Behavior(
-            .intDec,
-            takes: [.int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                let (result, hasOverflowed) = x.value
-                    .subtractingReportingOverflow(1)
-
-                if hasOverflowed {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intDec: \(x.value) - 1»",
-                                call: recording([x, InstructionItem(.intDec)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                result,
-                                call: recording([x, InstructionItem(.intDec)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.intDec, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
+            let (result, overflowed) = x.subtractingReportingOverflow(1)
+            guard !overflowed else { throw Refusal("Overflow in .intDec: \(x) - 1»") }
+            return result
+        }
 
     static let intFromBool_Behavior =
-        Behavior(
-            .intFromBool,
-            takes: [.bool],
-            fxn: { a, recording in
-                let (x) = (a[0] as! BoolItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            x.value ? 1 : 0,
-                            call: recording([x, InstructionItem(.intFromBool)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intFromBool, takes: BoolItem.self, gives: IntItem.self) { x in x ? 1 : 0 }
 
     /// The character's Unicode scalar value, the inverse of `.charFromInt`. A
     /// character made of several scalars (a flag, a letter with a combining
     /// accent) has no single code, so it is an error.
     static let intFromChar_Behavior =
-        Behavior(
-            .intFromChar,
-            takes: [.char],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (c) = (a[0] as! CharItem)
-                let scalars = c.value.unicodeScalars
-                guard scalars.count == 1, let scalar = scalars.first else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Several Unicode scalars in .intFromChar: \(c.value)",
-                                kind: .conversion,
-                                call: recording([c, InstructionItem(.intFromChar)]))
-                        )
-                    ]
-                }
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            Int(scalar.value),
-                            call: recording([c, InstructionItem(.intFromChar)]))
-                    )
-                ]
+        Behavior.operation(.intFromChar, takes: CharItem.self, gives: IntItem.self) { c throws(Refusal) in
+            let scalars = c.unicodeScalars
+            guard scalars.count == 1, let scalar = scalars.first else {
+                throw Refusal("Several Unicode scalars in .intFromChar: \(c)", kind: .conversion)
             }
-        )
+            return Int(scalar.value)
+        }
 
     /// The string read as an integer; an error if it is not one.
     static let intFromString_Behavior =
-        Behavior(
-            .intFromString,
-            takes: [.string],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (s) = (a[0] as! StringItem)
-                guard let v = Int(s.value) else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Not an integer in .intFromString: \"\(s.value)\"",
-                                kind: .conversion,
-                                call: recording([s, InstructionItem(.intFromString)]))
-                        )
-                    ]
-                }
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            v,
-                            call: recording([s, InstructionItem(.intFromString)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.intFromString, takes: StringItem.self, gives: IntItem.self) { s throws(Refusal) in
+            guard let v = Int(s) else { throw Refusal("Not an integer in .intFromString: \"\(s)\"", kind: .conversion) }
+            return v
+        }
 
+    /// `Int(_:)` traps on a non-finite or out-of-range double, so those refuse.
     static let intFromDouble_Behavior =
-        Behavior(
-            .intFromDouble,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-
-                // Int(x.value) traps on non-finite or out-of-Int-range doubles
-                guard x.value.isFinite,
-                    x.value >= Double(Int.min),
-                    x.value < Double(Int.max)
-                else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .intFromDouble: \(x.value) → Int",
-                                call: recording([x, InstructionItem(.intFromDouble)]))
-                        )
-                    ]
-                }
-
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            Int(x.value),
-                            call: recording([x, InstructionItem(.intFromDouble)]))
-                    )
-                ]
+        Behavior.operation(.intFromDouble, takes: DoubleItem.self, gives: IntItem.self) { x throws(Refusal) in
+            guard x.isFinite, x >= Double(Int.min), x < Double(Int.max) else {
+                throw Refusal("Overflow in .intFromDouble: \(x) → Int")
             }
-        )
+            return Int(x)
+        }
 
     static let intBehaviors:[PushInstruction : Behavior] =
         [

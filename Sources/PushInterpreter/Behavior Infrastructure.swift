@@ -100,6 +100,12 @@ nonisolated final class Behavior: Sendable {
     /// which is an operation unless built with `Behavior.control`.
     let behaviorClass: BehaviorClass
 
+    /// The stack this Behavior's result goes to, when that is declared (the typed
+    /// operations, Roadmap #44); nil when only running it can tell. A refusal
+    /// goes to `.error` regardless. The start of a `produces` declaration for the
+    /// input-output map (#41).
+    let gives: PushStack?
+
 
     /// The common form: consume one item from each of `takes`, and require —
     /// without consuming — `alsoNeeds` more. An operation.
@@ -158,13 +164,15 @@ nonisolated final class Behavior: Sendable {
         requires: [Requirement],
         tags: Set<InstructionTag>,
         behaviorClass: BehaviorClass,
-        body: BehaviorBody
+        body: BehaviorBody,
+        gives: PushStack? = nil
     ) {
         self.name = label
         self.requirements = requires
         self.tags = tags
         self.behaviorClass = behaviorClass
         self.body = body
+        self.gives = gives
         let plan = Behavior.directPlan(for: requires)
         self.directChecks = plan.checks
         self.directTakes = plan.takes
@@ -413,8 +421,18 @@ nonisolated extension Behavior {
         producing resultStack: PushStack,
         from source: [any Item]
     ) -> [any Item] {
+        reading(sorted: reads.sorted(by: { $0.key.rawValue < $1.key.rawValue }), producing: resultStack, from: source)
+    }
+
+    /// `reading(_:producing:from:)` with its counts already sorted by stack, for a
+    /// caller that worked them out once (the typed operations).
+    static func reading(
+        sorted reads: [(key: PushStack, value: Int)],
+        producing resultStack: PushStack,
+        from source: [any Item]
+    ) -> [any Item] {
         var result = source
-        for (stack, count) in reads.sorted(by: { $0.key.rawValue < $1.key.rawValue }) where count > 0 {
+        for (stack, count) in reads where count > 0 {
             if stack == resultStack {
                 // The result is on top, the `count` arguments just beneath it.
                 // Lift each argument past the result and pop it.

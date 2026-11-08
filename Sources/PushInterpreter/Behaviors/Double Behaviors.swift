@@ -10,548 +10,136 @@ import Foundation
 
 nonisolated extension Interpreter {
 
+    // Typed operations (Roadmap #44): arguments in written order, so `y x .doubleSubtract`
+    // is `{ y, x in y - x }`. A thrown `Refusal` becomes an error; an infinite or
+    // NaN result is refused as overflow.
+
     static let doubleAdd_Behavior =
-        Behavior(
-            .doubleAdd,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
+        Behavior.operation(.doubleAdd, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = y + x
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleAdd: \(y) + \(x)") }
+            return result
+        }
 
-                let result = y.value + x.value
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleAdd: \(y.value) + \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleAdd)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleAdd)]))
-                        )
-                    ]
-
-                }
-            }
-        )
-
+    /// Whole-number quotient: `y` less its remainder, divided by `x`.
     static let doubleQuot_Behavior =
-        Behavior(
-            .doubleQuot,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-
-                var result =
-                    (y.value - y.value.truncatingRemainder(dividingBy: x.value))
-                    / x.value
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleQuot: \(y.value) // \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleQuot)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleQuot)]))
-                        )
-                    ]
-
-                }
-            }
-        )
+        Behavior.operation(.doubleQuot, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = (y - y.truncatingRemainder(dividingBy: x)) / x
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleQuot: \(y) // \(x)") }
+            return result
+        }
 
     static let doubleDivide_Behavior =
-        Behavior(
-            .doubleDivide,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-
-                var result = (y.value / x.value)
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleDivide: \(y.value) / \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleDivide)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleDivide)]))
-                        )
-                    ]
-
-                }
-            }
-        )
+        Behavior.operation(.doubleDivide, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = y / x
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleDivide: \(y) / \(x)") }
+            return result
+        }
 
     static let doubleMod_Behavior =
-        Behavior(
-            .doubleMod,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-
-                var result = (y.value.truncatingRemainder(dividingBy: x.value))
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleMod: \(y.value) % \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleMod)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleMod)]))
-                        )
-                    ]
-
-                }
-            }
-        )
+        Behavior.operation(.doubleMod, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = y.truncatingRemainder(dividingBy: x)
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleMod: \(y) % \(x)") }
+            return result
+        }
 
     static let doubleMin_Behavior =
-        Behavior(
-            .doubleMin,
-            takes: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            min(x.value, y.value),
-                            call: recording([y, x, InstructionItem(.doubleMin)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleMin, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in min(x, y) }
 
     static let doubleMax_Behavior =
-        Behavior(
-            .doubleMax,
-            takes: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            max(x.value, y.value),
-                            call: recording([y, x, InstructionItem(.doubleMax)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleMax, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in max(x, y) }
 
     static let doubleSubtract_Behavior =
-        Behavior(
-            .doubleSubtract,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-
-                let result = y.value - x.value
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleSubtract: \(y.value) - \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleSubtract)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleSubtract)]))
-                        )
-                    ]
-
-                }
-            }
-        )
+        Behavior.operation(.doubleSubtract, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = y - x
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleSubtract: \(y) - \(x)") }
+            return result
+        }
 
     static let doubleMultiply_Behavior =
-        Behavior(
-            .doubleMultiply,
-            takes: [.double, .double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-
-                let result = y.value * x.value
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleMultiply: \(y.value) * \(x.value)",
-                                call: recording([y, x, InstructionItem(.doubleMultiply)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([y, x, InstructionItem(.doubleMultiply)]))
-                        )
-                    ]
-
-                }
-            }
-        )
+        Behavior.operation(.doubleMultiply, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            let result = y * x
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleMultiply: \(y) * \(x)") }
+            return result
+        }
 
     static let doubleFromInt_Behavior =
-        Behavior(
-            .doubleFromInt,
-            takes: [.int],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            Double(x.value),
-                            call: recording([x, InstructionItem(.doubleFromInt)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleFromInt, takes: IntItem.self, gives: DoubleItem.self) { x in Double(x) }
 
+    // Comparisons are non-destructive queries: both operands survive, and the
+    // result's crux clears them away (`Behavior.reading`).
+    //
+    // `>=` and `<=` are written as negated `<` because that is what they were when
+    // they compared `DoubleItem`s (Comparable's defaults): with a NaN operand both
+    // are true, where Double's own `>=`/`<=` would be false.
     static let doubleGT_Behavior =
-        Behavior(
-            .doubleGT,
-            reads: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y > x,
-                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleGT, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y > x }
 
     static let doubleGTE_Behavior =
-        Behavior(
-            .doubleGTE,
-            reads: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y >= x,
-                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleGTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleGTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in !(y < x) }
 
     static let doubleLTE_Behavior =
-        Behavior(
-            .doubleLTE,
-            reads: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y <= x,
-                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleLTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in !(x < y) }
 
     static let doubleLT_Behavior =
-        Behavior(
-            .doubleLT,
-            reads: [.double, .double],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! DoubleItem, a[1] as! DoubleItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y < x,
-                            call: recording(Behavior.reading([.double: 2], producing: .bool, from: [y, x, InstructionItem(.doubleLT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleLT, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y < x }
 
     static let doubleCos_Behavior =
-        Behavior(
-            .doubleCos,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                let result = cos(x.value)
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleCos: cos(\(x.value))",
-                                call: recording([x, InstructionItem(.doubleCos)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([x, InstructionItem(.doubleCos)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.doubleCos, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            let result = cos(x)
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleCos: cos(\(x))") }
+            return result
+        }
 
     static let doubleSin_Behavior =
-        Behavior(
-            .doubleSin,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                let result = sin(x.value)
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleSin: sin(\(x.value))",
-                                call: recording([x, InstructionItem(.doubleSin)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([x, InstructionItem(.doubleSin)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.doubleSin, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            let result = sin(x)
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleSin: sin(\(x))") }
+            return result
+        }
 
     static let doubleTan_Behavior =
-        Behavior(
-            .doubleTan,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                let result = tan(x.value)
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleTan: tan(\(x.value))",
-                                call: recording([x, InstructionItem(.doubleTan)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([x, InstructionItem(.doubleTan)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.doubleTan, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            let result = tan(x)
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleTan: tan(\(x))") }
+            return result
+        }
 
     static let doubleInc_Behavior =
-        Behavior(
-            .doubleInc,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                let result = x.value + 1.0
-
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleInc: \(x.value) + 1.0",
-                                call: recording([x, InstructionItem(.doubleInc)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([x, InstructionItem(.doubleInc)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.doubleInc, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            let result = x + 1.0
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleInc: \(x) + 1.0") }
+            return result
+        }
 
     static let doubleDec_Behavior =
-        Behavior(
-            .doubleDec,
-            takes: [.double],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                let result = x.value - 1.0
-
-                if result.isInfinite || result.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleDec: \(x.value) - 1.0",
-                                call: recording([x, InstructionItem(.doubleDec)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                result,
-                                call: recording([x, InstructionItem(.doubleDec)]))
-                        )
-                    ]
-                }
-            }
-        )
+        Behavior.operation(.doubleDec, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            let result = x - 1.0
+            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleDec: \(x) - 1.0") }
+            return result
+        }
 
     static let doubleFromBool_Behavior =
-        Behavior(
-            .doubleFromBool,
-            takes: [.bool],
-            fxn: { a, recording in
-                let (x) = (a[0] as! BoolItem)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            x.value ? 1.0 : 0.0,
-                            call: recording([x, InstructionItem(.doubleFromBool)]))
-                    )
-                ]
+        Behavior.operation(.doubleFromBool, takes: BoolItem.self, gives: DoubleItem.self) { x in x ? 1.0 : 0.0 }
 
-            }
-        )
-
+    /// The character's ASCII code; any non-ASCII character is 0.
     static let doubleFromChar_Behavior =
-        Behavior(
-            .doubleFromChar,
-            takes: [.char],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CharItem)
-                let num = (x.value.isASCII ? Double(x.value.asciiValue!) : 0.0)
-                return [
-                    Router(
-                        .double,
-                        DoubleItem(
-                            num,
-                            call: recording([x, InstructionItem(.doubleFromChar)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.doubleFromChar, takes: CharItem.self, gives: DoubleItem.self) { x in
+            x.isASCII ? Double(x.asciiValue!) : 0.0
+        }
 
+    /// The string read as a number; an error if it is not one, or if it reads as
+    /// a non-finite value.
     static let doubleFromString_Behavior =
-        Behavior(
-            .doubleFromString,
-            takes: [.string],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                guard let num = Double(x.value) else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Not a number in .doubleFromString: \"\(x.value)\"",
-                                kind: .conversion,
-                                call: recording([x, InstructionItem(.doubleFromString)]))
-                        )
-                    ]
-                }
-                // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;
-                // reject them here so they cannot poison later numeric behaviors
-                if num.isInfinite || num.isNaN {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem(
-                                "Overflow in .doubleFromString: \"\(x.value)\"",
-                                call: recording([x, InstructionItem(.doubleFromString)]))
-                        )
-                    ]
-                } else {
-                    return [
-                        Router(
-                            .double,
-                            DoubleItem(
-                                num,
-                                call: recording([x, InstructionItem(.doubleFromString)]))
-                        )
-                    ]
-                }
+        Behavior.operation(.doubleFromString, takes: StringItem.self, gives: DoubleItem.self) { x throws(Refusal) in
+            guard let num = Double(x) else {
+                throw Refusal("Not a number in .doubleFromString: \"\(x)\"", kind: .conversion)
             }
-        )
+            // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;
+            // reject them here so they cannot poison later numeric behaviors
+            guard !(num.isInfinite || num.isNaN) else { throw Refusal("Overflow in .doubleFromString: \"\(x)\"") }
+            return num
+        }
 
     static let doubleBehaviors:[PushInstruction : Behavior] =
         
