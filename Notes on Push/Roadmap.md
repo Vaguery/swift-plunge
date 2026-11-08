@@ -344,9 +344,13 @@ A representation-neutral derivation graph, for other GP representations, is a la
     search queries, `codeNthRoot`). Left: control; anything with an `IteratorItem` (not a `ValueItem`:
     its value is only a cursor, and its setters record their own reconstruction); `execQuote` (prefix
     crux); and the ones whose result embeds an argument item with its history (the scalar `xQuote`s,
-    `codeWrapRoot`, `codePair`, the replace-points pair), plus the two code cuts, which want an item-level
-    form that gives a `CodeItem` (a values body would drop that history; `splitting` needs a
-    `MemberItem`). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
+    `codeWrapRoot`, `codePair`, the replace-points pair), plus the two code cuts. **Then built**:
+    `composing` (items in, a value out, for a result that contains an argument with its history) and a
+    `splitting` overload for types without element origins; those eight are typed too.
+    **Status at the end of 2026-11-08:** 154 construction sites typed (106 `operation`, 30 `assembling`,
+    8 `composing`, 6 `extracting`, 4 `splitting`). Hand-written by design: control, structural rules,
+    context reads, channels, iterator operations (an `IteratorItem` is not a `ValueItem`), the
+    iterator-loop deliverers (pushAll, split, parseToLetters, iterate), and `execQuote` (prefix crux). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
 

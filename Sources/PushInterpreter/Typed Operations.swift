@@ -116,6 +116,26 @@ nonisolated extension Behavior {
     }
 
 
+    // MARK: - Items in, a value out
+
+    /// Builds a value **from the argument items themselves**, not just their
+    /// values: for a result that contains an argument, history and all (a block
+    /// quoting or pairing its arguments). A values body would rebuild such an
+    /// argument without its `call`, and change its provenance.
+    static func composing<each A: ValueItem, R: ValueItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) -> R.Value
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+            let value = body(repeat each items(args, call.positions, repeat each takes))
+            return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
+        }
+    }
+
+
     // MARK: - Items in, an element out
 
     /// **Takes one element out of a container.** `body` names it (`Extraction`) or
@@ -159,6 +179,26 @@ nonisolated extension Behavior {
                                       call: recording(Behavior.selecting(produced, of: parts.count,
                                                                          on: R.pushStack, from: call.written)),
                                       members: recording.pieces(part.members())))
+            }
+        }
+    }
+
+
+    /// Several results on one stack, for a type **without element origins** (a
+    /// block's pieces: `codeCutAtGap`). As `splitting` above, but the body returns
+    /// the pieces' values.
+    static func splitting<each A: ValueItem, R: ValueItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) -> [R.Value]
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+            let parts = body(repeat each items(args, call.positions, repeat each takes))
+            return parts.enumerated().map { produced, value in
+                Router(R.pushStack, R(value, call: recording(Behavior.selecting(produced, of: parts.count,
+                                                                                on: R.pushStack, from: call.written))))
             }
         }
     }

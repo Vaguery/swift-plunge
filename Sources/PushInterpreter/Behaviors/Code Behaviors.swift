@@ -26,21 +26,9 @@ nonisolated extension Interpreter {
     /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeAppend`, which concatenates
     /// contents flat.
     static let codePair_Behavior =
-        Behavior(
-            .codePair,
-            takes: [.code, .code],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                return [
-                    Router(
-                        .code,
-                        CodeItem(
-                            [y.denotedItem, x.denotedItem],
-                            call: recording([y, x, InstructionItem(.codePair)]))
-                    )
-                ]
-            }
-        )
+        Behavior.composing(.codePair, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
+            [y.denotedItem, x.denotedItem]
+        }
 
     /// The `.code` sibling of `execIf`: pop a bool and two blocks, run the chosen
     /// one on `.exec`. Only the source stack differs — the mechanics (argument
@@ -289,19 +277,12 @@ nonisolated extension Interpreter {
         replacePointsBehavior(.codeReplaceFirstPoint, firstOnly: true)
 
     static func replacePointsBehavior(_ instruction: PushInstruction, firstOnly: Bool) -> Behavior {
-        Behavior(
-            instruction,
-            takes: [.code, .code, .code],
-            fxn: { a, recording in
-                // a[0]=replacement (top), a[1]=needle, a[2]=subject (deepest).
-                let (repl, needle, subject) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! CodeItem)
-                let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
-                let result = (rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])
-                return [Router(.code, CodeItem(
-                    result.value,
-                    call: recording([subject, needle, repl, InstructionItem(instruction)])))]
-            }
-        )
+        // Written `subject needle replacement`; the replacement goes in as itself.
+        Behavior.composing(instruction, takes: CodeItem.self, CodeItem.self, CodeItem.self,
+                           gives: CodeItem.self) { subject, needle, repl in
+            let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
+            return ((rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])).value
+        }
     }
 
     // MARK: - Root-level split and iterate
@@ -310,28 +291,13 @@ nonisolated extension Interpreter {
     /// `.code` analog of `vecXCut`/`stringCut`. Prefix deeper, suffix on top (so
     /// `cut` then `codeAppend` rebuilds the original); law-5 multi-result crux.
     static let codeCutRootAtGap_Behavior =
-        Behavior(
-            .codeCutRootAtGap,
-            takes: [.code, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
-                // Gaps, not elements: a root of N items has N+1 gaps, from 0
-                // (before everything → empty prefix) to N (after everything →
-                // empty suffix). The index clamps over those gaps.
-                let idx = Position.gap(y.value, count: x.value.count)
-                let prefix = Array(x.value[0..<idx])
-                let suffix = Array(x.value[idx...])
-                let source: [any Item] = [x, y, InstructionItem(.codeCutRootAtGap)]
-                return [
-                    Router(.code, CodeItem(
-                        prefix,
-                        call: recording(Behavior.selecting(0, of: 2, on: .code, from: source)))),
-                    Router(.code, CodeItem(
-                        suffix,
-                        call: recording(Behavior.selecting(1, of: 2, on: .code, from: source)))),
-                ]
-            }
-        )
+        Behavior.splitting(.codeCutRootAtGap, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
+            // Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
+            // everything → empty prefix) to N (after everything → empty suffix).
+            // The index clamps over those gaps.
+            let idx = Position.gap(y.value, count: x.value.count)
+            return [Array(x.value[0..<idx]), Array(x.value[idx...])]
+        }
 
     // MARK: - Tree-wide gap surgery
     //
@@ -350,24 +316,12 @@ nonisolated extension Interpreter {
     /// happens to fall between root elements. That is a property of cutting trees;
     /// see the note in `CodeGaps.swift`.
     static let codeCutAtGap_Behavior =
-        Behavior(
-            .codeCutAtGap,
-            takes: [.code, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
-                let tokens = x.gapTokens
-                let idx = x.gapIndex(y.value)
-                let source: [any Item] = [x, y, InstructionItem(.codeCutAtGap)]
-                return [
-                    Router(.code, CodeItem(
-                        CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
-                        call: recording(Behavior.selecting(0, of: 2, on: .code, from: source)))),
-                    Router(.code, CodeItem(
-                        CodeItem.rebuilt(from: Array(tokens[idx...])).value,
-                        call: recording(Behavior.selecting(1, of: 2, on: .code, from: source)))),
-                ]
-            }
-        )
+        Behavior.splitting(.codeCutAtGap, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
+            let tokens = x.gapTokens
+            let idx = x.gapIndex(y.value)
+            return [CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
+                    CodeItem.rebuilt(from: Array(tokens[idx...])).value]
+        }
 
     /// Splice one block into another's tree at the indexed gap.
     ///
@@ -484,18 +438,7 @@ nonisolated extension Interpreter {
     static let codeIterateDoPoints_Behavior   = iteratePointsBehavior(.codeIterateDoPoints, .unwrapped)
 
     static let codeWrapRoot_Behavior =
-    Behavior(
-        .codeWrapRoot,
-        takes: [.code],
-        fxn: {a, recording in
-            let (x) = (a[0] as! CodeItem)
-            let result =
-                CodeItem(
-                    [x],
-                    call: recording([x, InstructionItem(.codeWrapRoot)]))
-            return [ Router( .code, result) ]
-        }
-    )
+        Behavior.composing(.codeWrapRoot, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
 
     static let execQuote_Behavior =
     Behavior(
@@ -511,64 +454,19 @@ nonisolated extension Interpreter {
 
 
     static let intQuote_Behavior =
-    Behavior(
-        .intQuote,
-        takes: [.int],
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([x, InstructionItem(.intQuote)])
-            return [ Router(.code, result) ]
-        }
-    )
+        Behavior.composing(.intQuote, takes: IntItem.self, gives: CodeItem.self) { x in [x] }
 
     static let boolQuote_Behavior =
-    Behavior(
-        .boolQuote,
-        takes: [.bool],
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([x, InstructionItem(.boolQuote)])
-            return [ Router(.code, result) ]
-        }
-    )
+        Behavior.composing(.boolQuote, takes: BoolItem.self, gives: CodeItem.self) { x in [x] }
 
     static let stringQuote_Behavior =
-    Behavior(
-        .stringQuote,
-        takes: [.string],
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([x, InstructionItem(.stringQuote)])
-            return [ Router(.code, result) ]
-        }
-    )
+        Behavior.composing(.stringQuote, takes: StringItem.self, gives: CodeItem.self) { x in [x] }
 
     static let charQuote_Behavior =
-    Behavior(
-        .charQuote,
-        takes: [.char],
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([x, InstructionItem(.charQuote)])
-            return [ Router(.code, result) ]
-        }
-    )
+        Behavior.composing(.charQuote, takes: CharItem.self, gives: CodeItem.self) { x in [x] }
 
     static let doubleQuote_Behavior =
-    Behavior(
-        .doubleQuote,
-        takes: [.double],
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([x, InstructionItem(.doubleQuote)])
-            return [ Router(.code, result) ]
-        }
-    )
+        Behavior.composing(.doubleQuote, takes: DoubleItem.self, gives: CodeItem.self) { x in [x] }
 
 
     /// Unwraps the top `.code` block onto `.exec`, so its contents run.

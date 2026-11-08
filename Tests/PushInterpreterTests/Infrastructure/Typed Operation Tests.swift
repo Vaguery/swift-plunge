@@ -162,4 +162,16 @@ struct TypedOperationTests {
         #expect(callString(inty.stacks[.vecInt]![1]) == "( [1, 2, 3] 1 .vecIntCut 1 .vecIntPopItems )")
         #expect(callString(inty.stacks[.vecInt]![0]) == "( [1, 2, 3] 1 .vecIntCut .vecIntSwap .vecIntPop )")
     }
+
+    /// `composing`: the body gets the argument itself, so a quoted value keeps its
+    /// own history inside the block — a values body would have rebuilt it bare.
+    @Test func `composing keeps an argument's history inside the result`() {
+        let inty = Interpreter.recordingProvenance()
+        inty.load(program: [IntItem(3), IntItem(4), InstructionItem(.intAdd), InstructionItem(.intQuote)])
+        inty.run()
+        let block = topItem(inty, .code) as! CodeItem
+        #expect(block.pretty() == "( 7 )")
+        #expect(callString(block) == "( 7 .intQuote )")
+        #expect(callString(block.value[0]) == "( 3 4 .intAdd )", "the quoted 7 still knows where it came from")
+    }
 }
