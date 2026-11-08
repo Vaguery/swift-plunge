@@ -97,8 +97,8 @@ nonisolated extension Interpreter {
     ///
     /// **Dying returns the body to `.code`.** An instruction that consumed
     /// something and then finished with it should not also destroy it —
-    /// `execDoCount` already hands its arguments back when its count is too small
-    /// to act on, and this is the same courtesy at the other end of the loop
+    /// `execDoCount` and `execDoTimes` hand their body back when their count is too
+    /// small to act on, and this is the same courtesy at the other end of the loop
     /// (principle 5). It is not tidiness: `.code` is the language's tightest
     /// bottleneck, so every loop that ends is a small supply of the scarcest
     /// thing there is.

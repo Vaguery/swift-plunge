@@ -167,7 +167,11 @@ then the last" adds complexity and explains nothing. Declaring their class is en
    mostly on the ends; measure that after the change, and shape it in the constant distribution if needed.
    Iterator burial keeps its clamp, and its negative value keeps its meaning (end the loop).
 4. **D: the clamps stay.** By default, `dupTimes` with a negative count is a clamp to zero copies, and
-   iterating an empty collection hands the body back to `.code` as a finished loop does.
+   iterating an empty collection hands the body back to `.code` as a finished loop does. **Ruled later
+   the same day:** `execDoCount` and `execDoTimes` work the same way except that `execDoCount` leaves the
+   index on `.int` on each pass. So with a count below 1 both hand the body back to `.code` and consume
+   the count. (`execDoCount` used to send its count back through `.exec`, a leftover of the continuation
+   form.) Results go straight to the stack they end up on.
 5. **The classes: declare, then narrow.** First every Behavior declares its class (checked by a test over
    the whole instruction set, and feeding the #41 map); then `BehaviorWithSideEffects` is replaced by
    narrower forms, one per class. Roadmap #43. Step 1 is built. Ruled while building it: taking an

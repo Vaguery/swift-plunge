@@ -71,11 +71,13 @@ nonisolated extension Interpreter {
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
                 guard x.value >= 1 else {
-                    // Both arguments are returned to where they came from.
-                    return [
-                        Router(.code, body),
-                        Router(.exec, x),
-                    ]
+                    // No passes, so no indices: it declines exactly as
+                    // `.execDoTimes` does, the two differing only in the index each
+                    // pass leaves. The body goes back to `.code`; the count is a
+                    // claim of zero passes, consumed like `DupTimes`'s (Roadmap #42).
+                    // (It used to send the count back through `.exec`, a leftover
+                    // of the continuation form.)
+                    return [Router(.code, body)]
                 }
 
                 // The count starts at a 0 this instruction supplies itself: a

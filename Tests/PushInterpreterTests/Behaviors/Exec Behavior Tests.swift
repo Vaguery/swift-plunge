@@ -80,9 +80,28 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
 
+        // Declines as `.execDoTimes` does: the body back on `.code`, the count
+        // consumed (zero passes, so no index). It used to send the 0 back through
+        // `.exec`.
         doThis(.execDoCount, to: inty)
-        #expect(stackString(inty, .exec) == "[ 0 ]")
+        #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .code) == "[ ( false ) ]")
+    }
+
+    /// The two counted loops differ only in the index each pass leaves, so they
+    /// decline identically.
+    @Test(arguments: [PushInstruction.execDoCount, .execDoTimes], [0, -3])
+    func `a counted loop with no passes hands back its body and consumes its count`(
+        loop: PushInstruction, count: Int
+    ) {
+        let inty = Interpreter.recordingProvenance()
+        loadInts(inty, ints: [count])
+        inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))
+        doThis(loop, to: inty)
+        #expect(stackString(inty, .exec) == "[ ]")
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect(stackString(inty, .code) == "[ ( false ) ]")
     }
 
     /// Was `execDoRange doesn't loop if the counters are the same`, which pinned
