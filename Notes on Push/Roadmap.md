@@ -339,8 +339,14 @@ A representation-neutral derivation graph, for other GP representations, is a la
     reads. `MemberItem`/`TracingItem` are the container protocols. Side effect: where keeping the recorded
     `call` puts a different stack first (stringDrop/Take, the char replaces, stringSetChar, non-int
     vecXSet, and the three string char queries), the requirement order changed, so a "missing args" error
-    with several stacks short names a different one. Not yet: code and iterator operations (`CodeItem`
-    and `IteratorItem` are not `ValueItem`s). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
+    with several stacks short names a different one. **Code operations, same day**: `CodeItem` is a
+    `ValueItem`; 15 code operations are typed (append, flatten, the point and gap edits, the size and
+    search queries, `codeNthRoot`). Left: control; anything with an `IteratorItem` (not a `ValueItem`:
+    its value is only a cursor, and its setters record their own reconstruction); `execQuote` (prefix
+    crux); and the ones whose result embeds an argument item with its history (the scalar `xQuote`s,
+    `codeWrapRoot`, `codePair`, the replace-points pair), plus the two code cuts, which want an item-level
+    form that gives a `CodeItem` (a values body would drop that history; `splitting` needs a
+    `MemberItem`). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
 

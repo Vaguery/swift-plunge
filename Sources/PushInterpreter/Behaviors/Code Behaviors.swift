@@ -15,18 +15,9 @@ import DequeModule
 nonisolated extension Interpreter {
 
     static let codeAppend_Behavior =
-        Behavior(
-            .codeAppend,
-            takes: [.code, .code],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                let result =
-                    CodeItem(
-                        y.value + x.value,
-                        call: recording([y, x, InstructionItem(.codeAppend)]))
-                return [Router(.code, result)]
-            }
-        )
+        Behavior.operation(.codeAppend, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
+            y + x
+        }
 
     /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
     /// `codeWrapRoot`, and Clojure's `list` with two arguments. Each argument is
@@ -71,139 +62,69 @@ nonisolated extension Interpreter {
         )
 
     static let codeItemIsEmpty_Behavior =
-        Behavior(
-            .codeItemIsEmpty,
-            reads: [.code],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CodeItem)
-                let result =
-                    BoolItem(
-                        x.value.isEmpty,
-                        call: recording(Behavior.reading([.code: 1], producing: .bool, from: [x, InstructionItem(.codeItemIsEmpty)])))
-                return [Router(.bool, result)]
-            }
-        )
+        Behavior.operation(.codeItemIsEmpty, reads: CodeItem.self, gives: BoolItem.self) { x in x.isEmpty }
 
     static let codeLengthRoot_Behavior =
-        Behavior(
-            .codeLengthRoot,
-            reads: [.code],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CodeItem)
-                let result =
-                    IntItem(
-                        x.value.count,
-                        call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthRoot)])))
-                return [Router(.int, result)]
-            }
-        )
+        Behavior.operation(.codeLengthRoot, reads: CodeItem.self, gives: IntItem.self) { x in x.count }
 
     // MARK: - Whole-tree queries (non-destructive)
     //
     // All read their code argument(s) and leave them; the crux pops what it read
     // (`Behavior.reading`), like the vector queries. They use the pre-order point
-    // walker on `CodeItem` (Items.swift).
+    // walker on `CodeItem` (Items.swift), on a block rebuilt from the argument's
+    // value: every walk here counts and compares by value, never by `call`.
 
     /// The number of pre-order points in the whole tree, root included.
     /// `( (1 2) 3 )` → 5. (Contrast `codeLengthRoot`, the root `.value` count.)
     static let codeLengthPoints_Behavior =
-        Behavior(
-            .codeLengthPoints,
-            reads: [.code],
-            fxn: { a, recording in
-                let x = a[0] as! CodeItem
-                return [Router(.int, IntItem(
-                    x.pointCount,
-                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeLengthPoints)]))))]
-            }
-        )
+        Behavior.operation(.codeLengthPoints, reads: CodeItem.self, gives: IntItem.self) { x in
+            CodeItem(x).pointCount
+        }
 
     /// The number of leaves in the tree — everything that is not a sub-block, so
     /// scalars, instructions and whole vectors each count one. Equals `flatSize`.
     static let codeWidth_Behavior =
-        Behavior(
-            .codeWidth,
-            reads: [.code],
-            fxn: { a, recording in
-                let x = a[0] as! CodeItem
-                return [Router(.int, IntItem(
-                    x.flatSize,
-                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeWidth)]))))]
-            }
-        )
+        Behavior.operation(.codeWidth, reads: CodeItem.self, gives: IntItem.self) { x in
+            CodeItem(x).flatSize
+        }
 
     /// The maximum nesting depth: root 0, each nested block one deeper.
     static let codeDepth_Behavior =
-        Behavior(
-            .codeDepth,
-            reads: [.code],
-            fxn: { a, recording in
-                let x = a[0] as! CodeItem
-                return [Router(.int, IntItem(
-                    x.depth,
-                    call: recording(Behavior.reading([.code: 1], producing: .int, from: [x, InstructionItem(.codeDepth)]))))]
-            }
-        )
+        Behavior.operation(.codeDepth, reads: CodeItem.self, gives: IntItem.self) { x in
+            CodeItem(x).depth
+        }
 
     /// Whether a target block occurs as a point anywhere in another's tree. Since
     /// the root is a point, a tree contains itself. Reads both, leaves both.
+    ///
+    /// Written `needle hay .codeContains`: the haystack is on top. The needle is
+    /// *denoted* for the search (singleton-unwrap), but the crux re-pushes the
+    /// original block, so re-running denotes it again.
     static let codeContains_Behavior =
-        Behavior(
-            .codeContains,
-            reads: [.code, .code],
-            fxn: { a, recording in
-                // a[0] is the haystack (top), a[1] the needle block. The needle
-                // is *denoted* for the search (singleton-unwrap), but the crux
-                // must re-push the original block so re-running denotes it again.
-                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                return [Router(.bool, BoolItem(
-                    hay.firstPointIndex(of: needle.denotedItem) != nil,
-                    call: recording(Behavior.reading([.code: 2], producing: .bool, from: [needle, hay, InstructionItem(.codeContains)]))))]
-            }
-        )
+        Behavior.operation(.codeContains, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { needle, hay in
+            CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) != nil
+        }
 
     /// The pre-order index of the first point equal to the target; an error if
     /// there is none (it used to answer −1).
     static let codeIndexOfPoint_Behavior =
-        Behavior(
-            .codeIndexOfPoint,
-            reads: [.code, .code],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                guard let found = hay.firstPointIndex(of: needle.denotedItem) else {
-                    return [Behavior.refusal(
-                        "Not found in .codeIndexOfPoint",
-                        kind: .notFound,
-                        call: recording(Behavior.reading([.code: 2], producing: .error, from: [needle, hay, InstructionItem(.codeIndexOfPoint)])))]
-                }
-                return [Router(.int, IntItem(
-                    found,
-                    call: recording(Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)]))))]
+        Behavior.operation(.codeIndexOfPoint, reads: CodeItem.self, CodeItem.self, gives: IntItem.self) { needle, hay throws(Refusal) in
+            guard let found = CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) else {
+                throw Refusal("Not found in .codeIndexOfPoint", kind: .notFound)
             }
-        )
+            return found
+        }
 
     /// The block that directly contains the first point equal to the target —
     /// its parent. An error if the target is absent, or if it is the whole tree
     /// (which has no parent here). Reads both, leaves both.
     static let codeContainer_Behavior =
-        Behavior(
-            .codeContainer,
-            reads: [.code, .code],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                guard let parent = hay.parentContaining(needle.denotedItem) else {
-                    return [Behavior.refusal(
-                        "No container found in .codeContainer",
-                        kind: .notFound,
-                        call: recording(Behavior.reading([.code: 2], producing: .error, from: [needle, hay, InstructionItem(.codeContainer)])))]
-                }
-                return [Router(.code, CodeItem(
-                    parent.value,
-                    call: recording(Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)]))))]
+        Behavior.operation(.codeContainer, reads: CodeItem.self, CodeItem.self, gives: CodeItem.self) { needle, hay throws(Refusal) in
+            guard let parent = CodeItem(hay).parentContaining(CodeItem(needle).denotedItem) else {
+                throw Refusal("No container found in .codeContainer", kind: .notFound)
             }
-        )
+            return parent.value
+        }
 
     // MARK: - Point access (non-destructive)
     //
@@ -221,34 +142,19 @@ nonisolated extension Interpreter {
 
     /// The pre-order point at the `.int` index (root at 0), yielded as `.code`.
     static let codeNthPoint_Behavior =
-        Behavior(
-            .codeNthPoint,
-            reads: [.code, .int],
-            fxn: { a, recording in
-                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                return [Router(.code, CodeItem(
-                    boxedPointContents(x.point(at: i.value)),
-                    call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthPoint)]))))]
-            }
-        )
+        Behavior.operation(.codeNthPoint, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+            boxedPointContents(CodeItem(x).point(at: i))
+        }
 
     /// The root `.value` element at the `.int` index (clamped), yielded as
     /// `.code`. An empty block has no root elements, so it is an error.
     static let codeNthRoot_Behavior =
-        Behavior(
-            .codeNthRoot,
-            reads: [.code, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                guard let element = rootPicker(x, i.value) else {
-                    return [emptyBlockRefusal(.codeNthRoot, x, i, recording)]
-                }
-                return [Router(.code, CodeItem(
-                    boxedPointContents(element),
-                    call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)]))))]
+        Behavior.operation(.codeNthRoot, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
+            guard let element = rootPicker(CodeItem(x), i) else {
+                throw Refusal("Empty block in .\(PushInstruction.codeNthRoot)", kind: .emptyCollection)
             }
-        )
+            return boxedPointContents(element)
+        }
 
     // MARK: - Point access that emits to `.exec` (Do / Emit)
     //
@@ -343,63 +249,35 @@ nonisolated extension Interpreter {
     /// Flatten the whole tree to its leaves, left to right. `(1 (2 3) ())` →
     /// `(1 2 3)`. Empty blocks vanish.
     static let codeFlatten_Behavior =
-        Behavior(
-            .codeFlatten,
-            takes: [.code],
-            fxn: { a, recording in
-                let x = a[0] as! CodeItem
-                return [Router(.code, CodeItem(
-                    x.flattenedLeaves(),
-                    call: recording([x, InstructionItem(.codeFlatten)])))]
-            }
-        )
+        Behavior.operation(.codeFlatten, takes: CodeItem.self, gives: CodeItem.self) { x in
+            CodeItem(x).flattenedLeaves()
+        }
 
     /// Flatten one level: each root element that is a block is replaced by its
     /// contents, no deeper. `(1 (2 (3 4)) 5)` → `(1 2 (3 4) 5)`.
     static let codeFlattenOnce_Behavior =
-        Behavior(
-            .codeFlattenOnce,
-            takes: [.code],
-            fxn: { a, recording in
-                let x = a[0] as! CodeItem
-                return [Router(.code, CodeItem(
-                    x.flattenedOnce(),
-                    call: recording([x, InstructionItem(.codeFlattenOnce)])))]
-            }
-        )
+        Behavior.operation(.codeFlattenOnce, takes: CodeItem.self, gives: CodeItem.self) { x in
+            CodeItem(x).flattenedOnce()
+        }
 
     /// Flatten the subtree at the indexed point in place. A leaf point is
     /// unchanged; point 0 (the root) flattens the whole thing (= codeFlatten).
     static let codeFlattenPoint_Behavior =
-        Behavior(
-            .codeFlattenPoint,
-            takes: [.code, .int],
-            fxn: { a, recording in
-                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                let point = x.point(at: i.value)
-                let flattened: any Item =
-                    (point.exactly(CodeItem.self)).map { CodeItem($0.flattenedLeaves()) } ?? point
-                let rebuilt = x.replacingPoint(at: i.value, with: flattened)
-                let result = (rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])
-                return [Router(.code, CodeItem(
-                    result.value,
-                    call: recording([x, i, InstructionItem(.codeFlattenPoint)])))]
-            }
-        )
+        Behavior.operation(.codeFlattenPoint, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+            let tree = CodeItem(x)
+            let point = tree.point(at: i)
+            let flattened: any Item =
+                (point.exactly(CodeItem.self)).map { CodeItem($0.flattenedLeaves()) } ?? point
+            let rebuilt = tree.replacingPoint(at: i, with: flattened)
+            return ((rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])).value
+        }
 
     /// Remove the point at the indexed location, subtree and all. Removing the
     /// root gives an empty block.
     static let codeRemovePoint_Behavior =
-        Behavior(
-            .codeRemovePoint,
-            takes: [.code, .int],
-            fxn: { a, recording in
-                let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                return [Router(.code, CodeItem(
-                    x.removingPoint(at: i.value).value,
-                    call: recording([x, i, InstructionItem(.codeRemovePoint)])))]
-            }
-        )
+        Behavior.operation(.codeRemovePoint, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+            CodeItem(x).removingPoint(at: i).value
+        }
 
     /// Replace every point equal to `needle` with `replacement` (whole subtree),
     /// single pass. Consumes subject, needle, replacement (all `.code`).
@@ -499,22 +377,19 @@ nonisolated extension Interpreter {
     /// instruction that names a target: `( 5 )` inserts the bare leaf `5`,
     /// `( ( 5 ) )` inserts the block `( 5 )`.
     static let codeInsertAtGap_Behavior =
-        Behavior(
-            .codeInsertAtGap,
-            takes: [.code, .code, .int],
-            fxn: { a, recording in
-                let (insert, subject, n) = (a[0] as! CodeItem, a[1] as! CodeItem, a[2] as! IntItem)
-                var tokens = subject.gapTokens
-                let idx = subject.gapIndex(n.value)
-                let denoted = insert.denotedItem
-                let spliced: [CodeToken] = (denoted.exactly(CodeItem.self))
-                    .map { [.open] + $0.gapTokens + [.close] } ?? [.item(denoted)]
-                tokens.insert(contentsOf: spliced, at: idx)
-                return [Router(.code, CodeItem(
-                    CodeItem.rebuilt(from: tokens).value,
-                    call: recording([subject, insert, n, InstructionItem(.codeInsertAtGap)])))]
-            }
-        )
+        Behavior.operation(.codeInsertAtGap, takes: CodeItem.self, CodeItem.self, IntItem.self, gives: CodeItem.self) { subject, insert, n in
+            let tree = CodeItem(subject)
+            var tokens = tree.gapTokens
+            let idx = tree.gapIndex(n)
+            // A block the insertion denotes is spliced as tokens and rebuilt, so
+            // its own `call` never reaches the result: rebuilding it from its value
+            // here loses nothing.
+            let denoted = CodeItem(insert).denotedItem
+            let spliced: [CodeToken] = (denoted.exactly(CodeItem.self))
+                .map { [.open] + $0.gapTokens + [.close] } ?? [.item(denoted)]
+            tokens.insert(contentsOf: spliced, at: idx)
+            return CodeItem.rebuilt(from: tokens).value
+        }
 
     /// Open a new block at one gap and close it at another, then rebuild.
     ///
@@ -526,27 +401,21 @@ nonisolated extension Interpreter {
     /// unbalanced; `rebuilt(from:)` repairs it, which is the whole reason that
     /// function is total.
     static let codeWrapPoints_Behavior =
-        Behavior(
-            .codeWrapPoints,
-            takes: [.code, .int, .int],
-            fxn: { a, recording in
-                // `top` is the last int written and `deep` the first, so the crux
-                // has to name them `deep top` — law 3 records in *written* order.
-                // Getting that backwards is invisible to the value here, since the
-                // pair is sorted below, and shows up only as a crux that is not a
-                // fixed point. Which is exactly how the fuzzer found it.
-                let (x, top, deep) = (a[0] as! CodeItem, a[1] as! IntItem, a[2] as! IntItem)
-                var tokens = x.gapTokens
-                let (lo, hi) = { let p = [x.gapIndex(top.value), x.gapIndex(deep.value)].sorted()
-                                 return (p[0], p[1]) }()
-                // The higher index first, so inserting there cannot shift the lower.
-                tokens.insert(.close, at: hi)
-                tokens.insert(.open, at: lo)
-                return [Router(.code, CodeItem(
-                    CodeItem.rebuilt(from: tokens).value,
-                    call: recording([x, deep, top, InstructionItem(.codeWrapPoints)])))]
-            }
-        )
+        Behavior.operation(.codeWrapPoints, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
+            // `top` is the last int written and `deep` the first, so the crux
+            // names them `deep top` — law 3 records in *written* order. Getting
+            // that backwards is invisible to the value here, since the pair is
+            // sorted below, and shows up only as a crux that is not a fixed point.
+            // Which is exactly how the fuzzer found it.
+            let tree = CodeItem(x)
+            var tokens = tree.gapTokens
+            let (lo, hi) = { let p = [tree.gapIndex(top), tree.gapIndex(deep)].sorted()
+                             return (p[0], p[1]) }()
+            // The higher index first, so inserting there cannot shift the lower.
+            tokens.insert(.close, at: hi)
+            tokens.insert(.open, at: lo)
+            return CodeItem.rebuilt(from: tokens).value
+        }
 
     /// Flatten every block the gap range reaches into, and only those.
     ///
@@ -555,19 +424,13 @@ nonisolated extension Interpreter {
     /// outside it — so the effect stays where the program pointed. Indices are
     /// sorted, as in `codeWrapPoints`.
     static let codeFlattenRange_Behavior =
-        Behavior(
-            .codeFlattenRange,
-            takes: [.code, .int, .int],
-            fxn: { a, recording in
-                // `deep top`, not `top deep` — see the note on `codeWrapPoints`.
-                let (x, top, deep) = (a[0] as! CodeItem, a[1] as! IntItem, a[2] as! IntItem)
-                let (lo, hi) = { let p = [x.gapIndex(top.value), x.gapIndex(deep.value)].sorted()
-                                 return (p[0], p[1]) }()
-                return [Router(.code, CodeItem(
-                    x.flatteningBlocks(inGapRange: lo, through: hi).value,
-                    call: recording([x, deep, top, InstructionItem(.codeFlattenRange)])))]
-            }
-        )
+        Behavior.operation(.codeFlattenRange, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
+            // `deep top`, not `top deep` — see the note on `codeWrapPoints`.
+            let tree = CodeItem(x)
+            let (lo, hi) = { let p = [tree.gapIndex(top), tree.gapIndex(deep)].sorted()
+                             return (p[0], p[1]) }()
+            return tree.flatteningBlocks(inGapRange: lo, through: hi).value
+        }
 
     /// Iterate a block's **root** elements, running the mouse once per element —
     /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing

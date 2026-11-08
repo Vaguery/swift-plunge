@@ -20,3 +20,9 @@ nonisolated protocol ValueItem: Item {
 nonisolated extension CharItem: ValueItem {
     static var pushStack: PushStack { .char }
 }
+
+/// A block's value is its contents. (An `IteratorItem` is not a `ValueItem`: its
+/// value is only a cursor, and an iterator is never rebuilt from one.)
+nonisolated extension CodeItem: ValueItem {
+    static var pushStack: PushStack { .code }
+}
