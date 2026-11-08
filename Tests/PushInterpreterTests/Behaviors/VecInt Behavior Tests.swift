@@ -144,12 +144,14 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .vecInt) == "[ [9, 99, 999] ]", "the vector survives")
         #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 99 .vecIntIndexOf .intSwap .intPop 1 .vecIntPopItems )")
 
-        // Absent → -1.
+        // Absent → an error (it used to answer -1); both arguments survive.
         let absent = Interpreter.recordingProvenance()
         absent.stacks[.vecInt]!.prepend(VecIntItem([9, 99, 999]))
         absent.stacks[.int]!.prepend(IntItem(7777))
         doThis(.vecIntIndexOf, to: absent)
-        #expect(stackString(absent, .int) == "[ -1 7777 ]")
+        #expect(stackString(absent, .int) == "[ 7777 ]")
+        #expect(stackString(absent, .vecInt) == "[ [9, 99, 999] ]")
+        #expect((topItem(absent, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func vecIntItemIsEmpty() {
@@ -284,7 +286,8 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .vecInt) == "[ ]")
         #expect(stackString(inty, .exec) == "[ ]")
-
+        #expect(stackString(inty, .code) == "[ ( .boolNot ) ]",
+                "no passes: the body goes back to .code, as a finished loop's does")
     }
 
     @Test func `vecIntIterate works for one item`() {
@@ -358,9 +361,11 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
         #expect(stackString(inty, .int) == "[ -3 1 7777 ]")
 
+        // An empty vector has no element: an error (Roadmap #42).
         doThis(.vecIntNth, to: inty)
         #expect(stackString(inty, .int) == "[ 1 7777 ]")
         #expect(callString(topItem(inty, .int)) == "( )")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
 
         doThis(.vecIntNth, to: inty)
         #expect(stackString(inty, .int) == "[ 99 7777 ]")
@@ -368,29 +373,28 @@ struct VecIntBehaviorTests {
 
         doThis(.intPop, to: inty)
 
+        // Past the end clamps to the last element (it used to wrap: 7777 % 3 == 1).
         doThis(.vecIntNth, to: inty)
-        #expect(stackString(inty, .int) == "[ 99 ]")
+        #expect(stackString(inty, .int) == "[ 999 ]")
         #expect(callString(topItem(inty, .int)) == "( [9, 99, 999] 7777 .vecIntNth )")
     }
 
-    @Test func `vecIntNth handles Int.min index without trapping`() {
-        // abs(Int.min) traps; .magnitude does not. magnitude(Int.min) % 3 == 2
+    @Test func `vecIntNth clamps Int.min to the first element`() {
         loadInts(inty, ints: [Int.min])
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([9, 99, 999])])
 
         doThis(.vecIntNth, to: inty)
-        #expect(stackString(inty, .int) == "[ 999 ]")
+        #expect(stackString(inty, .int) == "[ 9 ]")
     }
 
-    @Test func `vecIntSet handles Int.min index without trapping`() {
+    @Test func `vecIntSet clamps Int.min to the first element`() {
         // position is popped first (top), replacement second.
-        // magnitude(Int.min) % 5 == 3
         loadInts(inty, ints: [Int.min, 42])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([9, 99, 999, 9999, 99999])])
 
         doThis(.vecIntSet, to: inty)
-        #expect(stackString(inty, .vecInt) == "[ [9, 99, 999, 42, 99999] ]")
+        #expect(stackString(inty, .vecInt) == "[ [42, 99, 999, 9999, 99999] ]")
     }
 
     @Test func vecIntOccurrencesOf() {
@@ -643,11 +647,12 @@ struct VecIntBehaviorTests {
                          VecIntItem([9,9,9,9,9])
                         ])
 
+        // An empty vector has no element to replace: an error, and the
+        // arguments are consumed (it used to hand the empty vector back).
         doThis(.vecIntSet, to: inty)
-        #expect(stackString(inty, .vecInt) == "[ [] [9, 8, 7, 6, 9] [9, 9, 9, 9, 9] ]")
-        #expect(callString(topItem(inty, .vecInt)) == "( [] 9 1 .vecIntSet )")
-
-        doThis(.vecIntPop, to: inty)
+        #expect(stackString(inty, .vecInt) == "[ [9, 8, 7, 6, 9] [9, 9, 9, 9, 9] ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
+        #expect(callString(topItem(inty, .error)) == "( [] 9 1 .vecIntSet )")
 
         doThis(.vecIntSet, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 8, 7, 2222, 9] [9, 9, 9, 9, 9] ]")
@@ -655,8 +660,9 @@ struct VecIntBehaviorTests {
 
         doThis(.vecIntPop, to: inty)
 
+        // Past the end clamps to the last element (it used to wrap: 7 % 5 == 2).
         doThis(.vecIntSet, to: inty)
-        #expect(stackString(inty, .vecInt) == "[ [9, 9, -1, 9, 9] ]")
+        #expect(stackString(inty, .vecInt) == "[ [9, 9, 9, 9, -1] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 9, 9, 9, 9] -1 7 .vecIntSet )")
     }
 

@@ -518,7 +518,17 @@ nonisolated extension Interpreter {
             tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
-                let num = Double(x.value) ?? 0.0
+                guard let num = Double(x.value) else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Not a number in .doubleFromString: \"\(x.value)\"",
+                                kind: .conversion,
+                                call: recording([x, InstructionItem(.doubleFromString)]))
+                        )
+                    ]
+                }
                 // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;
                 // reject them here so they cannot poison later numeric behaviors
                 if num.isInfinite || num.isNaN {

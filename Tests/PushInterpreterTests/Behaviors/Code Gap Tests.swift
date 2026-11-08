@@ -45,12 +45,14 @@ struct CodeGapTests {
         #expect(CodeItem([]).gapCount == 1, "an empty block still has the one gap")
     }
 
-    @Test func `the gap index wraps modulo gapCount`() {
+    /// Clamped over the gaps, `0…gapCount−1` (Roadmap #42); it used to wrap.
+    @Test func `the gap index clamps to the gaps`() {
         #expect(nested.gapIndex(0) == 0)
         #expect(nested.gapIndex(6) == 6)
-        #expect(nested.gapIndex(7) == 0, "wraps at gapCount, not at token count")
-        #expect(nested.gapIndex(-1) == 1, "magnitude, so Int.min cannot trap")
-        #expect(nested.gapIndex(Int.min) == nested.gapIndex(Int.min))
+        #expect(nested.gapIndex(7) == 6, "past the last gap is the last gap")
+        #expect(nested.gapIndex(-1) == 0, "below the first gap is the first gap")
+        #expect(nested.gapIndex(Int.min) == 0)
+        #expect(nested.gapIndex(Int.max) == 6)
     }
 
     @Test func `rebuilding repairs an unbalanced token run`() {

@@ -9,7 +9,18 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
+    /// The character whose Unicode scalar value is `code`, or nil if `code` is not
+    /// a valid scalar (negative, past 0x10FFFF, or a surrogate).
+    ///
+    /// Character codes are scalar values in both directions (Roadmap #42), so
+    /// `.charFromInt` and `.intFromChar` are inverses: `65 .charFromInt` is `A`.
+    /// They used to map any number to `|n mod 95| + 32`, which made 65 an `a`.
+    static func character(scalar code: Int) -> Character? {
+        guard let bits = UInt32(exactly: code), let scalar = Unicode.Scalar(bits) else { return nil }
+        return Character(scalar)
+    }
+
+    /// Truncates toward zero, then reads the result as a Unicode scalar value.
     static let charFromDouble_behavior =
         Behavior(
             .charFromDouble,
@@ -19,7 +30,7 @@ nonisolated extension Interpreter {
                 let (x) = (a[0] as! DoubleItem)
 
                 // Int(x.value) traps on non-finite or out-of-Int-range doubles,
-                // so guard the conversion before reducing modulo 95
+                // so guard the conversion first.
                 guard x.value.isFinite,
                     x.value >= Double(Int.min),
                     x.value < Double(Int.max)
@@ -34,7 +45,17 @@ nonisolated extension Interpreter {
                     ]
                 }
 
-                let c = Character(Unicode.Scalar(abs(Int(x.value) % 95) + 32)!)
+                guard let c = character(scalar: Int(x.value)) else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Not a Unicode scalar in .charFromDouble: \(x.value)",
+                                kind: .conversion,
+                                call: recording([x, InstructionItem(.charFromDouble)]))
+                        )
+                    ]
+                }
                 return [
                     Router(
                         .char,
@@ -46,14 +67,25 @@ nonisolated extension Interpreter {
             }
         )
 
-    // the propeller definition is incorrect, in that it includes the first 32 unprintable characters
+    /// The character with this Unicode scalar value; an error if there is none.
     static let charFromInt_Behavior =
         Behavior(
             .charFromInt,
             takes: [.int],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! IntItem)
-                let c = Character(UnicodeScalar(abs(x.value % 95) + 32)!)
+                guard let c = character(scalar: x.value) else {
+                    return [
+                        Router(
+                            .error,
+                            ErrorItem(
+                                "Not a Unicode scalar in .charFromInt: \(x.value)",
+                                kind: .conversion,
+                                call: recording([x, InstructionItem(.charFromInt)]))
+                        )
+                    ]
+                }
                 return [
                     Router(
                         .char,

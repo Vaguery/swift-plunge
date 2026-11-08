@@ -150,7 +150,8 @@ struct VecBoolBehaviorTests {
         absent.stacks[.vecBool]!.prepend(VecBoolItem([true, true]))
         absent.stacks[.bool]!.prepend(BoolItem(false))
         doThis(.vecBoolIndexOf, to: absent)
-        #expect(stackString(absent, .int) == "[ -1 ]")
+        #expect(stackString(absent, .int) == "[ ]", "absent: an error, not -1")
+        #expect((topItem(absent, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func vecBoolItemIsEmpty() {
@@ -359,7 +360,7 @@ struct VecBoolBehaviorTests {
         #expect(callString(topItem(inty, .bool)) == "( [true, false, true] 1 .vecBoolNth )")
 
         doThis(.vecBoolNth, to: inty)
-        #expect(stackString(inty, .bool) == "[ false false ]")
+        #expect(stackString(inty, .bool) == "[ true false ]", "past the end is the last element")
         #expect(callString(topItem(inty, .bool)) == "( [false, false, true] 7777 .vecBoolNth )")
     }
 
@@ -534,11 +535,11 @@ struct VecBoolBehaviorTests {
                          VecBoolItem([true,true,true,true,]),
                         ])
 
+        // An empty vector has no element to replace: an error, arguments consumed.
         doThis(.vecBoolSet, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, true, true, true] [true, true, true, true] [true, true, true, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] false 1 .vecBoolSet )")
-
-        doThis(.vecBoolPop, to: inty)
+        #expect(stackString(inty, .vecBool) == "[ [true, true, true, true] [true, true, true, true] [true, true, true, true] ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
+        #expect(callString(topItem(inty, .error)) == "( [] false 1 .vecBoolSet )")
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, true] [true, true, true, true] [true, true, true, true] ]")

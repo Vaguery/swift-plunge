@@ -93,15 +93,28 @@ struct CodeQueryTests {
         #expect(idxOf(mixed, CodeItem([CodeItem([IntItem(5)])])) == 2, "(( 5 )) denotes subtree ( 5 )")
     }
 
-    @Test func `indexOfPoint returns pre-order index or -1`() {
-        func idx(_ hay: CodeItem, _ target: CodeItem) -> Int {
+    @Test func `indexOfPoint returns pre-order index, or an error if absent`() {
+        func run(_ hay: CodeItem, _ target: CodeItem) -> Interpreter {
             let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [hay, target] as [any Item])
             doThis(.codeIndexOfPoint, to: inty)
-            return (topItem(inty, .int) as! IntItem).value
+            return inty
         }
-        #expect(idx(tree, CodeItem([IntItem(1), IntItem(2)])) == 1)
-        #expect(idx(tree, CodeItem([IntItem(9)])) == -1)
+        #expect((topItem(run(tree, CodeItem([IntItem(1), IntItem(2)])), .int) as! IntItem).value == 1)
+
+        // Absent: an error, where it used to answer -1 (Roadmap #42).
+        let missing = run(tree, CodeItem([IntItem(9)]))
+        #expect(stackString(missing, .int) == "[ ]")
+        let error = topItem(missing, .error)
+        #expect((error as? ErrorItem)?.kind == .notFound)
+        #expect(stackString(missing, .code) == "[ ( ( 1 2 ) 3 ) ( 9 ) ]", "both operands survive the read")
+
+        // Its crux reproduces the error alone, clearing what it read.
+        let redo = Interpreter.recordingProvenance()
+        redo.load(program: error.crux())
+        redo.run()
+        #expect(redo.stacks[.code]!.isEmpty)
+        #expect((topItem(redo, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func `container returns the parent, and its crux (a code result) cleans up via swap`() {
@@ -132,12 +145,13 @@ struct CodeQueryTests {
                 "the parent ( 1 2 ), atop the surviving operands")
     }
 
-    @Test func `container of an absent needle pushes nothing`() {
+    @Test func `container of an absent needle is an error`() {
         let inty = Interpreter.recordingProvenance()
         // needle ( 9 ) denotes leaf 9, which the tree does not contain.
         inty.stacks[.code]!.prepend(contentsOf: [tree, CodeItem([IntItem(9)])] as [any Item])
         doThis(.codeContainer, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( 1 2 ) 3 ) ( 9 ) ]",
-                "nothing pushed; operands untouched (nondestructive)")
+                "no result; operands untouched (nondestructive)")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .notFound)
     }
 }

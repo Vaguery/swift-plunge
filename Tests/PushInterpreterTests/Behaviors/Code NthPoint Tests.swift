@@ -39,9 +39,10 @@ struct CodeNthPointTests {
         #expect(topItem(inty, .code).pretty() == "( 1 )", "a leaf becomes a one-item block")
     }
 
-    @Test func `nthPoint 0 is the whole tree; index wraps`() {
+    @Test func `nthPoint 0 is the whole tree; index clamps`() {
         #expect(nth(.codeNthPoint, tree, 0).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )")
-        #expect(nth(.codeNthPoint, tree, 5).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )", "5 % 5 == 0")
+        #expect(nth(.codeNthPoint, tree, 5).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last point")
+        #expect(nth(.codeNthPoint, tree, -2).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )", "below 0 is the root")
     }
 
     @Test func `nthPoint crux reproduces the point, debris-free`() {
@@ -61,13 +62,15 @@ struct CodeNthPointTests {
         // root elements: 0:(1 2)  1:3
         #expect(nth(.codeNthRoot, tree, 0).stacks[.code]!.first!.pretty() == "( 1 2 )")
         #expect(nth(.codeNthRoot, tree, 1).stacks[.code]!.first!.pretty() == "( 3 )", "leaf wrapped")
-        #expect(nth(.codeNthRoot, tree, 3).stacks[.code]!.first!.pretty() == "( 3 )", "3 % 2 == 1")
+        #expect(nth(.codeNthRoot, tree, 3).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last element")
+        #expect(nth(.codeNthRoot, tree, -3).stacks[.code]!.first!.pretty() == "( 1 2 )", "below 0 is the first")
     }
 
-    @Test func `nthRoot on an empty block pushes nothing`() {
+    @Test func `nthRoot on an empty block is an error`() {
         let inty = nth(.codeNthRoot, CodeItem([]), 0)
         #expect(inty.stacks[.code]!.first!.pretty() == "( )", "the empty block survives, no result pushed")
         #expect(stackString(inty, .int) == "[ 0 ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
     }
 
 }

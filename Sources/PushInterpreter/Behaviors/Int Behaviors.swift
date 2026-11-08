@@ -380,45 +380,66 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// The character's Unicode scalar value, the inverse of `.charFromInt`. A
+    /// character made of several scalars (a flag, a letter with a combining
+    /// accent) has no single code, so it is an error.
     static let intFromChar_Behavior =
         Behavior(
             .intFromChar,
             takes: [.char],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (c) = (a[0] as! CharItem)
-                if let v = c.value.asciiValue {
+                let scalars = c.value.unicodeScalars
+                guard scalars.count == 1, let scalar = scalars.first else {
                     return [
                         Router(
-                            .int,
-                            IntItem(
-                                Int(v),
+                            .error,
+                            ErrorItem(
+                                "Several Unicode scalars in .intFromChar: \(c.value)",
+                                kind: .conversion,
                                 call: recording([c, InstructionItem(.intFromChar)]))
                         )
                     ]
-                } else {
-                    return []
                 }
+                return [
+                    Router(
+                        .int,
+                        IntItem(
+                            Int(scalar.value),
+                            call: recording([c, InstructionItem(.intFromChar)]))
+                    )
+                ]
             }
         )
 
+    /// The string read as an integer; an error if it is not one.
     static let intFromString_Behavior =
         Behavior(
             .intFromString,
             takes: [.string],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (s) = (a[0] as! StringItem)
-                if let v = Int(s.value) {
+                guard let v = Int(s.value) else {
                     return [
                         Router(
-                            .int,
-                            IntItem(
-                                v,
+                            .error,
+                            ErrorItem(
+                                "Not an integer in .intFromString: \"\(s.value)\"",
+                                kind: .conversion,
                                 call: recording([s, InstructionItem(.intFromString)]))
                         )
                     ]
-                } else {
-                    return []
                 }
+                return [
+                    Router(
+                        .int,
+                        IntItem(
+                            v,
+                            call: recording([s, InstructionItem(.intFromString)]))
+                    )
+                ]
             }
         )
 

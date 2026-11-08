@@ -91,10 +91,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 87 87 ]")
         #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
 
-        // not ASCII therefore no result
+        // Any single Unicode scalar has a code, not only ASCII (Roadmap #42).
         doThis(.intFromChar, to: inty)
-        #expect(stackString(inty, .int) == "[ 87 87 ]")
-        #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
+        #expect(stackString(inty, .int) == "[ 128525 87 87 ]")
+        #expect(callString(topItem(inty, .int)) == "( '😍' .intFromChar )")
+    }
+
+    /// A character made of several scalars (a flag is two) has no single code.
+    @Test func `intFromChar refuses a character of several scalars`() {
+        loadChars(inty, chars: ["🇺🇸"])
+        doThis(.intFromChar, to: inty)
+        #expect(stackString(inty, .int) == "[ ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .conversion)
+        #expect(callString(topItem(inty, .error)) == "( '🇺🇸' .intFromChar )")
     }
 
     @Test func intFromDouble() {
@@ -156,13 +165,16 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
         #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
 
+        // Not integers: each is an error now, where it used to vanish silently.
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
-        #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .conversion)
+        #expect(callString(topItem(inty, .error)) == "( \"1_000_000\" .intFromString )")
 
         doThis(.intFromString, to: inty)
         #expect(stackString(inty, .int) == "[ 1 0 -172 ]")
-        #expect(callString(topItem(inty, .int)) == "( \"00001\" .intFromString )")
+        #expect(callString(topItem(inty, .error)) == "( \" 172\" .intFromString )")
+        #expect(inty.stacks[.error]!.count == 2)
     }
 
     @Test func intGT() {

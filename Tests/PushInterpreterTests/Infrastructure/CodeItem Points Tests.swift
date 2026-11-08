@@ -30,13 +30,13 @@ struct CodeItemPointsTests {
         #expect(tree.pointCount == 5)
     }
 
-    @Test func `point(at:) wraps the index modulo the count`() {
+    @Test func `point(at:) clamps the index to the points`() {
         // points: 0:root 1:(1 2) 2:1 3:2 4:3, count 5
         #expect(tree.point(at: 0).pretty() == "( ( 1 2 ) 3 )")
         #expect((tree.point(at: 4) as? IntItem)?.value == 3)
-        #expect((tree.point(at: 9) as? IntItem)?.value == 3, "9 % 5 == 4")
-        #expect((tree.point(at: 5) as? CodeItem)?.pretty() == "( ( 1 2 ) 3 )", "5 % 5 == 0")
-        #expect((tree.point(at: -1) as? CodeItem)?.pretty() == "( 1 2 )", "|-1| % 5 == 1")
+        #expect((tree.point(at: 9) as? IntItem)?.value == 3, "past the end is the last point")
+        #expect((tree.point(at: 5) as? IntItem)?.value == 3, "past the end is the last point")
+        #expect((tree.point(at: -1) as? CodeItem)?.pretty() == "( ( 1 2 ) 3 )", "below 0 is the root")
     }
 
     @Test func `empty blocks are points`() {

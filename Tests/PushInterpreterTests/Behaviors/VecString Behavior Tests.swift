@@ -143,7 +143,8 @@ struct VecStringBehaviorTests {
         absent.stacks[.vecString]!.prepend(VecStringItem(["x", "y", "z"]))
         absent.stacks[.string]!.prepend(StringItem("7"))
         doThis(.vecStringIndexOf, to: absent)
-        #expect(stackString(absent, .int) == "[ -1 ]")
+        #expect(stackString(absent, .int) == "[ ]", "absent: an error, not -1")
+        #expect((topItem(absent, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func vecStringIsEmpty() {
@@ -340,7 +341,7 @@ struct VecStringBehaviorTests {
         #expect(callString(topItem(inty, .string)) == "( [\"x\", \"y\", \"z\"] 1 .vecStringNth )")
 
         doThis(.vecStringNth, to: inty)
-        #expect(stackString(inty, .string) == "[ \"aa\" \"y\" ]")
+        #expect(stackString(inty, .string) == "[ \"cc\" \"y\" ]", "past the end is the last element")
         #expect(callString(topItem(inty, .string)) == "( [\"aa\", \"bb\", \"cc\"] 7776 .vecStringNth )")
     }
 
@@ -509,20 +510,20 @@ struct VecStringBehaviorTests {
                          VecStringItem(["a","b"])
                         ])
 
+        // An empty vector has no element to replace: an error, arguments consumed.
         doThis(.vecStringSet, to: inty)
-        #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\", \"d\", \"e\"] [\"a\", \"b\"] ]")
-        #expect(callString(topItem(inty, .vecString)) == "( [] \"-\" 1 .vecStringSet )")
-
-        doThis(.vecStringPop, to: inty)
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"c\", \"d\", \"e\"] [\"a\", \"b\"] ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
+        #expect(callString(topItem(inty, .error)) == "( [] \"-\" 1 .vecStringSet )")
 
         doThis(.vecStringSet, to: inty)
-        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"-\", \"d\", \"e\"] [\"a\", \"b\"] ]")
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\", \"c\", \"d\", \"-\"] [\"a\", \"b\"] ]", "2222 clamps to the last")
         #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\", \"c\", \"d\", \"e\"] \"-\" 2222 .vecStringSet )")
 
         doThis(.vecStringPop, to: inty)
 
         doThis(.vecStringSet, to: inty)
-        #expect(stackString(inty, .vecString) == "[ [\"-\", \"b\"] ]")
+        #expect(stackString(inty, .vecString) == "[ [\"a\", \"-\"] ]", "2 clamps to the last")
         #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\"] \"-\" 2 .vecStringSet )")
     }
 

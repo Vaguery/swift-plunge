@@ -16,8 +16,9 @@
 //
 //      gap:              0   1      2   3      4       5   6      7 gaps
 //
-//  `gapCount` is `tokens.count + 1`, and an index wraps modulo it — the same wrap
-//  `codeCutRootAtGap` uses, and for the same reason it gives:
+//  `gapCount` is `tokens.count + 1`, and an index is clamped to those gaps
+//  (`Position.gap`) — the same clamp `codeCutRootAtGap` uses, and for the same
+//  reason it gives:
 //
 //  > Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
 //  > everything) to N (after everything). That is what lets a cut reach the two
@@ -81,13 +82,10 @@ nonisolated extension CodeItem {
     /// spaces before the first token and after the last both count.
     var gapCount: Int { gapTokens.count + 1 }
 
-    /// Any int, landed on a real gap. The single place the wrap lives, so the four
-    /// gap instructions cannot drift from each other or from `codeCutRootAtGap`.
-    ///
-    /// `magnitude` rather than `abs` for the same reason as everywhere else: `abs`
-    /// traps on `Int.min`.
+    /// Any int, landed on a real gap by clamping (`Position.gap`), so the four gap
+    /// instructions cannot drift from each other or from `codeCutRootAtGap`.
     func gapIndex(_ n: Int) -> Int {
-        Int(n.magnitude % UInt(gapCount))
+        Position.gap(n, count: gapCount - 1)
     }
 
     /// Parse tokens back into a tree, repairing imbalance as it goes — an

@@ -14,24 +14,34 @@ struct CharBehaviorTests {
 
     let inty = Interpreter.recordingProvenance()
 
+    /// Character codes are Unicode scalar values (Roadmap #42); a double is
+    /// truncated toward zero first.
     @Test func charFromDouble() {
-        loadDoubles(inty, doubles: [0,21,31,91.5])
-        #expect(stackString(inty, .double) == "[ 0.0 21.0 31.0 91.5 ]")
+        loadDoubles(inty, doubles: [65,97,32,91.5])
+        #expect(stackString(inty, .double) == "[ 65.0 97.0 32.0 91.5 ]")
 
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ ' ' ]")
-        #expect(callString(topItem(inty, .char)) == "( 0.0 .charFromDouble )")
-        
-        doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ '5' ' ' ]")
-        #expect(callString(topItem(inty, .char)) == "( 21.0 .charFromDouble )")
+        #expect(stackString(inty, .char) == "[ 'A' ]")
+        #expect(callString(topItem(inty, .char)) == "( 65.0 .charFromDouble )")
 
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ '?' '5' ' ' ]")
-        
+        #expect(stackString(inty, .char) == "[ 'a' 'A' ]")
+        #expect(callString(topItem(inty, .char)) == "( 97.0 .charFromDouble )")
+
         doThis(.charFromDouble, to: inty)
-        #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
+        #expect(stackString(inty, .char) == "[ ' ' 'a' 'A' ]")
+
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ '[' ' ' 'a' 'A' ]")
         #expect(callString(topItem(inty, .char)) == "( 91.5 .charFromDouble )")
+    }
+
+    @Test func `charFromDouble refuses a number that is no Unicode scalar`() {
+        loadDoubles(inty, doubles: [-1.5])
+        doThis(.charFromDouble, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .conversion)
+        #expect(callString(topItem(inty, .error)) == "( -1.5 .charFromDouble )")
     }
 
     @Test func `charFromDouble handles non-finite and out-of-range doubles`() {
@@ -51,22 +61,44 @@ struct CharBehaviorTests {
     }
 
     @Test func charFromInt() {
-        loadInts(inty, ints: [0,21,31,91])
-        #expect(stackString(inty, .int) == "[ 0 21 31 91 ]")
+        loadInts(inty, ints: [65,97,32,8364])
+        #expect(stackString(inty, .int) == "[ 65 97 32 8364 ]")
 
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ ' ' ]")
-        #expect(callString(topItem(inty, .char)) == "( 0 .charFromInt )")
-        
+        #expect(stackString(inty, .char) == "[ 'A' ]")
+        #expect(callString(topItem(inty, .char)) == "( 65 .charFromInt )")
+
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ '5' ' ' ]")
-        
+        #expect(stackString(inty, .char) == "[ 'a' 'A' ]")
+
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ '?' '5' ' ' ]")
-        
+        #expect(stackString(inty, .char) == "[ ' ' 'a' 'A' ]")
+
         doThis(.charFromInt, to: inty)
-        #expect(stackString(inty, .char) == "[ '{' '?' '5' ' ' ]")
-        #expect(callString(topItem(inty, .char)) == "( 91 .charFromInt )")
+        #expect(stackString(inty, .char) == "[ '€' ' ' 'a' 'A' ]")
+        #expect(callString(topItem(inty, .char)) == "( 8364 .charFromInt )")
+    }
+
+    /// Negative, past 0x10FFFF, or a UTF-16 surrogate: no such character.
+    @Test(arguments: [-1, 0x110000, 0xD800])
+    func `charFromInt refuses an int that is no Unicode scalar`(code: Int) {
+        let inty = Interpreter.recordingProvenance()
+        loadInts(inty, ints: [code])
+        doThis(.charFromInt, to: inty)
+        #expect(stackString(inty, .char) == "[ ]")
+        #expect(stackString(inty, .int) == "[ ]", "the argument is consumed")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .conversion)
+    }
+
+    /// The two conversions are inverses, which `|n mod 95| + 32` never allowed.
+    @Test func `charFromInt and intFromChar are inverses`() {
+        for code in [0, 65, 233, 8364, 0x1F600] {
+            let inty = Interpreter.recordingProvenance()
+            loadInts(inty, ints: [code])
+            doThis(.charFromInt, to: inty)
+            doThis(.intFromChar, to: inty)
+            #expect(stackString(inty, .int) == "[ \(code) ]")
+        }
     }
 
     @Test func charGT() {

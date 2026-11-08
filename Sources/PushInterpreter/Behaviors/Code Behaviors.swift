@@ -162,29 +162,43 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// The pre-order index of the first point equal to the target, or −1.
+    /// The pre-order index of the first point equal to the target; an error if
+    /// there is none (it used to answer −1).
     static let codeIndexOfPoint_Behavior =
         Behavior(
             .codeIndexOfPoint,
             reads: [.code, .code],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
+                guard let found = hay.firstPointIndex(of: needle.denotedItem) else {
+                    return [Behavior.refusal(
+                        "Not found in .codeIndexOfPoint",
+                        kind: .notFound,
+                        call: recording(Behavior.reading([.code: 2], producing: .error, from: [needle, hay, InstructionItem(.codeIndexOfPoint)])))]
+                }
                 return [Router(.int, IntItem(
-                    hay.firstPointIndex(of: needle.denotedItem) ?? -1,
+                    found,
                     call: recording(Behavior.reading([.code: 2], producing: .int, from: [needle, hay, InstructionItem(.codeIndexOfPoint)]))))]
             }
         )
 
     /// The block that directly contains the first point equal to the target —
-    /// its parent. Nothing is pushed if the target is absent, or if it is the
-    /// whole tree (which has no parent here). Reads both, leaves both.
+    /// its parent. An error if the target is absent, or if it is the whole tree
+    /// (which has no parent here). Reads both, leaves both.
     static let codeContainer_Behavior =
         Behavior(
             .codeContainer,
             reads: [.code, .code],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (hay, needle) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                guard let parent = hay.parentContaining(needle.denotedItem) else { return [] }
+                guard let parent = hay.parentContaining(needle.denotedItem) else {
+                    return [Behavior.refusal(
+                        "No container found in .codeContainer",
+                        kind: .notFound,
+                        call: recording(Behavior.reading([.code: 2], producing: .error, from: [needle, hay, InstructionItem(.codeContainer)])))]
+                }
                 return [Router(.code, CodeItem(
                     parent.value,
                     call: recording(Behavior.reading([.code: 2], producing: .code, from: [needle, hay, InstructionItem(.codeContainer)]))))]
@@ -198,7 +212,7 @@ nonisolated extension Interpreter {
     // is uniform and inert. The extracted point is treated as a derived value —
     // "the code at point i of x" — recording the reading crux rather than the
     // point's own history, so the crux is uniform whatever the point's type and
-    // cleans up both arguments (§5). Index is `magnitude % count`.
+    // cleans up both arguments (§5). The index is clamped (`Position.item`).
 
     /// Box a point as a `.code` result: a sub-block as-is, a leaf wrapped once.
     static func boxedPointContents(_ point: any Item) -> [any Item] {
@@ -218,16 +232,18 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// The root `.value` element at the `.int` index (`magnitude % count`), yielded
-    /// as `.code`. An empty block has no root elements, so nothing is pushed.
+    /// The root `.value` element at the `.int` index (clamped), yielded as
+    /// `.code`. An empty block has no root elements, so it is an error.
     static let codeNthRoot_Behavior =
         Behavior(
             .codeNthRoot,
             reads: [.code, .int],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                guard !x.value.isEmpty else { return [] }
-                let element = x.value[Int(i.value.magnitude % UInt(x.value.count))]
+                guard let element = rootPicker(x, i.value) else {
+                    return [emptyBlockRefusal(.codeNthRoot, x, i, recording)]
+                }
                 return [Router(.code, CodeItem(
                     boxedPointContents(element),
                     call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code, from: [x, i, InstructionItem(.codeNthRoot)]))))]
@@ -249,16 +265,34 @@ nonisolated extension Interpreter {
     // their own — the routed items carry their own provenance. An item with no
     // history of its own, out of a block that has one, records its address
     // instead: `x i .codeEmitNthRoot` and the clean-up (`Containment`). The index is
-    // taken `magnitude % count`.
+    // clamped (`Position.item`). A tree always has a point (its root), but an
+    // empty block has no root elements, so the `Root` forms can refuse.
+
+    /// The error for a root-indexed read of `( )`, which has no root elements.
+    static func emptyBlockRefusal(
+        _ instruction: PushInstruction, _ x: CodeItem, _ i: IntItem, _ recording: ProvenanceRecording
+    ) -> Router {
+        Behavior.refusal(
+            "Empty block in .\(instruction)",
+            kind: .emptyCollection,
+            call: recording(Behavior.reading([.code: 1, .int: 1], producing: .error, from: [x, i, InstructionItem(instruction)])))
+    }
 
     /// Emit a point to `.exec` as-is (whole).
-    static func emitNthBehavior(_ instruction: PushInstruction, point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?) -> Behavior {
+    static func emitNthBehavior(
+        _ instruction: PushInstruction,
+        point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?,
+        tags: Set<InstructionTag> = []
+    ) -> Behavior {
         Behavior(
             instruction,
             reads: [.code, .int],
+            tags: tags,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                guard let point = pick(x, i.value) else { return [] }
+                guard let point = pick(x, i.value) else {
+                    return [emptyBlockRefusal(instruction, x, i, recording)]
+                }
                 return [Router(.exec, Containment.takenOut(point, of: x, at: i, by: instruction, recording))]
             }
         )
@@ -273,14 +307,18 @@ nonisolated extension Interpreter {
     static func doNthBehavior(
         _ instruction: PushInstruction,
         point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?,
-        twin: PushInstruction
+        twin: PushInstruction,
+        tags: Set<InstructionTag> = []
     ) -> Behavior {
         Behavior(
             instruction,
             reads: [.code, .int],
+            tags: tags,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
-                guard let point = pick(x, i.value) else { return [] }
+                guard let point = pick(x, i.value) else {
+                    return [emptyBlockRefusal(instruction, x, i, recording)]
+                }
                 let boxed = CodeItem(
                     boxedPointContents(point),
                     call: recording(Behavior.reading([.code: 1, .int: 1], producing: .code,
@@ -292,13 +330,13 @@ nonisolated extension Interpreter {
 
     static let pointPicker: @Sendable (CodeItem, Int) -> (any Item)? = { x, i in x.point(at: i) }
     static let rootPicker: @Sendable (CodeItem, Int) -> (any Item)? = { x, i in
-        x.value.isEmpty ? nil : x.value[Int(i.magnitude % UInt(x.value.count))]
+        x.value.isEmpty ? nil : x.value[Position.item(i, count: x.value.count)]
     }
 
     static let codeEmitNthPoint_Behavior = emitNthBehavior(.codeEmitNthPoint, point: pointPicker)
     static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker, twin: .codeNthPoint)
-    static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker)
-    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codeNthRoot)
+    static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker, tags: [.fallible])
+    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codeNthRoot, tags: [.fallible])
 
     // MARK: - Flatten and point mutation (transforms, consume)
 
@@ -401,10 +439,8 @@ nonisolated extension Interpreter {
                 let (x, y) = (a[0] as! CodeItem, a[1] as! IntItem)
                 // Gaps, not elements: a root of N items has N+1 gaps, from 0
                 // (before everything → empty prefix) to N (after everything →
-                // empty suffix). So the index wraps modulo count+1, not count —
-                // that is what lets a cut reach the two extremes.
-                let count = x.value.count
-                let idx = Int(y.value.magnitude % UInt(count + 1))
+                // empty suffix). The index clamps over those gaps.
+                let idx = Position.gap(y.value, count: x.value.count)
                 let prefix = Array(x.value[0..<idx])
                 let suffix = Array(x.value[idx...])
                 let source: [any Item] = [x, y, InstructionItem(.codeCutRootAtGap)]
@@ -536,8 +572,8 @@ nonisolated extension Interpreter {
     /// Iterate a block's **root** elements, running the mouse once per element —
     /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing
     /// `.elements`-over-CodeItem walk. `code MOUSE .codeIterateRoot`: the mouse is
-    /// on top (a[0]), the iterated code beneath (a[1]). An empty block does
-    /// nothing.
+    /// on top (a[0]), the iterated code beneath (a[1]). An empty block makes no
+    /// passes, and the mouse goes back to `.code`, as a finished loop's body does.
     static let codeIterateRoot_Behavior =
         Behavior(
             .codeIterateRoot,
@@ -545,7 +581,7 @@ nonisolated extension Interpreter {
             tags: [.reEntrant],
             fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
-                guard !x.value.isEmpty else { return [] }
+                guard !x.value.isEmpty else { return [Router(.code, mouse)] }
                 return Interpreter.iteratorLoop(
                     kind: .elements(into: nil),
                     origin: x,

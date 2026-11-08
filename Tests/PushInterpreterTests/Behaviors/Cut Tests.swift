@@ -91,53 +91,57 @@ struct CutTests {
         #expect(stackString(inty, .vecInt) == "[ [1, 2, 3, 4, 5] ]")
     }
 
-    @Test mutating func `the vecInt index wraps modulo the length`() {
-        // 7 % 5 == 2, so this is the same cut as index 2.
+    /// The index names a gap, `0…count`, and clamps (Roadmap #42; it used to wrap
+    /// modulo the length).
+    @Test mutating func `the vecInt index clamps to the gaps`() {
+        // Past the end is the last gap: everything in the prefix.
         let (deep, top) = cut(VecIntItem([1, 2, 3, 4, 5]), at: 7, .vecIntCut, on: .vecInt)
-        #expect((deep as? VecIntItem)?.value == [1, 2])
-        #expect((top as? VecIntItem)?.value == [3, 4, 5])
-        // And the crux records the *given* index, not the reduced one — it re-runs
-        // through the same modulo, so it reproduces without pre-reducing.
+        #expect((deep as? VecIntItem)?.value == [1, 2, 3, 4, 5])
+        #expect((top as? VecIntItem)?.value == [])
+        // And the crux records the *given* index, not the clamped one — it re-runs
+        // through the same clamp, so it reproduces without pre-reducing.
         #expect(callString(top) == "( [1, 2, 3, 4, 5] 7 .vecIntCut .vecIntSwap .vecIntPop )")
-        #expect(reproduced(top, on: .vecInt)?.pretty() == "[3, 4, 5]")
+        #expect(reproduced(top, on: .vecInt)?.pretty() == "[]")
     }
 
-    /// A negative index cannot trap (that is why `.magnitude` is used, not `abs`),
-    /// and `Int.min` is the case `abs` would have crashed on.
-    @Test mutating func `a negative vecInt index uses magnitude, and Int_min does not trap`() {
-        // (-3).magnitude % 5 == 3
+    /// A negative index is the first gap, and `Int.min` cannot trap.
+    @Test mutating func `a negative vecInt index clamps to zero, and Int_min does not trap`() {
         let (deep, _) = cut(VecIntItem([1, 2, 3, 4, 5]), at: -3, .vecIntCut, on: .vecInt)
-        #expect((deep as? VecIntItem)?.value == [1, 2, 3])
+        #expect((deep as? VecIntItem)?.value == [])
 
         inty = Interpreter.recordingProvenance()
         let (d2, t2) = cut(VecIntItem([1, 2, 3, 4, 5]), at: .min, .vecIntCut, on: .vecInt)
-        // Int.min.magnitude % 5 == 3
-        #expect((d2 as? VecIntItem)?.value == [1, 2, 3])
-        #expect((t2 as? VecIntItem)?.value == [4, 5])
+        #expect((d2 as? VecIntItem)?.value == [])
+        #expect((t2 as? VecIntItem)?.value == [1, 2, 3, 4, 5])
     }
 
-    /// The wrap means an index of exactly `count` folds to 0, so you can never cut
-    /// off the whole vector and leave nothing: **the suffix is never empty**.
-    @Test mutating func `cutting at the length wraps to zero, never leaving an empty suffix`() {
+    /// A cut at exactly `count` is the last gap, so the suffix can be empty. The old
+    /// wrap folded it to 0 and made that gap unreachable.
+    @Test mutating func `cutting at the length leaves an empty suffix`() {
         let (deep, top) = cut(VecIntItem([1, 2, 3]), at: 3, .vecIntCut, on: .vecInt)
-        #expect((deep as? VecIntItem)?.value == [], "index 3 % 3 == 0: empty prefix")
-        #expect((top as? VecIntItem)?.value == [1, 2, 3], "the whole vector on top")
+        #expect((deep as? VecIntItem)?.value == [1, 2, 3], "the whole vector beneath")
+        #expect((top as? VecIntItem)?.value == [], "an empty suffix on top")
     }
 
     @Test mutating func `cutting an empty vector gives two empty vectors`() {
         let (deep, top) = cut(VecIntItem([]), at: 4, .vecIntCut, on: .vecInt)
         #expect((deep as? VecIntItem)?.value == [])
         #expect((top as? VecIntItem)?.value == [])
-        // Both still reproduce — the modulo-by-zero guard does not break provenance.
+        // Both still reproduce: an empty vector has one gap, and the cut is there.
         #expect(reproduced(deep, on: .vecInt)?.pretty() == "[]")
         #expect(reproduced(top, on: .vecInt)?.pretty() == "[]")
     }
 
-    @Test mutating func `a singleton cuts into empty and itself`() {
-        // Any index modulo 1 is 0, so a one-element vector has only one cut.
+    @Test mutating func `a singleton has two cuts`() {
+        // A one-element vector has two gaps, before and after.
         let (deep, top) = cut(VecIntItem([42]), at: 9, .vecIntCut, on: .vecInt)
-        #expect((deep as? VecIntItem)?.value == [])
-        #expect((top as? VecIntItem)?.value == [42])
+        #expect((deep as? VecIntItem)?.value == [42])
+        #expect((top as? VecIntItem)?.value == [])
+
+        inty = Interpreter.recordingProvenance()
+        let (d2, t2) = cut(VecIntItem([42]), at: 0, .vecIntCut, on: .vecInt)
+        #expect((d2 as? VecIntItem)?.value == [])
+        #expect((t2 as? VecIntItem)?.value == [42])
     }
 
 
@@ -208,11 +212,11 @@ struct CutTests {
         #expect(stackString(inty, .string) == "[ \"hello\" ]")
     }
 
-    @Test mutating func `the string index wraps, and an empty string gives two empties`() {
-        // 8 % 5 == 3
+    @Test mutating func `the string index clamps, and an empty string gives two empties`() {
+        // Past the end is the last gap.
         let (deep, top) = cut(StringItem("hello"), at: 8, .stringCut, on: .string)
-        #expect((deep as? StringItem)?.value == "hel")
-        #expect((top as? StringItem)?.value == "lo")
+        #expect((deep as? StringItem)?.value == "hello")
+        #expect((top as? StringItem)?.value == "")
 
         inty = Interpreter.recordingProvenance()
         let (d2, t2) = cut(StringItem(""), at: 3, .stringCut, on: .string)

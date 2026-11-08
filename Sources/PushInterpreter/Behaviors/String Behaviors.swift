@@ -101,10 +101,12 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// The position of the first occurrence of the char; an error if there is none.
     static let stringIndexOfChar_Behavior =
         Behavior(
             .stringIndexOfChar,
             reads: [.string, .char],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
                 if let idx = x.value.firstIndex(of: y.value) {
@@ -125,7 +127,13 @@ nonisolated extension Interpreter {
                         )
                     ]
                 } else {
-                    return []  // not found
+                    return [Behavior.refusal(
+                        "Not found in .stringIndexOfChar: \(y.value)",
+                        kind: .notFound,
+                        call: recording(Behavior.reading(
+                            [.string: 1, .char: 1],
+                            producing: .error,
+                            from: [y, x, InstructionItem(.stringIndexOfChar)])))]
                 }
             }
         )
@@ -193,6 +201,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringFirst,
             takes: [.string],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 if let c = x.value.first {
@@ -206,7 +215,10 @@ nonisolated extension Interpreter {
                         )
                     ]
                 } else {
-                    return []  // empty string
+                    return [Behavior.refusal(
+                        "Empty string in .stringFirst",
+                        kind: .emptyCollection,
+                        call: recording([x, InstructionItem(.stringFirst)]))]
                 }
             }
         )
@@ -215,6 +227,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringLast,
             takes: [.string],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! StringItem)
                 if let c = x.value.last {
@@ -227,7 +240,10 @@ nonisolated extension Interpreter {
                         )
                     ]
                 } else {
-                    return []  // empty string
+                    return [Behavior.refusal(
+                        "Empty string in .stringLast",
+                        kind: .emptyCollection,
+                        call: recording([x, InstructionItem(.stringLast)]))]
                 }
             }
         )
@@ -404,25 +420,31 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// The char at the index, clamped to the string (`Position.item`); an error
+    /// for an empty string.
     static let stringNth_Behavior =
         Behavior(
             .stringNth,
             takes: [.string, .int],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 if x.value.isEmpty {
-                    return []
+                    return [Behavior.refusal(
+                        "Empty string in .stringNth",
+                        kind: .emptyCollection,
+                        call: recording([x, y, InstructionItem(.stringNth)]))]
                 } else {
-                    let moduloIdx = (max(0, y.value) % x.value.count)
+                    let position = Position.item(y.value, count: x.value.count)
                     let idx = x.value.index(
                         x.value.startIndex,
-                        offsetBy: moduloIdx
+                        offsetBy: position
                     )
                     let c = x.value[idx]
                     return [
                         Router(
                             .char,
-                            x.traced(at: moduloIdx, c, recording) ?? CharItem(
+                            x.traced(at: position, c, recording) ?? CharItem(
                                 c,
                                 // `[string, index]`, matching the four `vecXNth`
                                 // siblings. This used to be `[index, string]` —
@@ -644,30 +666,32 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// Replaces the char at the index, clamped to the string (`Position.item`).
+    /// An empty string has no char to replace, so it is an error.
     static let stringSetChar_Behavior =
         Behavior(
             .stringSetChar,
             takes: [.string, .int, .char],
+            tags: [.fallible],
             fxn: { a, recording in
-                var (x, y, z) = (
+                let (x, y, z) = (
                     a[0] as! StringItem,
                     a[1] as! IntItem,
                     a[2] as! CharItem
                 )
-                var result = x.value
-                var position: Int?
-                if result.count > 0 {
-                    let moduloIdx = (max(0, y.value) % result.count)
-                    position = moduloIdx
-                    let idx = result.index(
-                        result.startIndex,
-                        offsetBy: moduloIdx
-                    )
-                    result.replaceSubrange(idx...idx, with: String(z.value))
+                guard !x.value.isEmpty else {
+                    return [Behavior.refusal(
+                        "Empty string in .stringSetChar",
+                        kind: .emptyCollection,
+                        call: recording([z, y, x, InstructionItem(.stringSetChar)]))]
                 }
+                var result = x.value
+                let position = Position.item(y.value, count: result.count)
+                let idx = result.index(result.startIndex, offsetBy: position)
+                result.replaceSubrange(idx...idx, with: String(z.value))
                 func members() -> [Origin] {
                     var slots = x.origins()
-                    if let position { slots[position] = Origin.item(z) }
+                    slots[position] = Origin.item(z)
                     return slots
                 }
                 return [
@@ -707,10 +731,9 @@ nonisolated extension Interpreter {
             }
         )
 
-    /// The `n`th whitespace-delimited word of a string, indexed modulo the word
-    /// count like its `stringNth` sibling. Nothing at all for a string with no
-    /// words — there is no sensible word to return, and an ErrorItem would be
-    /// noise.
+    /// The `n`th whitespace-delimited word of a string, the index clamped to the
+    /// word count like its `stringNth` sibling. A string with no words is an
+    /// error: there is no word to return (Roadmap #42).
     ///
     /// Added for `stringSplit`'s iterator to have something honest to record, but
     /// useful in its own right.
@@ -718,11 +741,17 @@ nonisolated extension Interpreter {
         Behavior(
             .stringNthWord,
             takes: [.string, .int],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
                 let words = x.value.split { $0.isWhitespace }
-                guard !words.isEmpty else { return [] }
-                let idx = (max(0, y.value) % words.count)
+                guard !words.isEmpty else {
+                    return [Behavior.refusal(
+                        "No words in .stringNthWord",
+                        kind: .emptyCollection,
+                        call: recording([x, y, InstructionItem(.stringNthWord)]))]
+                }
+                let idx = Position.item(y.value, count: words.count)
                 return [
                     Router(
                         .string,
@@ -741,9 +770,10 @@ nonisolated extension Interpreter {
     /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
     /// `stringConcat` is the identity (concat consumes the deeper piece first).
     ///
-    /// The index wraps modulo the character count (`magnitude % count`, trap-safe
-    /// and matching `stringNth`), so the suffix is never empty for a non-empty
-    /// string and cutting an empty string gives two empty strings. Character
+    /// The index names a **gap** and is clamped to `0…count` (`Position.gap`): a
+    /// cut at 0 gives an empty prefix, a cut at the count an empty suffix, and
+    /// cutting an empty string gives two empty strings. (It used to wrap modulo
+    /// the character count, which left the last gap unreachable.) Character
     /// counting is by grapheme, like every other string instruction here.
     ///
     /// Provenance is law 5 (`Behavior.selecting`): the deeper piece records
@@ -754,8 +784,7 @@ nonisolated extension Interpreter {
             takes: [.string, .int],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                let count = x.value.count
-                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+                let idx = Position.gap(y.value, count: x.value.count)
                 let cut = x.value.index(x.value.startIndex, offsetBy: idx)
 
                 let source: [any Item] = [x, y, InstructionItem(.stringCut)]
@@ -832,7 +861,8 @@ nonisolated extension Interpreter {
             tags: [.reEntrant],
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
-                guard !x.value.isEmpty else { return [] }
+                // No passes: the body goes back to `.code`, as a finished loop's does.
+                guard !x.value.isEmpty else { return [Router(.code, mouse)] }
                 return Interpreter.iteratorLoop(
                     kind: .elements(into: nil),
                     origin: x,

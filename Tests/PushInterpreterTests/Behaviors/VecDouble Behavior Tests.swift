@@ -145,7 +145,8 @@ struct VecDoubleBehaviorTests {
         absent.stacks[.vecDouble]!.prepend(VecDoubleItem([9, 99, 999]))
         absent.stacks[.double]!.prepend(DoubleItem(7777))
         doThis(.vecDoubleIndexOf, to: absent)
-        #expect(stackString(absent, .int) == "[ -1 ]")
+        #expect(stackString(absent, .int) == "[ ]", "absent: an error, not -1")
+        #expect((topItem(absent, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func vecDoubleItemIsEmpty() {
@@ -342,7 +343,7 @@ struct VecDoubleBehaviorTests {
         #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] 1 .vecDoubleNth )")
 
         doThis(.vecDoubleNth, to: inty)
-        #expect(stackString(inty, .double) == "[ 9.0 99.0 ]")
+        #expect(stackString(inty, .double) == "[ 999.0 99.0 ]", "past the end is the last element")
         #expect(callString(topItem(inty, .double)) == "( [9.0, 99.0, 999.0] 7776 .vecDoubleNth )")
     }
 
@@ -515,14 +516,14 @@ struct VecDoubleBehaviorTests {
                         ])
 
 
+        // An empty vector has no element to replace: an error, arguments consumed.
         doThis(.vecDoubleSet, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1 .vecDoubleSet )")
-
-        doThis(.vecDoublePop, to: inty)
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
+        #expect(callString(topItem(inty, .error)) == "( [] 9.0 1 .vecDoubleSet )")
 
         doThis(.vecDoubleSet, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 3.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
+        #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 7.0, 6.0, 3.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]", "2222 clamps to the last")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 3.0 2222 .vecDoubleSet )")
 
         doThis(.vecDoublePop, to: inty)

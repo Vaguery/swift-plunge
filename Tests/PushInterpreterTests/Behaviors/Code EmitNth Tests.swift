@@ -93,19 +93,21 @@ struct CodeEmitNthTests {
         #expect(stackString(doInty, .int) == stackString(emitInty, .int))
     }
 
-    @Test func `emitNthRoot on an empty block emits nothing`() {
+    @Test func `emitNthRoot on an empty block is an error`() {
         let inty = Interpreter()
         inty.load(program: [CodeItem([]), IntItem(3), InstructionItem(.codeEmitNthRoot)])
         inty.run()
         #expect(stackString(inty, .code) == "[ ( ) ]", "only the untouched tree remains")
         #expect(stackString(inty, .int) == "[ 3 ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
     }
 
-    @Test func `index wraps modulo the point count`() {
-        // 5 points; index 6 % 5 == 1 → the ( 7 8 ) subtree.
+    @Test func `index clamps to the point count`() {
+        // 5 points; index 6 clamps to 4 → the leaf 9, which goes to `.int`.
         let inty = Interpreter()
         inty.load(program: [tree, IntItem(6), InstructionItem(.codeEmitNthPoint)])
         inty.run()
-        #expect(stackString(inty, .code) == "[ ( 7 8 ) ( ( 7 8 ) 9 ) ]")
+        #expect(stackString(inty, .code) == "[ ( ( 7 8 ) 9 ) ]")
+        #expect(stackString(inty, .int) == "[ 9 6 ]")
     }
 }

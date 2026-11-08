@@ -510,10 +510,12 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ 11 2 -222 22 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghi\" \"abcdefghi\" \"abcdefghi\" ]")
 
+        // An empty string has no char: an error (Roadmap #42).
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .int) == "[ 2 -222 22 ]")
         #expect(stackString(inty, .string) == "[ \"abcdefghi\" \"abcdefghi\" \"abcdefghi\" ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
 
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ 'c' ]")
@@ -527,8 +529,9 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"abcdefghi\" ]")
         #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" -222 .stringNth )")
 
+        // Past the end clamps to the last char (it used to wrap: 22 % 9 == 4).
         doThis(.stringNth, to: inty)
-        #expect(stackString(inty, .char) == "[ 'e' 'a' 'c' ]")
+        #expect(stackString(inty, .char) == "[ 'i' 'a' 'c' ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ ]")
         #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" 22 .stringNth )")
@@ -807,12 +810,13 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ 11 2 -222 13 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"0123456789\" ]")
 
+        // An empty string has no char to replace: an error, and the arguments are
+        // consumed (it used to hand the empty string back).
         doThis(.stringSetChar, to: inty)
         #expect(stackString(inty, .char) == "[ '.' '?' '+' ]")
         #expect(stackString(inty, .int) == "[ 2 -222 13 ]")
-        #expect(stackString(inty, .string) == "[ \"\" \"0123456789\" ]")
-
-        doThis(.stringPop, to: inty)
+        #expect(stackString(inty, .string) == "[ \"0123456789\" ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
 
         doThis(.stringSetChar, to: inty)
         #expect(stackString(inty, .char) == "[ '?' '+' ]")
@@ -826,10 +830,11 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"?1.3456789\" ]")
         #expect(callString(topItem(inty, .string)) == "( '?' -222 \"01.3456789\" .stringSetChar )")
 
+        // Past the end clamps to the last char (it used to wrap: 13 % 10 == 3).
         doThis(.stringSetChar, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .string) == "[ \"?1.+456789\" ]")
+        #expect(stackString(inty, .string) == "[ \"?1.345678+\" ]")
         #expect(callString(topItem(inty, .string)) == "( '+' 13 \"?1.3456789\" .stringSetChar )")
     }
 
@@ -880,18 +885,19 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"two\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"one two three\" 1 .stringNthWord )")
 
-        // Indexed modulo the word count, like its `stringNth` sibling.
+        // Clamped to the word count, like its `stringNth` sibling: past the end is
+        // the last word (it used to wrap, 4 % 3 == 1).
         loadInts(inty, ints: [4])
         loadStrings(inty, strings: ["one two three"])
         doThis(.stringNthWord, to: inty)
-        #expect(topItem(inty, .string).pretty() == "\"two\"")
+        #expect(topItem(inty, .string).pretty() == "\"three\"")
 
-        // A string with no words has no word to give back, and an ErrorItem here
-        // would be noise.
+        // A string with no words has no word to give back: an error (Roadmap #42).
         loadInts(inty, ints: [0])
         loadStrings(inty, strings: ["   "])
         doThis(.stringNthWord, to: inty)
-        #expect(stackString(inty, .string) == "[ \"two\" \"two\" ]")
+        #expect(stackString(inty, .string) == "[ \"three\" \"two\" ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
     }
 
     @Test func `stringSubstring works for empty`() {

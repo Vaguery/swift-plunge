@@ -295,11 +295,12 @@ nonisolated extension Interpreter {
         )
     }
 
-    // returns the first element of the vector, or nothing if it is empty
+    // returns the first element of the vector; an error if it is empty
     static func firstBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
             takes: [V.pushStack],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 if let result = x.value.first {
@@ -313,17 +314,21 @@ nonisolated extension Interpreter {
                         )
                     ]
                 } else {
-                    return []
+                    return [Behavior.refusal(
+                        "Empty vector in .\(instruction)",
+                        kind: .emptyCollection,
+                        call: recording([x, InstructionItem(instruction)]))]
                 }
             }
         )
     }
 
-    // returns the last element of the vector, or nothing if it is empty
+    // returns the last element of the vector; an error if it is empty
     static func lastBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
             takes: [V.pushStack],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x) = (a[0] as! V)
                 if let result = x.value.last {
@@ -336,27 +341,32 @@ nonisolated extension Interpreter {
                         )
                     ]
                 } else {
-                    return []
+                    return [Behavior.refusal(
+                        "Empty vector in .\(instruction)",
+                        kind: .emptyCollection,
+                        call: recording([x, InstructionItem(instruction)]))]
                 }
             }
         )
     }
 
-    // returns the element at position y (wrapped modulo the vector's length),
-    // or nothing if the vector is empty
+    // returns the element at position y, clamped to the vector (`Position.item`);
+    // an error if the vector is empty
     static func nthBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
             takes: [V.pushStack, .int],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
                 let range = x.value.count
                 if range == 0 {
-                    return []
+                    return [Behavior.refusal(
+                        "Empty vector in .\(instruction)",
+                        kind: .emptyCollection,
+                        call: recording([x, y, InstructionItem(instruction)]))]
                 } else {
-                    // .magnitude (a UInt) avoids abs(Int.min) trapping;
-                    // reducing modulo range keeps the wrapped-index semantics
-                    let idx = Int(y.value.magnitude % UInt(range))
+                    let idx = Position.item(y.value, count: range)
                     let result = x.value[idx]
                     return [
                         Router(
@@ -371,15 +381,26 @@ nonisolated extension Interpreter {
         )
     }
 
-    // returns the index of the first occurrence of the scalar argument, or -1
-    // (non-destructively: both the vector and the needle survive the read)
+    // returns the index of the first occurrence of the scalar argument; an error
+    // if there is none (non-destructively: both the vector and the needle survive
+    // the read). It used to answer -1, which any index-taking instruction would
+    // then have quietly turned into a real position.
     static func indexOfBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
             instruction,
             reads: [V.pushStack, V.Scalar.pushStack],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! V.Scalar)
-                let result = x.value.firstIndex(of: y.value) ?? -1
+                guard let result = x.value.firstIndex(of: y.value) else {
+                    return [Behavior.refusal(
+                        "Not found in .\(instruction)",
+                        kind: .notFound,
+                        call: recording(Behavior.reading(
+                            [V.pushStack: 1, V.Scalar.pushStack: 1],
+                            producing: .error,
+                            from: [x, y, InstructionItem(instruction)])))]
+                }
                 return [
                     Router(
                         .int,
@@ -513,18 +534,29 @@ nonisolated extension Interpreter {
         )
     }
 
-    /// The index of the first contiguous occurrence of the sub-vector, or −1.
+    /// The index of the first contiguous occurrence of the sub-vector; an error if
+    /// there is none (it used to answer −1).
     static func indexOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior(
             instruction,
             reads: [V.pushStack, V.pushStack],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (hay, needle) = (a[0] as! V, a[1] as! V)
+                guard let found = firstSubIndex(hay.value, needle.value) else {
+                    return [Behavior.refusal(
+                        "Not found in .\(instruction)",
+                        kind: .notFound,
+                        call: recording(Behavior.reading(
+                            [V.pushStack: 2],
+                            producing: .error,
+                            from: [needle, hay, InstructionItem(instruction)])))]
+                }
                 return [
                     Router(
                         .int,
                         IntItem(
-                            firstSubIndex(hay.value, needle.value) ?? -1,
+                            found,
                             call: recording(Behavior.reading(
                                 [V.pushStack: 2],
                                 producing: .int,
@@ -731,23 +763,28 @@ nonisolated extension Interpreter {
 
     // ( vec position replacement .vecXSet )
     //
-    // replace the element at position (wrapped modulo the vector's length) with replacement
+    // replace the element at position (clamped to the vector, `Position.item`)
+    // with replacement; an empty vector has no element to replace, so it is an error
     //
     static func setBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior(
             instruction,
             takes: [V.pushStack, .int, V.Scalar.pushStack],
+            tags: [.fallible],
             fxn: { a, recording in
                 let (x, y, z) = (a[0] as! V, a[1] as! IntItem, a[2] as! V.Scalar)
-                var result = x.value
-                // .magnitude (a UInt) avoids abs(Int.min) trapping
-                let idx = result.isEmpty ? nil : Int(y.value.magnitude % UInt(result.count))
-                if let idx {
-                    result[idx] = z.value
+                guard !x.value.isEmpty else {
+                    return [Behavior.refusal(
+                        "Empty vector in .\(instruction)",
+                        kind: .emptyCollection,
+                        call: recording([x, z, y, InstructionItem(instruction)]))]
                 }
+                var result = x.value
+                let idx = Position.item(y.value, count: result.count)
+                result[idx] = z.value
                 func members() -> [Origin] {
                     var slots = x.origins()
-                    if let idx { slots[idx] = Origin.item(z) }
+                    slots[idx] = Origin.item(z)
                     return slots
                 }
                 return [
@@ -806,13 +843,10 @@ nonisolated extension Interpreter {
     /// consumes the deeper argument first (`a[1].value + a[0].value`), so with the
     /// prefix underneath, `prefix + suffix` rebuilds the original vector.
     ///
-    /// **The index wraps** — `magnitude % count` maps any int into `[0, count)`,
-    /// avoiding the `Int.min` trap and matching the `nth` family's wrapped-index
-    /// reading. Two consequences of the wrap, both deliberate: an index of exactly
-    /// `count` wraps to 0, so the suffix is **never empty** for a non-empty
-    /// argument (you cannot cut off the whole thing and leave nothing); and the
-    /// prefix is empty exactly when the cut lands at 0. Cutting an empty vector
-    /// gives two empty vectors.
+    /// **The index names a gap and is clamped to `0…count`** (`Position.gap`,
+    /// Roadmap #42): at 0 the prefix is empty, at `count` the suffix is. Cutting
+    /// an empty vector gives two empty vectors. It used to wrap modulo `count`,
+    /// which left the last gap unreachable, so the suffix could never be empty.
     ///
     /// **Provenance is law 5** (`Behavior.selecting`, Items.swift): two results on
     /// one stack. The deeper piece records the discard that surfaces it —
@@ -825,10 +859,7 @@ nonisolated extension Interpreter {
             takes: [V.pushStack, .int],
             fxn: { a, recording in
                 let (x, y) = (a[0] as! V, a[1] as! IntItem)
-                let count = x.value.count
-                // `.magnitude` (a UInt) avoids `abs(Int.min)` trapping; the modulo
-                // is skipped on an empty vector, where it would divide by zero.
-                let idx = count == 0 ? 0 : Int(y.value.magnitude % UInt(count))
+                let idx = Position.gap(y.value, count: x.value.count)
 
                 let prefix = Array(x.value[0..<idx])
                 let suffix = Array(x.value[idx...])
@@ -1066,7 +1097,8 @@ nonisolated extension Interpreter {
             tags: [.reEntrant],
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
-                guard !x.value.isEmpty else { return [] }
+                // No passes: the body goes back to `.code`, as a finished loop's does.
+                guard !x.value.isEmpty else { return [Router(.code, mouse)] }
                 return Interpreter.iteratorLoop(
                     kind: .elements(into: nil),
                     origin: x,

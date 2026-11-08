@@ -291,7 +291,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
     Not yet well formed: `.exec` continuations, `.iterator` as one type, and the shape effects of the
     direct-write combinators. A type-level map is a hypergraph with cycles; backward chaining builds the DAG.
 
-42. **Every Behavior returns its intended output or an error** — **RULED 2026-11-08** → *Error audit and
+42. **Every Behavior returns its intended output or an error** — **RULED and BUILT 2026-11-08** (three new
+    `ErrorKind`s: `.emptyCollection`, `.notFound`, `.conversion`; clamping lives in `Position`) → *Error audit and
     Behavior classes (2026-11-08).md*. The ~23 silent failures, the arbitrary conversions
     (`doubleFromString` → 0.0, `charFromInt` mod 95) and the `-1` "not found" sentinels become errors.
     Character codes are Unicode scalar values both ways. Out-of-range indices **clamp** in every family

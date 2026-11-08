@@ -1,6 +1,8 @@
 # Error audit and Behavior classes
 
-*swift-push-interpreter, 2026-11-08. A discussion draft: nothing described here has been changed yet.*
+*swift-push-interpreter, 2026-11-08. Rulings at the end. Part 1 (the audit, Roadmap #42) is built: every
+failure listed in A and B is now an error, indices clamp, and the Cut and Shove gap bugs are fixed. Part 2
+(the classes, #43) is not built yet.*
 
 Two questions about the interpreter's Behaviors (the Swift implementations of Push instructions):
 

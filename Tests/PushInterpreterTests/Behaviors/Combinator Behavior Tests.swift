@@ -312,18 +312,39 @@ struct CombinatorBehaviorTests {
         #expect(stackString(inty, .int) == "[ 17 0 2 ]")
         #expect(stackString(inty, .double) == "[ 2.2 3.3 1.1 4.4 ]")
 
+        // 17 clamps to the bottom: with 2.2 taken, three remain and there are
+        // four places to put it. (It used to clamp one short of the bottom.)
         doThis(.doubleShove, to: inty)
         #expect(stackString(inty, .int) == "[ 0 2 ]")
-        #expect(stackString(inty, .double) == "[ 3.3 1.1 2.2 4.4 ]")
+        #expect(stackString(inty, .double) == "[ 3.3 1.1 4.4 2.2 ]")
 
         doThis(.doubleShove, to: inty)
         #expect(stackString(inty, .int) == "[ 2 ]")
-        #expect(stackString(inty, .double) == "[ 3.3 1.1 2.2 4.4 ]")
+        #expect(stackString(inty, .double) == "[ 3.3 1.1 4.4 2.2 ]")
 
         doThis(.doubleShove, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")
+        #expect(stackString(inty, .double) == "[ 1.1 4.4 3.3 2.2 ]")
         #expect(callString(topItem(inty, .double)) == "( )")
+    }
+
+    /// `n .xShove` undoes `n .xYank`, and on two items it is a swap — it used to
+    /// clamp one short of the bottom, which made it a no-op there.
+    @Test func `shove reaches the bottom and undoes yank`() {
+        loadDoubles(inty, doubles: [1.1, 2.2])
+        loadInts(inty, ints: [1])
+        doThis(.doubleShove, to: inty)
+        #expect(stackString(inty, .double) == "[ 2.2 1.1 ]")
+
+        loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4, 5.5])
+        for depth in [0, 1, 3, 4] {
+            let before = stackString(inty, .double)
+            loadInts(inty, ints: [depth])
+            doThis(.doubleYank, to: inty)
+            loadInts(inty, ints: [depth])
+            doThis(.doubleShove, to: inty)
+            #expect(stackString(inty, .double) == before, "depth \(depth)")
+        }
     }
 
     @Test func `combinator StackDepth works`() {

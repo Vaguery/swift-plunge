@@ -196,13 +196,15 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 1.0 0.0 -172.0 ]")
         #expect(callString(topItem(inty, .double)) == "( \"00001\" .doubleFromString )")
 
+        // Not numbers: each is an error now. They used to answer 0.0.
         doThis(.doubleFromString, to: inty)
-        #expect(stackString(inty, .double) == "[ 0.0 1.0 0.0 -172.0 ]")
-        #expect(callString(topItem(inty, .double)) == "( \"1_000_000\" .doubleFromString )")
+        #expect(stackString(inty, .double) == "[ 1.0 0.0 -172.0 ]")
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .conversion)
+        #expect(callString(topItem(inty, .error)) == "( \"1_000_000\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)
-        #expect(stackString(inty, .double) == "[ 0.0 0.0 1.0 0.0 -172.0 ]")
-        #expect(callString(topItem(inty, .double)) == "( \" 172\" .doubleFromString )")
+        #expect(stackString(inty, .double) == "[ 1.0 0.0 -172.0 ]")
+        #expect(callString(topItem(inty, .error)) == "( \" 172\" .doubleFromString )")
     }
 
     @Test func `doubleFromString rejects non-finite strings`() {

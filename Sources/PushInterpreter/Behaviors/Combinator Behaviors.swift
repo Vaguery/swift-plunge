@@ -402,9 +402,12 @@ nonisolated extension Interpreter {
                     ]
                 }
 
+                // With the item taken, `c` remain and there are c+1 places to put
+                // it back, 0 (the top) to c (the bottom): a gap, clamped. So
+                // `n .xShove` undoes `n .xYank`. It used to clamp to 0…c−1, which
+                // never reached the bottom and made it a no-op on two items.
                 let indexRaw = collectedItems[0] as! IntItem
-                let range = interpreter.stacks[stack]!.count - 1
-                let idx = max(0, min(indexRaw.value, range))
+                let idx = Position.gap(indexRaw.value, count: interpreter.stacks[stack]!.count)
                 let newItem = oldItem
                 // Provenance law 1 (Items.swift): moving an item within its own
                 // stack records nothing — `call` passes through untouched.

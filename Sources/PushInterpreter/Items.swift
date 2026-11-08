@@ -633,11 +633,12 @@ nonisolated extension CodeItem {
         1 + value.reduce(0) { $0 + (($1.exactly(CodeItem.self))?.pointCount ?? 1) }
     }
 
-    /// The pre-order point at `index`, taken `magnitude % pointCount` so any int
-    /// lands on a real point (0 is the whole tree).
+    /// The pre-order point at `index`, clamped (`Position.item`) so any int lands
+    /// on a real point: 0 and below is the whole tree, past the end the last point.
+    /// A tree always has at least one point, its root.
     func point(at index: Int) -> any Item {
         let points = preorderPoints
-        return points[Int(index.magnitude % UInt(points.count))]
+        return points[Position.item(index, count: points.count)]
     }
 
     /// The maximum nesting depth: root is 0, each nested block adds one.
@@ -679,7 +680,7 @@ nonisolated extension CodeItem {
     /// Index 0 (the root) replaces the whole tree. One replacement; the counter
     /// threads pre-order left to right.
     func replacingPoint(at index: Int, with replacement: any Item) -> any Item {
-        let target = Int(index.magnitude % UInt(pointCount))
+        let target = Position.item(index, count: pointCount)
         var counter = 0
         func rebuild(_ node: any Item) -> any Item {
             let here = counter
@@ -694,7 +695,7 @@ nonisolated extension CodeItem {
     /// A new tree with the point at `index` (and its subtree) removed. Removing
     /// the root gives an empty block; a removed element vanishes from its parent.
     func removingPoint(at index: Int) -> CodeItem {
-        let target = Int(index.magnitude % UInt(pointCount))
+        let target = Position.item(index, count: pointCount)
         if target == 0 { return CodeItem([]) }
         var counter = 1   // root (index 0) already accounted for
         func rebuild(_ block: CodeItem) -> CodeItem {
@@ -1059,6 +1060,18 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     case invariant
     /// The `RUNAWAY:` and `MEMORY:` markers: a run stopped early by a guard.
     case guardStop
+    /// A read of an element from a collection that has none: `.vecIntFirst` or
+    /// `.stringNth` of an empty one, `.codeNthRoot` of `( )`, `.stringNthWord` of
+    /// a string with no words. An index into a non-empty collection clamps and
+    /// never errs; this is the one case where no position exists (Roadmap #42).
+    case emptyCollection
+    /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOfChar`,
+    /// `.codeIndexOfPoint`, `.codeContainer`. These used to answer `-1` (which
+    /// every index-taking instruction would then quietly accept) or nothing at all.
+    case notFound
+    /// A value with no counterpart in the target type: a string that is not a
+    /// number, an int that is not a Unicode scalar, a character made of several.
+    case conversion
     /// A Behavior's own complaint about its arguments — a negative count, a type
     /// this kind of loop does not have — and anything not otherwise classified.
     case other

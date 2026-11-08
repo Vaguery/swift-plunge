@@ -309,6 +309,15 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
 
 
 nonisolated extension Behavior {
+    /// The result of a Behavior that cannot produce its intended output from the
+    /// arguments it was given (Roadmap #42: every Behavior returns its output or
+    /// an error). `call` is recorded like a result's: the arguments and the
+    /// instruction (law 3), or for a query the `reading(_:producing: .error, …)`
+    /// form, so re-running it reproduces the error.
+    static func refusal(_ message: String, kind: ErrorKind, call: [any Item]) -> Router {
+        Router(.error, ErrorItem(message, kind: kind, call: call))
+    }
+
     /// The `call` for one of several results a Behavior puts on a single stack —
     /// provenance law 5 (Items.swift).
     ///

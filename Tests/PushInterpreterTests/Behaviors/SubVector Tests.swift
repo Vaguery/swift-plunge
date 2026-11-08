@@ -50,14 +50,16 @@ struct SubVectorTests {
         #expect((topItem(empty, .bool) as! BoolItem).value)
     }
 
-    @Test func `indexOfSubVec returns the start, or -1`() {
+    @Test func `indexOfSubVec returns the start, or an error if absent`() {
         let inty = loadSearch([5, 1, 2, 3], [1, 2])
         doThis(.vecIntIndexOfSubVec, to: inty)
         #expect((topItem(inty, .int) as! IntItem).value == 1)
 
+        // Absent: an error, where it used to answer -1 (Roadmap #42).
         let miss = loadSearch([5, 1, 2, 3], [9, 9])
         doThis(.vecIntIndexOfSubVec, to: miss)
-        #expect((topItem(miss, .int) as! IntItem).value == -1)
+        #expect(stackString(miss, .int) == "[ ]")
+        #expect((topItem(miss, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func `occurrencesOfSubVec counts non-overlapping runs`() {
