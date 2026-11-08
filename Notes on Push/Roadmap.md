@@ -306,6 +306,11 @@ A representation-neutral derivation graph, for other GP representations, is a la
     context reads, control (continuation writes) and channels. Declare each Behavior's class first, with a
     whole-set test; then replace `BehaviorWithSideEffects` with one narrower form per class. Not rewriting
     the direct-write combinators as pops and pushes.
+    **Step 1 BUILT 2026-11-08** (`BehaviorClass`, declared with `as:`; plain Behaviors default to
+    `.operation`, `BehaviorWithSideEffects` must say): 295 operations, 145 structural, 127 context reads,
+    27 control, 13 channels; *Behavior Class Tests* check each declaration against what it does. Ruled:
+    `execQuote` is an operation like the other `xQuote`s. `.exec` is special only contingently; Push's
+    tradition is that code is data and data is code, as far as possible.
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

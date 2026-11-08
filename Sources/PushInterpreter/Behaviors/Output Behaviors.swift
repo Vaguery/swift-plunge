@@ -13,6 +13,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .printNewline,
             takes: [],
+            as: .channel,
             modifier: { (interpreter, _) in
                 interpreter.printText("\n")
                 return []
@@ -23,6 +24,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .boolPrint,
             takes: [.bool],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! BoolItem
                 interpreter.printItem(x)
@@ -34,6 +36,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .iteratorPrint,
             takes: [.iterator],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! IteratorItem
                 interpreter.printItem(x)
@@ -45,6 +48,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .execPrint,
             takes: [.exec],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0]
                 interpreter.printItem(x)
@@ -56,6 +60,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .doublePrint,
             takes: [.double],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! DoubleItem
                 interpreter.printItem(x)
@@ -67,6 +72,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .charPrint,
             takes: [.char],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! CharItem
                 interpreter.printItem(x)
@@ -78,6 +84,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .intPrint,
             takes: [.int],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! IntItem
                 interpreter.printItem(x)
@@ -89,6 +96,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .stringPrint,
             takes: [.string],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! StringItem
                 interpreter.printItem(x)
@@ -100,6 +108,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .vecBoolPrint,
             takes: [.vecBool],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecBoolItem
                 interpreter.printItem(x)
@@ -111,6 +120,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .vecDoublePrint,
             takes: [.vecDouble],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecDoubleItem
                 interpreter.printItem(x)
@@ -122,6 +132,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .vecIntPrint,
             takes: [.vecInt],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecIntItem
                 interpreter.printItem(x)
@@ -133,6 +144,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .vecStringPrint,
             takes: [.vecString],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! VecStringItem
                 interpreter.printItem(x)
@@ -144,6 +156,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .codePrint,
             takes: [.code],
+            as: .channel,
             modifier: { (interpreter, args) in
                 let (x) = args[0] as! CodeItem
                 interpreter.printItem(x)

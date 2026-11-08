@@ -170,7 +170,10 @@ then the last" adds complexity and explains nothing. Declaring their class is en
    iterating an empty collection hands the body back to `.code` as a finished loop does.
 5. **The classes: declare, then narrow.** First every Behavior declares its class (checked by a test over
    the whole instruction set, and feeding the #41 map); then `BehaviorWithSideEffects` is replaced by
-   narrower forms, one per class. Roadmap #43.
+   narrower forms, one per class. Roadmap #43. Step 1 is built. Ruled while building it: taking an
+   argument from `.exec` does not make a Behavior control. `execQuote` is an operation, like every other
+   `xQuote`: the tradition from Push's originators is that code is data and data is code as far as
+   possible, so `.exec` is special only in a contingent sense. Control means *writing* the continuation.
 6. **Plain clamping, no negative indices from the end.** Considered and declined the same day: counting
    from the end (−1 the last) would make "second-to-last" mean the same at every length, but it puts a
    discontinuity at zero (−1 is the last, 0 the first), where small ints and arithmetic results cluster.

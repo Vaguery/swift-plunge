@@ -58,6 +58,7 @@ nonisolated extension Interpreter {
         Behavior(
             .codeIf,
             takes: [.bool, .code, .code],
+            as: .control,
             fxn: { a, recording in
                 // Like execIf: `( then ) ( else ) .codeIf` — the last-written block
                 // is on top and arrives as a[1] (`else`), so a[2] is `then`.
@@ -288,6 +289,7 @@ nonisolated extension Interpreter {
             instruction,
             reads: [.code, .int],
             tags: tags,
+            as: .control,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else {
@@ -314,6 +316,7 @@ nonisolated extension Interpreter {
             instruction,
             reads: [.code, .int],
             tags: tags,
+            as: .control,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else {
@@ -579,6 +582,7 @@ nonisolated extension Interpreter {
             .codeIterateRoot,
             takes: [.code, .code],
             tags: [.reEntrant],
+            as: .control,
             fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [Router(.code, mouse)] }
@@ -604,6 +608,7 @@ nonisolated extension Interpreter {
             // The whole generated family is re-entrant — tagging in the factory is
             // what makes it impossible to tag two of the three.
             tags: [.reEntrant],
+            as: .control,
             fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return Interpreter.iteratorLoop(
@@ -733,6 +738,7 @@ nonisolated extension Interpreter {
     BehaviorWithSideEffects(
         .codeDo,
         takes: [.code],
+        as: .control,
         modifier: { (interpreter, collectedItems) in
             let block = collectedItems[0] as! CodeItem
             interpreter.place(contentsOf: Containment.contents(of: block, interpreter.recording), on: .exec)

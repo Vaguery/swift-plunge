@@ -64,6 +64,7 @@ nonisolated extension Interpreter {
             // TWO, not one: it guards on `count - 1 > 0`, because with a single
             // item there is nothing to reach past.
             alsoNeeds: [stack: 2],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1
@@ -103,6 +104,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack],
+            as: .structural,
             fxn: { a, recording in
                 return [Router(stack, a[0]), Router(stack, a[0])]
             }
@@ -136,6 +138,7 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let range = interpreter.stacks[stack]!.count - 1
                 let rawIndex = collectedItems[0] as! IntItem
@@ -189,6 +192,7 @@ nonisolated extension Interpreter {
             // It reorders/copies `stack` without popping it, so say so: this is
             // what stops it eating the index and then finding nothing there.
             alsoNeeds: [stack: 1],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let howMany = (collectedItems[0] as! IntItem).value
 
@@ -225,6 +229,7 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, collectedItems) in
                 let empty = interpreter.stacks[stack]!.isEmpty
                 return [
@@ -295,6 +300,7 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 interpreter.clear(stack)
                 return []
@@ -315,6 +321,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack],
+            as: .structural,
             fxn: { _, _ in return [] }
         )
         result[name] = inst
@@ -338,6 +345,7 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [.int],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let rawCount = collectedItems[0] as! IntItem
                 // Clamped rather than an error, like its `DupItems`/`Yank`
@@ -363,6 +371,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack, stack, stack],
+            as: .structural,
             fxn: { a, recording in
                 let (x, y, z) = (a[0], a[1], a[2])
                 return [
@@ -390,6 +399,7 @@ nonisolated extension Interpreter {
             // It reorders/copies `stack` without popping it, so say so: this is
             // what stops it eating the index and then finding nothing there.
             alsoNeeds: [stack: 1],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 // Unreachable since `alsoNeeds` — the plan will not let this run
                 // with an empty `stack`. Kept as the honest alternative to a `!`.
@@ -432,6 +442,7 @@ nonisolated extension Interpreter {
         inst = BehaviorWithSideEffects(
             name,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, collectedItems) in
                 let c = interpreter.stacks[stack]!.count
                 return [
@@ -465,6 +476,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             takes: [stack, stack],
+            as: .structural,
             fxn: { a, recording in
                 return [
                     Router(stack, a[0]), Router(stack, a[1]),
@@ -491,6 +503,7 @@ nonisolated extension Interpreter {
             // TWO, not one: it guards on `count - 1 > 0`, because with a single
             // item there is nothing to reach past.
             alsoNeeds: [stack: 2],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1
@@ -527,6 +540,7 @@ nonisolated extension Interpreter {
             // TWO, not one: it guards on `count - 1 > 0`, because with a single
             // item there is nothing to reach past.
             alsoNeeds: [stack: 2],
+            as: .structural,
             modifier: { (interpreter, collectedItems) in
                 let rawIndex = collectedItems[0] as! IntItem
                 let range = interpreter.stacks[stack]!.count - 1

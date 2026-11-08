@@ -1003,6 +1003,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             instruction,
             takes: [.int],
+            as: .contextRead,
             modifier: { (interpreter, collected) in
                 let n = (collected[0] as! IntItem).value
                 let stack = V.Scalar.pushStack
@@ -1039,6 +1040,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             instruction,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, _) in
                 let stack = V.Scalar.pushStack
                 let elements = Array(interpreter.stacks[stack]!)
@@ -1095,6 +1097,7 @@ nonisolated extension Interpreter {
             // All four `vecXIterate` at once — the factory is the right place for a
             // family judgment, because there is then no way to tag three of four.
             tags: [.reEntrant],
+            as: .control,
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
                 // No passes: the body goes back to `.code`, as a finished loop's does.

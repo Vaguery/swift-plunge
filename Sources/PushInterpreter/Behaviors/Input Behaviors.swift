@@ -20,6 +20,7 @@ nonisolated extension Interpreter {
                 BehaviorWithSideEffects(
                     instructionName,
                     takes: [],
+                    as: .contextRead,
                     modifier: { (interpreter, collectedItems) in
                         if var v = interpreter.inputs[instructionName] {
                             v.call = interpreter.recording([InstructionItem(instructionName)])

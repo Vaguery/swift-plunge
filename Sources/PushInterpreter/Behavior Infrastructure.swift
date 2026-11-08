@@ -96,6 +96,13 @@ nonisolated class Behavior: @unchecked Sendable {
     /// per-instruction because there is then no way to tag eleven of twelve.
     let tags: Set<InstructionTag>
 
+    /// What this Behavior does to the interpreter's state — see `BehaviorClass`.
+    /// Declared, like `tags`, because mechanism does not decide it. A plain
+    /// `Behavior` sees only its arguments, so it can only be an operation, a
+    /// structural rule or control; it defaults to `.operation`. A
+    /// `BehaviorWithSideEffects` must always say.
+    let behaviorClass: BehaviorClass
+
 
     /// The common form: consume one item from each of `takes`, and require —
     /// without consuming — `alsoNeeds` more.
@@ -114,6 +121,7 @@ nonisolated class Behavior: @unchecked Sendable {
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         tags: Set<InstructionTag> = [],
+        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         // `takes` first: an index is popped before the stack it indexes into is
@@ -125,6 +133,7 @@ nonisolated class Behavior: @unchecked Sendable {
                 + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
                     .map { Requirement.needs($0.key, count: $0.value) },
             tags: tags,
+            as: behaviorClass,
             fxn: fxn
         )
     }
@@ -141,9 +150,10 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         reads: [PushStack],
         tags: Set<InstructionTag> = [],
+        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
-        self.init(label, requires: reads.map { Requirement.reads($0) }, tags: tags, fxn: fxn)
+        self.init(label, requires: reads.map { Requirement.reads($0) }, tags: tags, as: behaviorClass, fxn: fxn)
     }
 
     /// The general form, for a Behavior whose requirements are not all static.
@@ -151,11 +161,13 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         requires: [Requirement],
         tags: Set<InstructionTag> = [],
+        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         self.name = label
         self.requirements = requires
         self.tags = tags
+        self.behaviorClass = behaviorClass
         self.transformer = fxn
         (self.directTakes, self.directTakeCounts) = Behavior.directPlan(for: requires)
     }
@@ -279,6 +291,7 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         tags: Set<InstructionTag> = [],
+        as behaviorClass: BehaviorClass,
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
         self.init(
@@ -287,18 +300,22 @@ nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
                 + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
                     .map { Requirement.needs($0.key, count: $0.value) },
             tags: tags,
+            as: behaviorClass,
             modifier: modifier
         )
     }
 
+    /// No default class here: direct access to the interpreter is what every class
+    /// but `.operation` needs, so these are the Behaviors that must always say.
     init(
         _ label: PushInstruction,
         requires: [Requirement],
         tags: Set<InstructionTag> = [],
+        as behaviorClass: BehaviorClass,
         modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
     ) {
         self.directModifier = modifier
-        super.init(label, requires: requires, tags: tags, fxn: { _, _ in return [] })
+        super.init(label, requires: requires, tags: tags, as: behaviorClass, fxn: { _, _ in return [] })
     }
 
     override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {

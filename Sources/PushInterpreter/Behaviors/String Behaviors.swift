@@ -859,6 +859,7 @@ nonisolated extension Interpreter {
             .stringIterate,
             takes: [.string, .code],
             tags: [.reEntrant],
+            as: .control,
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
                 // No passes: the body goes back to `.code`, as a finished loop's does.

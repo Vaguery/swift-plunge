@@ -131,6 +131,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorStep,
             takes: [.iterator],
+            as: .control,
             fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
@@ -165,6 +166,7 @@ nonisolated extension Interpreter {
             .iteratorPlay,
             takes: [.iterator],
             tags: [.reEntrant],
+            as: .control,
             modifier: { (interpreter, collectedItems) in
                 let iterator = collectedItems[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
@@ -209,6 +211,7 @@ nonisolated extension Interpreter {
             .iteratorPlayDelayed,
             takes: [.int, .iterator],
             tags: [.reEntrant],
+            as: .control,
             modifier: { (interpreter, collectedItems) in
                 let burial = (collectedItems[0] as! IntItem).value
                 var iterator = collectedItems[1] as! IteratorItem

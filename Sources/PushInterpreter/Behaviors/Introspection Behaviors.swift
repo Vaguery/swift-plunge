@@ -61,6 +61,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .pushStepCount,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, _) in
                 [Router(.int, IntItem(interpreter.counter).observed(by: .pushStepCount, interpreter.recording))]
             }
@@ -73,6 +74,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             .errorStackDepth,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, _) in
                 let depth = IntItem(interpreter.stacks[.error]!.count)
                 return [Router(.int, depth.observed(by: .errorStackDepth, interpreter.recording))]
@@ -97,6 +99,7 @@ nonisolated extension Interpreter {
         BehaviorWithSideEffects(
             name,
             takes: [],
+            as: .contextRead,
             modifier: { (interpreter, _) in
                 let n = interpreter.stacks.errorCount(of: kind)
                 return [Router(.int, IntItem(n).observed(by: name, interpreter.recording))]
