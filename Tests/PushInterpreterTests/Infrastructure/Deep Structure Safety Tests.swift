@@ -23,6 +23,10 @@ struct DeepStructureSafetyTests {
         item.call.isEmpty ? [item] : item.call.flatMap(recursiveCrux)
     }
 
+    /// The flattened tree, which is the crux of any history with nothing shared.
+    /// A shared node (`c` in `d`, `b` in `e`) is built once by `crux()` itself
+    /// (`CruxSharing`; see `Crux Sharing Tests`), so the comparison is with the
+    /// flattening, the walk that must survive depth.
     @Test func `the iterative crux matches the recursive definition`() {
         // A small tree with branching, nesting and shared nodes.
         let a = IntItem(1)
@@ -31,7 +35,7 @@ struct DeepStructureSafetyTests {
         let d = IntItem(6, call: [c, c, InstructionItem(.intAdd)])
         let e = BoolItem(true, call: [d, b, InstructionItem(.intGT)])
         for item in [a, b, c, d, e] as [any Item] {
-            #expect(CodeItem(item.crux()).pretty() == CodeItem(recursiveCrux(item)).pretty())
+            #expect(CodeItem(CruxSharing.flattened(item)).pretty() == CodeItem(recursiveCrux(item)).pretty())
         }
     }
 

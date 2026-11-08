@@ -229,7 +229,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
     public var burial: Int
 
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }

@@ -291,6 +291,46 @@ mutable binding where a stand-in is an immutable label. The envelope keeps the s
 can share it. Under every storage design being considered, a variable read that hands back the bound
 item's own history needs no stand-in; stand-ins arise only for facts *about* the bindings.
 
+## Sharing (2026-11-07)
+
+Provenance is a DAG. When one value feeds several others, every history that uses it holds the very same
+node: `.intDup` copies an item with its history (law 1), and a non-destructive read (`.boolEq`, `.vecIntNth`,
+any query) records the argument it read *and leaves it on the stack* for the program to use again. Until
+now `crux()` wrote out the tree, so a shared node appeared once per use: `x x .intAdd` where the program ran
+`x .intDup .intAdd`.
+
+That mattered more than it looked. **Every history the round-trip fuzz saw elided was a shared one**, not
+a loop chain: a loop over a non-destructive read builds each value from the two before it, so N steps of
+the program make a tree of fib(N) leaves. The elided items were 40–200 distinct nodes weighing 10,000–
+20,000; none was elided for depth, and lifting `maxIterations` changed nothing.
+
+**The crux now builds each shared node once** (`CruxSharing`). A node used by two or more argument
+positions is built first, in a prelude, children before parents, and left on its stack. Each use takes a
+copy (`.xDup` when it is on top, else `n .xYankDup`), and the last use takes the node itself (nothing when
+it is already in place or only copies of it are above, `.xSwap` at depth 1, else `n .xYank`). The depths
+are known because the crux keeps count of every stack as it writes. `x .intDup .intAdd` reads back as
+itself; the 30-step `.boolEq` loop's crux is a few hundred items, not a million.
+
+- **Only argument positions.** Reuse happens before the first instruction in a `call`, where every element
+  pushes exactly one item (a node's crux nets its item on its stack; a literal pushes itself). After an
+  instruction (a clean-up, a prefix argument read from `.exec`), elements are written out as before.
+- **A fixed point.** Dup and yank record nothing, so the copy *is* the node, and a replay shares exactly the
+  nodes the original shared. Nodes are identified by their `call`'s storage, which copies share and a value
+  rebuilt another way does not, so two equal values computed twice stay two.
+- **Nothing changes without sharing.** A history with no shared node comes out as the flattened tree, leaf
+  for leaf (`CruxSharing.flattened`).
+- **The budget measures the crux.** `callWeight` still sums the tree, so it is an upper bound. When it is
+  over `maxCallWeight`, the push boundary writes the shared crux, stopping at the budget; if it fits, the
+  item is kept and *weighed by its crux's length*, so its descendants sum real lengths and the walk is
+  repeated only near the real budget. The decision depends on the history alone, so a replay makes the
+  same one.
+
+Results: elided items 0 in all three fuzz mixes (were 0.0%, 0.2%, 1.3% of value-stack items); 0 broken in
+about 250,000 replays; the fuzz takes ~53 s (was ~40 s).
+
+**Local variables would serve this better** (the user, 2026-11-07): bind each shared value once and read
+it by name, with no depth bookkeeping. The planning would be unchanged. Roadmap #39.
+
 ## Containment (2026-11-07)
 
 Law 1b says an item that goes into a block and comes back out is the item that went in, history intact.

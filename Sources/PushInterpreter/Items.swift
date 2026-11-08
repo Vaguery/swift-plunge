@@ -243,6 +243,48 @@ nonisolated struct CallStorage: Sendable {
     var call: [any Item] { box?.call ?? [] }
     var measure: CallMeasure { box?.measure ?? .literal }
     var members: Pieces? { box?.members }
+
+    /// The same history, members and depth, with `weight` as its measured weight
+    /// (the length of its crux, which can be far below its tree's). The `call`
+    /// array is shared, not copied, so the history is still the same node to
+    /// `CruxSharing`.
+    func remeasured(weight: Int) -> CallStorage {
+        guard let box else { return self }
+        return CallStorage(box: Box(
+            call: box.call,
+            measure: CallMeasure(weight: UInt32(clamping: weight), depth: box.measure.depth),
+            members: box.members))
+    }
+}
+
+/// An item that keeps its history in a `CallStorage`: every item type but
+/// `StandInItem`, which never has one. Lets the push boundary record a measured
+/// weight (`Interpreter.elidingOverBudgetProvenance`).
+nonisolated protocol HoldsCall: Item {
+    var callStorage: CallStorage { get set }
+}
+
+nonisolated extension BoolItem: HoldsCall {}
+nonisolated extension CharItem: HoldsCall {}
+nonisolated extension CodeItem: HoldsCall {}
+nonisolated extension DoubleItem: HoldsCall {}
+nonisolated extension InstructionItem: HoldsCall {}
+nonisolated extension IntItem: HoldsCall {}
+nonisolated extension StringItem: HoldsCall {}
+nonisolated extension VecBoolItem: HoldsCall {}
+nonisolated extension VecDoubleItem: HoldsCall {}
+nonisolated extension VecIntItem: HoldsCall {}
+nonisolated extension VecStringItem: HoldsCall {}
+nonisolated extension ErrorItem: HoldsCall {}
+nonisolated extension IteratorItem: HoldsCall {}
+
+nonisolated extension HoldsCall {
+    /// This item with its weight measured as `weight`; see `CallStorage.remeasured`.
+    func remeasured(weight: Int) -> any Item {
+        var copy = self
+        copy.callStorage = callStorage.remeasured(weight: weight)
+        return copy
+    }
 }
 
 nonisolated extension CallMeasure {
@@ -328,25 +370,14 @@ nonisolated extension Item {
         // history is a `StandInItem`, which is also a leaf (its `call` is empty),
         // so it appears in the crux as itself, marked. That is how eliding an
         // over-budget `call` (Interpreter.push) stays safe *and* visible.
-        if self.call.isEmpty { return [self] }
-        // **Iterative, not recursive.** A call tree can legally nest thousands deep
-        // (a long run's loop counter, say — `maxCallWeight` bounds its size, not its
-        // depth), and recursion one Swift frame per level overflowed the small stack
-        // of a concurrency worker thread, killing the whole process (found by the
-        // dual-mode stress run: depth 2,463). This walks the same tree in the same
-        // left-to-right order with an explicit stack, so depth costs heap, not stack.
-        // Every leaf is an item with an empty `call`, exactly as the recursive form
-        // bottomed out.
-        var leaves: [any Item] = []
-        var pending: [any Item] = self.call.reversed()
-        while let next = pending.popLast() {
-            if next.call.isEmpty {
-                leaves.append(next)
-            } else {
-                pending.append(contentsOf: next.call.reversed())
-            }
-        }
-        return leaves
+        //
+        // Otherwise the history is written out left to right, each SHARED node
+        // built once and reused by dup and yank, as the program reused it
+        // (`CruxSharing`). With nothing shared, that is the tree leaf by leaf.
+        // Iterative, not recursive: a call tree can legally nest thousands deep,
+        // and recursion one Swift frame per level overflowed the small stack of a
+        // concurrency worker thread (found by the dual-mode stress run: depth 2,463).
+        CruxSharing.crux(of: self)
     }
 }
 
@@ -382,7 +413,7 @@ public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 public nonisolated struct BoolItem: Item, Equatable, Pretty {
     public var value: Bool
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -409,7 +440,7 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
 public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     public var value: Character
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -477,7 +508,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// above. This is the only heterogeneous container in the language.
     public var value: [any Item]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -696,7 +727,7 @@ nonisolated extension CodeItem {
 public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     public var value: Double
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -728,7 +759,7 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public var value: PushInstruction
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -762,7 +793,7 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     public var value: Int
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -795,7 +826,7 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     public var value: String
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -842,7 +873,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
 public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     public var value: [Bool]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -880,7 +911,7 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
 public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     public var value: [Double]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -917,7 +948,7 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
 public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     public var value: [Int]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -955,7 +986,7 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
 public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     public var value: [String]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
@@ -1074,7 +1105,7 @@ public nonisolated struct ErrorItem: Item, Equatable {
     }
 
     /// This item's provenance, behind one optional reference; see `CallStorage`.
-    private var callStorage = CallStorage.literal
+    var callStorage = CallStorage.literal
     public var call: [any Item] {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }

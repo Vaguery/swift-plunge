@@ -62,7 +62,10 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // aggressive. See `Interpreter.elidingOverBudgetProvenance`.
     //
     // Total provenance (Item.callWeight) allowed on a single pushed item: the caps
-    // above bound an item's *content*, this bounds its *history*. That used to be
+    // above bound an item's *content*, this bounds its *history*. A history is
+    // over it only if its crux is: one that is over as a tree is measured again
+    // as the crux, which builds each shared node once (`CruxSharing`), and kept
+    // if that fits. That used to be
     // the last unbounded dimension in the system; `maxIterations` below now holds
     // that title, since nothing bounded what a loop CLAIMS.
     public var maxCallWeight   : Int = 10_000
@@ -391,8 +394,17 @@ nonisolated final class Interpreter {
     }
 
 
-    /// Drops an item's `call` once its provenance exceeds `maxCallWeight`,
-    /// returning the item otherwise untouched.
+    /// Drops an item's `call` once its crux would be longer than `maxCallWeight`
+    /// (or its history deeper than `maxCallDepth`), returning the item otherwise
+    /// untouched, or, if only its tree was over, weighed as its crux.
+    ///
+    /// `callWeight` sums the tree, which counts a shared node once per use, so a
+    /// history built by non-destructive reads (each value from the two before it)
+    /// weighs fib(N) after N steps. Over budget as a tree, it is measured as the
+    /// crux, which builds each shared node once (`CruxSharing`): if that fits, the
+    /// item is kept and weighed by its crux's length, so its descendants sum real
+    /// lengths and the walk is repeated only near the real budget. The measure is
+    /// a function of the history alone, so a replay decides the same way.
     ///
     /// Deliberately not an error, and deliberately not a refusal — unlike
     /// `overflow(of:)`, which rejects the push. The item is still perfectly
@@ -403,8 +415,8 @@ nonisolated final class Interpreter {
     /// rather than indistinguishable from a literal in the program. Weight 2 and
     /// depth 1, so it never trips the budget again.
     ///
-    /// The last resort, not the plan: provenance compression is to replace it
-    /// (Roadmap §P, step 3).
+    /// The last resort, not the plan: every elision the round-trip fuzz used to
+    /// see was a shared history, and sharing removed them all (Roadmap §P, step 3).
     ///
     /// This is the honest-growth backstop: the provenance law removes the
     /// spurious growth and `IteratorItem` folds loop counters, but a value that
@@ -415,8 +427,18 @@ nonisolated final class Interpreter {
     /// which is acceptable: those behaviors (`deepDup`, `shove`) are
     /// provenance-transparent under law 1, so they cannot grow a `call`.
     func elidingOverBudgetProvenance(_ item: any Item) -> any Item {
-        guard item.callWeight > config.maxCallWeight || item.callDepth > config.maxCallDepth
-        else { return item }
+        if item.callDepth <= config.maxCallDepth {
+            guard item.callWeight > config.maxCallWeight else { return item }
+            // The tree is over budget, but the crux builds each shared node once
+            // (`CruxSharing`), so it can be far shorter. Measured only now, and at
+            // a cost of at most the budget.
+            if let program = CruxSharing.crux(of: item, limit: config.maxCallWeight) {
+                // Kept, and weighed as what it is: a crux this long. Its
+                // descendants then sum real lengths, not the tree's, so the walk
+                // is repeated only near the real budget.
+                return (item as? any HoldsCall)?.remeasured(weight: program.count) ?? item
+            }
+        }
         var lightened = item
         lightened.call = [StandInItem(standingInFor: item, source: Self.producer(in: item.call), reason: .elided)]
         return lightened

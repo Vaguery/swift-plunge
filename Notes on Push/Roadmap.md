@@ -43,6 +43,14 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    **Found:** the largest gap is not elision but **container contents with no history of their own** (next).
 3. Provenance compression replaces elision (generalized `CruxCompression`, looped-provenance steps 2–4); then
    retire `maxIterations` (#24).
+   **Found first (2026-11-07):** every history the fuzz elided was a *shared* one, not a loop. A
+   non-destructive read leaves its arguments, so a loop over one builds each value from the two before
+   it: a few dozen distinct nodes, weighing 10,000–20,000 as a tree (fib(N) after N steps). No elision
+   was for depth, and lifting `maxIterations` changed none of them.
+   **Sharing BUILT (2026-11-07):** `crux()` builds each shared node once and reuses it by dup and yank,
+   as the program did (`CruxSharing`; § Sharing in *Provenance and the crux.md*); the push boundary
+   measures that crux, not the tree, and weighs a kept history by it. Elided items 0 in all three mixes
+   (were 0.0% / 0.2% / 1.3%); 0 broken; the fuzz takes ~53 s (was ~40 s).
 4. Per-element provenance for vectors **and strings** (#21), as a parallel array filled only when recording.
    **Widened by step 2's finding to code blocks**: an item with no history inside a container that has one
    (a block bound to `.input3`, then unwrapped; the blocks the structural code edits rebuild along their
@@ -241,6 +249,18 @@ A representation-neutral derivation graph, for other GP representations, is a la
     crux (or a stand-in mark it). Questions *about* the bindings (bound?, how many?) are state reads, so
     stand-ins. A ref and a stand-in share a shape (one item under a name), and the `AnyItem` envelope keeps
     it generic so they can share it. → *Provenance and the crux.md* § Stand-ins
+    *Two uses noted by the user (2026-11-07, while step 3 was built):* the shared crux (§ Sharing) would
+    read better with variables: bind each shared value once and read it by name, instead of the
+    `.xDup`/`n .xYankDup`/`n .xYank` bookkeeping. The planning (which nodes are shared, which uses can
+    reuse) would stay as it is; only the writing would change. The same goes for a container a crux
+    addresses repeatedly (a vector, string or block): put it in a variable and refer to it. That might
+    not be less code in the end.
+
+40. **Behavior arguments as a scratch array** — noted 2026-11-07 for exploration *after* the provenance
+    batch; nothing designed. Instead of loading a Behavior's arguments into local Swift variables, load
+    them into a sequential `[any Item]` scratch space that the closure reads as `$0`, `$1`, … . It changes
+    no result by itself; the interest is that the scratch space could persist, or be manipulated, after
+    the Behavior runs, which might allow interesting dynamics with local variables (#39).
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
