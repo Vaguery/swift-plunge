@@ -331,9 +331,16 @@ A representation-neutral derivation graph, for other GP representations, is a la
     `WrittenOrder` (requirements and `call` from the declared order: stacks by first appearance, each
     deepest first, which reproduced every hand-written `call`), and `Behavior.gives` (the result stack, for
     #41). Converted: all int, double, bool and char operations (64), with identical messages and cruxes;
-    release throughput unchanged. Not yet: string, vector, code and iterator operations, many of which
-    return existing items (`traced`), carry element `members`, or give several results — the constructor
-    would need those forms first. **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
+    release throughput unchanged. **Then, same day, three item-level forms**, whose bodies get typed items
+    rather than values: `assembling` (a container plus its elements' origins, `Built`), `extracting` (an
+    element taken out, traced when it kept a history, `Extraction`), and `splitting` (several results on
+    one stack, each with its selecting crux). With them every string and vector operation that makes a
+    value is typed, except the iterator-loop ones (pushAll, split, parseToLetters, iterate) and the context
+    reads. `MemberItem`/`TracingItem` are the container protocols. Side effect: where keeping the recorded
+    `call` puts a different stack first (stringDrop/Take, the char replaces, stringSetChar, non-int
+    vecXSet, and the three string char queries), the requirement order changed, so a "missing args" error
+    with several stacks short names a different one. Not yet: code and iterator operations (`CodeItem`
+    and `IteratorItem` are not `ValueItem`s). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
 

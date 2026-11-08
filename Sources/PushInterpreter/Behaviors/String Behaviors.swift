@@ -10,460 +10,133 @@ import DequeModule
 nonisolated extension Interpreter {
 
     static let stringButLast_Behavior =
-        Behavior(
-            .stringButLast,
-            takes: [.string],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(x.value.dropLast(1)),
-                            call: recording([x, InstructionItem(.stringButLast)]),
-                            members: recording.pieces(x.origins().dropLast(1)))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringButLast, takes: StringItem.self, gives: StringItem.self) { x in
+            Built(String(x.value.dropLast(1)), members: x.origins().dropLast(1))
+        }
 
     static let stringConcat_Behavior =
-        Behavior(
-            .stringConcat,
-            takes: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            y.value + x.value,
-                            call: recording([y, x, InstructionItem(.stringConcat)]),
-                            members: recording.pieces(y.origins(0) + x.origins(1)))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringConcat, takes: StringItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            Built(y.value + x.value, members: y.origins(0) + x.origins(1))
+        }
 
     static let stringConjChar_Behavior =
-        Behavior(
-            .stringConjChar,
-            takes: [.string, .char],
-            fxn: { a, recording in
-                let (y, x) = (a[0] as! StringItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            y.value + String(x.value),
-                            call: recording([y, x, InstructionItem(.stringConjChar)]),
-                            members: recording.pieces(y.origins() + [Origin.item(x)]))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringConjChar, takes: StringItem.self, CharItem.self, gives: StringItem.self) { y, x in
+            Built(y.value + String(x.value), members: y.origins() + [Origin.item(x)])
+        }
 
     static let stringContains_Behavior =
-        Behavior(
-            .stringContains,
-            reads: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            // `firstRange(of:)` is stdlib and deterministic
-                            // (empty substring ⇒ contained); plain `.contains`
-                            // resolved to different overloads across Foundation
-                            // / module contexts once this code left the app target.
-                            y.value.firstRange(of: x.value) != nil,
-                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringContains)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringContains, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in
+            // `firstRange(of:)` is stdlib and deterministic
+            // (empty substring ⇒ contained); plain `.contains`
+            // resolved to different overloads across Foundation
+            // / module contexts once this code left the app target.
+            y.firstRange(of: x) != nil
+        }
 
+    // Written order: the char (recorded first), then the string.
     static let stringContainsChar_Behavior =
-        Behavior(
-            .stringContainsChar,
-            reads: [.string, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.contains(y.value),
-                            call: recording(Behavior.reading([.string: 1, .char: 1], producing: .bool, from: [y, x, InstructionItem(.stringContainsChar)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringContainsChar, reads: CharItem.self, StringItem.self, gives: BoolItem.self) { y, x in
+            x.contains(y)
+        }
 
     /// The position of the first occurrence of the char; an error if there is none.
     static let stringIndexOfChar_Behavior =
-        Behavior(
-            .stringIndexOfChar,
-            reads: [.string, .char],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
-                if let idx = x.value.firstIndex(of: y.value) {
-                    let intIdx = x.value.distance(
-                        from: x.value.startIndex,
-                        to: idx
-                    )
-                    return [
-                        Router(
-                            .int,
-                            IntItem(
-                                intIdx,
-                                call: recording(Behavior.reading(
-                                [.string: 1, .char: 1],
-                                producing: .int,
-                                from: [y, x, InstructionItem(.stringIndexOfChar)]
-                            )))
-                        )
-                    ]
-                } else {
-                    return [Behavior.refusal(
-                        "Not found in .stringIndexOfChar: \(y.value)",
-                        kind: .notFound,
-                        call: recording(Behavior.reading(
-                            [.string: 1, .char: 1],
-                            producing: .error,
-                            from: [y, x, InstructionItem(.stringIndexOfChar)])))]
-                }
+        Behavior.operation(.stringIndexOfChar, reads: CharItem.self, StringItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+            guard let idx = x.firstIndex(of: y) else {
+                throw Refusal("Not found in .stringIndexOfChar: \(y)", kind: .notFound)
             }
-        )
+            return x.distance(from: x.startIndex, to: idx)
+        }
 
-    // the IntItem value is truncated at 0 before use as an index
-    //
+    // the IntItem value is truncated at 0 before use as an index.
+    // Written order: the int (recorded first), then the string.
     static let stringDrop_Behavior =
-        Behavior(
-            .stringDrop,
-            takes: [.string, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                let toDrop = max(0, y.value)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(x.value.dropLast(toDrop)),
-                            call: recording([y, x, InstructionItem(.stringDrop)]),
-                            members: recording.pieces(x.origins().dropLast(toDrop)))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringDrop, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            let toDrop = max(0, y.value)
+            return Built(String(x.value.dropLast(toDrop)), members: x.origins().dropLast(toDrop))
+        }
 
-    // the IntItem value is truncated at 0 before use as an index
-    //
+    // the IntItem value is truncated at 0 before use as an index.
+    // Written order: the int (recorded first), then the string.
     static let stringTake_Behavior =
-        Behavior(
-            .stringTake,
-            takes: [.string, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                let toTake = max(0, y.value)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(x.value.prefix(toTake)),
-                            call: recording([y, x, InstructionItem(.stringTake)]),
-                            members: recording.pieces(Array(x.origins().prefix(toTake))))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringTake, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            let toTake = max(0, y.value)
+            return Built(String(x.value.prefix(toTake)), members: Array(x.origins().prefix(toTake)))
+        }
 
     static let stringItemIsEmpty_Behavior =
-        Behavior(
-            .stringItemIsEmpty,
-            reads: [.string],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            x.value.isEmpty,
-                            call: recording(Behavior.reading([.string: 1], producing: .bool, from: [x, InstructionItem(.stringItemIsEmpty)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringItemIsEmpty, reads: StringItem.self, gives: BoolItem.self) { x in x.isEmpty }
 
     static let stringFirst_Behavior =
-        Behavior(
-            .stringFirst,
-            takes: [.string],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                if let c = x.value.first {
-                    // The char that went in, if it kept a history (`Containment`).
-                    return [
-                        Router(
-                            .char,
-                            x.traced(at: 0, c, recording) ?? CharItem(
-                                c,
-                                call: recording([x, InstructionItem(.stringFirst)]))
-                        )
-                    ]
-                } else {
-                    return [Behavior.refusal(
-                        "Empty string in .stringFirst",
-                        kind: .emptyCollection,
-                        call: recording([x, InstructionItem(.stringFirst)]))]
-                }
+        Behavior.extracting(.stringFirst, takes: StringItem.self) { x throws(Refusal) in
+            guard !x.value.isEmpty else {
+                throw Refusal("Empty string in .stringFirst", kind: .emptyCollection)
             }
-        )
+            // The char that went in, if it kept a history (`Containment`).
+            return Extraction(x, at: 0)
+        }
 
     static let stringLast_Behavior =
-        Behavior(
-            .stringLast,
-            takes: [.string],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                if let c = x.value.last {
-                    return [
-                        Router(
-                            .char,
-                            x.traced(at: x.value.count - 1, c, recording) ?? CharItem(
-                                c,
-                                call: recording([x, InstructionItem(.stringLast)]))
-                        )
-                    ]
-                } else {
-                    return [Behavior.refusal(
-                        "Empty string in .stringLast",
-                        kind: .emptyCollection,
-                        call: recording([x, InstructionItem(.stringLast)]))]
-                }
+        Behavior.extracting(.stringLast, takes: StringItem.self) { x throws(Refusal) in
+            guard !x.value.isEmpty else {
+                throw Refusal("Empty string in .stringLast", kind: .emptyCollection)
             }
-        )
+            return Extraction(x, at: x.value.count - 1)
+        }
 
+    // Comparisons are non-destructive queries: both operands survive, and the
+    // result's crux clears them away (`Behavior.reading`).
     static let stringLTE_Behavior =
-        Behavior(
-            .stringLTE,
-            reads: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y <= x,
-                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringLTE, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y <= x }
 
     static let stringLT_Behavior =
-        Behavior(
-            .stringLT,
-            reads: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y < x,
-                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringLT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringLT, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y < x }
 
     static let stringGT_Behavior =
-        Behavior(
-            .stringGT,
-            reads: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y > x,
-                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGT)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringGT, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y > x }
 
     static let stringGTE_Behavior =
-        Behavior(
-            .stringGTE,
-            reads: [.string, .string],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! StringItem)
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            y >= x,
-                            call: recording(Behavior.reading([.string: 2], producing: .bool, from: [y, x, InstructionItem(.stringGTE)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringGTE, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y >= x }
 
     static let stringReverse_Behavior =
-        Behavior(
-            .stringReverse,
-            takes: [.string],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(x.value.reversed()),
-                            call: recording([x, InstructionItem(.stringReverse)]),
-                            members: recording.pieces(x.origins().reversed()))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringReverse, takes: StringItem.self, gives: StringItem.self) { x in
+            Built(String(x.value.reversed()), members: x.origins().reversed())
+        }
 
     static let stringLength_Behavior =
-        Behavior(
-            .stringLength,
-            reads: [.string],
-            fxn: { a, recording in
-                let (x) = (a[0] as! StringItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            x.value.count,
-                            call: recording(Behavior.reading([.string: 1], producing: .int, from: [x, InstructionItem(.stringLength)])))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringLength, reads: StringItem.self, gives: IntItem.self) { x in x.count }
 
     static let stringFromBool_Behavior =
-        Behavior(
-            .stringFromBool,
-            takes: [.bool],
-            fxn: { a, recording in
-                let (x) = (a[0] as! BoolItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            "\(x.value)",
-                            call: recording([x, InstructionItem(.stringFromBool)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringFromBool, takes: BoolItem.self, gives: StringItem.self) { x in "\(x)" }
 
     static let stringFromChar_Behavior =
-        Behavior(
-            .stringFromChar,
-            takes: [.char],
-            fxn: { a, recording in
-                let (x) = (a[0] as! CharItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            "\(x.value)",
-                            call: recording([x, InstructionItem(.stringFromChar)]),
-                            members: recording.pieces([Origin.item(x)]))
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringFromChar, takes: CharItem.self, gives: StringItem.self) { x in
+            Built("\(x.value)", members: [Origin.item(x)])
+        }
 
     static let stringFromDouble_Behavior =
-        Behavior(
-            .stringFromDouble,
-            takes: [.double],
-            fxn: { a, recording in
-                let (x) = (a[0] as! DoubleItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            "\(x.value)",
-                            call: recording([x, InstructionItem(.stringFromDouble)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringFromDouble, takes: DoubleItem.self, gives: StringItem.self) { x in "\(x)" }
 
     static let stringFromInt_Behavior =
-        Behavior(
-            .stringFromInt,
-            takes: [.int],
-            fxn: { a, recording in
-                let (x) = (a[0] as! IntItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            "\(x.value)",
-                            call: recording([x, InstructionItem(.stringFromInt)]))
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringFromInt, takes: IntItem.self, gives: StringItem.self) { x in "\(x)" }
 
     /// The char at the index, clamped to the string (`Position.item`); an error
     /// for an empty string.
     static let stringNth_Behavior =
-        Behavior(
-            .stringNth,
-            takes: [.string, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                if x.value.isEmpty {
-                    return [Behavior.refusal(
-                        "Empty string in .stringNth",
-                        kind: .emptyCollection,
-                        call: recording([x, y, InstructionItem(.stringNth)]))]
-                } else {
-                    let position = Position.item(y.value, count: x.value.count)
-                    let idx = x.value.index(
-                        x.value.startIndex,
-                        offsetBy: position
-                    )
-                    let c = x.value[idx]
-                    return [
-                        Router(
-                            .char,
-                            x.traced(at: position, c, recording) ?? CharItem(
-                                c,
-                                // `[string, index]`, matching the four `vecXNth`
-                                // siblings. This used to be `[index, string]` —
-                                // harmless in itself, since the two arguments come
-                                // off different stacks and either order re-runs
-                                // correctly, but the two families disagreeing meant
-                                // an iterator walking a string could not record the
-                                // same way one walking a vector did. The crux then
-                                // stopped being a fixed point: re-running it
-                                // produced a differently-worded crux for the same
-                                // value. The fuzzer found it; see "Design
-                                // Principles.md" on argument order being free only
-                                // *across* stacks.
-                                call: recording([x, y, InstructionItem(.stringNth)]))
-                        )
-                    ]
-                }
+        // Written order `[string, index]`, matching the four `vecXNth` siblings.
+        // This used to be `[index, string]` — harmless in itself, since the two
+        // arguments come off different stacks and either order re-runs correctly,
+        // but the two families disagreeing meant an iterator walking a string
+        // could not record the same way one walking a vector did. The crux then
+        // stopped being a fixed point: re-running it produced a differently-worded
+        // crux for the same value. The fuzzer found it; see "Design Principles.md"
+        // on argument order being free only *across* stacks.
+        Behavior.extracting(.stringNth, takes: StringItem.self, IntItem.self) { x, y throws(Refusal) in
+            guard !x.value.isEmpty else {
+                throw Refusal("Empty string in .stringNth", kind: .emptyCollection)
             }
-        )
+            return Extraction(x, at: Position.item(y.value, count: x.value.count))
+        }
 
     /// Pushes every character of a string to `.string` as a one-character
     /// *string* — not a char, which is the whole of the difference from
@@ -491,220 +164,79 @@ nonisolated extension Interpreter {
             }
         )
 
+    // Written order: the char (recorded first), then the string.
     static let stringOccurrencesOfChar_Behavior =
-        Behavior(
-            .stringOccurrencesOfChar,
-            reads: [.string, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .int,
-                        IntItem(
-                            x.value.filter({ $0 == y.value }).count,
-                            call: recording(Behavior.reading(
-                                [.string: 1, .char: 1],
-                                producing: .int,
-                                from: [y, x, InstructionItem(.stringOccurrencesOfChar)]
-                            )),
-                        )
-                    )
-                ]
-            }
-        )
+        Behavior.operation(.stringOccurrencesOfChar, reads: CharItem.self, StringItem.self, gives: IntItem.self) { y, x in
+            x.filter({ $0 == y }).count
+        }
 
+    // Written order: the char (recorded first), then the string.
     static let stringRemoveChar_Behavior =
-        Behavior(
-            .stringRemoveChar,
-            takes: [.string, .char],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! CharItem)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            x.value.filter({ $0 != y.value }),
-                            call: recording([y, x, InstructionItem(.stringRemoveChar)]),
-                            members: recording.pieces(
-                                zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1)),
-                        )
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringRemoveChar, takes: CharItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            Built(x.value.filter({ $0 != y.value }),
+                  members: zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1))
+        }
 
     // ( "0123" '2' '.' .stringReplaceChar ) -> "01.3"
     //
+    // Written order: the target char (deeper), the replacement char, then the string.
     static let stringReplaceChar_Behavior =
-        Behavior(
-            .stringReplaceChar,
-            takes: [.string, .char, .char],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,
-                    a[1] as! CharItem,
-                    a[2] as! CharItem
-                )
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            x.value.replacing(
-                                String(z.value),
-                                with: String(y.value)
-                            ),
-                            call: recording([
-                                z, y, x, InstructionItem(.stringReplaceChar),
-                            ]),
-                            members: recording.pieces(
-                                zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 }),
-                        )
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringReplaceChar, takes: CharItem.self, CharItem.self, StringItem.self,
+                            gives: StringItem.self) { z, y, x in
+            Built(x.value.replacing(String(z.value), with: String(y.value)),
+                  members: zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 })
+        }
 
     static let stringReplaceFirstChar_Behavior =
-        Behavior(
-            .stringReplaceFirstChar,
-            takes: [.string, .char, .char],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,
-                    a[1] as! CharItem,
-                    a[2] as! CharItem
-                )
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            x.value.replacing(
-                                String(z.value),
-                                with: String(y.value),
-                                maxReplacements: 1
-                            ),
-                            call: recording([
-                                z, y, x,
-                                InstructionItem(.stringReplaceFirstChar),
-                            ]),
-                            members: recording.pieces(replacingFirstSlot(of: z.value, in: x, with: y)),
-                        )
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringReplaceFirstChar, takes: CharItem.self, CharItem.self, StringItem.self,
+                            gives: StringItem.self) { z, y, x in
+            Built(x.value.replacing(String(z.value), with: String(y.value), maxReplacements: 1),
+                  members: replacingFirstSlot(of: z.value, in: x, with: y))
+        }
 
     // ("foo" "o" "g" .stringReplace) -> "fgg"
     //
     static let stringReplace_Behavior =
-        Behavior(
-            .stringReplace,
-            takes: [.string, .string, .string],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,  // replacement
-                    a[1] as! StringItem,  // target
-                    a[2] as! StringItem
-                )  // in this context
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            z.value.replacing(y.value, with: x.value),
-                            call: recording([z, y, x, InstructionItem(.stringReplace)]),
-                            members: recording.pieces(replacingSubstringSlots(z, y, x, firstOnly: false)),
-                        )
-                    )
-                ]
-            }
-        )
+        // z: in this context (deepest), y: target, x: replacement (top).
+        Behavior.assembling(.stringReplace, takes: StringItem.self, StringItem.self, StringItem.self,
+                            gives: StringItem.self) { z, y, x in
+            Built(z.value.replacing(y.value, with: x.value),
+                  members: replacingSubstringSlots(z, y, x, firstOnly: false))
+        }
 
     static let stringReplaceFirst_Behavior =
-        Behavior(
-            .stringReplaceFirst,
-            takes: [.string, .string, .string],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,  // replacement
-                    a[1] as! StringItem,  // target
-                    a[2] as! StringItem
-                )  // in this context
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            z.value.replacing(
-                                y.value,
-                                with: x.value,
-                                maxReplacements: 1
-                            ),
-                            call: recording([z, y, x, InstructionItem(.stringReplaceFirst)]),
-                            members: recording.pieces(replacingSubstringSlots(z, y, x, firstOnly: true)),
-                        )
-                    )
-                ]
-            }
-        )
+        // z: in this context (deepest), y: target, x: replacement (top).
+        Behavior.assembling(.stringReplaceFirst, takes: StringItem.self, StringItem.self, StringItem.self,
+                            gives: StringItem.self) { z, y, x in
+            Built(z.value.replacing(y.value, with: x.value, maxReplacements: 1),
+                  members: replacingSubstringSlots(z, y, x, firstOnly: true))
+        }
 
     static let stringRest_Behavior =
-        Behavior(
-            .stringRest,
-            takes: [.string],
-            fxn: { a, recording in
-                var (x) = (a[0] as! StringItem)
-                let result = String(x.value.dropFirst(1))
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            result,
-                            call: recording([x, InstructionItem(.stringRest)]),
-                            members: recording.pieces(Array(x.origins().dropFirst(1))),
-                        )
-                    )
-                ]
-            }
-        )
+        Behavior.assembling(.stringRest, takes: StringItem.self, gives: StringItem.self) { x in
+            Built(String(x.value.dropFirst(1)), members: Array(x.origins().dropFirst(1)))
+        }
 
     /// Replaces the char at the index, clamped to the string (`Position.item`).
     /// An empty string has no char to replace, so it is an error.
     static let stringSetChar_Behavior =
-        Behavior(
-            .stringSetChar,
-            takes: [.string, .int, .char],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,
-                    a[1] as! IntItem,
-                    a[2] as! CharItem
-                )
-                guard !x.value.isEmpty else {
-                    return [Behavior.refusal(
-                        "Empty string in .stringSetChar",
-                        kind: .emptyCollection,
-                        call: recording([z, y, x, InstructionItem(.stringSetChar)]))]
-                }
-                var result = x.value
-                let position = Position.item(y.value, count: result.count)
-                let idx = result.index(result.startIndex, offsetBy: position)
-                result.replaceSubrange(idx...idx, with: String(z.value))
-                func members() -> [Origin] {
-                    var slots = x.origins()
-                    slots[position] = Origin.item(z)
-                    return slots
-                }
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            result,
-                            call: recording([z, y, x, InstructionItem(.stringSetChar)]),
-                            members: recording.pieces(members()))
-                    )
-                ]
+        // Written order: the char (recorded first), the index, then the string.
+        Behavior.assembling(.stringSetChar, takes: CharItem.self, IntItem.self, StringItem.self,
+                            gives: StringItem.self) { z, y, x throws(Refusal) in
+            guard !x.value.isEmpty else {
+                throw Refusal("Empty string in .stringSetChar", kind: .emptyCollection)
             }
-        )
+            var result = x.value
+            let position = Position.item(y.value, count: result.count)
+            let idx = result.index(result.startIndex, offsetBy: position)
+            result.replaceSubrange(idx...idx, with: String(z.value))
+            func members() -> [Origin] {
+                var slots = x.origins()
+                slots[position] = Origin.item(z)
+                return slots
+            }
+            return Built(result, members: members())
+        }
 
     /// Pushes every whitespace-delimited word of a string to `.string`, one per
     /// pass, front to back. A string with no words produces nothing.
@@ -738,33 +270,17 @@ nonisolated extension Interpreter {
     /// Added for `stringSplit`'s iterator to have something honest to record, but
     /// useful in its own right.
     static let stringNthWord_Behavior =
-        Behavior(
-            .stringNthWord,
-            takes: [.string, .int],
-            tags: [.fallible],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                let words = x.value.split { $0.isWhitespace }
-                guard !words.isEmpty else {
-                    return [Behavior.refusal(
-                        "No words in .stringNthWord",
-                        kind: .emptyCollection,
-                        call: recording([x, y, InstructionItem(.stringNthWord)]))]
-                }
-                let idx = Position.item(y.value, count: words.count)
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(words[idx]),
-                            // `[string, index]`, matching `stringNth` and the four
-                            // `vecXNth` siblings.
-                            call: recording([x, y, InstructionItem(.stringNthWord)]),
-                            members: recording.pieces(x.origins(of: words[idx])))
-                    )
-                ]
+        // Written order `[string, index]`, matching `stringNth` and the four
+        // `vecXNth` siblings.
+        Behavior.assembling(.stringNthWord, takes: StringItem.self, IntItem.self,
+                            gives: StringItem.self) { x, y throws(Refusal) in
+            let words = x.value.split { $0.isWhitespace }
+            guard !words.isEmpty else {
+                throw Refusal("No words in .stringNthWord", kind: .emptyCollection)
             }
-        )
+            let idx = Position.item(y.value, count: words.count)
+            return Built(String(words[idx]), members: x.origins(of: words[idx]))
+        }
 
     /// Snips a string into two pieces at the indexed position, pushing **both** to
     /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
@@ -779,60 +295,31 @@ nonisolated extension Interpreter {
     /// Provenance is law 5 (`Behavior.selecting`): the deeper piece records
     /// `x y .stringCut 1 .stringPopItems`, the top piece just the cut.
     static let stringCut_Behavior =
-        Behavior(
-            .stringCut,
-            takes: [.string, .int],
-            fxn: { a, recording in
-                let (x, y) = (a[0] as! StringItem, a[1] as! IntItem)
-                let idx = Position.gap(y.value, count: x.value.count)
-                let cut = x.value.index(x.value.startIndex, offsetBy: idx)
+        Behavior.splitting(.stringCut, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
+            let idx = Position.gap(y.value, count: x.value.count)
+            let cut = x.value.index(x.value.startIndex, offsetBy: idx)
+            return [
+                Built(String(x.value[..<cut]), members: Array(x.origins().prefix(idx))),
+                Built(String(x.value[cut...]), members: Array(x.origins().dropFirst(idx))),
+            ]
+        }
 
-                let source: [any Item] = [x, y, InstructionItem(.stringCut)]
-                return [
-                    Router(.string, StringItem(
-                        String(x.value[..<cut]),
-                        call: recording(Behavior.selecting(0, of: 2, on: .string, from: source)),
-                        members: recording.pieces(Array(x.origins().prefix(idx))))),
-                    Router(.string, StringItem(
-                        String(x.value[cut...]),
-                        call: recording(Behavior.selecting(1, of: 2, on: .string, from: source)),
-                        members: recording.pieces(Array(x.origins().dropFirst(idx))))),
-                ]
-            }
-        )
-
+    // Written order: the string, then the two ints deepest first (z, then y).
     static let stringSubstring_Behavior =
-        Behavior(
-            .stringSubstring,
-            takes: [.string, .int, .int],
-            fxn: { a, recording in
-                let (x, y, z) = (
-                    a[0] as! StringItem,
-                    a[1] as! IntItem,
-                    a[2] as! IntItem
-                )
-
-                var result = x.value
-                var slice = Substring(result)
-                if result.count > 0 {
-                    let range = result.count - 1
-                    let lhs = min(range, max(0, z.value))
-                    let rhs = min(range, max(0, z.value, y.value))
-                    let start = result.index(result.startIndex, offsetBy: lhs)
-                    let end = result.index(result.startIndex, offsetBy: rhs)
-                    slice = result[start...end]
-                }
-                return [
-                    Router(
-                        .string,
-                        StringItem(
-                            String(slice),
-                            call: recording([x, z, y, InstructionItem(.stringSubstring)]),
-                            members: recording.pieces(x.origins(of: slice)))
-                    )
-                ]
+        Behavior.assembling(.stringSubstring, takes: StringItem.self, IntItem.self, IntItem.self,
+                            gives: StringItem.self) { x, z, y in
+            let result = x.value
+            var slice = Substring(result)
+            if result.count > 0 {
+                let range = result.count - 1
+                let lhs = min(range, max(0, z.value))
+                let rhs = min(range, max(0, z.value, y.value))
+                let start = result.index(result.startIndex, offsetBy: lhs)
+                let end = result.index(result.startIndex, offsetBy: rhs)
+                slice = result[start...end]
             }
-        )
+            return Built(String(slice), members: x.origins(of: slice))
+        }
 
     // ( "abcd" .stringIterate MOUSE )
     //

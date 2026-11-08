@@ -103,4 +103,63 @@ struct TypedOperationTests {
         #expect(stackString(redo, .bool) == "[ true ]")
         #expect(stackString(redo, .int) == "[ ]")
     }
+
+
+    // MARK: - The item-level forms
+
+    /// `assembling`: the body sees the items, so the result's elements record where
+    /// they came from — here, each from its position in one of the two inputs.
+    @Test func `assembling records the origins the body names`() {
+        let join = Behavior.assembling(.vecIntConcat, takes: VecIntItem.self, VecIntItem.self,
+                                       gives: VecIntItem.self) { y, x in
+            Built(y.value + x.value, members: y.origins(0) + x.origins(1))
+        }
+        #expect(join.gives == .vecInt)
+        let inty = Interpreter.recordingProvenance()
+        inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([3]), VecIntItem([1, 2])] as [any Item])
+        join.act(on: inty)
+        let result = topItem(inty, .vecInt) as! VecIntItem
+        #expect(result.value == [1, 2, 3])
+        #expect(callString(result) == "( [1, 2] [3] .vecIntConcat )")
+        #expect(result.members?.count == 3, "one origin per element")
+    }
+
+    /// `extracting`: an element with no history of its own is built with the
+    /// instruction's `call`; an empty container refuses with that same `call`.
+    @Test func `extracting builds an untraced element and refuses an empty container`() {
+        let first = Behavior.extracting(.vecIntFirst, takes: VecIntItem.self) { v throws(Refusal) in
+            guard !v.value.isEmpty else { throw Refusal("Empty vector in .vecIntFirst", kind: .emptyCollection) }
+            return Extraction(v, at: 0)
+        }
+        #expect(first.gives == .int)
+        #expect(first.tags.contains(.fallible))
+
+        let inty = Interpreter.recordingProvenance()
+        inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem([7, 8]), VecIntItem([])] as [any Item])
+        first.act(on: inty)
+        #expect(stackString(inty, .int) == "[ 7 ]")
+        #expect(callString(topItem(inty, .int)) == "( [7, 8] .vecIntFirst )")
+
+        first.act(on: inty)
+        #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
+        #expect(callString(topItem(inty, .error)) == "( [] .vecIntFirst )")
+    }
+
+    /// `splitting`: results in produced order, the first deepest, each recording
+    /// the selecting crux that surfaces it alone (provenance law 5).
+    @Test func `splitting gives each piece its selecting crux`() {
+        let halve = Behavior.splitting(.vecIntCut, takes: VecIntItem.self, IntItem.self,
+                                       gives: VecIntItem.self) { v, n in
+            let at = Position.gap(n.value, count: v.value.count)
+            return [Built(Array(v.value[..<at]), members: Array(v.origins()[..<at])),
+                    Built(Array(v.value[at...]), members: Array(v.origins()[at...]))]
+        }
+        let inty = Interpreter.recordingProvenance()
+        inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3]))
+        inty.stacks[.int]!.prepend(IntItem(1))
+        halve.act(on: inty)
+        #expect(stackString(inty, .vecInt) == "[ [2, 3] [1] ]")
+        #expect(callString(inty.stacks[.vecInt]![1]) == "( [1, 2, 3] 1 .vecIntCut 1 .vecIntPopItems )")
+        #expect(callString(inty.stacks[.vecInt]![0]) == "( [1, 2, 3] 1 .vecIntCut .vecIntSwap .vecIntPop )")
+    }
 }

@@ -11,53 +11,9 @@
 //  program writes them, and the function of their values.
 //
 
-/// **Where each argument of a typed operation sits**, worked out once from the
-/// argument stacks listed in written order.
-///
-/// The rule reproduces how the hand-written operations always recorded `call`
-/// (provenance law 3): arguments grouped by stack in order of first appearance,
-/// and within a stack deepest first — `y x .intAdd`, `"abc" 2 .stringNth`,
-/// `[1, 2] 9 0 .vecIntSet`. It also gives the requirements: each stack's items
-/// claimed top first, the stacks in the same order.
-nonisolated struct WrittenOrder: Sendable {
-    /// Each stack and how many arguments it supplies, in order of first appearance.
-    let groups: [(stack: PushStack, count: Int)]
-    /// For each argument in written order, its index in the gathered arguments
-    /// (which arrive in requirement order: each stack's top first).
-    let positions: [Int]
-
-    init(_ stacks: [PushStack]) {
-        var groups: [(stack: PushStack, count: Int)] = []
-        for stack in stacks {
-            if let slot = groups.firstIndex(where: { $0.stack == stack }) {
-                groups[slot].count += 1
-            } else {
-                groups.append((stack, 1))
-            }
-        }
-        var offset: [PushStack: Int] = [:]
-        var running = 0
-        for group in groups {
-            offset[group.stack] = running
-            running += group.count
-        }
-        var seen: [PushStack: Int] = [:]
-        var positions: [Int] = []
-        for stack in stacks {
-            let k = seen[stack, default: 0]
-            seen[stack] = k + 1
-            let count = groups.first { $0.stack == stack }!.count
-            // Written k-th, so it is (count − 1 − k) from the top.
-            positions.append(offset[stack]! + count - 1 - k)
-        }
-        self.groups = groups
-        self.positions = positions
-    }
-
-}
-
-
 nonisolated extension Behavior {
+
+    // MARK: - Values in, a value out
 
     /// An operation that **consumes** its arguments. `takes` lists the argument
     /// types in written order; `body` receives their values in that order and
@@ -69,8 +25,9 @@ nonisolated extension Behavior {
         tags: Set<InstructionTag> = [],
         _ body: @escaping @Sendable (repeat (each A).Value) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each takes), reading: false, gives: gives, tags: tags) { args, positions in
-            body(repeat each values(args, positions, repeat each takes))
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+            let value = body(repeat each values(args, call.positions, repeat each takes))
+            return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
     }
 
@@ -83,9 +40,10 @@ nonisolated extension Behavior {
         tags: Set<InstructionTag> = [],
         _ body: @escaping @Sendable (repeat (each A).Value) throws(Refusal) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each takes), reading: false, gives: gives,
-              tags: tags.union([.fallible])) { args, positions throws(Refusal) in
-            try body(repeat each values(args, positions, repeat each takes))
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack,
+              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let value = try body(repeat each values(args, call.positions, repeat each takes))
+            return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
     }
 
@@ -98,8 +56,9 @@ nonisolated extension Behavior {
         tags: Set<InstructionTag> = [],
         _ body: @escaping @Sendable (repeat (each A).Value) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each reads), reading: true, gives: gives, tags: tags) { args, positions in
-            body(repeat each values(args, positions, repeat each reads))
+        typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack, tags: tags) { args, call, recording in
+            let value = body(repeat each values(args, call.positions, repeat each reads))
+            return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
     }
 
@@ -111,9 +70,96 @@ nonisolated extension Behavior {
         tags: Set<InstructionTag> = [],
         _ body: @escaping @Sendable (repeat (each A).Value) throws(Refusal) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each reads), reading: true, gives: gives,
-              tags: tags.union([.fallible])) { args, positions throws(Refusal) in
-            try body(repeat each values(args, positions, repeat each reads))
+        typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack,
+              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let value = try body(repeat each values(args, call.positions, repeat each reads))
+            return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
+        }
+    }
+
+
+    // MARK: - Items in, a container out
+
+    /// Builds a **container from its arguments' elements**. `body` receives the
+    /// arguments as typed items, so it can read their element origins, and returns
+    /// the new value with the origin of each element (`Built`).
+    static func assembling<each A: ValueItem, R: MemberItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) -> Built<R.Value>
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+            let built = body(repeat each items(args, call.positions, repeat each takes))
+            return [Router(R.pushStack, R(built.value,
+                                          call: recording(call.recorded(producing: R.pushStack)),
+                                          members: recording.pieces(built.members())))]
+        }
+    }
+
+    /// Builds a container and **can refuse**. Tagged `.fallible`.
+    static func assembling<each A: ValueItem, R: MemberItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) throws(Refusal) -> Built<R.Value>
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack,
+              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let built = try body(repeat each items(args, call.positions, repeat each takes))
+            return [Router(R.pushStack, R(built.value,
+                                          call: recording(call.recorded(producing: R.pushStack)),
+                                          members: recording.pieces(built.members())))]
+        }
+    }
+
+
+    // MARK: - Items in, an element out
+
+    /// **Takes one element out of a container.** `body` names it (`Extraction`) or
+    /// refuses (an empty container has no element). The result is the element that
+    /// went in, if it kept a history (`Containment`); otherwise it is built with
+    /// this instruction's own `call`. Tagged `.fallible`.
+    static func extracting<each A: ValueItem, C: TracingItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) throws(Refusal) -> Extraction<C>
+    ) -> Behavior {
+        let gives = C.ElementItem.pushStack
+        return typed(label, stacks: stacks(repeat each takes), reading: false, gives: gives,
+                     tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let extraction = try body(repeat each items(args, call.positions, repeat each takes))
+            let container = extraction.container, index = extraction.index
+            let element = container.tracedElement(at: index, recording)
+                ?? C.ElementItem(container.element(at: index), call: recording(call.recorded(producing: gives)))
+            return [Router(gives, element)]
+        }
+    }
+
+
+    // MARK: - Items in, several containers out
+
+    /// Gives **several results on one stack**, produced in order, so the first ends
+    /// deepest (`cut`). Each records the selecting crux (provenance law 5): the
+    /// instruction, then the clean-up that surfaces that one result.
+    static func splitting<each A: ValueItem, R: MemberItem>(
+        _ label: PushInstruction,
+        takes: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) -> [Built<R.Value>]
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+            let parts = body(repeat each items(args, call.positions, repeat each takes))
+            return parts.enumerated().map { produced, part in
+                Router(R.pushStack, R(part.value,
+                                      call: recording(Behavior.selecting(produced, of: parts.count,
+                                                                         on: R.pushStack, from: call.written)),
+                                      members: recording.pieces(part.members())))
+            }
         }
     }
 
@@ -141,15 +187,29 @@ nonisolated extension Behavior {
         return (repeat next(each types))
     }
 
-    /// Builds the Behavior: requirements and `call` from the written order, the
-    /// result routed to `R`'s stack, a `Refusal` routed to `.error`.
-    private static func typed<R: ValueItem>(
+    /// The arguments themselves in written order, cast to their declared types,
+    /// for the forms that need more than values (element origins, history).
+    private static func items<each A: ValueItem>(
+        _ args: [any Item], _ positions: [Int], _ types: repeat (each A).Type
+    ) -> (repeat each A) {
+        var i = 0
+        func next<T: ValueItem>(_ type: T.Type) -> T {
+            defer { i += 1 }
+            return args[positions[i]] as! T
+        }
+        return (repeat next(each types))
+    }
+
+    /// Builds the Behavior: requirements from the written order, results from
+    /// `produce`, a `Refusal` routed to `.error` with the `call` a result would
+    /// have recorded.
+    private static func typed(
         _ label: PushInstruction,
         stacks: [PushStack],
         reading: Bool,
-        gives: R.Type,
+        gives: PushStack,
         tags: Set<InstructionTag>,
-        compute: @escaping @Sendable ([any Item], [Int]) throws(Refusal) -> R.Value
+        produce: @escaping @Sendable ([any Item], WrittenCall, ProvenanceRecording) throws(Refusal) -> [Router]
     ) -> Behavior {
         let order = WrittenOrder(stacks)
         let requirements = order.groups.flatMap { group in
@@ -157,27 +217,21 @@ nonisolated extension Behavior {
                   count: group.count)
         }
         let positions = order.positions
-        let readCounts = order.groups
-            .map { (key: $0.stack, value: $0.count) }
-            .sorted { $0.key.rawValue < $1.key.rawValue }
+        let readCounts = reading
+            ? order.groups.map { (key: $0.stack, value: $0.count) }.sorted { $0.key.rawValue < $1.key.rawValue }
+            : nil
         let instruction = InstructionItem(label)
 
         let fxn: @Sendable ([any Item], ProvenanceRecording) -> [Router] = { args, recording in
-            // The recorded `call`: the arguments as written and the instruction,
-            // plus, for a query, the clean-up of what it read. Built only when
-            // recording (`recording` takes it as an autoclosure).
-            func call(producing stack: PushStack) -> [any Item] {
-                let written = positions.map { args[$0] } + [instruction]
-                return reading ? Behavior.reading(sorted: readCounts, producing: stack, from: written) : written
-            }
+            let call = WrittenCall(arguments: args, positions: positions, instruction: instruction, readCounts: readCounts)
             do throws(Refusal) {
-                let value = try compute(args, positions)
-                return [Router(R.pushStack, R(value, call: recording(call(producing: R.pushStack))))]
+                return try produce(args, call, recording)
             } catch {
-                return [Behavior.refusal(error.message, kind: error.kind, call: recording(call(producing: .error)))]
+                return [Behavior.refusal(error.message, kind: error.kind,
+                                         call: recording(call.recorded(producing: .error)))]
             }
         }
         return Behavior(label, requires: requirements, tags: tags,
-                        behaviorClass: .operation, body: .values(fxn), gives: R.pushStack)
+                        behaviorClass: .operation, body: .values(fxn), gives: gives)
     }
 }
