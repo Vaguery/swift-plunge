@@ -285,6 +285,11 @@ A representation-neutral derivation graph, for other GP representations, is a la
     output is well defined, especially `.code` and `.exec` results, where several types are possible.
     (The reading/writing plans each Behavior already declares, `takes`/`reads`/`alsoNeeds` and its
     Routers, are where it would start.)
+    **SURVEYED 2026-11-08** → *Behavior input-output map.md* (`BehaviorIOSurvey`, off by default): 488 of
+    607 instructions have one fixed output signature; the size limits refused 24 of 82,115 results and never
+    redirect one (a separate filter); body errors are domain conditions (28 of 31 replace the result).
+    Not yet well formed: `.exec` continuations, `.iterator` as one type, and the shape effects of the
+    direct-write combinators. A type-level map is a hypergraph with cycles; backward chaining builds the DAG.
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
