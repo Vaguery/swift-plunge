@@ -69,17 +69,17 @@ nonisolated extension Interpreter {
     // Comparisons are non-destructive queries: both operands survive, and the
     // result's crux clears them away (`Behavior.reading`).
     //
-    // `>=` and `<=` are written as negated `<` because that is what they were when
-    // they compared `DoubleItem`s (Comparable's defaults): with a NaN operand both
-    // are true, where Double's own `>=`/`<=` would be false.
+    // IEEE semantics: every comparison with a NaN operand is false. (`>=` and `<=`
+    // used to compare `DoubleItem`s, whose `Comparable` defaults made them `!(y < x)`
+    // and `!(x < y)`, so a NaN made both true. Fixed 2026-11-08.)
     static let doubleGT_Behavior =
         Behavior.operation(.doubleGT, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y > x }
 
     static let doubleGTE_Behavior =
-        Behavior.operation(.doubleGTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in !(y < x) }
+        Behavior.operation(.doubleGTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y >= x }
 
     static let doubleLTE_Behavior =
-        Behavior.operation(.doubleLTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in !(x < y) }
+        Behavior.operation(.doubleLTE, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y <= x }
 
     static let doubleLT_Behavior =
         Behavior.operation(.doubleLT, reads: DoubleItem.self, DoubleItem.self, gives: BoolItem.self) { y, x in y < x }

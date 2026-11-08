@@ -1364,14 +1364,17 @@ nonisolated extension Interpreter {
     static let vecDoubleReadStack_Behavior =
         readStackBehavior(.vecDoubleReadStack, readItemsInstruction: .vecDoubleReadItems, making: VecDoubleItem.self)
 
+    // IEEE semantics, as for the scalars: a NaN element makes `<=` and `>=` false
+    // where it decides the order. They are "less (greater) than, or equal", not
+    // "not greater (less) than", which a NaN made true both ways (fixed 2026-11-08).
     static let vecDoubleLT_Behavior =
         comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
     static let vecDoubleLTE_Behavior =
-        comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { !$1.lexicographicallyPrecedes($0) }
+        comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) || $0 == $1 }
     static let vecDoubleGT_Behavior =
         comparisonBehavior(.vecDoubleGT, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) }
     static let vecDoubleGTE_Behavior =
-        comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { !$0.lexicographicallyPrecedes($1) }
+        comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) || $0 == $1 }
 
     // ( [1,1,2,3] .vecDoublePushAll)
     //

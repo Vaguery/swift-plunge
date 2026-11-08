@@ -333,8 +333,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
     #41). Converted: all int, double, bool and char operations (64), with identical messages and cruxes;
     release throughput unchanged. Not yet: string, vector, code and iterator operations, many of which
     return existing items (`traced`), carry element `members`, or give several results — the constructor
-    would need those forms first. Open: `doubleGTE`/`doubleLTE` are true when an operand is NaN (they
-    inherit `!(y < x)` from `Comparable`); kept as it was, flagged for a ruling.
+    would need those forms first. **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
+    comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
+    "not less/greater than", so a NaN made them true: a silent bug.
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 
