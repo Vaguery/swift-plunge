@@ -257,7 +257,8 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
 
         inty.step()   // third and last pass: element false, and the loop is done
-        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo ( .intInc ) ]")
         #expect(stackString(inty, .bool) == "[ false true false ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
@@ -299,7 +300,8 @@ struct VecBoolBehaviorTests {
         inty.step()
         #expect(stackString(inty, .bool) == "[ false ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ( .boolNot ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 

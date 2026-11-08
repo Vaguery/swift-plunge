@@ -78,7 +78,16 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // chain there crashes outright (2,000 does not). 1,000 leaves room for frames
     // larger than that measurement's. Raise it only for runs on big-stack threads.
     public var maxCallDepth    : Int = 1_000
-    // DERIVED from `stepLimit`, and NOT a preference. The most passes any single
+    // RETIRED as a budget (2026-11-07, Roadmap #24): off by default (`Int.max`),
+    // kept as an opt-in preference. Its reason was the crux: a loop cut off by
+    // `stepLimit` left a history that could not be read back, so loops were held
+    // to a length that finishes. A crux now folds a loop's chain into a counted
+    // loop over its seed (`CruxCompression.folded`) and records the passes that
+    // actually ran, so a loop may run until `stepLimit` and keep its history.
+    // Set it to hold loops to a human-sized number of passes anyway. What follows
+    // is the case as it was made, and it still describes what setting it does.
+    //
+    // Was DERIVED from `stepLimit`, and NOT a preference. The most passes any single
     // COUNTED loop may promise — the last unbounded dimension there was:
     // `stepLimit` bounds the work a loop does, but nothing bounded what one loop
     // *claims* it will do — so `0 999999
@@ -104,7 +113,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // and NOTE those must stay below `stepLimit`, or the largest legal collection
     // cannot be walked to completion. See "Notes on Push/Keeping loops
     // human-sized.md" and Design Principles §12.
-    public var maxIterations   : Int = 100
+    public var maxIterations   : Int = .max
     // When a stack fills faster than the size caps would catch, watch for the
     // signature of a runaway loop (a stack piling repeats or cycling a short
     // period, *and* a looping instruction pending on `.exec`) and stop the run
@@ -427,21 +436,28 @@ nonisolated final class Interpreter {
     /// which is acceptable: those behaviors (`deepDup`, `shove`) are
     /// provenance-transparent under law 1, so they cannot grow a `call`.
     func elidingOverBudgetProvenance(_ item: any Item) -> any Item {
-        if item.callDepth <= config.maxCallDepth {
-            guard item.callWeight > config.maxCallWeight else { return item }
-            // The tree is over budget, but the crux builds each shared node once
-            // (`CruxSharing`), so it can be far shorter. Measured only now, and at
-            // a cost of at most the budget.
-            if let program = CruxSharing.crux(of: item, limit: config.maxCallWeight) {
-                // Kept, and weighed as what it is: a crux this long. Its
-                // descendants then sum real lengths, not the tree's, so the walk
-                // is repeated only near the real budget.
-                return (item as? any HoldsCall)?.remeasured(weight: program.count) ?? item
-            }
-        }
+        if let kept = withinBudget(item) { return kept }
+        // A loop's chain, folded into a counted loop over its seed
+        // (`CruxCompression.folded`), may fit where the chain did not.
+        if let folded = CruxCompression.folded(item), let kept = withinBudget(folded) { return kept }
         var lightened = item
         lightened.call = [StandInItem(standingInFor: item, source: Self.producer(in: item.call), reason: .elided)]
         return lightened
+    }
+
+    /// `item` if its history is within both budgets, weighed by its crux if
+    /// only its tree was over; nil if it is over either.
+    func withinBudget(_ item: any Item) -> (any Item)? {
+        guard item.callDepth <= config.maxCallDepth else { return nil }
+        guard item.callWeight > config.maxCallWeight else { return item }
+        // The tree is over budget, but the crux builds each shared node once
+        // (`CruxSharing`), so it can be far shorter. Measured only now, and at
+        // a cost of at most the budget.
+        guard let program = CruxSharing.crux(of: item, limit: config.maxCallWeight) else { return nil }
+        // Kept, and weighed as what it is: a crux this long. Its descendants
+        // then sum real lengths, not the tree's, so the walk is repeated only
+        // near the real budget.
+        return (item as? any HoldsCall)?.remeasured(weight: program.count) ?? item
     }
 
     /// The instruction that produced an item, read off its `call`: the last

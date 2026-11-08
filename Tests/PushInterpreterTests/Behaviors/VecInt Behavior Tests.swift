@@ -263,7 +263,8 @@ struct VecIntBehaviorTests {
 
         inty.step()   // second and last pass: element 55, and the loop is done
         #expect(stackString(inty, .int) == "[ 55 4 ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ( .boolNot ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
@@ -306,7 +307,8 @@ struct VecIntBehaviorTests {
         inty.step()
         #expect(stackString(inty, .int) == "[ 88 ]")
         #expect(stackString(inty, .vecInt) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ( .boolNot ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 

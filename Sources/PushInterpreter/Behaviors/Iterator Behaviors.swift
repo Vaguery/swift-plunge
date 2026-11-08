@@ -112,6 +112,19 @@ nonisolated extension Interpreter {
         iterator.body.map { [Router(.code, $0)] } ?? []
     }
 
+    /// The last pass, `payload`, and then the farewell: the body goes onto `.exec`
+    /// *under* the pass, and lands on `.code` (a block met on `.exec` rests there)
+    /// once the pass has run. **After, not with.** Handed straight to `.code`, it
+    /// sat on top of `.code` all through the last pass, so a body that reads
+    /// `.code` read its own loop's body on that pass and no other: `B` run `K`
+    /// times by a loop was not `B` written `K` times. Found 2026-11-07 when a
+    /// folded crux (`CruxCompression.folded`) replayed a `.codeNthPoint` chain one
+    /// level short.
+    static func iteratorFarewell(_ iterator: IteratorItem, after payload: [Router]) -> [Router] {
+        guard let body = iterator.body else { return payload }
+        return [Router(.exec, body)] + payload
+    }
+
     /// One pass, by hand — no continuation. A program driving a loop itself calls
     /// this as often as it wants a pass.
     static let iteratorStep_Behavior =
@@ -126,7 +139,7 @@ nonisolated extension Interpreter {
                 if iterator.hasNextPass {
                     results.append(Router(.iterator, iterator.stepped(recording: recording)))
                 } else {
-                    results.append(contentsOf: iteratorFarewell(iterator))
+                    results = iteratorFarewell(iterator, after: results)
                 }
                 return results
             }
@@ -158,7 +171,7 @@ nonisolated extension Interpreter {
 
                 let payload = iteratorPass(iterator, recording: interpreter.recording)
                 guard iterator.hasNextPass else {
-                    return payload + iteratorFarewell(iterator)
+                    return iteratorFarewell(iterator, after: payload)
                 }
 
                 bury(
@@ -203,7 +216,7 @@ nonisolated extension Interpreter {
 
                 let payload = iteratorPass(iterator, recording: interpreter.recording)
                 guard burial >= 0, iterator.hasNextPass else {
-                    return payload + iteratorFarewell(iterator)
+                    return iteratorFarewell(iterator, after: payload)
                 }
 
                 iterator.burial = burial

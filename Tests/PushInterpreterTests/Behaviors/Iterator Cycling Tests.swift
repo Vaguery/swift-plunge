@@ -181,6 +181,7 @@ struct IteratorCyclingTests {
     /// so it comes back to 33 — 99, the most whole laps that fit under 100.
     @Test func `a wildly cycling walk is clamped at push`() {
         let inty = Interpreter.recordingProvenance()
+        inty.config.maxIterations = 100   // off by default since 2026-11-07
         inty.push(cycling(40), to: .iterator)
 
         #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33)
@@ -243,6 +244,7 @@ struct IteratorCyclingTests {
 
     @Test func `a source longer than the ceiling falls back to one lap, not none`() {
         let inty = Interpreter.recordingProvenance()
+        inty.config.maxIterations = 100   // off by default since 2026-11-07
         inty.push(cycling(2, over: Array(1...1_000)), to: .iterator)
 
         let landed = inty.stacks[.iterator]!.first as? IteratorItem
@@ -293,6 +295,7 @@ struct IteratorCyclingTests {
         #expect(!absurd.isSpent, "still has plenty to emit")
 
         let inty = Interpreter.recordingProvenance()
+        inty.config.maxIterations = 100   // off by default since 2026-11-07
         inty.push(absurd, to: .iterator)
         #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33, "and the clamp catches it")
     }

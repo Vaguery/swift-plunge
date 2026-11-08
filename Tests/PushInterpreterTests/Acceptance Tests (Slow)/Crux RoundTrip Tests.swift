@@ -269,13 +269,15 @@ struct CruxFuzzTests {
     /// **Large, by ruling**: many seeds under three mixes, the balanced
     /// `.equalShares`, `.loopHeavy`, because loops are where provenance is
     /// hardest and no other generator concentrates them, and `.containerHeavy`,
-    /// because vector and string members are exercised by nothing else. A single seed is not
+    /// because vector and string members are exercised by nothing else, and the
+    /// loop-heavy mix once more under a shallow history budget, because nothing
+    /// else makes random programs fold loops. A single seed is not
     /// enough to see a rare class: the #27 failures ran about 1 in 1,900 claims,
     /// and seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
     static let seeds: [UInt64] = (0..<40).map { 20_260_715 &+ $0 &* 7919 }
-    // 40 seeds × 5 programs × 3 mixes is about 250,000 replayed claims, 20× the
-    // old disabled fuzz, in about 47 s alone. 20 per seed took about 2 minutes
-    // with two mixes.
+    // 40 seeds × 5 programs × 4 cases is about 460,000 replayed claims in about
+    // 75 s alone (3 cases, before loops ran unclamped: about 250,000 in 47 s).
+    // 20 per seed took about 2 minutes with two mixes.
     static let casesPerSeed = 5       // random programs per seed, per mix
     static let programItems = 150     // instruction tokens per random genome
 
@@ -284,13 +286,20 @@ struct CruxFuzzTests {
     @Test(arguments: [
         ("equal shares", InstructionMix.equalShares),
         ("loop-heavy", InstructionMix.loopHeavy),
-        ("container-heavy", InstructionMix.containerHeavy)
+        ("container-heavy", InstructionMix.containerHeavy),
+        ("loop-heavy, shallow", InstructionMix.loopHeavy)
     ])
     func `every item a random program leaves has a runnable crux`(name: String, mix: InstructionMix) {
         // Failing cases are written to disk as replayable JSON, a reproduction
         // path that does not depend on the generator at all.
         var settings = InterpreterSettings.recordingProvenance   // it checks cruxes
         settings.stepLimit = 3_000
+        // The fourth case: the loop-heavy mix again, with histories held to 50
+        // levels instead of 1,000. At this step limit no chain reaches 1,000, so
+        // this is the case that makes random programs fold loops
+        // (`CruxCompression.folded`) and replays every fold.
+        let shallow = name.hasSuffix("shallow")
+        if shallow { settings.maxCallDepth = 50 }
 
         let dir = FileManager.default.temporaryDirectory.appending(path: "push-crux-fuzz")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -344,6 +353,14 @@ struct CruxFuzzTests {
         for finding in findings.prefix(10) { log(finding) }
         if findings.count > 10 { log("… and \(findings.count - 10) more") }
 
+        expectComplete(tally, findings: findings, shallow: shallow)
+        // Guards the test itself: a generator change that stopped producing
+        // provenance would make the checks above vacuous.
+        #expect(tally.holds > 1_000, "only \(tally.holds) claims held; is the generator still producing provenance?")
+    }
+
+    /// The fuzz's verdicts on one case's tally.
+    private func expectComplete(_ tally: CruxCompleteness, findings: [String], shallow: Bool) {
         #expect(findings.isEmpty, "\(findings.count) random programs left items whose crux does not reproduce them")
         // No item with no history may come out of a container that has one: it
         // records its address instead (the containment law, `Containment`, §P
@@ -352,10 +369,19 @@ struct CruxFuzzTests {
         // their path left a few with no trace at all.
         #expect(tally.count(.boundContents) == 0,
                 "contents of bound values taken out bare: \(tally.examples[.boundContents] ?? [])")
+        // No history may be elided (§P step 3): a shared one is written with each
+        // shared node once (`CruxSharing`), a loop's chain is folded
+        // (`CruxCompression.folded`). Before them, 0.2% and 1.3% of value-stack
+        // items under the loop-heavy and container-heavy mixes carried one.
+        // Except under the shallow budget, where a history deeper than 50 that is
+        // not one loop's chain is still elided (0.3% of items when added).
+        if shallow {
+            #expect(tally.compressed.folded > 100, "only \(tally.compressed.folded) items ran a folded loop")
+        } else {
+            #expect(tally.count(.elided) == 0,
+                    "items carrying an elided history: \(tally.examples[.elided] ?? [])")
+        }
         #expect(tally.count(.unmarked) == 0,
                 "items with no history that the program never contained: \(tally.examples[.unmarked] ?? [])")
-        // Guards the test itself: a generator change that stopped producing
-        // provenance would make the checks above vacuous.
-        #expect(tally.holds > 1_000, "only \(tally.holds) claims held; is the generator still producing provenance?")
     }
 }

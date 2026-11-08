@@ -1,6 +1,12 @@
 # Keeping loops human-sized
 
-**Status: BUILT.** `maxIterations` (default 100), `.iteratorRestart`, a dying loop returning its body,
+**Status: RETIRED AS A DEFAULT (2026-11-07).** `maxIterations` now defaults to `Int.max` (no clamp): a crux
+folds a loop's chain into a counted loop (*Compressing looped provenance*), so a loop cut off by `stepLimit`
+keeps a readable history and the clamp is no longer load-bearing. The mechanism stays, opt-in, for a run
+that wants loops held to a human-sized number of passes. Also changed that day: the dying loop's body now
+returns to `.code` *after* its last pass, not with it (see *The first-class iterator* § farewell).
+
+**Was: BUILT.** `maxIterations` (default 100), `.iteratorRestart`, a dying loop returning its body,
 and the constructor invariant all landed together. This note is kept for the *reasoning*; the code is in
 `InterpreterSettings`, `Interpreter.clampingIterations`, `IteratorItem.clamped(toPasses:)` and
 `Interpreter.iteratorFarewell` / `iteratorBuilt`. The principles it argued for are Design Principles §5

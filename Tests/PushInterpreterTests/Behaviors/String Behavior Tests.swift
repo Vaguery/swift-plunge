@@ -364,7 +364,8 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .char) == "[ 'o' 'o' 'b' ]")
         #expect(stackString(inty, .int) == "[ 3 ]")
         // Three characters, so three passes and no continuation.
-        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .intInc ) .codeDo ( .intInc ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
         // The last character costs no more to explain than the first.
         #expect(callString(topItem(inty, .char)) == "( \"boo\" 2 .stringNth )")

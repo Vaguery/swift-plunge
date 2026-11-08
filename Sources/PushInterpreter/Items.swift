@@ -279,6 +279,15 @@ nonisolated extension ErrorItem: HoldsCall {}
 nonisolated extension IteratorItem: HoldsCall {}
 
 nonisolated extension HoldsCall {
+    /// This item with `call` as its history, keeping its members: a fold
+    /// (`CruxCompression.folded`) rewrites how the history is written, not where
+    /// the elements came from.
+    func recalled(_ call: [any Item]) -> any Item {
+        var copy = self
+        copy.callStorage = CallStorage(call, members: callStorage.members)
+        return copy
+    }
+
     /// This item with its weight measured as `weight`; see `CallStorage.remeasured`.
     func remeasured(weight: Int) -> any Item {
         var copy = self

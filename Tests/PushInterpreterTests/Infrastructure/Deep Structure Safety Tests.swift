@@ -59,11 +59,27 @@ struct DeepStructureSafetyTests {
         #expect(MemoryLayout<InstructionItem>.size <= 24)
     }
 
-    @Test func `provenance deeper than maxCallDepth is elided at push`() {
+    /// A loop's chain is folded rather than elided (`CruxCompression.folded`):
+    /// one level over its seed, so it is no longer too deep.
+    @Test func `a chain deeper than maxCallDepth is folded at push`() {
         let inty = Interpreter.recordingProvenance()
         inty.config.maxCallDepth = 3
         var item = IntItem(0)
-        for i in 1...5 { item = IntItem(i, call: [item, InstructionItem(.intInc)]) }   // depth 5
+        for level in 1...5 { item = IntItem(level, call: [item, InstructionItem(.intInc)]) }   // depth 5
+        inty.push(item, to: .int)
+        let kept = inty.stacks[.int]!.first!
+        #expect(CodeItem(kept.crux()).pretty() == "( 0 ( .intInc ) 5 .execDoTimes .codePop )")
+        #expect(kept.callDepth == 1)
+    }
+
+    @Test func `provenance deeper than maxCallDepth is elided at push`() {
+        let inty = Interpreter.recordingProvenance()
+        inty.config.maxCallDepth = 3
+        // Alternating levels, so it is not a loop's chain and does not fold.
+        var item = IntItem(0)
+        for level in 1...5 {
+            item = IntItem(level, call: [item, InstructionItem(level % 2 == 1 ? .intInc : .intDec)])   // depth 5
+        }
         inty.push(item, to: .int)
         // Over-deep provenance is dropped, as over-weight is, and a stand-in marks
         // the drop and names the instruction that produced the value.

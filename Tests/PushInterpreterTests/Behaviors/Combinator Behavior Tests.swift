@@ -106,7 +106,12 @@ struct CombinatorBehaviorTests {
     /// `maxIterations` holds any *counted* loop to a human-sized number of passes,
     /// so three billion copies becomes a hundred. Clamped, not refused, and not
     /// moduloed — a count under the limit would pass through untouched.
+    ///
+    /// `maxIterations` is off by default since 2026-11-07 (a crux folds a loop's
+    /// chain, so loops may run to `stepLimit`); this sets it, as a run that wants
+    /// the clamp would.
     @Test func `combinator DupTimes no longer needs its own size guard`() {
+        inty.config.maxIterations = 100
         loadInts(inty, ints: [3_000_000_000])
         loadDoubles(inty, doubles: [1.1])
         #expect(stackString(inty, .int) == "[ 3000000000 ]")

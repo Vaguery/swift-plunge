@@ -283,6 +283,12 @@ Two deliberate asymmetries with playing, both of which follow existing rules rat
 and litters nothing), and **a success returns the body to `.code`** unrun — the same farewell every
 other ending pays. A *refusal* hands the whole iterator back, as the setters do.
 
+*(2026-11-07: **the farewell comes after the last pass, not with it.** The body used to land on `.code`
+together with the last pass's payload, so a body that reads `.code` saw its own loop's body on that pass
+alone. It now goes onto `.exec` under the last pass and lands on `.code` once the pass has run
+(`iteratorFarewell(_:after:)`). A loop of `B` K times is now `B` written K times, which a folded crux
+relies on: *Compressing looped provenance*.)*
+
 ## Next
 
 The iterator follow-ons — `.points(into:)`, map/filter (the accumulator work), `.sampling(steps:)`, a

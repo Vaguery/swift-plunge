@@ -52,6 +52,132 @@ public nonisolated enum CruxCompression {
         let count = best.region / period
         let prefix = Array(crux[0 ..< (n - best.region)])    // the seed, untouched
         let body = Array(crux[(n - period) ..< n])           // one repeat unit
-        return prefix + [CodeItem(body), IntItem(count), InstructionItem(.execDoTimes)]
+        // A finished loop hands its body back to `.code`; the crux discards it.
+        return prefix + [CodeItem(body), IntItem(count), InstructionItem(.execDoTimes), InstructionItem(.codePop)]
+    }
+}
+
+// MARK: - Folding a loop's chain at the push boundary
+
+/// **A loop's accumulator is a chain.** `0 ( 1 .intAdd ) 5000 .execDoTimes`
+/// leaves 5000 with a history 5000 levels deep, each level `[previous, 1,
+/// .intAdd]`. It is honestly linear, and a history deeper than `maxCallDepth`
+/// is elided (releasing it costs a stack frame per level). Folded, it is
+/// `0 ( 1 .intAdd ) 5000 .execDoTimes` again: one level over the seed, ordinary
+/// runnable Push that replays the chain pass by pass.
+///
+/// `Interpreter.push` folds a history that is over budget before it elides one,
+/// and keeps the fold if that brings it within budget. A chain that keeps
+/// growing folds again, and the new levels join the old fold (`K` passes become
+/// `K + M`), so a loop that runs to `stepLimit` keeps its history.
+///
+/// **A fixed point.** The levels a fold matches are compared by structure, not
+/// by identity, and the fold is a function of the history alone; a replay
+/// rebuilds the chain level by level, crosses the budget at the same level, and
+/// folds it the same way.
+nonisolated extension CruxCompression {
+
+    /// `item` with the chain under it folded into a counted loop, or nil if its
+    /// history is not a chain of at least `minimumPasses` identical levels.
+    ///
+    /// A level is a node whose `call` starts with the level below and goes on
+    /// with the same elements (by structure) as every other level: the loop's
+    /// body. The body runs after the level below, so it is written as its
+    /// elements' cruxes, and the chain as `seed ( body ) K .execDoTimes .codePop`:
+    /// a finished loop hands its body back to `.code` (`iteratorFarewell`), and
+    /// the crux must leave nothing but its item.
+    static func folded(_ item: any Item, minimumPasses: Int = 3) -> (any Item)? {
+        guard let holder = item as? any HoldsCall else { return nil }
+        let top = item.call
+        guard top.count >= 2, !top[0].call.isEmpty else { return nil }
+        let sides = Array(top.dropFirst())
+
+        // Walk down while each level has the same sides.
+        var passes = 1
+        var seed = top[0]
+        while seed.call.count == top.count,
+              zip(seed.call.dropFirst(), sides).allSatisfy({ sameHistory($0, $1) }) {
+            passes += 1
+            seed = seed.call[0]
+        }
+
+        let body = sides.flatMap { $0.crux() }
+        var count = passes
+        // A chain that has folded before: its seed is the earlier fold, with
+        // the same body. The new passes join it.
+        if let earlier = Fold(seed), sameLeaves(earlier.body, body) {
+            seed = earlier.seed
+            count += earlier.count
+        } else if passes < minimumPasses {
+            return nil
+        }
+        let call: [any Item] = [seed, CodeItem(body), IntItem(count), InstructionItem(.execDoTimes),
+                                InstructionItem(.codePop)]
+        return holder.recalled(call)
+    }
+
+    /// The parts of a fold: `seed ( body ) count .execDoTimes .codePop`.
+    struct Fold {
+        let seed: any Item
+        let body: [any Item]
+        let count: Int
+
+        /// The fold `item`'s `call` is, if it is one.
+        init?(_ item: any Item) {
+            let call = item.call
+            guard call.count == 5,
+                  call[3].exactly(InstructionItem.self)?.value == .execDoTimes,
+                  call[4].exactly(InstructionItem.self)?.value == .codePop,
+                  let count = call[2].exactly(IntItem.self), call[2].call.isEmpty,
+                  let body = call[1].exactly(CodeItem.self), call[1].call.isEmpty
+            else { return nil }
+            (seed, self.body, self.count) = (call[0], body.value, count.value)
+        }
+    }
+
+    /// Whether `left` and `right` have the same history, compared by structure:
+    /// the same leaves, in the same tree. Identical storage answers at once.
+    /// Gives up (answers no) past `budget` comparisons, which keeps a fold's walk
+    /// bounded without making its answer depend on anything but the histories.
+    static func sameHistory(_ left: any Item, _ right: any Item, budget: Int = 4_096) -> Bool {
+        var pending: [(any Item, any Item)] = [(left, right)]
+        var spent = 0
+        while let (one, other) = pending.popLast() {
+            spent += 1
+            guard spent <= budget, type(of: one) == type(of: other) else { return false }
+            let oneCall = one.call, otherCall = other.call
+            guard oneCall.count == otherCall.count else { return false }
+            if oneCall.isEmpty {
+                guard one.pretty() == other.pretty() else { return false }
+                continue
+            }
+            if CruxSharing.key(one) == CruxSharing.key(other) { continue }
+            guard one.isEqual(to: other) else { return false }
+            pending.append(contentsOf: zip(oneCall, otherCall).map { ($0, $1) })
+        }
+        return true
+    }
+
+    /// Whether two leaf sequences would run the same.
+    static func sameLeaves(_ left: [any Item], _ right: [any Item]) -> Bool {
+        left.count == right.count
+            && zip(left, right).allSatisfy { type(of: $0) == type(of: $1) && $0.pretty() == $1.pretty() }
+    }
+
+    /// Roughly how many steps running `crux` takes: one per item, and a counted
+    /// loop's body once per pass. A replay needs a step budget, and a folded
+    /// crux is short but runs long.
+    public static func replaySteps(_ crux: [any Item]) -> Int {
+        var steps = 0
+        for (index, item) in crux.enumerated() {
+            steps += 1
+            guard item.exactly(InstructionItem.self)?.value == .execDoTimes, index >= 2,
+                  let count = crux[index - 1].exactly(IntItem.self),
+                  let body = crux[index - 2].exactly(CodeItem.self) else { continue }
+            let pass = replaySteps(body.value) + 4
+            let (total, overflow) = pass.multipliedReportingOverflow(by: max(0, count.value))
+            steps = overflow ? .max : steps.addingReportingOverflow(total).partialValue
+        }
+        return steps
     }
 }

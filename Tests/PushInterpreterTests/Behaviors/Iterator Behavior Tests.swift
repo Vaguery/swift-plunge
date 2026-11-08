@@ -178,7 +178,8 @@ struct IteratorBehaviorTests {
 
         // This pass still happens — only the continuation is dropped, and the
         // iterator goes with it, well short of exhaustion.
-        #expect(stackString(inty, .exec) == "[ ( true ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( true ) .codeDo ( true ) ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }

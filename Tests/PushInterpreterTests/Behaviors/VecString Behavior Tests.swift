@@ -238,7 +238,8 @@ struct VecStringBehaviorTests {
 
         inty.step()   // second and last pass: "badger", and the loop is done
         #expect(stackString(inty, .string) == "[ \"badger\" \"skunk\" ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ( .boolNot ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
@@ -280,7 +281,8 @@ struct VecStringBehaviorTests {
         inty.step()
         #expect(stackString(inty, .string) == "[ \"joe\" ]")
         #expect(stackString(inty, .vecString) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( .boolNot ) .codeDo ( .boolNot ) ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 

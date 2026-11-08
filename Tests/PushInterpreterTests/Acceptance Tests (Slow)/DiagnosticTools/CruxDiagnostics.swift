@@ -158,7 +158,9 @@ func inspectCrux(
     guard let resting = PushStack.defaultStack(for: item) else { return .holds }
 
     let crux = item.crux()
-    let room = max(settings.stepLimit, crux.count * stepScale)
+    // A folded loop (`seed ( body ) K .execDoTimes`) is short but runs long, so
+    // the budget follows the steps the crux takes, not its length.
+    let room = max(settings.stepLimit, CruxCompression.replaySteps(crux) * stepScale)
     let redo = Interpreter.recordingProvenance()
     redo.config = settings.reconstructing
     redo.config.stepLimit = room

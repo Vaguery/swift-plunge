@@ -57,6 +57,9 @@ struct CruxCompleteness {
     /// address (`v k .vecIntNth`, `s .stringFirst`, `b k .codeEmitNthRoot`): an
     /// element that was born in its container rather than put there (`Containment`).
     private(set) var addressed = 0
+    /// Value-stack items whose crux reuses a shared node (`.xDup`, `.xYankDup`,
+    /// `.xYank`: `CruxSharing`) or runs a folded loop (`CruxCompression.folded`).
+    private(set) var compressed = (shared: 0, folded: 0)
     /// The total crux length of the value-stack items with a history, for a mean.
     private(set) var cruxLeaves = 0
     /// Vectors and strings left with members, the elements they cover, and the
@@ -167,6 +170,27 @@ struct CruxCompleteness {
     private mutating func measure(_ crux: [any Item]) {
         cruxLeaves += crux.count
         if crux.contains(where: Self.isAddress) { addressed += 1 }
+        if crux.contains(where: Self.isSharing) { compressed.shared += 1 }
+        if crux.indices.contains(where: { Self.isFold(crux, at: $0) }) { compressed.folded += 1 }
+    }
+
+    /// The instructions only a shared crux writes: a program's own dups and yanks
+    /// record nothing (provenance law 1), so a crux holds them only by sharing.
+    static let sharingInstructions: Set<PushInstruction> = Set(PushStack.allCases.flatMap { stack in
+        stack.sharingInstructions.map { [$0.dup, $0.yank, $0.yankDup] } ?? []
+    })
+
+    static func isSharing(_ leaf: any Item) -> Bool {
+        leaf.exactly(InstructionItem.self).map { sharingInstructions.contains($0.value) } ?? false
+    }
+
+    /// Whether a folded loop, `( body ) K .execDoTimes .codePop`, ends at `index`.
+    static func isFold(_ crux: [any Item], at index: Int) -> Bool {
+        index >= 3
+            && crux[index].exactly(InstructionItem.self)?.value == .codePop
+            && crux[index - 1].exactly(InstructionItem.self)?.value == .execDoTimes
+            && crux[index - 2].exactly(IntItem.self) != nil
+            && crux[index - 3].exactly(CodeItem.self) != nil
     }
 
     /// A short report: per group, the classes as shares of its items and the
@@ -186,6 +210,8 @@ struct CruxCompleteness {
                 let derivedItems = max(1, total - count(.programLiteral, in: group))
                 let mean = (Double(cruxLeaves) / Double(derivedItems)).formatted(.number.precision(.fractionLength(1)))
                 lines.append("    taken out by address: \(percent(addressed, of: total)); mean crux length \(mean)")
+                lines.append("    compressed: \(percent(compressed.shared, of: total)) reuse a shared node, "
+                             + "\(percent(compressed.folded, of: total)) run a folded loop")
                 let tables = pieceTables
                 lines.append("    members: \(tables.containers) vectors and strings, "
                              + "\(tables.elements) elements in \(tables.runs) runs "

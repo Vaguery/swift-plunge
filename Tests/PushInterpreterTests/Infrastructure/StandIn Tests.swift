@@ -47,18 +47,19 @@ struct StandInTests {
     @Test func `elision leaves a stand-in that replays to the same item`() {
         var settings = Interpreter.recordingProvenance().config
         settings.maxCallWeight = 5
-        // A chain whose history outgrows a 5-weight budget part-way through.
+        // A chain whose history outgrows a 5-weight budget part-way through. Its
+        // levels alternate, so it is not a loop's chain and does not fold.
         var program: [any Item] = [IntItem(1)]
-        for _ in 0..<6 { program += [IntItem(1), InstructionItem(.intAdd)] }
+        for step in 0..<6 { program += [IntItem(step % 2 + 1), InstructionItem(.intAdd)] }
         let inty = run(program, settings: settings)
         let total = topItem(inty, .int)
-        #expect(total.pretty() == "7")
+        #expect(total.pretty() == "10")
         let leaves = total.crux()
         #expect(leaves.contains { ($0 as? StandInItem)?.reason == .elided },
                 "an over-budget history should leave an elided stand-in, got \(CodeItem(leaves).pretty())")
 
         let replay = run(leaves, settings: settings)
-        #expect(topItem(replay, .int).pretty() == "7")
+        #expect(topItem(replay, .int).pretty() == "10")
         #expect(callString(topItem(replay, .int)) == callString(total))
     }
 

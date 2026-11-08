@@ -1,6 +1,29 @@
 # Compressing looped provenance
 
-**Status: PROTOTYPE.** `CruxCompression.compressed(_:)` collapses the exact-repeat (`.execDoTimes`) case,
+**Status: BUILT at the push boundary (2026-11-07), steps 2–4 below.** `CruxCompression.folded(_:)`
+folds a history that is over budget, when it is one loop's chain, into `seed ( body ) K .execDoTimes
+.codePop`, and a chain that grows again joins its fold (`K` becomes `K + M`). `Interpreter.push` tries
+it before eliding. `maxIterations` is off by default. What was learned building it:
+
+- **Loops were not what the fuzz elided.** Every elided history was a *shared* one (a non-destructive
+  read's arguments reused, fib(N) leaves for N steps); that is solved by `CruxSharing`
+  (*Provenance and the crux* § Sharing). Folding is for chains deeper than `maxCallDepth`, which random
+  programs at a 3,000-step limit never reach; a fourth fuzz case holds histories to 50 levels to make
+  them fold (0.4% of its items run a folded loop, all replay).
+- **`.codePop` is part of the fold.** A finished loop hands its body back to `.code`, and the crux must
+  leave only its item.
+- **The hand-back was early.** It landed on `.code` *with* the last pass, so a body that reads `.code`
+  saw its own loop's body on that pass only, and `( B ) K .execDoTimes` was not `B` K times. The body
+  now waits on `.exec` under the last pass (`iteratorFarewell(_:after:)`). Found by that fourth case: a
+  `.codeNthPoint` chain replayed one level short.
+- **Matching is by structure** (`sameHistory`, bounded), and the fold is a function of the history
+  alone, so a replay folds at the same level. Levels must be identical: a chain whose levels alternate,
+  or progress (`.execDoCount`'s index), is not folded and is still elided past the budget.
+- **The replay budget** follows `CruxCompression.replaySteps`, not the crux's length.
+
+*The design as written before it was built follows.*
+
+**Was: PROTOTYPE.** `CruxCompression.compressed(_:)` collapses the exact-repeat (`.execDoTimes`) case,
 with a round-trip test (`CruxCompression Tests.swift`). Not yet integrated into `crux()` rendering or the
 push boundary, and `maxIterations` is still in place. This note is the design; the prototype proves the
 central claim so the rest can be built against a working reconstruction.

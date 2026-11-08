@@ -51,6 +51,13 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    as the program did (`CruxSharing`; § Sharing in *Provenance and the crux.md*); the push boundary
    measures that crux, not the tree, and weighs a kept history by it. Elided items 0 in all three mixes
    (were 0.0% / 0.2% / 1.3%); 0 broken; the fuzz takes ~53 s (was ~40 s).
+   **Loop folding BUILT (2026-11-07):** a history over budget that is one loop's chain folds into
+   `seed ( body ) K .execDoTimes .codePop` (`CruxCompression.folded`), joining an earlier fold as it grows;
+   `maxIterations` off by default (#24). A loop's body now returns to `.code` *after* its last pass (it came
+   back with it, so a body reading `.code` saw itself on that pass). A fourth fuzz case (loop-heavy,
+   histories held to 50 levels) makes random programs fold: 0 broken in all four, about 460,000 replays,
+   ~75 s. **Not folded:** chains whose levels alternate or progress (`.execDoCount`'s index); they are
+   still elided past the budget (0.3% of items in the 50-level case).
 4. Per-element provenance for vectors **and strings** (#21), as a parallel array filled only when recording.
    **Widened by step 2's finding to code blocks**: an item with no history inside a container that has one
    (a block bound to `.input3`, then unwrapped; the blocks the structural code edits rebuild along their
@@ -86,7 +93,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
   constant. Elements that went in one at a time stay one run each; grouping those is compression (step 3).
 - **#22** opt-in history encoding in `AnyItem`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
-- **#24** retire `maxIterations` once provenance compression lands.
+- **#24** (**done**, 2026-11-07) retire `maxIterations` once provenance compression lands. *Retired as a
+  default*: `Int.max`, no clamp; the mechanism stays, opt-in. Delete it outright if wanted.
 - **#25** (**done**) `.execDoRange` becomes **inclusive**: |span|+1 passes (`4 4` → 4; `4 7` → 7, 6, 5, 4). Today it makes
   max(1, |span|) passes. `.execDoCount`/`.execDoTimes` keep their pass counts.
 - **#26** `execEq` is removed; `( A ) ( B ) .codeEq` asks the same.
@@ -261,6 +269,14 @@ A representation-neutral derivation graph, for other GP representations, is a la
     them into a sequential `[any Item]` scratch space that the closure reads as `$0`, `$1`, … . It changes
     no result by itself; the interest is that the scratch space could persist, or be manipulated, after
     the Behavior runs, which might allow interesting dynamics with local variables (#39).
+
+41. **A map of Behaviors' inputs and outputs, as a DAG** — noted 2026-11-07, to explore *soon after* the
+    crux rework is finished. An organized map of which stacks and types each Behavior reads and writes
+    allows **backward-chaining** from the outputs a problem wants to the inputs that can produce them,
+    for program synthesis. The aim is for the map to be a completely defined DAG. Open: whether every
+    output is well defined, especially `.code` and `.exec` results, where several types are possible.
+    (The reading/writing plans each Behavior already declares, `takes`/`reads`/`alsoNeeds` and its
+    Routers, are where it would start.)
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

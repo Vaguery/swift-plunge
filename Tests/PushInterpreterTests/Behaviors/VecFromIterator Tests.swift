@@ -292,8 +292,10 @@ struct VecFromIteratorTests {
     /// **Nothing here picks a length.** A claim was clamped to `maxIterations` at
     /// `push`, long before this saw it — so a wild counting loop collects 101
     /// items, not four billion, and this instruction never had to know.
+    /// (`maxIterations` is off by default since 2026-11-07; set here.)
     @Test func `a claim was already clamped before it could be collected`() {
         let inty = Interpreter.recordingProvenance()
+        inty.config.maxIterations = 100
         inty.push(
             IteratorItem(
                 kind: .counting(stride: 1),

@@ -115,7 +115,8 @@ struct ExecBehaviorTests {
         // Second and last pass: index 3, the destination. The index goes straight
         // to `.int`, and the spent iterator is consumed rather than coming to rest.
         for _ in 0..<4 { inty.step() }
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
         #expect(stackString(inty, .int) == "[ 3 4 ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
@@ -127,7 +128,8 @@ struct ExecBehaviorTests {
         doThis(.execDoRange, to: inty)
         #expect(stackString(inty, .iterator) == "[ «4→5 by 1 @0 ( false )» ]")
         inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
         #expect(stackString(inty, .int) == "[ 4 ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
@@ -200,7 +202,8 @@ struct ExecBehaviorTests {
 
         for _ in 0..<3 { inty.step() }   // run the body again
         inty.step()   // fourth pass: index 4, the destination, and the loop ends there
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ]")
+        // The body waits under the last pass, and returns to .code after it.
+        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
         #expect(stackString(inty, .int) == "[ 4 5 6 7 ]")
         // The destination is INCLUDED (since 2026-11-07, Roadmap #25; it used to
         // be excluded), and the spent iterator is consumed rather than resting.

@@ -249,8 +249,11 @@ program.)*
 
 **This can never break the obligation.** A stand-in *is* a runnable program producing that value, and
 it says it stands in for a dropped history. Elision costs the story, never the correctness, and now the
-loss is visible. That asymmetry is what makes an aggressive budget safe. It is the last resort:
-provenance compression is to replace it (Roadmap §P step 3).
+loss is visible. That asymmetry is what makes an aggressive budget safe. It is the last resort, and
+since 2026-11-07 it comes after two lossless steps: the budget measures the crux, which builds each
+shared node once (§ Sharing), and a loop's chain is folded into a counted loop
+(`CruxCompression.folded`; *Compressing looped provenance*). What is still elided is a history that is
+long without repeating itself, or deeper than `maxCallDepth` without being one loop's chain.
 
 It is deliberately *not* an error: unlike `overflow(of:)`, which refuses the push and emits an
 `ErrorItem`, elision pushes the item normally and merely forgets where it came from.
