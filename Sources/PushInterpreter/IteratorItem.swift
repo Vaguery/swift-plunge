@@ -211,7 +211,6 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// counter cycles a vector of the numbers. `init` normalizes those kinds to 1
     /// and `.iteratorSetLaps` refuses them outright.
     ///
-    /// **It is what brings a walk under `maxIterations`** — see `promisedPasses`.
     public var laps: Int
 
     /// How deep in `.exec` this loop hides its next copy — **always ≥ 0**.
@@ -490,113 +489,6 @@ nonisolated extension IteratorItem {
         }
     }
 
-    /// How many passes this iterator still promises **from where its cursor is**,
-    /// or nil if the question does not apply to its kind.
-    ///
-    /// Only a **claim** has a promise to measure. A counted loop asserts a span
-    /// out of thin air and a repeating one asserts a count; a walk's length is a
-    /// fact about data it was handed, bounded already by `maxVectorLength` /
-    /// `maxStringLength`, and not this budget's business. See Design Principles
-    /// §12.
-    ///
-    /// **Remaining, not total**, and that distinction is load-bearing. It used to
-    /// measure the whole span from the loop's start, which is the same number for
-    /// every loop that begins at cursor 0 — every loop that was *stepped* rather
-    /// than hand-built. A constructor takes the cursor as an argument, though, so
-    /// a program can build one that starts part-way along; measuring from the
-    /// start then let `clamped(toPasses:)` shrink the span to somewhere the cursor
-    /// had already passed, and the iterator came to rest **spent**, breaking the
-    /// invariant `iteratorBuilt` exists to keep. Measuring what is left cannot do
-    /// that.
-    var promisedPasses: Int? {
-        switch kind {
-        case .counting(let stride):
-            guard
-                stride != 0,
-                let current = currentValue(),
-                let end = (destination as? IntItem)?.value
-            else { return nil }
-            let (span, overflowed) = end.subtractingReportingOverflow(current)
-            // A span too wide to subtract is wider than any limit.
-            guard !overflowed else { return Int.max }
-            return span.magnitude / stride.magnitude >= Int.max.magnitude
-                ? Int.max
-                : Int(span.magnitude / stride.magnitude)
-        case .repeating:
-            guard let end = (destination as? IntItem)?.value else { return nil }
-            let (left, overflowed) = end.subtractingReportingOverflow(value)
-            guard !overflowed else { return Int.max }
-            return max(0, left)
-        // A walk of one lap is a fact and stays out of this. Ask it to go round
-        // *again*, though, and the number of laps is a claim the program made out
-        // of thin air — exactly what a counted loop's span is — so a cycling walk
-        // is clamped and a plain one is not. Cycling moves a walk across §12's
-        // line, and the budget was already waiting on the other side.
-        case .elements, .letters, .words, .points:
-            return laps > 1 ? totalEmissions : nil
-        }
-    }
-
-    /// This iterator, promising no more than `limit` passes — or `nil` if it
-    /// already promises no more than that, which is the overwhelmingly common
-    /// case and the one that must cost nothing.
-    ///
-    /// **Clamped, never modulo.** Under the limit passes through completely
-    /// untouched; over it saturates. The relationship between the program's number
-    /// and its loop survives, so a search can climb it. `100 % 100 = 0` cannot be
-    /// climbed by anything (Design Principles §12).
-    ///
-    /// **Idempotent**, which is what lets it live at the push boundary without
-    /// breaking `crux()`: a clamped iterator is a fixed point, so reconstructing
-    /// one and pushing it again changes nothing.
-    func clamped(toPasses limit: Int, recording: ProvenanceRecording) -> IteratorItem? {
-        let ceiling = max(0, limit)
-        guard let promised = promisedPasses, promised > ceiling else { return nil }
-
-        var clamped = self
-        switch kind {
-        // Both spans are measured **from the cursor**, matching `promisedPasses`:
-        // the budget is "at most `ceiling` more passes", not "at most `ceiling`
-        // passes ever". For the overwhelmingly common cursor of 0 the two readings
-        // are the same number, which is why the difference went unnoticed; for a
-        // hand-built cursor they are not, and measuring from the start clamped the
-        // end to somewhere the cursor had already gone.
-        case .counting(let stride):
-            guard let current = currentValue() else { return nil }
-            let (reach, reachOverflowed) = stride.multipliedReportingOverflow(by: ceiling)
-            guard !reachOverflowed else { return nil }
-            let (end, endOverflowed) = current.addingReportingOverflow(reach)
-            guard !endOverflowed else { return nil }
-            clamped.destination = IntItem(end)
-        case .repeating:
-            let (end, endOverflowed) = value.addingReportingOverflow(ceiling)
-            guard !endOverflowed else { return nil }
-            clamped.destination = IntItem(end)
-
-        // Clamp the laps, never the source: one lap is a fact about data the
-        // program was handed, and `maxVectorLength`/`maxStringLength` are what
-        // bound *that*. So a 3-element vector cycles 33 times and stops at 99
-        // emissions, while a 1000-element vector cycled twice falls back to
-        // once — 1000 emissions, because that lap was never this budget's to cut.
-        case .elements, .letters, .words, .points:
-            let count = sourceCount
-            guard count > 0 else { return nil }
-            let allowed = max(1, ceiling / count)
-            guard allowed < laps else { return nil }
-            clamped.laps = allowed
-        }
-        // **Never hand back something spent.** Clamping happens at the push
-        // boundary, after `iteratorBuilt` has already approved the iterator, so a
-        // clamp that finished it would put a spent iterator on `.iterator` — which
-        // the whole design says cannot happen, and whose crux then cannot rebuild
-        // it. Measuring from the cursor above prevents that for any sensible
-        // ceiling; this is the backstop for the degenerate one (`maxIterations`
-        // of 0), where declining to clamp is better than stranding.
-        guard !clamped.isSpent else { return nil }
-        clamped.call = recording(clamped.reconstruction())
-        return clamped
-    }
-
     /// Everything this iterator would emit from its current cursor onward, in
     /// order — the whole sequence, driven to exhaustion.
     ///
@@ -618,24 +510,16 @@ nonisolated extension IteratorItem {
     /// are what the sequence *contains*, which is a different question from what a
     /// pass *pushes*.
     ///
-    /// **What bounds it** — the reason no new budget was needed. Every kind is
-    /// already bounded, by two different rules and for two different reasons
-    /// (§12). A `.counting` or `.repeating` iterator, or a cycling walk, made a
-    /// claim, so `clamped(toPasses:)` cut it to `maxIterations` at `push` — before
-    /// it could ever rest on a stack to be collected. A plain walk's length is a
-    /// fact about data already bounded by `maxVectorLength`/`maxStringLength`. And
-    /// the result is a vector, so the push gate measures it once more on the way
-    /// out.
-    ///
-    /// **And yet it carries a backstop**, because "every kind is already bounded"
-    /// turned out to be a claim about the clamping rules rather than a fact about
-    /// this loop. A counting iterator with stride 0 promised no passes
-    /// (`promisedPasses` is nil for it), so it was never clamped, and its value
-    /// never reaches its end — so this loop ran forever, inside one step, where
-    /// `stepLimit` cannot see it. One such program hung a whole search. A played
+    /// **What bounds it: `collectionLimit`.** This loop runs inside one step,
+    /// where `stepLimit` cannot see it, so it carries its own bound. A played
     /// loop is protected by `stepLimit`; this one is protected by
     /// `collectionLimit` instead. Over it, the answer is `nil`, and the caller
-    /// refuses rather than handing back a silently truncated sequence.
+    /// refuses rather than handing back a silently truncated sequence. (A
+    /// counting loop's claimed span used to be clamped to `maxIterations` at
+    /// `push` first; that was deleted 2026-11-08, and this bound was already the
+    /// one that mattered: a stride-0 counter, never clamped, once hung a whole
+    /// search here.) The result is a vector, so the push gate measures it once
+    /// more on the way out.
     ///
     /// `recording` decides whether the collected items carry provenance; the
     /// cursor's own steps never need any, since nothing outside this loop sees it.
@@ -699,7 +583,7 @@ nonisolated extension IteratorItem {
                 ? UInt(bitPattern: end &- current)
                 : UInt(bitPattern: current &- end)
             // Stride 0 never moves: `hasNextPass` holds forever unless it starts at
-            // its end. (`promisedPasses` is nil for it, so it was never clamped.)
+            // its end.
             guard stride != 0 else { return distance == 0 ? 1 : .max }
             // Emits `current`, then steps while more than one stride remains:
             // ⌈distance / |stride|⌉ passes, and at least one.

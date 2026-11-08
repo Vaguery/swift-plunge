@@ -72,7 +72,8 @@ does not degrade the crux, because collecting is law 3 and boxing is law 1b.
   `maxCodePoints` at the push boundary. The work evaporates; the item is what persists, and it is
   bounded. The amplification is real, but it is not smuggled in through the step budget.
 - **The 10× rate is an accident**, not a decision. It is the ratio of two numbers chosen for unrelated
-  reasons (§13: `maxIterations` is derived from `stepLimit`; `maxCodePoints` is a policy). Anyone tuning
+  reasons (§13: `maxIterations` was derived from `stepLimit`; `maxCodePoints` is a policy). (`maxIterations`
+  was deleted 2026-11-08, so the rate is now `maxCodePoints` against whatever a loop's count says.) Anyone tuning
   either should know they are also setting an exchange rate.
 
 ### The general form

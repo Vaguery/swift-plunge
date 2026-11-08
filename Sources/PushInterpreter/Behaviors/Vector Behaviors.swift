@@ -1726,13 +1726,11 @@ nonisolated extension Interpreter {
     /// iterator is built from two ints, so `0 10 …iteratorFromIntRange
     /// .vecFromIterator` makes a vecInt out of nothing but ints.
     ///
-    /// **The length is the iterator's, and nothing here chooses it.** Every kind
-    /// is bounded before it can ever be an argument: a claim (`.counting`,
-    /// `.repeating`, a cycling walk) was clamped to `maxIterations` at `push`, and
-    /// a plain walk's length is a fact about data `maxVectorLength` already
-    /// bounds. The push gate then measures the vector on the way out, so an
-    /// over-long collect errors like any oversized push rather than being silently
-    /// truncated.
+    /// **The length is the iterator's, and nothing here chooses it.** An
+    /// iterator that provably emits more than `IteratorItem.collectionLimit` is
+    /// refused before any walking, and the push gate then measures the vector on
+    /// the way out, so an over-long collect errors like any oversized push rather
+    /// than being silently truncated.
     ///
     /// **Uniform or refuse.** The type is read off what actually came out, not off
     /// the kind, so a `.code` walk over a uniform block collects fine and a mixed

@@ -29,7 +29,6 @@ struct MemoryGuardCostBenchmark {
     private func settings(memoryGuard: Bool) -> InterpreterSettings {
         var s = InterpreterSettings()
         s.stepLimit = 20_000
-        s.maxIterations = .max                 // let the loop run deep
         s.maxStackDepth = 100_000              // allow a deep stack
         s.maxLiveWeight = memoryGuard ? 1_000_000_000 : .max  // .max disables the guard
         return s

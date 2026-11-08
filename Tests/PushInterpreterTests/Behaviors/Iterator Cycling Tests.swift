@@ -15,10 +15,6 @@
 //     iterator's record names its cursor: a cursor that rewound would rebuild an
 //     iterator that had done no laps.
 //
-//  And one that costs nothing but would hurt: cycling is what drags a walk across
-//  the line in Design Principles §12 — a lap the program *asked* for is a claim,
-//  so `maxIterations` starts applying where it deliberately did not before.
-//
 
 @testable import PushInterpreter
 import Testing
@@ -165,48 +161,14 @@ struct IteratorCyclingTests {
     }
 
 
-    // MARK: - the budget
+    // MARK: - a hand-built cursor
 
-    /// **The point of cycling being an attribute.** A walk of one lap is a fact
-    /// about data the program was handed, and `promisedPasses` returns nil so the
-    /// clamp leaves it alone. Ask for a second lap and the number is a claim the
-    /// program made up — so it is measurable, and `maxIterations` starts applying
-    /// to a kind it deliberately never touched.
-    @Test func `cycling moves a walk from fact to claim`() {
-        #expect(cycling(1).promisedPasses == nil, "one lap is a fact about the data")
-        #expect(cycling(3).promisedPasses == 9, "three laps is a claim, and claims are counted")
-    }
-
-    /// The clamp cuts the laps, never the source: 40 laps of 3 is 120 emissions,
-    /// so it comes back to 33 — 99, the most whole laps that fit under 100.
-    @Test func `a wildly cycling walk is clamped at push`() {
+    /// The crux of an iterator built part-way along must rebuild it. A
+    /// 40-seed sweep once found 2 broken claims in 154,364, both
+    /// `.iteratorRepeatingIntoExec`, when a since-deleted iteration budget
+    /// (`maxIterations`) shrank the end to behind the cursor.
+    @Test func `a hand-built cursor is rebuilt by its crux`() {
         let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100   // off by default since 2026-11-07
-        inty.push(cycling(40), to: .iterator)
-
-        #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33)
-    }
-
-    /// The other side of the same rule. One lap of a 1000-element vector is 1000
-    /// emissions and is **allowed** — that lap was never this budget's to cut
-    /// (`maxVectorLength` bounds it instead). So a cycling walk over a source
-    /// already longer than the ceiling falls back to a single lap rather than to
-    /// nothing.
-    /// **A clamp must never leave a resting iterator spent.**
-    ///
-    /// `iteratorBuilt` approves a live iterator, and only then does the push
-    /// boundary clamp it — so a clamp measured from the loop's *start* could shrink
-    /// the end to somewhere the cursor had already passed, and the result came to
-    /// rest with nothing to emit. Its crux then could not rebuild it, which is how
-    /// a 40-seed sweep found this: 2 broken claims in 154,364, both
-    /// `.iteratorRepeatingIntoExec`.
-    ///
-    /// The budget is now "at most `maxIterations` **more** passes", measured from
-    /// the cursor. For a cursor of 0 — every loop that was stepped rather than
-    /// hand-built — nothing changes, which is why this went unseen.
-    @Test func `clamping a hand-built cursor does not strand it`() {
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100
         inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
         // takes: [.code, .int, .int, .int] — written deepest-first: count, cursor, burial.
         inty.stacks[.int]!.prepend(contentsOf:
@@ -215,49 +177,12 @@ struct IteratorCyclingTests {
 
         let landed = inty.stacks[.iterator]!.first as! IteratorItem
         #expect(!landed.isSpent, "a resting iterator has something to emit")
-        #expect(landed.promisedPasses == 100, "100 more passes, not 100 in total")
-        #expect((landed.destination as? IntItem)?.value == 25_146)
         #expect(landed.value == 25_046, "and the cursor is where the program put it")
 
-        // The crux of an iterator that can exist must rebuild it.
         let redo = Interpreter.recordingProvenance()
-        redo.config.maxIterations = 100
         redo.load(program: landed.crux())
         redo.run()
         #expect(stackString(redo, .iterator) == stackString(inty, .iterator))
-    }
-
-    /// The clamp stays a fixed point: having budgeted from the cursor, asking
-    /// again finds nothing left to cut.
-    @Test func `clamping is idempotent from a moved cursor`() {
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100
-        inty.stacks[.code]!.prepend(CodeItem([IntItem(7)]))
-        inty.stacks[.int]!.prepend(contentsOf:
-            [IntItem(0), IntItem(25_046), IntItem(30_000)] as [any Item])
-        doThis(.iteratorRepeatingIntoExec, to: inty)
-
-        let landed = inty.stacks[.iterator]!.first as! IteratorItem
-        #expect(landed.clamped(toPasses: 100, recording: .on) == nil,
-                "already within budget, so nothing to clamp — and no wasted copy")
-    }
-
-    @Test func `a source longer than the ceiling falls back to one lap, not none`() {
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100   // off by default since 2026-11-07
-        inty.push(cycling(2, over: Array(1...1_000)), to: .iterator)
-
-        let landed = inty.stacks[.iterator]!.first as? IteratorItem
-        #expect(landed?.laps == 1)
-        #expect(landed?.promisedPasses == nil, "and is a fact again, so nothing clamps it further")
-    }
-
-    /// Clamping has to be idempotent or `crux()` breaks: a record is re-run
-    /// through `push`, so an iterator that changed on the way back in would not
-    /// reproduce itself.
-    @Test func `clamping a clamped iterator changes nothing`() {
-        #expect(cycling(40).clamped(toPasses: 100, recording: .on)?.laps == 33)
-        #expect(cycling(33).clamped(toPasses: 100, recording: .on) == nil, "already under; nothing to do")
     }
 
 
@@ -293,10 +218,5 @@ struct IteratorCyclingTests {
         let absurd = cycling(Int.max, over: [1, 2, 3])
         #expect(absurd.totalEmissions == Int.max)
         #expect(!absurd.isSpent, "still has plenty to emit")
-
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100   // off by default since 2026-11-07
-        inty.push(absurd, to: .iterator)
-        #expect((inty.stacks[.iterator]!.first as? IteratorItem)?.laps == 33, "and the clamp catches it")
     }
 }

@@ -289,13 +289,12 @@ struct VecFromIteratorTests {
 
     // MARK: - length
 
-    /// **Nothing here picks a length.** A claim was clamped to `maxIterations` at
-    /// `push`, long before this saw it — so a wild counting loop collects 101
-    /// items, not four billion, and this instruction never had to know.
-    /// (`maxIterations` is off by default since 2026-11-07; set here.)
-    @Test func `a claim was already clamped before it could be collected`() {
+    /// **Nothing here picks a length.** A wild counting loop that provably emits
+    /// more than `IteratorItem.collectionLimit` is refused before any walking,
+    /// rather than collected and truncated. (Until 2026-11-08 `maxIterations`
+    /// clamped the claim to 100 passes at `push` first.)
+    @Test func `a wild claim is refused by the collection limit`() {
         let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100
         inty.push(
             IteratorItem(
                 kind: .counting(stride: 1),
@@ -308,14 +307,14 @@ struct VecFromIteratorTests {
         )
         doThis(.vecFromIterator, to: inty)
 
-        let collected = (inty.stacks[.vecInt]!.first as? VecIntItem)?.value
-        #expect(collected?.count == 100, "100 promised passes, and the last stops short of the end")
-        #expect(collected?.last == 99)
+        #expect(stackString(inty, .vecInt) == "[ ]")
+        #expect(inty.stacks[.iterator]!.count == 1, "the iterator is handed back")
+        #expect(errorStrings(inty).contains { $0.contains("emits more than \(IteratorItem.collectionLimit)") })
     }
 
     /// The other rule: a walk's length is a fact about data, bounded by
-    /// `maxVectorLength` rather than by `maxIterations` — so this collects 500,
-    /// well past the iteration ceiling, exactly as walking it would emit 500.
+    /// `maxVectorLength` — so this collects 500, exactly as walking it would emit
+    /// 500.
     @Test func `a fact is bounded by the collection budget, not the loop budget`() {
         let inty = loaded(walking(VecIntItem(Array(1...500))))
         doThis(.vecFromIterator, to: inty)
@@ -327,9 +326,7 @@ struct VecFromIteratorTests {
     /// collect errors like any oversized push rather than being silently cut.
     @Test func `an over-long collect is refused by the push gate`() {
         let inty = loaded(walking(VecIntItem(Array(1...1_000)), laps: 2))
-        // Cycling would make 2000, but the clamp at push already cut it to one
-        // lap: 1000 is the source's own length, and that was never the loop
-        // budget's to touch.
+        // Two laps of 1000: 2000 items, over the vector cap either way.
         #expect(inty.stacks[.iterator]!.count == 1)
 
         var settings = InterpreterSettings()

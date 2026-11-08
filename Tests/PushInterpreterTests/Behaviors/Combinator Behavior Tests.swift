@@ -101,33 +101,31 @@ struct CombinatorBehaviorTests {
     /// its own `maxStackDepth` check — the only bespoke size guard in the
     /// language — and errored rather than doing any of the work.
     ///
-    /// That guard is gone, and nothing bespoke replaced it. Three ordinary limits
-    /// now cover what it was groping for, and this asserts the first of them:
-    /// `maxIterations` holds any *counted* loop to a human-sized number of passes,
-    /// so three billion copies becomes a hundred. Clamped, not refused, and not
-    /// moduloed — a count under the limit would pass through untouched.
-    ///
-    /// `maxIterations` is off by default since 2026-11-07 (a crux folds a loop's
-    /// chain, so loops may run to `stepLimit`); this sets it, as a run that wants
-    /// the clamp would.
+    /// That guard is gone, and nothing bespoke replaced it: a count of three
+    /// billion builds a loop like any other count, and the ordinary limits
+    /// (`stepLimit`, the runaway guard, `maxStackDepth`) bound the work it does.
+    /// (`maxIterations`, which held such a loop to 100 passes, was deleted
+    /// 2026-11-08.)
     @Test func `combinator DupTimes no longer needs its own size guard`() {
-        inty.config.maxIterations = 100
         loadInts(inty, ints: [3_000_000_000])
         loadDoubles(inty, doubles: [1.1])
         #expect(stackString(inty, .int) == "[ 3000000000 ]")
         #expect(stackString(inty, .double) == "[ 1.1 ]")
 
         doThis(.doubleDupTimes, to: inty)
-        // It builds a loop rather than refusing outright…
+        // It builds a loop rather than refusing outright.
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(!errorStrings(inty).contains { $0.contains("overflow") })
+    }
 
+    /// A count the run can afford finishes, and leaves nothing behind.
+    @Test func `a DupTimes loop within budget finishes`() {
+        loadInts(inty, ints: [100])
+        loadDoubles(inty, doubles: [1.1])
+        doThis(.doubleDupTimes, to: inty)
         inty.config.stepLimit = 20_000
         inty.run()
 
-        // …and it **finishes**, which is the whole argument for clamping: three
-        // billion copies would have run a few hundred and died mid-loop, leaving
-        // debris. A hundred is a whole answer.
         #expect(inty.stacks[.double]!.count == 101)   // the original, plus 100
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .iterator) == "[ ]")
@@ -142,7 +140,6 @@ struct CombinatorBehaviorTests {
     @Test func `a DupTimes loop too big for its budget is caught by the runaway guard`() {
         loadInts(inty, ints: [3_000_000_000])
         loadDoubles(inty, doubles: [1.1])
-        inty.config.maxIterations = 3_000_000_000
         inty.config.stepLimit = 20_000
 
         doThis(.doubleDupTimes, to: inty)

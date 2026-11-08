@@ -48,9 +48,6 @@ struct ProvenanceTests {
     func loopedRange(_ iterations: Int, body: [any Item] = []) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
-        // A test that wants a long loop says so — `maxIterations` holds one to 100
-        // passes by default, which is the point of it.
-        inty.config.maxIterations = 20_000
         inty.load(program: [
             IntItem(0),
             // `.execDoRange` is inclusive (since 2026-11-07), so `0 n−1` is n passes.
@@ -101,9 +98,6 @@ struct ProvenanceTests {
     @Test func `a descending loop folds to a negative offset`() {
         let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
-        // A test that wants a long loop says so — `maxIterations` holds one to 100
-        // passes by default, which is the point of it.
-        inty.config.maxIterations = 20_000
         inty.load(program: [
             IntItem(60), IntItem(10), CodeItem([]), InstructionItem(.execDoRange),
         ])
@@ -145,9 +139,6 @@ struct ProvenanceTests {
     /// `config.stepLimit` instead.
     func midLoop() -> Interpreter {
         let inty = Interpreter.recordingProvenance()
-        // This one is about encapsulation, not about the iteration budget, so it
-        // asks for the room to keep its 200 rather than being clamped to 100.
-        inty.config.maxIterations = 20_000
         inty.load(program: [
             IntItem(0), IntItem(200), CodeItem([]), InstructionItem(.execDoRange),
         ])
@@ -183,9 +174,6 @@ struct ProvenanceTests {
     func accumulate(_ iterations: Int, maxCallWeight: Int) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
-        // A test that wants a long loop says so — `maxIterations` holds one to 100
-        // passes by default, which is the point of it.
-        inty.config.maxIterations = 20_000
         inty.config.maxCallWeight = maxCallWeight
         inty.load(program: [
             IntItem(999),

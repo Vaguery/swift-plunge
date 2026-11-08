@@ -59,9 +59,9 @@ struct ProvenanceCostBenchmark {
         return prog
     }
 
-    /// Two regimes. `.production` is the real default — the `maxCallWeight` elider and
-    /// `maxIterations` clamp both bound how much provenance on-mode can build.
-    /// `.uncapped` lifts both (and raises `stepLimit`) so loops run deep and provenance
+    /// Two regimes. `.production` is the real default — the `maxCallWeight` elider
+    /// bounds how much provenance on-mode can build.
+    /// `.uncapped` lifts it (and raises `stepLimit`) so loops run deep and provenance
     /// is retained in full: the *true* cost of call retention, which this toggle sheds
     /// entirely. Both guards are content/count based, so they fire identically on and
     /// off — the two modes always compute the same values.
@@ -76,7 +76,6 @@ struct ProvenanceCostBenchmark {
         case .uncapped:
             s.stepLimit = 3_000
             s.maxCallWeight = .max      // do not elide provenance
-            s.maxIterations = .max      // let counted loops run deep
         }
         return s
     }
@@ -201,8 +200,8 @@ struct ProvenanceCostBenchmark {
         correctness: \(programs.count * 2 - mismatches)/\(programs.count * 2) identical value signatures (both regimes)
         content (Σ weight): on \(uncapped.contentOn) == off \(uncapped.contentOff)  ⇒ only provenance differs, never a value
         retained provenance — Σ callWeight (all live items):
-          production (defaults, elider + clamp): on \(production.callOn)   off \(production.callOff)
-          uncapped (elider + clamp lifted):      on \(uncapped.callOn)   off \(uncapped.callOff)
+          production (defaults, elider):         on \(production.callOn)   off \(production.callOff)
+          uncapped (elider lifted):              on \(uncapped.callOn)   off \(uncapped.callOff)
         retained provenance — deepest single item (the tail the toggle targets):
           production: on \(production.maxOn)   off \(production.maxOff)   (\(String(format: "%.0f", Double(production.maxOn) / Double(max(production.maxOff, 1))))× deeper on)
           uncapped:   on \(uncapped.maxOn)   off \(uncapped.maxOff)   (\(String(format: "%.0f", Double(uncapped.maxOn) / Double(max(uncapped.maxOff, 1))))× deeper on)

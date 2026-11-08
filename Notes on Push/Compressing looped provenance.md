@@ -3,7 +3,7 @@
 **Status: BUILT at the push boundary (2026-11-07), steps 2–4 below.** `CruxCompression.folded(_:)`
 folds a history that is over budget, when it is one loop's chain, into `seed ( body ) K .execDoTimes
 .codePop`, and a chain that grows again joins its fold (`K` becomes `K + M`). `Interpreter.push` tries
-it before eliding. `maxIterations` is off by default. What was learned building it:
+it before eliding. `maxIterations` was deleted (2026-11-08). What was learned building it:
 
 - **Loops were not what the fuzz elided.** Every elided history was a *shared* one (a non-destructive
   read's arguments reused, fib(N) leaves for N steps); that is solved by `CruxSharing`
@@ -99,7 +99,8 @@ With actual-lap recording in place the clamp is redundant, and its removal becom
    provenance losslessly.
 4. **Retire the clamp.** With (3) in, `clampingIterations` / `maxIterations` can go: a counted loop runs
    to `stepLimit`, and its crux records the laps that completed. Keep `maxIterations` as an optional
-   *readability* preference if wanted, but it is no longer load-bearing.
+   *readability* preference if wanted, but it is no longer load-bearing. **Done**: off by default
+   2026-11-07, deleted outright 2026-11-08.
 
 ## The harder cases, deferred honestly
 

@@ -139,7 +139,6 @@ nonisolated enum DualModeStress {
         let regime: String
         func scaled(_ factor: Int, steps: Int, liveWeight: Int) {
             settings.stepLimit = steps
-            settings.maxIterations = steps
             settings.maxStackDepth *= factor
             settings.maxStringLength *= factor
             settings.maxVectorLength *= factor

@@ -11,9 +11,9 @@
 //  This pass finds that repeated trailing block and rewrites it as
 //  `seed  ( body )  N  .execDoTimes`, which re-runs to the same value in O(body).
 //
-//  It is the mechanism that would let `maxIterations` retire: with the actual pass
-//  count recorded compactly and reconstructably, a loop can run to `stepLimit`
-//  without its crux blowing up or being elided. Scoped to the exact-repeat case
+//  It is the mechanism that let `maxIterations` retire (deleted 2026-11-08): with
+//  the actual pass count recorded compactly and reconstructably, a loop can run to
+//  `stepLimit` without its crux blowing up or being elided. Scoped to the exact-repeat case
 //  (`.execDoTimes`, no per-pass index); varying-index loops (`.execDoRange`) and
 //  recursion are the deferred harder cases. See
 //  `Notes on Push/Compressing looped provenance.md`.

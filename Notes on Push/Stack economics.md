@@ -128,9 +128,9 @@ Two things make it possible, and both were already there:
   comes out. That is what lets it exist without a sieve — nothing can *ask* `.iterator` for an
   Int-emitter (see "Sieve arguments"), so it takes whatever is on top and answers in kind. `.code`'s
   quotes are the same trick from the other direction, and `pushDefault` already routed by type.
-- **Nothing had to choose a length.** Every kind was already bounded before it could be an argument: a
-  claim was clamped to `maxIterations` at `push`, a walk's length is a fact `maxVectorLength` bounds, and
-  the push gate measures the result once more on the way out.
+- **Nothing had to choose a length.** A collection is bounded by `IteratorItem.collectionLimit`, refused
+  before any walking when the iterator provably emits more, and the push gate measures the result once
+  more on the way out. (Until 2026-11-08 a claim was also clamped to `maxIterations` at `push`.)
 
 It is also the first instruction that makes `.int` *scarcer* on purpose and is right to: two ints become
 a hundred, on a different stack. Given that `.int` is the most-demanded stack in the language and unmet

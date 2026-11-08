@@ -68,7 +68,8 @@ cycle of length 1 run `destination` times, which is worth noticing but not worth
 counter is a cycling walk over a vector of the numbers.
 
 The interesting consequence is a budget one, and it is in Design Principles §12: a lap is a number the
-*program made up*, so cycling moves a walk from fact to claim and `maxIterations` starts applying to it.
+*program made up*, so cycling moves a walk from fact to claim and `maxIterations` started applying to it
+(until 2026-11-08, when `maxIterations` was deleted).
 
 A Double range needs no Double counter, which is what makes this hold: initialize by a number of steps
 (which fixes the stride from the endpoints) or by a stride (which fixes the step count by division). The

@@ -110,7 +110,7 @@ nonisolated struct InstructionMix: Sendable {
 
     /// Equal shares of every role, plus the loops at twice a role's share: about
     /// two draws in seven are a loop. **Loops are where provenance is hardest**
-    /// (long histories, elision, the clamp), and no other mix concentrates them;
+    /// (long histories, sharing, folding, elision), and no other mix concentrates them;
     /// the crux fuzz runs under this as well as `.equalShares`.
     static let loopHeavy = InstructionMix(
         Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map { ($0, 1.0) }),

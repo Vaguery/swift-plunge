@@ -556,8 +556,7 @@ nonisolated extension Interpreter {
                 let (emits, body) = (a[5] as! BoolItem, a[6] as! CodeItem)
 
                 // A counter that never moves never arrives: with stride 0 the value
-                // stays at `origin` forever, `promisedPasses` has no span to clamp,
-                // and `.codeFromIterator` once collected one until the process ran
+                // stays at `origin` forever, and `.codeFromIterator` once collected one until the process ran
                 // out of memory. `execDoRange` can never build one (it steps by ±1),
                 // so this constructor is the only door, and it stays shut.
                 // An explicit error result, as `.intQuot` gives for a zero divisor:

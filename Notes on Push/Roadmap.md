@@ -53,7 +53,7 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    (were 0.0% / 0.2% / 1.3%); 0 broken; the fuzz takes ~53 s (was ~40 s).
    **Loop folding BUILT (2026-11-07):** a history over budget that is one loop's chain folds into
    `seed ( body ) K .execDoTimes .codePop` (`CruxCompression.folded`), joining an earlier fold as it grows;
-   `maxIterations` off by default (#24). A loop's body now returns to `.code` *after* its last pass (it came
+   `maxIterations` off by default (#24), and deleted 2026-11-08. A loop's body now returns to `.code` *after* its last pass (it came
    back with it, so a body reading `.code` saw itself on that pass). A fourth fuzz case (loop-heavy,
    histories held to 50 levels) makes random programs fold: 0 broken in all four, about 460,000 replays,
    ~75 s. **Not folded:** chains whose levels alternate or progress (`.execDoCount`'s index); they are
@@ -93,8 +93,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
   constant. Elements that went in one at a time stay one run each; grouping those is compression (step 3).
 - **#22** opt-in history encoding in `AnyItem`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
-- **#24** (**done**, 2026-11-07) retire `maxIterations` once provenance compression lands. *Retired as a
-  default*: `Int.max`, no clamp; the mechanism stays, opt-in. Delete it outright if wanted.
+- **#24** (**done**) retire `maxIterations` once provenance compression lands. Off by default 2026-11-07;
+  **deleted** 2026-11-08 (the setting, the push-boundary clamp, `IteratorItem.clamped(toPasses:)` and
+  `promisedPasses`).
 - **#25** (**done**) `.execDoRange` becomes **inclusive**: |span|+1 passes (`4 4` → 4; `4 7` → 7, 6, 5, 4). Today it makes
   max(1, |span|) passes. `.execDoCount`/`.execDoTimes` keep their pass counts.
 - **#26** `execEq` is removed; `( A ) ( B ) .codeEq` asks the same.
@@ -205,8 +206,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
 
 ## F. Decisions with a number or a semantics still open
 
-24. **`maxIterations = 100`** — the one judgment-call number; flagged for review. → *Keeping loops
-    human-sized.md*
+24. ~~**`maxIterations = 100`** — the one judgment-call number; flagged for review.~~ **DELETED**
+    2026-11-08, once a crux could fold a loop. → *Keeping loops human-sized.md*
 25. ~~**`.execDoRange` inclusive of its destination?**~~ **DONE** 2026-11-07: inclusive, as in Push3
     (`4 7` → 7, 6, 5, 4; `4 4` → 4). It was max(1, |span|) passes, now |span|+1. → *The first-class iterator.md*
 26. **`execEq` permanent known gap** — leave as-is / record-nothing (law 4b) / restrict to single-item

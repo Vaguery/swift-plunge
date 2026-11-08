@@ -96,7 +96,6 @@ struct DeepStructureSafetyTests {
             let inty = Interpreter()
             inty.config.recordsProvenance = true
             inty.config.stepLimit = 100_000
-            inty.config.maxIterations = 10_000
             inty.load(program: [IntItem(0), CodeItem([IntItem(1), InstructionItem(.intAdd)]),
                                 IntItem(5_000), InstructionItem(.execDoTimes)])
             inty.run()
@@ -114,7 +113,6 @@ struct DeepStructureSafetyTests {
         let (deepest, refusals, bound) = await Task.detached {
             let inty = Interpreter()
             inty.config.stepLimit = 100_000
-            inty.config.maxIterations = 10_000
             inty.load(program: [CodeItem([IntItem(7)]), CodeItem([InstructionItem(.codeWrapRoot)]),
                                 IntItem(5_000), InstructionItem(.execDoTimes)])
             inty.run()

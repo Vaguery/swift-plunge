@@ -1,15 +1,17 @@
 # Keeping loops human-sized
 
-**Status: RETIRED AS A DEFAULT (2026-11-07).** `maxIterations` now defaults to `Int.max` (no clamp): a crux
-folds a loop's chain into a counted loop (*Compressing looped provenance*), so a loop cut off by `stepLimit`
-keeps a readable history and the clamp is no longer load-bearing. The mechanism stays, opt-in, for a run
-that wants loops held to a human-sized number of passes. Also changed that day: the dying loop's body now
-returns to `.code` *after* its last pass, not with it (see *The first-class iterator* § farewell).
+**Status: `maxIterations` DELETED (2026-11-08).** Off by default on 2026-11-07, and deleted outright the
+next day: a crux folds a loop's chain into a counted loop (*Compressing looped provenance*), so a loop cut
+off by `stepLimit` keeps a readable history and the clamp was no longer load-bearing. A collector
+(`.vecFromIterator`, `.codeFromIterator`) is bounded by `IteratorItem.collectionLimit`, which was already
+what bounded it in practice. Also changed on 2026-11-07: the dying loop's body returns to `.code` *after*
+its last pass, not with it (see *The first-class iterator* § farewell). `.iteratorRestart`, the dying loop
+returning its body, and the constructor invariant all remain.
 
 **Was: BUILT.** `maxIterations` (default 100), `.iteratorRestart`, a dying loop returning its body,
-and the constructor invariant all landed together. This note is kept for the *reasoning*; the code is in
-`InterpreterSettings`, `Interpreter.clampingIterations`, `IteratorItem.clamped(toPasses:)` and
-`Interpreter.iteratorFarewell` / `iteratorBuilt`. The principles it argued for are Design Principles §5
+and the constructor invariant all landed together. This note is kept for the *reasoning*; the code was in
+`InterpreterSettings`, `Interpreter.clampingIterations` and `IteratorItem.clamped(toPasses:)` (all deleted
+2026-11-08), and is still in `Interpreter.iteratorFarewell` / `iteratorBuilt`. The principles it argued for are Design Principles §5
 and §12.
 
 It replaces the `.execDoFew` / `.execDoSome` family of earlier interpreters, which took an `.int`

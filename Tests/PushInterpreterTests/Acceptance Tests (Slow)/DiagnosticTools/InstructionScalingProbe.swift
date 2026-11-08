@@ -74,7 +74,7 @@ struct InstructionScalingProbe {
             set[.vecString]!.append(VecStringItem((0..<n).map { _ in large ? sentence(20) : word() }))
             set[.code]!.append(block(large ? settings.maxCodePoints - 1 : 4))
             set[.iterator]!.append(IteratorItem(kind: .counting(stride: 1), origin: IntItem(0),
-                                                destination: IntItem(large ? settings.maxIterations : 3),
+                                                destination: IntItem(large ? settings.stepLimit : 3),
                                                 body: block(large ? 200 : 2), emits: true, cursor: 0, burial: 0))
         }
         return set

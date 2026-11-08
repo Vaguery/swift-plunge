@@ -141,9 +141,9 @@ enum CruxVerdict: Sendable {
 /// `CodeItem`, but rebuilding pushes that origin through `.code` where the cap
 /// does apply.
 ///
-/// Three settings deliberately do not relax, because each would change what the
-/// replay *computes* rather than what it may hold — `maxIterations`,
-/// `maxCallWeight` and `stepLimit`. The reasons are on
+/// Some settings deliberately do not relax, because each would change what the
+/// replay *computes* rather than what it may hold — `maxCallWeight`, the depth
+/// caps and `stepLimit`. The reasons are on
 /// `InterpreterSettings.reconstructing`.
 @MainActor
 func inspectCrux(

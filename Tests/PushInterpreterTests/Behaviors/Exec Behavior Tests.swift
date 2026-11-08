@@ -20,9 +20,6 @@ struct ExecBehaviorTests {
     /// `.iteratorPlay` — the counting is Swift's job, and none of it is expressed
     /// in Push.
     @Test func `execDoCount builds an iterator and plays it when counter > 0`() {
-        // About the shape of what it builds, not the iteration budget — which
-        // would otherwise hold this to 100 and make the trace about clamping.
-        inty.config.maxIterations = 20_000
         loadInts(inty, ints: [3456])
         // The body is a code argument now, so it waits on `.code`.
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))

@@ -38,8 +38,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
 
     // INHERITED, loosely after propeller's limits.cljc:
     //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
-    // None of these six was chosen here on its own merits. `maxIterations` below is
-    // derived from `stepLimit`, so moving that one moves this one too.
+    // None of these six was chosen here on its own merits.
     public var stepLimit       : Int = 1_000
     public var maxStackDepth   : Int = 10_000
     public var maxStringLength : Int = 1_000
@@ -66,8 +65,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // over it only if its crux is: one that is over as a tree is measured again
     // as the crux, which builds each shared node once (`CruxSharing`), and kept
     // if that fits. That used to be
-    // the last unbounded dimension in the system; `maxIterations` below now holds
-    // that title, since nothing bounded what a loop CLAIMS.
+    // the last unbounded dimension in the system.
     public var maxCallWeight   : Int = 10_000
     // DERIVED from the stack a concurrency worker thread gets (512 KB), and NOT a
     // preference. The deepest provenance a pushed item may keep, elided like
@@ -78,42 +76,11 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // chain there crashes outright (2,000 does not). 1,000 leaves room for frames
     // larger than that measurement's. Raise it only for runs on big-stack threads.
     public var maxCallDepth    : Int = 1_000
-    // RETIRED as a budget (2026-11-07, Roadmap #24): off by default (`Int.max`),
-    // kept as an opt-in preference. Its reason was the crux: a loop cut off by
-    // `stepLimit` left a history that could not be read back, so loops were held
-    // to a length that finishes. A crux now folds a loop's chain into a counted
-    // loop over its seed (`CruxCompression.folded`) and records the passes that
-    // actually ran, so a loop may run until `stepLimit` and keep its history.
-    // Set it to hold loops to a human-sized number of passes anyway. What follows
-    // is the case as it was made, and it still describes what setting it does.
-    //
-    // Was DERIVED from `stepLimit`, and NOT a preference. The most passes any single
-    // COUNTED loop may promise — the last unbounded dimension there was:
-    // `stepLimit` bounds the work a loop does, but nothing bounded what one loop
-    // *claims* it will do — so `0 999999
-    // .execDoRange` did not run a million times, it ran a few hundred and died
-    // half-finished, leaving debris instead of an answer. Clamping does not buy
-    // safety (stepLimit had that); it buys COMPLETION, and a program whose loops
-    // finish is one a human can read.
-    //
-    // Applied by clamping a loop's span at construction — never by modulo, which
-    // is chaotic (100 % 100 = 0 passes) and so cannot be climbed by a search or
-    // followed by a reader. Clamping is monotone: counts under the limit pass
-    // through untouched, counts over it saturate.
-    //
-    // WHY 100: at `stepLimit` 1_000 and roughly 1-4 steps per pass, ~100 is the
-    // largest loop that can FINISH, and finishing is the entire point of it. It
-    // looks inconsistent beside the 1_000s above and that inconsistency is
-    // information — this one is derived and they are not. **Raise `stepLimit` and
-    // this is needlessly small; lower it and this becomes a lie.** A test that
-    // wants a longer loop raises both, which is the pattern.
-    //
-    // Counted loops only. A collection's length is a fact rather than a claim, so
-    // `.elements` walks are bounded by maxVectorLength/maxStringLength instead —
-    // and NOTE those must stay below `stepLimit`, or the largest legal collection
-    // cannot be walked to completion. See "Notes on Push/Keeping loops
-    // human-sized.md" and Design Principles §12.
-    public var maxIterations   : Int = .max
+    // (`maxIterations`, which clamped a counted loop's promised passes to 100 so
+    // that it finished and its crux could be read back, was deleted 2026-11-08,
+    // Roadmap #24: a crux folds a loop's chain into a counted loop over its seed,
+    // `CruxCompression.folded`, so a loop may run until `stepLimit` and keep its
+    // history. A collector is bounded by `IteratorItem.collectionLimit`.)
     // When a stack fills faster than the size caps would catch, watch for the
     // signature of a runaway loop (a stack piling repeats or cycling a short
     // period, *and* a looping instruction pending on `.exec`) and stop the run
@@ -168,12 +135,9 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     /// wrong. (Reachable the same way through `maxVectorLength` and
     /// `maxStringLength`, via an iterator walking an oversized collection.)
     ///
-    /// **Three things deliberately do not move**, because each would change what
+    /// **Some things deliberately do not move**, because each would change what
     /// the replay computes rather than what it is allowed to hold:
     ///
-    ///  - `maxIterations` — a counted loop's span is clamped at construction, and
-    ///    the crux records the clamped bounds. Allowing more passes here would run
-    ///    a *different* loop than the one that produced the value.
     ///  - `maxCallWeight` — provenance elided in the original run must elide the
     ///    same way in the replay, or the reproduced item carries more history than
     ///    the original and the fixed-point check fails on a difference this policy
@@ -381,7 +345,7 @@ nonisolated final class Interpreter {
         // inside `recording(…)`; see `ProvenanceRecording`), so there is nothing to
         // strip. `Provenance Off Parity Tests` holds the whole language to that.
         // An item loaded from outside keeps whatever `call` it was handed.
-        self.place(self.elidingOverBudgetProvenance(self.clampingIterations(item)), on: stack)
+        self.place(self.elidingOverBudgetProvenance(item), on: stack)
     }
 
 
@@ -466,29 +430,6 @@ nonisolated final class Interpreter {
     static func producer(in call: [any Item]) -> PushInstruction? {
         if let last = call.last?.exactly(InstructionItem.self) { return last.value }
         return call.first?.exactly(InstructionItem.self)?.value
-    }
-
-    /// Holds a loop to `maxIterations` passes, the third budget beside
-    /// `maxItemWeight` and `maxCallWeight` and enforced in the same place.
-    ///
-    /// **Clamped, not refused, and not moduloed.** Refusing would be the
-    /// `overflow(of:)` treatment, but nothing here is impossible — the loop can
-    /// run, just not as far as it claimed. And modulo, the old `.execDoFew` trick,
-    /// is chaotic: it maps 100 passes to 0. Clamping is monotone, so a search can
-    /// still climb toward the loop it wants (Design Principles §12).
-    ///
-    /// This works at the push boundary only because the clamp is **idempotent**: a
-    /// clamped iterator is a fixed point, so `crux()` reconstructs one and pushing
-    /// it again changes nothing.
-    ///
-    /// Counted and repeating loops only. A collection's length is a fact rather
-    /// than a claim; `maxVectorLength`/`maxStringLength` bound those.
-    func clampingIterations(_ item: any Item) -> any Item {
-        guard
-            let iterator = item.exactly(IteratorItem.self),
-            let held = iterator.clamped(toPasses: config.maxIterations, recording: recording)
-        else { return item }
-        return held
     }
 
     /// Enforces the homogeneity invariant for any stack write. Every stack

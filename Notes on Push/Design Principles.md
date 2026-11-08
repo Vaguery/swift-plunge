@@ -97,9 +97,8 @@ the checker report bugs that were not there (issue #27 — 95 apparent failures,
   `flatSize` when the item *is* a `CodeItem`), but rebuilding pushes that origin through `.code`, where
   the cap bites.
 
-Three settings deliberately do **not** relax, because each would change what the replay computes rather
-than what it may hold: `maxIterations` (a counted loop's span is clamped at construction and the crux
-records the clamped bounds), `maxCallWeight` (provenance elided originally must elide identically, or the
+Some settings deliberately do **not** relax, because each would change what the replay computes rather
+than what it may hold: `maxCallWeight` (provenance elided originally must elide identically, or the
 fixed-point check fails on a difference the policy introduced), and `stepLimit` (sized by the caller, who
 knows the crux's length).
 
@@ -456,8 +455,9 @@ structurally nothing for a clamp to move.
 **Cycling proved this the useful way round.** A walking iterator can be given `laps` — go round the
 source more than once — and the moment it does, the same walk that was a fact becomes a claim: the
 program asserted "forty times" out of thin air, exactly as a counted loop asserts a span. So
-`promisedPasses` starts answering, the clamp at `push` starts applying, and a cycling walk is bounded at
-`maxIterations` while a plain one is not. **The budget was already waiting on the other side of the
+`promisedPasses` started answering, the clamp at `push` started applying, and a cycling walk was bounded at
+`maxIterations` while a plain one was not. (`maxIterations` was deleted 2026-11-08, once a crux could fold
+a loop's chain; the reasoning is kept because the distinction between fact and claim still holds.) **The budget was already waiting on the other side of the
 line**; nothing new had to be built, and no number had to be chosen.
 
 The clamp cuts the **laps and never the source**, which is the same rule read carefully: a 3-element
@@ -521,7 +521,7 @@ recording it is far better than implying a rationale that was never had. It also
 number is *available* to be reconsidered, which a silent number does not.
 
 **Derived.** Fixed by some *other* limit. These are the dangerous ones, because they look free.
-`maxIterations = 100` is not a preference: at `stepLimit = 1_000` and roughly 1–4 steps per pass, ~100 is
+`maxIterations = 100` (deleted 2026-11-08, but the clearest example) was not a preference: at `stepLimit = 1_000` and roughly 1–4 steps per pass, ~100 is
 the largest loop that can **finish**, and finishing is the entire point of it (§12). Raise `stepLimit`
 and 100 is needlessly small; lower it and 100 becomes a lie. It looks inconsistent beside the other
 1,000s, and **that inconsistency is information** — it is derived, and they are not.

@@ -374,10 +374,6 @@ struct IteratorBehaviorTests {
                 counting(from: 0, to: 10_000, emits: false),
                 exec: [InstructionItem(.iteratorPlay)]
             )
-            // A test that wants a long loop says so, next to the step limit it
-            // already raises. `maxIterations` would otherwise hold this to 100
-            // passes and the loop would be over before the second sample.
-            inty.config.maxIterations = 10_000
             for _ in 0..<steps { inty.step() }
             return inty.stacks[.iterator]!.first!
         }
@@ -688,63 +684,10 @@ struct IteratorBehaviorTests {
         #expect(errorStrings(inty).contains { $0.contains("has nothing to emit") })
     }
 
-    /// Clamped, never moduloed. A count under the limit passes through completely
-    /// untouched; one over it saturates. Monotone, so a search can climb it —
-    /// `100 % 100 = 0` cannot be climbed by anything.
-    @Test func `maxIterations clamps a loop's span rather than mangling it`() {
-        func endOf(_ destination: Int, limit: Int = 100) -> Int? {
-            let inty = Interpreter.recordingProvenance()
-            inty.config.maxIterations = limit
-            inty.load(program: [
-                IntItem(0), IntItem(destination), CodeItem([]),
-                InstructionItem(.execDoRange),
-            ])
-            for _ in 0..<4 { inty.step() }
-            return ((inty.stacks[.iterator]!.first as? IteratorItem)?.destination as? IntItem)?.value
-        }
-
-        // `.execDoRange` is inclusive (2026-11-07), so the iterator's exclusive
-        // end sits one past the program's: `0 5` makes six passes, end 6.
-        #expect(endOf(5) == 6)              // untouched
-        #expect(endOf(99) == 100)           // exactly at the limit (100 passes): untouched
-        #expect(endOf(100) == 100)          // 101 passes asked: saturates…
-        #expect(endOf(999_999) == 100)      // …and stays saturated
-    }
-
-    /// Clamping a *descending* loop moves its destination UP: the rule is about
-    /// the span, not the number.
-    @Test func `maxIterations clamps the span, not the destination`() {
+    /// A loop's span is whatever the program asked for (there is no iteration
+    /// budget since 2026-11-08), and its iterator's crux rebuilds it exactly.
+    @Test func `a long range's iterator round-trips through its crux`() {
         let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 10
-        inty.load(program: [
-            IntItem(500), IntItem(0), CodeItem([]), InstructionItem(.execDoRange),
-        ])
-        for _ in 0..<4 { inty.step() }
-        let live = inty.stacks[.iterator]!.first as? IteratorItem
-        #expect((live?.destination as? IntItem)?.value == 490)
-        #expect(live?.stride == -1)
-    }
-
-    /// A collection's length is a fact, not a claim — so the budget does not touch
-    /// it. A walking iterator has no destination for a clamp to move.
-    @Test func `maxIterations does not truncate a walk over data`() {
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 3
-        inty.load(program: [
-            VecIntItem(Array(0..<40)), CodeItem([]), InstructionItem(.vecIntIterate),
-        ])
-        inty.run(stepLimit: 10_000)
-
-        // All forty, not three.
-        #expect(inty.stacks[.int]!.count == 40)
-    }
-
-    /// The clamp lives at the push boundary with the other budgets, which is only
-    /// safe because it is a fixed point: reconstructing a clamped iterator and
-    /// pushing it again must not clamp it further.
-    @Test func `the clamp is idempotent, so a clamped crux round-trips`() {
-        let inty = Interpreter.recordingProvenance()
-        inty.config.maxIterations = 100
         inty.load(program: [
             IntItem(0), IntItem(999_999), CodeItem([]), InstructionItem(.execDoRange),
         ])
