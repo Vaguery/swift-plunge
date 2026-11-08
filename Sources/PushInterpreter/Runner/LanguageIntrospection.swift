@@ -101,6 +101,21 @@ public extension Runner {
         Interpreter.instructions(reading: stack).sorted { $0.rawValue < $1.rawValue }
     }
 
+    /// What `instruction` takes and gives, read off its declarations — its edge
+    /// in the language's input-output map (Roadmap #41). Nil if the language has
+    /// no such instruction.
+    nonisolated func signature(of instruction: PushInstruction) -> InstructionSignature? {
+        Interpreter.signatures[instruction]
+    }
+
+    /// The instructions that can put a value on `stack`, sorted: where chaining
+    /// backwards from a wanted output starts. A deferred push (a constant on
+    /// `.exec`) counts at the stack it rests on; continuations and inputs, whose
+    /// outputs the definition does not fix, are not listed.
+    nonisolated func instructions(producing stack: PushStack) -> [PushInstruction] {
+        (Interpreter.producers[stack] ?? []).sorted { $0.rawValue < $1.rawValue }
+    }
+
     /// The instructions that need no arguments and so can never starve —
     /// constants, inputs, and the combinators that measure or clear a stack.
     nonisolated var alwaysSatisfiedInstructions: [PushInstruction] {

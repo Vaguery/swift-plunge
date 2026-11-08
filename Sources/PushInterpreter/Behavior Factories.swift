@@ -21,7 +21,7 @@ nonisolated extension Behavior {
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) -> Behavior {
         Behavior(label, requires: requirements(takes: takes, alsoNeeds: alsoNeeds),
-                 tags: tags, behaviorClass: .control, body: .values(fxn))
+                 tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
     /// Control over arguments it reads and leaves (`codeEmitNthPoint`, …).
@@ -32,7 +32,7 @@ nonisolated extension Behavior {
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) -> Behavior {
         Behavior(label, requires: reads.map { Requirement.reads($0) },
-                 tags: tags, behaviorClass: .control, body: .values(fxn))
+                 tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
     /// Control with general requirements.
@@ -42,7 +42,7 @@ nonisolated extension Behavior {
         tags: Set<InstructionTag> = [],
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) -> Behavior {
-        Behavior(label, requires: requires, tags: tags, behaviorClass: .control, body: .values(fxn))
+        Behavior(label, requires: requires, tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
     /// Control that needs more than a `Router` can say: placing a block's contents
@@ -54,7 +54,7 @@ nonisolated extension Behavior {
         effects: @escaping @Sendable ([any Item], ProvenanceRecording) -> [ControlEffect]
     ) -> Behavior {
         Behavior(label, requires: takes.map { Requirement.takes($0) },
-                 tags: tags, behaviorClass: .control, body: .control(effects))
+                 tags: tags, behaviorClass: .control, body: .control(effects), produces: .continuation)
     }
 
 
@@ -73,7 +73,8 @@ nonisolated extension Behavior {
         step: @escaping @Sendable ([any Item], StackView) -> StructuralStep
     ) -> Behavior {
         Behavior(label, requires: requirements(takes: takes, alsoNeeds: needs > 0 ? [stack: needs] : [:]),
-                 tags: tags, behaviorClass: .structural, body: .structural(stack, step))
+                 tags: tags, behaviorClass: .structural, body: .structural(stack, step),
+                 produces: .positions(stack))
     }
 
     /// Performs a `PositionEffect` on `stack`, through the interpreter's
@@ -109,10 +110,11 @@ nonisolated extension Behavior {
         _ label: PushInstruction,
         takes: [PushStack] = [],
         tags: Set<InstructionTag> = [],
+        produces: Produces,
         read: @escaping @Sendable ([any Item], ReadContext) -> [Router]
     ) -> Behavior {
         Behavior(label, requires: takes.map { Requirement.takes($0) },
-                 tags: tags, behaviorClass: .contextRead, body: .contextRead(read))
+                 tags: tags, behaviorClass: .contextRead, body: .contextRead(read), produces: produces)
     }
 
 
@@ -126,6 +128,6 @@ nonisolated extension Behavior {
         write: @escaping @Sendable ([any Item]) -> ChannelWrite
     ) -> Behavior {
         Behavior(label, requires: takes.map { Requirement.takes($0) },
-                 tags: tags, behaviorClass: .channel, body: .channel(write))
+                 tags: tags, behaviorClass: .channel, body: .channel(write), produces: .printout)
     }
 }

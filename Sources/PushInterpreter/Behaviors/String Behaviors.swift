@@ -152,6 +152,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringParseToLetters,
             takes: [.string],
+            produces: .delivery(.string),
             fxn: { a, recording in
                 let x = a[0] as! StringItem
                 guard !x.value.isEmpty else { return [] }
@@ -250,6 +251,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringSplit,
             takes: [.string],
+            produces: .delivery(.string),
             fxn: { a, recording in
                 let x = a[0] as! StringItem
                 guard !x.value.split(whereSeparator: { $0.isWhitespace }).isEmpty
@@ -298,10 +300,10 @@ nonisolated extension Interpreter {
         Behavior.splitting(.stringCut, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
             let idx = Position.gap(y.value, count: x.value.count)
             let cut = x.value.index(x.value.startIndex, offsetBy: idx)
-            return [
+            return (
                 Built(String(x.value[..<cut]), members: Array(x.origins().prefix(idx))),
-                Built(String(x.value[cut...]), members: Array(x.origins().dropFirst(idx))),
-            ]
+                Built(String(x.value[cut...]), members: Array(x.origins().dropFirst(idx)))
+            )
         }
 
     // Written order: the string, then the two ints deepest first (z, then y).
@@ -376,6 +378,7 @@ nonisolated extension Interpreter {
         Behavior(
             .stringPushAllChars,
             takes: [.string],
+            produces: .delivery(.char),
             fxn: { a, recording in
                 let s = a[0] as! StringItem
                 guard !s.value.isEmpty else { return [] }

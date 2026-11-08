@@ -58,7 +58,7 @@ nonisolated extension Interpreter {
     /// itself would tie the answer to where the increment happens to sit in the
     /// loop, which is an implementation detail this instruction should not export.
     static let pushStepCount_Behavior =
-        Behavior.contextRead(.pushStepCount) { _, context in
+        Behavior.contextRead(.pushStepCount, produces: .results([.int])) { _, context in
             [Router(.int, IntItem(context.stepCount).observed(by: .pushStepCount, context.recording))]
         }
 
@@ -66,7 +66,7 @@ nonisolated extension Interpreter {
     /// How many errors are on `.error`. **The one error combinator**, and the only
     /// instruction in the language that names a stack it cannot alter.
     static let errorStackDepth_Behavior =
-        Behavior.contextRead(.errorStackDepth) { _, context in
+        Behavior.contextRead(.errorStackDepth, produces: .results([.int])) { _, context in
             let depth = IntItem(context.depth(of: .error))
             return [Router(.int, depth.observed(by: .errorStackDepth, context.recording))]
         }
@@ -86,7 +86,7 @@ nonisolated extension Interpreter {
         _ name: PushInstruction,
         counting kind: ErrorKind
     ) -> Behavior {
-        Behavior.contextRead(name) { _, context in
+        Behavior.contextRead(name, produces: .results([.int])) { _, context in
             let n = context.errorCount(of: kind)
             return [Router(.int, IntItem(n).observed(by: name, context.recording))]
         }

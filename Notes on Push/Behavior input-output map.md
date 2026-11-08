@@ -1,6 +1,8 @@
 # Behavior input–output map (Roadmap #41)
 
-**Status: SURVEYED (2026-11-08). Nothing built in the language.** The question: can every Behavior's
+**Status: DECLARED (2026-11-08), after the survey below.** Every Behavior now states its output (see
+*Declared outputs* at the end); the survey's findings are kept as the reasoning behind the shapes.
+**Originally surveyed the same day.** The question: can every Behavior's
 outputs be stated as well-formed edges (inputs of these types → outputs of these types), so a program
 synthesizer could chain backwards from the outputs a problem wants? And should errors and the size limits
 be part of those edges, or a separate filter over the pure I/O?
@@ -150,3 +152,55 @@ map a property of the language. The survey becomes its test, in the way the role
 every Behavior and fail if a Router falls outside its declared alternatives. Pieces it would need:
 iterator element types; a convention for `.exec` literals as deferred pushes; a control-edge marker for
 continuations; shape effects for the combinators.
+
+## Declared outputs (built 2026-11-08)
+
+Built after #42–#44 had removed most of what the survey found irregular: the silent failures are errors,
+`BehaviorWithSideEffects` is gone (structural rules return a `PositionEffect`), and the typed operations
+declare their result stack (`gives:`).
+
+**`Produces`**, a required argument of every Behavior constructor, is the output half of a signature:
+
+| Case | Meaning | Instructions |
+|---|---|---|
+| `results([stacks])` | fixed results, one per listed stack | 314 (305 single; 9 lists of two: the 7 cuts, `iteratorPeekStride`, `iteratorPeekLaps`) |
+| `alternatives([[stacks]])` | one of a few fixed lists, chosen by argument values | 11 |
+| `deferred(stack)` | a literal on `.exec` that rests on `stack` next step | 80 constants |
+| `binding` | the bound value, deferred; its type is per problem | 10 inputs |
+| `delivery(stack)` | an iterator loop putting elements on `stack` later | 7 (`vecXPushAll`, `stringSplit`, `stringParseToLetters`, `stringPushAllChars`) |
+| `positions(stack)` | value-blind deletes, copies and moves on `stack` | 144 structural rules |
+| `continuation` | a control edge: whatever the program it writes does | 28 |
+| `printout` | the printout | 13 |
+
+Errors are never listed: starvation follows from `requirements`, a `.fallible` tag marks a partial edge
+(outside its domain the result is an error), and the size limits stay a separate filter after every edge,
+as the survey recommended. A refusal may hand its own arguments back untouched (the iterator setters), and
+nothing else.
+
+**`InstructionSignature`** joins the inputs (consumes, reads, needs, variadic, from `requirements`) to
+`produces` and partiality. `Interpreter.signatures` and `Interpreter.producers` (stack → the instructions that
+can put a value there) are built once from the declarations. Public: `Runner.signature(of:)` and
+`Runner.instructions(producing:)`.
+
+**Checked by running.** *Behavior IO Declaration Tests* drive each of the 607 instructions 20 times on
+sampled stacks (the survey's sampler) and fail if a result falls outside its declaration, if a body errs
+without `.fallible`, or if any stack changes in place other than a structural rule's own or a control
+write. A `delivery` is run to the end on a fresh interpreter to see where its elements land. A wrong
+declaration planted on purpose (the `Eq` family as `.int`) fails it.
+
+Changed on the way: `splitting` returns a pair rather than a list, so a cut declares exactly two results
+(all seven cuts always gave two); the twelve iterator constructors that erred untagged are now `.fallible`.
+
+**Still coarse**, and where the map would sharpen next:
+
+- **Iterators by element type.** `iteratorPeekStart` declares an iterator plus a value on *any* stack, and
+  `vecFromIterator` any vector stack, because `.iterator` is one type. An iterator typed by element (read off
+  `kind` and `origin`) would make them fixed edges and give `delivery` loops a checked element type.
+- **Continuations.** 28 control Behaviors are one opaque case. A control edge could name the stacks of
+  the blocks it runs (`execIf`: one of two `.code` blocks), leaving the types to the blocks' own edges.
+- **Inputs.** A `binding`'s type is fixed per problem, by its training cases; a search can refine the map
+  per problem before chaining.
+- **Peeks that give nothing.** `iteratorPeekEnd` on a walking iterator and `iteratorPeekBody` on one
+  without a body hand back only the iterator, with no value and no error: by design (their doc comments),
+  but at odds with #42's "the intended output or an error". Open for a ruling.
+

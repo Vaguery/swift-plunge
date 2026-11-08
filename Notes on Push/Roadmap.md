@@ -290,6 +290,18 @@ A representation-neutral derivation graph, for other GP representations, is a la
     redirect one (a separate filter); body errors are domain conditions (28 of 31 replace the result).
     Not yet well formed: `.exec` continuations, `.iterator` as one type, and the shape effects of the
     direct-write combinators. A type-level map is a hypergraph with cycles; backward chaining builds the DAG.
+    **Declared and checked 2026-11-08** (after #43/#44): every Behavior declares `produces: Produces`, the
+    output half of its signature, and the compiler requires it. Typed operations derive it from `gives:`;
+    structural rules (`.positions(stack)`), control (`.continuation`) and channels (`.printout`) from their
+    class; context reads and the ~50 hand-written operations by hand. `InstructionSignature` adds the inputs
+    (consumes, reads, needs, variadic) and partiality (`.fallible`); `Runner.signature(of:)` and
+    `Runner.instructions(producing:)` make the map public, the latter the first step of backward chaining.
+    *Behavior IO Declaration Tests* drive all 607 on sampled stacks and check every result against its
+    declaration (and that a body error comes only from a `.fallible` Behavior); a planted wrong declaration
+    fails it. `splitting` now returns a pair, so a cut is declared as exactly two results. The 12 iterator
+    constructors the survey found erring untagged are now `.fallible`. Still coarse: continuations, the
+    iterator getters and `vecFromIterator` (alternatives over every element type, until iterators are typed
+    by element), and inputs (`.binding`, typed per problem).
 
 42. **Every Behavior returns its intended output or an error** — **RULED and BUILT 2026-11-08** (three new
     `ErrorKind`s: `.emptyCollection`, `.notFound`, `.conversion`; clamping lives in `Position`) → *Error audit and

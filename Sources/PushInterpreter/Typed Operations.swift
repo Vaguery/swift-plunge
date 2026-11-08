@@ -160,20 +160,23 @@ nonisolated extension Behavior {
     }
 
 
-    // MARK: - Items in, several containers out
+    // MARK: - Items in, two containers out
 
-    /// Gives **several results on one stack**, produced in order, so the first ends
-    /// deepest (`cut`). Each records the selecting crux (provenance law 5): the
-    /// instruction, then the clean-up that surfaces that one result.
+    /// **Splits into two results on one stack**, the first produced ending deepest
+    /// (`cut`: prefix under suffix). Each records the selecting crux (provenance
+    /// law 5): the instruction, then the clean-up that surfaces that one result.
+    /// A pair, not a list, so the declared output is exactly two (Roadmap #41).
     static func splitting<each A: ValueItem, R: MemberItem>(
         _ label: PushInstruction,
         takes: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
-        _ body: @escaping @Sendable (repeat each A) -> [Built<R.Value>]
+        _ body: @escaping @Sendable (repeat each A) -> (Built<R.Value>, Built<R.Value>)
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
-            let parts = body(repeat each items(args, call.positions, repeat each takes))
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, count: 2,
+              tags: tags) { args, call, recording in
+            let pair = body(repeat each items(args, call.positions, repeat each takes))
+            let parts = [pair.0, pair.1]
             return parts.enumerated().map { produced, part in
                 Router(R.pushStack, R(part.value,
                                       call: recording(Behavior.selecting(produced, of: parts.count,
@@ -184,7 +187,7 @@ nonisolated extension Behavior {
     }
 
 
-    /// Several results on one stack, for a type **without element origins** (a
+    /// Two results on one stack, for a type **without element origins** (a
     /// block's pieces: `codeCutAtGap`). As `splitting` above, but the body returns
     /// the pieces' values.
     static func splitting<each A: ValueItem, R: ValueItem>(
@@ -192,10 +195,12 @@ nonisolated extension Behavior {
         takes: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
-        _ body: @escaping @Sendable (repeat each A) -> [R.Value]
+        _ body: @escaping @Sendable (repeat each A) -> (R.Value, R.Value)
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
-            let parts = body(repeat each items(args, call.positions, repeat each takes))
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, count: 2,
+              tags: tags) { args, call, recording in
+            let pair = body(repeat each items(args, call.positions, repeat each takes))
+            let parts = [pair.0, pair.1]
             return parts.enumerated().map { produced, value in
                 Router(R.pushStack, R(value, call: recording(Behavior.selecting(produced, of: parts.count,
                                                                                 on: R.pushStack, from: call.written))))
@@ -248,6 +253,7 @@ nonisolated extension Behavior {
         stacks: [PushStack],
         reading: Bool,
         gives: PushStack,
+        count: Int = 1,
         tags: Set<InstructionTag>,
         produce: @escaping @Sendable ([any Item], WrittenCall, ProvenanceRecording) throws(Refusal) -> [Router]
     ) -> Behavior {
@@ -261,6 +267,7 @@ nonisolated extension Behavior {
             ? order.groups.map { (key: $0.stack, value: $0.count) }.sorted { $0.key.rawValue < $1.key.rawValue }
             : nil
         let instruction = InstructionItem(label)
+        let produces = Produces.results(Array(repeating: gives, count: count))
 
         let fxn: @Sendable ([any Item], ProvenanceRecording) -> [Router] = { args, recording in
             let call = WrittenCall(arguments: args, positions: positions, instruction: instruction, readCounts: readCounts)
@@ -272,6 +279,6 @@ nonisolated extension Behavior {
             }
         }
         return Behavior(label, requires: requirements, tags: tags,
-                        behaviorClass: .operation, body: .values(fxn), gives: gives)
+                        behaviorClass: .operation, body: .values(fxn), produces: produces)
     }
 }

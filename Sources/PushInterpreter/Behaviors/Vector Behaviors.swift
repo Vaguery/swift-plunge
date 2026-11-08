@@ -462,10 +462,10 @@ nonisolated extension Interpreter {
             let prefix = Array(x.value[0..<idx])
             let suffix = Array(x.value[idx...])
 
-            return [
+            return (
                 Built(prefix, members: Array(x.origins()[0..<idx])),
-                Built(suffix, members: Array(x.origins()[idx...])),
-            ]
+                Built(suffix, members: Array(x.origins()[idx...]))
+            )
         }
     }
 
@@ -533,6 +533,7 @@ nonisolated extension Interpreter {
                     (args[0] as? V)?.value.count ?? 0
                 }),
             ],
+            produces: .results([V.pushStack]),
             fxn: { a, recording in
                 let template = a[0] as! V
                 // Top-first out of the planner, so reversing puts the first-written
@@ -590,7 +591,7 @@ nonisolated extension Interpreter {
     static func readItemsBehavior<V: VectorItem>(
         _ instruction: PushInstruction, making itemType: V.Type
     ) -> Behavior {
-        Behavior.contextRead(instruction, takes: [.int]) { collected, context in
+        Behavior.contextRead(instruction, takes: [.int], produces: .results([V.pushStack])) { collected, context in
                 let n = (collected[0] as! IntItem).value
                 let stack = V.Scalar.pushStack
                 let items = context.items(of: stack)
@@ -622,7 +623,7 @@ nonisolated extension Interpreter {
         readItemsInstruction: PushInstruction,
         making itemType: V.Type
     ) -> Behavior {
-        Behavior.contextRead(instruction) { _, context in
+        Behavior.contextRead(instruction, produces: .results([V.pushStack])) { _, context in
                 let stack = V.Scalar.pushStack
                 let elements = Array(context.items(of: stack))
                     .map { $0 as! V.Scalar }
@@ -644,6 +645,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [V.pushStack],
+            produces: .delivery(V.Scalar.pushStack),
             fxn: { a, recording in
                 let x = a[0] as! V
                 guard !x.value.isEmpty else { return [] }
@@ -1368,6 +1370,8 @@ nonisolated extension Interpreter {
         .vecFromIterator,
         takes: [.iterator],
         tags: [.fallible],
+        // A vector of the iterator's element type, and the body if it had one.
+        produces: .alternatives([PushStack.vecBool, .vecDouble, .vecInt, .vecString].flatMap { [[$0], [$0, .code]] }),
         fxn: { a, recording in
             let iterator = a[0] as! IteratorItem
             // As `.codeFromIterator`: a success ends the loop and the farewell

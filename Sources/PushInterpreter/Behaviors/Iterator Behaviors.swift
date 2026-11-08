@@ -223,6 +223,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorPopState,
             takes: [.iterator],
+            produces: .alternatives([[.iterator]] + Produces.loopEnds),
             fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent, iterator.hasNextPass else {
@@ -250,11 +251,13 @@ nonisolated extension Interpreter {
     /// record nothing.
     static func iteratorGetter_Behavior(
         _ name: PushInstruction,
+        produces: Produces,
         reading field: @escaping @Sendable (IteratorItem, ProvenanceRecording) -> (any Item)?
     ) -> Behavior {
         Behavior(
             name,
             takes: [.iterator],
+            produces: produces,
             fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 var results = [Router(.iterator, iterator)]
@@ -271,12 +274,12 @@ nonisolated extension Interpreter {
     /// that item belongs to, so it is `.int` for a counting loop and `.string` or a
     /// vector stack for one walking a collection.
     static let iteratorPeekStart_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStart) { iterator, _ in iterator.origin }
+        iteratorGetter_Behavior(.iteratorPeekStart, produces: .iteratorAnd(Produces.anyItem)) { iterator, _ in iterator.origin }
 
     /// Where the loop ends. A `.elements` iterator has no end bound of its own —
     /// its end is its source's length — so this emits nothing for one.
     static let iteratorPeekEnd_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekEnd) { iterator, _ in iterator.destination }
+        iteratorGetter_Behavior(.iteratorPeekEnd, produces: .iteratorAnd([.int])) { iterator, _ in iterator.destination }
 
     /// The step between passes; `1` for an iterator walking a collection.
     ///
@@ -289,7 +292,7 @@ nonisolated extension Interpreter {
     /// iterator on `.iterator`, which a same-stack sibling would then read. The
     /// crux pops it, so the fragment leaves only the fact (Design Principles §1).
     static let iteratorPeekStride_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStride) { iterator, recording in
+        iteratorGetter_Behavior(.iteratorPeekStride, produces: .results([.iterator, .int])) { iterator, recording in
             IntItem(
                 iterator.stride,
                 call: recording(Behavior.reading(
@@ -301,7 +304,7 @@ nonisolated extension Interpreter {
     /// The block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
     static let iteratorPeekBody_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekBody) { iterator, _ in iterator.body }
+        iteratorGetter_Behavior(.iteratorPeekBody, produces: .iteratorAnd([.code])) { iterator, _ in iterator.body }
 
     /// How many times this iterator goes round its source — `1` for anything that
     /// does not cycle, which is most iterators and every counting one.
@@ -311,7 +314,7 @@ nonisolated extension Interpreter {
     /// law 3 applies — including the `reading` cleanup that pops the iterator the
     /// getter hands back.
     static let iteratorPeekLaps_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekLaps) { iterator, recording in
+        iteratorGetter_Behavior(.iteratorPeekLaps, produces: .results([.iterator, .int])) { iterator, recording in
             IntItem(
                 iterator.laps,
                 call: recording(Behavior.reading(
@@ -353,6 +356,7 @@ nonisolated extension Interpreter {
             // on a walking iterator has no end to set — so the whole family is
             // fallible, tagged once here.
             tags: [.fallible],
+            produces: .alternatives([[.iterator]] + Produces.loopEnds),
             fxn: { a, recording in
                 var iterator = a[1] as! IteratorItem
 
@@ -388,6 +392,7 @@ nonisolated extension Interpreter {
             .iteratorRestart,
             takes: [.iterator],
             tags: [.fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 var iterator = a[0] as! IteratorItem
                 iterator.value = 0
@@ -530,6 +535,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly, .fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 // `.int` is a stack, so the last argument written is on top:
                 // `origin dest stride cursor burial` arrives reversed.
@@ -599,7 +605,9 @@ nonisolated extension Interpreter {
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
-            tags: [.cruxOnly],
+            // `.fallible`: `iteratorBuilt` refuses an iterator with nothing to emit.
+            tags: [.cruxOnly, .fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 let origin = a[0]
                 let (burial, cursor) = (a[1] as! IntItem, a[2] as! IntItem)
@@ -665,7 +673,9 @@ nonisolated extension Interpreter {
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
-            tags: [.cruxOnly],
+            // `.fallible`: `iteratorBuilt` refuses an iterator with nothing to emit.
+            tags: [.cruxOnly, .fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
@@ -705,7 +715,9 @@ nonisolated extension Interpreter {
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
-            tags: [.cruxOnly],
+            // `.fallible`: `iteratorBuilt` refuses an iterator with nothing to emit.
+            tags: [.cruxOnly, .fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 let (body, origin) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
@@ -753,6 +765,7 @@ nonisolated extension Interpreter {
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
             tags: [.cruxOnly, .fallible],
+            produces: .results([.iterator]),
             fxn: { a, recording in
                 let box = a[0] as! CodeItem
                 let (burial, cursor, count) = (

@@ -296,7 +296,7 @@ nonisolated extension Interpreter {
             // everything → empty prefix) to N (after everything → empty suffix).
             // The index clamps over those gaps.
             let idx = Position.gap(y.value, count: x.value.count)
-            return [Array(x.value[0..<idx]), Array(x.value[idx...])]
+            return (Array(x.value[0..<idx]), Array(x.value[idx...]))
         }
 
     // MARK: - Tree-wide gap surgery
@@ -319,8 +319,8 @@ nonisolated extension Interpreter {
         Behavior.splitting(.codeCutAtGap, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
             let tokens = x.gapTokens
             let idx = x.gapIndex(y.value)
-            return [CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
-                    CodeItem.rebuilt(from: Array(tokens[idx...])).value]
+            return (CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
+                    CodeItem.rebuilt(from: Array(tokens[idx...])).value)
         }
 
     /// Splice one block into another's tree at the indexed gap.
@@ -444,6 +444,7 @@ nonisolated extension Interpreter {
     Behavior(
         .execQuote,
         takes: [.exec],
+        produces: .results([.code]),
         fxn: {a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])
@@ -527,6 +528,8 @@ nonisolated extension Interpreter {
         .codeFromIterator,
         takes: [.iterator],
         tags: [.fallible],
+        // The collected block, under it the body if the loop had one.
+        produces: .alternatives([[.code], [.code, .code]]),
         fxn: { a, recording in
             let iterator = a[0] as! IteratorItem
             // The farewell returns the body to `.code`, *under* the result. The
@@ -571,6 +574,7 @@ nonisolated extension Interpreter {
     Behavior(
         .iteratorQuote,
         takes: [.iterator],
+        produces: .results([.code]),
         fxn: { a, recording in
             let (x) = (a[0])
             var result = CodeItem([x])

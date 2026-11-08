@@ -145,15 +145,16 @@ struct TypedOperationTests {
         #expect(callString(topItem(inty, .error)) == "( [] .vecIntFirst )")
     }
 
-    /// `splitting`: results in produced order, the first deepest, each recording
-    /// the selecting crux that surfaces it alone (provenance law 5).
+    /// `splitting`: two results, the first deepest, each recording the selecting
+    /// crux that surfaces it alone (provenance law 5); declared as two results.
     @Test func `splitting gives each piece its selecting crux`() {
         let halve = Behavior.splitting(.vecIntCut, takes: VecIntItem.self, IntItem.self,
                                        gives: VecIntItem.self) { v, n in
             let at = Position.gap(n.value, count: v.value.count)
-            return [Built(Array(v.value[..<at]), members: Array(v.origins()[..<at])),
-                    Built(Array(v.value[at...]), members: Array(v.origins()[at...]))]
+            return (Built(Array(v.value[..<at]), members: Array(v.origins()[..<at])),
+                    Built(Array(v.value[at...]), members: Array(v.origins()[at...])))
         }
+        #expect(halve.produces == .results([.vecInt, .vecInt]))
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3]))
         inty.stacks[.int]!.prepend(IntItem(1))

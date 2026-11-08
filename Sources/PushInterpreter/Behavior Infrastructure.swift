@@ -100,11 +100,20 @@ nonisolated final class Behavior: Sendable {
     /// which is an operation unless built with `Behavior.control`.
     let behaviorClass: BehaviorClass
 
-    /// The stack this Behavior's result goes to, when that is declared (the typed
-    /// operations, Roadmap #44); nil when only running it can tell. A refusal
-    /// goes to `.error` regardless. The start of a `produces` declaration for the
-    /// input-output map (#41).
-    let gives: PushStack?
+    /// What this Behavior puts out when it succeeds — the output half of its
+    /// signature (Roadmap #41; see `Produces`). Every constructor declares it: the
+    /// typed operations from their result type, structural rules, control and
+    /// channels from their class, and everything else by hand.
+    let produces: Produces
+
+    /// The one stack this Behavior's results go to, when its results are fixed
+    /// and all on one stack (most operations); nil otherwise. A refusal goes to `.error` regardless.
+    var gives: PushStack? {
+        switch produces {
+        case .results(let stacks) where Set(stacks).count == 1: stacks[0]
+        default: nil
+        }
+    }
 
 
     /// The common form: consume one item from each of `takes`, and require —
@@ -124,10 +133,11 @@ nonisolated final class Behavior: Sendable {
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         tags: Set<InstructionTag> = [],
+        produces: Produces,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         self.init(label, requires: Behavior.requirements(takes: takes, alsoNeeds: alsoNeeds),
-                  tags: tags, behaviorClass: .operation, body: .values(fxn))
+                  tags: tags, behaviorClass: .operation, body: .values(fxn), produces: produces)
     }
 
     /// The non-destructive query form: **read** one item from each of `reads`,
@@ -142,10 +152,11 @@ nonisolated final class Behavior: Sendable {
         _ label: PushInstruction,
         reads: [PushStack],
         tags: Set<InstructionTag> = [],
+        produces: Produces,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
         self.init(label, requires: reads.map { Requirement.reads($0) },
-                  tags: tags, behaviorClass: .operation, body: .values(fxn))
+                  tags: tags, behaviorClass: .operation, body: .values(fxn), produces: produces)
     }
 
     /// The general form, for an operation whose requirements are not all static.
@@ -153,9 +164,11 @@ nonisolated final class Behavior: Sendable {
         _ label: PushInstruction,
         requires: [Requirement],
         tags: Set<InstructionTag> = [],
+        produces: Produces,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
-        self.init(label, requires: requires, tags: tags, behaviorClass: .operation, body: .values(fxn))
+        self.init(label, requires: requires, tags: tags, behaviorClass: .operation, body: .values(fxn),
+                  produces: produces)
     }
 
     /// Every constructor ends here.
@@ -165,14 +178,14 @@ nonisolated final class Behavior: Sendable {
         tags: Set<InstructionTag>,
         behaviorClass: BehaviorClass,
         body: BehaviorBody,
-        gives: PushStack? = nil
+        produces: Produces
     ) {
         self.name = label
         self.requirements = requires
         self.tags = tags
         self.behaviorClass = behaviorClass
         self.body = body
-        self.gives = gives
+        self.produces = produces
         let plan = Behavior.directPlan(for: requires)
         self.directChecks = plan.checks
         self.directTakes = plan.takes

@@ -169,7 +169,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackIsEmpty")!
-        inst = Behavior.contextRead(name) { _, context in
+        inst = Behavior.contextRead(name, produces: .results([.bool])) { _, context in
                 let empty = context.depth(of: stack) == 0
                 return [
                     Router(
@@ -205,6 +205,7 @@ nonisolated extension Interpreter {
         inst = Behavior(
             name,
             requires: [Requirement.reads(stack), Requirement.reads(stack)],
+            produces: .results([.bool]),
             fxn: { a, recording in
                 let isSame = a[0].isEqual(to: a[1])
                 // The crux cleans up the two operands it read, so it reproduces
@@ -317,7 +318,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackDepth")!
-        inst = Behavior.contextRead(name) { _, context in
+        inst = Behavior.contextRead(name, produces: .results([.int])) { _, context in
                 let c = context.depth(of: stack)
                 return [
                     Router(
