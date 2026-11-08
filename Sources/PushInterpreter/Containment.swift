@@ -152,6 +152,17 @@ nonisolated struct Pieces: Sendable {
         self.ends = ends
     }
 
+    /// These runs, as they were: how `ItemArchive` rebuilds a decoded item's
+    /// members.
+    init(runs: [Run]) {
+        var total = 0
+        self.runs = runs
+        self.ends = runs.map { run in
+            total += run.count
+            return total
+        }
+    }
+
     /// The origin of element `index`, or nil if out of range. O(log runs).
     func origin(at index: Int) -> Origin? {
         guard index >= 0, index < count else { return nil }

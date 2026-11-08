@@ -8,9 +8,11 @@
 /// The per-step observations one recorder collected during a run, typed by its
 /// target's value kind.
 ///
-/// Item-valued targets (`top`, `second`, `constant`) keep the `any Item` — via
-/// `AnyItem`, retaining its `call` provenance (`crux`) — while scalar targets
-/// keep their natural value. A `nil` element is a step where the observed
+/// Item-valued targets (`top`, `second`, `constant`) keep the `any Item`, with
+/// its `call` provenance (`crux`) while the trace is in memory, while scalar
+/// targets keep their natural value. **Encoded, a trace keeps values only**:
+/// `AnyItem` drops histories. To carry them across a process boundary, encode
+/// the items as an `ItemArchive` (opt-in, Roadmap #22). A `nil` element is a step where the observed
 /// position held nothing.
 public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     case items([AnyItem?])

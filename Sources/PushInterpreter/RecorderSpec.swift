@@ -17,7 +17,9 @@
 ///
 /// Item-valued targets (`top`, `second`, `constant`) collect the `any Item`
 /// itself rather than an unwrapped scalar, so the observation retains the item's
-/// `call` provenance (`crux`) for downstream analysis. Scalar targets that have
+/// `call` provenance (`crux`) for downstream analysis: in memory, and across a
+/// process boundary when encoded as an `ItemArchive` (`AnyItem`, the default
+/// encoding, keeps values only). Scalar targets that have
 /// no underlying item (`count`, `isEmpty`, `printout`, `counter`) collect their
 /// natural value type.
 public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {

@@ -74,7 +74,13 @@ rulings are in PlungeGP's `Notes and Planning/Open directions.md` § First prior
    `.containerHeavy`, exercises them: elision 5.2% → 1.5%, derived 81.5% → 85.3%, 0 broken. Then a
    **piece table** (`Pieces`): origins stored as runs, each element addressed from its source; elision
    1.3%, derived 85.6%.
-5. Opt-in history encoding in `AnyItem` (#22).
+5. Opt-in history encoding in `AnyItem` (#22). **BUILT 2026-11-08** as `ItemArchive`, a separate type so
+   the default envelope stays value-only: a node table, children first, each shared node written once (the
+   identity `crux()` shares by). It carries `call`, nested items' histories (block contents, an iterator's
+   origin/destination/body, a stand-in's value), members, and a remeasured weight. Decoding needs no
+   interpreter or bindings; encoding a decoded archive gives the same table. Random programs' items
+   round-trip (value, crux, measures) in all three mixes; their tables hold about 0.56 of the tree's
+   nodes. Also fixed: `AnyItem` dropped an iterator's `laps`.
 6. Crux-to-function, both forms (#23).
 
 A representation-neutral derivation graph, for other GP representations, is a later project.
@@ -91,7 +97,7 @@ A representation-neutral derivation graph, for other GP representations, is a la
   *Representation:* **a piece table (built 2026-11-07, the user's suggestion).** Runs of one item that
   went in, or of a source container's positions, so an element born in a constant is addressed from the
   constant. Elements that went in one at a time stay one run each; grouping those is compression (step 3).
-- **#22** opt-in history encoding in `AnyItem`.
+- **#22** (**done** 2026-11-08) opt-in history encoding: `ItemArchive`.
 - **#23** both forms, as two instructions: substitute an input, and delete the leaf.
 - **#24** (**done**) retire `maxIterations` once provenance compression lands. Off by default 2026-11-07;
   **deleted** 2026-11-08 (the setting, the push-boundary clamp, `IteratorItem.clamped(toPasses:)` and
@@ -194,8 +200,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
 21. ~~**Vector elements have no provenance**~~ — `VecIntItem.value` is a raw `[Int]`. The one place
     containment destroys history, against law 1b. Costs addressability, not correctness. **Blocks #23.**
     **DONE 2026-11-07:** members (§P step 4).
-22. **(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.
-    Still true across `Codable` (in memory the trace keeps `call`).
+22. ~~**(marginal)** `RecordedTrace`/`RecorderSpec` comments claim crux retention that `AnyItem` drops.~~
+    **DONE** 2026-11-08: `ItemArchive` encodes histories (opt-in), and the comments say which encoding
+    keeps what.
 23. **`codeFuncFrom_Crux`** — turn an item's crux into a `CodeItem`, then curry it by removing a leaf.
     The payoff the whole provenance exercise is for. Wants #21 first. → *Code instruction planning.md*
     **Depends on call trees:** a crux-consuming behavior must guard with `Interpreter.requiresProvenance(name)`

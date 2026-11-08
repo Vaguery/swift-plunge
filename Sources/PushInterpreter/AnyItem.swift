@@ -42,16 +42,20 @@ nonisolated struct IteratorState: Codable, Sendable {
     var body: AnyItem?
     var emits: Bool
     var burial: Int
+    /// Absent from anything encoded before 2026-11-08, which dropped it (a
+    /// cycling walk came back as one lap); decoded as 1 then.
+    var laps: Int?
 }
 
 
 /// A `Codable` envelope around the `any Item` existential, which cannot itself
 /// carry a synthesized conformance.
 ///
-/// Only an item's *type tag* and *value* are serialized. The runtime-only
-/// fields — `call` (provenance) and `index` — are deliberately
-/// omitted: items in a program (or a `crux` result) are pristine on those
-/// fronts, and they are reconstructed with their defaults on decode. Every
+/// Only an item's *type tag* and *value* are serialized. Its history (`call`,
+/// and a container's members) is deliberately omitted: items in a program (or
+/// a `crux` result) have none, and a decoded item comes back as a literal, its
+/// crux itself. To keep histories, encode an `ItemArchive` instead (opt-in,
+/// Roadmap #22). Every
 /// `Item.value` is a JSON-native type (or, for `CodeItem`, a nested array of
 /// items), so the encoding is total.
 ///
@@ -125,6 +129,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 body: body,
                 emits: state.emits,
                 cursor: state.cursor,
+                laps: state.laps ?? 1,
                 burial: state.burial
             )
         case .standIn:
@@ -185,7 +190,8 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                     destination: concrete.destination.map(AnyItem.init),
                     body: concrete.body.map(AnyItem.init),
                     emits: concrete.emits,
-                    burial: concrete.burial
+                    burial: concrete.burial,
+                    laps: concrete.laps
                 ),
                 forKey: .value
             )

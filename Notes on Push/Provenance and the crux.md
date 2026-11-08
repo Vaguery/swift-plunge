@@ -334,6 +334,30 @@ about 250,000 replays; the fuzz takes ~53 s (was ~40 s).
 **Local variables would serve this better** (the user, 2026-11-07): bind each shared value once and read
 it by name, with no depth bookkeeping. The planning would be unchanged. Roadmap #39.
 
+## Persistence (2026-11-08)
+
+`AnyItem`, the default `Codable` envelope, encodes values only: a decoded item is a literal whose crux is
+itself. **`ItemArchive`** is the opt-in alternative (Roadmap #22, ruling P8), a separate type so that
+nothing turns history on by accident.
+
+It writes a **node table, children before parents**, each node once. A node is shared when it is the same
+history in memory, by the identity `crux()` shares by (`CruxSharing.key`, checked for equal values too);
+the commonest literals (instructions, ints) are shared by value, since a literal has no history to tell
+them apart. So a table is about as long as the crux, not the tree: a doubling chain 30 deep, of tree
+weight 2^30, is 32 nodes.
+
+A node carries everything a history consists of: the `call`; the histories of what the item *holds* (a
+block's contents, an iterator's origin, destination and body, a stand-in's value), each its own node;
+members, as runs naming their items and sources; and the weight the push boundary measured, when it is
+the crux's rather than the tree's. Decoding rebuilds the items node by node, so it needs no interpreter
+and no input bindings, and it shares exactly what the original shared: **encoding a decoded archive gives
+the same table**. The table is flat, so neither direction recurses, however deep a history is.
+
+Why a table rather than storing the crux: the crux is a program, and getting the history back from it
+means replaying it under the same bindings; the table is the history itself, with every intermediate
+value, which is what an analysis of saved records and crux-to-function (#23) want. The crux is derived
+from the decoded item, as from any other.
+
 ## Containment (2026-11-07)
 
 Law 1b says an item that goes into a block and comes back out is the item that went in, history intact.
@@ -569,10 +593,8 @@ containment destroys history, and law 1b says containment should not.
   semantic inconsistency between siblings, but changing it changes language semantics. Flagged only.
 - ~~`==` walks the entire provenance DAG.~~ No longer: equality is value-only (`isEqual`), and ignores
   `call` entirely.
-- `RecordedTrace` and `RecorderSpec` both claim in comments to retain `call` provenance for downstream
-  analysis. They do not — `AnyItem` drops it. Either the comments are wrong or the export is missing;
-  the unimplemented `codeFuncFrom_Crux` family in `Code instruction planning.markdown` suggests the
-  latter was the plan.
+- ~~`RecordedTrace` and `RecorderSpec` both claim in comments to retain `call` provenance for downstream
+  analysis. They do not — `AnyItem` drops it.~~ Addressed 2026-11-08: see § Persistence.
 - `execWhile` records its continuation as `.execDoWhile`, following the klapaucius note it was ported
   from. Now moot for provenance (both are combinatory and record nothing), but the naming remains.
 
