@@ -9,11 +9,10 @@ import DequeModule
 import Foundation
 
 
-nonisolated class Behavior: @unchecked Sendable {
-    // @unchecked: Behavior is non-final (BehaviorWithSideEffects subclasses it),
-    // so Sendable cannot be checked automatically. All stored state is immutable
-    // (`let`) and Sendable and the stored closures are `@Sendable`, so a single
-    // shared instance is safe to run from many interpreters/tasks at once.
+nonisolated final class Behavior: Sendable {
+    // Every stored property is an immutable `let` of a Sendable type, and the
+    // closures in `body` are `@Sendable`, so one shared instance is safe to run
+    // from many interpreters and tasks at once.
     let name: PushInstruction
 
     /// Everything this Behavior must find, **in order**. Order matters: each
@@ -82,11 +81,10 @@ nonisolated class Behavior: @unchecked Sendable {
         return result
     }
 
-    /// Computes the results from the arguments. The second argument says whether
-    /// to record provenance: every `call` a transformer builds is written inside
-    /// `recording(…)`, which skips it entirely when recording is off (see
-    /// `ProvenanceRecording`).
-    let transformer: @Sendable ([any Item], ProvenanceRecording) -> [Router]
+    /// What this Behavior's code may see and what it returns — see
+    /// `BehaviorBody`. No body mutates the interpreter; `act` applies what it
+    /// returns.
+    let body: BehaviorBody
 
     /// Declared judgment about this instruction — see `InstructionTag`.
     ///
@@ -97,15 +95,14 @@ nonisolated class Behavior: @unchecked Sendable {
     let tags: Set<InstructionTag>
 
     /// What this Behavior does to the interpreter's state — see `BehaviorClass`.
-    /// Declared, like `tags`, because mechanism does not decide it. A plain
-    /// `Behavior` sees only its arguments, so it can only be an operation, a
-    /// structural rule or control; it defaults to `.operation`. A
-    /// `BehaviorWithSideEffects` must always say.
+    /// Declared, because mechanism does not decide it, and kept consistent with
+    /// `body` by the constructors: each form fixes its class except `values`,
+    /// which is an operation unless built with `Behavior.control`.
     let behaviorClass: BehaviorClass
 
 
     /// The common form: consume one item from each of `takes`, and require —
-    /// without consuming — `alsoNeeds` more.
+    /// without consuming — `alsoNeeds` more. An operation.
     ///
     /// `alsoNeeds` exists because `takes:` alone conflated *what I consume* with
     /// *what I need*. `doubleYank` takes an `.int` index and *reorders* `.double`;
@@ -121,27 +118,16 @@ nonisolated class Behavior: @unchecked Sendable {
         takes: [PushStack],
         alsoNeeds: [PushStack: Int] = [:],
         tags: Set<InstructionTag> = [],
-        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
-        // `takes` first: an index is popped before the stack it indexes into is
-        // measured, so `intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
-        // Sorted so the ordering does not depend on Dictionary's iteration order.
-        self.init(
-            label,
-            requires: takes.map { Requirement.takes($0) }
-                + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
-                    .map { Requirement.needs($0.key, count: $0.value) },
-            tags: tags,
-            as: behaviorClass,
-            fxn: fxn
-        )
+        self.init(label, requires: Behavior.requirements(takes: takes, alsoNeeds: alsoNeeds),
+                  tags: tags, behaviorClass: .operation, body: .values(fxn))
     }
 
     /// The non-destructive query form: **read** one item from each of `reads`,
     /// examine it, leave it on the stack. The transformer receives the read items
     /// (in order) exactly as `takes:` would hand over consumed ones — the only
-    /// difference is that they survive.
+    /// difference is that they survive. An operation.
     ///
     /// A query result must record its cleanup with `Behavior.reading(_:from:)` so
     /// its crux reproduces only the fact; the read itself leaves no provenance on
@@ -150,40 +136,65 @@ nonisolated class Behavior: @unchecked Sendable {
         _ label: PushInstruction,
         reads: [PushStack],
         tags: Set<InstructionTag> = [],
-        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
     ) {
-        self.init(label, requires: reads.map { Requirement.reads($0) }, tags: tags, as: behaviorClass, fxn: fxn)
+        self.init(label, requires: reads.map { Requirement.reads($0) },
+                  tags: tags, behaviorClass: .operation, body: .values(fxn))
     }
 
-    /// The general form, for a Behavior whose requirements are not all static.
-    init(
+    /// The general form, for an operation whose requirements are not all static.
+    convenience init(
         _ label: PushInstruction,
         requires: [Requirement],
         tags: Set<InstructionTag> = [],
-        as behaviorClass: BehaviorClass = .operation,
         fxn: @escaping @Sendable ([any Item], ProvenanceRecording) -> [Router]
+    ) {
+        self.init(label, requires: requires, tags: tags, behaviorClass: .operation, body: .values(fxn))
+    }
+
+    /// Every constructor ends here.
+    init(
+        _ label: PushInstruction,
+        requires: [Requirement],
+        tags: Set<InstructionTag>,
+        behaviorClass: BehaviorClass,
+        body: BehaviorBody
     ) {
         self.name = label
         self.requirements = requires
         self.tags = tags
         self.behaviorClass = behaviorClass
-        self.transformer = fxn
-        (self.directTakes, self.directTakeCounts) = Behavior.directPlan(for: requires)
+        self.body = body
+        let plan = Behavior.directPlan(for: requires)
+        self.directChecks = plan.checks
+        self.directTakes = plan.takes
+        self.directTakeCounts = plan.counts
     }
 
-    /// Where each argument sits, for a Behavior whose every requirement is a plain
-    /// `.takes` — most of the language. `nil` otherwise.
+    /// `takes` first: an index is popped before the stack it indexes into is
+    /// measured, so `intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
+    /// Sorted so the ordering does not depend on Dictionary's iteration order.
+    static func requirements(takes: [PushStack], alsoNeeds: [PushStack: Int]) -> [Requirement] {
+        takes.map { Requirement.takes($0) }
+            + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
+                .map { Requirement.needs($0.key, count: $0.value) }
+    }
+
+    /// The depth each requirement must find, in requirement order, for a Behavior
+    /// whose requirements are all plain `.takes` and `.needs` — most of the
+    /// language. `nil` otherwise. A check names its stack, so a refusal names the
+    /// same stack the `Planner` would.
     ///
-    /// Such a plan never depends on the stacks' contents: the k-th `.takes` of a
+    /// Such a plan never depends on the stacks' contents: the k-th claim on a
     /// stack is always that stack's index k, exactly as the `Planner` would claim
     /// it. So it is worked out once here, and `act` can check depths, read the
     /// arguments, and drop them without building a plan per instruction (which
     /// profiling found was an eighth of all interpreter time).
-    let directTakes: [DirectTake]?
+    let directChecks: [DirectTake]?
+    /// Where each consumed argument sits, for the direct path.
+    let directTakes: [DirectTake]
     /// How many items each stack gives up, for the direct path.
     let directTakeCounts: [(stack: PushStack, count: Int)]
-
 
 
     /// What this Behavior would need of an interpreter, resolved against its
@@ -214,13 +225,47 @@ nonisolated class Behavior: @unchecked Sendable {
     }
 
 
-    /// The single seam subclasses vary: pure behaviors run their `transformer`,
-    /// while `BehaviorWithSideEffects` mutates the interpreter directly. Keeping
-    /// this apart from `act` lets the surrounding pipeline — arg-gathering,
-    /// distribution, and Interpreter-mode hooks — be written just once. The one
-    /// such hook today is provenance recording, decided per interpreter.
+    /// Runs the body on `arguments` (already gathered and removed) and performs
+    /// every effect it asks for except pushing its results, which it returns for
+    /// `distribute`. Kept apart from `act` so that diagnostics can drive a
+    /// Behavior's body directly.
     func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {
-        self.transformer(arguments, interpreter.recording)
+        switch body {
+        case .values(let fxn):
+            return fxn(arguments, interpreter.recording)
+
+        case .structural(let stack, let step):
+            let view = StackView(interpreter.stacks[stack] ?? [], recording: interpreter.recording)
+            switch step(arguments, view) {
+            case .positions(let effect): Behavior.apply(effect, to: stack, in: interpreter); return []
+            case .loop(let routers):     return routers
+            case .unchanged:             return []
+            }
+
+        case .contextRead(let read):
+            return read(arguments, ReadContext(interpreter))
+
+        case .control(let fxn):
+            var results: [Router] = []
+            for effect in fxn(arguments, interpreter.recording) {
+                switch effect {
+                case .result(let router):
+                    results.append(router)
+                case .place(let items):
+                    interpreter.place(contentsOf: items, on: .exec)
+                case .bury(let token, let depth, let payload):
+                    Interpreter.bury(token, depth, under: payload, in: interpreter)
+                }
+            }
+            return results
+
+        case .channel(let write):
+            switch write(arguments) {
+            case .item(let item): interpreter.printItem(item)
+            case .text(let text): interpreter.printText(text)
+            }
+            return []
+        }
     }
 
 
@@ -237,14 +282,14 @@ nonisolated class Behavior: @unchecked Sendable {
     ///
     /// The prefix is unchanged, so anything matching on `"missing args"` still
     /// matches.
-    final func act(on interpreter: Interpreter) {
-        if let directTakes {
+    func act(on interpreter: Interpreter) {
+        if let directChecks {
             // The same outcome the Planner reaches, without planning: refuse on the
-            // first argument that is not there, naming its stack; otherwise read
+            // first requirement that is not met, naming its stack; otherwise read
             // every argument, then take them all (each stack's claims are its top
             // n items, so dropping n is exactly what `commit` would remove).
-            for take in directTakes where take.index >= interpreter.stacks[take.stack]?.count ?? 0 {
-                self.distribute(to: interpreter, items: [missingArguments(on: take.stack, interpreter.recording)])
+            for check in directChecks where check.index >= interpreter.stacks[check.stack]?.count ?? 0 {
+                self.distribute(to: interpreter, items: [missingArguments(on: check.stack, interpreter.recording)])
                 return
             }
             // The arguments' weight is taken off `liveWeight` *before* they are
@@ -273,54 +318,6 @@ nonisolated class Behavior: @unchecked Sendable {
                 items: self.computeResults(from: arguments, on: interpreter)
             )
         }
-    }
-}
-
-
-// subclass for behaviors that manipulate the Interpreter state more than pop/push
-nonisolated class BehaviorWithSideEffects : Behavior, @unchecked Sendable {
-    // restated from Behavior: this subclass adds a stored `let directModifier`,
-    // which is itself `@Sendable` and immutable, so the type stays safe to share.
-    let directModifier: @Sendable (inout Interpreter, [any Item]) -> [Router]
-
-    /// `alsoNeeds` matters most here: reaching into a stack without popping it is
-    /// exactly what a `BehaviorWithSideEffects` is *for*, so it is these that could
-    /// need something they never declared.
-    convenience init(
-        _ label: PushInstruction,
-        takes: [PushStack],
-        alsoNeeds: [PushStack: Int] = [:],
-        tags: Set<InstructionTag> = [],
-        as behaviorClass: BehaviorClass,
-        modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
-    ) {
-        self.init(
-            label,
-            requires: takes.map { Requirement.takes($0) }
-                + alsoNeeds.sorted { "\($0.key)" < "\($1.key)" }
-                    .map { Requirement.needs($0.key, count: $0.value) },
-            tags: tags,
-            as: behaviorClass,
-            modifier: modifier
-        )
-    }
-
-    /// No default class here: direct access to the interpreter is what every class
-    /// but `.operation` needs, so these are the Behaviors that must always say.
-    init(
-        _ label: PushInstruction,
-        requires: [Requirement],
-        tags: Set<InstructionTag> = [],
-        as behaviorClass: BehaviorClass,
-        modifier: @escaping @Sendable (inout Interpreter, [any Item]) -> [Router]
-    ) {
-        self.directModifier = modifier
-        super.init(label, requires: requires, tags: tags, as: behaviorClass, fxn: { _, _ in return [] })
-    }
-
-    override func computeResults(from arguments: [any Item], on interpreter: Interpreter) -> [Router] {
-        var mutableInterpreter = interpreter
-        return directModifier(&mutableInterpreter, arguments)
     }
 }
 

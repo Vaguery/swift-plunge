@@ -396,9 +396,9 @@ nonisolated final class Interpreter {
     /// genuinely accumulates (`x 1 .intAdd` in a loop body that is not the loop's
     /// own counter) has a truthfully linear history that no rule can shrink.
     ///
-    /// `BehaviorWithSideEffects` writes some stacks directly and bypasses this,
-    /// which is acceptable: those behaviors (`deepDup`, `shove`) are
-    /// provenance-transparent under law 1, so they cannot grow a `call`.
+    /// A structural rule's moves (`Behavior.apply`) insert directly and bypass
+    /// this, which is acceptable: they are provenance-transparent under law 1, so
+    /// they cannot grow a `call`. Its copies go through `push`.
     func elidingOverBudgetProvenance(_ item: any Item) -> any Item {
         if let kept = withinBudget(item) { return kept }
         // A loop's chain, folded into a counted loop over its seed

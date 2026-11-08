@@ -58,28 +58,18 @@ nonisolated extension Interpreter {
     /// itself would tie the answer to where the increment happens to sit in the
     /// loop, which is an implementation detail this instruction should not export.
     static let pushStepCount_Behavior =
-        BehaviorWithSideEffects(
-            .pushStepCount,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, _) in
-                [Router(.int, IntItem(interpreter.counter).observed(by: .pushStepCount, interpreter.recording))]
-            }
-        )
+        Behavior.contextRead(.pushStepCount) { _, context in
+            [Router(.int, IntItem(context.stepCount).observed(by: .pushStepCount, context.recording))]
+        }
 
 
     /// How many errors are on `.error`. **The one error combinator**, and the only
     /// instruction in the language that names a stack it cannot alter.
     static let errorStackDepth_Behavior =
-        BehaviorWithSideEffects(
-            .errorStackDepth,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, _) in
-                let depth = IntItem(interpreter.stacks[.error]!.count)
-                return [Router(.int, depth.observed(by: .errorStackDepth, interpreter.recording))]
-            }
-        )
+        Behavior.contextRead(.errorStackDepth) { _, context in
+            let depth = IntItem(context.depth(of: .error))
+            return [Router(.int, depth.observed(by: .errorStackDepth, context.recording))]
+        }
 
 
     /// Counts the errors on `.error` of one kind.
@@ -96,15 +86,10 @@ nonisolated extension Interpreter {
         _ name: PushInstruction,
         counting kind: ErrorKind
     ) -> Behavior {
-        BehaviorWithSideEffects(
-            name,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, _) in
-                let n = interpreter.stacks.errorCount(of: kind)
-                return [Router(.int, IntItem(n).observed(by: name, interpreter.recording))]
-            }
-        )
+        Behavior.contextRead(name) { _, context in
+            let n = context.errorCount(of: kind)
+            return [Router(.int, IntItem(n).observed(by: name, context.recording))]
+        }
     }
 
     /// How many instructions have starved — refused because a stack came up short.

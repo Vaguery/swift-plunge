@@ -855,11 +855,10 @@ nonisolated extension Interpreter {
     /// `s 2 .stringNth`: O(1), independent of the others, and independent of how
     /// many passes have run.
     static let stringIterate_Behavior =
-        Behavior(
+        Behavior.control(
             .stringIterate,
             takes: [.string, .code],
             tags: [.reEntrant],
-            as: .control,
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! StringItem, a[1] as! CodeItem)
                 // No passes: the body goes back to `.code`, as a finished loop's does.

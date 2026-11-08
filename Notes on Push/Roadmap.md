@@ -311,6 +311,21 @@ A representation-neutral derivation graph, for other GP representations, is a la
     27 control, 13 channels; *Behavior Class Tests* check each declaration against what it does. Ruled:
     `execQuote` is an operation like the other `xQuote`s. `.exec` is special only contingently; Push's
     tradition is that code is data and data is code, as far as possible.
+    **Step 2 BUILT 2026-11-08**: `BehaviorWithSideEffects` is gone. Each class has its own body
+    (`BehaviorBody`): operations and control return `Router`s; structural rules return a `PositionEffect`
+    (or a loop, for `DupItems`/`DupTimes`); context reads see a read-only `ReadContext`; control can also
+    place and bury on `.exec` (`ControlEffect`); channels return a `ChannelWrite`. Only `act` mutates. All
+    144 structural rules, plain dup/pop/swap/rot included, are declared effects. `execK` is control (it
+    runs the kept block), not structural. `DeepDup`'s copy now goes through the validated push.
+    Macros stay postponed, but come back with new types and instructions: see *Extensibility goal -
+    compass and straightedge.md*. The user expects macros to get simpler as the representation is
+    refined.
+
+44. **Typed operation constructors** — noted 2026-11-08, not designed. A parameter-pack constructor,
+    `operation(.intGT, takes: IntItem.self, IntItem.self, gives: BoolItem.self) { a, b in a > b }`, would
+    write the casts and `Router` once, make an operation's result type data (#41), make partiality a
+    `throw` (#42), and derive `call` from the declared arguments. A throwaway prototype compiled and ran
+    under Swift 6. The macro-free half of what new types need (*Extensibility goal*).
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

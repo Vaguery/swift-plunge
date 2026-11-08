@@ -38,7 +38,7 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     case operation
 
     /// **Value-blind rearrangement of positions**: deleting (pop, flush,
-    /// `PopItems`, `execK`), copying (dup, `DupItems`, `DupTimes`, `DeepDup`,
+    /// `PopItems`), copying (dup, `DupItems`, `DupTimes`, `DeepDup`,
     /// `YankDup`) and reordering (swap, rot, `Yank`, `Shove`), the deep ones indexed
     /// by an int. These are the structural rules of substructural logic: weakening,
     /// contraction and exchange. Provenance law 1: rearranging records nothing.
@@ -51,7 +51,7 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     case contextRead
 
     /// **A write to the continuation**: its output is the rest of the program, not
-    /// a value of some type. `codeDo`, `execIf`, the loop constructors, the code
+    /// a value of some type. `codeDo`, `execIf`, `execK`, the loop constructors, the code
     /// `Emit`/`Do`/`Iterate` instructions and `iteratorPlay` — Joy-style combinators
     /// over quotations. An iterator is a reified continuation with a cursor.
     case control

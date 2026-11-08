@@ -55,10 +55,9 @@ nonisolated extension Interpreter {
     /// one on `.exec`. Only the source stack differs — the mechanics (argument
     /// order, `.codeDo` the winner, the loser recorded nowhere) are execIf's.
     static let codeIf_Behavior =
-        Behavior(
+        Behavior.control(
             .codeIf,
             takes: [.bool, .code, .code],
-            as: .control,
             fxn: { a, recording in
                 // Like execIf: `( then ) ( else ) .codeIf` — the last-written block
                 // is on top and arrives as a[1] (`else`), so a[2] is `then`.
@@ -285,11 +284,10 @@ nonisolated extension Interpreter {
         point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?,
         tags: Set<InstructionTag> = []
     ) -> Behavior {
-        Behavior(
+        Behavior.control(
             instruction,
             reads: [.code, .int],
             tags: tags,
-            as: .control,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else {
@@ -312,11 +310,10 @@ nonisolated extension Interpreter {
         twin: PushInstruction,
         tags: Set<InstructionTag> = []
     ) -> Behavior {
-        Behavior(
+        Behavior.control(
             instruction,
             reads: [.code, .int],
             tags: tags,
-            as: .control,
             fxn: { a, recording in
                 let (x, i) = (a[0] as! CodeItem, a[1] as! IntItem)
                 guard let point = pick(x, i.value) else {
@@ -578,11 +575,10 @@ nonisolated extension Interpreter {
     /// on top (a[0]), the iterated code beneath (a[1]). An empty block makes no
     /// passes, and the mouse goes back to `.code`, as a finished loop's body does.
     static let codeIterateRoot_Behavior =
-        Behavior(
+        Behavior.control(
             .codeIterateRoot,
             takes: [.code, .code],
             tags: [.reEntrant],
-            as: .control,
             fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 guard !x.value.isEmpty else { return [Router(.code, mouse)] }
@@ -602,13 +598,12 @@ nonisolated extension Interpreter {
     /// sub-block's contents. The `.points` siblings of `codeIterateRoot`. A tree
     /// always has at least its root, so none of them ever does nothing.
     static func iteratePointsBehavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
-        Behavior(
+        Behavior.control(
             instruction,
             takes: [.code, .code],
             // The whole generated family is re-entrant — tagging in the factory is
             // what makes it impossible to tag two of the three.
             tags: [.reEntrant],
-            as: .control,
             fxn: { a, recording in
                 let (mouse, x) = (a[0] as! CodeItem, a[1] as! CodeItem)
                 return Interpreter.iteratorLoop(
@@ -735,16 +730,10 @@ nonisolated extension Interpreter {
     /// and the clean-up, so its crux keeps the link to the block. See
     /// `Containment`.
     static let codeDo_Behavior =
-    BehaviorWithSideEffects(
-        .codeDo,
-        takes: [.code],
-        as: .control,
-        modifier: { (interpreter, collectedItems) in
-            let block = collectedItems[0] as! CodeItem
-            interpreter.place(contentsOf: Containment.contents(of: block, interpreter.recording), on: .exec)
-            return []
-        }
-    )
+    Behavior.control(.codeDo, takes: [.code]) { collectedItems, recording in
+        let block = collectedItems[0] as! CodeItem
+        return [.place(Containment.contents(of: block, recording))]
+    }
 
 
     /// Drive an iterator to exhaustion and box what it emitted into one block.

@@ -56,39 +56,14 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DeepDup")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            // It reorders/copies `stack` without popping it, so say so: this is
-            // what stops it eating the index and then finding nothing there.
-            // TWO, not one: it guards on `count - 1 > 0`, because with a single
-            // item there is nothing to reach past.
-            alsoNeeds: [stack: 2],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let rawIndex = collectedItems[0] as! IntItem
-                let range = interpreter.stacks[stack]!.count - 1
-                let idx = range - max(0, min(rawIndex.value, range))
-                // from the "bottom"
-
-                guard range > 0 else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
-                        )
-                    ]
-                }
-                let oldItem = interpreter.stacks[stack]![idx]
-                let newItem = oldItem
-                // Provenance law 1 (Items.swift): moving an item within its own
-                // stack records nothing — `call` passes through untouched.
-                if interpreter.requireAccepts(newItem, on: stack) {
-                    interpreter.insert(newItem, at: idx, on: stack)
-                }
-                return []
-            }
-        )
+        /// Copies the item `n` up from the bottom and puts the copy beside it.
+        /// It reorders and copies `stack` without popping it, so it needs two items
+        /// there (with one, there is nothing to reach past) and takes only its index.
+        inst = Behavior.structural(name, on: stack, takes: [.int], needs: 2) { args, view in
+            let range = view.count - 1
+            let idx = range - Position.item((args[0] as! IntItem).value, count: view.count)
+            return .positions(.copy(from: idx, to: idx))
+        }
         result[name] = inst
     }
 
@@ -101,14 +76,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Dup")!
-        inst = Behavior(
-            name,
-            takes: [stack],
-            as: .structural,
-            fxn: { a, recording in
-                return [Router(stack, a[0]), Router(stack, a[0])]
-            }
-        )
+        inst = Behavior.structural(name, on: stack, needs: 1) { _, _ in .positions(.copy(from: 0, to: 0)) }
         result[name] = inst
     }
 
@@ -135,27 +103,17 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DupItems")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let range = interpreter.stacks[stack]!.count - 1
-                let rawIndex = collectedItems[0] as! IntItem
-                let number = min(range, max(rawIndex.value, 0))
-                guard !interpreter.stacks[stack]!.isEmpty, number > 0 else { return [] }
-
-                let box = CodeItem(
-                    Array(interpreter.stacks[stack]!.prefix(number).reversed())
-                )
-                return Interpreter.iteratorLoop(
-                    kind: .elements(into: stack.isHeterogeneous ? stack : nil),
-                    origin: box,
-                    body: nil,
-                    emits: true, recording: interpreter.recording
-                )
-            }
-        )
+        inst = Behavior.structural(name, on: stack, takes: [.int]) { args, view in
+            let number = min(view.count - 1, max((args[0] as! IntItem).value, 0))
+            guard view.count > 0, number > 0 else { return .unchanged }
+            let box = CodeItem(Array(view.top(number).reversed()))
+            return .loop(Interpreter.iteratorLoop(
+                kind: .elements(into: stack.isHeterogeneous ? stack : nil),
+                origin: box,
+                body: nil,
+                emits: true, recording: view.recording
+            ))
+        }
         result[name] = inst
     }
 
@@ -186,34 +144,19 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DupTimes")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            // It reorders/copies `stack` without popping it, so say so: this is
-            // what stops it eating the index and then finding nothing there.
-            alsoNeeds: [stack: 1],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let howMany = (collectedItems[0] as! IntItem).value
-
-                // Unreachable since `alsoNeeds` — the plan will not let this run
-                // with an empty `stack`. Kept as the honest alternative to a `!`.
-                guard let item = interpreter.stacks[stack]!.first else {
-                    return [Router(.error, ErrorItem("\(name) on empty stack")
-                        .observed(by: name, interpreter.recording))]
-                }
-                // A non-positive count copies nothing, and says nothing about it.
-                guard howMany > 0 else { return [] }
-
-                return Interpreter.iteratorLoop(
-                    kind: .repeating(into: stack.isHeterogeneous ? stack : nil),
-                    origin: item,
-                    destination: IntItem(howMany),
-                    body: nil,
-                    emits: true, recording: interpreter.recording
-                )
-            }
-        )
+        // It copies `stack` without popping it, so it needs one item there.
+        inst = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
+            let howMany = (args[0] as! IntItem).value
+            // A non-positive count is a clamp to zero copies (Roadmap #42).
+            guard howMany > 0, let item = view.item(at: 0) else { return .unchanged }
+            return .loop(Interpreter.iteratorLoop(
+                kind: .repeating(into: stack.isHeterogeneous ? stack : nil),
+                origin: item,
+                destination: IntItem(howMany),
+                body: nil,
+                emits: true, recording: view.recording
+            ))
+        }
         result[name] = inst
     }
 
@@ -226,12 +169,8 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackIsEmpty")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, collectedItems) in
-                let empty = interpreter.stacks[stack]!.isEmpty
+        inst = Behavior.contextRead(name) { _, context in
+                let empty = context.depth(of: stack) == 0
                 return [
                     Router(
                         .bool,
@@ -241,11 +180,10 @@ nonisolated extension Interpreter {
                         // literal, marked as observed. Naming the instruction
                         // would reconstruct to whatever a *fresh* interpreter's
                         // stack held.
-                        BoolItem(empty).observed(by: name, interpreter.recording)
+                        BoolItem(empty).observed(by: name, context.recording)
                     )
                 ]
-            }
-        )
+        }
         result[name] = inst
     }
 
@@ -297,15 +235,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Flush")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                interpreter.clear(stack)
-                return []
-            }
-        )
+        inst = Behavior.structural(name, on: stack) { _, view in .positions(.delete(top: view.count)) }
         result[name] = inst
     }
 
@@ -318,12 +248,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Pop")!
-        inst = Behavior(
-            name,
-            takes: [stack],
-            as: .structural,
-            fxn: { _, _ in return [] }
-        )
+        inst = Behavior.structural(name, on: stack, needs: 1) { _, _ in .positions(.delete(top: 1)) }
         result[name] = inst
     }
 
@@ -342,20 +267,11 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)PopItems")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let rawCount = collectedItems[0] as! IntItem
-                // Clamped rather than an error, like its `DupItems`/`Yank`
-                // siblings: a count past the bottom empties the stack.
-                let available = interpreter.stacks[stack]!.count
-                let number = min(available, max(rawCount.value, 0))
-                interpreter.takeFirst(number, from: stack)
-                return []
-            }
-        )
+        // Clamped rather than an error, like its `DupItems`/`Yank` siblings: a
+        // count past the bottom empties the stack.
+        inst = Behavior.structural(name, on: stack, takes: [.int]) { args, view in
+            .positions(.delete(top: Position.gap((args[0] as! IntItem).value, count: view.count)))
+        }
         result[name] = inst
     }
 
@@ -368,19 +284,8 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Rot")!
-        inst = Behavior(
-            name,
-            takes: [stack, stack, stack],
-            as: .structural,
-            fxn: { a, recording in
-                let (x, y, z) = (a[0], a[1], a[2])
-                return [
-                    Router(stack, y),
-                    Router(stack, x),
-                    Router(stack, z),
-                ]
-            }
-        )
+        // The third item comes to the top: `x y z` (top first) becomes `z x y`.
+        inst = Behavior.structural(name, on: stack, needs: 3) { _, _ in .positions(.move(from: 2, to: 0)) }
         result[name] = inst
     }
 
@@ -393,40 +298,13 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Shove")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            // It reorders/copies `stack` without popping it, so say so: this is
-            // what stops it eating the index and then finding nothing there.
-            alsoNeeds: [stack: 1],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                // Unreachable since `alsoNeeds` — the plan will not let this run
-                // with an empty `stack`. Kept as the honest alternative to a `!`.
-                guard let oldItem = interpreter.takeFirst(from: stack) else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
-                        )
-                    ]
-                }
-
-                // With the item taken, `c` remain and there are c+1 places to put
-                // it back, 0 (the top) to c (the bottom): a gap, clamped. So
-                // `n .xShove` undoes `n .xYank`. It used to clamp to 0…c−1, which
-                // never reached the bottom and made it a no-op on two items.
-                let indexRaw = collectedItems[0] as! IntItem
-                let idx = Position.gap(indexRaw.value, count: interpreter.stacks[stack]!.count)
-                let newItem = oldItem
-                // Provenance law 1 (Items.swift): moving an item within its own
-                // stack records nothing — `call` passes through untouched.
-                if interpreter.requireAccepts(newItem, on: stack) {
-                    interpreter.insert(newItem, at: idx, on: stack)
-                }
-                return []
-            }
-        )
+        // With the top item taken, `c` remain and there are c+1 places to put it
+        // back, 0 (the top) to c (the bottom): a gap, clamped. So `n .xShove`
+        // undoes `n .xYank`. (It used to clamp to 0…c−1, which never reached the
+        // bottom and made it a no-op on two items.)
+        inst = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
+            .positions(.move(from: 0, to: Position.gap((args[0] as! IntItem).value, count: view.count - 1)))
+        }
         result[name] = inst
     }
 
@@ -439,12 +317,8 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackDepth")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, collectedItems) in
-                let c = interpreter.stacks[stack]!.count
+        inst = Behavior.contextRead(name) { _, context in
+                let c = context.depth(of: stack)
                 return [
                     Router(
                         .int,
@@ -453,11 +327,10 @@ nonisolated extension Interpreter {
                         // (`.intStackDepth_actuallyWas_4`), the literal count
                         // marked as observed. The instruction name would
                         // reconstruct to whatever a fresh interpreter held.
-                        IntItem(c).observed(by: name, interpreter.recording)
+                        IntItem(c).observed(by: name, context.recording)
                     )
                 ]
-            }
-        )
+        }
         result[name] = inst
     }
 
@@ -473,16 +346,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Swap")!
-        inst = Behavior(
-            name,
-            takes: [stack, stack],
-            as: .structural,
-            fxn: { a, recording in
-                return [
-                    Router(stack, a[0]), Router(stack, a[1]),
-                ]
-            }
-        )
+        inst = Behavior.structural(name, on: stack, needs: 2) { _, _ in .positions(.move(from: 1, to: 0)) }
         result[name] = inst
     }
 
@@ -495,31 +359,11 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)Yank")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            // It reorders/copies `stack` without popping it, so say so: this is
-            // what stops it eating the index and then finding nothing there.
-            // TWO, not one: it guards on `count - 1 > 0`, because with a single
-            // item there is nothing to reach past.
-            alsoNeeds: [stack: 2],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let rawIndex = collectedItems[0] as! IntItem
-                let range = interpreter.stacks[stack]!.count - 1
-                let idx = max(0, min(rawIndex.value, range))
-
-                guard range > 0, let oldItem = interpreter.take(at: idx, from: stack) else {
-                    return [Router(.error, ErrorItem("\(name) on empty stack")
-                        .observed(by: name, interpreter.recording))]
-                }
-
-                let newItem = oldItem
-                // Provenance law 1 (Items.swift): moving an item within its own
-                // stack records nothing — `call` passes through untouched.
-                return [Router(stack, newItem)]
-            }
-        )
+        // It reorders `stack` without popping it, so it takes only its index and
+        // needs two items there: with one, there is nothing to reach past.
+        inst = Behavior.structural(name, on: stack, takes: [.int], needs: 2) { args, view in
+            .positions(.move(from: Position.item((args[0] as! IntItem).value, count: view.count), to: 0))
+        }
         result[name] = inst
     }
 
@@ -532,35 +376,9 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)YankDup")!
-        inst = BehaviorWithSideEffects(
-            name,
-            takes: [.int],
-            // It reorders/copies `stack` without popping it, so say so: this is
-            // what stops it eating the index and then finding nothing there.
-            // TWO, not one: it guards on `count - 1 > 0`, because with a single
-            // item there is nothing to reach past.
-            alsoNeeds: [stack: 2],
-            as: .structural,
-            modifier: { (interpreter, collectedItems) in
-                let rawIndex = collectedItems[0] as! IntItem
-                let range = interpreter.stacks[stack]!.count - 1
-                let idx = max(0, min(rawIndex.value, range))
-
-                guard range > 0 else {
-                    return [
-                        Router(
-                            .error,
-                            ErrorItem("\(name) on empty stack").observed(by: name, interpreter.recording)
-                        )
-                    ]
-                }
-                let oldItem = interpreter.stacks[stack]![idx]
-                let newItem = oldItem
-                // Provenance law 1 (Items.swift): moving an item within its own
-                // stack records nothing — `call` passes through untouched.
-                return [Router(stack, newItem)]
-            }
-        )
+        inst = Behavior.structural(name, on: stack, takes: [.int], needs: 2) { args, view in
+            .positions(.copy(from: Position.item((args[0] as! IntItem).value, count: view.count), to: 0))
+        }
         result[name] = inst
     }
 

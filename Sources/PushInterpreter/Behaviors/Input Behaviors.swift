@@ -17,13 +17,9 @@ nonisolated extension Interpreter {
         for i in 0..<10 {
             let instructionName = PushInstruction(rawValue: "input\(i)")!
             result[instructionName] =
-                BehaviorWithSideEffects(
-                    instructionName,
-                    takes: [],
-                    as: .contextRead,
-                    modifier: { (interpreter, collectedItems) in
-                        if var v = interpreter.inputs[instructionName] {
-                            v.call = interpreter.recording([InstructionItem(instructionName)])
+                Behavior.contextRead(instructionName) { _, context in
+                        if var v = context.inputs[instructionName] {
+                            v.call = context.recording([InstructionItem(instructionName)])
                             return [Router(.exec, v)]
                         } else {
                             // Records the same `[.inputN]` its success branch
@@ -39,12 +35,11 @@ nonisolated extension Interpreter {
                                     ErrorItem(
                                         "No input for \(instructionName)",
                                         kind: .missingInput,
-                                        call: interpreter.recording([InstructionItem(instructionName)]))
+                                        call: context.recording([InstructionItem(instructionName)]))
                                 )
                             ]
                         }
                     }
-                )
         }
         return result
     }

@@ -70,9 +70,9 @@ struct BehaviorClassTests {
         })
         #expect(counts == [
             .operation: 295,
-            .structural: 145,   // 12 families × 12 stacks, and execK
+            .structural: 144,   // 12 families × 12 stacks
             .contextRead: 127,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 8 readItems/readStack
-            .control: 27,
+            .control: 28,
             .channel: 13,
         ], "\(counts)")
     }
@@ -80,11 +80,18 @@ struct BehaviorClassTests {
 
     // MARK: - What each class can reach
 
-    /// A plain `Behavior` sees only its arguments, never the interpreter, so it
-    /// cannot read the environment, the clock or a stack's shape, and cannot print.
-    @Test func `only a Behavior with interpreter access reads context or writes a channel`() {
-        for name in members(.contextRead) + members(.channel) {
-            #expect(Interpreter.language[name] is BehaviorWithSideEffects, "\(name)")
+    /// The body's type is what a Behavior can reach, so each class must have its
+    /// own: only a context read sees the interpreter, only a channel prints, only
+    /// a structural rule changes positions in place. Operations and control share
+    /// `values`, and control alone may also write the continuation directly.
+    @Test func `every class has the body that lets it do what it says`() {
+        for (name, behavior) in Interpreter.language {
+            let fits = switch (behavior.behaviorClass, behavior.body) {
+            case (.operation, .values), (.control, .values), (.control, .control),
+                 (.structural, .structural), (.contextRead, .contextRead), (.channel, .channel): true
+            default: false
+            }
+            #expect(fits, "\(name) is \(behavior.behaviorClass) with a mismatched body")
         }
     }
 
@@ -146,12 +153,12 @@ struct BehaviorClassTests {
         }
     }
 
-    /// The converse for the plain Behaviors: one that writes `.exec` is control,
+    /// The converse for operations: one that writes `.exec` is control,
     /// or an operation that delivers its values through an iterator loop (the
     /// explode family and the iterator constructors that start running), or a
     /// structural rule on `.exec` itself.
     @Test func `a plain operation writes the continuation only to deliver values`() {
-        for name in members(.operation) where !(Interpreter.language[name] is BehaviorWithSideEffects) {
+        for name in members(.operation) {
             let inty = seeded()
             Interpreter.language[name]!.act(on: inty)
             for item in inty.stacks[.exec]! where !item.isEqual(to: BoolItem(false)) {

@@ -22,13 +22,9 @@ nonisolated extension Interpreter {
             for i in 0..<10 {
                 let instructionName = PushInstruction(rawValue: "\(stack)\(i)")!
                 result[instructionName] =
-                BehaviorWithSideEffects(
-                    instructionName,
-                    takes: [],
-                    as: .contextRead,
-                    modifier: { (interpreter, collectedItems) in
-                        if var v = interpreter.constants[instructionName] {
-                            v.call = interpreter.recording([InstructionItem(instructionName)])
+                Behavior.contextRead(instructionName) { _, context in
+                        if var v = context.constants[instructionName] {
+                            v.call = context.recording([InstructionItem(instructionName)])
                             return [Router(.exec, v)]
                         } else {
                             // As the `.inputN` errors: records the same
@@ -38,9 +34,9 @@ nonisolated extension Interpreter {
                             return [Router(.error,
                                            ErrorItem("No constant assigned for \(instructionName)",
                                                      kind: .missingConstant,
-                                                     call: interpreter.recording([InstructionItem(instructionName)])))]
+                                                     call: context.recording([InstructionItem(instructionName)])))]
                         }
-                    })
+                    }
             }
         }
         return result

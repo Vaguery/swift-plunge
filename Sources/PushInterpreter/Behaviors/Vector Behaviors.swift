@@ -968,7 +968,7 @@ nonisolated extension Interpreter {
     // Build a vector from the scalars on its `X` stack **without consuming them** —
     // the closed-system fix (a program can finally create a vector) and a
     // non-destructive snapshot of the stack. They reach into the stack directly
-    // (a `BehaviorWithSideEffects`, because the count is dynamic), and leave the
+    // (a context read, through `ReadContext`, because the count is dynamic), and leave the
     // scalars in place.
     //
     // The crux always reconstructs via the fixed-count `readItems` form (never
@@ -1000,18 +1000,14 @@ nonisolated extension Interpreter {
     static func readItemsBehavior<V: VectorItem>(
         _ instruction: PushInstruction, making itemType: V.Type
     ) -> Behavior {
-        BehaviorWithSideEffects(
-            instruction,
-            takes: [.int],
-            as: .contextRead,
-            modifier: { (interpreter, collected) in
+        Behavior.contextRead(instruction, takes: [.int]) { collected, context in
                 let n = (collected[0] as! IntItem).value
                 let stack = V.Scalar.pushStack
-                let available = interpreter.stacks[stack]!.count
-                let k = min(max(0, n), available)
+                let items = context.items(of: stack)
+                let k = Position.gap(n, count: items.count)
                 // Top k, top-first, reversed so the first-read scalar is the last
                 // element — the inverse of `pushAll`, matching `vecXConstruct`.
-                let elements = Array(interpreter.stacks[stack]!.prefix(k))
+                let elements = Array(items.prefix(k))
                     .map { $0 as! V.Scalar }
                     .reversed()
                     .map { $0 }
@@ -1020,12 +1016,11 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: interpreter.recording(snapshotCrux(elements, readInstruction: instruction, making: V.self)),
-                            members: interpreter.recording.pieces(elements.map { Origin.item($0) }))
+                            call: context.recording(snapshotCrux(elements, readInstruction: instruction, making: V.self)),
+                            members: context.recording.pieces(elements.map { Origin.item($0) }))
                     )
                 ]
-            }
-        )
+        }
     }
 
     /// Read the **whole** `X` stack into a new vector, leaving it in place. An
@@ -1037,13 +1032,9 @@ nonisolated extension Interpreter {
         readItemsInstruction: PushInstruction,
         making itemType: V.Type
     ) -> Behavior {
-        BehaviorWithSideEffects(
-            instruction,
-            takes: [],
-            as: .contextRead,
-            modifier: { (interpreter, _) in
+        Behavior.contextRead(instruction) { _, context in
                 let stack = V.Scalar.pushStack
-                let elements = Array(interpreter.stacks[stack]!)
+                let elements = Array(context.items(of: stack))
                     .map { $0 as! V.Scalar }
                     .reversed()
                     .map { $0 }
@@ -1052,12 +1043,11 @@ nonisolated extension Interpreter {
                         V.pushStack,
                         V(
                             elements.map(\.value),
-                            call: interpreter.recording(snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self)),
-                            members: interpreter.recording.pieces(elements.map { Origin.item($0) }))
+                            call: context.recording(snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self)),
+                            members: context.recording.pieces(elements.map { Origin.item($0) }))
                     )
                 ]
-            }
-        )
+        }
     }
 
     static func pushAllBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
@@ -1091,13 +1081,12 @@ nonisolated extension Interpreter {
     /// `.vecXFirst`/`.vecXRest` are no longer named by anything here. They were the
     /// honest description of a *shrinking* walk; there is no shrinking now.
     static func iterateBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
-        Behavior(
+        Behavior.control(
             instruction,
             takes: [V.pushStack, .code],
             // All four `vecXIterate` at once — the factory is the right place for a
             // family judgment, because there is then no way to tag three of four.
             tags: [.reEntrant],
-            as: .control,
             fxn: { a, recording in
                 let (x, mouse) = (a[0] as! V, a[1] as! CodeItem)
                 // No passes: the body goes back to `.code`, as a finished loop's does.

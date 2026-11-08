@@ -10,159 +10,43 @@ import DequeModule
 nonisolated extension Interpreter {
 
     static let printNewline_Behavior =
-        BehaviorWithSideEffects(
-            .printNewline,
-            takes: [],
-            as: .channel,
-            modifier: { (interpreter, _) in
-                interpreter.printText("\n")
-                return []
-            }
-        )
+        Behavior.channel(.printNewline, takes: []) { _ in .text("\n") }
 
     static let boolPrint_Behavior =
-        BehaviorWithSideEffects(
-            .boolPrint,
-            takes: [.bool],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! BoolItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.boolPrint, takes: [.bool]) { args in .item(args[0]) }
 
     static let iteratorPrint_Behavior =
-        BehaviorWithSideEffects(
-            .iteratorPrint,
-            takes: [.iterator],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! IteratorItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.iteratorPrint, takes: [.iterator]) { args in .item(args[0]) }
 
     static let execPrint_Behavior =
-        BehaviorWithSideEffects(
-            .execPrint,
-            takes: [.exec],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0]
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.execPrint, takes: [.exec]) { args in .item(args[0]) }
 
     static let doublePrint_Behavior =
-        BehaviorWithSideEffects(
-            .doublePrint,
-            takes: [.double],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! DoubleItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.doublePrint, takes: [.double]) { args in .item(args[0]) }
 
     static let charPrint_Behavior =
-        BehaviorWithSideEffects(
-            .charPrint,
-            takes: [.char],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! CharItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.charPrint, takes: [.char]) { args in .item(args[0]) }
 
     static let intPrint_Behavior =
-        BehaviorWithSideEffects(
-            .intPrint,
-            takes: [.int],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! IntItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.intPrint, takes: [.int]) { args in .item(args[0]) }
 
     static let stringPrint_Behavior =
-        BehaviorWithSideEffects(
-            .stringPrint,
-            takes: [.string],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! StringItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.stringPrint, takes: [.string]) { args in .item(args[0]) }
 
     static let vecBoolPrint_Behavior =
-        BehaviorWithSideEffects(
-            .vecBoolPrint,
-            takes: [.vecBool],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! VecBoolItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.vecBoolPrint, takes: [.vecBool]) { args in .item(args[0]) }
 
     static let vecDoublePrint_Behavior =
-        BehaviorWithSideEffects(
-            .vecDoublePrint,
-            takes: [.vecDouble],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! VecDoubleItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.vecDoublePrint, takes: [.vecDouble]) { args in .item(args[0]) }
 
     static let vecIntPrint_Behavior =
-        BehaviorWithSideEffects(
-            .vecIntPrint,
-            takes: [.vecInt],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! VecIntItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.vecIntPrint, takes: [.vecInt]) { args in .item(args[0]) }
 
     static let vecStringPrint_Behavior =
-        BehaviorWithSideEffects(
-            .vecStringPrint,
-            takes: [.vecString],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! VecStringItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.vecStringPrint, takes: [.vecString]) { args in .item(args[0]) }
 
     static let codePrint_Behavior =
-        BehaviorWithSideEffects(
-            .codePrint,
-            takes: [.code],
-            as: .channel,
-            modifier: { (interpreter, args) in
-                let (x) = args[0] as! CodeItem
-                interpreter.printItem(x)
-                return []
-            }
-        )
+        Behavior.channel(.codePrint, takes: [.code]) { args in .item(args[0]) }
 
 
     static var outputBehaviors:[PushInstruction : Behavior] {

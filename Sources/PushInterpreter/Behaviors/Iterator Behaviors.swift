@@ -128,10 +128,9 @@ nonisolated extension Interpreter {
     /// One pass, by hand — no continuation. A program driving a loop itself calls
     /// this as often as it wants a pass.
     static let iteratorStep_Behavior =
-        Behavior(
+        Behavior.control(
             .iteratorStep,
             takes: [.iterator],
-            as: .control,
             fxn: { a, recording in
                 let iterator = a[0] as! IteratorItem
                 guard !iterator.isSpent else { return iteratorFarewell(iterator) }
@@ -162,29 +161,20 @@ nonisolated extension Interpreter {
     /// `.iteratorPlay` can only arise if the body itself removed the iterator, and
     /// then "missing args" on `.error` is the honest answer.
     static let iteratorPlay_Behavior =
-        BehaviorWithSideEffects(
-            .iteratorPlay,
-            takes: [.iterator],
-            tags: [.reEntrant],
-            as: .control,
-            modifier: { (interpreter, collectedItems) in
-                let iterator = collectedItems[0] as! IteratorItem
-                guard !iterator.isSpent else { return iteratorFarewell(iterator) }
+        Behavior.control(.iteratorPlay, takes: [.iterator], tags: [.reEntrant]) { collectedItems, recording in
+            let iterator = collectedItems[0] as! IteratorItem
+            guard !iterator.isSpent else { return iteratorFarewell(iterator).map { .result($0) } }
 
-                let payload = iteratorPass(iterator, recording: interpreter.recording)
-                guard iterator.hasNextPass else {
-                    return iteratorFarewell(iterator, after: payload)
-                }
-
-                bury(
-                    InstructionItem(.iteratorPlay),
-                    iterator.burial,
-                    under: payload,
-                    in: interpreter
-                )
-                return [Router(.iterator, iterator.stepped(recording: interpreter.recording))]
+            let payload = iteratorPass(iterator, recording: recording)
+            guard iterator.hasNextPass else {
+                return iteratorFarewell(iterator, after: payload).map { .result($0) }
             }
-        )
+
+            return [
+                .bury(InstructionItem(.iteratorPlay), depth: iterator.burial, under: payload),
+                .result(Router(.iterator, iterator.stepped(recording: recording))),
+            ]
+        }
 
     /// Aim a loop's burial depth, once, and play it.
     ///
@@ -207,19 +197,14 @@ nonisolated extension Interpreter {
     /// iterator un-popped: the loop stalls with its state intact rather than
     /// vanishing, and can be played again.
     static let iteratorPlayDelayed_Behavior =
-        BehaviorWithSideEffects(
-            .iteratorPlayDelayed,
-            takes: [.int, .iterator],
-            tags: [.reEntrant],
-            as: .control,
-            modifier: { (interpreter, collectedItems) in
+        Behavior.control(.iteratorPlayDelayed, takes: [.int, .iterator], tags: [.reEntrant]) { collectedItems, recording in
                 let burial = (collectedItems[0] as! IntItem).value
                 var iterator = collectedItems[1] as! IteratorItem
-                guard !iterator.isSpent else { return iteratorFarewell(iterator) }
+                guard !iterator.isSpent else { return iteratorFarewell(iterator).map { .result($0) } }
 
-                let payload = iteratorPass(iterator, recording: interpreter.recording)
+                let payload = iteratorPass(iterator, recording: recording)
                 guard burial >= 0, iterator.hasNextPass else {
-                    return iteratorFarewell(iterator, after: payload)
+                    return iteratorFarewell(iterator, after: payload).map { .result($0) }
                 }
 
                 iterator.burial = burial
@@ -227,15 +212,11 @@ nonisolated extension Interpreter {
 
                 // The continuation is a plain `.iteratorPlay`: it will read the
                 // burial now stored on the iterator, and consume no more ints.
-                bury(
-                    InstructionItem(.iteratorPlay),
-                    burial,
-                    under: payload,
-                    in: interpreter
-                )
-                return [Router(.iterator, iterator.stepped(recording: interpreter.recording))]
-            }
-        )
+                return [
+                    .bury(InstructionItem(.iteratorPlay), depth: burial, under: payload),
+                    .result(Router(.iterator, iterator.stepped(recording: recording))),
+                ]
+        }
 
     /// Advance the cursor without emitting anything — skip a pass.
     static let iteratorPopState_Behavior =

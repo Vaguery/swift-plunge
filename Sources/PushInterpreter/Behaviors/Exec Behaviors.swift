@@ -12,7 +12,7 @@ nonisolated extension Interpreter {
     // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L335-L343
     //  "`:exec-do*while` pops the top of the `:exec` stack. It builds and pushes a continuation to the `:exec` stack which is `'([item] :exec-while [item])` (_Note_ the instruction is `:exec-while` in the continuation form)."
     static let execDoWhile_Behavior =
-        Behavior(
+        Behavior.control(
             .execDoWhile,
             takes: [.bool, .code],
             tags: [.reEntrant],
@@ -20,7 +20,6 @@ nonisolated extension Interpreter {
             // duplications of the block (law 1b — containment leaves no mark),
             // and the `.execWhile` and `.codeDo` tokens are freshly minted
             // (law 4). Nothing is derived, so nothing records a `call`.
-            as: .control,
             fxn: { a, recording in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
@@ -54,7 +53,7 @@ nonisolated extension Interpreter {
     //
 
     static let execDoCount_Behavior =
-        Behavior(
+        Behavior.control(
             .execDoCount,
             takes: [.int, .code],
             // Counts from 0 up to `x`, leaving each index on `.int` for the body.
@@ -68,7 +67,6 @@ nonisolated extension Interpreter {
             // `IteratorItem.reconstruction`); the `.iteratorPlay` token is freshly
             // minted (law 4). `origin` is the literal 0 whatever the arguments
             // were, so it is its own crux and records nothing.
-            as: .control,
             fxn: { a, recording in
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
@@ -96,7 +94,7 @@ nonisolated extension Interpreter {
 
     //        // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L183-L203
     static let execDoTimes_Behavior =
-        Behavior(
+        Behavior.control(
             .execDoTimes,
             takes: [.int, .code],
             // "Do the body, `x` times" — the index is the loop's business and is
@@ -108,7 +106,6 @@ nonisolated extension Interpreter {
             // `.iteratorPlay` token is freshly minted (law 4). The counter that
             // used to need `IteratorItem.steppedCall` to fold is gone — the
             // iterator holds the count, and never emits it.
-            as: .control,
             fxn: { a, recording in
                 let (x, body) = (a[0] as! IntItem, a[1] as! CodeItem)
 
@@ -139,7 +136,7 @@ nonisolated extension Interpreter {
 
     //        // using my own code as an example from: https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L83-L112
     static let execDoRange_Behavior =
-        Behavior(
+        Behavior.control(
             .execDoRange,
             takes: [.int, .int, .code],
             // Steps an index from `y` toward `x`, leaving it on `.int` each pass.
@@ -158,7 +155,6 @@ nonisolated extension Interpreter {
             // Provenance: the body copy is combinatory (laws 1 and 1b) and the
             // `.iteratorPlay` token is freshly minted (law 4). The iterator records
             // how to rebuild itself by state.
-            as: .control,
             fxn: { a, recording in
                 let (x, y, body) = (a[0] as! IntItem, a[1] as! IntItem, a[2] as! CodeItem)
 
@@ -224,7 +220,7 @@ nonisolated extension Interpreter {
     }
 
     static let execIf_Behavior =
-        Behavior(
+        Behavior.control(
             .execIf,
             takes: [.bool, .code, .code],
             // Provenance: selecting one of two blocks and discarding the other
@@ -235,7 +231,6 @@ nonisolated extension Interpreter {
             // The chosen block RUNS — `.exec` top→bottom is chosen, .codeDo.
             // Selecting a block *without* running it is what the `.code`
             // combinators are for.
-            as: .control,
             fxn: { a, recording in
                 // Argument order reverses when a code argument moves from `.exec`
                 // to `.code`: `.exec` was read forward from the program, but
@@ -254,13 +249,13 @@ nonisolated extension Interpreter {
         )
 
     static let execK_Behavior =
-        Behavior(
+        Behavior.control(
             .execK,
             takes: [.code, .code],
             // The K combinator: keep the first, discard the second. Law 1 — no
             // value changes. The kept block runs, as it did when it was handed
-            // back to `.exec`.
-            as: .structural,
+            // back to `.exec`, which is why this is control: it writes the
+            // continuation.
             fxn: { a, recording in
                 // `K x y = x` keeps the first-written block, which off `.code`
                 // arrives as a[1] — see the note on `execIf` about the order
@@ -274,7 +269,7 @@ nonisolated extension Interpreter {
         )
 
     static let execY_Behavior =
-        Behavior(
+        Behavior.control(
             .execY,
             takes: [.code],
             tags: [.reEntrant, .risky],
@@ -284,7 +279,6 @@ nonisolated extension Interpreter {
             // `.exec` top→bottom: x, .codeDo, x, .execY — run the body, then
             // re-supply it to `.code` and recur. Routers are prepended one at a
             // time, so their order is the reverse of the resulting stack.
-            as: .control,
             fxn: { a, recording in
                 let x = a[0]
                 return [
@@ -297,7 +291,7 @@ nonisolated extension Interpreter {
         )
 
     static let execS_Behavior =
-        Behavior(
+        Behavior.control(
             .execS,
             takes: [.code, .code, .code],
             // The S combinator: `S x y z` → `x z (y z)`. Pure rearrangement, so
@@ -307,7 +301,6 @@ nonisolated extension Interpreter {
             // top→bottom is x, z, y, z and every one of them is a block. The
             // `(y z)` grouping flattens harmlessly: `.exec` is flat, so `x z (y z)`
             // and `x z y z` execute identically.
-            as: .control,
             fxn: { a, recording in
                 // Written `x y z .execS`, so off `.code` the top is z — see the
                 // note on `execIf` about the order reversing with the move from
@@ -329,12 +322,11 @@ nonisolated extension Interpreter {
         )
 
     static let execWhen_Behavior =
-        Behavior(
+        Behavior.control(
             .execWhen,
             takes: [.bool, .code],
             // Law 1: the block passes through untouched when the guard holds,
             // and runs. When it does not hold, it is discarded.
-            as: .control,
             fxn: { a, recording in
                 var (x, body) = (a[0] as! BoolItem, a[1])
                 var results = [Router]()
@@ -350,7 +342,7 @@ nonisolated extension Interpreter {
         )
 
     static let execWhile_Behavior =
-        Behavior(
+        Behavior.control(
             .execWhile,
             takes: [.bool, .code],
             tags: [.reEntrant],
@@ -360,7 +352,6 @@ nonisolated extension Interpreter {
             // On a true guard, `.exec` top→bottom is body, .codeDo, body,
             // .execWhile: run the body, re-supply it to `.code`, and re-test the
             // next BOOL. A false guard consumes both and stops.
-            as: .control,
             fxn: { a, recording in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
