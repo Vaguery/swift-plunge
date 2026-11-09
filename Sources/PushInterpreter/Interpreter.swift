@@ -185,6 +185,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: combinatorBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: comparisonBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: codeBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: collectionBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: constantBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
