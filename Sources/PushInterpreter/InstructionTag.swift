@@ -165,7 +165,7 @@ public nonisolated extension InstructionTag {
             + "belongs and scores z = 1.0, which is noise. See InstructionRiskProfile."
         case .cruxOnly:
             "Measured: the ~12 iteratorFrom… constructors want ~7 arguments and starve close to "
-            + "100% of the time in random programs (Roadmap #17)."
+            + "100% of the time in random programs."
         case .fallible:
             "By inspection of each behavior body: these construct an ErrorItem for a reason "
             + "other than starvation. Not derivable — a Behavior declares what it takes and "

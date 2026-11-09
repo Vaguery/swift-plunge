@@ -18,7 +18,7 @@ nonisolated extension Interpreter {
         .described("Prints the top bool and a newline to the output.")
 
     /// Prints the loop's state and leaves the loop running: an iterator's body
-    /// is never lost to a print (the user's ruling on loop endings, 2026-11-09;
+    /// is never lost to a print (since 2026-11-09;
     /// until then it consumed the iterator and its body with it).
     static let iteratorPrint_Behavior =
         Behavior(.iteratorPrint, requires: [.reads(.iterator)], tags: [], behaviorClass: .channel,

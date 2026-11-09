@@ -23,7 +23,7 @@
 //
 //  **Nothing takes an argument from `.exec`**.
 //
-//  **Names** (the user, 2026-11-09; the stack was `.ref` until then): every
+//  **Names** (since 2026-11-09, when the stack was renamed from `.ref`): every
 //  instruction that works on the stack is named for it, `binding…`, as
 //  everywhere in the language. The verb *ref* survives only after a source
 //  stack, for the binders: `intRef` makes a binding from an int as `intQuote`

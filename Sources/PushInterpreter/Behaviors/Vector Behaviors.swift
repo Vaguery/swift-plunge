@@ -58,7 +58,7 @@ nonisolated extension VectorItem {
     static func same(_ a: Element, _ b: Element) -> Bool { key(a) == key(b) }
 }
 
-/// **A double as vector operations compare it** (the user's ruling, 2026-11-09):
+/// **A double as vector operations compare it** (since 2026-11-09):
 /// the usual equality and order, except that every NaN is the same NaN and
 /// sorts above every number. Until then a NaN in a vector of doubles could not be
 /// found, counted, removed or deduplicated, and compared three different ways.

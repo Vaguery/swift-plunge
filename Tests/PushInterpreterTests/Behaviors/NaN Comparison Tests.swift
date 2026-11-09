@@ -7,7 +7,7 @@
 //  "not greater than" (fixed 2026-11-08).
 //
 //  Vector comparisons are vector operations, and since 2026-11-09 those treat
-//  every NaN as one value above every number (`DoubleKey`, the user's ruling),
+//  every NaN as one value above every number (`DoubleKey`),
 //  so a NaN decides a vector order like any other element.
 //
 

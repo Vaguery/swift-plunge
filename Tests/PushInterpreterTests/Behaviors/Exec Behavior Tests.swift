@@ -105,8 +105,8 @@ struct ExecBehaviorTests {
     }
 
     /// Exclusive of its destination, like every counted loop (inclusive from
-    /// 2026-11-07 until the user ruled on 2026-11-09 that the ranges should
-    /// agree): adjacent bounds make one pass, and so do equal ones.
+    /// 2026-11-07 to 2026-11-09): adjacent bounds make one pass, and so do equal
+    /// ones.
     @Test func `execDoRange stops short of its destination`() {
         loadInts(inty, ints: [3, 4])
         // The body is a code argument now, so it waits on `.code`.

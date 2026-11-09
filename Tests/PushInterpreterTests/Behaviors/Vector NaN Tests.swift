@@ -2,7 +2,7 @@
 //  Vector NaN Tests.swift
 //  PushInterpreterTests
 //
-//  One rule for NaN in vectors of doubles (the user's ruling, 2026-11-09):
+//  One rule for NaN in vectors of doubles (since 2026-11-09):
 //  every NaN is the same NaN, and it sorts above every number. NaNs reach a
 //  program only through its inputs or literals; nothing computes one.
 //

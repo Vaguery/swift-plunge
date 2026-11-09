@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
                 // Always runs the body at least once — `.exec` top→bottom is
                 // body, .codeDo. On a false bool that is the only pass, and the
                 // body goes under it, to land on `.code` once it has run, as every
-                // finished loop returns its body (the user's ruling, 2026-11-09;
+                // finished loop returns its body (since 2026-11-09;
                 // until then it was discarded).
                 var results = [
                     Router(.exec, InstructionItem(.codeDo)),
@@ -180,8 +180,8 @@ nonisolated extension Interpreter {
                 // **Exclusive of the destination**, like every other counted loop
                 // (`execDoCount`, `execDoTimes`, `iteratorFromIntRange`):
                 // `4 7 .execDoRange` emits 4, 5, 6, and equal bounds make one pass.
-                // (Inclusive, as in Push3, from 2026-11-07 until the user ruled on
-                // 2026-11-09 that the language's ranges should agree.)
+                // (Inclusive, as in Push3, from 2026-11-07 to 2026-11-09, when the
+                // language's ranges were made to agree.)
                 let destination = x
 
                 return iteratorLoop(
@@ -372,7 +372,7 @@ nonisolated extension Interpreter {
             // On a true guard, `.exec` top→bottom is body, .codeDo, body,
             // .execWhile: run the body, re-supply it to `.code`, and re-test the
             // next BOOL. A false guard ends the loop and returns the body to
-            // `.code`, as every finished loop does (the user's ruling, 2026-11-09;
+            // `.code`, as every finished loop does (since 2026-11-09;
             // until then it was discarded).
             fxn: { a, recording in
                 let (x, body) = (a[0] as! BoolItem, a[1])
