@@ -2,7 +2,7 @@
 //  BlockPacking.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  Packing a flat gene stream into code blocks followed by a flat program —
 //  the shape `FibonacciGenome` and `ForestGenome` share.

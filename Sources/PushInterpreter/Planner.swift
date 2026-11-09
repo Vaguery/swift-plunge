@@ -2,7 +2,7 @@
 //  Planner.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/16/26.
+//  Created by Bill Tozier on 7/16/26.
 //
 //  Deciding whether a Behavior can run, and finding its arguments, without
 //  touching anything until every one of them is found.

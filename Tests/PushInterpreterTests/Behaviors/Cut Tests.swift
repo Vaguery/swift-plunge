@@ -2,7 +2,7 @@
 //  Cut Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  `.vecXCut` (all four vectors) and `.stringCut`: snip the argument in two at an
 //  index taken modulo its length, pushing both pieces to the same stack.

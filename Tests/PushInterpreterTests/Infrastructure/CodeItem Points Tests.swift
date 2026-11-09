@@ -2,7 +2,7 @@
 //  CodeItem Points Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  The pre-order point walker on CodeItem — the shared foundation for the whole
 //  code-tree instruction batch. Points are pre-order (node before children),

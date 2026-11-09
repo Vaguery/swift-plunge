@@ -2,7 +2,7 @@
 //  CruxCompression Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/22/26.
+//  Created by Bill Tozier on 7/22/26.
 //
 //  Proves the prototype's central claim: a looped crux can be collapsed to a
 //  compact form that RE-RUNS to the same value. Record (the compressed loop node)

@@ -2,7 +2,7 @@
 //  Traits Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/22/26.
+//  Created by Bill Tozier on 7/22/26.
 //
 //  Traits are advisory and overlapping, so the load-bearing claims are different
 //  from the tag partition's: every trait reports only real instructions, the

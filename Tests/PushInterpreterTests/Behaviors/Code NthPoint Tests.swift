@@ -2,7 +2,7 @@
 //  Code NthPoint Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  codeNthPoint / codeNthRoot — point access, always yielding .code (a sub-block
 //  as-is, a leaf wrapped once), non-destructive.

@@ -2,7 +2,7 @@
 //  Code Stage1 Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  codePair (wrap two) and codeIf (execIf with a .code source).
 //

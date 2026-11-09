@@ -2,7 +2,7 @@
 //  Argument Starvation Probe.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/16/26.
+//  Created by Bill Tozier on 7/16/26.
 //
 //  A diagnostic, not an assertion. It runs a lot of random programs and asks:
 //  **how often does each instruction fail for want of arguments, and which stack

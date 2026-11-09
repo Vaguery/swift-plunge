@@ -2,7 +2,7 @@
 //  InstructionTrait.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/22/26.
+//  Created by Bill Tozier on 7/22/26.
 //
 //  Overlapping "kind" categories of instruction, cutting across the type-domain
 //  (which stack it works on) and the `InstructionTag` role partition. Where

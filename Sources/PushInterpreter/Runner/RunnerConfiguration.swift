@@ -2,7 +2,7 @@
 //  RunnerConfiguration.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/13/26.
+//  Created by Bill Tozier on 7/13/26.
 //
 
 /// Shared configuration applied to every evaluation: interpreter limits, the

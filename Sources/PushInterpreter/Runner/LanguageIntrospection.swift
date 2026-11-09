@@ -2,7 +2,7 @@
 //  LanguageIntrospection.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/19/26.
+//  Created by Bill Tozier on 7/19/26.
 //
 //  The public, typed view of *what the language contains* — the surface a calling
 //  process (the search owner) needs to reason about instructions before it builds

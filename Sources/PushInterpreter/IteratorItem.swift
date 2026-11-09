@@ -2,7 +2,7 @@
 //  IteratorItem.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/15/26.
+//  Created by Bill Tozier on 7/15/26.
 //
 
 import Foundation

@@ -2,7 +2,7 @@
 //  Code IterateEmitPoints Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  codeIterateEmitPoints (whole) and codeIterateDoPoints (unwrapped): the .exec
 //  cousins of codeIteratePoints, walking every pre-order point and handing each on

@@ -2,7 +2,7 @@
 //  CodeFromIterator Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  The general form of collecting: box everything an iterator emits into one
 //  block.

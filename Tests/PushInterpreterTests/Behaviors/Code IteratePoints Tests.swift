@@ -2,7 +2,7 @@
 //  Code IteratePoints Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  codeIteratePoints and its .points IteratorKind: emit every pre-order point of
 //  a tree, each boxed as .code, recording the codeNthPoint crux.

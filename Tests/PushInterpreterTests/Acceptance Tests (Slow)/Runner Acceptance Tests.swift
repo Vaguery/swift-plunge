@@ -2,7 +2,7 @@
 //  Runner Acceptance Tests.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/14/26.
+//  Created by Bill Tozier on 7/14/26.
 //
 //  Plain import (no @testable): drives the library only through its public
 //  surface, the way the search process will. RandomCode is a test helper.

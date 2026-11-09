@@ -2,7 +2,7 @@
 //  Code Query Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  Whole-tree queries: codeLengthPoints, codeWidth, codeDepth (unary), and
 //  codeContains, codeIndexOfPoint, codeContainer (binary). All non-destructive —

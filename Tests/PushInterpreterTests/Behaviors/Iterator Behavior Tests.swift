@@ -2,7 +2,7 @@
 //  Iterator Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/16/26.
+//  Created by Bill Tozier on 7/16/26.
 //
 //  `IteratorItem` as a first-class type: stepping it, playing it, reading it,
 //  and rebuilding it. The point of the type is that a loop's state is its own —

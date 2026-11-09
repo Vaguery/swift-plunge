@@ -2,7 +2,7 @@
 //  Traits.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/22/26.
+//  Created by Bill Tozier on 7/22/26.
 //
 //  The overlapping-trait tables, built beside `language` the same way `Tags.swift`
 //  builds the role partition. Two sources feed them, in order of trust:

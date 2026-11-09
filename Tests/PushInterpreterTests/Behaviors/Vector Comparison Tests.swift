@@ -2,7 +2,7 @@
 //  Vector Comparison Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  Lexicographic ordering for `vecInt` / `vecDouble` / `vecString` — the vector
 //  analog of `stringLT`/`stringGT`. Two claims: the order is Swift's built-in

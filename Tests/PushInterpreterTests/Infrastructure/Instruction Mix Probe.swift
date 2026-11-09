@@ -2,7 +2,7 @@
 //  Instruction Mix Probe.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  A diagnostic, not an assertion. **What proportions of constants, inputs,
 //  furniture and work make a random program do something — and does the answer

@@ -2,7 +2,7 @@
 //  Stress Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 6/20/26.
+//  Created by Bill Tozier on 6/20/26.
 //
 
 import DequeModule

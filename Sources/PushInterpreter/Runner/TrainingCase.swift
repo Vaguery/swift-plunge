@@ -2,7 +2,7 @@
 //  TrainingCase.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/13/26.
+//  Created by Bill Tozier on 7/13/26.
 //
 
 /// One fitness case: the input bindings a program is run against, keyed by input

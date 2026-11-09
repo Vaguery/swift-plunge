@@ -2,7 +2,7 @@
 //  Code EmitNth Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  The `.exec` cousins of codeNth: codeEmitNth{Point,Root} push a point as-is,
 //  codeDoNth{Point,Root} push it unwrapped (run its contents). Both read the tree

@@ -2,7 +2,7 @@
 //  Public API Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/13/26.
+//  Created by Bill Tozier on 7/13/26.
 //
 //  NOTE: this file imports PushInterpreter WITHOUT `@testable`, so it sees only
 //  the public surface — exactly what the app's separate module sees. If it

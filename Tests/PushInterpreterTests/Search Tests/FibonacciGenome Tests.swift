@@ -2,7 +2,7 @@
 //  FibonacciGenome Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  A flat gene stream, packed into blocks of implied Fibonacci lengths.
 //

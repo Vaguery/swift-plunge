@@ -2,7 +2,7 @@
 //  Stack Flow Probe.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/16/26.
+//  Created by Bill Tozier on 7/16/26.
 //
 //  A diagnostic, not an assertion: it drives every registered Behavior with a
 //  fully seeded interpreter and reports which stacks each one leaves deeper or

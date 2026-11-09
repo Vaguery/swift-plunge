@@ -2,7 +2,7 @@
 //  Double Behaviors.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 6/2/26.
+//  Created by Bill Tozier on 6/2/26.
 //
 
 import DequeModule

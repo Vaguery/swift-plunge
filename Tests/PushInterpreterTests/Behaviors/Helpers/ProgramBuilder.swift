@@ -2,7 +2,7 @@
 //  ProgramBuilder.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/19/26.
+//  Created by Bill Tozier on 7/19/26.
 //
 //  A test-only program builder that parses a flat token stream into a nested
 //  `[any Item]` program. It is the good half of the departed `Plushy.plushy2push`

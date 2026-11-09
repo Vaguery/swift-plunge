@@ -2,7 +2,7 @@
 //  Behavior.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 5/30/26.
+//  Created by Bill Tozier on 5/30/26.
 //
 
 import DequeModule

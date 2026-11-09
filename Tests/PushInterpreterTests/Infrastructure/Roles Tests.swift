@@ -2,7 +2,7 @@
 //  Tags Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  The tags exist so that "sample uniformly from the combinators" is a question
 //  with an answer. The property that makes them trustworthy is that **they

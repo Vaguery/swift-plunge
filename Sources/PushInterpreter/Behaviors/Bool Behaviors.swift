@@ -2,7 +2,7 @@
 //  Bool Behaviors.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 5/31/26.
+//  Created by Bill Tozier on 5/31/26.
 //
 
 import DequeModule

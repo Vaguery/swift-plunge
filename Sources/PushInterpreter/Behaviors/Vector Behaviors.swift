@@ -2,7 +2,7 @@
 //  Vector Behaviors.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/8/26.
+//  Created by Bill Tozier on 7/8/26.
 //
 
 import DequeModule

@@ -2,7 +2,7 @@
 //  Individual.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 6/3/26.
+//  Created by Bill Tozier on 6/3/26.
 //
 
 /// The execution-relevant payload for one candidate: a ready-to-run `program`

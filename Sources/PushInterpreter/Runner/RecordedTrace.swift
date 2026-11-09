@@ -2,7 +2,7 @@
 //  RecordedTrace.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/13/26.
+//  Created by Bill Tozier on 7/13/26.
 //
 
 /// The per-step observations one recorder collected during a run, typed by its

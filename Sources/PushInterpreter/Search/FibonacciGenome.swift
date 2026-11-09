@@ -2,7 +2,7 @@
 //  FibonacciGenome.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 
 /// A linear genome whose code blocks are implied rather than encoded: take the

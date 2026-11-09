@@ -2,7 +2,7 @@
 //  SubVector Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  Whole-subsequence search and replace on vectors — the analog of string's
 //  `stringContains`/`stringReplace` (as opposed to the element-wise forms).

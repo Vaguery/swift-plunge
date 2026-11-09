@@ -2,7 +2,7 @@
 //  RandomCode.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 6/3/26.
+//  Created by Bill Tozier on 6/3/26.
 //
 //  Random programs and values, for exercising the weird edges of the language.
 //

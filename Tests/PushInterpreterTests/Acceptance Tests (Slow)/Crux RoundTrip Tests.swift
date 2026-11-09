@@ -2,7 +2,7 @@
 //  Crux RoundTrip Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/15/26.
+//  Created by Bill Tozier on 7/15/26.
 //
 //  The crux's one obligation, checked by actually doing it:
 //

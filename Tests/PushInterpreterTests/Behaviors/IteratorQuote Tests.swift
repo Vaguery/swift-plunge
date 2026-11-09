@@ -2,7 +2,7 @@
 //  IteratorQuote Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  Parking a live loop on `.code`, and getting it back.
 //

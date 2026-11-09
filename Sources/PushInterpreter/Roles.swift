@@ -2,7 +2,7 @@
 //  Tags.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  Named subsets of the language, so that "sample uniformly from the
 //  combinators" and "which instructions consume an .int" are questions with

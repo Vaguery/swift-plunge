@@ -2,7 +2,7 @@
 //  CruxCompression.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/22/26.
+//  Created by Bill Tozier on 7/22/26.
 //
 //  PROTOTYPE — a two-pass crux composition that collapses the linear provenance a
 //  loop leaves behind. `crux()` flattens an item's history to a leaf sequence; a

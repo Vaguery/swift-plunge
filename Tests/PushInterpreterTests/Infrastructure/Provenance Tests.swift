@@ -2,7 +2,7 @@
 //  Provenance Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/15/26.
+//  Created by Bill Tozier on 7/15/26.
 //
 //  The provenance law (see Items.swift) and the two things that bound `.call`:
 //  a loop counter naming its origin and offset directly, and the `maxCallWeight`

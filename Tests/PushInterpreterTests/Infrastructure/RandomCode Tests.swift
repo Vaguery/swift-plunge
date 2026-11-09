@@ -2,7 +2,7 @@
 //  RandomCode Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  The generator's two promises: **a gene stream is instruction tokens and
 //  nothing else**, and **a mix means what it says**.

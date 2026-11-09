@@ -2,7 +2,7 @@
 //  Iterator Cycling Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  `laps`: a walking iterator that goes round its source more than once.
 //

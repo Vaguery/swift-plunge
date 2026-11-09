@@ -2,7 +2,7 @@
 //  Planner Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/16/26.
+//  Created by Bill Tozier on 7/16/26.
 //
 //  The Planner decides whether a Behavior may run and finds its arguments. Two
 //  things are being tested here, and the second matters more than the first:

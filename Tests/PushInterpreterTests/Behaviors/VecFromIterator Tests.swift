@@ -2,7 +2,7 @@
 //  VecFromIterator Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/17/26.
+//  Created by Bill Tozier on 7/17/26.
 //
 //  The second of the three ways to make a vector: drive an iterator to
 //  exhaustion and keep what it emitted.

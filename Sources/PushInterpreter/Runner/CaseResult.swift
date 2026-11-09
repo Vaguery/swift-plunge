@@ -2,7 +2,7 @@
 //  CaseResult.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 7/13/26.
+//  Created by Bill Tozier on 7/13/26.
 //
 
 /// The outcome of evaluating one pairing: the recorded observations, keyed by

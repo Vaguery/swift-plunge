@@ -2,7 +2,7 @@
 //  Combinator Behaviors.swift
 //  PushInterpreter
 //
-//  Created by William Tozier on 6/11/26.
+//  Created by Bill Tozier on 6/11/26.
 //
 
 import DequeModule

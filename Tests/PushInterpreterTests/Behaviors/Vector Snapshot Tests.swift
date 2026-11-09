@@ -2,7 +2,7 @@
 //  Vector Snapshot Tests.swift
 //  PushInterpreterTests
 //
-//  Created by William Tozier on 7/18/26.
+//  Created by Bill Tozier on 7/18/26.
 //
 //  Read-only constructors: build a vector from the scalars on its stack WITHOUT
 //  consuming them — the closed-system fix (a program can finally create a vector)
