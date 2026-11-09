@@ -416,7 +416,7 @@ first version, kept for the record.
 | ~~P7 + P8~~ | ~~≈ 35~~ | ~~the type registry (A4 / #37)~~ |
 | P7′ (pattern lookup, §8) | ≈ 43 | — |
 | ~~P8 (variables as writable inputs)~~ | ~~≈ 11~~ | |
-| P8′ (`.ref` stack, §9) | ≈ 45 | one new stack, so the type registry helps |
+| P8′ (`.ref` stack, §9–§10) | ≈ 48 | one new stack, so the type registry helps |
 
 In all, about 195, taking 607 to about 800. Only `.ref` is a new stack.
 
