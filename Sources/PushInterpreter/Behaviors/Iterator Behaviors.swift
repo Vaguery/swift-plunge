@@ -15,9 +15,17 @@ nonisolated extension Interpreter {
     /// emits one), then — if it has a body — the body and the `.codeDo` that runs
     /// it.
     ///
-    /// `.exec` ends up top→bottom `body, .codeDo, …`, so the body runs *between*
-    /// the payload and whatever continuation the caller appends. That is what lets
-    /// the body see — or steal — the iterator resting on `.iterator`.
+    /// **The emitted item comes first, wherever it goes.** One that rests on a data
+    /// stack is there before the body runs. One that runs (an instruction walked
+    /// out of a block, a point unwrapped by `.codeDo`, anything an `…IntoExec`
+    /// iterator sends to `.exec`) is placed *above* the body, so it runs first
+    /// too: `.exec` ends up top→bottom `item…, body, .codeDo, …`. Routers land in
+    /// order, so that means routing it after the body. (Until 2026-11-09 it was
+    /// routed first and so ran after the body, against this comment.)
+    ///
+    /// The body then runs between the payload and whatever continuation the caller
+    /// buries below it. That is what lets the body see — or steal — the iterator
+    /// resting on `.iterator`.
     ///
     /// **A bodyless iterator emits only its element.** Those are the sequences —
     /// `stringPushAllChars` and the dup families — which have no mouse to run, and
@@ -28,6 +36,7 @@ nonisolated extension Interpreter {
     /// projection carries its own record; see `IteratorItem.projection`.
     static func iteratorPass(_ iterator: IteratorItem, recording: ProvenanceRecording) -> [Router] {
         var results = [Router]()
+        var runsFirst = [Router]()   // emitted items bound for `.exec`: routed last, so they run first
 
         if iterator.emits, let projected = iterator.projection(recording: recording) {
             if case .points(.unwrapped) = iterator.kind {
@@ -35,8 +44,8 @@ nonisolated extension Interpreter {
                 // `.code` (it does not spill), so `.codeDo` is what unwraps it —
                 // the same mechanism `codeDoNthPoint` uses. A leaf's box `( x )`
                 // spills to `x`, so leaves behave as `whole` does.
-                results.append(Router(.exec, InstructionItem(.codeDo)))
-                results.append(Router(.exec, projected))
+                runsFirst.append(Router(.exec, InstructionItem(.codeDo)))
+                runsFirst.append(Router(.exec, projected))
             } else {
                 // `?? .exec` because `defaultStack(for:)` answers nil for an
                 // InstructionItem — it executes rather than lands. Without the
@@ -47,7 +56,11 @@ nonisolated extension Interpreter {
                 let resting = iterator.target
                     ?? PushStack.defaultStack(for: projected)
                     ?? .exec
-                results.append(Router(resting, projected))
+                if resting == .exec {
+                    runsFirst.append(Router(resting, projected))
+                } else {
+                    results.append(Router(resting, projected))
+                }
             }
         }
 
@@ -56,7 +69,7 @@ nonisolated extension Interpreter {
             results.append(Router(.exec, InstructionItem(.codeDo)))
             results.append(Router(.exec, bodyCopy))
         }
-        return results
+        return results + runsFirst
     }
 
     /// Insert `token` into `.exec` at `burial` items below the payload the caller
@@ -804,7 +817,7 @@ nonisolated extension Interpreter {
             "Builds an unplayed iterator over a block's top-level items: `( x ) ( body ) i d e` starts at pass i at "
             + "depth d, emitting if e"
             + (into == .exec
-                ? ", each sent to `.exec` to run after the body"
+                ? ", each sent to `.exec` to run before the body"
                 : ", each landing on its stack (instructions run)")
             + "; refuses if nothing is left to emit.")
     }
@@ -848,7 +861,7 @@ nonisolated extension Interpreter {
         .described(
             "Builds an unplayed iterator over every point of a block, pre-order from the whole block: "
             + "`( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point "
-            + (mode == .boxed ? "boxed onto `.code`" : mode == .whole ? "routed as it is" : "run, after the body")
+            + (mode == .boxed ? "boxed onto `.code`" : mode == .whole ? "routed as it is" : "run, before the body")
             + "; refuses if nothing is left to emit.")
     }
 
