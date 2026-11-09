@@ -1,0 +1,65 @@
+# Builds and tests the package on Linux, builds the DocC site, and publishes it
+# to GitHub Pages from `main`.
+#
+# Publishing needs GitHub Pages enabled for the repository with "GitHub Actions"
+# as its source (Settings → Pages); on a private repository that needs a paid
+# plan. Without it, the `publish` job fails and the rest still runs.
+
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      - name: Build the documentation
+        run: |
+          swift package --allow-writing-to-directory ./site \
+            generate-documentation --target PushInterpreter \
+            --output-path ./site \
+            --transform-for-static-hosting \
+            --hosting-base-path swift-push-interpreter
+
+      - name: Redirect the site root to the documentation
+        run: |
+          echo '<script>window.location.href += "documentation/pushinterpreter"</script>' > ./site/index.html
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: ./site
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
