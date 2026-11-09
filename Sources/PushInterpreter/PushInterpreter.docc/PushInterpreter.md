@@ -29,6 +29,9 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 
 ### The language
 
+- <doc:Variables>
+- <doc:SearchingTheStacks>
+- <doc:Functions>
 - <doc:InstructionReference>
 
 ### Running programs
