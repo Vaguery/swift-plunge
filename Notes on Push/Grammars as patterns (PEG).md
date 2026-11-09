@@ -6,7 +6,7 @@ its questions (§9) still open. Written before step 4b of the coverage audit
 (pattern as a first-class item) with a specific proposal, and asks the
 questions in §9.
 
-The user's prompt: with `.ref` handling keyed storage, and pattern lookups on
+The user's prompt: with `.binding` handling keyed storage, and pattern lookups on
 the stacks, string matching (and perhaps vectors) "opens the possibility of
 using Parsing Expression Grammars". How easily would a PEG representation work
 for strings, code and the other structured types?
@@ -200,7 +200,7 @@ position is a stand-in (law 4b), as for the lookups already built.
 
 ---
 
-## 5. Recursion, and the `.ref` connection
+## 5. Recursion, and the `.binding` connection
 
 Without recursion a PEG is not much stronger than a regular expression with
 lookahead; balanced nesting needs a rule to refer to itself.
@@ -208,11 +208,11 @@ lookahead; balanced nesting needs a rule to refer to itself.
 - **`.pegSelf`** (one rule, the whole pattern) is enough for balanced
   brackets and nested lists, and has no naming problem. A depth limit
   (the code nesting limit) plus the step charge bounds it.
-- **Many rules** would naturally live on the coming **`.ref` stack**:
+- **Many rules** would naturally live on the coming **`.binding` stack** (designed as `.binding`):
   `( .pegRule k )` matches whatever pattern is bound to key *k*, so a grammar
   is an environment of bindings, mutual recursion comes free, and rebinding a
   key changes a rule for the scope of a `with`. That is a reason to build
-  `.ref` before grammars, and to keep `.pegRule` for after.
+  `.binding` before grammars, and to keep `.pegRule` for after.
 - **Left recursion** (`A ← A x / y`) loops in a plain PEG. With the step
   charge it is refused rather than hung, and that is enough.
 
@@ -268,9 +268,9 @@ formalism, so the real choice is which matcher reads it.
 | **PEG** (proposed) | one parse or none; linear with memo, small without; lookahead | cannot express some ambiguous context-free languages naturally; ordered choice means alternative order matters |
 | **CFG** (Earley or CYK recognizer) | unordered choice: the alternatives' order does not matter, which is kinder to mutation; the classic formal class; **also generates** (below) | O(n³) worst case, so a 1,000-element subject is up to 10⁹ operations, only bounded by the step charge; **ambiguous**: recognition (yes/no) is still deterministic, but "which parse" and "which stretch" need a fixed tie-break (leftmost, then longest), and captures need a choice of tree |
 | **Tree automata / tree grammars** | the right formalism for code as trees, with regular tree languages closed under intersection and complement | only for code; OMeta-style `.pegInside` gets most of it inside the PEG reading |
-| **Unification patterns** (Lisp/Prolog style, pattern variables) | `( ?x ?x )` says "the same thing twice", which neither PEG nor CFG can; bindings would naturally go to **`.ref`** keys | variables are a second kind of state; and `( ?x ?x )` with a Find nearly is PSB1 *Double Letters*, so it is a trivializer to measure first |
+| **Unification patterns** (Lisp/Prolog style, pattern variables) | `( ?x ?x )` says "the same thing twice", which neither PEG nor CFG can; bindings would naturally go to **`.binding`** keys | variables are a second kind of state; and `( ?x ?x )` with a Find nearly is PSB1 *Double Letters*, so it is a trivializer to measure first |
 | **Regex** | familiar | rejected in §8 |
-| **Attribute / boolean grammars, parser combinators** | more power; combinators are what PEG is in code | no case yet that PEG plus `.ref` rules lacks |
+| **Attribute / boolean grammars, parser combinators** | more power; combinators are what PEG is in code | no case yet that PEG plus `.binding` rules lacks |
 
 **Generation is the one thing CFGs give that PEGs do not.** A CFG is also a
 *producer*: the *k*-th string of a grammar (in a fixed enumeration order) is
@@ -285,7 +285,7 @@ later as a second instruction family (`xMatchesCFG`, and a generator
 `xFromGrammar` taking *k*), which is the audit's "several ways" applied to
 matching: the same evolved pattern, read strictly in order or as unordered
 alternatives. `.pegChoice` would then be named for the shape it gives
-(`.patternChoice`), not for one formalism. Unification waits for `.ref` and
+(`.patternChoice`), not for one formalism. Unification waits for `.binding` and
 a trivializer measurement.
 
 ## 9. Questions for the user
@@ -294,13 +294,13 @@ a trivializer measurement.
    or a separate pattern type?
 2. **Items with no pattern reading:** ε, as Push's no-op convention
    (recommended), or fail?
-3. **Recursion:** `.pegSelf` in the first build, and `.pegRule k` on `.ref`
+3. **Recursion:** `.pegSelf` in the first build, and `.pegRule k` on `.binding`
    after it is built (recommended), or no recursion at first?
 4. **`true`/`false` as any/fail** collides with matching a `vecBool`'s
    elements. Either bools mean themselves on a `vecBool` only (the
    element-type rule wins), or "any" gets its own `.pegAny` and bools are
    always literals. The first is more uniform with ints.
-5. **Sequencing:** build after `.ref` (step 5), as a step 6 with its
+5. **Sequencing:** build after `.binding` (step 5), as a step 6 with its
    measurements first (recommended), or sooner?
 6. **Formalism** (§8b): PEG reading first, with a CFG reading and generator
    of the same blocks later (recommended); or CFG first; or both at once?

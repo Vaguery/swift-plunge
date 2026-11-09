@@ -335,16 +335,16 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // Deletion at a depth, every generated family (the user, 2026-11-09)
     case boolDeleteAtDepth, intDeleteAtDepth, doubleDeleteAtDepth, charDeleteAtDepth, stringDeleteAtDepth,
          codeDeleteAtDepth, execDeleteAtDepth, vecIntDeleteAtDepth, vecBoolDeleteAtDepth, vecDoubleDeleteAtDepth,
-         vecStringDeleteAtDepth, iteratorDeleteAtDepth, refDeleteAtDepth
+         vecStringDeleteAtDepth, iteratorDeleteAtDepth, bindingDeleteAtDepth
 
-    // The .ref stack (Behavior coverage audit, §9–§11, rulings 7–13): its generated family,
-    case refDeepDup, refDup, refDupItems, refDupTimes, refStackIsEmpty, refEq, refFlush, refPop, refPopItems,
-         refRot, refShove, refStackDepth, refSwap, refYank, refYankDup
+    // The .binding stack (Behavior coverage audit, §9–§11, rulings 7–13): its generated family,
+    case bindingDeepDup, bindingDup, bindingDupItems, bindingDupTimes, bindingStackIsEmpty, bindingEq, bindingFlush, bindingPop, bindingPopItems,
+         bindingRot, bindingShove, bindingStackDepth, bindingSwap, bindingYank, bindingYankDup
     // the binders,
     case boolRef, intRef, doubleRef, charRef, stringRef, codeRef, vecBoolRef, vecIntRef, vecDoubleRef, vecStringRef
     case boolWith, intWith, doubleWith, charWith, stringWith, codeWith, vecBoolWith, vecIntWith, vecDoubleWith,
          vecStringWith
-    case refRekey, refScope, refQuote, refFromCode, refFresh
+    case bindingRekey, refScope, bindingQuote, bindingFromCode, refFresh
     // and the lookups.
     case refDeref, refDerefBelow, refDerefToCode, refDerefToCodeBelow, refNearestKey, refFloorKey, refKeyOf,
          refUnbind, refBindingDepth

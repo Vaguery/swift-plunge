@@ -50,7 +50,7 @@ nonisolated enum NestedRendering {
                     }
                     pieces.append(.text("»"))
                     pending.append(contentsOf: pieces.reversed())
-                } else if let pair = item as? RefItem {
+                } else if let pair = item as? BindingItem {
                     // `⟨key ↦ value⟩`.
                     let pieces: [Piece] = [.text("⟨\(pair.key) ↦ "), .item(pair.bound), .text("⟩")]
                     pending.append(contentsOf: pieces.reversed())

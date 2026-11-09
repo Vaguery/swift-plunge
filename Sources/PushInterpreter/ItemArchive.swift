@@ -97,7 +97,7 @@ nonisolated struct ArchiveNode: Codable, Sendable {
     var code: [Int]?
     var iterator: ArchivedIterator?
     var standIn: ArchivedStandIn?
-    var ref: ArchivedRef?
+    var binding: ArchivedBinding?
     /// The history, when there is one.
     var call: [Int]?
     /// The weight the push boundary measured, when it is not the tree's.
@@ -126,7 +126,7 @@ nonisolated struct ArchiveNode: Codable, Sendable {
             return StandInItem(standingInFor: try resolve(standIn.value),
                                source: standIn.source, reason: standIn.reason)
         }
-        if let ref { return RefItem(key: ref.key, bound: try resolve(ref.bound)) }
+        if let binding { return BindingItem(key: binding.key, bound: try resolve(binding.bound)) }
         throw ArchiveError.malformed("a node with no item")
     }
 }
@@ -155,8 +155,8 @@ nonisolated struct ArchivedIterator: Codable, Sendable {
     }
 }
 
-/// A `RefItem`, its bound item named by position.
-nonisolated struct ArchivedRef: Codable, Sendable {
+/// A `BindingItem`, its bound item named by position.
+nonisolated struct ArchivedBinding: Codable, Sendable {
     var key: Int
     var bound: Int
 }
@@ -236,7 +236,7 @@ nonisolated struct ArchiveWriter {
             return [iterator.origin] + [iterator.destination, iterator.body].compactMap { $0 }
         }
         if let standIn = item.exactly(StandInItem.self) { return [standIn.value] }
-        if let pair = item.exactly(RefItem.self) { return [pair.bound] }
+        if let pair = item.exactly(BindingItem.self) { return [pair.bound] }
         return []
     }
 
@@ -280,8 +280,8 @@ nonisolated struct ArchiveWriter {
                 emits: iterator.emits, laps: iterator.laps, burial: iterator.burial)
         } else if let standIn = item.exactly(StandInItem.self) {
             node.standIn = ArchivedStandIn(value: held[0], source: standIn.source, reason: standIn.reason)
-        } else if let pair = item.exactly(RefItem.self) {
-            node.ref = ArchivedRef(key: pair.key, bound: held[0])
+        } else if let pair = item.exactly(BindingItem.self) {
+            node.binding = ArchivedBinding(key: pair.key, bound: held[0])
         } else {
             node.scalar = AnyItem(item)
         }

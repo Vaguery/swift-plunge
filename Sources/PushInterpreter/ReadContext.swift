@@ -29,7 +29,7 @@ nonisolated struct ReadContext {
 
     /// Reports `steps` of work done (see `meter`).
     func charge(_ steps: Int) { meter.steps += steps }
-    /// A fresh `.ref` key: the interpreter's next, counting those this read has
+    /// A fresh `.binding` key: the interpreter's next, counting those this read has
     /// already drawn. `Behavior.act` advances the counter past them.
     func freshKey() -> Int {
         defer { meter.keysDrawn += 1 }
@@ -60,6 +60,6 @@ nonisolated struct ReadContext {
 /// The work a context read reports (`ReadContext.meter`).
 nonisolated final class WorkMeter {
     var steps = 0
-    /// Fresh `.ref` keys drawn (`freshKey`).
+    /// Fresh `.binding` keys drawn (`freshKey`).
     var keysDrawn = 0
 }

@@ -62,8 +62,8 @@ struct BehaviorIODeclarationTests {
                   PushStack.defaultStack(for: results[0].item) == stack
             else { return "gave \(got), declared a deferred .\(stack)" }
             return nil
-        case .binding:
-            return got == [.exec] ? nil : "gave \(got), declared a binding on .exec"
+        case .input:
+            return got == [.exec] ? nil : "gave \(got), declared an input on .exec"
         case .delivery(let stack):
             guard got.allSatisfy({ [.exec, .iterator].contains($0) }) else { return "gave \(got), declared a loop" }
             let landed = delivered(by: results)
@@ -146,7 +146,7 @@ struct BehaviorIODeclarationTests {
         case .results: "fixed results"
         case .alternatives: "alternatives"
         case .deferred: "deferred"
-        case .binding: "binding"
+        case .input: "input"
         case .delivery: "delivery"
         case .positions: "positions"
         case .continuation: "continuation"
@@ -161,7 +161,7 @@ struct BehaviorIODeclarationTests {
         #expect(Interpreter.signatures.count == Interpreter.language.count)
         #expect(counts == [
             "one result": 419, "fixed results": 81, "alternatives": 23,
-            "deferred": 80, "binding": 10, "delivery": 7,
+            "deferred": 80, "input": 10, "delivery": 7,
             "positions": 170, "continuation": 42, "printout": 13
         ])
     }

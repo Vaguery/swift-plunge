@@ -16,7 +16,7 @@ nonisolated extension Interpreter {
 
         for instructionName in inputSlots {
             result[instructionName] =
-                Behavior.contextRead(instructionName, produces: .binding) { _, context in
+                Behavior.contextRead(instructionName, produces: .input) { _, context in
                         if var v = context.inputs[instructionName] {
                             v.call = context.recording([InstructionItem(instructionName)])
                             return [Router(.exec, v)]

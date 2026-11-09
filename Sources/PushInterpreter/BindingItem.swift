@@ -1,12 +1,12 @@
 //
-//  RefItem.swift
+//  BindingItem.swift
 //  PushInterpreter
 //
-//  A keyed binding on the `.ref` stack (*Behavior coverage audit (2026-11-09)*
+//  A keyed binding on the `.binding` stack (*Behavior coverage audit (2026-11-09)*
 //  §9–§11, rulings 7–13; Roadmap #39).
 //
 
-/// **A binding: an int key and the item bound to it.** The `.ref` stack holds
+/// **A binding: an int key and the item bound to it.** The `.binding` stack holds
 /// these, and a variable is every pair with one key: the topmost is its current
 /// value, the ones below it are older values it shadows, so each variable is a
 /// stack of its own.
@@ -21,9 +21,9 @@
 /// - **The key is `value`**, as an iterator's cursor is: the part a pair is
 ///   addressed by.
 ///
-/// A literal pair in a program lands on `.ref`, as a block lands on `.code`.
-/// One made by a binder records how to make it again (`RefItem.rebuilt`).
-public nonisolated struct RefItem: Item, Pretty {
+/// A literal pair in a program lands on `.binding`, as a block lands on `.code`.
+/// One made by a binder records how to make it again (`BindingItem.rebuilt`).
+public nonisolated struct BindingItem: Item, Pretty {
     /// The key.
     public var value: Int
     /// The item bound to the key.
@@ -58,7 +58,7 @@ public nonisolated struct RefItem: Item, Pretty {
     public var nestingDepth: Int { bound.nestingDepth + 1 }
 
     public func isEqual(to other: any Item) -> Bool {
-        guard let other = other as? RefItem else { return false }
+        guard let other = other as? BindingItem else { return false }
         return value == other.value && bound.isEqual(to: other.bound)
     }
 
@@ -69,10 +69,10 @@ public nonisolated struct RefItem: Item, Pretty {
     }
 }
 
-nonisolated extension RefItem: HoldsCall {}
+nonisolated extension BindingItem: HoldsCall {}
 
 
-nonisolated extension RefItem {
+nonisolated extension BindingItem {
 
     /// The binder for each stack whose items can be bound (ruling 9).
     static let binders: [PushStack: PushInstruction] = [
@@ -86,13 +86,13 @@ nonisolated extension RefItem {
     /// (the fresh key on `.int`, and `bound` itself, which it read), then re-key
     /// the new pair to `key`:
     ///
-    ///     5 .intRef .intPop .intPop .intRef_actuallyWas_12 .refRekey
+    ///     5 .intRef .intPop .intPop .intRef_actuallyWas_12 .bindingRekey
     ///
     /// `key` carries its own history (a stand-in for a fresh key, or the
-    /// argument a `refRekey` was given). Nil for an item with no binder.
+    /// argument a `bindingRekey` was given). Nil for an item with no binder.
     static func rebuilt(binding bound: any Item, to key: any Item) -> [any Item]? {
         guard let stack = PushStack.defaultStack(for: bound), let binder = binders[stack] else { return nil }
         return [bound, InstructionItem(binder), InstructionItem(.intPop), InstructionItem(stack.popInstruction),
-                key, InstructionItem(.refRekey)]
+                key, InstructionItem(.bindingRekey)]
     }
 }

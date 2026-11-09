@@ -32,7 +32,7 @@ struct BehaviorClassTests {
         case .iterator:  IteratorItem(kind: .counting(stride: 1), origin: IntItem(0),
                                       destination: IntItem(3), body: CodeItem([IntItem(7)]), emits: true)
         case .exec:      BoolItem(flag)
-        case .ref:       RefItem(key: 2, bound: BoolItem(flag))
+        case .binding:       BindingItem(key: 2, bound: BoolItem(flag))
         case .error:     ErrorItem("x")
         }
     }
@@ -70,8 +70,8 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 422,   // incl. 18 finds and IndexOf…From (audit §8, 4b); refEq/Rekey/Quote/FromCode
-            .structural: 170,   // 13 families × 13 stacks (DeleteAtDepth the 13th; .ref the 13th stack), refUnbind
+            .operation: 422,   // incl. 18 finds and IndexOf…From (audit §8, 4b); bindingEq/Rekey/Quote/FromCode
+            .structural: 170,   // 13 families × 13 stacks (DeleteAtDepth the 13th; .binding the 13th stack), refUnbind
             .contextRead: 200,  // 80 constants, 10 inputs, 26 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars,
                                 // 50 lookups, 10 xRef, refFresh, 4 derefs, 4 key/depth finders
             .control: 40,       // incl. 10 xWith and refScope

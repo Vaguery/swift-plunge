@@ -206,7 +206,7 @@ func inspectCrux(
     }
     // The composition invariant. `.error` is ignored — a crux may legitimately
     // re-raise — and `.exec` is known drained by the guard above. What the load
-    // itself puts on a stack (the inputs' bindings on `.ref`) is the environment,
+    // itself puts on a stack (the inputs' bindings on `.binding`) is the environment,
     // not debris.
     let baseline = loadedBaseline(inputs: inputs, constants: constants)
     var debris: [String] = []
@@ -223,7 +223,7 @@ func inspectCrux(
 
 
 /// How many items each stack holds once `inputs` and `constants` are loaded and
-/// nothing has run: the bindings `.ref` starts with (ruling 8 of the coverage
+/// nothing has run: the bindings `.binding` starts with (ruling 8 of the coverage
 /// audit), zero elsewhere.
 func loadedBaseline(inputs: [PushInstruction: any Item],
                     constants: [PushInstruction: any Item]) -> [PushStack: Int] {

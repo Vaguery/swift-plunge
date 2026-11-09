@@ -1,8 +1,8 @@
 //
-//  Ref Behavior Tests.swift
+//  Binding Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  The `.ref` stack (Behavior coverage audit §9–§11, rulings 7–13): keyed
+//  The `.binding` stack (Behavior coverage audit §9–§11, rulings 7–13): keyed
 //  bindings, keys 0…N−1 holding the inputs, fresh keys from N, binders that read
 //  and leave, scoped `with` blocks, and lookups that read their key; plus
 //  `xDeleteAtDepth`, the generated deletion at a depth.
@@ -12,7 +12,7 @@
 import Testing
 
 @Suite @MainActor
-struct RefBehaviorTests {
+struct BindingBehaviorTests {
 
     static func run(_ program: [any Item], inputs: [PushInstruction: any Item] = [:]) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
@@ -39,9 +39,9 @@ struct RefBehaviorTests {
     @Test func `the inputs are bound to keys 0 to N-1 at load`() {
         let inputs: [PushInstruction: any Item] = [.input0: IntItem(5), .input2: StringItem("x")]
         let inty = Self.run([], inputs: inputs)
-        #expect(inty.stacks[.ref]!.map { $0.pretty() } == ["⟨2 ↦ \"x\"⟩", "⟨0 ↦ 5⟩"], "slot order, the last on top")
-        #expect(Self.replays(inty.stacks[.ref]![0], on: .ref, inputs: inputs))
-        #expect(Self.replays(inty.stacks[.ref]![1], on: .ref, inputs: inputs))
+        #expect(inty.stacks[.binding]!.map { $0.pretty() } == ["⟨2 ↦ \"x\"⟩", "⟨0 ↦ 5⟩"], "slot order, the last on top")
+        #expect(Self.replays(inty.stacks[.binding]![0], on: .binding, inputs: inputs))
+        #expect(Self.replays(inty.stacks[.binding]![1], on: .binding, inputs: inputs))
 
         let read = Self.run([IntItem(2), Self.op(.refDeref)], inputs: inputs)
         #expect(stackString(read, .string) == "[ \"x\" ]")
@@ -51,8 +51,8 @@ struct RefBehaviorTests {
     @Test func `a binder reads its item, binds a copy to a fresh key, and pushes the key`() {
         let inty = Self.run([IntItem(7), Self.op(.intRef)])
         #expect(stackString(inty, .int) == "[ \(Self.fresh) 7 ]")
-        #expect(inty.stacks[.ref]!.first!.pretty() == "⟨\(Self.fresh) ↦ 7⟩")
-        #expect(Self.replays(inty.stacks[.ref]!.first!, on: .ref))
+        #expect(inty.stacks[.binding]!.first!.pretty() == "⟨\(Self.fresh) ↦ 7⟩")
+        #expect(Self.replays(inty.stacks[.binding]!.first!, on: .binding))
 
         let two = Self.run([StringItem("a"), Self.op(.stringRef), Self.op(.stringRef)])
         #expect(stackString(two, .int) == "[ \(Self.fresh + 1) \(Self.fresh) ]", "each key is new")
@@ -61,17 +61,17 @@ struct RefBehaviorTests {
     @Test func `rekeying assigns, shadowing the older binding without touching the input`() {
         let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
         let inty = Self.run([IntItem(7), Self.op(.intRef), Self.op(.intPop), Self.op(.intPop),
-                             IntItem(3), Self.op(.refRekey),
+                             IntItem(3), Self.op(.bindingRekey),
                              IntItem(3), Self.op(.refDeref), Self.op(.input3)], inputs: inputs)
         #expect(stackString(inty, .int) == "[ 99 7 3 ]", "the variable says 7; .input3 still says 99")
-        #expect(inty.stacks[.ref]!.first!.pretty() == "⟨3 ↦ 7⟩")
-        #expect(Self.replays(inty.stacks[.ref]!.first!, on: .ref, inputs: inputs))
+        #expect(inty.stacks[.binding]!.first!.pretty() == "⟨3 ↦ 7⟩")
+        #expect(Self.replays(inty.stacks[.binding]!.first!, on: .binding, inputs: inputs))
     }
 
     @Test func `older bindings are reached below, and come back after an unbind`() {
         let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
         let shadow: [any Item] = [IntItem(7), Self.op(.intRef), Self.op(.intPop), Self.op(.intPop),
-                                  IntItem(3), Self.op(.refRekey)]
+                                  IntItem(3), Self.op(.bindingRekey)]
         let depth = Self.run(shadow + [IntItem(3), Self.op(.refBindingDepth)], inputs: inputs)
         #expect(stackString(depth, .int) == "[ 0 3 ]")
 
@@ -80,7 +80,7 @@ struct RefBehaviorTests {
 
         let unbound = Self.run(shadow + [IntItem(3), Self.op(.refUnbind), Self.op(.refDeref)], inputs: inputs)
         #expect(stackString(unbound, .int) == "[ 99 3 ]")
-        #expect(unbound.stacks[.ref]!.count == 1)
+        #expect(unbound.stacks[.binding]!.count == 1)
     }
 
     @Test func `a bound block runs when dereferenced, and is data when delivered`() {
@@ -100,7 +100,7 @@ struct RefBehaviorTests {
         let body = CodeItem([Self.op(.refDerefToCode)])
         let inty = Self.run([IntItem(5), body, Self.op(.intWith)])
         #expect(inty.stacks[.code]!.first!.pretty() == "( 5 )", "the body saw the binding")
-        #expect(inty.stacks[.ref]!.isEmpty, "and it is gone after")
+        #expect(inty.stacks[.binding]!.isEmpty, "and it is gone after")
         #expect(stackString(inty, .int) == "[ \(Self.fresh) 5 ]", "the item read, and its key")
         #expect(inty.stacks[.error]!.isEmpty)
     }
@@ -108,7 +108,7 @@ struct RefBehaviorTests {
     @Test func `a miss refuses and consumes nothing`() {
         let inty = Self.run([IntItem(42), Self.op(.refDeref)])
         #expect(stackString(inty, .int) == "[ 42 ]")
-        #expect(inty.stacks[.error]!.first!.pretty().contains("missing args: .ref"))
+        #expect(inty.stacks[.error]!.first!.pretty().contains("missing args: .binding"))
 
         let below = Self.run([IntItem(7), Self.op(.intRef), Self.op(.intPop), IntItem(Self.fresh), IntItem(1),
                               Self.op(.refDerefBelow)])
@@ -120,18 +120,18 @@ struct RefBehaviorTests {
     }
 
     @Test func `pairs to and from code`() {
-        let inty = Self.run([StringItem("v"), Self.op(.stringRef), Self.op(.refQuote)])
+        let inty = Self.run([StringItem("v"), Self.op(.stringRef), Self.op(.bindingQuote)])
         #expect(inty.stacks[.code]!.first!.pretty() == "( \(Self.fresh) \"v\" )")
         #expect(Self.replays(inty.stacks[.code]!.first!, on: .code))
 
-        let back = Self.run([CodeItem([IntItem(4), StringItem("w")]), Self.op(.refFromCode)])
-        #expect(back.stacks[.ref]!.first!.pretty() == "⟨4 ↦ \"w\"⟩")
+        let back = Self.run([CodeItem([IntItem(4), StringItem("w")]), Self.op(.bindingFromCode)])
+        #expect(back.stacks[.binding]!.first!.pretty() == "⟨4 ↦ \"w\"⟩")
 
-        let wrong = Self.run([CodeItem([StringItem("w"), IntItem(4)]), Self.op(.refFromCode)])
-        #expect(wrong.stacks[.ref]!.isEmpty && wrong.stacks[.error]!.count == 1)
+        let wrong = Self.run([CodeItem([StringItem("w"), IntItem(4)]), Self.op(.bindingFromCode)])
+        #expect(wrong.stacks[.binding]!.isEmpty && wrong.stacks[.error]!.count == 1)
 
-        let literal = Self.run([RefItem(key: 8, bound: CharItem("c"))])
-        #expect(literal.stacks[.ref]!.first!.pretty() == "⟨8 ↦ 'c'⟩", "a literal pair lands on .ref")
+        let literal = Self.run([BindingItem(key: 8, bound: CharItem("c"))])
+        #expect(literal.stacks[.binding]!.first!.pretty() == "⟨8 ↦ 'c'⟩", "a literal pair lands on .binding")
     }
 
     @Test func `keys found by distance, from below, and by value`() {

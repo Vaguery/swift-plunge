@@ -8,7 +8,7 @@
 /// The concrete `Item` types, used as a Codable type tag.
 nonisolated enum ItemKind: String, Codable, Sendable {
     case bool, char, code, double, instruction, int, string
-    case vecBool, vecDouble, vecInt, vecString, iterator, error, standIn, ref
+    case vecBool, vecDouble, vecInt, vecString, iterator, error, standIn, binding
 }
 
 /// Everything a `StandInItem` needs to be rebuilt: the literal it stands in for,
@@ -24,9 +24,9 @@ nonisolated struct StandInState: Codable, Sendable {
 }
 
 
-/// Everything a `RefItem` needs to be rebuilt: its key and the item bound to
+/// Everything a `BindingItem` needs to be rebuilt: its key and the item bound to
 /// it, nested as an `AnyItem`.
-nonisolated struct RefState: Codable, Sendable {
+nonisolated struct BindingState: Codable, Sendable {
     var key: Int
     var bound: AnyItem
 }
@@ -140,9 +140,9 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 laps: state.laps ?? 1,
                 burial: state.burial
             )
-        case .ref:
-            let state = try container.decode(RefState.self, forKey: .value)
-            item = RefItem(key: state.key, bound: state.bound.item)
+        case .binding:
+            let state = try container.decode(BindingState.self, forKey: .value)
+            item = BindingItem(key: state.key, bound: state.bound.item)
         case .standIn:
             let state = try container.decode(StandInState.self, forKey: .value)
             item = StandInItem(standingInFor: state.value.item, source: state.source, reason: state.reason)
@@ -206,9 +206,9 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
                 ),
                 forKey: .value
             )
-        case let concrete as RefItem:
-            try container.encode(ItemKind.ref, forKey: .type)
-            try container.encode(RefState(key: concrete.key, bound: AnyItem(concrete.bound)), forKey: .value)
+        case let concrete as BindingItem:
+            try container.encode(ItemKind.binding, forKey: .type)
+            try container.encode(BindingState(key: concrete.key, bound: AnyItem(concrete.bound)), forKey: .value)
         case let concrete as StandInItem:
             try container.encode(ItemKind.standIn, forKey: .type)
             try container.encode(

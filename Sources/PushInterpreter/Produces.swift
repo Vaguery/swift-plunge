@@ -36,8 +36,9 @@ public nonisolated enum Produces: Hashable, Sendable {
     case deferred(PushStack)
 
     /// The value bound to the instruction, deferred like a constant. Its stack is
-    /// the binding's type, which only a problem's training cases fix (the inputs).
-    case binding
+    /// the input's type, which only a problem's training cases fix. (Named `binding`
+    /// until 2026-11-09, when that word went to the `.binding` stack.)
+    case input
 
     /// An iterator loop delivering elements to `stack` over the following steps:
     /// a promise, returned as an iterator and `.iteratorPlay`, not the elements
@@ -61,7 +62,7 @@ public nonisolated enum Produces: Hashable, Sendable {
 public nonisolated extension Produces {
 
     /// The stacks this declaration can put a value on, with a deferred push
-    /// counted at the stack it rests on. Empty for `continuation` and `binding`,
+    /// counted at the stack it rests on. Empty for `continuation` and `input`,
     /// whose stacks are not fixed by the definition, and for `printout`.
     var valueStacks: Set<PushStack> {
         switch self {
@@ -69,7 +70,7 @@ public nonisolated extension Produces {
         case .alternatives(let options):  Set(options.flatMap { $0 })
         case .deferred(let stack):        [stack]
         case .delivery(let stack):        [stack]
-        case .positions, .continuation, .binding, .printout: []
+        case .positions, .continuation, .input, .printout: []
         }
     }
 }

@@ -1,19 +1,19 @@
 //
-//  Ref Behaviors.swift
+//  Binding Behaviors.swift
 //  PushInterpreter
 //
-//  The `.ref` stack: keyed bindings, each variable a stack of its own
+//  The `.binding` stack: keyed bindings, each variable a stack of its own
 //  (*Behavior coverage audit (2026-11-09)* §9–§11, rulings 7–13; Roadmap #39).
 //
 //  **Binding.** `xRef` reads the top of X, leaves it, binds a copy to a fresh
-//  key and pushes the key onto `.int`. `refRekey` gives the top pair another
+//  key and pushes the key onto `.int`. `bindingRekey` gives the top pair another
 //  key, shadowing that key's older binding: assignment, for every type at once.
 //  `xWith` binds the top of X for the length of a body from `.code`; it is
 //  written as `.xRef ( body ) .refScope`, and `refScope` runs a body with a key
 //  on `.int` and removes that key's binding after.
 //
 //  **Looking up.** Every lookup reads its key from `.int` and leaves it, and a
-//  miss is a refusal, as if `.ref` were empty (ruling I20). `refDeref` runs
+//  miss is a refusal, as if `.binding` were empty (ruling I20). `refDeref` runs
 //  what a key holds (a block's contents go to `.exec`; anything else lands on
 //  its stack); `refDerefToCode` delivers it to `.code` as data (a block as it
 //  is, anything else quoted). Their `…Below` forms take a depth from `.int` and
@@ -23,6 +23,12 @@
 //  from below, and by value (a probe from `.code`).
 //
 //  **Nothing takes an argument from `.exec`** (ruling 12).
+//
+//  **Names** (the user, 2026-11-09; the stack was `.ref` until then): the noun
+//  is *binding*: the stack, the item, its generated family, and what treats a
+//  pair as a value (`bindingRekey`, `bindingQuote`, `bindingFromCode`). The verb
+//  is *ref*: binding (`xRef`, `refFresh`), scoping (`xWith`, `refScope`) and
+//  looking up (`refDeref`, the key finders, `refUnbind`).
 //
 
 import DequeModule
@@ -39,7 +45,7 @@ nonisolated extension Interpreter {
 
     /// The depth of the topmost pair at or below `start` whose key is `key`.
     static func bindingDepth(of key: Int, in pairs: Deque<any Item>, from start: Int = 0) -> Int? {
-        (max(0, start)..<max(max(0, start), pairs.count)).first { (pairs[$0] as? RefItem)?.key == key }
+        (max(0, start)..<max(max(0, start), pairs.count)).first { (pairs[$0] as? BindingItem)?.key == key }
     }
 
     /// The quote instruction for each stack an item can be quoted from.
@@ -64,16 +70,16 @@ nonisolated extension Interpreter {
     /// `xRef`: binds a copy of the top of `stack` to a fresh key, leaving the
     /// item where it was, and pushes the key onto `.int` (ruling 9).
     static func refBinder(_ name: PushInstruction, of stack: PushStack) -> Behavior {
-        Behavior.contextRead(name, tags: [.fallible], produces: .results([.ref, .int])) { _, context in
+        Behavior.contextRead(name, tags: [.fallible], produces: .results([.binding, .int])) { _, context in
             let recording = context.recording
             guard let top = context.items(of: stack).first else {
                 return [refMissing(name, on: stack, recording)]
             }
             let fresh = context.freshKey()
             let key = IntItem(fresh).observed(by: name, recording)
-            let pair = RefItem(key: fresh, bound: top,
-                               call: recording(RefItem.rebuilt(binding: top, to: key) ?? []))
-            return [Router(.ref, pair), Router(.int, key)]
+            let pair = BindingItem(key: fresh, bound: top,
+                               call: recording(BindingItem.rebuilt(binding: top, to: key) ?? []))
+            return [Router(.binding, pair), Router(.int, key)]
         }
     }
 
@@ -95,23 +101,23 @@ nonisolated extension Interpreter {
             return [.place([key] + body + [key, InstructionItem(.refUnbind), InstructionItem(.intPop)])]
         }
 
-    /// `k .refRekey` gives the top pair the key k (ruling 10).
+    /// `k .bindingRekey` gives the top pair the key k (ruling 10).
     ///
     /// Only the last key matters, so a pair that was itself re-keyed is recorded
-    /// as re-keyed once: its history up to that `refRekey`, then k. That is also
+    /// as re-keyed once: its history up to that `bindingRekey`, then k. That is also
     /// what keeps a bound pair's crux a fixed point, since replaying it binds
     /// afresh and re-keys the fresh key away.
-    static let refRekey_Behavior =
-        Behavior(.refRekey, requires: [.takes(.ref), .takes(.int)], tags: [], behaviorClass: .operation,
+    static let bindingRekey_Behavior =
+        Behavior(.bindingRekey, requires: [.takes(.binding), .takes(.int)], tags: [], behaviorClass: .operation,
                  body: .values { a, recording in
-                     let pair = a[0] as! RefItem, key = a[1] as! IntItem
+                     let pair = a[0] as! BindingItem, key = a[1] as! IntItem
                      let previous = pair.call
                      let before: [any Item] =
-                         previous.count >= 2 && (previous.last as? InstructionItem)?.value == .refRekey
+                         previous.count >= 2 && (previous.last as? InstructionItem)?.value == .bindingRekey
                          ? Array(previous.dropLast(2)) : [pair]
-                     return [Router(.ref, RefItem(key: key.value, bound: pair.bound,
-                                                  call: recording(before + [key, InstructionItem(.refRekey)])))]
-                 }, produces: .results([.ref]))
+                     return [Router(.binding, BindingItem(key: key.value, bound: pair.bound,
+                                                  call: recording(before + [key, InstructionItem(.bindingRekey)])))]
+                 }, produces: .results([.binding]))
 
     /// A fresh key onto `.int`: a deterministic gensym.
     static let refFresh_Behavior =
@@ -123,30 +129,30 @@ nonisolated extension Interpreter {
     // MARK: - Pairs as data
 
     /// A pair as the block `( k value )`.
-    static let refQuote_Behavior =
-        Behavior(.refQuote, requires: [.takes(.ref)], tags: [], behaviorClass: .operation,
+    static let bindingQuote_Behavior =
+        Behavior(.bindingQuote, requires: [.takes(.binding)], tags: [], behaviorClass: .operation,
                  body: .values { a, recording in
-                     let pair = a[0] as! RefItem
+                     let pair = a[0] as! BindingItem
                      return [Router(.code, CodeItem([IntItem(pair.key), pair.bound],
-                                                    call: recording([pair, InstructionItem(.refQuote)])))]
+                                                    call: recording([pair, InstructionItem(.bindingQuote)])))]
                  }, produces: .results([.code]))
 
     /// The block `( k value )` as a pair; refused for any other shape, and for a
     /// value that cannot be bound (an iterator or a pair).
-    static let refFromCode_Behavior =
-        Behavior(.refFromCode, requires: [.takes(.code)], tags: [.fallible], behaviorClass: .operation,
+    static let bindingFromCode_Behavior =
+        Behavior(.bindingFromCode, requires: [.takes(.code)], tags: [.fallible], behaviorClass: .operation,
                  body: .values { a, recording in
                      let block = a[0] as! CodeItem
-                     let call = recording([block, InstructionItem(.refFromCode)])
+                     let call = recording([block, InstructionItem(.bindingFromCode)])
                      guard block.value.count == 2, let key = block.value[0] as? IntItem,
-                           !(block.value[1] is IteratorItem), !(block.value[1] is RefItem) else {
-                         return [Behavior.refusal("Not a ( key value ) pair in .refFromCode", kind: .conversion,
+                           !(block.value[1] is IteratorItem), !(block.value[1] is BindingItem) else {
+                         return [Behavior.refusal("Not a ( key value ) pair in .bindingFromCode", kind: .conversion,
                                                   call: call)]
                      }
                      // The value as it is addressed in its block, so it keeps a history.
                      let bound = Containment.contents(of: block, recording)[1]
-                     return [Router(.ref, RefItem(key: key.value, bound: bound, call: call))]
-                 }, produces: .alternatives([[.ref], [.error]]))
+                     return [Router(.binding, BindingItem(key: key.value, bound: bound, call: call))]
+                 }, produces: .alternatives([[.binding], [.error]]))
 
 
     // MARK: - Lookups
@@ -163,12 +169,12 @@ nonisolated extension Interpreter {
             guard let key = context.items(of: .int).first as? IntItem else {
                 return handBack + [refMissing(name, on: .int, context.recording)]
             }
-            let pairs = context.items(of: .ref)
+            let pairs = context.items(of: .binding)
             let start = below ? (a[0] as! IntItem).value : 0
             guard let depth = bindingDepth(of: key.value, in: pairs, from: start) else {
-                return handBack + [refMissing(name, on: .ref, context.recording)]
+                return handBack + [refMissing(name, on: .binding, context.recording)]
             }
-            return deliver((pairs[depth] as! RefItem).bound, context)
+            return deliver((pairs[depth] as! BindingItem).bound, context)
         }
     }
 
@@ -200,29 +206,29 @@ nonisolated extension Interpreter {
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(.refBindingDepth, on: .int, context.recording)]
             }
-            guard let depth = bindingDepth(of: key.value, in: context.items(of: .ref)) else {
-                return [refMissing(.refBindingDepth, on: .ref, context.recording)]
+            guard let depth = bindingDepth(of: key.value, in: context.items(of: .binding)) else {
+                return [refMissing(.refBindingDepth, on: .binding, context.recording)]
             }
             return [Router(.int, IntItem(depth).observed(by: .refBindingDepth, context.recording))]
         }
 
     /// A key found from the key on `.int` (read) by `choose`, among the keys on
-    /// `.ref` from the top down; onto `.int`, observed.
+    /// `.binding` from the top down; onto `.int`, observed.
     static func refKeyFinder(_ name: PushInstruction,
                              choose: @escaping @Sendable (Int, [Int]) -> Int?) -> Behavior {
         Behavior.contextRead(name, tags: [.fallible], produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(name, on: .int, context.recording)]
             }
-            let keys = context.items(of: .ref).map { ($0 as! RefItem).key }
+            let keys = context.items(of: .binding).map { ($0 as! BindingItem).key }
             guard let found = choose(key.value, keys) else {
-                return [refMissing(name, on: .ref, context.recording)]
+                return [refMissing(name, on: .binding, context.recording)]
             }
             return [Router(.int, IntItem(found).observed(by: name, context.recording))]
         }
     }
 
-    /// The key nearest k, the topmost on a tie; misses only on an empty `.ref`.
+    /// The key nearest k, the topmost on a tie; misses only on an empty `.binding`.
     static let refNearestKey_Behavior = refKeyFinder(.refNearestKey) { k, keys in
         keys.min { abs(Double($0) - Double(k)) < abs(Double($1) - Double(k)) }
     }
@@ -240,9 +246,9 @@ nonisolated extension Interpreter {
                 return [refMissing(.refKeyOf, on: .code, context.recording)]
             }
             let target = probe.denotedItem
-            guard let pair = context.items(of: .ref).lazy.compactMap({ $0 as? RefItem })
+            guard let pair = context.items(of: .binding).lazy.compactMap({ $0 as? BindingItem })
                 .first(where: { $0.bound.isEqual(to: probe) || $0.bound.isEqual(to: target) }) else {
-                return [refMissing(.refKeyOf, on: .ref, context.recording)]
+                return [refMissing(.refKeyOf, on: .binding, context.recording)]
             }
             return [Router(.int, IntItem(pair.key).observed(by: .refKeyOf, context.recording))]
         }
@@ -251,23 +257,23 @@ nonisolated extension Interpreter {
     /// depth the key names.
     static let refUnbind_Behavior =
         Behavior(.refUnbind, requires: [.reads(.int)], tags: [.fallible], behaviorClass: .structural,
-                 body: .structural(.ref) { a, view in
+                 body: .structural(.binding) { a, view in
                      let key = (a[0] as! IntItem).value
-                     guard let depth = (0..<view.count).first(where: { (view.item(at: $0) as? RefItem)?.key == key })
-                     else { return .loop([refMissing(.refUnbind, on: .ref, view.recording)]) }
+                     let depth = (0..<view.count).first { (view.item(at: $0) as? BindingItem)?.key == key }
+                     guard let depth else { return .loop([refMissing(.refUnbind, on: .binding, view.recording)]) }
                      return .positions(.remove(at: depth))
-                 }, produces: .positions(.ref))
+                 }, produces: .positions(.binding))
 
 
     // MARK: - The family
 
-    static let refBehaviors: [PushInstruction: Behavior] = {
+    static let bindingBehaviors: [PushInstruction: Behavior] = {
         var family: [PushInstruction: Behavior] = [
             .refScope: refScope_Behavior,
-            .refRekey: refRekey_Behavior,
+            .bindingRekey: bindingRekey_Behavior,
             .refFresh: refFresh_Behavior,
-            .refQuote: refQuote_Behavior,
-            .refFromCode: refFromCode_Behavior,
+            .bindingQuote: bindingQuote_Behavior,
+            .bindingFromCode: bindingFromCode_Behavior,
             .refDeref: refDeref(.refDeref, below: false),
             .refDerefBelow: refDeref(.refDerefBelow, below: true),
             .refDerefToCode: refDerefToCode(.refDerefToCode, below: false),
@@ -278,7 +284,7 @@ nonisolated extension Interpreter {
             .refKeyOf: refKeyOf_Behavior,
             .refUnbind: refUnbind_Behavior
         ]
-        for (stack, binder) in RefItem.binders {
+        for (stack, binder) in BindingItem.binders {
             family[binder] = refBinder(binder, of: stack)
             let with = PushInstruction(rawValue: "\(stack.rawValue)With")!
             family[with] = refWith(with, binder: binder, of: stack)

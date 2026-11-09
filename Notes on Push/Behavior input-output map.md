@@ -166,7 +166,7 @@ declare their result stack (`gives:`).
 | `results([stacks])` | fixed results, one per listed stack | 314 (305 single; 9 lists of two: the 7 cuts, `iteratorPeekStride`, `iteratorPeekLaps`) |
 | `alternatives([[stacks]])` | one of a few fixed lists, chosen by argument values | 11 |
 | `deferred(stack)` | a literal on `.exec` that rests on `stack` next step | 80 constants |
-| `binding` | the bound value, deferred; its type is per problem | 10 inputs |
+| `input` (named `binding` until 2026-11-09) | the bound value, deferred; its type is per problem | 10 inputs |
 | `delivery(stack)` | an iterator loop putting elements on `stack` later | 7 (`vecXPushAll`, `stringSplit`, `stringParseToLetters`, `stringPushAllChars`) |
 | `positions(stack)` | value-blind deletes, copies and moves on `stack` | 144 structural rules |
 | `continuation` | a control edge: whatever the program it writes does | 28 |
@@ -198,7 +198,7 @@ Changed on the way: `splitting` returns a pair rather than a list, so a cut decl
   `kind` and `origin`) would make them fixed edges and give `delivery` loops a checked element type.
 - **Continuations.** 28 control Behaviors are one opaque case. A control edge could name the stacks of
   the blocks it runs (`execIf`: one of two `.code` blocks), leaving the types to the blocks' own edges.
-- **Inputs.** A `binding`'s type is fixed per problem, by its training cases; a search can refine the map
+- **Inputs.** An `input`'s type is fixed per problem, by its training cases; a search can refine the map
   per problem before chaining.
 - **Peeks that give nothing — RULED 2026-11-08: correct as they are.** `iteratorPeekEnd` on a walking
   iterator and `iteratorPeekBody` on one without a body hand back only the iterator. "The intended output"

@@ -39,7 +39,7 @@ struct InterpreterRobustnessTests {
                             emits: true
                          )
         case .exec:      return BoolItem(false)
-        case .ref:       return RefItem(key: 1, bound: StringItem("r"))
+        case .binding:       return BindingItem(key: 1, bound: StringItem("r"))
         case .error:     return ErrorItem("x")
         }
     }

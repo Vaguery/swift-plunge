@@ -87,7 +87,7 @@ struct CruxRoundTripTests {
                             emits: true,
                             cursor: n % 3
                          )
-        case .ref:       RefItem(key: n, bound: IntItem(n + 1))
+        case .binding:       BindingItem(key: n, bound: IntItem(n + 1))
         case .error:     nil   // never seeded; never checked
         }
     }
@@ -117,7 +117,7 @@ struct CruxRoundTripTests {
     /// cannot find its arguments produces only an ErrorItem, which tests
     /// nothing.
     /// `recording` is set before the load, since the load itself records: the
-    /// inputs' bindings on `.ref` (ruling 8 of the coverage audit).
+    /// inputs' bindings on `.binding` (ruling 8 of the coverage audit).
     func seeded(depth: Int = 4, recording: Bool = true) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.config.recordsProvenance = recording
@@ -328,7 +328,7 @@ struct CruxFuzzTests {
                     let inputs = inty.inputs
                     let constants = inty.constants
                     // Loaded again with the bindings, as the Runner loads, so the
-                    // inputs are bound on `.ref` too (ruling 8 of the coverage audit).
+                    // inputs are bound on `.binding` too (ruling 8 of the coverage audit).
                     inty.load(inputs: inputs, constants: constants, program: program)
                     inty.run(stepLimit: settings.stepLimit)
 

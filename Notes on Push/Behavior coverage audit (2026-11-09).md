@@ -755,6 +755,9 @@ Debating it costs more.
 
 ## 9. A `.ref` stack: keyed bindings, each variable a stack (2026-11-09)
 
+*Built as the `.binding` stack (§11, step 5); the text below keeps the design's
+original names.*
+
 *Revised by the rulings in §11: the named tokens, the binding from `.exec`
 and `execLet` are dropped.*
 
@@ -1229,23 +1232,26 @@ Settled in building:
 - **Not built:** PEG or other grammar patterns (*Grammars as patterns
   (PEG).md*, explored the same day; proposed as step 6, after `.ref`).
 
-**Step 5, the `.ref` stack built 2026-11-09, 783 → 845 instructions**
-(*RefItem.swift*, *Ref Behaviors.swift*). As ruled (rulings 7–13), with these
+**Step 5, the `.binding` stack built 2026-11-09, 783 → 845 instructions**
+(designed and ruled above as `.ref`; renamed by the user the same day: the
+noun is *binding*, for the stack, the item, its family and what treats a pair
+as a value, and the verb is *ref*, for binding, scoping and looking up)
+(*BindingItem.swift*, *Binding Behaviors.swift*). As ruled (rulings 7–13), with these
 settled in building:
-- **A pair is a `RefItem`**: an int key (its `value`) and the item bound to
-  it. A literal pair in a program lands on `.ref`, as a block lands on `.code`.
-  `.ref` gets the generated family (dup, pop, swap, yank, …, `refEq`).
+- **A pair is a `BindingItem`**: an int key (its `value`) and the item bound to
+  it. A literal pair in a program lands on `.binding`, as a block lands on `.code`.
+  `.binding` gets the generated family (dup, pop, swap, yank, …, `bindingEq`).
 - **Inputs are bound at load**, key *i* for slot *i*, in slot order (the last
   slot's pair on top). The slots are derived from the `inputN` cases
   (`Interpreter.inputSlots`), and so is the first fresh key; nothing says 10.
   Only `load(inputs:)` binds them: inputs assigned after a load (as two test
-  harnesses did) are not on `.ref`.
+  harnesses did) are not on `.binding`.
 - **Fresh keys come from a counter the interpreter owns**, drawn through
   `ReadContext.freshKey()` and advanced in `Behavior.act`, so no body mutates
   the interpreter. Each fresh key is an observed stand-in.
 - **A bound pair's crux rebuilds it**: the item, its binder, the clean-up, then
-  the key and `refRekey` (`5 .intRef .intPop .intPop .intRef_actuallyWas_12
-  .refRekey`). `refRekey` of a pair that was itself re-keyed replaces the last
+  the key and `bindingRekey` (`5 .intRef .intPop .intPop .intRef_actuallyWas_12
+  .bindingRekey`). `bindingRekey` of a pair that was itself re-keyed replaces the last
   key rather than adding one, which keeps that crux a fixed point under replay
   (the crux fuzz found it).
 - **`xWith` is a composition, `.xRef ( body ) .refScope`.** `refScope` (one
@@ -1262,11 +1268,14 @@ settled in building:
 - **The key finders return keys, not values**: `refNearestKey`, `refFloorKey`
   (which misses when every key is above k), `refKeyOf` (reverse lookup, probe
   from `.code`), `refBindingDepth`. Each feeds a deref.
-- **`refUnbind` is a structural rule** on `.ref` that reads its key and removes
+- **`refUnbind` is a structural rule** on `.binding` that reads its key and removes
   the topmost binding, through a new position effect, `remove(at:)`.
 - **The user's addition: `xDeleteAtDepth` on all thirteen family stacks**, the
   depth clamped as `Yank`'s is. Deletion by pattern is for after grammars.
-- **`refFromCode` takes exactly `( key value )`**, the value addressed in its
+- **Keys can be any int, negative included**; only fresh keys are drawn from
+  the counter, which starts at N with no gap after the inputs. The holes a
+  program sees are its unbound input slots, whose keys stay empty.
+- **`bindingFromCode` takes exactly `( key value )`**, the value addressed in its
   block so it keeps a history.
 
 **Order of work**, a suggestion and not a ruling:

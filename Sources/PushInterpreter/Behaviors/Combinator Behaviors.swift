@@ -32,7 +32,7 @@ nonisolated extension Interpreter {
         .vecDouble,
         .vecString,
         .iterator,
-        .ref,
+        .binding,
     ]
 
     static var combinatorBehaviors: [PushInstruction: Behavior] {

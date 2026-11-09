@@ -199,7 +199,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: iteratorBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: lookupBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: findBehaviors, intoLanguage: &starter)
-        integrateBehaviors(fromThese: refBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: bindingBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: textBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecBoolBehaviors, intoLanguage: &starter)
@@ -242,7 +242,7 @@ nonisolated final class Interpreter {
     /// stack, "the last thing it produced" (map, filter and reduce; Behavior
     /// coverage audit, P2). One store per push.
     @exclusivity(unchecked) var lastPush: PushStack? = nil
-    /// The next fresh `.ref` key (ruling 7). Reset at every load to the number
+    /// The next fresh `.binding` key (ruling 7). Reset at every load to the number
     /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`
     /// for each key a context read draws (`ReadContext.freshKey`).
     @exclusivity(unchecked) var nextRefKey = Interpreter.inputSlots.count
@@ -617,7 +617,7 @@ nonisolated final class Interpreter {
         .sorted { $0.slot < $1.slot }
         .map(\.name)
 
-    /// **Binds key *i* to input slot *i*** on `.ref`, for every bound input, in
+    /// **Binds key *i* to input slot *i*** on `.binding`, for every bound input, in
     /// slot order, so the last slot's pair is on top (ruling 8). `.inputN` stays
     /// the direct path; this is the redundant one, and a program can shadow a
     /// key without losing the input. Each pair records how to make it again from
@@ -628,13 +628,13 @@ nonisolated final class Interpreter {
             guard var bound = inputs[name] else { continue }
             bound.call = recording([InstructionItem(name)])
             let key = IntItem(slot).minted(by: name, recording)
-            var pair = RefItem(key: slot, bound: bound)
-            if let rebuilt = RefItem.rebuilt(binding: bound, to: key) {
+            var pair = BindingItem(key: slot, bound: bound)
+            if let rebuilt = BindingItem.rebuilt(binding: bound, to: key) {
                 pair.call = recording(rebuilt)
             } else {
                 pair = pair.observed(by: name, recording)
             }
-            if requireAccepts(pair, on: .ref) { stacks[.ref]!.prepend(pair) }
+            if requireAccepts(pair, on: .binding) { stacks[.binding]!.prepend(pair) }
         }
     }
 

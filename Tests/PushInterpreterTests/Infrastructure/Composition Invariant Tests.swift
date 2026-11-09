@@ -179,7 +179,7 @@ struct CompositionInvariantTests {
         let harness = CruxRoundTripTests()
         let (inputs, constants) = harness.bindings
 
-        // What the load itself puts on a stack (the inputs' bindings on `.ref`) is
+        // What the load itself puts on a stack (the inputs' bindings on `.binding`) is
         // the environment, not debris.
         let baseline = loadedBaseline(inputs: inputs, constants: constants)
         var checked = 0
