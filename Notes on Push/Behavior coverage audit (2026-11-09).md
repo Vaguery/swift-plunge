@@ -1032,6 +1032,12 @@ and `execLet`):
       - `refUnbind` and `refBindingDepth`, with their keys read from `.int`;
       - `refFresh`, which pushes a fresh key and is a deterministic gensym.
 
+**Slot counts are not fixed** (the user, 2026-11-09). Ten inputs and ten
+constants per type are today's numbers, not permanent ones. Some day they will be
+arrays of any length. So the counter starts at **N, the number of input slots**,
+derived from the slot definitions and never written as 10. Keys 0…N−1 hold the
+inputs.
+
 **`.ref`'s size as ruled:**
 
 | Group | Instructions |

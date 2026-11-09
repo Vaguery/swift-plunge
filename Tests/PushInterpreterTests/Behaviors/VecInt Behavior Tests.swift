@@ -719,5 +719,23 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .vecInt) == "[ [9] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] 1 .vecIntTake )")
     }
-    
+
+    /// The other end (ruling I15): `TakeLast`/`DropLast` split at n from the
+    /// back, clamped like `Take`/`Drop`, and record their argument like them.
+    @Test func `take and drop the last elements`() {
+        func run(_ instruction: PushInstruction, _ n: Int) -> (String, String) {
+            let inty = Interpreter.recordingProvenance()
+            loadInts(inty, ints: [n])
+            inty.stacks[.vecInt]!.prepend(VecIntItem([1, 2, 3, 4, 5]))
+            doThis(instruction, to: inty)
+            return (stackString(inty, .vecInt), callString(topItem(inty, .vecInt)))
+        }
+        #expect(run(.vecIntTakeLast, 2) == ("[ [4, 5] ]", "( [1, 2, 3, 4, 5] 2 .vecIntTakeLast )"))
+        #expect(run(.vecIntDropLast, 2).0 == "[ [1, 2, 3] ]")
+        #expect(run(.vecIntTakeLast, 99).0 == "[ [1, 2, 3, 4, 5] ]")
+        #expect(run(.vecIntDropLast, 99).0 == "[ [] ]")
+        #expect(run(.vecIntTakeLast, -1).0 == "[ [] ]")
+        #expect(run(.vecIntDropLast, -1).0 == "[ [1, 2, 3, 4, 5] ]")
+    }
+
 }

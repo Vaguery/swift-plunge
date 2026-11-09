@@ -109,20 +109,39 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"abcdefghij\" ]")
         #expect(callString(topItem(inty, .string)) == "( 0 \"abcdefghij\" .stringDrop )")
 
+        // Drops from the front, as `vecXDrop` does (ruling I15, 2026-11-09).
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ -14 99 ]")
-        #expect(stackString(inty, .string) == "[ \"abcdef\" ]")
+        #expect(stackString(inty, .string) == "[ \"efghij\" ]")
         #expect(callString(topItem(inty, .string)) == "( 4 \"abcdefghij\" .stringDrop )")
 
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ 99 ]")
-        #expect(stackString(inty, .string) == "[ \"abcdef\" ]")
-        #expect(callString(topItem(inty, .string)) == "( -14 \"abcdef\" .stringDrop )")
+        #expect(stackString(inty, .string) == "[ \"efghij\" ]")
+        #expect(callString(topItem(inty, .string)) == "( -14 \"efghij\" .stringDrop )")
 
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 99 \"abcdef\" .stringDrop )")
+        #expect(callString(topItem(inty, .string)) == "( 99 \"efghij\" .stringDrop )")
+    }
+
+    /// Both ends, both ways: `Take`/`Drop` split at n from the front,
+    /// `TakeLast`/`DropLast` at n from the back (ruling I15).
+    @Test func `take and drop at either end`() {
+        func run(_ instruction: PushInstruction, _ n: Int) -> String {
+            let inty = Interpreter()
+            loadInts(inty, ints: [n])
+            loadStrings(inty, strings: ["abcdefghij"])
+            doThis(instruction, to: inty)
+            return stackString(inty, .string)
+        }
+        #expect(run(.stringTake, 4) == "[ \"abcd\" ]")
+        #expect(run(.stringDrop, 4) == "[ \"efghij\" ]")
+        #expect(run(.stringTakeLast, 4) == "[ \"ghij\" ]")
+        #expect(run(.stringDropLast, 4) == "[ \"abcdef\" ]")
+        #expect(run(.stringTakeLast, 99) == "[ \"abcdefghij\" ]")
+        #expect(run(.stringDropLast, -3) == "[ \"abcdefghij\" ]")
     }
 
     @Test func stringFirst() {

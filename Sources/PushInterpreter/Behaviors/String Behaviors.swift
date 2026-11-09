@@ -50,10 +50,30 @@ nonisolated extension Interpreter {
 
     // the IntItem value is truncated at 0 before use as an index.
     // Written order: the int (recorded first), then the string.
+    //
+    // Drops from the **front**, as `vecXDrop` does, so `stringTake n` and
+    // `stringDrop n` split a string the way they split a vector (ruling I15,
+    // 2026-11-09; it used to drop from the end, which is now `stringDropLast`).
     static let stringDrop_Behavior =
         Behavior.assembling(.stringDrop, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
             let toDrop = max(0, y.value)
-            return Built(String(x.value.dropLast(toDrop)), members: x.origins().dropLast(toDrop))
+            return Built(String(x.value.dropFirst(toDrop)), members: Array(x.origins().dropFirst(toDrop)))
+        }
+
+    // the string with its last n characters removed (n clamped at 0).
+    // Written order: the int (recorded first), then the string.
+    static let stringDropLast_Behavior =
+        Behavior.assembling(.stringDropLast, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            let toDrop = max(0, y.value)
+            return Built(String(x.value.dropLast(toDrop)), members: Array(x.origins().dropLast(toDrop)))
+        }
+
+    // the last n characters of the string (n clamped at 0).
+    // Written order: the int (recorded first), then the string.
+    static let stringTakeLast_Behavior =
+        Behavior.assembling(.stringTakeLast, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+            let toTake = max(0, y.value)
+            return Built(String(x.value.suffix(toTake)), members: Array(x.origins().suffix(toTake)))
         }
 
     // the IntItem value is truncated at 0 before use as an index.
@@ -454,5 +474,7 @@ nonisolated extension Interpreter {
         .stringCut : stringCut_Behavior,
         .stringSubstring : stringSubstring_Behavior,
         .stringTake : stringTake_Behavior,
+        .stringTakeLast : stringTakeLast_Behavior,
+        .stringDropLast : stringDropLast_Behavior,
         ]
 }

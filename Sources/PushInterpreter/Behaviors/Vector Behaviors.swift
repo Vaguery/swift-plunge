@@ -127,7 +127,7 @@ nonisolated extension Interpreter {
         }
     }
 
-    // returns the last y elements of the vector (y clamped to [0, count])
+    // returns the first y elements of the vector (y clamped to [0, count])
     static func takeBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.assembling(instruction, takes: V.self, IntItem.self, gives: V.self) { x, y in
             let range = x.value.count
@@ -142,6 +142,23 @@ nonisolated extension Interpreter {
             let range = x.value.count
             let idx = (min(range, max(y.value, 0)))
             return Built(Array(x.value.dropFirst(idx)), members: Array(x.origins().dropFirst(idx)))
+        }
+    }
+
+    // returns the last y elements of the vector (y clamped to [0, count]): the
+    // other end's `take`, so both ends have a route (ruling I15, 2026-11-09)
+    static func takeLastBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+        Behavior.assembling(instruction, takes: V.self, IntItem.self, gives: V.self) { x, y in
+            let count = min(x.value.count, max(y.value, 0))
+            return Built(Array(x.value.suffix(count)), members: Array(x.origins().suffix(count)))
+        }
+    }
+
+    // returns the vector with the last y elements removed (y clamped to [0, count])
+    static func dropLastBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+        Behavior.assembling(instruction, takes: V.self, IntItem.self, gives: V.self) { x, y in
+            let count = min(x.value.count, max(y.value, 0))
+            return Built(Array(x.value.dropLast(count)), members: Array(x.origins().dropLast(count)))
         }
     }
 
@@ -717,6 +734,10 @@ nonisolated extension Interpreter {
     static let vecBoolReverse_Behavior =
         reverseBehavior(.vecBoolReverse, making: VecBoolItem.self)
 
+    static let vecBoolTakeLast_Behavior =
+        takeLastBehavior(.vecBoolTakeLast, making: VecBoolItem.self)
+    static let vecBoolDropLast_Behavior =
+        dropLastBehavior(.vecBoolDropLast, making: VecBoolItem.self)
     static let vecBoolTake_Behavior =
         takeBehavior(.vecBoolTake, making: VecBoolItem.self)
 
@@ -853,6 +874,8 @@ nonisolated extension Interpreter {
         .vecBoolReadItems : vecBoolReadItems_Behavior,
         .vecBoolReadStack : vecBoolReadStack_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
+        .vecBoolTakeLast : vecBoolTakeLast_Behavior,
+        .vecBoolDropLast : vecBoolDropLast_Behavior,
     ]
 
 
@@ -876,6 +899,10 @@ nonisolated extension Interpreter {
     static let vecDoubleReverse_Behavior =
         reverseBehavior(.vecDoubleReverse, making: VecDoubleItem.self)
 
+    static let vecDoubleTakeLast_Behavior =
+        takeLastBehavior(.vecDoubleTakeLast, making: VecDoubleItem.self)
+    static let vecDoubleDropLast_Behavior =
+        dropLastBehavior(.vecDoubleDropLast, making: VecDoubleItem.self)
     static let vecDoubleTake_Behavior =
         takeBehavior(.vecDoubleTake, making: VecDoubleItem.self)
 
@@ -1023,6 +1050,8 @@ nonisolated extension Interpreter {
         .vecDoubleReadItems : vecDoubleReadItems_Behavior,
         .vecDoubleReadStack : vecDoubleReadStack_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
+        .vecDoubleTakeLast : vecDoubleTakeLast_Behavior,
+        .vecDoubleDropLast : vecDoubleDropLast_Behavior,
     ]
 
 
@@ -1048,6 +1077,10 @@ nonisolated extension Interpreter {
     static let vecIntReverse_Behavior =
         reverseBehavior(.vecIntReverse, making: VecIntItem.self)
 
+    static let vecIntTakeLast_Behavior =
+        takeLastBehavior(.vecIntTakeLast, making: VecIntItem.self)
+    static let vecIntDropLast_Behavior =
+        dropLastBehavior(.vecIntDropLast, making: VecIntItem.self)
     static let vecIntTake_Behavior =
         takeBehavior(.vecIntTake, making: VecIntItem.self)
 
@@ -1193,6 +1226,8 @@ nonisolated extension Interpreter {
         .vecIntReadItems : vecIntReadItems_Behavior,
         .vecIntReadStack : vecIntReadStack_Behavior,
         .vecIntTake : vecIntTake_Behavior,
+        .vecIntTakeLast : vecIntTakeLast_Behavior,
+        .vecIntDropLast : vecIntDropLast_Behavior,
     ]
 
 
@@ -1221,6 +1256,10 @@ nonisolated extension Interpreter {
     static let vecStringReverse_Behavior =
         reverseBehavior(.vecStringReverse, making: VecStringItem.self)
 
+    static let vecStringTakeLast_Behavior =
+        takeLastBehavior(.vecStringTakeLast, making: VecStringItem.self)
+    static let vecStringDropLast_Behavior =
+        dropLastBehavior(.vecStringDropLast, making: VecStringItem.self)
     static let vecStringTake_Behavior =
         takeBehavior(.vecStringTake, making: VecStringItem.self)
 
@@ -1469,6 +1508,8 @@ nonisolated extension Interpreter {
         .vecStringReadItems : vecStringReadItems_Behavior,
         .vecStringReadStack : vecStringReadStack_Behavior,
         .vecStringTake : vecStringTake_Behavior,
+        .vecStringTakeLast : vecStringTakeLast_Behavior,
+        .vecStringDropLast : vecStringDropLast_Behavior,
     ]
 
 }
