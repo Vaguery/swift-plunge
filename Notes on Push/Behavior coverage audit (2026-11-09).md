@@ -640,6 +640,35 @@ selectivity, more than a spread of types.
     - A depth on a stack depends on the stack's arrangement, so it records a
       stand-in, as `StackDepth` does (law 4b).
 
+### Searching from a given depth (the user, 2026-11-09)
+
+Every lookup has **two versions**:
+
+- **The default searches from the top.** On a stack, that means just below the
+  probe, which is read from the top.
+- **The `…Below` variant takes a start index from `.int`** and searches strictly
+  below it, on a stack or in a collection.
+  - The bound is exclusive, so feeding back the index a lookup just returned
+    finds the **next** match.
+  - A start past the bottom (or the end) is a refusal; a negative start is
+    clamped (§12).
+
+Consequences:
+
+- **Walking every match.** Each lookup leaves its index on `.int`, and `…Below`
+  takes exactly that int. So `find`, `findBelow`, `findBelow`, … visits every
+  match without drawing on any other int. The start index is consumed and the
+  new one replaces it, so `.int` does not fill up during the walk.
+- **Indices refer to the stack as it stands** when the instruction runs. A
+  returned depth already counts the copy just pushed, so feeding it back stays
+  consistent.
+- **Inside a collection** this is "the next occurrence after i", as in
+  `index(of:from:)`.
+- **For `.ref`**, `refDerefBelow` reaches a key's **shadowed** bindings, its
+  older values, without unbinding anything. "Each variable a stack" is then
+  readable at any depth, not only by popping.
+- **Cost:** the lookup family doubles.
+
 ### Three dictionaries, none of them a type
 
 1. **Association blocks on `.code`, looked up by prefix.**
@@ -1070,6 +1099,9 @@ and `execLet`):
       tagged re-entrant for the runaway guard, because a bound block can look
       itself up.
     - **`refDerefToCode`** delivers the value to `.code` as data.
+    - **Each has a `…Below` variant** taking a start index from `.int` (§8,
+      "Searching from a given depth"). `refDerefBelow` reads a key's older,
+      shadowed bindings without unbinding.
     - Alongside them:
       - the **nearest** and **floor** variants, which never miss on a
         non-empty `.ref`;
