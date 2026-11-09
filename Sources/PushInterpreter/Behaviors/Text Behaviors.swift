@@ -34,26 +34,33 @@ nonisolated extension Interpreter {
         Behavior.operation(.charUpper, takes: CharItem.self, gives: CharItem.self) { x throws(Refusal) in
             try singleCharacter(x, { $0.uppercased() }, .charUpper)
         }
+        .described("Uppercases a char by Unicode's default rules; refuses one whose uppercase is several chars, " +
+                   "like ß.")
 
     static let charLower_Behavior =
         Behavior.operation(.charLower, takes: CharItem.self, gives: CharItem.self) { x throws(Refusal) in
             try singleCharacter(x, { $0.lowercased() }, .charLower)
         }
+        .described("Lowercases a char by Unicode's default rules; refuses one whose lowercase is several chars.")
 
     static let charIsUpper_Behavior =
         Behavior.operation(.charIsUpper, reads: CharItem.self, gives: BoolItem.self) { x in x.isUppercase }
+        .described("Tests whether the char is uppercase, leaving the char; a char with no case gives false.")
 
     static let charIsLower_Behavior =
         Behavior.operation(.charIsLower, reads: CharItem.self, gives: BoolItem.self) { x in x.isLowercase }
+        .described("Tests whether the char is lowercase, leaving the char; a char with no case gives false.")
 
 
     // MARK: - Strings
 
     static let stringUpper_Behavior =
         Behavior.operation(.stringUpper, takes: StringItem.self, gives: StringItem.self) { x in x.uppercased() }
+        .described("Uppercases a string by Unicode's default rules, so ß becomes SS.")
 
     static let stringLower_Behavior =
         Behavior.operation(.stringLower, takes: StringItem.self, gives: StringItem.self) { x in x.lowercased() }
+        .described("Lowercases a string by Unicode's default rules.")
 
     /// Where the second string first occurs in the first, counted in
     /// characters; an error if it does not. An empty needle is found at 0.
@@ -65,18 +72,22 @@ nonisolated extension Interpreter {
             }
             return hay.distance(from: hay.startIndex, to: range.lowerBound)
         }
+        .described("Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOf`; an empty t " +
+                   "gives 0; refuses when absent.")
 
     static let stringStartsWith_Behavior =
         Behavior.operation(.stringStartsWith, reads: StringItem.self, StringItem.self,
                            gives: BoolItem.self) { x, prefix in
             x.hasPrefix(prefix)
         }
+        .described("Tests whether s begins with t, leaving both: `s t .stringStartsWith`; an empty t gives true.")
 
     static let stringEndsWith_Behavior =
         Behavior.operation(.stringEndsWith, reads: StringItem.self, StringItem.self,
                            gives: BoolItem.self) { x, suffix in
             x.hasSuffix(suffix)
         }
+        .described("Tests whether s ends with t, leaving both: `s t .stringEndsWith`; an empty t gives true.")
 
     /// Without whitespace at either end. The characters kept keep their origins.
     static let stringTrim_Behavior =
@@ -89,6 +100,7 @@ nonisolated extension Interpreter {
             let origins = x.origins()
             return Built(String(characters[first...last]), members: Array(origins[first...last]))
         }
+        .described("Removes whitespace from both ends of a string; an all-whitespace string gives the empty string.")
 
 
     // MARK: - The family

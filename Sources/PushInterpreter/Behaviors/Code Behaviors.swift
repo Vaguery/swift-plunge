@@ -18,6 +18,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeAppend, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
             y + x
         }
+        .described("Concatenates two blocks' root items: `( a ) ( b c ) .codeAppend` gives `( a b c )`.")
 
     /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
     /// `codeWrapRoot`, and Clojure's `list` with two arguments. Each argument is
@@ -29,6 +30,8 @@ nonisolated extension Interpreter {
         Behavior.composing(.codePair, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
             [y.denotedItem, x.denotedItem]
         }
+        .described("Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block " +
+                   "contributing its sole item.")
 
     /// The `.code` sibling of `execIf`: pop a bool and two blocks, run the chosen
     /// one on `.exec`. Only the source stack differs — the mechanics (argument
@@ -48,6 +51,8 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described("Runs one of two blocks: `( t ) ( e ) .codeIf` runs t if the bool is true, else e; the other is " +
+                   "discarded.")
 
     /// **One block and a bool**: run the block if the bool is true; otherwise
     /// hand it back to `.code` untouched (ruling I1, *CodeItem goes to code*
@@ -68,12 +73,15 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described("Runs the block if the bool is true; otherwise leaves the block on `.code` untouched.")
 
     static let codeItemIsEmpty_Behavior =
         Behavior.operation(.codeItemIsEmpty, reads: CodeItem.self, gives: BoolItem.self) { x in x.isEmpty }
+        .described("Tests whether the block has no items, leaving the block.")
 
     static let codeLengthRoot_Behavior =
         Behavior.operation(.codeLengthRoot, reads: CodeItem.self, gives: IntItem.self) { x in x.count }
+        .described("Counts the block's root items, leaving the block.")
 
     // MARK: - Whole-tree queries (non-destructive)
     //
@@ -88,6 +96,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeLengthPoints, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).pointCount
         }
+        .described("Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5.")
 
     /// The number of leaves in the tree — everything that is not a sub-block, so
     /// scalars, instructions and whole vectors each count one. Equals `flatSize`.
@@ -95,12 +104,15 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeWidth, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).flatSize
         }
+        .described("Counts the block's leaves (items that are not blocks) at every depth, leaving the block.")
 
     /// The maximum nesting depth: root 0, each nested block one deeper.
     static let codeDepth_Behavior =
         Behavior.operation(.codeDepth, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).depth
         }
+        .described("Measures how deeply blocks nest, leaving the block: `( )` is 0, a flat block 1, each nested " +
+                   "level one more.")
 
     /// Whether a target block occurs as a point anywhere in another's tree. Since
     /// the root is a point, a tree contains itself. Reads both, leaves both.
@@ -112,6 +124,8 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeContains, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { needle, hay in
             CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) != nil
         }
+        .described("Tests whether block n occurs as a point of block h, leaving both: `n h .codeContains`; a " +
+                   "one-item n stands for its sole item.")
 
     /// The pre-order index of the first point equal to the target; an error if
     /// there is none (it used to answer −1).
@@ -122,6 +136,8 @@ nonisolated extension Interpreter {
             }
             return found
         }
+        .described("Finds the first point of h equal to n, leaving both: `n h .codeIndexOfPoint`; a one-item n " +
+                   "stands for its sole item; refuses when absent.")
 
     /// The block that directly contains the first point equal to the target —
     /// its parent. An error if the target is absent, or if it is the whole tree
@@ -133,6 +149,8 @@ nonisolated extension Interpreter {
             }
             return parent.value
         }
+        .described("Copies the block directly holding n's first occurrence in h, leaving both: `n h " +
+                   ".codeContainer`; refuses if n is absent or is h itself.")
 
     // MARK: - Point access (non-destructive)
     //
@@ -153,6 +171,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeNthPoint, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             boxedPointContents(CodeItem(x).point(at: i))
         }
+        .described("Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`.")
 
     /// The root `.value` element at the `.int` index (clamped), yielded as
     /// `.code`. An empty block has no root elements, so it is an error.
@@ -163,6 +182,8 @@ nonisolated extension Interpreter {
             }
             return boxedPointContents(element)
         }
+        .described("Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( " +
+                   "x )`; refuses an empty block.")
 
     // MARK: - Point access that emits to `.exec` (Do / Emit)
     //
@@ -248,9 +269,17 @@ nonisolated extension Interpreter {
     }
 
     static let codeEmitNthPoint_Behavior = emitNthBehavior(.codeEmitNthPoint, point: pointPicker)
+        .described("Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on " +
+                   "`.code`, an instruction runs.")
     static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker, twin: .codeNthPoint)
+        .described("Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf " +
+                   "goes to its stack.")
     static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker, tags: [.fallible])
+        .described("Sends root item i (clamped) to `.exec` as it is, leaving the block and index; refuses an empty " +
+                   "block.")
     static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codeNthRoot, tags: [.fallible])
+        .described("Runs root item i (clamped), leaving the block and index: a sub-block's contents execute; " +
+                   "refuses an empty block.")
 
     // MARK: - Flatten and point mutation (transforms, consume)
 
@@ -260,6 +289,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeFlatten, takes: CodeItem.self, gives: CodeItem.self) { x in
             CodeItem(x).flattenedLeaves()
         }
+        .described("Flattens a block to its leaves, in order; nested empty blocks vanish.")
 
     /// Flatten one level: each root element that is a block is replaced by its
     /// contents, no deeper. `(1 (2 (3 4)) 5)` → `(1 2 (3 4) 5)`.
@@ -267,6 +297,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeFlattenOnce, takes: CodeItem.self, gives: CodeItem.self) { x in
             CodeItem(x).flattenedOnce()
         }
+        .described("Flattens one level: each root item that is a block is replaced by its items.")
 
     /// Flatten the subtree at the indexed point in place. A leaf point is
     /// unchanged; point 0 (the root) flattens the whole thing (= codeFlatten).
@@ -279,6 +310,8 @@ nonisolated extension Interpreter {
             let rebuilt = tree.replacingPoint(at: i, with: flattened)
             return ((rebuilt.exactly(CodeItem.self)) ?? CodeItem([rebuilt])).value
         }
+        .described("Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 " +
+                   "flattens everything.")
 
     /// Remove the point at the indexed location, subtree and all. Removing the
     /// root gives an empty block.
@@ -286,15 +319,20 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeRemovePoint, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             CodeItem(x).removingPoint(at: i).value
         }
+        .described("Removes point i (clamped) with everything under it; removing point 0 gives `( )`.")
 
     /// Replace every point equal to `needle` with `replacement` (whole subtree),
     /// single pass. Consumes subject, needle, replacement (all `.code`).
     static let codeReplaceAllPoints_Behavior =
         replacePointsBehavior(.codeReplaceAllPoints, firstOnly: false)
+        .described("Replaces matching points: `s n r .codeReplaceAllPoints` puts r for every point of s equal to n; " +
+                   "a one-item n or r stands for its item.")
 
     /// As above, but only the first matching point in pre-order.
     static let codeReplaceFirstPoint_Behavior =
         replacePointsBehavior(.codeReplaceFirstPoint, firstOnly: true)
+        .described("Replaces the first matching point: `s n r .codeReplaceFirstPoint` puts r for s's first point " +
+                   "equal to n; a one-item n or r stands for its item.")
 
     static func replacePointsBehavior(_ instruction: PushInstruction, firstOnly: Bool) -> Behavior {
         // Written `subject needle replacement`; the replacement goes in as itself.
@@ -318,6 +356,8 @@ nonisolated extension Interpreter {
             let idx = Position.gap(y.value, count: x.value.count)
             return (Array(x.value[0..<idx]), Array(x.value[idx...]))
         }
+        .described("Splits a block's root items at gap i, clamped to 0 through their count: the front part beneath, " +
+                   "the back part on top.")
 
     // MARK: - Tree-wide gap surgery
     //
@@ -342,6 +382,8 @@ nonisolated extension Interpreter {
             return (CodeItem.rebuilt(from: Array(tokens[0..<idx])).value,
                     CodeItem.rebuilt(from: Array(tokens[idx...])).value)
         }
+        .described("Splits the whole tree at gap i (clamped), front part beneath, back on top; leaves keep their " +
+                   "order, and blocks the cut crosses split in two.")
 
     /// Splice one block into another's tree at the indexed gap.
     ///
@@ -364,6 +406,8 @@ nonisolated extension Interpreter {
             tokens.insert(contentsOf: spliced, at: idx)
             return CodeItem.rebuilt(from: tokens).value
         }
+        .described("Inserts: `s x i .codeInsertAtGap` splices block x into s at gap i (clamped); a one-item x " +
+                   "inserts its sole item.")
 
     /// Open a new block at one gap and close it at another, then rebuild.
     ///
@@ -390,6 +434,8 @@ nonisolated extension Interpreter {
             tokens.insert(.open, at: lo)
             return CodeItem.rebuilt(from: tokens).value
         }
+        .described("Wraps everything between gaps i and j (clamped, either order) in a new block; equal gaps insert " +
+                   "`( )`, and crossed block edges are repaired.")
 
     /// Flatten every block the gap range reaches into, and only those.
     ///
@@ -405,6 +451,8 @@ nonisolated extension Interpreter {
                              return (p[0], p[1]) }()
             return tree.flatteningBlocks(inGapRange: lo, through: hi).value
         }
+        .described("Flattens every block whose first or last gap lies between gaps i and j (clamped, either order); " +
+                   "blocks enclosing the range keep their shape.")
 
     /// Iterate a block's **root** elements, running the mouse once per element —
     /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing
@@ -427,6 +475,8 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described("Loops: `x b .codeIterateRoot` runs block b once per root item of block x, pushing each item to " +
+                   "its stack (an instruction runs); b ends on `.code`.")
 
     /// Iterate every **pre-order point** of the tree, running the mouse once per
     /// point. The three variants differ only in how each point is handed on (see
@@ -454,11 +504,18 @@ nonisolated extension Interpreter {
     }
 
     static let codeIteratePoints_Behavior     = iteratePointsBehavior(.codeIteratePoints, .boxed)
+        .described("Loops: `x b .codeIteratePoints` runs block b once per point of block x, root first, pushing " +
+                   "each point as a block; b ends on `.code`.")
     static let codeIterateEmitPoints_Behavior = iteratePointsBehavior(.codeIterateEmitPoints, .whole)
+        .described("Loops: `x b .codeIterateEmitPoints` runs block b once per point of block x, root first, pushing " +
+                   "each point as it is (an instruction runs); b ends on `.code`.")
     static let codeIterateDoPoints_Behavior   = iteratePointsBehavior(.codeIterateDoPoints, .unwrapped)
+        .described("Loops: `x b .codeIterateDoPoints` runs block b once per point of block x, root first, also " +
+                   "running each point; b ends on `.code`.")
 
     static let codeWrapRoot_Behavior =
         Behavior.composing(.codeWrapRoot, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Wraps a block in another: `( a b )` becomes `( ( a b ) )`.")
 
     static let execQuote_Behavior =
     Behavior(
@@ -472,22 +529,28 @@ nonisolated extension Interpreter {
             return [ Router(.code, result) ]
         }
     )
+    .described("Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item block.")
 
 
     static let intQuote_Behavior =
         Behavior.composing(.intQuote, takes: IntItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes an int as a one-item block: `5` becomes `( 5 )`.")
 
     static let boolQuote_Behavior =
         Behavior.composing(.boolQuote, takes: BoolItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a bool as a one-item block: `true` becomes `( true )`.")
 
     static let stringQuote_Behavior =
         Behavior.composing(.stringQuote, takes: StringItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a string as a one-item block on `.code`.")
 
     static let charQuote_Behavior =
         Behavior.composing(.charQuote, takes: CharItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a char as a one-item block on `.code`.")
 
     static let doubleQuote_Behavior =
         Behavior.composing(.doubleQuote, takes: DoubleItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`.")
 
 
     /// Unwraps the top `.code` block onto `.exec`, so its contents run.
@@ -516,6 +579,7 @@ nonisolated extension Interpreter {
         let block = collectedItems[0] as! CodeItem
         return [.place(Containment.contents(of: block, recording))]
     }
+    .described("Runs a block: its items go onto `.exec`, the first to run first.")
 
 
     /// Drive an iterator to exhaustion and box what it emitted into one block.
@@ -577,6 +641,8 @@ nonisolated extension Interpreter {
             return Interpreter.iteratorFarewell(iterator) + [Router(.code, collected)]
         }
     )
+    .described("Collects everything the iterator has left to emit into one block, its body returning to `.code` " +
+               "beneath; refuses, keeping the iterator, when that is too many items.")
 
 
     /// Box a live iterator and park it on `.code`, where no continuation can
@@ -602,6 +668,7 @@ nonisolated extension Interpreter {
             return [ Router(.code, result) ]
         }
     )
+    .described("Quotes an iterator as a one-item block on `.code`, parking it where no loop continues it.")
 
 
     static let codeBehaviors:[PushInstruction : Behavior] =

@@ -13,16 +13,19 @@ nonisolated extension Interpreter {
         Behavior.assembling(.stringButLast, takes: StringItem.self, gives: StringItem.self) { x in
             Built(String(x.value.dropLast(1)), members: x.origins().dropLast(1))
         }
+        .described("Removes a string's last character; the empty string stays empty.")
 
     static let stringConcat_Behavior =
         Behavior.assembling(.stringConcat, takes: StringItem.self, StringItem.self, gives: StringItem.self) { y, x in
             Built(y.value + x.value, members: y.origins(0) + x.origins(1))
         }
+        .described("Joins two strings: `s t .stringConcat` gives s followed by t.")
 
     static let stringConjChar_Behavior =
         Behavior.assembling(.stringConjChar, takes: StringItem.self, CharItem.self, gives: StringItem.self) { y, x in
             Built(y.value + String(x.value), members: y.origins() + [Origin.item(x)])
         }
+        .described("Appends a char to the end of a string.")
 
     static let stringContains_Behavior =
         Behavior.operation(.stringContains, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in
@@ -32,12 +35,14 @@ nonisolated extension Interpreter {
             // / module contexts once this code left the app target.
             y.firstRange(of: x) != nil
         }
+        .described("Tests whether t occurs in s, leaving both: `s t .stringContains`; an empty t gives true.")
 
     // Written order: the char (recorded first), then the string.
     static let stringContainsChar_Behavior =
         Behavior.operation(.stringContainsChar, reads: CharItem.self, StringItem.self, gives: BoolItem.self) { y, x in
             x.contains(y)
         }
+        .described("Tests whether the char occurs in the string, leaving both.")
 
     /// The position of the first occurrence of the char; an error if there is none.
     static let stringIndexOfChar_Behavior =
@@ -47,6 +52,8 @@ nonisolated extension Interpreter {
             }
             return x.distance(from: x.startIndex, to: idx)
         }
+        .described("Finds the position of the char's first occurrence in the string, leaving both; refuses when " +
+                   "absent.")
 
     // the IntItem value is truncated at 0 before use as an index.
     // Written order: the int (recorded first), then the string.
@@ -59,6 +66,7 @@ nonisolated extension Interpreter {
             let toDrop = max(0, y.value)
             return Built(String(x.value.dropFirst(toDrop)), members: Array(x.origins().dropFirst(toDrop)))
         }
+        .described("Removes the first n characters of a string; a negative n removes none.")
 
     // the string with its last n characters removed (n clamped at 0).
     // Written order: the int (recorded first), then the string.
@@ -67,6 +75,7 @@ nonisolated extension Interpreter {
             let toDrop = max(0, y.value)
             return Built(String(x.value.dropLast(toDrop)), members: Array(x.origins().dropLast(toDrop)))
         }
+        .described("Removes the last n characters of a string; a negative n removes none.")
 
     // the last n characters of the string (n clamped at 0).
     // Written order: the int (recorded first), then the string.
@@ -75,6 +84,7 @@ nonisolated extension Interpreter {
             let toTake = max(0, y.value)
             return Built(String(x.value.suffix(toTake)), members: Array(x.origins().suffix(toTake)))
         }
+        .described("Keeps only the last n characters of a string; a negative n keeps none.")
 
     // the IntItem value is truncated at 0 before use as an index.
     // Written order: the int (recorded first), then the string.
@@ -83,9 +93,11 @@ nonisolated extension Interpreter {
             let toTake = max(0, y.value)
             return Built(String(x.value.prefix(toTake)), members: Array(x.origins().prefix(toTake)))
         }
+        .described("Keeps only the first n characters of a string; a negative n keeps none.")
 
     static let stringItemIsEmpty_Behavior =
         Behavior.operation(.stringItemIsEmpty, reads: StringItem.self, gives: BoolItem.self) { x in x.isEmpty }
+        .described("Tests whether the string is empty, leaving the string.")
 
     static let stringFirst_Behavior =
         Behavior.extracting(.stringFirst, takes: StringItem.self) { x throws(Refusal) in
@@ -95,6 +107,7 @@ nonisolated extension Interpreter {
             // The char that went in, if it kept a history (`Containment`).
             return Extraction(x, at: 0)
         }
+        .described("Takes a string's first character; refuses the empty string.")
 
     static let stringLast_Behavior =
         Behavior.extracting(.stringLast, takes: StringItem.self) { x throws(Refusal) in
@@ -103,42 +116,53 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: x.value.count - 1)
         }
+        .described("Takes a string's last character; refuses the empty string.")
 
     // Comparisons are non-destructive queries: both operands survive, and the
     // result's crux clears them away (`Behavior.reading`).
     static let stringLTE_Behavior =
         Behavior.operation(.stringLTE, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y <= x }
+        .described("Compares in Unicode order, leaving both strings: `s t .stringLTE` gives s ≤ t.")
 
     static let stringLT_Behavior =
         Behavior.operation(.stringLT, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y < x }
+        .described("Compares in Unicode order, leaving both strings: `s t .stringLT` gives s < t.")
 
     static let stringGT_Behavior =
         Behavior.operation(.stringGT, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y > x }
+        .described("Compares in Unicode order, leaving both strings: `s t .stringGT` gives s > t.")
 
     static let stringGTE_Behavior =
         Behavior.operation(.stringGTE, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in y >= x }
+        .described("Compares in Unicode order, leaving both strings: `s t .stringGTE` gives s ≥ t.")
 
     static let stringReverse_Behavior =
         Behavior.assembling(.stringReverse, takes: StringItem.self, gives: StringItem.self) { x in
             Built(String(x.value.reversed()), members: x.origins().reversed())
         }
+        .described("Reverses a string's characters.")
 
     static let stringLength_Behavior =
         Behavior.operation(.stringLength, reads: StringItem.self, gives: IntItem.self) { x in x.count }
+        .described("Counts the string's characters, leaving the string.")
 
     static let stringFromBool_Behavior =
         Behavior.operation(.stringFromBool, takes: BoolItem.self, gives: StringItem.self) { x in "\(x)" }
+        .described("Converts a bool to the string `true` or `false`.")
 
     static let stringFromChar_Behavior =
         Behavior.assembling(.stringFromChar, takes: CharItem.self, gives: StringItem.self) { x in
             Built("\(x.value)", members: [Origin.item(x)])
         }
+        .described("Converts a char to a one-character string.")
 
     static let stringFromDouble_Behavior =
         Behavior.operation(.stringFromDouble, takes: DoubleItem.self, gives: StringItem.self) { x in "\(x)" }
+        .described("Converts a double to text, such as `2.5`, `1e-05`, `inf` or `nan`.")
 
     static let stringFromInt_Behavior =
         Behavior.operation(.stringFromInt, takes: IntItem.self, gives: StringItem.self) { x in "\(x)" }
+        .described("Converts an int to its decimal text.")
 
     /// The char at the index, clamped to the string (`Position.item`); an error
     /// for an empty string.
@@ -157,6 +181,7 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: Position.item(y.value, count: x.value.count))
         }
+        .described("Takes the character at index i, clamped into range; refuses the empty string.")
 
     /// `stringNth` without consuming: the string and the index stay where they
     /// were (ruling I7). `stringNth` itself still consumes, so an element's
@@ -168,6 +193,8 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: Position.item(y.value, count: x.value.count))
         }
+        .described("Copies the character at index i, clamped into range, leaving the string and index; refuses the " +
+                   "empty string.")
 
     /// Pushes every character of a string to `.string` as a one-character
     /// *string* — not a char, which is the whole of the difference from
@@ -195,12 +222,15 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described("Pushes each character as a one-character string, one per step, front to back; the empty string " +
+                   "gives nothing.")
 
     // Written order: the char (recorded first), then the string.
     static let stringOccurrencesOfChar_Behavior =
         Behavior.operation(.stringOccurrencesOfChar, reads: CharItem.self, StringItem.self, gives: IntItem.self) { y, x in
             x.filter({ $0 == y }).count
         }
+        .described("Counts how often the char occurs in the string, leaving both.")
 
     // Written order: the char (recorded first), then the string.
     static let stringRemoveChar_Behavior =
@@ -208,6 +238,7 @@ nonisolated extension Interpreter {
             Built(x.value.filter({ $0 != y.value }),
                   members: zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1))
         }
+        .described("Removes every occurrence of the char from the string.")
 
     // ( "0123" '2' '.' .stringReplaceChar ) -> "01.3"
     //
@@ -218,6 +249,7 @@ nonisolated extension Interpreter {
             Built(x.value.replacing(String(z.value), with: String(y.value)),
                   members: zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 })
         }
+        .described("Replaces chars: `a b s .stringReplaceChar` turns every a in s into b.")
 
     static let stringReplaceFirstChar_Behavior =
         Behavior.assembling(.stringReplaceFirstChar, takes: CharItem.self, CharItem.self, StringItem.self,
@@ -225,6 +257,7 @@ nonisolated extension Interpreter {
             Built(x.value.replacing(String(z.value), with: String(y.value), maxReplacements: 1),
                   members: replacingFirstSlot(of: z.value, in: x, with: y))
         }
+        .described("Replaces one char: `a b s .stringReplaceFirstChar` turns the first a in s into b.")
 
     // ("foo" "o" "g" .stringReplace) -> "fgg"
     //
@@ -235,6 +268,8 @@ nonisolated extension Interpreter {
             Built(z.value.replacing(y.value, with: x.value),
                   members: replacingSubstringSlots(z, y, x, firstOnly: false))
         }
+        .described("Replaces substrings: `s t u .stringReplace` puts u for every t in s; an empty t puts u between " +
+                   "all characters and at both ends.")
 
     static let stringReplaceFirst_Behavior =
         // z: in this context (deepest), y: target, x: replacement (top).
@@ -243,11 +278,14 @@ nonisolated extension Interpreter {
             Built(z.value.replacing(y.value, with: x.value, maxReplacements: 1),
                   members: replacingSubstringSlots(z, y, x, firstOnly: true))
         }
+        .described("Replaces a substring: `s t u .stringReplaceFirst` puts u for the first t in s; an empty t puts " +
+                   "u at the front.")
 
     static let stringRest_Behavior =
         Behavior.assembling(.stringRest, takes: StringItem.self, gives: StringItem.self) { x in
             Built(String(x.value.dropFirst(1)), members: Array(x.origins().dropFirst(1)))
         }
+        .described("Removes a string's first character; the empty string stays empty.")
 
     /// Replaces the char at the index, clamped to the string (`Position.item`).
     /// An empty string has no char to replace, so it is an error.
@@ -269,6 +307,7 @@ nonisolated extension Interpreter {
             }
             return Built(result, members: members())
         }
+        .described("Replaces the character at index i, clamped into range, with the char; refuses the empty string.")
 
     /// Pushes every whitespace-delimited word of a string to `.string`, one per
     /// pass, front to back. A string with no words produces nothing.
@@ -295,6 +334,8 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described("Pushes each whitespace-separated word of a string, one per step, front to back; a string with " +
+                   "no words gives nothing.")
 
     /// The `n`th whitespace-delimited word of a string, the index clamped to the
     /// word count like its `stringNth` sibling. A string with no words is an
@@ -314,6 +355,8 @@ nonisolated extension Interpreter {
             let idx = Position.item(y.value, count: words.count)
             return Built(String(words[idx]), members: x.origins(of: words[idx]))
         }
+        .described("Takes the whitespace-separated word at index i, clamped into range; refuses a string with no " +
+                   "words.")
 
     /// Snips a string into two pieces at the indexed position, pushing **both** to
     /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
@@ -336,6 +379,8 @@ nonisolated extension Interpreter {
                 Built(String(x.value[cut...]), members: Array(x.origins().dropFirst(idx)))
             )
         }
+        .described("Splits a string at gap i, clamped to 0 through its length: the front part beneath, the back " +
+                   "part on top.")
 
     // Written order: the string, then the two ints deepest first (z, then y).
     static let stringSubstring_Behavior =
@@ -353,6 +398,8 @@ nonisolated extension Interpreter {
             }
             return Built(String(slice), members: x.origins(of: slice))
         }
+        .described("Takes characters i through j inclusive: `s i j .stringSubstring`; both clamped into range, a j " +
+                   "below i gives character i alone.")
 
     // ( "abcd" .stringIterate MOUSE )
     //
@@ -391,6 +438,8 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described("Runs the block once per character, pushing that char before each pass; the empty string makes " +
+                   "no passes, and the block ends on `.code`.")
 
     /// Pushes every character of a string to `.char`, **one per pass**, front to
     /// back — so the last character ends up on top.
@@ -421,6 +470,7 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described("Pushes each character of a string as a char, one per step, front to back, so the last ends on top.")
 
     // MARK: - Members (`Pieces`)
 
