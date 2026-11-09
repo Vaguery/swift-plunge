@@ -242,7 +242,7 @@ nonisolated final class Interpreter {
     /// stack, "the last thing it produced" (map, filter and reduce; Behavior
     /// coverage audit, P2). One store per push.
     @exclusivity(unchecked) var lastPush: PushStack? = nil
-    /// The next fresh `.binding` key (ruling 7). Reset at every load to the number
+    /// The next fresh `.binding` key. Reset at every load to the number
     /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`
     /// for each key a context read draws (`ReadContext.freshKey`).
     @exclusivity(unchecked) var nextRefKey = Interpreter.inputSlots.count
@@ -369,7 +369,7 @@ nonisolated final class Interpreter {
 
 
     /// Guard for a behavior that *reads* an item's `crux()` (its call tree) to do its
-    /// work — e.g. the planned `codeFuncFrom_Crux` (Roadmap #23), which turns a stack
+    /// work — e.g. the planned `codeFuncFrom_Crux`, which turns a stack
     /// item's crux into a runnable function. Such a behavior is only meaningful in a
     /// call-active interpreter; if it runs with `recordsProvenance` off, every crux it
     /// could read is trivial (`[self]`), so it cannot do its job. This records a
@@ -408,7 +408,7 @@ nonisolated final class Interpreter {
     /// depth 1, so it never trips the budget again.
     ///
     /// The last resort, not the plan: every elision the round-trip fuzz used to
-    /// see was a shared history, and sharing removed them all (Roadmap §P, step 3).
+    /// see was a shared history, and sharing removed them all.
     ///
     /// This is the honest-growth backstop: the provenance law removes the
     /// spurious growth and `IteratorItem` folds loop counters, but a value that
@@ -608,7 +608,7 @@ nonisolated final class Interpreter {
     
     /// The input instructions, by slot: `.input0` is slot 0. Derived from the
     /// instruction set, never written as a count, since the number of slots is
-    /// not fixed (the user, 2026-11-09).
+    /// not fixed.
     static let inputSlots: [PushInstruction] = PushInstruction.allCases
         .compactMap { name -> (slot: Int, name: PushInstruction)? in
             guard name.rawValue.hasPrefix("input"), let slot = Int(name.rawValue.dropFirst(5)) else { return nil }
@@ -618,7 +618,7 @@ nonisolated final class Interpreter {
         .map(\.name)
 
     /// **Binds key *i* to input slot *i*** on `.binding`, for every bound input, in
-    /// slot order, so the last slot's pair is on top (ruling 8). `.inputN` stays
+    /// slot order, so the last slot's pair is on top. `.inputN` stays
     /// the direct path; this is the redundant one, and a program can shadow a
     /// key without losing the input. Each pair records how to make it again from
     /// `.inputN`, its key marked as minted by that instruction.

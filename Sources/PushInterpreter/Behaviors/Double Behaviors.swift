@@ -10,7 +10,7 @@ import Foundation
 
 nonisolated extension Interpreter {
 
-    // Typed operations (Roadmap #44): arguments in written order, so `y x .doubleSubtract`
+    // Typed operations: arguments in written order, so `y x .doubleSubtract`
     // is `{ y, x in y - x }`. A thrown `Refusal` becomes an error; an infinite or
     // NaN result is refused as overflow.
 
@@ -58,7 +58,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.doubleMax, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in max(x, y) }
         .described("Keeps the larger of two doubles.")
 
-    // The non-destructive siblings (ruling I7): read both, leave them, push the
+    // The non-destructive siblings: read both, leave them, push the
     // larger (smaller).
     static let doublePeekMax_Behavior =
         Behavior.operation(.doublePeekMax, reads: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in max(x, y) }

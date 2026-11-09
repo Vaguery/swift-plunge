@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  Lookup by pattern on the stacks themselves (*Behavior coverage audit
-//  (2026-11-09)* §8, rulings 5–6): the sieve made visible to a program, and the
+// * §8, rulings 5–6): the sieve made visible to a program, and the
 //  language's keyed storage without a dictionary type.
 //
 //  **The rule.** The probe is the top of the stack, *read*, so a key is never
@@ -17,7 +17,7 @@
 //    the copy has been used. The position depends on the stack's arrangement,
 //    so it records a stand-in (law 4b), as `StackDepth` does;
 //  - **no match is a refusal, as if the stack were empty**: a missing-arguments
-//    error, and nothing consumed (ruling I20).
+//    error, and nothing consumed.
 //  When the stack is `.int` itself, the copy goes down first and the position
 //  on top of it, so whatever takes the position (a yank, a `…From`) pops it and
 //  finds the copy on top and the match at that depth, as on any other stack.
@@ -35,7 +35,7 @@
 //  treats constants); `Nearest` (ints, doubles and chars, which have a distance;
 //  ties go to the topmost, and it misses only when there is nothing below).
 //
-//  **The same kinds within a collection** (step 4b): `xFind…` reads a
+//  **The same kinds within a collection**: `xFind…` reads a
 //  container and a probe of its element type, written in that order, and gives
 //  the first element that matches with its index (index down, element on top),
 //  or refuses. `…From` reads a start index as well. Alongside them, `IndexOf`

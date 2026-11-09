@@ -101,7 +101,7 @@ nonisolated enum GatherPlan {
 ///
 /// That is not hypothetical: it is exactly how sixty combinators came to pop an
 /// index, find an empty stack, and error having consumed it. Planning first is what
-/// keeps the all-or-nothing bargain (Design Principles §14) for every Behavior at
+/// keeps the all-or-nothing bargain for every Behavior at
 /// once, rather than leaving each to keep it by hand and mostly fail.
 nonisolated struct Planner {
     private let interpreter: Interpreter

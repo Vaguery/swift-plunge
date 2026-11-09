@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  Case, substring search, prefixes and suffixes, and trimming (*Behavior
-//  coverage audit (2026-11-09)*, P6): the text work that had no route at all.
+//  coverage audit*, P6): the text work that had no route at all.
 //
 //  The queries (`IsUpper`, `IsLower`, `IndexOf`, `StartsWith`, `EndsWith`) read
 //  and leave their arguments, as every query does. Written order follows

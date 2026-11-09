@@ -2,7 +2,7 @@
 //  Produces.swift
 //  PushInterpreter
 //
-//  The output half of a Behavior's signature (Roadmap #41).
+//  The output half of a Behavior's signature.
 //
 
 /// **What a Behavior puts out when it succeeds**, declared beside its

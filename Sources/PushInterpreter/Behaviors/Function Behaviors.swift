@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  Map, filter and reduce over vectors and strings (*Behavior coverage audit
-//  (2026-11-09)*, P2; *Map and reduce from a crux-function.md*).
+// *, P2; *Map and reduce from a crux-function.md*).
 //
 //  **A function is a block with `.inputN` holes.** There is no function type:
 //  `( .input0 2 .intMultiply )` doubles its argument. Applying it runs the block
@@ -13,11 +13,11 @@
 //
 //  The rulings that shape them (audit §11):
 //  - **The result is the last value the function pushed**, on whatever stack;
-//    so the result type follows the data (I17), and `( .input0 .doubleFromInt )`
+//    so the result type follows the data, and `( .input0 .doubleFromInt )`
 //    maps a vecInt to a vecDouble.
 //  - **Uniform or refuse.** A map's results must be one type: bools, ints,
 //    doubles or strings make that vector; chars make a string.
-//  - **No result passes the element through** (I4): the element stands for
+//  - **No result passes the element through**: the element stands for
 //    itself. For filter, no result (or anything but a bool) counts as false.
 //  - **Reduce folds from the first element**, with `.input0` the accumulator and
 //    `.input1` the element; no seed is drawn, and an empty collection is refused.

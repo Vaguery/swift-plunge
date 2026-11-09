@@ -9,7 +9,7 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    // Typed operations (Roadmap #44): arguments in written order, so in
+    // Typed operations: arguments in written order, so in
     // `p q .boolPandNotQ` the closure is `{ p, q in p && !q }`. Here `y` is the
     // deeper (first-written) argument, `x` the top.
 

@@ -2,7 +2,7 @@
 //  Behavior Factories.swift
 //  PushInterpreter
 //
-//  One constructor per BehaviorClass (Roadmap #43). The plain `Behavior(…)`
+//  One constructor per BehaviorClass. The plain `Behavior(…)`
 //  initializers make operations; these make everything else, so a Behavior's
 //  class follows from how it was built.
 //

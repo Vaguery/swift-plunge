@@ -102,9 +102,9 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     //
     case execDoCount, execDoRange, execDoTimes, execDoWhile, execIf, execK, execS, execWhen, execWhile, execY
     
-    // exec comparison: none. `execEq` was removed (2026-11-07): with blocks landing
+    // exec comparison: none. `execEq` was removed: with blocks landing
     // on `.code` intact, `( A ) ( B ) .codeEq` asks the same question, and its
-    // prefix crux could not reproduce derived operands (Roadmap #26).
+    // prefix crux could not reproduce derived operands.
 
     // exec conversion
     
@@ -310,11 +310,11 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case int0, int1, int2, int3, int4, int5, int6, int7, int8, int9
 
     // string constants
-    // Collection reductions (Behavior coverage audit, P1)
+    // Collection reductions
     case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
 
-    // Pattern lookup on the stacks (Behavior coverage audit, §8)
+    // Pattern lookup on the stacks
     case intLookupEqual, intLookupEqualFrom, doubleLookupEqual, doubleLookupEqualFrom, charLookupEqual, charLookupEqualFrom,
          stringLookupEqual, stringLookupEqualFrom, codeLookupEqual, codeLookupEqualFrom, vecBoolLookupEqual, vecBoolLookupEqualFrom,
          vecIntLookupEqual, vecIntLookupEqualFrom, vecDoubleLookupEqual, vecDoubleLookupEqualFrom, vecStringLookupEqual, vecStringLookupEqualFrom,
@@ -325,14 +325,14 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
          vecDoubleLookupContaining, vecDoubleLookupContainingFrom, vecStringLookupPrefix, vecStringLookupPrefixFrom, vecStringLookupContaining, vecStringLookupContainingFrom,
          codeLookupShape, codeLookupShapeFrom
 
-    // Lookup within a collection, and IndexOf from a start (Behavior coverage audit, §8 step 4b)
+    // Lookup within a collection, and IndexOf from a start
     case vecIntFindNearest, vecIntFindNearestFrom, vecDoubleFindNearest, vecDoubleFindNearestFrom,
          stringFindNearest, stringFindNearestFrom, vecStringFindPrefix, vecStringFindPrefixFrom,
          vecStringFindContaining, vecStringFindContainingFrom, codeFindPrefix, codeFindPrefixFrom,
          vecBoolIndexOfFrom, vecIntIndexOfFrom, vecDoubleIndexOfFrom, vecStringIndexOfFrom,
          stringIndexOfCharFrom, stringIndexOfFrom
 
-    // Deletion at a depth, every generated family (the user, 2026-11-09)
+    // Deletion at a depth, every generated family
     case boolDeleteAtDepth, intDeleteAtDepth, doubleDeleteAtDepth, charDeleteAtDepth, stringDeleteAtDepth,
          codeDeleteAtDepth, execDeleteAtDepth, vecIntDeleteAtDepth, vecBoolDeleteAtDepth, vecDoubleDeleteAtDepth,
          vecStringDeleteAtDepth, iteratorDeleteAtDepth, bindingDeleteAtDepth
@@ -349,28 +349,28 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case bindingDeref, bindingDerefBelow, bindingDerefToCode, bindingDerefToCodeBelow, bindingNearestKey, bindingFloorKey, bindingKeyOf,
          bindingUnbind, bindingKeyDepth
 
-    // Short iterator constructors (Behavior coverage audit, P3)
+    // Short iterator constructors
     case iteratorOverString, iteratorOverVecBool, iteratorOverVecInt, iteratorOverVecDouble,
          iteratorOverVecString, iteratorOverCode
 
-    // Map, filter and reduce (Behavior coverage audit, P2)
+    // Map, filter and reduce
     case vecBoolMap, vecIntMap, vecDoubleMap, vecStringMap, vecBoolFilter, vecIntFilter, vecDoubleFilter,
          vecStringFilter, vecBoolReduce, vecIntReduce, vecDoubleReduce, vecStringReduce,
          stringMap, stringFilter, stringReduce
 
-    // Conversions (Behavior coverage audit, P4)
+    // Conversions
     case vecBoolQuote, vecIntQuote, vecDoubleQuote, vecStringQuote, vecFromCode,
          stringFromChars, stringReadStack, stringSplitOn, vecStringJoin
 
-    // Text (Behavior coverage audit, P6)
+    // Text
     case charUpper, charLower, charIsUpper, charIsLower, stringUpper, stringLower, stringIndexOf,
          stringStartsWith, stringEndsWith, stringTrim
 
-    // Numbers (Behavior coverage audit, P5)
+    // Numbers
     case intAbs, intNegate, intSign, intPow, doubleAbs, doubleNegate, doubleSign, doublePow,
          doubleSqrt, doubleExp, doubleLog, doubleFloor, doubleCeil, doubleRound
 
-    // Set operations on collections (Behavior coverage audit, P1b)
+    // Set operations on collections
     case vecBoolDistinct, vecIntDistinct, vecDoubleDistinct, vecStringDistinct, stringDistinct, codeDistinct, vecBoolIntersect, vecIntIntersect, vecDoubleIntersect, vecStringIntersect, stringIntersect, codeIntersect,
          vecBoolDifference, vecIntDifference, vecDoubleDifference, vecStringDifference, stringDifference, codeDifference, vecBoolIsSubset, vecIntIsSubset, vecDoubleIsSubset, vecStringIsSubset, stringIsSubset, codeIsSubset
 

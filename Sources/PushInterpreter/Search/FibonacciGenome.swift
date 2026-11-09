@@ -13,7 +13,7 @@
 /// ( a ) ( b ) ( c d ) ( e f g ) ( h i j k l ) …then the rest, flat
 /// ```
 ///
-/// **What it is for.** Blocks in a program land on `.code` as data (§7), so this
+/// **What it is for.** Blocks in a program land on `.code` as data, so this
 /// front-loads the language's scarcest stack with a spread of block sizes — a
 /// 1-item block for a trivial body, a 21-item block for something substantial —
 /// before the flat program runs and goes looking for them. Fibonacci is a cheap

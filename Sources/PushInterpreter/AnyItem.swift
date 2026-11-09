@@ -15,8 +15,8 @@ nonisolated enum ItemKind: String, Codable, Sendable {
 /// nested as an `AnyItem` (as an iterator's origin is), and its label. Value
 /// content, not history: a stand-in *is* the marked literal, so encoding it does
 /// not breach the envelope's rule against serializing provenance. Kept generic (a
-/// nested item plus a label) so a future local-variable type can share the shape
-/// (Roadmap #39).
+/// nested item plus a label) so a future local-variable type can share the shape.
+///
 nonisolated struct StandInState: Codable, Sendable {
     var value: AnyItem
     var source: PushInstruction?

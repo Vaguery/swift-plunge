@@ -49,7 +49,7 @@ nonisolated extension Interpreter {
         // `.error` is absent, as it is from the combinator loop: the error stack
         // gets no generated family at all (see `Introspection Behaviors.swift`).
         // `.exec` is absent too: `execEq` was removed, since `( A ) ( B ) .codeEq`
-        // asks the same question now that blocks land on `.code` (Roadmap #26).
+        // asks the same question now that blocks land on `.code`.
         for stack in Self.generatedFamilyStacks where stack != .exec {
             eqCombinator_Behavior(for: stack, into: &result)
         }

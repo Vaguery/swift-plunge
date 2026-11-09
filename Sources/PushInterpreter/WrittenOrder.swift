@@ -2,7 +2,7 @@
 //  WrittenOrder.swift
 //  PushInterpreter
 //
-//  Where each argument of a typed operation sits (Roadmap #44).
+//  Where each argument of a typed operation sits.
 //
 
 /// **Where each argument of a typed operation sits**, worked out once from the

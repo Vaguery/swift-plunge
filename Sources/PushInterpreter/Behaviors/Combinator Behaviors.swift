@@ -159,7 +159,7 @@ nonisolated extension Interpreter {
         // It copies `stack` without popping it, so it needs one item there.
         inst = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
             let howMany = (args[0] as! IntItem).value
-            // A non-positive count is a clamp to zero copies (Roadmap #42).
+            // A non-positive count is a clamp to zero copies.
             guard howMany > 0, let item = view.item(at: 0) else { return .unchanged }
             return .loop(Interpreter.iteratorLoop(
                 kind: .repeating(into: stack.isHeterogeneous ? stack : nil),

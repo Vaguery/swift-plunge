@@ -2,7 +2,7 @@
 //  BackwardChaining.swift
 //  PushInterpreter
 //
-//  Chaining backwards over the input-output map (Roadmap #41): from the stack a
+//  Chaining backwards over the input-output map: from the stack a
 //  problem wants, through the instructions that produce it, down to the inputs
 //  and constants the problem provides.
 //

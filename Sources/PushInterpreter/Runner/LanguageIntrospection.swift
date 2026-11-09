@@ -109,7 +109,7 @@ public extension Runner {
     }
 
     /// What `instruction` takes and gives, read off its declarations — its edge
-    /// in the language's input-output map (Roadmap #41). Nil if the language has
+    /// in the language's input-output map. Nil if the language has
     /// no such instruction.
     nonisolated func signature(of instruction: PushInstruction) -> InstructionSignature? {
         Interpreter.signatures[instruction]

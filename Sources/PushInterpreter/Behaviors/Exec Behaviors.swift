@@ -81,7 +81,7 @@ nonisolated extension Interpreter {
                     // No passes, so no indices: it declines exactly as
                     // `.execDoTimes` does, the two differing only in the index each
                     // pass leaves. The body goes back to `.code`; the count is a
-                    // claim of zero passes, consumed like `DupTimes`'s (Roadmap #42).
+                    // claim of zero passes, consumed like `DupTimes`'s.
                     // (It used to send the count back through `.exec`, a leftover
                     // of the continuation form.)
                     return [Router(.code, body)]

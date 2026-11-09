@@ -2,7 +2,7 @@
 //  BindingItem.swift
 //  PushInterpreter
 //
-//  A keyed binding on the `.binding` stack (*Behavior coverage audit (2026-11-09)*
+//  A keyed binding on the `.binding` stack (*Behavior coverage audit*
 //  §9–§11, rulings 7–13; Roadmap #39).
 //
 
@@ -74,7 +74,7 @@ nonisolated extension BindingItem: HoldsCall {}
 
 nonisolated extension BindingItem {
 
-    /// The binder for each stack whose items can be bound (ruling 9).
+    /// The binder for each stack whose items can be bound.
     static let binders: [PushStack: PushInstruction] = [
         .bool: .boolRef, .int: .intRef, .double: .doubleRef, .char: .charRef, .string: .stringRef,
         .code: .codeRef, .vecBool: .vecBoolRef, .vecInt: .vecIntRef, .vecDouble: .vecDoubleRef,

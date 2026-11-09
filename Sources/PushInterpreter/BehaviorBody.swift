@@ -2,7 +2,7 @@
 //  BehaviorBody.swift
 //  PushInterpreter
 //
-//  What a Behavior's code is allowed to see and return (Roadmap #43).
+//  What a Behavior's code is allowed to see and return.
 //
 
 /// **A Behavior's body, by what it may touch.** No body mutates the interpreter:

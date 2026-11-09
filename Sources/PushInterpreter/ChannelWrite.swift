@@ -2,7 +2,7 @@
 //  ChannelWrite.swift
 //  PushInterpreter
 //
-//  What a channel Behavior sends to the printout (Roadmap #43).
+//  What a channel Behavior sends to the printout.
 //
 
 /// **A write to the printout.** A channel Behavior returns one of these and never

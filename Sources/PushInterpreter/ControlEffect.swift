@@ -2,7 +2,7 @@
 //  ControlEffect.swift
 //  PushInterpreter
 //
-//  What a control Behavior writes, beyond its ordinary results (Roadmap #43).
+//  What a control Behavior writes, beyond its ordinary results.
 //
 
 /// **A write to the continuation**, for the control Behaviors that need more than

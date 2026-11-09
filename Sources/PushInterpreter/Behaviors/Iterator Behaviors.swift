@@ -321,7 +321,7 @@ nonisolated extension Interpreter {
     /// It records through `reading` because the getter hands its iterator back: a
     /// bare `«iter» .iteratorPeekStride` reproduces the stride *and* leaves the
     /// iterator on `.iterator`, which a same-stack sibling would then read. The
-    /// crux pops it, so the fragment leaves only the fact (Design Principles §1).
+    /// crux pops it, so the fragment leaves only the fact.
     static let iteratorPeekStride_Behavior =
         iteratorGetter_Behavior(.iteratorPeekStride, produces: .results([.iterator, .int])) { iterator, recording in
             IntItem(
@@ -724,7 +724,7 @@ nonisolated extension Interpreter {
                 + "left to emit.")
     }
 
-    /// **The short constructors** (Behavior coverage audit, P3): an iterator over
+    /// **The short constructors**: an iterator over
     /// a whole collection from the collection and a body alone, `v ( body )`,
     /// with the cursor at the start, nothing buried and every element emitted.
     /// Two arguments, as `vecXIterate` takes, so a random program can actually

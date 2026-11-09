@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  What kind of thing a Behavior does to the interpreter's state (Roadmap #43;
-//  "Notes on Push/Error audit and Behavior classes (2026-11-08).md").
+//  "Notes on Push/Error audit and Behavior classes.md").
 //
 
 /// **What a Behavior does to the interpreter's whole state.**
@@ -31,8 +31,8 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
 
     /// **A pure, partial function on typed values.** Arithmetic, conversions,
     /// comparisons, constructors (iterators included), queries, iterator state
-    /// changes, and the explode family. Outside its domain the result is an error
-    /// (Roadmap #42). A `reads` query is the same function with its arguments
+    /// changes, and the explode family. Outside its domain the result is an error.
+    /// A `reads` query is the same function with its arguments
     /// copied first. Provenance law 3: the result records its arguments and the
     /// instruction.
     case operation

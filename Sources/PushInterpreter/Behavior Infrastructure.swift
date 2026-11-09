@@ -137,7 +137,7 @@ nonisolated final class Behavior: Sendable {
     /// declaring `.double` in `takes:` would pop the very item it means to move. So
     /// it declared only the int — and then **60 behaviors across five families
     /// popped their index, found an empty stack, and errored having already eaten
-    /// the argument** (Design Principles §14).
+    /// the argument**.
     ///
     /// A stack may appear in both and the counts add: `intYank` takes one `.int` as
     /// its index **and** needs two more to work on, so it wants three.

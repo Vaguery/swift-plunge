@@ -2,11 +2,11 @@
 //  Numeric Behaviors.swift
 //  PushInterpreter
 //
-//  The arithmetic the language lacked (*Behavior coverage audit (2026-11-09)*,
+//  The arithmetic the language lacked (*Behavior coverage audit*,
 //  P5): absolute value, negation, sign and power for ints and doubles; square
 //  root, exponential, logarithm and the three roundings for doubles.
 //
-//  As everywhere (ruling I11): a Behavior returns its intended output or an
+//  As everywhere: a Behavior returns its intended output or an
 //  error. Anything that would overflow an int, or come out NaN or infinite for
 //  a double, is refused. Written order is reading order: `b e .intPow` is b to
 //  the e.

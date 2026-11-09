@@ -197,7 +197,7 @@ nonisolated extension Interpreter {
     }
 
     // returns the last y elements of the vector (y clamped to [0, count]): the
-    // other end's `take`, so both ends have a route (ruling I15, 2026-11-09)
+    // other end's `take`, so both ends have a route
     static func takeLastBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.assembling(instruction, takes: V.self, IntItem.self, gives: V.self) { x, y in
             let count = min(x.value.count, max(y.value, 0))
@@ -264,8 +264,8 @@ nonisolated extension Interpreter {
             + "an empty vector.")
     }
 
-    // `Nth` without consuming: the vector and the index stay where they were
-    // (ruling I7). `Nth` itself still consumes, so an element's address crux
+    // `Nth` without consuming: the vector and the index stay where they were.
+    // `Nth` itself still consumes, so an element's address crux
     // stays `v 2 .vecIntNth`.
     static func peekNthBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.extracting(instruction, reads: V.self, IntItem.self) { x, y throws(Refusal) in
@@ -628,7 +628,7 @@ nonisolated extension Interpreter {
     /// item popped becomes the LAST element** — round-tripping the pair back to the
     /// vector you started with. The postfix reading agrees, which is the useful
     /// check: `1 22 333 ( a 3-element vector ) .vecIntConstruct` yields
-    /// `[1, 22, 333]`, in the order you wrote them (Design Principles §2, §6).
+    /// `[1, 22, 333]`, in the order you wrote them.
     ///
     /// **It does not open the closed system.** A program still cannot make a vector
     /// out of nothing — it needs one to shape the new one, so the vector stacks
@@ -1596,7 +1596,7 @@ nonisolated extension Interpreter {
             let iterator = a[0] as! IteratorItem
             // As `.codeFromIterator`: a success ends the loop and the farewell
             // hands the body back to `.code`, so the crux must pop it or the
-            // fragment litters a stack it never landed on (Design Principles §1).
+            // fragment litters a stack it never landed on.
             // A plain pop suffices here, unlike `.codeFromIterator` — a vector
             // rests on a vec stack, never on `.code`, so the body is on top of
             // `.code` with nothing of ours beneath it.

@@ -2,7 +2,7 @@
 //  MemberItem.swift
 //  PushInterpreter
 //
-//  Container types a typed operation can build or take elements from (Roadmap #44).
+//  Container types a typed operation can build or take elements from.
 //
 
 /// **A container whose elements can record where they came from** (`members`,

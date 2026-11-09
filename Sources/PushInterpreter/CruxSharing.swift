@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  A crux that builds each shared value once. Added 2026-11-07 for provenance
-//  completeness (Roadmap §P, step 3): see "Sharing" in
+//  completeness: see "Sharing" in
 //  `Notes on Push/Provenance and the crux.md`.
 //
 

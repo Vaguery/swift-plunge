@@ -9,7 +9,7 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    // Typed operations (Roadmap #44): arguments in written order, so `y x .intSubtract`
+    // Typed operations: arguments in written order, so `y x .intSubtract`
     // is `{ y, x in y - x }`. A thrown `Refusal` becomes an error.
 
     static let intAdd_Behavior =

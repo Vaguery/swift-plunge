@@ -2,7 +2,7 @@
 //  WrittenCall.swift
 //  PushInterpreter
 //
-//  The `call` a typed operation records (Roadmap #44).
+//  The `call` a typed operation records.
 //
 
 /// **The `call` a typed operation records**, for one run of it: the arguments as

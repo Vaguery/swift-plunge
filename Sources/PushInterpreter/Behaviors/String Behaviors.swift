@@ -184,7 +184,7 @@ nonisolated extension Interpreter {
         .described("Takes the character at index i, clamped into range; refuses the empty string.")
 
     /// `stringNth` without consuming: the string and the index stay where they
-    /// were (ruling I7). `stringNth` itself still consumes, so an element's
+    /// were. `stringNth` itself still consumes, so an element's
     /// address crux stays `s 2 .stringNth`.
     static let stringPeekNth_Behavior =
         Behavior.extracting(.stringPeekNth, reads: StringItem.self, IntItem.self) { x, y throws(Refusal) in
@@ -339,7 +339,7 @@ nonisolated extension Interpreter {
 
     /// The `n`th whitespace-delimited word of a string, the index clamped to the
     /// word count like its `stringNth` sibling. A string with no words is an
-    /// error: there is no word to return (Roadmap #42).
+    /// error: there is no word to return.
     ///
     /// Added for `stringSplit`'s iterator to have something honest to record, but
     /// useful in its own right.

@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  The `.binding` stack: keyed bindings, each variable a stack of its own
-//  (*Behavior coverage audit (2026-11-09)* §9–§11, rulings 7–13; Roadmap #39).
+//  (*Behavior coverage audit* §9–§11, rulings 7–13; Roadmap #39).
 //
 //  **Binding.** `xRef` reads the top of X, leaves it, binds a copy to a fresh
 //  key and pushes the key onto `.int`. `bindingRekey` gives the top pair another
@@ -13,7 +13,7 @@
 //  a key on `.int` and removes that key's binding after.
 //
 //  **Looking up.** Every lookup reads its key from `.int` and leaves it, and a
-//  miss is a refusal, as if `.binding` were empty (ruling I20). `bindingDeref` runs
+//  miss is a refusal, as if `.binding` were empty. `bindingDeref` runs
 //  what a key holds (a block's contents go to `.exec`; anything else lands on
 //  its stack); `bindingDerefToCode` delivers it to `.code` as data (a block as it
 //  is, anything else quoted). Their `…Below` forms take a depth from `.int` and
@@ -22,7 +22,7 @@
 //  binding, and `bindingNearestKey`, `bindingFloorKey` and `bindingKeyOf` find
 //  keys: by distance, from below, and by value (a probe from `.code`).
 //
-//  **Nothing takes an argument from `.exec`** (ruling 12).
+//  **Nothing takes an argument from `.exec`**.
 //
 //  **Names** (the user, 2026-11-09; the stack was `.ref` until then): every
 //  instruction that works on the stack is named for it, `binding…`, as
@@ -68,7 +68,7 @@ nonisolated extension Interpreter {
     // MARK: - Binders
 
     /// `xRef`: binds a copy of the top of `stack` to a fresh key, leaving the
-    /// item where it was, and pushes the key onto `.int` (ruling 9).
+    /// item where it was, and pushes the key onto `.int`.
     static func refBinder(_ name: PushInstruction, of stack: PushStack) -> Behavior {
         Behavior.contextRead(name, tags: [.fallible], produces: .results([.binding, .int])) { _, context in
             let recording = context.recording
@@ -87,7 +87,7 @@ nonisolated extension Interpreter {
     }
 
     /// `xWith`: binds the top of `stack` for the length of a body taken from
-    /// `.code` (ruling 11), as `.xRef ( body ) .bindingScope`. The top of `stack` must
+    /// `.code`, as `.xRef ( body ) .bindingScope`. The top of `stack` must
     /// be there, so the binder cannot starve between the two.
     static func refWith(_ name: PushInstruction, binder: PushInstruction, of stack: PushStack) -> Behavior {
         Behavior.control(name, requires: [.takes(.code), .reads(stack)]) { a, _ in
@@ -111,7 +111,7 @@ nonisolated extension Interpreter {
         .described("Runs a body with key k pushed onto `.int`, then removes k's topmost binding: "
                    + "`k ( b ) .bindingScope`.")
 
-    /// `k .bindingRekey` gives the top pair the key k (ruling 10).
+    /// `k .bindingRekey` gives the top pair the key k.
     ///
     /// Only the last key matters, so a pair that was itself re-keyed is recorded
     /// as re-keyed once: its history up to that `bindingRekey`, then k. That is also

@@ -19,7 +19,7 @@
 ///
 /// **Why the blocks work at all**: a `CodeItem` in a program is not an
 /// instruction, so when `.exec` reaches it `pushDefault` routes it to `.code` as
-/// *data* (Design Principles §7). The blocks therefore pile onto `.code` before
+/// *data*. The blocks therefore pile onto `.code` before
 /// the flat program runs, and the flat program finds them waiting — which is the
 /// point of the encoding, since `.code` is the language's scarcest stack and a
 /// program with nothing on it can build no loop bodies.

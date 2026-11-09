@@ -159,7 +159,7 @@ nonisolated extension Interpreter {
     // is uniform and inert. The extracted point is treated as a derived value —
     // "the code at point i of x" — recording the reading crux rather than the
     // point's own history, so the crux is uniform whatever the point's type and
-    // cleans up both arguments (§5). The index is clamped (`Position.item`).
+    // cleans up both arguments. The index is clamped (`Position.item`).
 
     /// Box a point as a `.code` result: a sub-block as-is, a leaf wrapped once.
     static func boxedPointContents(_ point: any Item) -> [any Item] {
@@ -570,7 +570,7 @@ nonisolated extension Interpreter {
     /// though it had been sitting there all along, unchanged from the time it
     /// went in. Being inside a block leaves no mark.
     ///
-    /// **Except on what was born there** (2026-11-07). A content with no history
+    /// **Except on what was born there**. A content with no history
     /// of its own, out of a block that has one (a block bound to `.input3`, or one
     /// a structural edit rebuilt), records its address, `block k .codeEmitNthRoot`
     /// and the clean-up, so its crux keeps the link to the block. See
@@ -619,7 +619,7 @@ nonisolated extension Interpreter {
             let iterator = a[0] as! IteratorItem
             // The farewell returns the body to `.code`, *under* the result. The
             // crux has to clear it, or the fragment leaves debris on the very
-            // stack it lands on (Design Principles §1) — so it records the same
+            // stack it lands on — so it records the same
             // swap-and-pop `reading` uses. No body, nothing to clear.
             // Over `collectionLimit` the sequence has no answer worth computing: refuse
             // as `.vecFromIterator` does, handing the iterator back untouched.

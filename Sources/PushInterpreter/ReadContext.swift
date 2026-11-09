@@ -2,7 +2,7 @@
 //  ReadContext.swift
 //  PushInterpreter
 //
-//  The read-only view a context read gets of the interpreter (Roadmap #43).
+//  The read-only view a context read gets of the interpreter.
 //
 
 import DequeModule

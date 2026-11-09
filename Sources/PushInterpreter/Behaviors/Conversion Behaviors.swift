@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  Between code and vectors, between chars and strings, and between a string
-//  and its pieces (*Behavior coverage audit (2026-11-09)*, P4).
+//  and its pieces.
 //
 //  - **`vecXQuote`** wraps a vector into a block as every other `Quote` does,
 //    so vectors are no longer the one data type that cannot become code.

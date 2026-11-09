@@ -12,7 +12,7 @@ nonisolated extension Interpreter {
     /// The character whose Unicode scalar value is `code`, or nil if `code` is not
     /// a valid scalar (negative, past 0x10FFFF, or a surrogate).
     ///
-    /// Character codes are scalar values in both directions (Roadmap #42), so
+    /// Character codes are scalar values in both directions, so
     /// `.charFromInt` and `.intFromChar` are inverses: `65 .charFromInt` is `A`.
     /// They used to map any number to `|n mod 95| + 32`, which made 65 an `a`.
     static func character(scalar code: Int) -> Character? {
@@ -20,7 +20,7 @@ nonisolated extension Interpreter {
         return Character(scalar)
     }
 
-    // Typed operations (Roadmap #44): arguments in written order, so `y x .charLT`
+    // Typed operations: arguments in written order, so `y x .charLT`
     // is `{ y, x in y < x }`. A thrown `Refusal` becomes an error.
 
     /// Truncates toward zero, then reads the result as a Unicode scalar value.

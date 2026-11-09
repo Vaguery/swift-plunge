@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 //  What an item taken out of a container records. Added 2026-11-07 for
-//  provenance completeness (Roadmap §P, step 4): see "Containment" in
+//  provenance completeness: see "Containment" in
 //  `Notes on Push/Provenance and the crux.md`.
 //
 

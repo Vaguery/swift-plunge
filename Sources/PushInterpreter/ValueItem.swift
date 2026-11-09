@@ -2,7 +2,7 @@
 //  ValueItem.swift
 //  PushInterpreter
 //
-//  An item type a typed operation can take or give (Roadmap #44).
+//  An item type a typed operation can take or give.
 //
 
 /// **An item type with a home stack and a plain value.** Enough for a typed

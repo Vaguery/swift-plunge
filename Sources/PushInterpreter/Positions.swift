@@ -6,8 +6,8 @@
 //  the vector, string and code families cannot drift apart again.
 //
 
-/// Turns any int a program supplies into a real position, by **clamping**
-/// (Design Principles §12, Roadmap #42): below the range is the first position,
+/// Turns any int a program supplies into a real position, by **clamping**:
+/// below the range is the first position,
 /// above it the last. Never modulo — wrapping made `100 .vecIntNth` a different
 /// element for every input length, where a clamp means "the last" on all of them.
 ///

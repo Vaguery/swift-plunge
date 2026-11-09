@@ -213,7 +213,7 @@ public nonisolated struct CallMeasure: Sendable, Hashable {
 /// The box is immutable; assigning `call` replaces it, so items keep value
 /// semantics.
 ///
-/// **Members** ride in the same box (2026-11-07). A vector's or string's elements
+/// **Members** ride in the same box. A vector's or string's elements
 /// are raw values, so they cannot carry a history of their own; when recording,
 /// the container keeps each element's origin, as a piece table (`Pieces`), for the
 /// extraction instructions to hand back (the containment law, `Containment`). Only
@@ -1065,7 +1065,7 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     /// A read of an element from a collection that has none: `.vecIntFirst` or
     /// `.stringNth` of an empty one, `.codeNthRoot` of `( )`, `.stringNthWord` of
     /// a string with no words. An index into a non-empty collection clamps and
-    /// never errs; this is the one case where no position exists (Roadmap #42).
+    /// never errs; this is the one case where no position exists.
     case emptyCollection
     /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOfChar`,
     /// `.codeIndexOfPoint`, `.codeContainer`. These used to answer `-1` (which

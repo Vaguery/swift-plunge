@@ -2,7 +2,7 @@
 //  Typed Operations.swift
 //  PushInterpreter
 //
-//  Operations declared by their argument and result types (Roadmap #44).
+//  Operations declared by their argument and result types.
 //
 //      Behavior.operation(.intGT, reads: IntItem.self, IntItem.self, gives: BoolItem.self) { y, x in y > x }
 //
@@ -224,7 +224,7 @@ nonisolated extension Behavior {
     /// **Splits into two results on one stack**, the first produced ending deepest
     /// (`cut`: prefix under suffix). Each records the selecting crux (provenance
     /// law 5): the instruction, then the clean-up that surfaces that one result.
-    /// A pair, not a list, so the declared output is exactly two (Roadmap #41).
+    /// A pair, not a list, so the declared output is exactly two.
     static func splitting<each A: ValueItem, R: MemberItem>(
         _ label: PushInstruction,
         takes: repeat (each A).Type,

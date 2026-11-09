@@ -2,7 +2,7 @@
 //  InstructionSignature.swift
 //  PushInterpreter
 //
-//  One instruction's edge in the language's input-output map (Roadmap #41).
+//  One instruction's edge in the language's input-output map.
 //
 
 /// **What an instruction takes and what it gives**, read off its `Behavior`'s

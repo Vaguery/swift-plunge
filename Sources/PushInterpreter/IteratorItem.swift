@@ -399,7 +399,7 @@ nonisolated extension IteratorItem {
     ///
     /// **The empty guard is not defensive**, it is the whole reason this is a
     /// property rather than an inline `%`: `x % 0` **traps**, and a trap is a
-    /// crashed interpreter rather than an `ErrorItem` (§14). A cycle over nothing
+    /// crashed interpreter rather than an `ErrorItem`. A cycle over nothing
     /// emits nothing, and `isSpent` already says so — but nothing may compute the
     /// index to find that out.
     var wrappedCursor: Int? {

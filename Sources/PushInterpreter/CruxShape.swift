@@ -2,7 +2,7 @@
 //  CruxShape.swift
 //  PushInterpreter
 //
-//  Cruxes compared up to the choice of constants (Roadmap #41).
+//  Cruxes compared up to the choice of constants.
 //
 
 nonisolated extension Interpreter {

@@ -2,7 +2,7 @@
 //  PositionEffect.swift
 //  PushInterpreter
 //
-//  A structural rule's whole effect, as data (Roadmap #43).
+//  A structural rule's whole effect, as data.
 //
 
 /// **A value-blind change to the positions of one stack** — what a structural
