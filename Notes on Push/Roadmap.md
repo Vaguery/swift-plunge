@@ -392,7 +392,7 @@ A representation-neutral derivation graph, for other GP representations, is a la
     - `stringDrop` from the front, plus `xDropLast`/`xTakeLast`;
     - `vecFromIterator` collects a body's results;
     - map's result type follows the data;
-    - reductions are queries (`Sum`, `Mean`, `Max`, `Min`, `IsSubset`), transforms consume
+    - reductions are queries (`Sum`, `Max`, `Min`, `IsSubset`; no `Mean`, which answers PSB1 *Vector Average*), transforms consume
       (`Distinct`, `Intersect`, `Difference`); no `Sort`, which benchmarks ask to be evolved;
     - pattern lookup on every stack (the sieve made visible; §C Q5);
     - set operations on collections, no set or dictionary type;

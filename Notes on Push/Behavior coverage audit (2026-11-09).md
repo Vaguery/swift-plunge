@@ -180,7 +180,9 @@ Under each item, **Adds** names the tasks it gives a new short route.
 
 ### P1. Collection reductions and orderings: queries, one factory
 
-- **`Sum`, `Mean` (→ `.double`), `Max`, `Min`** on `vecInt` and `vecDouble`.
+- **`Sum`, `Max`, `Min`** on `vecInt` and `vecDouble`. ~~`Mean`~~ **dropped (the
+  user, 2026-11-09):** it answers PSB1 *Vector Average* in one step, which
+  benchmarks ask to be evolved.
 - **`Max` and `Min`** also on `vecString` and `string` (by ordering).
 - ~~**`Sort`**~~ **Dropped (the user, 2026-11-09):** basic Push benchmarks ask
   for sorting to be evolved, and a built-in would answer them in one step.
@@ -190,8 +192,9 @@ Each is a query: it reads, does not take, and leaves its argument (Design
 Principles §5, I7). About 17 instructions.
 
 **Adds:**
-- average: 1 step (`vecIntMean`), or 3 steps (`.vecIntSum .vecIntLength
-  .intQuot`, possible because both are queries);
+- average: 3 steps (`.vecIntSum .vecIntLength .intQuot`, possible because both
+  are queries), or 4 for doubles (`.vecDoubleSum .vecDoubleLength
+  .doubleFromInt .doubleDivide`);
 - second and third routes to sum, max and min;
 - the first routes to sort and dedupe;
 - ~~a median: `Sort`, then `Nth` of `Length` halved~~ (no `Sort`).
@@ -430,10 +433,11 @@ Filters have two routes as well:
 - P2's predicate;
 - P1b's membership, where the filter is "in these" or "not in these".
 For example, average:
-- `vecIntMean`;
 - `.vecIntSum .vecIntLength .intQuot`;
-- `( .doubleFromInt ) .vecIntMap .vecDoubleMean`;
+- `( .doubleFromInt ) .vecIntMap`, then the double sum, length and divide;
 - `( .intAdd ) .vecIntReduce` and divide.
+
+(`vecIntMean` was dropped: it answers PSB1 *Vector Average* outright.)
 
 Word frequency and variables wait for P7.
 
@@ -1027,8 +1031,9 @@ named tokens produce ints, because ints are what the language is short of.
    deferred polymorphic map; `( .doubleFromInt ) .vecIntMap` gives a
    `vecDouble`.
 4. **Queries.**
-   - The fact-reporting collection instructions read and leave: `Sum`, `Mean`,
-     `Max`, `Min`, `IsSubset`.
+   - The fact-reporting collection instructions read and leave: `Sum`, `Max`,
+     `Min`, `IsSubset`. (`Mean` was dropped: it answers PSB1 *Vector Average*
+     outright.)
    - The transforming ones consume, as other transforms do: `Distinct`,
      `Intersect`, `Difference`. (`Sort` was dropped: benchmarks ask for it to be
      evolved.)

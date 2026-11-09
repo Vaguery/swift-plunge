@@ -33,19 +33,15 @@ struct CollectionBehaviorTests {
             && others.allSatisfy { fresh.stacks[$0]!.isEmpty }
     }
 
-    @Test func `sum and mean read the vector and leave it`() {
+    @Test func `sum reads the vector and leaves it`() {
         let inty = Self.run([VecIntItem([4, 6, 8]), InstructionItem(.vecIntSum)])
         #expect(stackString(inty, .int) == "[ 18 ]")
         #expect(stackString(inty, .vecInt) == "[ [4, 6, 8] ]")
         #expect(Self.replays(inty, .int))
 
-        let mean = Self.run([VecIntItem([4, 6, 8]), InstructionItem(.vecIntMean)])
-        #expect(stackString(mean, .double) == "[ 6.0 ]")
-        #expect(Self.replays(mean, .double))
-
-        let doubles = Self.run([VecDoubleItem([1.5, 2.5]), InstructionItem(.vecDoubleSum),
-                                InstructionItem(.vecDoubleMean)])
-        #expect(stackString(doubles, .double) == "[ 2.0 4.0 ]")
+        let doubles = Self.run([VecDoubleItem([1.5, 2.5]), InstructionItem(.vecDoubleSum)])
+        #expect(stackString(doubles, .double) == "[ 4.0 ]")
+        #expect(Self.replays(doubles, .double))
     }
 
     @Test func `average in three steps, now that sum and length are both queries`() {
@@ -54,11 +50,10 @@ struct CollectionBehaviorTests {
         #expect(stackString(inty, .int) == "[ 6 ]")
     }
 
-    @Test func `an empty vector sums to zero and has no mean`() {
-        let inty = Self.run([VecIntItem([]), InstructionItem(.vecIntSum), InstructionItem(.vecIntMean)])
+    @Test func `an empty vector sums to zero`() {
+        let inty = Self.run([VecIntItem([]), InstructionItem(.vecIntSum)])
         #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(stackString(inty, .double) == "[ ]")
-        #expect(inty.stacks[.error]!.count == 1)
+        #expect(inty.stacks[.error]!.isEmpty)
     }
 
     @Test func `sum refuses overflow`() {

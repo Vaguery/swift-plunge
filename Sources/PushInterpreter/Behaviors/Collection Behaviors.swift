@@ -7,7 +7,7 @@
 //  fits.
 //
 //  The rulings that shape them (audit §11, ruling 4):
-//  - **Facts read and leave.** `Sum`, `Mean`, `Max` and `Min` report something
+//  - **Facts read and leave.** `Sum`, `Max` and `Min` report something
 //    about a collection, so they are non-destructive queries (Design Principles
 //    §5): the collection stays where it was, and the crux cleans it up.
 //  - **`Max` and `Min` are member reads.** They take an element *out*, so the
@@ -15,8 +15,10 @@
 //    `Nth` does. Ties go to the first occurrence.
 //  - **Orders are total**, so every result is deterministic: a NaN counts as
 //    greater than every number.
-//  - **No `Sort`** (the user, 2026-11-09): basic Push benchmarks ask for
-//    sorting to be evolved, and a built-in would answer them in one step.
+//  - **No `Sort` and no `Mean`** (the user, 2026-11-09): basic Push
+//    benchmarks ask for sorting and averaging (PSB1 *Vector Average*) to be
+//    evolved, and a built-in would answer them in one step. Average stays a
+//    short composition: `.vecIntSum .vecIntLength .intQuot`.
 //
 
 nonisolated extension Interpreter {
@@ -56,7 +58,7 @@ nonisolated extension Interpreter {
     }
 
 
-    // MARK: - Sums and means
+    // MARK: - Sums
 
     /// The sum of a vecInt's elements; 0 for an empty one. Refuses on overflow,
     /// as `intAdd` does.
@@ -71,14 +73,6 @@ nonisolated extension Interpreter {
             return total
         }
 
-    /// The mean of a vecInt's elements, as a double; an error if it is empty.
-    /// Summed as doubles, so it cannot overflow.
-    static let vecIntMean_Behavior =
-        Behavior.operation(.vecIntMean, reads: VecIntItem.self, gives: DoubleItem.self) { x throws(Refusal) in
-            guard !x.isEmpty else { throw Refusal("Empty vector in .vecIntMean", kind: .emptyCollection) }
-            return x.reduce(0.0) { $0 + Double($1) } / Double(x.count)
-        }
-
     /// The sum of a vecDouble's elements; 0 for an empty one. Refuses a result
     /// that is not finite, as `doubleAdd` does.
     static let vecDoubleSum_Behavior =
@@ -86,16 +80,6 @@ nonisolated extension Interpreter {
             let total = x.reduce(0.0, +)
             guard total.isFinite else { throw Refusal("Overflow in .vecDoubleSum") }
             return total
-        }
-
-    /// The mean of a vecDouble's elements; an error if it is empty or the mean is
-    /// not finite.
-    static let vecDoubleMean_Behavior =
-        Behavior.operation(.vecDoubleMean, reads: VecDoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
-            guard !x.isEmpty else { throw Refusal("Empty vector in .vecDoubleMean", kind: .emptyCollection) }
-            let mean = x.reduce(0.0, +) / Double(x.count)
-            guard mean.isFinite else { throw Refusal("Overflow in .vecDoubleMean") }
-            return mean
         }
 
 
@@ -133,9 +117,7 @@ nonisolated extension Interpreter {
 
     static let collectionBehaviors: [PushInstruction: Behavior] = [
         .vecIntSum: vecIntSum_Behavior,
-        .vecIntMean: vecIntMean_Behavior,
         .vecDoubleSum: vecDoubleSum_Behavior,
-        .vecDoubleMean: vecDoubleMean_Behavior,
         .vecIntMax: vecIntMax_Behavior,
         .vecIntMin: vecIntMin_Behavior,
         .vecDoubleMax: vecDoubleMax_Behavior,

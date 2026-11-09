@@ -311,7 +311,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
 
     // string constants
     // Collection reductions (Behavior coverage audit, P1)
-    case vecIntSum, vecIntMean, vecDoubleSum, vecDoubleMean, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
+    case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
 
     case string0, string1, string2, string3, string4, string5, string6, string7, string8, string9
