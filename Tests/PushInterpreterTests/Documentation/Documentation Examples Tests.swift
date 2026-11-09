@@ -163,4 +163,24 @@ struct DocumentationExamplesTests {
         ])
         #expect(reduced[.int] == ["10", "(1 items)"])
     }
+
+    /// *Provenance and the Crux*: an answer explains itself.
+    @Test func `provenance: a crux reproduces the answer`() async {
+        var settings = InterpreterSettings()
+        settings.recordsProvenance = true
+        let runner = Runner(configuration: RunnerConfiguration(settings: settings, recorders: [
+            RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
+        ]))
+        await runner.register(individuals: [Individual(id: "p", program: program {
+            PushInstruction.input0; 10; PushInstruction.intAdd; 99; PushInstruction.input0; PushInstruction.intMultiply
+        })])
+        await runner.register(trainingCases: [TrainingCase(id: "c", inputs: [.input0: IntItem(4)])])
+        let result = await runner.evaluate(pairings: [Pairing(individual: "p", trainingCase: "c")])[0]
+        guard case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil else {
+            Issue.record("no answer"); return
+        }
+        print(answer.item.pretty(), CodeItem(answer.item.crux()).pretty())
+        #expect(answer.item.pretty() == "396")
+        #expect(CodeItem(answer.item.crux()).pretty() == "( 99 .input0 .intMultiply )")
+    }
 }

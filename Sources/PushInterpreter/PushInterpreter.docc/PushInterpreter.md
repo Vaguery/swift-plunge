@@ -32,6 +32,7 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - <doc:Variables>
 - <doc:SearchingTheStacks>
 - <doc:Functions>
+- <doc:Provenance>
 - <doc:InstructionReference>
 
 ### Running programs
