@@ -317,36 +317,37 @@ nonisolated extension Interpreter {
     /// Whether the vector contains the **sub-vector** argument (contiguous),
     /// non-destructively — both vectors survive; the crux pops both.
     static func containsSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
-        // Written order: the needle (deeper) first, then the hay on top.
-        Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { needle, hay in
+        // Written order: the vector searched (deeper) first, then the run sought on
+        // top, as every search here is written (until 2026-11-09 the run came first).
+        Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { hay, needle in
             firstSubIndex(hay, needle) != nil
         }
         .described(
-            "Tells whether a run occurs: `w v .\(instruction)` asks if v holds w contiguously, leaving both; an "
+            "Tells whether a run occurs: `v w .\(instruction)` asks if v holds w contiguously, leaving both; an "
             + "empty w always matches.")
     }
 
     /// The index of the first contiguous occurrence of the sub-vector; an error if
     /// there is none (it used to answer −1).
     static func indexOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
-        Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { needle, hay throws(Refusal) in
+        Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let found = firstSubIndex(hay, needle) else {
                 throw Refusal("Not found in .\(instruction)", kind: .notFound)
             }
             return found
         }
         .described(
-            "Finds a run: `w v .\(instruction)` gives where w first occurs contiguously in v, leaving both; an "
+            "Finds a run: `v w .\(instruction)` gives where w first occurs contiguously in v, leaving both; an "
             + "empty w gives 0; refuses when absent.")
     }
 
     /// The number of non-overlapping occurrences of the sub-vector.
     static func occurrencesOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
-        Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { needle, hay in
+        Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle in
             subCount(hay, needle)
         }
         .described(
-            "Counts a run: `w v .\(instruction)` gives how many non-overlapping times w occurs in v, leaving both; "
+            "Counts a run: `v w .\(instruction)` gives how many non-overlapping times w occurs in v, leaving both; "
             + "an empty w counts 0.")
     }
 

@@ -13,7 +13,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntConj` | Appends an int: `v x .vecIntConj` gives v with x added at the end. | `vecInt`, `int` | `vecInt` |
 | `vecIntConstruct` | Builds a vector of the top n ints, consuming them, where n is the length of a template vector, also consumed; the top int comes last. | `vecInt`, n × `int` | `vecInt` |
 | `vecIntContains` | Tells whether x is an element: `v x .vecIntContains`, leaving both. | `vecInt` (read), `int` (read) | `bool` |
-| `vecIntContainsSubVec` | Tells whether a run occurs: `w v .vecIntContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecInt` (read), `vecInt` (read) | `bool` |
+| `vecIntContainsSubVec` | Tells whether a run occurs: `v w .vecIntContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecInt` (read), `vecInt` (read) | `bool` |
 | `vecIntCut` | Splits at a gap: `v i .vecIntCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecInt`, `int` | `vecInt`, `vecInt` |
 | `vecIntDifference` | Filters: `a b .vecIntDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecInt`, `vecInt` | `vecInt` |
 | `vecIntDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecInt` | `vecInt` |
@@ -28,7 +28,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntGTE` gives a ≥ b. | `vecInt` (read), `vecInt` (read) | `bool` |
 | `vecIntIndexOf` | Finds x: `v x .vecIntIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecInt` (read), `int` (read) | `int`; may refuse |
 | `vecIntIndexOfFrom` | Finds an element from an index: `v x i .vecIntIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecInt` (read), `int` (read), `int` (read) | `int`; may refuse |
-| `vecIntIndexOfSubVec` | Finds a run: `w v .vecIntIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecInt` (read), `vecInt` (read) | `int`; may refuse |
+| `vecIntIndexOfSubVec` | Finds a run: `v w .vecIntIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecInt` (read), `vecInt` (read) | `int`; may refuse |
 | `vecIntIntersect` | Filters: `a b .vecIntIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecInt`, `vecInt` | `vecInt` |
 | `vecIntIsSubset` | Tells whether every element of a occurs in b: `a b .vecIntIsSubset`, leaving both. | `vecInt` (read), `vecInt` (read) | `bool` |
 | `vecIntItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecInt` (read) | `bool` |
@@ -41,7 +41,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `vecIntNth` | Picks an element: `v i .vecIntNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecInt`, `int` | `int`; may refuse |
 | `vecIntOccurrencesOf` | Counts x: `v x .vecIntOccurrencesOf` gives how many elements equal x, leaving both. | `vecInt` (read), `int` (read) | `int` |
-| `vecIntOccurrencesOfSubVec` | Counts a run: `w v .vecIntOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecInt` (read), `vecInt` (read) | `int` |
+| `vecIntOccurrencesOfSubVec` | Counts a run: `v w .vecIntOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecInt` (read), `vecInt` (read) | `int` |
 | `vecIntPeekNth` | Picks an element: `v i .vecIntPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecInt` (read), `int` (read) | `int`; may refuse |
 | `vecIntPushAll` | Pushes every element onto the int stack, front to back, so the last element ends on top; consumes the vector. | `vecInt` | `int`, one per step |
 | `vecIntQuote` | Wraps the vector in a one-item block. | `vecInt` | `code` |

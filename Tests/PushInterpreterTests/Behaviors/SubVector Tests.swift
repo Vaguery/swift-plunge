@@ -20,11 +20,12 @@ import DequeModule
 @Suite @MainActor
 struct SubVectorTests {
 
-    /// haystack on top (a[0]=haystack), needle beneath (a[1]=needle) — matching
-    /// the element `contains`, where the collection is the top argument.
+    /// The needle on top, the haystack beneath: written `v w .op`, the vector
+    /// searched first, as every search is written (`v x .vecIntIndexOf`,
+    /// `hay needle .stringIndexOf`). Until 2026-11-09 the haystack was on top.
     func loadSearch(_ hay: [Int], _ needle: [Int]) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
-        inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem(hay), VecIntItem(needle)] as [any Item])
+        inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem(needle), VecIntItem(hay)] as [any Item])
         return inty
     }
 
@@ -35,9 +36,9 @@ struct SubVectorTests {
         let inty = loadSearch([1, 2, 3, 4], [2, 3])
         doThis(.vecIntContainsSubVec, to: inty)
         #expect((topItem(inty, .bool) as! BoolItem).value)
-        #expect(stackString(inty, .vecInt) == "[ [1, 2, 3, 4] [2, 3] ]", "both survive the read")
+        #expect(stackString(inty, .vecInt) == "[ [2, 3] [1, 2, 3, 4] ]", "both survive the read")
         #expect(callString(topItem(inty, .bool))
-                == "( [2, 3] [1, 2, 3, 4] .vecIntContainsSubVec 2 .vecIntPopItems )")
+                == "( [1, 2, 3, 4] [2, 3] .vecIntContainsSubVec 2 .vecIntPopItems )")
 
         // Non-contiguous → not found.
         let miss = loadSearch([1, 2, 3, 4], [2, 4])
@@ -147,17 +148,17 @@ struct SubVectorTests {
     // MARK: - the other types exist and work
 
     @Test func `the family is generic across all four vector types`() {
-        // string subvectors — haystack on top
+        // string subvectors — needle on top
         let s = Interpreter.recordingProvenance()
         s.stacks[.vecString]!.prepend(contentsOf:
-            [VecStringItem(["a", "b", "c"]), VecStringItem(["b"])] as [any Item])
+            [VecStringItem(["b"]), VecStringItem(["a", "b", "c"])] as [any Item])
         doThis(.vecStringContainsSubVec, to: s)
         #expect((topItem(s, .bool) as! BoolItem).value)
 
-        // bool subvectors — haystack on top
+        // bool subvectors — needle on top
         let b = Interpreter.recordingProvenance()
         b.stacks[.vecBool]!.prepend(contentsOf:
-            [VecBoolItem([false, true, false, true]), VecBoolItem([true, false])] as [any Item])
+            [VecBoolItem([true, false]), VecBoolItem([false, true, false, true])] as [any Item])
         doThis(.vecBoolIndexOfSubVec, to: b)
         #expect((topItem(b, .int) as! IntItem).value == 1)
 

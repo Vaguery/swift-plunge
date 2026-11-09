@@ -13,7 +13,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleConj` | Appends a double: `v x .vecDoubleConj` gives v with x added at the end. | `vecDouble`, `double` | `vecDouble` |
 | `vecDoubleConstruct` | Builds a vector of the top n doubles, consuming them, where n is the length of a template vector, also consumed; the top double comes last. | `vecDouble`, n × `double` | `vecDouble` |
 | `vecDoubleContains` | Tells whether x is an element: `v x .vecDoubleContains`, leaving both. | `vecDouble` (read), `double` (read) | `bool` |
-| `vecDoubleContainsSubVec` | Tells whether a run occurs: `w v .vecDoubleContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleContainsSubVec` | Tells whether a run occurs: `v w .vecDoubleContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleCut` | Splits at a gap: `v i .vecDoubleCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble`, `vecDouble` |
 | `vecDoubleDifference` | Filters: `a b .vecDoubleDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecDouble` | `vecDouble` |
@@ -28,7 +28,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a = b; a NaN element ties in the order but is never equal. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleIndexOf` | Finds x: `v x .vecDoubleIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecDouble` (read), `double` (read) | `int`; may refuse |
 | `vecDoubleIndexOfFrom` | Finds an element from an index: `v x i .vecDoubleIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecDouble` (read), `double` (read), `int` (read) | `int`; may refuse |
-| `vecDoubleIndexOfSubVec` | Finds a run: `w v .vecDoubleIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
+| `vecDoubleIndexOfSubVec` | Finds a run: `v w .vecDoubleIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
 | `vecDoubleIntersect` | Filters: `a b .vecDoubleIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleIsSubset` | Tells whether every element of a occurs in b: `a b .vecDoubleIsSubset`, leaving both. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecDouble` (read) | `bool` |
@@ -41,7 +41,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleMin` | Pushes the least element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `double`; may refuse |
 | `vecDoubleNth` | Picks an element: `v i .vecDoubleNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecDouble`, `int` | `double`; may refuse |
 | `vecDoubleOccurrencesOf` | Counts x: `v x .vecDoubleOccurrencesOf` gives how many elements equal x, leaving both. | `vecDouble` (read), `double` (read) | `int` |
-| `vecDoubleOccurrencesOfSubVec` | Counts a run: `w v .vecDoubleOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecDouble` (read), `vecDouble` (read) | `int` |
+| `vecDoubleOccurrencesOfSubVec` | Counts a run: `v w .vecDoubleOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecDouble` (read), `vecDouble` (read) | `int` |
 | `vecDoublePeekNth` | Picks an element: `v i .vecDoublePeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecDouble` (read), `int` (read) | `double`; may refuse |
 | `vecDoublePushAll` | Pushes every element onto the double stack, front to back, so the last element ends on top; consumes the vector. | `vecDouble` | `double`, one per step |
 | `vecDoubleQuote` | Wraps the vector in a one-item block. | `vecDouble` | `code` |

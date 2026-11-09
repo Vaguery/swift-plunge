@@ -13,7 +13,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringConj` | Appends a string: `v x .vecStringConj` gives v with x added at the end. | `vecString`, `string` | `vecString` |
 | `vecStringConstruct` | Builds a vector of the top n strings, consuming them, where n is the length of a template vector, also consumed; the top string comes last. | `vecString`, n × `string` | `vecString` |
 | `vecStringContains` | Tells whether x is an element: `v x .vecStringContains`, leaving both. | `vecString` (read), `string` (read) | `bool` |
-| `vecStringContainsSubVec` | Tells whether a run occurs: `w v .vecStringContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringContainsSubVec` | Tells whether a run occurs: `v w .vecStringContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecString` (read), `vecString` (read) | `bool` |
 | `vecStringCut` | Splits at a gap: `v i .vecStringCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecString`, `int` | `vecString`, `vecString` |
 | `vecStringDifference` | Filters: `a b .vecStringDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecString`, `vecString` | `vecString` |
 | `vecStringDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecString` | `vecString` |
@@ -30,7 +30,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGTE` gives a ≥ b. | `vecString` (read), `vecString` (read) | `bool` |
 | `vecStringIndexOf` | Finds x: `v x .vecStringIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecString` (read), `string` (read) | `int`; may refuse |
 | `vecStringIndexOfFrom` | Finds an element from an index: `v x i .vecStringIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecString` (read), `string` (read), `int` (read) | `int`; may refuse |
-| `vecStringIndexOfSubVec` | Finds a run: `w v .vecStringIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecString` (read), `vecString` (read) | `int`; may refuse |
+| `vecStringIndexOfSubVec` | Finds a run: `v w .vecStringIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecString` (read), `vecString` (read) | `int`; may refuse |
 | `vecStringIntersect` | Filters: `a b .vecStringIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecString`, `vecString` | `vecString` |
 | `vecStringIsSubset` | Tells whether every element of a occurs in b: `a b .vecStringIsSubset`, leaving both. | `vecString` (read), `vecString` (read) | `bool` |
 | `vecStringItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecString` (read) | `bool` |
@@ -44,7 +44,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecString` (read) | `string`; may refuse |
 | `vecStringNth` | Picks an element: `v i .vecStringNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecString`, `int` | `string`; may refuse |
 | `vecStringOccurrencesOf` | Counts x: `v x .vecStringOccurrencesOf` gives how many elements equal x, leaving both. | `vecString` (read), `string` (read) | `int` |
-| `vecStringOccurrencesOfSubVec` | Counts a run: `w v .vecStringOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecString` (read), `vecString` (read) | `int` |
+| `vecStringOccurrencesOfSubVec` | Counts a run: `v w .vecStringOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecString` (read), `vecString` (read) | `int` |
 | `vecStringPeekNth` | Picks an element: `v i .vecStringPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecString` (read), `int` (read) | `string`; may refuse |
 | `vecStringPushAll` | Pushes every element onto the string stack, front to back, so the last element ends on top; consumes the vector. | `vecString` | `string`, one per step |
 | `vecStringQuote` | Wraps the vector in a one-item block. | `vecString` | `code` |
