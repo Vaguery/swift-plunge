@@ -183,6 +183,42 @@ nonisolated extension Behavior {
     }
 
 
+    // MARK: - Items in, an element and its index out
+
+    /// **Finds one element in a container and gives it with its index** (the
+    /// lookups in a collection, *Behavior coverage audit* §8): a query, reading
+    /// every argument. The index goes down first and the element on top of it,
+    /// which matters only when both land on `.int`.
+    ///
+    /// Each result's crux is the written call, then the removal of its sibling
+    /// (the element is on top; the index lifted past the element when they share
+    /// `.int`), then the clean-up of what was read. An element that kept an
+    /// origin in its container is that origin instead (`tracedElement`), as in
+    /// `extracting`. Tagged `.fallible`; a miss is a refusal.
+    static func finding<each A: ValueItem, E: ValueItem>(
+        _ label: PushInstruction,
+        reads: repeat (each A).Type,
+        gives: E.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) throws(Refusal) -> Found<E.Value>
+    ) -> Behavior {
+        let stack = E.pushStack
+        let dropElement = [InstructionItem(stack.popInstruction)]
+        let dropIndex = stack == .int
+            ? [InstructionItem(.intSwap), InstructionItem(.intPop)]
+            : [InstructionItem(.intPop)]
+        return typed(label, stacks: stacks(repeat each reads), reading: true, gives: stack,
+                     produces: .results([stack, .int]),
+                     tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let found = try body(repeat each items(args, call.positions, repeat each reads))
+            let index = IntItem(found.index, call: recording(call.recorded(producing: .int, after: dropElement)))
+            let element = found.container?.tracedElement(at: found.index, recording)
+                ?? E(found.value, call: recording(call.recorded(producing: stack, after: dropIndex)))
+            return [Router(.int, index), Router(stack, element)]
+        }
+    }
+
+
     // MARK: - Items in, two containers out
 
     /// **Splits into two results on one stack**, the first produced ending deepest
@@ -277,6 +313,7 @@ nonisolated extension Behavior {
         reading: Bool,
         gives: PushStack,
         count: Int = 1,
+        produces declared: Produces? = nil,
         tags: Set<InstructionTag>,
         produce: @escaping @Sendable ([any Item], WrittenCall, ProvenanceRecording) throws(Refusal) -> [Router]
     ) -> Behavior {
@@ -290,7 +327,7 @@ nonisolated extension Behavior {
             ? order.groups.map { (key: $0.stack, value: $0.count) }.sorted { $0.key.rawValue < $1.key.rawValue }
             : nil
         let instruction = InstructionItem(label)
-        let produces = Produces.results(Array(repeating: gives, count: count))
+        let produces = declared ?? Produces.results(Array(repeating: gives, count: count))
 
         let fxn: @Sendable ([any Item], ProvenanceRecording) -> [Router] = { args, recording in
             let call = WrittenCall(arguments: args, positions: positions, instruction: instruction, readCounts: readCounts)

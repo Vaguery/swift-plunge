@@ -1197,6 +1197,38 @@ Containing on string, code and the four vectors; Shape on code. Each has its
     found fewer than two items on the searched stack. A dictionary type would
     starve worse, on a stack only its own constructor fills.
 
+**Step 4b, lookups within a collection built 2026-11-09, 765 → 783
+instructions** (*Lookup Behaviors.swift*, `findBehaviors`; the constructor
+`Behavior.finding`). Twelve finds and six `IndexOf…From`:
+- `vecIntFindNearest`, `vecDoubleFindNearest`, `stringFindNearest` (a char
+  probe), `vecStringFindPrefix`, `vecStringFindContaining`, and
+  `codeFindPrefix` (an association list inside one block:
+  `( ( "a" 1 ) ( "b" 2 ) ) ( "b" ) .codeFindPrefix` gives `( "b" 2 )` and 1),
+  each with `…From`;
+- `vecXIndexOfFrom` for the four vectors, `stringIndexOfCharFrom`,
+  `stringIndexOfFrom`.
+
+Settled in building:
+- **A find is a query: it reads every argument**, the start included, and
+  gives the element and its index (index down, element on top when both are
+  ints). The stack lookups *take* their start; a find reads it, as every
+  `.reads` query does. The two differ because a stack lookup is a context read
+  and a find is an operation.
+- **Written order is the container, then the probe, then the start**, except
+  that `stringIndexOfCharFrom` keeps `stringIndexOfChar`'s order (char first).
+- **Each result's crux is the written call, then the removal of its sibling,
+  then the clean-up of the reads.** An element that kept an origin in its
+  container is that origin instead. Both are replayed by the crux fuzz.
+- **Measured side effect: the backward chainer.** Uniform over trees weights
+  an edge by the product of its subtree counts, so the six three-argument
+  `IndexOf…From` queries came to root most height-3 `.int` trees. On random
+  arguments they mostly find nothing, so reach fell (`.int` 74 of 300, `.char`
+  56, `.double` 78). The chainer test now leaves them out of its sample, as it
+  leaves out the iterator constructors. The bias is the chainer's, and a
+  matter for the search rewrite.
+- **Not built:** PEG or other grammar patterns (*Grammars as patterns
+  (PEG).md*, explored the same day; proposed as step 6, after `.ref`).
+
 **Order of work**, a suggestion and not a ruling:
 1. The small fixes and the ruled leftovers (P9 and rulings 1–2).
 2. Then P1, P1b, P5, P6 and P4, the operations needing no new machinery.

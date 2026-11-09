@@ -26,4 +26,11 @@ nonisolated struct WrittenCall {
         guard let readCounts else { return written }
         return Behavior.reading(sorted: readCounts, producing: stack, from: written)
     }
+
+    /// The `call` for one of several results: the written call, then `cleanup`,
+    /// which removes the sibling results, then the clean-up of what was read.
+    func recorded(producing stack: PushStack, after cleanup: [any Item]) -> [any Item] {
+        guard let readCounts else { return written + cleanup }
+        return Behavior.reading(sorted: readCounts, producing: stack, from: written + cleanup)
+    }
 }

@@ -325,6 +325,13 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
          vecDoubleLookupContaining, vecDoubleLookupContainingFrom, vecStringLookupPrefix, vecStringLookupPrefixFrom, vecStringLookupContaining, vecStringLookupContainingFrom,
          codeLookupShape, codeLookupShapeFrom
 
+    // Lookup within a collection, and IndexOf from a start (Behavior coverage audit, §8 step 4b)
+    case vecIntFindNearest, vecIntFindNearestFrom, vecDoubleFindNearest, vecDoubleFindNearestFrom,
+         stringFindNearest, stringFindNearestFrom, vecStringFindPrefix, vecStringFindPrefixFrom,
+         vecStringFindContaining, vecStringFindContainingFrom, codeFindPrefix, codeFindPrefixFrom,
+         vecBoolIndexOfFrom, vecIntIndexOfFrom, vecDoubleIndexOfFrom, vecStringIndexOfFrom,
+         stringIndexOfCharFrom, stringIndexOfFrom
+
     // Short iterator constructors (Behavior coverage audit, P3)
     case iteratorOverString, iteratorOverVecBool, iteratorOverVecInt, iteratorOverVecDouble,
          iteratorOverVecString, iteratorOverCode

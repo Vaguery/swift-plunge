@@ -31,6 +31,12 @@
 //  treats constants); `Nearest` (ints, doubles and chars, which have a distance;
 //  ties go to the topmost, and it misses only when there is nothing below).
 //
+//  **The same kinds within a collection** (step 4b): `xFind…` reads a
+//  container and a probe of its element type, written in that order, and gives
+//  the first element that matches with its index (index down, element on top),
+//  or refuses. `…From` reads a start index as well. Alongside them, `IndexOf`
+//  gains its `…From` forms, so every search inside a collection can resume.
+//
 
 import DequeModule
 
@@ -163,6 +169,142 @@ nonisolated extension Interpreter {
     }
 
 
+    // MARK: - Within a collection
+
+    /// The first index at or after `start` whose element satisfies `matches`.
+    static func firstIndex(_ count: Int, from start: Int, where matches: (Int) -> Bool) -> Int? {
+        (max(0, start)..<max(max(0, start), count)).first(where: matches)
+    }
+
+    /// The index at or after `start` whose element is nearest by `distance`,
+    /// the first on a tie; an element with no distance is passed over.
+    static func nearestIndex(_ count: Int, from start: Int, by distance: (Int) -> Double?) -> Int? {
+        var best: (index: Int, distance: Double)?
+        for index in max(0, start)..<max(max(0, start), count) {
+            guard let d = distance(index), !d.isNaN else { continue }
+            if best == nil || d < best!.distance { best = (index, d) }
+        }
+        return best?.index
+    }
+
+    /// A container and a probe of its element type (and a start, for `…From`),
+    /// in written order.
+    static func findBehavior<C: TracingItem & ValueItem>(
+        _ name: PushInstruction, in container: C.Type, from: Bool,
+        _ search: @escaping @Sendable (C, any Item, Int) -> Int?
+    ) -> Behavior {
+        if from {
+            return Behavior.finding(name, reads: C.self, C.ElementItem.self, IntItem.self,
+                                    gives: C.ElementItem.self) { c, probe, start throws(Refusal) in
+                guard let i = search(c, probe, start.value) else {
+                    throw Refusal("Not found in .\(name)", kind: .notFound)
+                }
+                return Found(c.element(at: i), at: i, in: c)
+            }
+        }
+        return Behavior.finding(name, reads: C.self, C.ElementItem.self,
+                                gives: C.ElementItem.self) { c, probe throws(Refusal) in
+            guard let i = search(c, probe, 0) else { throw Refusal("Not found in .\(name)", kind: .notFound) }
+            return Found(c.element(at: i), at: i, in: c)
+        }
+    }
+
+    /// The first element matching the probe under a kind.
+    static func find<C: TracingItem & ValueItem>(
+        _ name: PushInstruction, in container: C.Type, from: Bool,
+        _ matches: @escaping @Sendable (any Item, any Item) -> Bool
+    ) -> Behavior {
+        findBehavior(name, in: container, from: from) { c, probe, start in
+            firstIndex(c.elementCount, from: start) {
+                matches(probe, C.ElementItem(c.element(at: $0), call: []))
+            }
+        }
+    }
+
+    /// The element nearest the probe.
+    static func findNearest<C: TracingItem & ValueItem>(
+        _ name: PushInstruction, in container: C.Type, from: Bool,
+        _ distance: @escaping @Sendable (any Item, any Item) -> Double?
+    ) -> Behavior {
+        findBehavior(name, in: container, from: from) { c, probe, start in
+            nearestIndex(c.elementCount, from: start) {
+                distance(probe, C.ElementItem(c.element(at: $0), call: []))
+            }
+        }
+    }
+
+    /// The first root item of a block that is a block matching the probe block:
+    /// `( ( "a" 1 ) ( "b" 2 ) ) ( "b" ) .codeFindPrefix` gives `( "b" 2 )` and 1.
+    static func codeFind(
+        _ name: PushInstruction, from: Bool,
+        _ matches: @escaping @Sendable (any Item, any Item) -> Bool
+    ) -> Behavior {
+        @Sendable func search(_ block: CodeItem, _ probe: CodeItem, _ start: Int) throws(Refusal) -> Found<[any Item]> {
+            guard let i = firstIndex(block.value.count, from: start, where: { matches(probe, block.value[$0]) }) else {
+                throw Refusal("Not found in .\(name)", kind: .notFound)
+            }
+            return Found((block.value[i] as! CodeItem).value, at: i)
+        }
+        if from {
+            return Behavior.finding(name, reads: CodeItem.self, CodeItem.self, IntItem.self,
+                                    gives: CodeItem.self) { block, probe, start throws(Refusal) in
+                try search(block, probe, start.value)
+            }
+        }
+        return Behavior.finding(name, reads: CodeItem.self, CodeItem.self,
+                                gives: CodeItem.self) { block, probe throws(Refusal) in
+            try search(block, probe, 0)
+        }
+    }
+
+    /// `IndexOf` from a start, which a search that walks every occurrence needs:
+    /// `v x start .vecIntIndexOfFrom`, `c s start .stringIndexOfCharFrom` (the
+    /// order of `stringIndexOfChar`), `hay needle start .stringIndexOfFrom`.
+    /// The index is counted from the front, not from the start.
+    static func indexOfFromBehavior<V: VectorItem>(_ name: PushInstruction, _ type: V.Type) -> Behavior
+    where V.Element: Equatable {
+        Behavior.operation(name, reads: V.self, V.Scalar.self, IntItem.self,
+                           gives: IntItem.self) { v, x, start throws(Refusal) in
+            guard let i = firstIndex(v.count, from: start, where: { v[$0] == x }) else {
+                throw Refusal("Not found in .\(name)", kind: .notFound)
+            }
+            return i
+        }
+    }
+
+    static let stringIndexOfCharFrom_Behavior =
+        Behavior.operation(.stringIndexOfCharFrom, reads: CharItem.self, StringItem.self, IntItem.self,
+                           gives: IntItem.self) { c, s, start throws(Refusal) in
+            let characters = Array(s)
+            guard let i = firstIndex(characters.count, from: start, where: { characters[$0] == c }) else {
+                throw Refusal("Not found in .stringIndexOfCharFrom: \(c)", kind: .notFound)
+            }
+            return i
+        }
+
+    /// An empty needle is found at the start, if the start is within the string
+    /// or at its end.
+    static let stringIndexOfFrom_Behavior =
+        Behavior.operation(.stringIndexOfFrom, reads: StringItem.self, StringItem.self, IntItem.self,
+                           gives: IntItem.self) { hay, needle, start throws(Refusal) in
+            let from = max(0, start)
+            guard from <= hay.count,
+                  let range = hay[hay.index(hay.startIndex, offsetBy: from)...].firstRange(of: needle) else {
+                throw Refusal("Not found in .stringIndexOfFrom: \(needle)", kind: .notFound)
+            }
+            return hay.distance(from: hay.startIndex, to: range.lowerBound)
+        }
+
+    static let indexOfFromBehaviors: [PushInstruction: Behavior] = [
+        .vecBoolIndexOfFrom: indexOfFromBehavior(.vecBoolIndexOfFrom, VecBoolItem.self),
+        .vecIntIndexOfFrom: indexOfFromBehavior(.vecIntIndexOfFrom, VecIntItem.self),
+        .vecDoubleIndexOfFrom: indexOfFromBehavior(.vecDoubleIndexOfFrom, VecDoubleItem.self),
+        .vecStringIndexOfFrom: indexOfFromBehavior(.vecStringIndexOfFrom, VecStringItem.self),
+        .stringIndexOfCharFrom: stringIndexOfCharFrom_Behavior,
+        .stringIndexOfFrom: stringIndexOfFrom_Behavior
+    ]
+
+
     // MARK: - The family
 
     /// Each lookup and its `…From` variant.
@@ -232,6 +374,31 @@ nonisolated extension Interpreter {
 
         // Shape: code.
         add(both(.codeLookupShape, .codeLookupShapeFrom) { matching($0, on: .code, from: $1, sameShape) })
+        return family
+    }()
+
+    /// Lookup within a collection, and `IndexOf` from a start: queries, so
+    /// operations rather than context reads, kept apart from the stack lookups.
+    static let findBehaviors: [PushInstruction: Behavior] = {
+        var family: [PushInstruction: Behavior] = [:]
+        func add(_ entries: [PushInstruction: Behavior]) { family.merge(entries) { first, _ in first } }
+        add(both(.vecIntFindNearest, .vecIntFindNearestFrom) {
+            findNearest($0, in: VecIntItem.self, from: $1, intDistance)
+        })
+        add(both(.vecDoubleFindNearest, .vecDoubleFindNearestFrom) {
+            findNearest($0, in: VecDoubleItem.self, from: $1, doubleDistance)
+        })
+        add(both(.stringFindNearest, .stringFindNearestFrom) {
+            findNearest($0, in: StringItem.self, from: $1, charDistance)
+        })
+        add(both(.vecStringFindPrefix, .vecStringFindPrefixFrom) {
+            find($0, in: VecStringItem.self, from: $1, stringPrefix)
+        })
+        add(both(.vecStringFindContaining, .vecStringFindContainingFrom) {
+            find($0, in: VecStringItem.self, from: $1, stringContaining)
+        })
+        add(both(.codeFindPrefix, .codeFindPrefixFrom) { codeFind($0, from: $1, codePrefix) })
+        add(indexOfFromBehaviors)
         return family
     }()
 }

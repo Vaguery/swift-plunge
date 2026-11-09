@@ -69,7 +69,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 400,
+            .operation: 418,   // 18 of them finds within a collection and IndexOf…From (audit §8, 4b)
             .structural: 144,   // 12 families × 12 stacks
             .contextRead: 179,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars, 50 lookups
             .control: 29,
