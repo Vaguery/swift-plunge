@@ -25,12 +25,16 @@ nonisolated extension Interpreter {
 
     static let vecBoolQuote_Behavior =
         Behavior.composing(.vecBoolQuote, takes: VecBoolItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Wraps the vector in a one-item block.")
     static let vecIntQuote_Behavior =
         Behavior.composing(.vecIntQuote, takes: VecIntItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Wraps the vector in a one-item block.")
     static let vecDoubleQuote_Behavior =
         Behavior.composing(.vecDoubleQuote, takes: VecDoubleItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Wraps the vector in a one-item block.")
     static let vecStringQuote_Behavior =
         Behavior.composing(.vecStringQuote, takes: VecStringItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Wraps the vector in a one-item block.")
 
     static let vecFromCode_Behavior =
         Behavior(
@@ -73,6 +77,9 @@ nonisolated extension Interpreter {
                 return [Router(stack, vector)]
             }
         )
+        .described(
+            "Turns a block of bools, ints, doubles or strings, all one type, into a vector; a block holding one "
+            + "vector gives it back; refuses anything else.")
 
 
     // MARK: - Chars into strings
@@ -100,6 +107,9 @@ nonisolated extension Interpreter {
                                                call: context.recording(charsCrux(chars)),
                                                members: context.recording.pieces(chars.map { Origin.item($0) })))]
         }
+        .described(
+            "Copies the top n chars into a string, leaving them: `n .stringFromChars`, n clamped to the stack's "
+            + "depth; the top char comes last.")
 
     /// A string of every char on `.char`, leaving them; empty if there are none.
     /// Its crux reads them back with `stringFromChars`, so it composes.
@@ -110,6 +120,9 @@ nonisolated extension Interpreter {
                                                call: context.recording(charsCrux(chars)),
                                                members: context.recording.pieces(chars.map { Origin.item($0) })))]
         }
+        .described(
+            "Copies the whole char stack into a string, leaving it; the bottom char comes first, and an empty "
+            + "stack gives an empty string.")
 
 
     // MARK: - A string and its pieces
@@ -123,6 +136,9 @@ nonisolated extension Interpreter {
             guard !separator.isEmpty else { return s.map { String($0) } }
             return s.split(separator: separator, omittingEmptySubsequences: false).map(String.init)
         }
+        .described(
+            "Splits: `s p .stringSplitOn` gives the pieces of s between occurrences of p, empty pieces kept; an "
+            + "empty p splits s into chars.")
 
     /// `v sep .vecStringJoin`: the strings of `v` with `sep` between each two.
     static let vecStringJoin_Behavior =
@@ -130,6 +146,7 @@ nonisolated extension Interpreter {
                            gives: StringItem.self) { v, separator in
             v.joined(separator: separator)
         }
+        .described("Joins: `v p .vecStringJoin` gives the strings of v with p between each two.")
 
 
     // MARK: - The family

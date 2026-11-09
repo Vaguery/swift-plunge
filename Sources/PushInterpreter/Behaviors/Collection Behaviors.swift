@@ -55,6 +55,10 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: extremePosition(x.value, greatest: greatest, by: precedes))
         }
+        .described(
+            "Pushes the \(greatest ? "greatest" : "least") element, leaving the vector"
+            + (V.Scalar.pushStack == .double ? "; NaN counts as greater than every number" : "")
+            + "; refuses an empty vector.")
     }
 
 
@@ -72,6 +76,7 @@ nonisolated extension Interpreter {
             }
             return total
         }
+        .described("Sums the elements, leaving the vector; an empty vector gives 0; refuses on overflow.")
 
     /// The sum of a vecDouble's elements; 0 for an empty one. Refuses a result
     /// that is not finite, as `doubleAdd` does.
@@ -81,6 +86,8 @@ nonisolated extension Interpreter {
             guard total.isFinite else { throw Refusal("Overflow in .vecDoubleSum") }
             return total
         }
+        .described(
+            "Sums the elements, leaving the vector; an empty vector gives 0; refuses a result that is not finite.")
 
 
     // MARK: - Greatest and least
@@ -107,6 +114,9 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: extremePosition(Array(x.value), greatest: greatest, by: <))
         }
+        .described(
+            "Pushes the \(greatest ? "greatest" : "least") char of the string, leaving the string; refuses an "
+            + "empty string.")
     }
 
     static let stringMax_Behavior = stringExtremeBehavior(.stringMax, greatest: true)
@@ -133,6 +143,7 @@ nonisolated extension Interpreter {
             let origins = x.origins()
             return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
         }
+        .described("Removes repeated elements, keeping each first occurrence in order.")
     }
 
     /// Keeps the elements of the first vector that are (`keeping: true`) or are
@@ -146,6 +157,9 @@ nonisolated extension Interpreter {
             let origins = x.origins(0)
             return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
         }
+        .described(
+            "Filters: `a b .\(instruction)` keeps the elements of a that "
+            + "\(keeping ? "also occur" : "do not occur") in b, in a's order, repeats included.")
     }
 
     static func isSubsetBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior
@@ -153,6 +167,7 @@ nonisolated extension Interpreter {
         Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { x, y in
             Set(y).isSuperset(of: x)
         }
+        .described("Tells whether every element of a occurs in b: `a b .\(instruction)`, leaving both.")
     }
 
     static let vecBoolDistinct_Behavior = distinctBehavior(.vecBoolDistinct, making: VecBoolItem.self)
@@ -186,6 +201,7 @@ nonisolated extension Interpreter {
             let origins = x.origins()
             return Built(String(kept.map { characters[$0] }), members: kept.map { origins[$0] })
         }
+        .described("Removes repeated chars, keeping each first occurrence in order.")
 
     static func stringFilterBehavior(_ instruction: PushInstruction, keeping: Bool) -> Behavior {
         Behavior.assembling(instruction, takes: StringItem.self, StringItem.self, gives: StringItem.self) { x, y in
@@ -195,6 +211,9 @@ nonisolated extension Interpreter {
             let origins = x.origins(0)
             return Built(String(kept.map { characters[$0] }), members: kept.map { origins[$0] })
         }
+        .described(
+            "Filters: `a b .\(instruction)` keeps the chars of a that \(keeping ? "also occur" : "do not occur") "
+            + "in b, in a's order, repeats included.")
     }
 
     static let stringIntersect_Behavior = stringFilterBehavior(.stringIntersect, keeping: true)
@@ -204,6 +223,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.stringIsSubset, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { x, y in
             Set(y).isSuperset(of: x)
         }
+        .described("Tells whether every char of a occurs in b: `a b .stringIsSubset`, leaving both.")
 
     // Code: the root items, compared by value (Design Principles §9), so the one
     // multitype collection gets set operations too. Each kept item is the item
@@ -219,21 +239,32 @@ nonisolated extension Interpreter {
             for item in x.value where !contains(kept, item) { kept.append(item) }
             return kept
         }
+        .described(
+            "Removes repeated items from a block, comparing by value and keeping each first occurrence in order.")
 
     static let codeIntersect_Behavior =
         Behavior.composing(.codeIntersect, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
             x.value.filter { contains(y.value, $0) }
         }
+        .described(
+            "Filters: `a b .codeIntersect` keeps the items of block a that also occur in b, compared by value, in "
+            + "a's order, repeats included.")
 
     static let codeDifference_Behavior =
         Behavior.composing(.codeDifference, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
             x.value.filter { !contains(y.value, $0) }
         }
+        .described(
+            "Filters: `a b .codeDifference` keeps the items of block a that do not occur in b, compared by value, "
+            + "in a's order, repeats included.")
 
     static let codeIsSubset_Behavior =
         Behavior.operation(.codeIsSubset, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { x, y in
             x.allSatisfy { contains(y, $0) }
         }
+        .described(
+            "Tells whether every item of block a occurs in block b, compared by value: `a b .codeIsSubset`, "
+            + "leaving both.")
 
 
     // MARK: - The family

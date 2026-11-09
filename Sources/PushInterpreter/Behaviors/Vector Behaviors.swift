@@ -84,6 +84,7 @@ nonisolated extension Interpreter {
         Behavior.assembling(instruction, takes: V.self, gives: V.self) { x in
             Built(x.value.dropLast(1), members: x.origins().dropLast(1))
         }
+        .described("Drops the last element; an empty vector stays empty.")
     }
 
     // returns a new vector (of the given type) with the scalar argument appended
@@ -93,6 +94,7 @@ nonisolated extension Interpreter {
             result.append(y.value)
             return Built(result, members: x.origins() + [Origin.item(y)])
         }
+        .described("Appends \(V.Scalar.pushStack.noun): `v x .\(instruction)` gives v with x added at the end.")
     }
 
     // returns a new vector formed by placing y's elements before x's
@@ -100,17 +102,20 @@ nonisolated extension Interpreter {
         Behavior.assembling(instruction, takes: V.self, V.self, gives: V.self) { y, x in
             Built(y.value + x.value, members: y.origins(0) + x.origins(1))
         }
+        .described("Joins two vectors: `a b .\(instruction)` gives the elements of a followed by those of b.")
     }
 
     // returns whether the vector argument is empty
     static func itemIsEmptyBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.operation(instruction, reads: V.self, gives: BoolItem.self) { x in x.isEmpty }
+        .described("Tells whether the vector has no elements, leaving it.")
     }
 
     // returns the number of elements in the vector argument — non-destructively:
     // the vector is read, not consumed, and stays on its stack for reuse.
     static func lengthBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.operation(instruction, reads: V.self, gives: IntItem.self) { x in x.count }
+        .described("Counts the elements, leaving the vector.")
     }
 
     // returns a new vector with the first element removed
@@ -118,6 +123,7 @@ nonisolated extension Interpreter {
         Behavior.assembling(instruction, takes: V.self, gives: V.self) { x in
             Built(Array(x.value.dropFirst(1)), members: Array(x.origins().dropFirst(1)))
         }
+        .described("Drops the first element; an empty vector stays empty.")
     }
 
     // returns a new vector with the elements in reverse order
@@ -125,6 +131,7 @@ nonisolated extension Interpreter {
         Behavior.assembling(instruction, takes: V.self, gives: V.self) { x in
             Built(Array(x.value.reversed()), members: x.origins().reversed())
         }
+        .described("Reverses the order of the elements.")
     }
 
     // returns the first y elements of the vector (y clamped to [0, count])
@@ -134,6 +141,8 @@ nonisolated extension Interpreter {
             let idx = range - (min(range, max(y.value, 0)))
             return Built(Array(x.value.dropLast(idx)), members: Array(x.origins().dropLast(idx)))
         }
+        .described(
+            "Keeps the front: `v n .\(instruction)` gives the first n elements, n clamped to 0 through the length.")
     }
 
     // returns the vector with the first y elements removed (y clamped to [0, count])
@@ -143,6 +152,9 @@ nonisolated extension Interpreter {
             let idx = (min(range, max(y.value, 0)))
             return Built(Array(x.value.dropFirst(idx)), members: Array(x.origins().dropFirst(idx)))
         }
+        .described(
+            "Drops the front: `v n .\(instruction)` removes the first n elements, n clamped to 0 through the "
+            + "length.")
     }
 
     // returns the last y elements of the vector (y clamped to [0, count]): the
@@ -152,6 +164,8 @@ nonisolated extension Interpreter {
             let count = min(x.value.count, max(y.value, 0))
             return Built(Array(x.value.suffix(count)), members: Array(x.origins().suffix(count)))
         }
+        .described(
+            "Keeps the back: `v n .\(instruction)` gives the last n elements, n clamped to 0 through the length.")
     }
 
     // returns the vector with the last y elements removed (y clamped to [0, count])
@@ -160,12 +174,15 @@ nonisolated extension Interpreter {
             let count = min(x.value.count, max(y.value, 0))
             return Built(Array(x.value.dropLast(count)), members: Array(x.origins().dropLast(count)))
         }
+        .described(
+            "Drops the back: `v n .\(instruction)` removes the last n elements, n clamped to 0 through the length.")
     }
 
     // returns whether the vector contains the scalar argument (non-destructively:
     // both the vector and the needle survive the read)
     static func containsBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: BoolItem.self) { x, y in x.contains(y) }
+        .described("Tells whether x is an element: `v x .\(instruction)`, leaving both.")
     }
 
     // returns the first element of the vector; an error if it is empty
@@ -177,6 +194,7 @@ nonisolated extension Interpreter {
             // The item that went in, if it kept a history (`Containment`).
             return Extraction(x, at: 0)
         }
+        .described("Pushes the first element, consuming the vector; refuses an empty vector.")
     }
 
     // returns the last element of the vector; an error if it is empty
@@ -187,6 +205,7 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: x.value.count - 1)
         }
+        .described("Pushes the last element, consuming the vector; refuses an empty vector.")
     }
 
     // returns the element at position y, clamped to the vector (`Position.item`);
@@ -199,6 +218,9 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: Position.item(y.value, count: range))
         }
+        .described(
+            "Picks an element: `v i .\(instruction)` gives element i, i clamped into range, consuming v; refuses "
+            + "an empty vector.")
     }
 
     // `Nth` without consuming: the vector and the index stay where they were
@@ -212,6 +234,9 @@ nonisolated extension Interpreter {
             }
             return Extraction(x, at: Position.item(y.value, count: range))
         }
+        .described(
+            "Picks an element: `v i .\(instruction)` gives element i, i clamped into range, leaving both; refuses "
+            + "an empty vector.")
     }
 
     // returns the index of the first occurrence of the scalar argument; an error
@@ -225,6 +250,9 @@ nonisolated extension Interpreter {
             }
             return result
         }
+        .described(
+            "Finds x: `v x .\(instruction)` gives the index of its first occurrence, leaving both; refuses when x "
+            + "is absent.")
     }
 
     // returns the number of occurrences of the scalar argument in the vector
@@ -233,6 +261,7 @@ nonisolated extension Interpreter {
         Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: IntItem.self) { x, y in
             x.count(where: { $0 == y })
         }
+        .described("Counts x: `v x .\(instruction)` gives how many elements equal x, leaving both.")
     }
 
     /// A lexicographic ordering comparison of two vectors — the vector analog of
@@ -292,6 +321,9 @@ nonisolated extension Interpreter {
         Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { needle, hay in
             firstSubIndex(hay, needle) != nil
         }
+        .described(
+            "Tells whether a run occurs: `w v .\(instruction)` asks if v holds w contiguously, leaving both; an "
+            + "empty w always matches.")
     }
 
     /// The index of the first contiguous occurrence of the sub-vector; an error if
@@ -303,6 +335,9 @@ nonisolated extension Interpreter {
             }
             return found
         }
+        .described(
+            "Finds a run: `w v .\(instruction)` gives where w first occurs contiguously in v, leaving both; an "
+            + "empty w gives 0; refuses when absent.")
     }
 
     /// The number of non-overlapping occurrences of the sub-vector.
@@ -310,6 +345,9 @@ nonisolated extension Interpreter {
         Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { needle, hay in
             subCount(hay, needle)
         }
+        .described(
+            "Counts a run: `w v .\(instruction)` gives how many non-overlapping times w occurs in v, leaving both; "
+            + "an empty w counts 0.")
     }
 
     /// Replace **every** non-overlapping occurrence of a sub-vector with another
@@ -322,6 +360,9 @@ nonisolated extension Interpreter {
             Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
                   members: replacingSubSlots(subject, needle, repl, firstOnly: false))
         }
+        .described(
+            "Replaces runs: `v w r .\(instruction)` puts r in place of every non-overlapping w in v, left to "
+            + "right; an empty w changes nothing.")
     }
 
     /// Replace only the **first** occurrence of a sub-vector. Consumes, like its
@@ -331,6 +372,9 @@ nonisolated extension Interpreter {
             Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
                   members: replacingSubSlots(subject, needle, repl, firstOnly: true))
         }
+        .described(
+            "Replaces a run: `v w r .\(instruction)` puts r in place of the first w in v; an empty w changes "
+            + "nothing.")
     }
 
     /// Substitute `repl` for occurrences of `needle` in `hay`, left to right,
@@ -383,6 +427,7 @@ nonisolated extension Interpreter {
             result.removeAll(where: { $0 == y.value })
             return Built(result, members: zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1))
         }
+        .described("Removes every x: `v x .\(instruction)` gives v without its elements equal to x.")
     }
 
     // ( vec target replacement .vecXReplace )
@@ -397,6 +442,7 @@ nonisolated extension Interpreter {
             return Built(result,
                          members: zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 })
         }
+        .described("Substitutes: `v a b .\(instruction)` replaces every element equal to a with b.")
     }
 
     // ( vec target replacement .vecXReplaceFirst )
@@ -417,6 +463,9 @@ nonisolated extension Interpreter {
             }
             return Built(result, members: members())
         }
+        .described(
+            "Substitutes once: `v a b .\(instruction)` replaces the first element equal to a with b; no match "
+            + "leaves v unchanged.")
     }
 
     // ( vec position replacement .vecXSet )
@@ -442,6 +491,9 @@ nonisolated extension Interpreter {
             }
             return Built(result, members: members())
         }
+        .described(
+            "Overwrites an element: `v x i .\(instruction)` puts x at index i, i clamped into range; refuses an "
+            + "empty vector.")
     }
 
     // ( vec idx1 idx2 .vecXSubVec )
@@ -465,6 +517,9 @@ nonisolated extension Interpreter {
             }
             return Built(result, members: span.map { Array(x.origins()[$0]) } ?? [])
         }
+        .described(
+            "Slices: `v i j .\(instruction)` gives elements i through j inclusive, each clamped into range; j "
+            + "below i gives just element i.")
     }
 
     /// Snips a vector into two pieces at the indexed position, pushing **both** to
@@ -497,6 +552,9 @@ nonisolated extension Interpreter {
                 Built(suffix, members: Array(x.origins()[idx...]))
             )
         }
+        .described(
+            "Splits at a gap: `v i .\(instruction)` pushes the first i elements, then the rest on top, i clamped "
+            + "to 0 through the length.")
     }
 
     // ( vec .vecXPushAll )
@@ -582,6 +640,9 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described(
+            "Builds a vector of the top n \(V.Scalar.pushStack.plural), consuming them, where n is the length of a "
+            + "template vector, also consumed; the top \(V.Scalar.pushStack.noun) comes last.")
     }
 
     // MARK: - Read-only constructors (the stack "backup" / snapshot)
@@ -642,6 +703,9 @@ nonisolated extension Interpreter {
                     )
                 ]
         }
+        .described(
+            "Copies the top n \(V.Scalar.pushStack.plural) into a vector, leaving them: `n .\(instruction)`, n "
+            + "clamped to the stack's depth; the top \(V.Scalar.pushStack.noun) comes last.")
     }
 
     /// Read the **whole** `X` stack into a new vector, leaving it in place. An
@@ -669,6 +733,9 @@ nonisolated extension Interpreter {
                     )
                 ]
         }
+        .described(
+            "Copies the whole \(V.Scalar.pushStack.noun) stack into a vector, leaving it; the bottom "
+            + "\(V.Scalar.pushStack.noun) comes first, and an empty stack gives an empty vector.")
     }
 
     static func pushAllBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
@@ -687,6 +754,9 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described(
+            "Pushes every element onto the \(V.Scalar.pushStack.noun) stack, front to back, so the last element "
+            + "ends on top; consumes the vector.")
     }
 
     /// Runs the mouse once per element of the vector, leaving each element on the
@@ -721,6 +791,9 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described(
+            "Loops over the vector: for each element, pushes it to the \(V.Scalar.pushStack.noun) stack and runs "
+            + "the block taken from `.code`, which returns there afterward.")
     }
 
     /// Language assignments
@@ -1009,12 +1082,24 @@ nonisolated extension Interpreter {
     // "not greater (less) than", which a NaN made true both ways (fixed 2026-11-08).
     static let vecDoubleLT_Behavior =
         comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
+        .described(
+            "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLT` gives a < b; a "
+            + "NaN element ties with anything.")
     static let vecDoubleLTE_Behavior =
         comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) || $0 == $1 }
+        .described(
+            "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a "
+            + "= b; a NaN element ties in the order but is never equal.")
     static let vecDoubleGT_Behavior =
         comparisonBehavior(.vecDoubleGT, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) }
+        .described(
+            "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a "
+            + "NaN element ties with anything.")
     static let vecDoubleGTE_Behavior =
         comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) || $0 == $1 }
+        .described(
+            "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a "
+            + "= b; a NaN element ties in the order but is never equal.")
 
     // ( [1,1,2,3] .vecDoublePushAll)
     //
@@ -1187,12 +1272,16 @@ nonisolated extension Interpreter {
 
     static let vecIntLT_Behavior =
         comparisonBehavior(.vecIntLT, making: VecIntItem.self) { $0.lexicographicallyPrecedes($1) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntLT` gives a < b.")
     static let vecIntLTE_Behavior =
         comparisonBehavior(.vecIntLTE, making: VecIntItem.self) { !$1.lexicographicallyPrecedes($0) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntLTE` gives a ≤ b.")
     static let vecIntGT_Behavior =
         comparisonBehavior(.vecIntGT, making: VecIntItem.self) { $1.lexicographicallyPrecedes($0) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntGT` gives a > b.")
     static let vecIntGTE_Behavior =
         comparisonBehavior(.vecIntGTE, making: VecIntItem.self) { !$0.lexicographicallyPrecedes($1) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntGTE` gives a ≥ b.")
 
     // ( [1,1,2,3] .vecIntPushAll)
     //
@@ -1369,12 +1458,16 @@ nonisolated extension Interpreter {
 
     static let vecStringLT_Behavior =
         comparisonBehavior(.vecStringLT, making: VecStringItem.self) { $0.lexicographicallyPrecedes($1) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLT` gives a < b.")
     static let vecStringLTE_Behavior =
         comparisonBehavior(.vecStringLTE, making: VecStringItem.self) { !$1.lexicographicallyPrecedes($0) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLTE` gives a ≤ b.")
     static let vecStringGT_Behavior =
         comparisonBehavior(.vecStringGT, making: VecStringItem.self) { $1.lexicographicallyPrecedes($0) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGT` gives a > b.")
     static let vecStringGTE_Behavior =
         comparisonBehavior(.vecStringGTE, making: VecStringItem.self) { !$0.lexicographicallyPrecedes($1) }
+        .described("Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGTE` gives a ≥ b.")
 
     // ( [1,1,2,3] .vecStringPushAll)
     //
@@ -1518,6 +1611,9 @@ nonisolated extension Interpreter {
             return [Router(resting, collected)] + Interpreter.iteratorFarewell(iterator)
         }
     )
+    .described(
+        "Drains an iterator into a vector of what it emits, or of what its block makes of each (chars then make a "
+        + "string); refuses plain chars or mixed types, handing the iterator back.")
 
 
     static let vectorSharedBehaviors: [PushInstruction : Behavior] =
