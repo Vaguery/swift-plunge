@@ -621,13 +621,24 @@ selectivity, more than a spread of types.
   - the first sub-block of a code block whose head matches.
 
   Each lookup then has two homes, the stack and the collection.
-- **Every lookup has two output forms:**
-  - **the item**, copied;
-  - **its position**: the depth on a stack, or the index in a collection,
-    onto `.int`.
-
-  The position form subsumes `xStackIndexOf`. It also hands the index to
-  `Nth`, `Yank` or `Set`, so "find, then act there" is two steps.
+- **Every lookup returns both the item and its position** (the user's
+  refinement of two separate forms). A copy of the item lands on its own stack;
+  the depth on a stack, or the index in a collection, goes onto `.int`. The
+  declaration reads `.results([X, .int])`.
+  - **One instruction per kind and home**, not two.
+  - The position subsumes `xStackIndexOf` and hands the index to `Nth`, `Yank`
+    or `Set`, so "find, then act there" is two steps.
+  - The index is the extra int that `.int` is short of (§10's argument). A
+    program that wanted only the item leaves an int for the next consumer.
+  - **When both land on `.int`** (a lookup among ints), the item goes on top
+    and its index just beneath; `.intSwap` reaches the index.
+  - **A depth is counted after the copy is pushed**, so it is the depth that
+    `xYank` or `xYankDup` would need afterwards to reach the original.
+  - **Provenance differs between the two homes:**
+    - An index in a collection depends only on the collection and the probe,
+      so it replays (each result recording its selecting crux, law 5).
+    - A depth on a stack depends on the stack's arrangement, so it records a
+      stand-in, as `StackDepth` does (law 4b).
 
 ### Three dictionaries, none of them a type
 
