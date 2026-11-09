@@ -2,8 +2,8 @@
 //  CruxToFunction Diagnostics.swift
 //  PushInterpreterTests
 //
-//  Checks the logic behind the planned crux-to-function work (Roadmap #23,
-//  `codeFuncFromXCrux`): can a resolved value's crux be turned into a reusable
+//  Checks the logic behind the planned crux-to-function work
+//  (`codeFuncFromXCrux`): can a resolved value's crux be turned into a reusable
 //  *function* — a CodeItem mapping an input of a chosen type to an output of a
 //  chosen type — by deleting one leaf and letting the "hole" read from the stack?
 //
@@ -21,7 +21,7 @@
 //
 //  WHAT THE RUNS SHOW (seed-stable; see each test's printout):
 //   - VALIDITY IS FREE. Deleting a leaf gives a runnable, correctly-typed program
-//     ~100% of the time, at every crux size (total semantics, §14).
+//     ~100% of the time, at every crux size (total semantics).
 //   - FUNCTIONHOOD depends on the chosen leaf PROPAGATING to the output, not on
 //     crux size. For fully-propagating arithmetic (D1) ~97% of curries are input-
 //     sensitive even at 25 nodes; the killer is MASKING (min/max/mod, discarded
@@ -30,7 +30,7 @@
 //     with size): deletion reads the arg at the stack BOTTOM — a repositioned
 //     function — while substituting `.inputN` at the hole reproduces the original
 //     computation with one value replaced (the faithful curry). So the sound crux-
-//     to-function transform is SUBSTITUTE-an-input; delete-a-leaf (Roadmap #23)
+//     to-function transform is SUBSTITUTE-an-input; delete-a-leaf
 //     also yields functions, just repositioned ones. Both are fine for search.
 //   - `.inputN` needs no transform at all: the input IS the hole, read at the right
 //     point. D3 harvests (int,int)->int functions this way with zero surgery.
@@ -39,11 +39,10 @@
 //   - Reduce is NOT missing: a binary-op CodeItem body under `vecXIterate` with a
 //     primed accumulator IS a fold (see D4). At most it wants a sugar constructor.
 //   - `map` is a side-effect today; map-COLLECT (gather what the body left back
-//     into a vector) is the one real hole — the "pseudofunction" accumulator,
-//     Roadmap #A.2.
+//     into a vector) is the one real hole — the "pseudofunction" accumulator.
 //   - A function is a CodeItem and `.code` is the function stack. No `.function`
 //     type and no sieve are needed to RUN one: the iterate family already consumes
-//     a body off `.code`, and total semantics (§14) make signature-matching
+//     a body off `.code`, and total semantics make signature-matching
 //     dynamic. Signatures matter only at search/construction time (D3), read off a
 //     crux's leaf-types and result-type.
 //

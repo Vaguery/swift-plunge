@@ -72,9 +72,9 @@ struct TagsTests {
         #expect(Interpreter.instructions(role: .input).count == 10)
         // 168 once the 12 `…Eq` moved to `.comparison`, where they always
         // belonged (`Comparison Behaviors.swift`); 195 with `.binding`'s family (14)
-        // and `xDeleteAtDepth` on the 13 family stacks (coverage audit, step 5).
+        // and `xDeleteAtDepth` on the 13 family stacks (2026-11-09).
         #expect(Interpreter.instructions(role: .combinator).count == 195)
-        // `execEq` was removed (Roadmap #26); `bindingEq` came with `.binding`.
+        // `execEq` was removed; `bindingEq` came with `.binding`.
         #expect(Interpreter.instructions(role: .comparison).count == 40,
                 "12 Eq + 28 orderings")
 
@@ -87,8 +87,8 @@ struct TagsTests {
             - Interpreter.instructions(role: .input).count
         let furniture = Double(Interpreter.instructions(role: .combinator).count)
             / Double(notEnvironment)
-        // Lowered from 0.30 on 2026-11-09: the coverage audit's additions are all
-        // `.other` (0.29 after the set operations, ~0.24 when the audit is built).
+        // Lowered from 0.30 on 2026-11-09: that day's additions are all `.other`
+        // (0.29 after the set operations, ~0.24 once all of them were built).
         #expect(furniture > 0.20 && furniture < 0.42)
     }
 

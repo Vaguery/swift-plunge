@@ -382,8 +382,8 @@ struct VecBoolBehaviorTests {
 
     /// **The order changed here, deliberately.** This used to reverse before
     /// pushing, so element 0 landed on top; it now walks front to back like
-    /// everything else, so the LAST element lands on top. See "Collections are
-    /// walked front-to-back" in "Notes on Push/Design Principles.md".
+    /// everything else, so the LAST element lands on top: collections are
+    /// walked front-to-back.
     ///
     /// It also emits one element per pass rather than exploding, so the elements
     /// do not appear until the loop runs.

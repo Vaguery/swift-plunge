@@ -92,7 +92,7 @@ struct RandomCodeTests {
         #expect(abs((realized[.combinator] ?? 0) - fraction(.combinator)) < 0.02)
         #expect(abs((realized[.constant] ?? 0) - fraction(.constant)) < 0.02)
         #expect((realized[.input] ?? 0) < 0.03, "inputs are a sliver of the language")
-        // 0.20, not 0.25, since 2026-11-09: the coverage audit added only `.other`.
+        // 0.20, not 0.25, since 2026-11-09: that day's additions are all `.other`.
         #expect(fraction(.combinator) > 0.20, "furniture is a large minority")
     }
 

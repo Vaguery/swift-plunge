@@ -2,7 +2,7 @@
 //  Lookup Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Pattern lookup on the stacks (Behavior coverage audit §8): the probe is
+//  Pattern lookup on the stacks: the probe is
 //  read; a copy of the first match below it goes on top and its position onto
 //  `.int`; a miss is a refusal; `…From` continues a walk.
 //

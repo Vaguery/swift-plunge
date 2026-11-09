@@ -2,7 +2,7 @@
 //  Typed Operation Tests.swift
 //  PushInterpreterTests
 //
-//  The typed operation constructor (Roadmap #44): arguments declared in written
+//  The typed operation constructor: arguments declared in written
 //  order, `call` and requirements derived from them, refusals routed to `.error`.
 //
 

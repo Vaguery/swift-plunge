@@ -33,9 +33,9 @@
 //
 //  ## Every tag says where its judgment came from
 //
-//  Design Principles §13 requires a limit to record whether its number is chosen,
-//  inherited, or derived, *"because a number with no stated reason is
-//  indistinguishable from cargo."* A judgment tag is the same object and gets the
+//  Every limit in `Interpreter` records whether its number is chosen, inherited,
+//  or derived, because a number with no stated reason is indistinguishable from
+//  cargo. A judgment tag is the same object and gets the
 //  same discipline. `.risky` on `.execY` was first **inherited** — from Clojush and
 //  Push3 experience — and has since been **measured** here (see `.risky` below);
 //  saying which is the difference between a finding and a rumour.
@@ -53,8 +53,8 @@
 //  worth declaring is usually worth trying to measure before declaring it.
 //
 
-/// Where a tag's judgment came from — the §13 taxonomy, applied to categories
-/// rather than to numbers.
+/// Where a tag's judgment came from — the taxonomy `Interpreter`'s limits use,
+/// applied to categories rather than to numbers.
 public nonisolated enum TagProvenance: String, Sendable, Codable, Hashable {
     /// Taken from another Push implementation for comparability. Change it freely;
     /// the cost is that runs stop being comparable with theirs.
@@ -151,7 +151,7 @@ public nonisolated extension InstructionTag {
         }
     }
 
-    /// **Why**, not just *that* — the half §13 says is the whole point.
+    /// **Why**, not just *that* — the half that is the whole point.
     var rationale: String {
         switch self {
         case .reEntrant:

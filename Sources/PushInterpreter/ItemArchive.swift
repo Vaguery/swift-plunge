@@ -2,7 +2,7 @@
 //  ItemArchive.swift
 //  PushInterpreter
 //
-//  Opt-in history encoding (Roadmap #22, ruling P8; 2026-11-08). `AnyItem`
+//  Opt-in history encoding. `AnyItem`
 //  encodes an item's value only; this encodes items with their histories.
 //
 

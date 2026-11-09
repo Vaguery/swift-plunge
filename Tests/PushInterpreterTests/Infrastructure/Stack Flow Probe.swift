@@ -9,9 +9,8 @@
 //  shallower. The point is to see where a random program's items will PILE UP and
 //  where they will DRY UP — which is the shape of argument starvation.
 //
-//  Disabled by default and run by hand, like `behaviorCoverageTest`. Its findings
-//  as of the iterator work are written up in "Notes on Push/Stack economics.md";
-//  re-run it after adding instructions and update that note if the balance moves.
+//  Disabled by default and run by hand, like `behaviorCoverageTest`. Re-run it
+//  after adding instructions to see whether the balance moves.
 //
 
 @testable import PushInterpreter

@@ -2,14 +2,14 @@
 //  Lookup Match Rates.swift
 //  PushInterpreterTests
 //
-//  Ruling 5 of the Behavior coverage audit: measure how often pattern lookups
+//  Measures how often pattern lookups
 //  find something in the stacks random programs actually build. Each attempt
 //  is one of three outcomes:
 //  - hit: a match was found and copied;
 //  - miss: there was a probe and something below it, and nothing matched;
 //  - starved: there was nothing to search (no probe, nothing below it, or no
 //    start index for a `…From`).
-//  The audit's prediction (§8): Nearest hits most, then Prefix, Containing and
+//  The prediction: Nearest hits most, then Prefix, Containing and
 //  Equal. A dictionary type would sit below all of them.
 //
 

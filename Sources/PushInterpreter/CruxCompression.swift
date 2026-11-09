@@ -15,8 +15,7 @@
 //  the actual pass count recorded compactly and reconstructably, a loop can run to
 //  `stepLimit` without its crux blowing up or being elided. Scoped to the exact-repeat case
 //  (`.execDoTimes`, no per-pass index); varying-index loops (`.execDoRange`) and
-//  recursion are the deferred harder cases. See
-//  `Notes on Push/Compressing looped provenance.md`.
+//  recursion are the deferred harder cases.
 //
 public nonisolated enum CruxCompression {
 

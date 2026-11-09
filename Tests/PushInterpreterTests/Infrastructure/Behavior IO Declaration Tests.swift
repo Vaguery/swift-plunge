@@ -2,7 +2,7 @@
 //  Behavior IO Declaration Tests.swift
 //  PushInterpreterTests
 //
-//  Every Behavior declares what it produces (`Produces`, Roadmap #41). These
+//  Every Behavior declares what it produces (`Produces`). These
 //  drive each one on varied, seeded stacks (the `BehaviorIOSurvey` sampler) and
 //  check that what it returns stays inside what it declares, so the language's
 //  input-output map is a property of the definitions that running confirms.

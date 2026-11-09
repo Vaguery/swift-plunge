@@ -2,7 +2,7 @@
 //  Find Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Lookup within a collection (Behavior coverage audit §8, step 4b): a query
+//  Lookup within a collection: a query
 //  that reads a container and a probe, and gives the first matching element
 //  with its index; and `IndexOf` from a start.
 //

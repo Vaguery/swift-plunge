@@ -56,7 +56,7 @@ struct SubVectorTests {
         doThis(.vecIntIndexOfSubVec, to: inty)
         #expect((topItem(inty, .int) as! IntItem).value == 1)
 
-        // Absent: an error, where it used to answer -1 (Roadmap #42).
+        // Absent: an error, where it used to answer -1.
         let miss = loadSearch([5, 1, 2, 3], [9, 9])
         doThis(.vecIntIndexOfSubVec, to: miss)
         #expect(stackString(miss, .int) == "[ ]")

@@ -28,8 +28,8 @@ struct InstructionTagTests {
     // MARK: - The channel itself
 
     /// Every shipped tag says what it means and where its judgment came from —
-    /// §13's rule for limits, applied to categories. A tag with no stated reason is
-    /// indistinguishable from cargo.
+    /// the rule for `Interpreter`'s limits, applied to categories. A tag with no
+    /// stated reason is indistinguishable from cargo.
     @Test func `every shipped tag records a rationale`() {
         for tag in InstructionTag.known {
             #expect(!tag.summary.isEmpty, "\(tag.rawValue) has no summary")
@@ -110,7 +110,7 @@ struct InstructionTagTests {
 
     // MARK: - cruxOnly
 
-    /// Roadmap #17: the iterator constructors want so many arguments that they
+    /// The iterator constructors want so many arguments that they
     /// starve in practice. Blocked for a long time on having nowhere to declare it.
     @Test func `cruxOnly covers the iterator constructors`() {
         let tagged = Interpreter.instructions(declaring: .cruxOnly)

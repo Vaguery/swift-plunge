@@ -3,7 +3,7 @@
 //  PushInterpreterTests
 //
 //  Abs, negate, sign and power for ints and doubles; sqrt, exp, log and the
-//  roundings for doubles (Behavior coverage audit, P5). Every result is the
+//  roundings for doubles. Every result is the
 //  intended one or an error.
 //
 

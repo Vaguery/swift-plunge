@@ -105,8 +105,8 @@ struct ExecBehaviorTests {
     }
 
     /// Exclusive of its destination, like every counted loop (inclusive from
-    /// 2026-11-07, Roadmap #25, until the user ruled on 2026-11-09 that the
-    /// ranges should agree): adjacent bounds make one pass, and so do equal ones.
+    /// 2026-11-07 until the user ruled on 2026-11-09 that the ranges should
+    /// agree): adjacent bounds make one pass, and so do equal ones.
     @Test func `execDoRange stops short of its destination`() {
         loadInts(inty, ints: [3, 4])
         // The body is a code argument now, so it waits on `.code`.
@@ -523,7 +523,7 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .int) == "[ 1 ]")
     }
 
-    /// `execEq` was removed (2026-11-07, Roadmap #26): blocks now land on `.code`
+    /// `execEq` was removed (2026-11-07): blocks now land on `.code`
     /// intact, so `( A ) ( B ) .codeEq` asks whether two pending things are the
     /// same, and its crux is an ordinary postfix one. This replaces
     /// `execEq works with inputs (bug fix)`.

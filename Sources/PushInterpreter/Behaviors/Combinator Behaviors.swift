@@ -95,7 +95,7 @@ nonisolated extension Interpreter {
     ///
     /// The box holds the slice **bottom-to-top**, i.e. the order a program would
     /// have written those items in, so walking it front-to-back lands them in
-    /// their original order (principle 6).
+    /// their original order.
     ///
     /// Provenance: a dup changes no value, so law 1 applies and the copies keep
     /// their own `call` untouched. That is why this family needs no `Nth` to
@@ -143,7 +143,7 @@ nonisolated extension Interpreter {
     /// special pleading. `10_000` copies is now a long loop rather than an error —
     /// it fills the stack and reports *that*, which is the truth. If you find
     /// yourself writing a size check for one instruction, you have found a loop in
-    /// disguise (see "Notes on Push/Design Principles.md").
+    /// disguise.
     ///
     /// Provenance: a dup changes no value, so law 1 applies and every copy keeps
     /// the original's `call` untouched.

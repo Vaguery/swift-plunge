@@ -13,7 +13,7 @@
 /// edge from a multiset of input stacks to one of a few output lists. It has cycles
 /// (`intInc` is `.int → .int`), so it is not itself a DAG; chaining backwards from
 /// the outputs a problem wants *builds* one, a provenance DAG, which is what a crux
-/// already is (*Behavior input-output map.md*).
+/// already is.
 public nonisolated struct InstructionSignature: Hashable, Sendable {
 
     /// The stacks it consumes from, and how many items from each. A variadic

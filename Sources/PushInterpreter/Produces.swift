@@ -12,7 +12,7 @@
 /// Errors are never listed. Any Behavior can starve (its `requirements` say when),
 /// and one tagged `.fallible` is a *partial* edge: outside its domain it writes
 /// `.error` instead of these outputs. The size limits are a separate filter after
-/// every edge (*Behavior input-output map.md*).
+/// every edge.
 ///
 /// Most of the language is `results`, a fixed list of stacks. The other cases are
 /// the shapes the 2026-11-08 survey found that a fixed list cannot state.

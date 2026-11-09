@@ -2,7 +2,7 @@
 //  Backward Chaining Tests.swift
 //  PushInterpreterTests
 //
-//  The first use of the input-output map (Roadmap #41): chaining backwards from
+//  The first use of the input-output map: chaining backwards from
 //  a wanted stack to a problem's inputs and constants. Sampled trees are run, and
 //  each must behave as the map says: leave one result on the wanted stack and
 //  nothing anywhere else.
@@ -59,15 +59,15 @@ struct BackwardChainingTests {
     static let distinctFloor: [PushStack: Double] = [.char: 0.08, .double: 0.08]
 
     /// The share of sampled programs that must reach their goal: a half, except
-    /// `.char`, measured at 147 of 300 once the coverage audit added char
+    /// `.char`, measured at 147 of 300 once the language gained char
     /// producers that refuse more often on random arguments (`stringMax` on an
     /// empty string, `charUpper` of `ß`).
     static let reachFloor: [PushStack: Double] = [.char: 0.45]
 
-    /// Left out of the sample: the `IndexOf…From` queries (step 4b of the
-    /// coverage audit). Uniform over trees weights an edge by the product of its
-    /// subtree counts, so these six three-argument queries came to root most
-    /// height-3 `.int` trees, and on random arguments they mostly find nothing:
+    /// Left out of the sample: the `IndexOf…From` queries. Uniform over trees
+    /// weights an edge by the product of its subtree counts, so these six
+    /// three-argument queries came to root most height-3 `.int` trees, and on
+    /// random arguments they mostly find nothing:
     /// reach fell to 74 of 300 for `.int`, 56 for `.char` and 78 for `.double`,
     /// whose trees take ints as indices. The arity bias is the chainer's
     /// (as for the iterator constructors, `cruxOnly`), not the language's.
@@ -102,7 +102,7 @@ struct BackwardChainingTests {
             cruxes.insert(CodeItem(Interpreter.cruxShape(top.crux())).pretty())
         }
         // A refusal deep in a tree can starve everything above it; most come from
-        // #42's errors on random constants (`IndexOf` finding nothing).
+        // refusals on random constants (`IndexOf` finding nothing).
         #expect(Double(reached) >= (Self.reachFloor[goal] ?? 0.5) * Double(trials),
                 "only \(reached) of \(trials) reached .\(goal)")
         #expect(Double(cruxes.count) >= (Self.distinctFloor[goal] ?? 0.9) * Double(reached),

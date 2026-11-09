@@ -189,7 +189,7 @@ struct IteratorCyclingTests {
     // MARK: - the edges
 
     /// `x % 0` **traps**, and a trap is a crashed interpreter rather than an
-    /// ErrorItem (§14). A cycle over nothing emits nothing, and nothing may
+    /// ErrorItem. A cycle over nothing emits nothing, and nothing may
     /// compute the index to find that out.
     @Test func `cycling an empty source does not divide by zero`() {
         let empty = cycling(5, over: [])

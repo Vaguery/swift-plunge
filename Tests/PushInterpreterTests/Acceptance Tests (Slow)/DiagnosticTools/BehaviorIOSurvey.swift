@@ -2,7 +2,7 @@
 //  BehaviorIOSurvey.swift
 //  PushInterpreterTests
 //
-//  Roadmap #41: a map of what every Behavior reads and writes. Inputs are
+//  A map of what every Behavior reads and writes. Inputs are
 //  declared (`requirements`); outputs are not, since a Behavior's results are
 //  `Router`s computed at run time. So this measures them: every instruction is
 //  driven many times on varied, seeded stacks, and two layers are recorded apart:

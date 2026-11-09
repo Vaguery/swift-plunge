@@ -81,7 +81,7 @@ struct CodeStage1Tests {
         #expect(stackString(f, .int) == "[ 2 ]", "false → else block ran")
     }
 
-    /// One block and a bool (ruling I1): true runs it; false hands it back to
+    /// One block and a bool: true runs it; false hands it back to
     /// `.code` untouched, where `execWhen` would discard it.
     @Test func `codeDoIf runs the block or hands it back`() {
         func run(_ condition: Bool) -> Interpreter {

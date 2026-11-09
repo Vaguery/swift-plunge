@@ -3,8 +3,7 @@
 //  PushInterpreter
 //
 //  A crux that builds each shared value once. Added 2026-11-07 for provenance
-//  completeness: see "Sharing" in
-//  `Notes on Push/Provenance and the crux.md`.
+//  completeness.
 //
 
 /// **Provenance is a DAG, and a crux used to be its tree.** When one value feeds

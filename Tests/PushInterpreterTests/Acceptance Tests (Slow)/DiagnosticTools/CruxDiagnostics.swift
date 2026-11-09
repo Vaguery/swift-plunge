@@ -61,7 +61,7 @@ enum CruxFailureKind: String, CaseIterable, Sendable {
     /// The value came back on top of litter. Invisible to any check that reads
     /// only `.first`, and harmless until the fragment is embedded as an argument,
     /// at which point the litter shifts every argument position of the enclosing
-    /// instruction. See Design Principles §1, the composition invariant.
+    /// instruction, breaking the composition invariant.
     case debris = "debris"
 }
 
@@ -223,8 +223,7 @@ func inspectCrux(
 
 
 /// How many items each stack holds once `inputs` and `constants` are loaded and
-/// nothing has run: the bindings `.binding` starts with (ruling 8 of the coverage
-/// audit), zero elsewhere.
+/// nothing has run: the bindings `.binding` starts with, zero elsewhere.
 func loadedBaseline(inputs: [PushInstruction: any Item],
                     constants: [PushInstruction: any Item]) -> [PushStack: Int] {
     let empty = Interpreter()

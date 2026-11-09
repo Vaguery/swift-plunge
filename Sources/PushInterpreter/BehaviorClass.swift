@@ -2,8 +2,7 @@
 //  BehaviorClass.swift
 //  PushInterpreter
 //
-//  What kind of thing a Behavior does to the interpreter's state (Roadmap #43;
-//  "Notes on Push/Error audit and Behavior classes.md").
+//  What kind of thing a Behavior does to the interpreter's state.
 //
 
 /// **What a Behavior does to the interpreter's whole state.**

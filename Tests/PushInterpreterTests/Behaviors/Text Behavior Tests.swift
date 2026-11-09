@@ -2,8 +2,7 @@
 //  Text Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Case, substring search, prefixes and suffixes, and trimming (Behavior
-//  coverage audit, P6).
+//  Case, substring search, prefixes and suffixes, and trimming.
 //
 
 @testable import PushInterpreter

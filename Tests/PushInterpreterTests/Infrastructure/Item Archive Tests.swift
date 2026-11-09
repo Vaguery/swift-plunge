@@ -3,7 +3,7 @@
 //  PushInterpreterTests
 //
 //  Opt-in history encoding: `ItemArchive` carries items with their histories,
-//  writing each shared node once (Roadmap #22, ruling P8; 2026-11-08).
+//  writing each shared node once.
 //
 
 import Foundation

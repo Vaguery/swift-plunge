@@ -380,8 +380,8 @@ struct VecDoubleBehaviorTests {
         inty.run(stepLimit: 10_000)
 
         // Front to back, so 333.0 was pushed last and is on top — the reverse of
-        // what it used to be, deliberately. See "Collections are walked
-        // front-to-back" in "Notes on Push/Design Principles.md".
+        // what it used to be, deliberately: collections are walked
+        // front-to-back.
         #expect(stackString(inty, .double) == "[ 333.0 22.0 1.0 ]")
 
         // Each element names its own index rather than how far down a pile it

@@ -59,7 +59,7 @@ nonisolated extension Interpreter {
     // Written order: the int (recorded first), then the string.
     //
     // Drops from the **front**, as `vecXDrop` does, so `stringTake n` and
-    // `stringDrop n` split a string the way they split a vector (ruling I15,
+    // `stringDrop n` split a string the way they split a vector (since
     // 2026-11-09; it used to drop from the end, which is now `stringDropLast`).
     static let stringDrop_Behavior =
         Behavior.assembling(.stringDrop, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
@@ -173,8 +173,8 @@ nonisolated extension Interpreter {
         // but the two families disagreeing meant an iterator walking a string
         // could not record the same way one walking a vector did. The crux then
         // stopped being a fixed point: re-running it produced a differently-worded
-        // crux for the same value. The fuzzer found it; see "Design Principles.md"
-        // on argument order being free only *across* stacks.
+        // crux for the same value. The fuzzer found it: argument order is free
+        // only *across* stacks.
         Behavior.extracting(.stringNth, takes: StringItem.self, IntItem.self) { x, y throws(Refusal) in
             guard !x.value.isEmpty else {
                 throw Refusal("Empty string in .stringNth", kind: .emptyCollection)

@@ -4,7 +4,7 @@
 //
 //  A loop's chain, over budget, is folded into a counted loop over its seed
 //  rather than elided (`CruxCompression.folded`), so a loop may run until
-//  `stepLimit` and keep its history (Roadmap §P step 3, #24; 2026-11-07).
+//  `stepLimit` and keep its history (since 2026-11-07).
 //
 
 @testable import PushInterpreter

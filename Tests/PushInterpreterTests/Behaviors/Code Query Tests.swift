@@ -102,7 +102,7 @@ struct CodeQueryTests {
         }
         #expect((topItem(run(tree, CodeItem([IntItem(1), IntItem(2)])), .int) as! IntItem).value == 1)
 
-        // Absent: an error, where it used to answer -1 (Roadmap #42).
+        // Absent: an error, where it used to answer -1.
         let missing = run(tree, CodeItem([IntItem(9)]))
         #expect(stackString(missing, .int) == "[ ]")
         let error = topItem(missing, .error)

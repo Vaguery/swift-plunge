@@ -482,8 +482,7 @@ struct IteratorBehaviorTests {
     /// contiguously and run as a block. Every other stack rests its elements, so
     /// only `.exec` notices. Here `.intInc` is copied and runs before the `7` it
     /// wants arrives — so it complains, and the loop carries on. Accepted as the
-    /// price of one uniform mechanism; see "Notes on Push/The first-class
-    /// iterator.md".
+    /// price of one uniform mechanism.
     @Test func `execDupItems walks a box of heterogeneous pending code`() {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.exec] = Deque([

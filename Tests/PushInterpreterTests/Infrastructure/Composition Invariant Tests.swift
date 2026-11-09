@@ -9,9 +9,8 @@
 //  This is the property that makes `crux()` compose: it flattens a call tree into
 //  one postfix program by concatenating fragments, which is only correct if each
 //  fragment leaves exactly its own value where the next instruction expects it.
-//  "Sieve arguments.md" flags this as an untested accident (its question 4) and
-//  recommends promoting it to a tested rule "regardless" — non-destructive queries
-//  are what force the issue, so the rule is tested here.
+//  That used to be an untested accident; non-destructive queries are what force
+//  the issue, so the rule is tested here.
 //
 //  The subtlety is that non-destructive queries keep their argument alive at run
 //  time (for reuse) but their *crux* must clean it up (pop what it read) so the

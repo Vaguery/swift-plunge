@@ -2,8 +2,7 @@
 //  Function Behaviors.swift
 //  PushInterpreter
 //
-//  Map, filter and reduce over vectors and strings (*Behavior coverage audit
-// *, P2; *Map and reduce from a crux-function.md*).
+//  Map, filter and reduce over vectors and strings.
 //
 //  **A function is a block with `.inputN` holes.** There is no function type:
 //  `( .input0 2 .intMultiply )` doubles its argument. Applying it runs the block
@@ -11,7 +10,7 @@
 //  (and, for reduce, `.input1`) rebound. A block harvested from a crux already
 //  has its holes, so it applies as it is.
 //
-//  The rulings that shape them (audit §11):
+//  The rules that shape them:
 //  - **The result is the last value the function pushed**, on whatever stack;
 //    so the result type follows the data, and `( .input0 .doubleFromInt )`
 //    maps a vecInt to a vecDouble.

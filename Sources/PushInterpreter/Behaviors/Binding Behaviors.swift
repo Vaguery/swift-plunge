@@ -2,8 +2,7 @@
 //  Binding Behaviors.swift
 //  PushInterpreter
 //
-//  The `.binding` stack: keyed bindings, each variable a stack of its own
-//  (*Behavior coverage audit* §9–§11, rulings 7–13; Roadmap #39).
+//  The `.binding` stack: keyed bindings, each variable a stack of its own.
 //
 //  **Binding.** `xRef` reads the top of X, leaves it, binds a copy to a fresh
 //  key and pushes the key onto `.int`. `bindingRekey` gives the top pair another

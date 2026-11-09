@@ -361,7 +361,7 @@ struct VecIntBehaviorTests {
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
         #expect(stackString(inty, .int) == "[ -3 1 7777 ]")
 
-        // An empty vector has no element: an error (Roadmap #42).
+        // An empty vector has no element: an error.
         doThis(.vecIntNth, to: inty)
         #expect(stackString(inty, .int) == "[ 1 7777 ]")
         #expect(callString(topItem(inty, .int)) == "( )")
@@ -432,8 +432,8 @@ struct VecIntBehaviorTests {
         inty.run(stepLimit: 10_000)
 
         // Front to back, so 333 was pushed last and is on top — this order is the
-        // reverse of what it used to be, deliberately. See "Collections are walked
-        // front-to-back" in "Notes on Push/Design Principles.md".
+        // reverse of what it used to be, deliberately: collections are walked
+        // front-to-back.
         #expect(stackString(inty, .int) == "[ 333 22 1 ]")
 
         // Each element names its own index rather than how far down a pile it
@@ -720,7 +720,7 @@ struct VecIntBehaviorTests {
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] 1 .vecIntTake )")
     }
 
-    /// The other end (ruling I15): `TakeLast`/`DropLast` split at n from the
+    /// The other end: `TakeLast`/`DropLast` split at n from the
     /// back, clamped like `Take`/`Drop`, and record their argument like them.
     @Test func `take and drop the last elements`() {
         func run(_ instruction: PushInstruction, _ n: Int) -> (String, String) {
@@ -738,7 +738,7 @@ struct VecIntBehaviorTests {
         #expect(run(.vecIntDropLast, -1).0 == "[ [1, 2, 3, 4, 5] ]")
     }
 
-    /// The `Peek` form reads (ruling I7): the vector and the index stay, the
+    /// The `Peek` form reads: the vector and the index stay, the
     /// element lands on top, and a fresh run of the crux leaves only the element.
     @Test func `peekNth reads without consuming`() {
         let inty = Interpreter.recordingProvenance()

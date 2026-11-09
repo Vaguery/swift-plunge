@@ -501,7 +501,7 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
 //    while `.vecFromIterator` is the special case for when the emissions happen to
 //    be uniform scalars. A tree walk emitting subtrees, a mixed block, a string's
 //    chars — all have an answer, because a block holds anything.
-//  - **Boxing costs nothing** (law 1b, and principle 8): an item put in and taken
+//  - **Boxing costs nothing** (law 1b): an item put in and taken
 //    back out is the item that went in, keeping its own `call`. The box is
 //    transparent to provenance, which is precisely what makes it usable as a
 //    universal channel rather than a lossy one.
@@ -511,7 +511,7 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
 //
 // The cost of that generality is that `.code` is the one stack where two items of
 // the same type are not interchangeable as arguments, which `.exec` shares and
-// `.iterator` now joins — see "Sieve arguments.md" on liquid types.
+// `.iterator` now joins.
 public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// **Anything, in any mixture, nested to any depth** — see "The universal box"
     /// above. This is the only heterogeneous container in the language.
@@ -610,7 +610,7 @@ nonisolated extension CodeItem {
     /// quoted 6, the Lisp reading of a one-element list. This is how the code
     /// search/replace instructions let a program name a **leaf**, not only a
     /// subtree: `(5)` searches for the leaf 5, `((5))` for the subtree `(5)`, and
-    /// `(1 2)` for the subtree `(1 2)`. See Design Principles.
+    /// `(1 2)` for the subtree `(1 2)`.
     var denotedItem: any Item {
         value.count == 1 ? value[0] : self
     }

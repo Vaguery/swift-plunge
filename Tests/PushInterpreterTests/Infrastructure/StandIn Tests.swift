@@ -4,7 +4,7 @@
 //
 //  A stand-in marks a literal that stands in for a lost history: it runs as that
 //  literal, names its cause, and survives into every downstream crux. See
-//  `StandInItem` and Roadmap §P (2026-11-07).
+//  `StandInItem`.
 //
 
 import Foundation

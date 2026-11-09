@@ -53,8 +53,7 @@ nonisolated indirect enum Derivation: Sendable {
 
     /// The tree as an **argument** to another instruction: a query is followed by
     /// the cleanup of what it read, so it leaves only its result, and a sibling
-    /// on the same stack is not displaced (the composition invariant, Design
-    /// Principles §1).
+    /// on the same stack is not displaced (the composition invariant).
     var fragment: [any Item] {
         switch self {
         case .leaf(let name):

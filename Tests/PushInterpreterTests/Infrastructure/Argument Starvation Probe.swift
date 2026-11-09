@@ -9,7 +9,7 @@
 //  was empty when it did?**
 //
 //  Argument starvation — an instruction wants an argument, the stack is empty,
-//  nothing happens — is one of Push's real design flaws (Design Principles, §5),
+//  nothing happens — is one of Push's real design flaws,
 //  and much of the iterator work is aimed at it. This measures it.
 //
 //  It does not read the `.error` stack. An error only says "`intAdd` missing
@@ -43,8 +43,8 @@
 //  global and Swift Testing runs suites in parallel, so a concurrent drawer breaks
 //  the seed. See `CruxFuzzTests.disabledTests`.
 //
-//  Companion to "Notes on Push/Stack economics.md", which measures the same
-//  problem from the other end — which stacks the *language* fills and drains.
+//  Companion to `Stack Flow Probe`, which measures the same problem from the
+//  other end — which stacks the *language* fills and drains.
 //
 
 import Foundation

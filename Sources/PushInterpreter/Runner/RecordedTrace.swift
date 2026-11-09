@@ -12,7 +12,7 @@
 /// its `call` provenance (`crux`) while the trace is in memory, while scalar
 /// targets keep their natural value. **Encoded, a trace keeps values only**:
 /// `AnyItem` drops histories. To carry them across a process boundary, encode
-/// the items as an `ItemArchive` (opt-in, Roadmap #22). A `nil` element is a step where the observed
+/// the items as an `ItemArchive` (opt-in). A `nil` element is a step where the observed
 /// position held nothing.
 public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     case items([AnyItem?])

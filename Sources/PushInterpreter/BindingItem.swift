@@ -2,8 +2,7 @@
 //  BindingItem.swift
 //  PushInterpreter
 //
-//  A keyed binding on the `.binding` stack (*Behavior coverage audit*
-//  §9–§11, rulings 7–13; Roadmap #39).
+//  A keyed binding on the `.binding` stack.
 //
 
 /// **A binding: an int key and the item bound to it.** The `.binding` stack holds

@@ -23,7 +23,7 @@ import DequeModule
 ///
 /// A fourth kind is designed for and deliberately absent: a **sieve**, resolving to
 /// the first item matching a predicate rather than to a position. Admitting it is
-/// most of why this shape exists; see "Notes on Push/Sieve arguments.md".
+/// most of why this shape exists.
 nonisolated enum Requirement: Sendable {
     /// Consume one item from the top of `stack` — the topmost not already claimed
     /// by an earlier requirement.
@@ -45,7 +45,7 @@ nonisolated enum Requirement: Sendable {
     /// The *crux* of a query result still reproduces only its fact: it records the
     /// pops that clean up what was read (`Behavior.reading`), because a fragment
     /// that left its argument behind would corrupt a same-stack sibling. Live
-    /// keeps the argument; the crux cleans it up. See Design Principles §6.
+    /// keeps the argument; the crux cleans it up.
     case reads(PushStack)
 
     /// Consume as many items from `stack` as `count` says, where `count` is

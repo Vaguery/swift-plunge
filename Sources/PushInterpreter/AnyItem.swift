@@ -62,10 +62,9 @@ nonisolated struct IteratorState: Codable, Sendable {
 /// Only an item's *type tag* and *value* are serialized. Its history (`call`,
 /// and a container's members) is deliberately omitted: items in a program (or
 /// a `crux` result) have none, and a decoded item comes back as a literal, its
-/// crux itself. To keep histories, encode an `ItemArchive` instead (opt-in,
-/// Roadmap #22). Every
-/// `Item.value` is a JSON-native type (or, for `CodeItem`, a nested array of
-/// items), so the encoding is total.
+/// crux itself. To keep histories, encode an `ItemArchive` instead (opt-in).
+/// Every `Item.value` is a JSON-native type (or, for `CodeItem`, a nested array
+/// of items), so the encoding is total.
 ///
 /// Transport `[any Item]` as `program.map(AnyItem.init)` and recover it as
 /// `decoded.map(\.item)`.

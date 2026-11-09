@@ -91,7 +91,7 @@ struct CutTests {
         #expect(stackString(inty, .vecInt) == "[ [1, 2, 3, 4, 5] ]")
     }
 
-    /// The index names a gap, `0…count`, and clamps (Roadmap #42; it used to wrap
+    /// The index names a gap, `0…count`, and clamps (it used to wrap
     /// modulo the length).
     @Test mutating func `the vecInt index clamps to the gaps`() {
         // Past the end is the last gap: everything in the prefix.

@@ -39,7 +39,7 @@
 //  ## Two measures, and the second is the interesting one
 //
 //  - **starvation** — how often an instruction wants an argument that is not
-//    there. Push's dominant failure mode (Design Principles §5).
+//    there. Push's dominant failure mode.
 //  - **composition** — the share of surviving items whose crux is bigger than a
 //    bare literal: computed from something, rather than handed over and left
 //    alone. Measured with `callWeight`, the size of an item's provenance tree,
@@ -70,8 +70,6 @@
 //
 //  Disabled and run alone: `fuzzRNG` is a shared global and Swift Testing runs
 //  suites in parallel, so a concurrent drawer breaks the seed.
-//
-//  Companion to "Notes on Push/Stack economics.md", Part 3.
 //
 
 import Foundation
@@ -109,7 +107,7 @@ struct InstructionMixProbe {
     /// **The runtime of a random program is heavy-tailed**, and it is not the step
     /// limit that lets it be: `stepLimit` bounds *steps*, and a step is not O(1)
     /// work. `.codeFromIterator` and `.vecFromIterator` can each collect up to a
-    /// thousand values in a single step (Design Principles §4 says that is fine —
+    /// thousand values in a single step (which is fine in principle —
     /// they produce one Item — and it is, semantically), so a loop around one costs
     /// millions of item constructions while the step counter reads 2000.
     ///

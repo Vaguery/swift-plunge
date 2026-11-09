@@ -44,7 +44,7 @@ nonisolated extension Interpreter {
         Behavior.operation(.intMin, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in min(y, x) }
         .described("Keeps the smaller of two ints.")
 
-    // The non-destructive siblings (ruling I7, named 2026-11-09): read the two
+    // The non-destructive siblings: read the two
     // ints, leave them, and push the larger (smaller). `Peek` is the language's
     // label for a read that does not consume, as on the iterator getters.
     static let intPeekMax_Behavior =

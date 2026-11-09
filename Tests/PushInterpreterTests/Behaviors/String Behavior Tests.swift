@@ -109,7 +109,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"abcdefghij\" ]")
         #expect(callString(topItem(inty, .string)) == "( 0 \"abcdefghij\" .stringDrop )")
 
-        // Drops from the front, as `vecXDrop` does (ruling I15, 2026-11-09).
+        // Drops from the front, as `vecXDrop` does (since 2026-11-09).
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"efghij\" ]")
@@ -127,7 +127,7 @@ struct StringBehaviorTests {
     }
 
     /// Both ends, both ways: `Take`/`Drop` split at n from the front,
-    /// `TakeLast`/`DropLast` at n from the back (ruling I15).
+    /// `TakeLast`/`DropLast` at n from the back.
     @Test func `take and drop at either end`() {
         func run(_ instruction: PushInstruction, _ n: Int) -> String {
             let inty = Interpreter()
@@ -539,7 +539,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ 11 2 -222 22 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghi\" \"abcdefghi\" \"abcdefghi\" ]")
 
-        // An empty string has no char: an error (Roadmap #42).
+        // An empty string has no char: an error.
         doThis(.stringNth, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .int) == "[ 2 -222 22 ]")
@@ -921,7 +921,7 @@ struct StringBehaviorTests {
         doThis(.stringNthWord, to: inty)
         #expect(topItem(inty, .string).pretty() == "\"three\"")
 
-        // A string with no words has no word to give back: an error (Roadmap #42).
+        // A string with no words has no word to give back: an error.
         loadInts(inty, ints: [0])
         loadStrings(inty, strings: ["   "])
         doThis(.stringNthWord, to: inty)

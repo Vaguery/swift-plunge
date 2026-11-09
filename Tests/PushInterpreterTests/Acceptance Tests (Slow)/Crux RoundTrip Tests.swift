@@ -117,7 +117,7 @@ struct CruxRoundTripTests {
     /// cannot find its arguments produces only an ErrorItem, which tests
     /// nothing.
     /// `recording` is set before the load, since the load itself records: the
-    /// inputs' bindings on `.binding` (ruling 8 of the coverage audit).
+    /// inputs' bindings on `.binding`.
     func seeded(depth: Int = 4, recording: Bool = true) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.config.recordsProvenance = recording
@@ -178,7 +178,7 @@ struct CruxRoundTripTests {
     ///   `.exec` and scattered instead of reaching `.code`. Now it comes to rest
     ///   there intact, and `( 2 3 ) ( 1 2 ) .codeAppend` finds what it needs.
     /// - `execEq` — its crux had to be **prefix** (provenance law 3b), which
-    ///   reproduced single-item operands only. It was removed (Roadmap #26):
+    ///   reproduced single-item operands only. It was removed:
     ///   `( A ) ( B ) .codeEq` asks the same question.
     ///
     /// Both halves of the assertion below matter: this fails if the set grows
@@ -263,7 +263,7 @@ struct CruxRoundTripTests {
 @Suite @MainActor
 struct CruxFuzzTests {
 
-    /// **Always on** (since 2026-11-07, Roadmap §P step 2). It used to be disabled
+    /// **Always on** (since 2026-11-07). It used to be disabled
     /// by default and run alone, because every draw came from one mutable global
     /// generator that any parallel suite could consume mid-generation (observed:
     /// 21,123 claims on one run, 17,016 on the next, same seed). Each seed now
@@ -328,7 +328,7 @@ struct CruxFuzzTests {
                     let inputs = inty.inputs
                     let constants = inty.constants
                     // Loaded again with the bindings, as the Runner loads, so the
-                    // inputs are bound on `.binding` too (ruling 8 of the coverage audit).
+                    // inputs are bound on `.binding` too.
                     inty.load(inputs: inputs, constants: constants, program: program)
                     inty.run(stepLimit: settings.stepLimit)
 
@@ -370,13 +370,13 @@ struct CruxFuzzTests {
     private func expectComplete(_ tally: CruxCompleteness, findings: [String], shallow: Bool) {
         #expect(findings.isEmpty, "\(findings.count) random programs left items whose crux does not reproduce them")
         // No item with no history may come out of a container that has one: it
-        // records its address instead (the containment law, `Containment`, §P
-        // step 4). Before that law, the contents of bound blocks were 15–17% of
+        // records its address instead (the containment law, `Containment`).
+        // Before that law, the contents of bound blocks were 15–17% of
         // value-stack items, and blocks the structural code edits rebuild along
         // their path left a few with no trace at all.
         #expect(tally.count(.boundContents) == 0,
                 "contents of bound values taken out bare: \(tally.examples[.boundContents] ?? [])")
-        // No history may be elided (§P step 3): a shared one is written with each
+        // No history may be elided: a shared one is written with each
         // shared node once (`CruxSharing`), a loop's chain is folded
         // (`CruxCompression.folded`). Before them, 0.2% and 1.3% of value-stack
         // items under the loop-heavy and container-heavy mixes carried one.

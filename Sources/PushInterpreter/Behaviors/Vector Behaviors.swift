@@ -573,8 +573,8 @@ nonisolated extension Interpreter {
     /// consumes the deeper argument first (`a[1].value + a[0].value`), so with the
     /// prefix underneath, `prefix + suffix` rebuilds the original vector.
     ///
-    /// **The index names a gap and is clamped to `0…count`** (`Position.gap`,
-    /// Roadmap #42): at 0 the prefix is empty, at `count` the suffix is. Cutting
+    /// **The index names a gap and is clamped to `0…count`** (`Position.gap`):
+    /// at 0 the prefix is empty, at `count` the suffix is. Cutting
     /// an empty vector gives two empty vectors. It used to wrap modulo `count`,
     /// which left the last gap unreachable, so the suffix could never be empty.
     ///
@@ -609,8 +609,7 @@ nonisolated extension Interpreter {
     /// `stringPushAllChars` left the *last* character on top. Two instructions
     /// doing the same job and disagreeing about a basic question, for years —
     /// each internally consistent, neither wrong on its own. Walking front to back
-    /// settles it; see "Collections are walked front-to-back" in
-    /// "Notes on Push/Design Principles.md".
+    /// settles it: collections are walked front-to-back.
     ///
     /// It also used to explode in a single step, which put the work beyond
     /// `stepLimit` and the runaway guard, and forced every element to record which
@@ -632,7 +631,7 @@ nonisolated extension Interpreter {
     ///
     /// **It does not open the closed system.** A program still cannot make a vector
     /// out of nothing — it needs one to shape the new one, so the vector stacks
-    /// remain seeded-only (see "Stack economics.md" §2). What it *does* buy is the
+    /// remain seeded-only. What it *does* buy is the
     /// thing that was actually missing: until now a vector's contents could only be
     /// rearranged, never **computed**. Every element of the result can be something
     /// the program worked out.
@@ -1573,9 +1572,9 @@ nonisolated extension Interpreter {
     /// **A refusal hands the iterator back**, as the setters do: an instruction
     /// that cannot use a loop should not also destroy it. A *success* consumes it
     /// — exhausting it is the whole job — and returns its body to `.code` on the
-    /// way out, the same courtesy every other ending pays (principle 5).
+    /// way out, the same courtesy every other ending pays.
     ///
-    /// **With a body, it collects what the body makes** (ruling I16, built
+    /// **With a body, it collects what the body makes** (since
     /// 2026-11-09): each element is executed and then the body runs, in a fresh
     /// sub-interpreter, as `iteratorPlay` would run them, and the last value
     /// pushed is that element's result (a body that pushes nothing leaves the

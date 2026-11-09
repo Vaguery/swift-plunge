@@ -2,7 +2,7 @@
 //  Short Iterator Tests.swift
 //  PushInterpreterTests
 //
-//  The two-argument iterator constructors (Behavior coverage audit, P3): a
+//  The two-argument iterator constructors: a
 //  collection and a body make an iterator a random program can build.
 //
 

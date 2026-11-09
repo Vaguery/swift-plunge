@@ -3,8 +3,7 @@
 //  PushInterpreter
 //
 //  What an item taken out of a container records. Added 2026-11-07 for
-//  provenance completeness: see "Containment" in
-//  `Notes on Push/Provenance and the crux.md`.
+//  provenance completeness.
 //
 
 /// **The containment law.** An item taken out of a container is the item that went
@@ -76,7 +75,7 @@ nonisolated enum Containment {
 // MARK: - Members: the elements of vectors and strings
 
 /// Where each element of a vector or string came from, kept only when recording,
-/// in the container's `CallStorage` (Roadmap #21, ruling P5).
+/// in the container's `CallStorage`.
 ///
 /// A block's contents are items, so they keep their histories without help. A
 /// vector's or string's elements are raw values, so the container records, for

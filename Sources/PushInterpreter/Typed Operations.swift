@@ -162,7 +162,7 @@ nonisolated extension Behavior {
 
     /// **Reads one element out of a container**, leaving the container and the
     /// index where they were: the non-destructive sibling of `extracting(takes:)`
-    /// (the `Peek` forms, ruling I7). A traced element is still the item that went
+    /// (the `Peek` forms). A traced element is still the item that went
     /// in; otherwise its crux names this instruction and then removes what it
     /// read (`Behavior.reading`), so the fragment leaves only the element.
     static func extracting<each A: ValueItem, C: TracingItem>(
@@ -186,7 +186,7 @@ nonisolated extension Behavior {
     // MARK: - Items in, an element and its index out
 
     /// **Finds one element in a container and gives it with its index** (the
-    /// lookups in a collection, *Behavior coverage audit* §8): a query, reading
+    /// lookups in a collection): a query, reading
     /// every argument. The index goes down first and the element on top of it,
     /// which matters only when both land on `.int`.
     ///

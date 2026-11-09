@@ -249,7 +249,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     /// That polymorphism is what lets this exist without a sieve. A genome cannot
     /// *ask* for "an iterator that emits Ints" — `.iterator` is homogeneous by
     /// type and heterogeneous by behaviour, and asking for the top one and hoping
-    /// is all anything can do (see "Notes on Push/Sieve arguments.md"). So this
+    /// is all anything can do. So this
     /// takes whatever iterator is there and answers in kind, rather than
     /// demanding a type it has no way to find.
     case vecFromIterator
@@ -337,7 +337,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
          codeDeleteAtDepth, execDeleteAtDepth, vecIntDeleteAtDepth, vecBoolDeleteAtDepth, vecDoubleDeleteAtDepth,
          vecStringDeleteAtDepth, iteratorDeleteAtDepth, bindingDeleteAtDepth
 
-    // The .binding stack (Behavior coverage audit, §9–§11, rulings 7–13): its generated family,
+    // The .binding stack: its generated family,
     case bindingDeepDup, bindingDup, bindingDupItems, bindingDupTimes, bindingStackIsEmpty, bindingEq, bindingFlush, bindingPop, bindingPopItems,
          bindingRot, bindingShove, bindingStackDepth, bindingSwap, bindingYank, bindingYankDup
     // the binders,

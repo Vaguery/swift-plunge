@@ -8,7 +8,7 @@
 //
 //  The claim that matters is not "it makes blocks" — it is **where the blocks
 //  go**. A CodeItem in a program is not an instruction, so `.exec` routes it to
-//  `.code` as data (§7), and the encoding's whole purpose is to have a spread of
+//  `.code` as data, and the encoding's whole purpose is to have a spread of
 //  block sizes waiting on the language's scarcest stack before the flat program
 //  starts looking for them.
 //

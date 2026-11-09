@@ -91,7 +91,7 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 87 87 ]")
         #expect(callString(topItem(inty, .int)) == "( 'W' .intFromChar )")
 
-        // Any single Unicode scalar has a code, not only ASCII (Roadmap #42).
+        // Any single Unicode scalar has a code, not only ASCII.
         doThis(.intFromChar, to: inty)
         #expect(stackString(inty, .int) == "[ 128525 87 87 ]")
         #expect(callString(topItem(inty, .int)) == "( '😍' .intFromChar )")

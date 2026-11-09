@@ -2,7 +2,7 @@
 //  Binding Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  The `.binding` stack (Behavior coverage audit §9–§11, rulings 7–13): keyed
+//  The `.binding` stack: keyed
 //  bindings, keys 0…N−1 holding the inputs, fresh keys from N, binders that read
 //  and leave, scoped `with` blocks, and lookups that read their key; plus
 //  `xDeleteAtDepth`, the generated deletion at a depth.

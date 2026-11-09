@@ -2,8 +2,7 @@
 //  Conversion Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Vectors and code, chars into strings, and a string and its pieces
-//  (Behavior coverage audit, P4).
+//  Vectors and code, chars into strings, and a string and its pieces.
 //
 
 @testable import PushInterpreter

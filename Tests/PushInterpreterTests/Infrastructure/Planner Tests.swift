@@ -11,7 +11,7 @@
 //     claiming the topmost item nobody else has, counting a stack that is both
 //     taken from and reached into only once;
 //  2. that **a Behavior which cannot run takes nothing** — the all-or-nothing
-//     bargain (Design Principles §14). That one used to be every Behavior's own to keep
+//     bargain. That one used to be every Behavior's own to keep
 //     by hand, and sixty of them failed to. It is now structural, so it is tested
 //     structurally: the last test drives every instruction in the language.
 //

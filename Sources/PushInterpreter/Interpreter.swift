@@ -17,8 +17,8 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // non-finite results, so neither can trap or grow memory unbounded.
     //
     // EVERY NUMBER BELOW SAYS WHERE IT CAME FROM, because none of them is
-    // self-evident and an unexplained limit is indistinguishable from cargo (see
-    // Design Principles §13). Three kinds, and the kind says what you may do to it:
+    // self-evident and an unexplained limit is indistinguishable from cargo.
+    // Three kinds, and the kind says what you may do to it:
     //
     //   INHERITED — taken from another implementation for comparability, not
     //               correctness. Change it freely; the only cost is that runs stop
@@ -77,8 +77,8 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // larger than that measurement's. Raise it only for runs on big-stack threads.
     public var maxCallDepth    : Int = 1_000
     // (`maxIterations`, which clamped a counted loop's promised passes to 100 so
-    // that it finished and its crux could be read back, was deleted 2026-11-08,
-    // Roadmap #24: a crux folds a loop's chain into a counted loop over its seed,
+    // that it finished and its crux could be read back, was deleted 2026-11-08:
+    // a crux folds a loop's chain into a counted loop over its seed,
     // `CruxCompression.folded`, so a loop may run until `stepLimit` and keep its
     // history. A collector is bounded by `IteratorItem.collectionLimit`.)
     // When a stack fills faster than the size caps would catch, watch for the
@@ -239,8 +239,8 @@ nonisolated final class Interpreter {
 
     /// The stack of the most recent push of a value: any stack but `.exec` and
     /// `.error`. A function run in a sub-interpreter returns the top of this
-    /// stack, "the last thing it produced" (map, filter and reduce; Behavior
-    /// coverage audit, P2). One store per push.
+    /// stack, "the last thing it produced" (map, filter and reduce). One store
+    /// per push.
     @exclusivity(unchecked) var lastPush: PushStack? = nil
     /// The next fresh `.binding` key. Reset at every load to the number
     /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`

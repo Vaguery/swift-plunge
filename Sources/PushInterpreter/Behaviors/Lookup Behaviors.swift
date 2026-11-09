@@ -2,9 +2,8 @@
 //  Lookup Behaviors.swift
 //  PushInterpreter
 //
-//  Lookup by pattern on the stacks themselves (*Behavior coverage audit
-// * §8, rulings 5–6): the sieve made visible to a program, and the
-//  language's keyed storage without a dictionary type.
+//  Lookup by pattern on the stacks themselves: the sieve made visible to a
+//  program, and the language's keyed storage without a dictionary type.
 //
 //  **The rule.** The probe is the top of the stack, *read*, so a key is never
 //  used up. The search runs top-down below it, and the first item that matches

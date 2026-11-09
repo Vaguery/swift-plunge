@@ -2,7 +2,7 @@
 //  Behavior Class Tests.swift
 //  PushInterpreterTests
 //
-//  Every Behavior declares one `BehaviorClass` (Roadmap #43). The class is
+//  Every Behavior declares one `BehaviorClass`. The class is
 //  judgment, like a tag, so these tests do not re-derive it. They check each
 //  declaration against what the Behavior can reach and what it does when run on
 //  a well-stocked interpreter.
@@ -70,7 +70,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 422,   // incl. 18 finds and IndexOf…From (audit §8, 4b); bindingEq/Rekey/Quote/FromCode
+            .operation: 422,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode
             .structural: 170,   // 13 families × 13 stacks (DeleteAtDepth the 13th; .binding the 13th stack), bindingUnbind
             .contextRead: 200,  // 80 constants, 10 inputs, 26 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars,
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, 4 key/depth finders

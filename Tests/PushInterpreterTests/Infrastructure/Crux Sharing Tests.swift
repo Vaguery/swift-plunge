@@ -3,7 +3,7 @@
 //  PushInterpreterTests
 //
 //  A crux builds each shared node of its history once and reuses it by dup and
-//  yank, as the program did (`CruxSharing`, Roadmap §P step 3, 2026-11-07).
+//  yank, as the program did (`CruxSharing`, since 2026-11-07).
 //
 
 @testable import PushInterpreter

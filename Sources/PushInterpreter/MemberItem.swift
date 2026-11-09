@@ -6,7 +6,7 @@
 //
 
 /// **A container whose elements can record where they came from** (`members`,
-/// the per-element provenance of Roadmap #21): the vectors and strings. What
+/// per-element provenance): the vectors and strings. What
 /// `Behavior.assembling` and `Behavior.splitting` build.
 nonisolated protocol MemberItem: ValueItem, HoldsMembers {
     init(_ value: Value, call: [any Item], members: Pieces?)

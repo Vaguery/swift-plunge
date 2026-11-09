@@ -2,7 +2,7 @@
 //  BehaviorIOReport.swift
 //  PushInterpreterTests
 //
-//  Classifies and writes up what `BehaviorIOSurvey` observed (Roadmap #41).
+//  Classifies and writes up what `BehaviorIOSurvey` observed.
 //
 
 @testable import PushInterpreter

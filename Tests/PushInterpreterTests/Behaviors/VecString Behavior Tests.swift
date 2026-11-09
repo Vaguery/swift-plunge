@@ -378,8 +378,8 @@ struct VecStringBehaviorTests {
         inty.run(stepLimit: 10_000)
 
         // Front to back, so "333" was pushed last and is on top — the reverse of
-        // what it used to be, deliberately. See "Collections are walked
-        // front-to-back" in "Notes on Push/Design Principles.md".
+        // what it used to be, deliberately: collections are walked
+        // front-to-back.
         #expect(stackString(inty, .string) == "[ \"333\" \"22\" \"1\" ]")
 
         // Each element names its own index rather than how far down a pile it

@@ -15,7 +15,7 @@
 //  2. **it opens the closed system.** `.vecXConstruct` needs a vector to shape a
 //     vector; this makes one out of two ints;
 //  3. **nothing here picks a length.** Every kind was already bounded, by two
-//     different rules for two different reasons (§12), before it could ever be an
+//     different rules for two different reasons, before it could ever be an
 //     argument.
 //
 
@@ -232,13 +232,13 @@ struct VecFromIteratorTests {
 
     /// Exhausting the iterator is the whole job, so it goes — but its body comes
     /// back to `.code` rather than being destroyed with it. That is the same
-    /// courtesy every other ending pays (principle 5), and `.code` is the
+    /// courtesy every other ending pays, and `.code` is the
     /// language's tightest channel.
     @Test func `a collected loop is spent, and hands its body back`() {
         let inty = loaded(walking(VecIntItem([1, 2]), body: CodeItem([IntItem(99)])))
         doThis(.vecFromIterator, to: inty)
 
-        // Since ruling I16 (2026-11-09) a body's results are what is collected:
+        // Since 2026-11-09 a body's results are what is collected:
         // `( 99 )` makes 99 of each element. It runs in a sub-interpreter, so this
         // run's stacks never see it.
         #expect(stackString(inty, .vecInt) == "[ [99, 99] ]")
@@ -247,7 +247,7 @@ struct VecFromIteratorTests {
         #expect(stackString(inty, .int) == "[ ]", "and this run's stacks never see it run")
     }
 
-    /// The stack-fed map (ruling I16): each element is executed, then the body,
+    /// The stack-fed map: each element is executed, then the body,
     /// and the last value pushed is collected. No `.inputN` hole is needed.
     @Test func `with a body, it collects what the body makes`() {
         let squares = loaded(walking(VecIntItem([1, 2, 3]),

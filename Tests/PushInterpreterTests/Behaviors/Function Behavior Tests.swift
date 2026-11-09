@@ -2,7 +2,7 @@
 //  Function Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Map, filter and reduce (Behavior coverage audit, P2): a function is a block
+//  Map, filter and reduce: a function is a block
 //  with `.inputN` holes, run in a sub-interpreter; its result is the last value
 //  it pushed; sub-run steps are charged to the program.
 //

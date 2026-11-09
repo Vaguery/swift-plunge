@@ -2,8 +2,8 @@
 //  Text Behaviors.swift
 //  PushInterpreter
 //
-//  Case, substring search, prefixes and suffixes, and trimming (*Behavior
-//  coverage audit*, P6): the text work that had no route at all.
+//  Case, substring search, prefixes and suffixes, and trimming: the text work
+//  that had no route at all.
 //
 //  The queries (`IsUpper`, `IsLower`, `IndexOf`, `StartsWith`, `EndsWith`) read
 //  and leave their arguments, as every query does. Written order follows

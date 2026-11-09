@@ -111,8 +111,8 @@ nonisolated extension Interpreter {
     /// **Dying returns the body to `.code`.** An instruction that consumed
     /// something and then finished with it should not also destroy it —
     /// `execDoCount` and `execDoTimes` hand their body back when their count is too
-    /// small to act on, and this is the same courtesy at the other end of the loop
-    /// (principle 5). It is not tidiness: `.code` is the language's tightest
+    /// small to act on, and this is the same courtesy at the other end of the loop.
+    /// It is not tidiness: `.code` is the language's tightest
     /// bottleneck, so every loop that ends is a small supply of the scarcest
     /// thing there is.
     ///
@@ -367,7 +367,7 @@ nonisolated extension Interpreter {
     /// Re-aim one field of a live iterator.
     ///
     /// These are **not** `Peek`: they consume their new value and hand the
-    /// iterator back changed. Principle 10 warned the narrow Peek exception might
+    /// iterator back changed. The narrow Peek exception was always expected to
     /// widen; this is the widening, and it is narrow in the other direction —
     /// only the iterator survives, and only because re-aiming a loop you cannot
     /// keep would be pointless.
@@ -586,7 +586,7 @@ nonisolated extension Interpreter {
         Behavior(
             .iteratorFromIntRange,
             takes: [.int, .int, .int, .int, .int, .bool, .code],
-            // Roadmap #17: measured to starve close to 100% of the time in random
+            // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
@@ -661,7 +661,7 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [source, .int, .int, .bool, .code],
-            // Roadmap #17: measured to starve close to 100% of the time in random
+            // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
@@ -787,7 +787,7 @@ nonisolated extension Interpreter {
         Behavior(
             name,
             takes: [.code, .code, .int, .int, .bool],
-            // Roadmap #17: measured to starve close to 100% of the time in random
+            // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
@@ -836,7 +836,7 @@ nonisolated extension Interpreter {
         Behavior(
             instruction,
             takes: [.code, .code, .int, .int, .bool],
-            // Roadmap #17: measured to starve close to 100% of the time in random
+            // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.
@@ -890,7 +890,7 @@ nonisolated extension Interpreter {
             name,
             takes: [.code, .int, .int, .int],
             // `.fallible` too: it refuses an empty block.
-            // Roadmap #17: measured to starve close to 100% of the time in random
+            // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
             // draw. Tagged in the factory so the whole family moves together.

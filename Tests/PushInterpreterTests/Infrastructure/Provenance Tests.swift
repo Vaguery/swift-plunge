@@ -355,7 +355,7 @@ struct ProvenanceTests {
             redo.run()
             #expect(redo.stacks[.int]!.count == 1,
                     "selecting(\(produced), of: 3) left \(stackString(redo, .int)) on .int")
-            // `pushAll` lands front-to-back (Design Principles §6), so 10 is
+            // `pushAll` lands front-to-back, so 10 is
             // deepest — and the deepest is `producedAt` 0, the first produced.
             #expect((redo.stacks[.int]!.first as? IntItem)?.value == [10, 20, 30][produced],
                     "selecting(\(produced), of: 3) surfaced the wrong one")

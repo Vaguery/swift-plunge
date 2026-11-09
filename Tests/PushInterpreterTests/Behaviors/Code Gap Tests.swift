@@ -45,7 +45,7 @@ struct CodeGapTests {
         #expect(CodeItem([]).gapCount == 1, "an empty block still has the one gap")
     }
 
-    /// Clamped over the gaps, `0…gapCount−1` (Roadmap #42); it used to wrap.
+    /// Clamped over the gaps, `0…gapCount−1`; it used to wrap.
     @Test func `the gap index clamps to the gaps`() {
         #expect(nested.gapIndex(0) == 0)
         #expect(nested.gapIndex(6) == 6)

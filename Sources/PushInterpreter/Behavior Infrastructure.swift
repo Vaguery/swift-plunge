@@ -114,7 +114,7 @@ nonisolated final class Behavior: Sendable {
     let behaviorClass: BehaviorClass
 
     /// What this Behavior puts out when it succeeds — the output half of its
-    /// signature (Roadmap #41; see `Produces`). Every constructor declares it: the
+    /// signature (see `Produces`). Every constructor declares it: the
     /// typed operations from their result type, structural rules, control and
     /// channels from their class, and everything else by hand.
     let produces: Produces
@@ -371,7 +371,7 @@ nonisolated final class Behavior: Sendable {
 
 nonisolated extension Behavior {
     /// The result of a Behavior that cannot produce its intended output from the
-    /// arguments it was given (Roadmap #42: every Behavior returns its output or
+    /// arguments it was given (every Behavior returns its output or
     /// an error). `call` is recorded like a result's: the arguments and the
     /// instruction (law 3), or for a query the `reading(_:producing: .error, …)`
     /// form, so re-running it reproduces the error.
@@ -401,7 +401,7 @@ nonisolated extension Behavior {
     /// topmost result reproduced its own value correctly but left its siblings as
     /// debris, so the fragment was only usable in isolation: embedded as an
     /// argument, the stranded siblings shifted every argument position of the
-    /// enclosing instruction (the composition invariant, Design Principles §1).
+    /// enclosing instruction (the composition invariant).
     ///
     /// The cleanup is recorded as ordinary items in the returned `call`, which is
     /// why `crux()` needs no special case for multi-result instructions: it walks
@@ -432,8 +432,8 @@ nonisolated extension Behavior {
     ///
     /// A query keeps its argument(s) alive at run time (`.reads`), but its crux
     /// must reproduce only the fact: a fragment that left its argument behind would
-    /// be read by a same-stack sibling and corrupt it (Design Principles §6, the
-    /// composition invariant). So the crux names how the fact was computed, then
+    /// be read by a same-stack sibling and corrupt it (the composition invariant).
+    /// So the crux names how the fact was computed, then
     /// removes what it read. `reads` maps each stack read to how many items came
     /// off it — a comparison reads two from one stack, a search one from each of
     /// two.

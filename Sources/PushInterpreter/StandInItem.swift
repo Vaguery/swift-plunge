@@ -3,8 +3,7 @@
 //  PushInterpreter
 //
 //  A literal standing in for a history the interpreter could not, or chose not
-//  to, keep. Added 2026-11-07 for provenance completeness: see "Stand-ins" in
-//  `Notes on Push/Provenance and the crux.md`, and Roadmap §P.
+//  to, keep. Added 2026-11-07 for provenance completeness.
 //
 
 /// A literal that **stands in for a lost history**, and says so.

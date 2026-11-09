@@ -2,7 +2,7 @@
 //  Collection Behavior Tests.swift
 //  PushInterpreterTests
 //
-//  Reductions over whole collections (Behavior coverage audit, P1): facts
+//  Reductions over whole collections: facts
 //  read and leave, and Max and Min are member reads.
 //
 
@@ -86,7 +86,7 @@ struct CollectionBehaviorTests {
         #expect(stackString(max, .double) == "[ nan ]")
     }
 
-    // MARK: - Set operations (P1b)
+    // MARK: - Set operations
 
     @Test func `distinct keeps first occurrences`() {
         let inty = Self.run([VecIntItem([3, 1, 3, 2, 1]), InstructionItem(.vecIntDistinct)])

@@ -2,14 +2,13 @@
 //  Collection Behaviors.swift
 //  PushInterpreter
 //
-//  Reductions over whole collections (*Behavior coverage audit*,
-//  P1). Each is written once and applied to every collection it
-//  fits.
+//  Reductions over whole collections. Each is written once and applied to
+//  every collection it fits.
 //
-//  The rulings that shape them (audit §11, ruling 4):
+//  The rules that shape them:
 //  - **Facts read and leave.** `Sum`, `Max` and `Min` report something
-//    about a collection, so they are non-destructive queries (Design Principles
-//    §5): the collection stays where it was, and the crux cleans it up.
+//    about a collection, so they are non-destructive queries: the collection
+//    stays where it was, and the crux cleans it up.
 //  - **`Max` and `Min` are member reads.** They take an element *out*, so the
 //    element keeps its own history when it has one (`Containment`), exactly as
 //    `Nth` does. Ties go to the first occurrence.
@@ -123,10 +122,10 @@ nonisolated extension Interpreter {
     static let stringMin_Behavior = stringExtremeBehavior(.stringMin, greatest: false)
 
 
-    // MARK: - Set operations (audit P1b)
+    // MARK: - Set operations
     //
-    // Sets as operations on the collections that exist, not as a type (audit
-    // §7). `Distinct` keeps first occurrences. `Intersect` and `Difference` are
+    // Sets as operations on the collections that exist, not as a type.
+    // `Distinct` keeps first occurrences. `Intersect` and `Difference` are
     // **filters**: they keep the first argument's elements that are (are not)
     // in the second, in the first's order and with its repeats, so
     // `"hello" "aeiou" .stringDifference` is `"hll"`; set semantics are one

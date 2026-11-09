@@ -14,7 +14,7 @@ struct CharBehaviorTests {
 
     let inty = Interpreter.recordingProvenance()
 
-    /// Character codes are Unicode scalar values (Roadmap #42); a double is
+    /// Character codes are Unicode scalar values; a double is
     /// truncated toward zero first.
     @Test func charFromDouble() {
         loadDoubles(inty, doubles: [65,97,32,91.5])
