@@ -255,7 +255,11 @@ A representation-neutral derivation graph, for other GP representations, is a la
     instead of a cap. First a stack-composition probe, to measure how compressible stacks really are.
     After the current speed-up round. → *Compressed stacks.md*
 
-39. **Local variables (`.ref`)** — noted 2026-11-07; nothing built. Push will need a way to create,
+39. **Local variables (`.ref`)** — noted 2026-11-07; nothing built. **RULED 2026-11-09** → *Behavior
+    coverage audit (2026-11-09).md* §11: a `.ref` stack of (int key, value) pairs, LIFO, so each key is a
+    stack of its own bindings; keys 0–9 preloaded with the inputs; fresh keys from an owned counter
+    from 10; per-type `xRef` and `xWith` binders; `refRekey`; lookups that run or deliver. The text
+    below is the original entry. Push will need a way to create,
     assign and read a local variable; earlier implementations used a `.ref` type that could hold any item.
     **How the interpreter stores the bindings is not settled.** Earlier variants used a dictionary keyed by
     `.ref`, a collection of stacks (one per variable), or a container item like a `.code` block. For
@@ -379,6 +383,22 @@ A representation-neutral derivation graph, for other GP representations, is a la
     iterator-loop deliverers (pushAll, split, parseToLetters, iterate), and `execQuote` (prefix crux). **Ruled and fixed 2026-11-08:** double comparisons follow IEEE 754 (any
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
+
+45. **Behavior coverage** — **RULED 2026-11-09**, nothing built → *Behavior coverage audit
+    (2026-11-09).md*. The tasks with no short route (average, filter, sort, dedupe, case, substring
+    index, conversions between vector types, keyed storage) and the rulings that settle them:
+    - `stringDrop` from the front, plus `xDropLast`/`xTakeLast`;
+    - `vecFromIterator` collects a body's results;
+    - map's result type follows the data;
+    - reductions are queries (`Sum`, `Mean`, `Max`, `Min`, `IsSubset`), transforms consume (`Sort`,
+      `Distinct`, `Intersect`, `Difference`);
+    - pattern lookup on every stack (the sieve made visible; §C Q5);
+    - set operations on collections, no set or dictionary type;
+    - a lookup miss is a refusal;
+    - `.ref` (#39).
+    Also proposed there: numeric (abs, sqrt, round…), string/char (case, trim, index of substring),
+    `vecXQuote`/`vecFromCode`, split-on and join, one-argument iterator constructors. About 200
+    instructions in all; `.ref` is the only new stack.
 
 ## H. Collection coverage — deferred pieces → *Vector and Collection Coverage.md*
 

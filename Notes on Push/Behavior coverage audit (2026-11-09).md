@@ -1,6 +1,7 @@
 # Behavior coverage audit
 
-**Status: PROPOSAL, nothing built (2026-11-09).** An overview of what the
+**Status: RULED 2026-11-09, nothing built.** The rulings are in §11 and supersede
+the proposals where they differ. An overview of what the
 language can and cannot do in a few steps, made now that every Behavior declares
 its outputs (#41). It asks which Behaviors are missing or neglected, under three
 constraints set by the user:
@@ -436,7 +437,7 @@ For example, average:
 
 Word frequency and variables wait for P7.
 
-**Open questions for the user:**
+**Open questions for the user** (all answered 2026-11-09; see §11):
 1. Should `stringDrop` drop from the front?
 2. Should `vecFromIterator` collect a body's results when there is a body?
 3. Should map's result type follow the data (uniform or refuse)?
@@ -686,6 +687,9 @@ Debating it costs more.
 
 ## 9. A `.ref` stack: keyed bindings, each variable a stack (2026-11-09)
 
+*Revised by the rulings in §11: the named tokens, the binding from `.exec`
+and `execLet` are dropped.*
+
 The user's design:
 - A **`.ref` stack whose items are the pairs of §8**, `( key value )`, kept on
   a stack of their own.
@@ -844,6 +848,9 @@ privately.
 
 ## 10. Where keys come from, and what to make extras of (2026-11-09)
 
+*Int keys and the owned counter stand. The operations table is revised by
+§11.*
+
 The user's point:
 - Hand-written programs use strings as keys. Evolved programs need a
   **deterministic generator** that hands out a fresh key on demand.
@@ -941,3 +948,107 @@ all for P8′.
 **Other key types.** Keys stay *any* item (§9), and a quoted-probe variant can
 add string or code keys later if a problem wants them. The generator and the
 named tokens produce ints, because ints are what the language is short of.
+
+
+## 11. Rulings (2026-11-09)
+
+**General:**
+
+1. **Drop and Take.** `stringDrop` drops from the **front**, like `vecXDrop`.
+   Add **`xDropLast`** and **`xTakeLast`** for `string` and all four vector
+   types, so both ends have routes.
+2. **`vecFromIterator`.** Given an iterator with a body, it collects **the
+   body's results**, uniform or refuse. Without a body it collects the elements,
+   as now.
+3. **Map's result type follows the data**, uniform or refuse. This is #2's
+   deferred polymorphic map; `( .doubleFromInt ) .vecIntMap` gives a
+   `vecDouble`.
+4. **Queries.**
+   - The fact-reporting collection instructions read and leave: `Sum`, `Mean`,
+     `Max`, `Min`, `IsSubset`.
+   - The transforming ones consume, as other transforms do: `Sort`, `Distinct`,
+     `Intersect`, `Difference`.
+5. **Structures.**
+   - Build **pattern lookup on the existing stacks** (§8) and the **`.ref`
+     stack**.
+   - Sets are **operations on collections** (P1b).
+   - There is **no dictionary type and no set type**.
+   - **Measure** the lookups' match rates with the starvation probe as part of
+     building them.
+6. **A lookup that finds no match is a refusal**, like starvation: nothing is
+   consumed, and it is a missing-arguments error. This holds for every pattern
+   lookup and every `.ref` lookup.
+
+**The `.ref` stack** (supersedes §9's named tokens, the binding from `.exec`,
+and `execLet`):
+
+7. **Keys are ints** (§10).
+   - A counter owned by the interpreter, reset at every load and never on
+     `.iterator`, hands out fresh keys **starting at 10**.
+   - A fresh key records a stand-in (law 4b).
+8. **Keys 0–9 hold the inputs.**
+   - At each load, the interpreter pushes a pair (n, the value of `inputN`)
+     onto `.ref` for every bound input.
+   - `.input0…9` stay as the direct path; the `.ref` lookup is a redundant,
+     alternative path (the user's choice).
+   - A program can shadow key 3 with its own binding, and `.input3` still gives
+     the original.
+9. **Permanent binders, one per type: `xRef`.**
+   - Read the top item of stack X and leave it there.
+   - Push the pair (fresh key, copy of the item) onto the top of `.ref`.
+   - Push the fresh key onto `.int`.
+   - Types: bool, int, double, char, string, code and the four vectors.
+     `.iterator` is excluded, because loop state is private (Design Principles
+     §10). `.exec` is excluded, because arguments do not come from `.exec`.
+10. **Assignment is one generic `refRekey`.** It takes an int key k and re-keys
+    the top `.ref` pair to k, shadowing k's older binding.
+    - Assigning a value of any type to an existing variable is `x .intRef`
+      (or `stringRef`, …), then `k .refRekey`.
+    - One abstract instruction instead of one per type.
+11. **Temporary binders, one per type: `xWith`** (a `with` block).
+    - Read the top item of X and leave it.
+    - Bind it to a fresh key, and push the key onto `.int` (the "as name").
+    - Run **the body, taken from `.code`**: the convention of `execIf`,
+      `execDoTimes` and the other control instructions, so that, in the user's
+      words, "most exec arguments should come from `code`".
+    - Then remove the binding.
+    - The key is fresh, so the closing unbind cannot remove anything but its
+      own binding. That retires §9's caveat about a body rebinding the same
+      key, except where the body rekeys on purpose.
+12. **Nothing in the `.ref` design takes an argument from `.exec`.** Dropped:
+    - `ref0…ref9` and `bind0…bind9` (the inputs fill keys 0–9 instead);
+    - `refNew` and `codeBindN`;
+    - `execLet` (replaced by `xWith`).
+13. **Two lookup paths:**
+    - **`refDeref`** reads a key from `.int` (leaving it) and sends the value
+      to `.exec`, where it lands on its own stack, so a block **runs**. It is
+      tagged re-entrant for the runaway guard, because a bound block can look
+      itself up.
+    - **`refDerefToCode`** delivers the value to `.code` as data.
+    - Alongside them:
+      - the **nearest** and **floor** variants, which never miss on a
+        non-empty `.ref`;
+      - **reverse lookup** (value → key onto `.int`);
+      - `refUnbind` and `refBindingDepth`, with their keys read from `.int`;
+      - `refFresh`, which pushes a fresh key and is a deterministic gensym.
+
+**`.ref`'s size as ruled:**
+
+| Group | Instructions |
+|---|---|
+| Structural rules | 12 |
+| `refQuote`, `refFromCode`, `refEq` | 3 |
+| `xRef` | 10 |
+| `xWith` | 10 |
+| `refRekey` | 1 |
+| The lookups and their companions (`refDeref`, `refDerefToCode`, nearest, floor, reverse, `refUnbind`, `refBindingDepth`, `refFresh`) | 8 |
+| **Total** | **about 44** |
+
+**Order of work**, a suggestion and not a ruling:
+1. The small fixes and the ruled leftovers (P9 and rulings 1–2).
+2. Then P1, P1b, P5, P6 and P4, the operations needing no new machinery.
+3. Then map, reduce and filter (P2, with ruling 3) and the short iterator
+   constructors (P3).
+4. Then pattern lookup (P7′) with its measurements.
+5. Then `.ref`, the one new stack. The type registry (#37, A4) would make it
+   cheaper.
