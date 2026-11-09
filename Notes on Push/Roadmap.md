@@ -140,7 +140,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
    (*Iterator Behaviors.swift*; see also Resolved, issue #26). They already leave debris on the
    argument stack — the first latent violators of the composition invariant (Design Principles §1) — and
    `Behavior.reading` fixes them with the same helper the queries use.
-9. **Borderline element-access / selection** (`vecXNth`, `stringNth`, `xMax`/`xMin`) — an opt-in second
+9. ~~**Borderline element-access / selection**~~ **BUILT 2026-11-09** as `Peek` siblings (`vecXPeekNth`,
+   `stringPeekNth`, `intPeekMax`/`Min`, `doublePeekMax`/`Min`); the consuming forms stay, so element
+   address cruxes stay short (*Behavior coverage audit* §11). Original: (`vecXNth`, `stringNth`, `xMax`/`xMin`) — an opt-in second
    wave if "a query does not destroy its object" is judged to extend to reads that return a *member*
    rather than a fact.
 

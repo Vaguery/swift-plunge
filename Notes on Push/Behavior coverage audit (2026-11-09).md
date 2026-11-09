@@ -613,6 +613,22 @@ use a selective pattern when the data allow, and fall back on a total one when
 they do not. The diversity of patterns the user asks for is this spread of
 selectivity, more than a spread of types.
 
+### Two additions from the user (2026-11-09)
+
+- **The same kinds apply inside a collection**, not only on a stack:
+  - nearest within a vector (`[3, 9, 14] 10` → `9`);
+  - the first word of a `vecString` that has a prefix or contains a substring;
+  - the first sub-block of a code block whose head matches.
+
+  Each lookup then has two homes, the stack and the collection.
+- **Every lookup has two output forms:**
+  - **the item**, copied;
+  - **its position**: the depth on a stack, or the index in a collection,
+    onto `.int`.
+
+  The position form subsumes `xStackIndexOf`. It also hands the index to
+  `Nth`, `Yank` or `Set`, so "find, then act there" is two steps.
+
 ### Three dictionaries, none of them a type
 
 1. **Association blocks on `.code`, looked up by prefix.**
@@ -960,6 +976,12 @@ named tokens produce ints, because ints are what the language is short of.
 2. **`vecFromIterator`.** Given an iterator with a body, it collects **the
    body's results**, uniform or refuse. Without a body it collects the elements,
    as now.
+   *Deferred to P2 (2026-11-09):* collecting a body's results means running the
+   body on each element in a sub-interpreter, which is the map design's
+   machinery, with the same open rule for which stack holds the result. It is
+   built with map.
+   **Built 2026-11-09:** ruling 1 (`stringDrop` from the front; `xDropLast`,
+   `xTakeLast`), `codeDoIf` (I1), and the `Peek` forms below.
 3. **Map's result type follows the data**, uniform or refuse. This is #2's
    deferred polymorphic map; `( .doubleFromInt ) .vecIntMap` gives a
    `vecDouble`.
@@ -978,6 +1000,18 @@ named tokens produce ints, because ints are what the language is short of.
 6. **A lookup that finds no match is a refusal**, like starvation: nothing is
    consumed, and it is a missing-arguments error. This holds for every pattern
    lookup and every `.ref` lookup.
+
+**I7, amended in building (2026-11-09).** Making `vecXNth`, `stringNth`,
+`xMax` and `xMin` non-destructive would have lengthened every element's address
+crux from `v 2 .vecIntNth` (3 items) to 7, since the cleanup would then be part
+of every address. So, by the user's choice:
+- the consuming forms stay;
+- **`Peek` forms** are added: `vecXPeekNth`, `stringPeekNth`, `intPeekMax`,
+  `intPeekMin`, `doublePeekMax` and `doublePeekMin`.
+
+That makes two routes, not a change. `Peek` is the language's existing label for
+a read that does not consume (the iterator getters); the user's suggestion was
+Ruby's and Clojure's `Nth!`.
 
 **The `.ref` stack** (supersedes §9's named tokens, the binding from `.exec`,
 and `execLet`):
