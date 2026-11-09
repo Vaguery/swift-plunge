@@ -39,6 +39,9 @@ nonisolated extension Interpreter {
                             ]
                         }
                     }
+                    .described(
+                        "Pushes input \(instructionName.rawValue.dropFirst("input".count))'s value onto its own "
+                        + "stack, by way of `.exec`; refuses when that input is unbound.")
         }
         return result
     }

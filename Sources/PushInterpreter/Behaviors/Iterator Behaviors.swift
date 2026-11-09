@@ -144,6 +144,9 @@ nonisolated extension Interpreter {
                 return results
             }
         )
+        .described(
+            "Runs one pass by hand, emitting the current item and running the body, and leaves the advanced "
+            + "iterator; after the last pass the iterator goes and its body returns to `.code`.")
 
     /// One pass, plus its own next copy buried `burial` items below the payload —
     /// the loop, and **the only continuation token**.
@@ -175,6 +178,9 @@ nonisolated extension Interpreter {
                 .result(Router(.iterator, iterator.stepped(recording: recording))),
             ]
         }
+        .described(
+            "Plays the loop out: each pass emits the current item, runs the body, and queues the next pass at the "
+            + "iterator's depth in `.exec`; at the end the body returns to `.code`.")
 
     /// Aim a loop's burial depth, once, and play it.
     ///
@@ -217,6 +223,9 @@ nonisolated extension Interpreter {
                     .result(Router(.iterator, iterator.stepped(recording: recording))),
                 ]
         }
+        .described(
+            "Sets the depth, then plays: `n .iteratorPlayDelayed` stores n as the iterator's depth in `.exec` and "
+            + "plays as `.iteratorPlay` does; a negative n makes this pass the last.")
 
     /// Advance the cursor without emitting anything — skip a pass.
     static let iteratorPopState_Behavior =
@@ -232,6 +241,9 @@ nonisolated extension Interpreter {
                 return [Router(.iterator, iterator.stepped(recording: recording))]
             }
         )
+        .described(
+            "Skips a pass, advancing the cursor without emitting or running the body; skipping the last pass ends "
+            + "the loop and returns its body to `.code`.")
 
 
     // MARK: - Getters
@@ -275,11 +287,17 @@ nonisolated extension Interpreter {
     /// vector stack for one walking a collection.
     static let iteratorPeekStart_Behavior =
         iteratorGetter_Behavior(.iteratorPeekStart, produces: .iteratorAnd(Produces.anyItem)) { iterator, _ in iterator.origin }
+        .described(
+            "Pushes where the loop starts (the first int of a count, the source of a walk, or the repeated item) "
+            + "onto its stack, leaving the iterator.")
 
     /// Where the loop ends. A `.elements` iterator has no end bound of its own —
     /// its end is its source's length — so this emits nothing for one.
     static let iteratorPeekEnd_Behavior =
         iteratorGetter_Behavior(.iteratorPeekEnd, produces: .iteratorAnd([.int])) { iterator, _ in iterator.destination }
+        .described(
+            "Pushes the loop's end bound (the count, for a repeating iterator), leaving the iterator; pushes "
+            + "nothing for an iterator that walks a source.")
 
     /// The step between passes; `1` for an iterator walking a collection.
     ///
@@ -300,11 +318,15 @@ nonisolated extension Interpreter {
                     producing: .int,
                     from: [iterator, InstructionItem(.iteratorPeekStride)])))
         }
+        .described("Pushes the step between passes, 1 for any but a counting iterator, leaving the iterator.")
 
     /// The block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
     static let iteratorPeekBody_Behavior =
         iteratorGetter_Behavior(.iteratorPeekBody, produces: .iteratorAnd([.code])) { iterator, _ in iterator.body }
+        .described(
+            "Pushes a copy of the body onto `.code` without running it, leaving the iterator; pushes nothing for a "
+            + "bodyless iterator.")
 
     /// How many times this iterator goes round its source — `1` for anything that
     /// does not cycle, which is most iterators and every counting one.
@@ -322,6 +344,9 @@ nonisolated extension Interpreter {
                     producing: .int,
                     from: [iterator, InstructionItem(.iteratorPeekLaps)])))
         }
+        .described(
+            "Pushes how many times the iterator goes round its source, 1 for one that does not cycle, leaving the "
+            + "iterator.")
 
 
     // MARK: - Setters
@@ -402,6 +427,9 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: .iteratorRestart, recording)
             }
         )
+        .described(
+            "Rewinds the cursor to the first pass of the first lap, keeping the start, end, stride, laps, depth and "
+            + "body; refuses if that leaves nothing to emit.")
 
     /// Every constructor's last act, and the other half of the invariant that
     /// `iteratorFarewell` keeps: **an iterator that comes to rest has something to
@@ -450,6 +478,9 @@ nonisolated extension Interpreter {
             iterator.origin = item
             return nil
         }
+        .described(
+            "Re-aims the start: `( x ) .iteratorSetStart` makes x the start or source; refuses an empty block; a "
+            + "start leaving nothing to emit ends the loop, returning its body to `.code`.")
 
     /// Where the loop ends. `( 20 ) …`
     ///
@@ -468,6 +499,9 @@ nonisolated extension Interpreter {
             iterator.destination = item
             return nil
         }
+        .described(
+            "Re-aims the end: `( x ) .iteratorSetEnd` makes x the end bound; refuses an empty block or a walking "
+            + "iterator; an end leaving nothing to emit ends the loop, returning its body to `.code`.")
 
     /// How far along the loop is. Carrying it past the end finishes it.
     static let iteratorSetCounter_Behavior =
@@ -475,6 +509,9 @@ nonisolated extension Interpreter {
             iterator.value = (n as! IntItem).value
             return nil
         }
+        .described(
+            "Moves the cursor: `n .iteratorSetCounter` makes n the passes taken; a cursor below 0 or past the end "
+            + "ends the loop, returning its body to `.code`.")
 
     /// How deep in `.exec` the loop hides its next copy — the field
     /// `.iteratorPlayDelayed` sets once. This is the "separate instruction" that
@@ -488,6 +525,9 @@ nonisolated extension Interpreter {
             iterator.burial = (n as! IntItem).value
             return nil
         }
+        .described(
+            "Sets how deep in `.exec` each pass queues the next: `n .iteratorSetDepth`; a negative n ends the loop, "
+            + "returning its body to `.code`.")
 
     /// How many times the loop goes round its source. `3 …` walks it three times.
     ///
@@ -507,6 +547,9 @@ nonisolated extension Interpreter {
             iterator.laps = (n as! IntItem).value
             return nil
         }
+        .described(
+            "Sets how many times a walk goes round its source: `n .iteratorSetLaps`; refuses a counting or "
+            + "repeating iterator; n < 1 ends the loop, returning its body to `.code`.")
 
 
     // MARK: - Construction
@@ -580,6 +623,10 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: .iteratorFromIntRange, recording)
             }
         )
+        .described(
+            "Builds an unplayed counting iterator: `a b s i d e ( body )` counts from a toward b by step s, "
+            + "stopping short of b (one pass when a = b), from pass i at depth d, emitting if e; refuses s = 0 or "
+            + "nothing to emit.")
 
 
     /// Builds an iterator that **walks** a source — a string's characters, its
@@ -633,22 +680,35 @@ nonisolated extension Interpreter {
         iteratorWalking_Behavior(.iteratorFromString, over: .string) { _ in
             .elements(into: nil)
         }
+        .described(
+            "Builds an unplayed iterator over a string's chars: `s i d e ( body )` starts at pass i at depth d, "
+            + "emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit.")
 
     static let iteratorFromStringLetters_Behavior =
         iteratorWalking_Behavior(.iteratorFromStringLetters, over: .string) { _ in
             .letters
         }
+        .described(
+            "Builds an unplayed iterator over a string's chars, each as a one-char string: `s i d e ( body )` "
+            + "starts at pass i at depth d, emitting if e; refuses if nothing is left to emit.")
 
     static let iteratorFromStringWords_Behavior =
         iteratorWalking_Behavior(.iteratorFromStringWords, over: .string) { _ in
             .words
         }
+        .described(
+            "Builds an unplayed iterator over a string's whitespace-separated words: `s i d e ( body )` starts at "
+            + "pass i at depth d, emitting if e; refuses if nothing is left to emit.")
 
     static func iteratorFromVector_Behavior<V: VectorItem>(
         _ name: PushInstruction,
         over itemType: V.Type
     ) -> Behavior {
         iteratorWalking_Behavior(name, over: V.pushStack) { _ in .elements(into: nil) }
+            .described(
+                "Builds an unplayed iterator over a \(V.pushStack.noun)'s elements: `v i d e ( body )` starts at "
+                + "pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is "
+                + "left to emit.")
     }
 
     /// **The short constructors** (Behavior coverage audit, P3): an iterator over
@@ -681,6 +741,12 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: name, recording)
             }
         )
+        .described(
+            "Builds an iterator over a \(source.noun)'s "
+            + (source == .string ? "chars" : source == .code ? "top-level items" : "elements")
+            + (source == .code ? " and a body, written `( x ) ( body )`," : " and a body,")
+            + " ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an "
+            + "empty \(source.noun).")
     }
 
     static let iteratorOverString_Behavior = iteratorOver_Behavior(.iteratorOverString, over: .string)
@@ -734,6 +800,13 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: name, recording)
             }
         )
+        .described(
+            "Builds an unplayed iterator over a block's top-level items: `( x ) ( body ) i d e` starts at pass i at "
+            + "depth d, emitting if e"
+            + (into == .exec
+                ? ", each sent to `.exec` to run after the body"
+                : ", each landing on its stack (instructions run)")
+            + "; refuses if nothing is left to emit.")
     }
 
     static let iteratorFromCode_Behavior =
@@ -772,6 +845,11 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: instruction, recording)
             }
         )
+        .described(
+            "Builds an unplayed iterator over every point of a block, pre-order from the whole block: "
+            + "`( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point "
+            + (mode == .boxed ? "boxed onto `.code`" : mode == .whole ? "routed as it is" : "run, after the body")
+            + "; refuses if nothing is left to emit.")
     }
 
     static let iteratorFromCodePoints_Behavior =
@@ -830,6 +908,10 @@ nonisolated extension Interpreter {
                 return iteratorBuilt(iterator, by: name, recording)
             }
         )
+        .described(
+            "Builds an unplayed iterator that emits x n times: `( x ) n i d` starts at pass i at depth d, each copy "
+            + (into == .exec ? "sent to `.exec`" : "landing on its stack")
+            + "; refuses an empty block or nothing left to emit.")
     }
 
     static let iteratorRepeating_Behavior =

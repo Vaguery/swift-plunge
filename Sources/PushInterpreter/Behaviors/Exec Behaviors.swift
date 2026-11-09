@@ -48,6 +48,9 @@ nonisolated extension Interpreter {
                 return results
             }
         )
+        .described(
+            "Runs the body once and then, only if the bool it took beforehand was true, loops as `.execWhile` does, "
+            + "testing a new bool after each pass.")
 
     // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L13-L32
     //
@@ -93,6 +96,9 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described(
+            "Counts: `n ( body ) .execDoCount` pushes 0 to n − 1 in turn, running the body after each; the body "
+            + "then returns to `.code`, at once if n < 1.")
 
     //        // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L183-L203
     static let execDoTimes_Behavior =
@@ -135,6 +141,9 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described(
+            "Repeats: `n ( body ) .execDoTimes` runs the body n times, pushing no index; the body then returns to "
+            + "`.code`, at once if n < 1.")
 
     //        // using my own code as an example from: https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L83-L112
     static let execDoRange_Behavior =
@@ -187,6 +196,9 @@ nonisolated extension Interpreter {
                 )
             }
         )
+        .described(
+            "Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 through b inclusive, running the "
+            + "body after each; the body then returns to `.code`.")
 
     /// Build an iterator and hand it to `.iteratorPlay` — the shape every looping
     /// instruction in the language now reduces to, whether it counts a range or
@@ -249,6 +261,9 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described(
+            "Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding "
+            + "the other block.")
 
     static let execK_Behavior =
         Behavior.control(
@@ -269,6 +284,7 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described("Keeps the first block: `( a ) ( b ) .execK` runs a and discards b.")
 
     static let execY_Behavior =
         Behavior.control(
@@ -291,6 +307,9 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described(
+            "Recurs: `( a ) .execY` runs a, then puts a back on `.code` and runs `.execY` again, looping until the "
+            + "steps run out or the body intervenes.")
 
     static let execS_Behavior =
         Behavior.control(
@@ -322,6 +341,7 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described("Applies the S combinator: `( a ) ( b ) ( c ) .execS` runs a, c, b, then c again.")
 
     static let execWhen_Behavior =
         Behavior.control(
@@ -342,6 +362,7 @@ nonisolated extension Interpreter {
                 return results
             }
         )
+        .described("Runs the block when the bool is true, and discards it otherwise.")
 
     static let execWhile_Behavior =
         Behavior.control(
@@ -376,6 +397,9 @@ nonisolated extension Interpreter {
                 return results
             }
         )
+        .described(
+            "Loops: runs the body while the top bool is true, taking a new bool before each pass; a false bool ends "
+            + "the loop and discards the body.")
 
     static let execBehaviors:[PushInstruction : Behavior] =
     [

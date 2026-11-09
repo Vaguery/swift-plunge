@@ -179,6 +179,9 @@ nonisolated extension Interpreter {
                        empty: V([], call: context.recording([vector, function, InstructionItem(instruction)])),
                        context)
         }
+        .described(
+            "Runs the block on each element of a \(V.pushStack.noun), bound as `.input0`, collecting each run's "
+            + "last pushed value (the element if none); refuses mixed types or when steps run out.")
     }
 
     static func vectorFilterBehavior<V: VectorItem>(
@@ -195,6 +198,9 @@ nonisolated extension Interpreter {
                                           call: context.recording([vector, function, InstructionItem(instruction)]),
                                           members: context.recording.pieces(kept.map { origins[$0] })))]
         }
+        .described(
+            "Keeps the elements of a \(V.pushStack.noun) for which the block, run with the element as `.input0`, "
+            + "last pushes true; refuses when steps run out.")
     }
 
     static func vectorReduceBehavior<V: VectorItem>(
@@ -206,6 +212,9 @@ nonisolated extension Interpreter {
             return reduce(instruction, vector.value.map { V.Scalar($0, call: []) }, function,
                           call: [vector, function, InstructionItem(instruction)], context)
         }
+        .described(
+            "Folds the block over a \(V.pushStack.noun) from the first element, with the running value as "
+            + "`.input0` and the next element as `.input1`; refuses an empty vector or when steps run out.")
     }
 
     static let vecBoolMap_Behavior = vectorMapBehavior(.vecBoolMap, making: VecBoolItem.self)
@@ -231,6 +240,9 @@ nonisolated extension Interpreter {
             return map(.stringMap, text.value.map { CharItem($0) }, function,
                        call: call, empty: StringItem("", call: context.recording(call)), context)
         }
+        .described(
+            "Runs the block on each char of a string, bound as `.input0`, collecting each run's last pushed value "
+            + "(the char if none); refuses mixed types or when steps run out.")
 
     static let stringFilter_Behavior =
         Behavior.applying(.stringFilter, takes: [.string, .code], tags: [.fallible],
@@ -246,6 +258,9 @@ nonisolated extension Interpreter {
                                                call: context.recording(call),
                                                members: context.recording.pieces(kept.map { origins[$0] })))]
         }
+        .described(
+            "Keeps the chars of a string for which the block, run with the char as `.input0`, last pushes true; "
+            + "refuses when steps run out.")
 
     static let stringReduce_Behavior =
         Behavior.applying(.stringReduce, takes: [.string, .code], tags: [.fallible],
@@ -254,6 +269,9 @@ nonisolated extension Interpreter {
             return reduce(.stringReduce, text.value.map { CharItem($0) }, function,
                           call: [text, function, InstructionItem(.stringReduce)], context)
         }
+        .described(
+            "Folds the block over a string's chars from the first, with the running value as `.input0` and the next "
+            + "char as `.input1`; refuses an empty string or when steps run out.")
 
 
     // MARK: - The family
