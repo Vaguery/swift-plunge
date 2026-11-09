@@ -8,95 +8,95 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecStringButLast` |  | `vecString` | `vecString` |
-| `vecStringConcat` |  | `vecString`, `vecString` | `vecString` |
-| `vecStringConj` |  | `vecString`, `string` | `vecString` |
-| `vecStringConstruct` |  | `vecString`, n × `string` | `vecString` |
-| `vecStringContains` |  | `vecString` (read), `string` (read) | `bool` |
-| `vecStringContainsSubVec` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringCut` |  | `vecString`, `int` | `vecString`, `vecString` |
-| `vecStringDifference` |  | `vecString`, `vecString` | `vecString` |
-| `vecStringDistinct` |  | `vecString` | `vecString` |
-| `vecStringDrop` |  | `vecString`, `int` | `vecString` |
-| `vecStringDropLast` |  | `vecString`, `int` | `vecString` |
-| `vecStringEq` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringFilter` |  | `vecString`, `code` | `vecString`; may refuse |
-| `vecStringFindContaining` |  | `vecString` (read), `string` (read) | `string`, `int`; may refuse |
-| `vecStringFindContainingFrom` |  | `vecString` (read), `string` (read), `int` (read) | `string`, `int`; may refuse |
-| `vecStringFindPrefix` |  | `vecString` (read), `string` (read) | `string`, `int`; may refuse |
-| `vecStringFindPrefixFrom` |  | `vecString` (read), `string` (read), `int` (read) | `string`, `int`; may refuse |
-| `vecStringFirst` |  | `vecString` | `string`; may refuse |
-| `vecStringGT` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringGTE` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringIndexOf` |  | `vecString` (read), `string` (read) | `int`; may refuse |
-| `vecStringIndexOfFrom` |  | `vecString` (read), `string` (read), `int` (read) | `int`; may refuse |
-| `vecStringIndexOfSubVec` |  | `vecString` (read), `vecString` (read) | `int`; may refuse |
-| `vecStringIntersect` |  | `vecString`, `vecString` | `vecString` |
-| `vecStringIsSubset` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringItemIsEmpty` |  | `vecString` (read) | `bool` |
-| `vecStringJoin` |  | `vecString`, `string` | `string` |
-| `vecStringLT` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringLTE` |  | `vecString` (read), `vecString` (read) | `bool` |
-| `vecStringLast` |  | `vecString` | `string`; may refuse |
-| `vecStringLength` |  | `vecString` (read) | `int` |
-| `vecStringMap` |  | `vecString`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
-| `vecStringMax` |  | `vecString` (read) | `string`; may refuse |
-| `vecStringMin` |  | `vecString` (read) | `string`; may refuse |
-| `vecStringNth` |  | `vecString`, `int` | `string`; may refuse |
-| `vecStringOccurrencesOf` |  | `vecString` (read), `string` (read) | `int` |
-| `vecStringOccurrencesOfSubVec` |  | `vecString` (read), `vecString` (read) | `int` |
-| `vecStringPeekNth` |  | `vecString` (read), `int` (read) | `string`; may refuse |
-| `vecStringPushAll` |  | `vecString` | `string`, one per step |
-| `vecStringQuote` |  | `vecString` | `code` |
-| `vecStringReduce` |  | `vecString`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
-| `vecStringRemove` |  | `vecString`, `string` | `vecString` |
-| `vecStringReplace` |  | `vecString`, `string`, `string` | `vecString` |
-| `vecStringReplaceFirst` |  | `vecString`, `string`, `string` | `vecString` |
-| `vecStringReplaceFirstSubVec` |  | `vecString`, `vecString`, `vecString` | `vecString` |
-| `vecStringReplaceSubVec` |  | `vecString`, `vecString`, `vecString` | `vecString` |
-| `vecStringRest` |  | `vecString` | `vecString` |
-| `vecStringReverse` |  | `vecString` | `vecString` |
-| `vecStringSet` |  | `vecString`, `string`, `int` | `vecString`; may refuse |
-| `vecStringSubVec` |  | `vecString`, `int`, `int` | `vecString` |
-| `vecStringTake` |  | `vecString`, `int` | `vecString` |
-| `vecStringTakeLast` |  | `vecString`, `int` | `vecString` |
+| `vecStringButLast` | Drops the last element; an empty vector stays empty. | `vecString` | `vecString` |
+| `vecStringConcat` | Joins two vectors: `a b .vecStringConcat` gives the elements of a followed by those of b. | `vecString`, `vecString` | `vecString` |
+| `vecStringConj` | Appends a string: `v x .vecStringConj` gives v with x added at the end. | `vecString`, `string` | `vecString` |
+| `vecStringConstruct` | Builds a vector of the top n strings, consuming them, where n is the length of a template vector, also consumed; the top string comes last. | `vecString`, n × `string` | `vecString` |
+| `vecStringContains` | Tells whether x is an element: `v x .vecStringContains`, leaving both. | `vecString` (read), `string` (read) | `bool` |
+| `vecStringContainsSubVec` | Tells whether a run occurs: `w v .vecStringContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringCut` | Splits at a gap: `v i .vecStringCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecString`, `int` | `vecString`, `vecString` |
+| `vecStringDifference` | Filters: `a b .vecStringDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecString`, `vecString` | `vecString` |
+| `vecStringDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecString` | `vecString` |
+| `vecStringDrop` | Drops the front: `v n .vecStringDrop` removes the first n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
+| `vecStringDropLast` | Drops the back: `v n .vecStringDropLast` removes the last n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
+| `vecStringEq` | Pushes whether the top two vectors of strings are equal, leaving both. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringFilter` | Keeps the elements of a vector of strings for which the block, run with the element as `.input0`, last pushes true; refuses when steps run out. | `vecString`, `code` | `vecString`; may refuse |
+| `vecStringFindContaining` | Finds the first string of v that contains s, pushing its index and it, leaving both; refuses when none does. | `vecString` (read), `string` (read) | `string`, `int`; may refuse |
+| `vecStringFindContainingFrom` | Finds the first string of v at index i or later that contains s, pushing its index and it, leaving all three; refuses when none does. | `vecString` (read), `string` (read), `int` (read) | `string`, `int`; may refuse |
+| `vecStringFindPrefix` | Finds the first string of v that begins with s, pushing its index and it, leaving both; refuses when none does. | `vecString` (read), `string` (read) | `string`, `int`; may refuse |
+| `vecStringFindPrefixFrom` | Finds the first string of v at index i or later that begins with s, pushing its index and it, leaving all three; refuses when none does. | `vecString` (read), `string` (read), `int` (read) | `string`, `int`; may refuse |
+| `vecStringFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecString` | `string`; may refuse |
+| `vecStringGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGT` gives a > b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGTE` gives a ≥ b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringIndexOf` | Finds x: `v x .vecStringIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecString` (read), `string` (read) | `int`; may refuse |
+| `vecStringIndexOfFrom` | Finds an element from an index: `v x i .vecStringIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecString` (read), `string` (read), `int` (read) | `int`; may refuse |
+| `vecStringIndexOfSubVec` | Finds a run: `w v .vecStringIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecString` (read), `vecString` (read) | `int`; may refuse |
+| `vecStringIntersect` | Filters: `a b .vecStringIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecString`, `vecString` | `vecString` |
+| `vecStringIsSubset` | Tells whether every element of a occurs in b: `a b .vecStringIsSubset`, leaving both. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecString` (read) | `bool` |
+| `vecStringJoin` | Joins: `v p .vecStringJoin` gives the strings of v with p between each two. | `vecString`, `string` | `string` |
+| `vecStringLT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLT` gives a < b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLTE` gives a ≤ b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecString` | `string`; may refuse |
+| `vecStringLength` | Counts the elements, leaving the vector. | `vecString` (read) | `int` |
+| `vecStringMap` | Runs the block on each element of a vector of strings, bound as `.input0`, collecting each run's last pushed value (the element if none); refuses mixed types or when steps run out. | `vecString`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `vecStringMax` | Pushes the greatest element, leaving the vector; refuses an empty vector. | `vecString` (read) | `string`; may refuse |
+| `vecStringMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecString` (read) | `string`; may refuse |
+| `vecStringNth` | Picks an element: `v i .vecStringNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecString`, `int` | `string`; may refuse |
+| `vecStringOccurrencesOf` | Counts x: `v x .vecStringOccurrencesOf` gives how many elements equal x, leaving both. | `vecString` (read), `string` (read) | `int` |
+| `vecStringOccurrencesOfSubVec` | Counts a run: `w v .vecStringOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecString` (read), `vecString` (read) | `int` |
+| `vecStringPeekNth` | Picks an element: `v i .vecStringPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecString` (read), `int` (read) | `string`; may refuse |
+| `vecStringPushAll` | Pushes every element onto the string stack, front to back, so the last element ends on top; consumes the vector. | `vecString` | `string`, one per step |
+| `vecStringQuote` | Wraps the vector in a one-item block. | `vecString` | `code` |
+| `vecStringReduce` | Folds the block over a vector of strings from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecString`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecStringRemove` | Removes every x: `v x .vecStringRemove` gives v without its elements equal to x. | `vecString`, `string` | `vecString` |
+| `vecStringReplace` | Substitutes: `v a b .vecStringReplace` replaces every element equal to a with b. | `vecString`, `string`, `string` | `vecString` |
+| `vecStringReplaceFirst` | Substitutes once: `v a b .vecStringReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecString`, `string`, `string` | `vecString` |
+| `vecStringReplaceFirstSubVec` | Replaces a run: `v w r .vecStringReplaceFirstSubVec` puts r in place of the first w in v; an empty w changes nothing. | `vecString`, `vecString`, `vecString` | `vecString` |
+| `vecStringReplaceSubVec` | Replaces runs: `v w r .vecStringReplaceSubVec` puts r in place of every non-overlapping w in v, left to right; an empty w changes nothing. | `vecString`, `vecString`, `vecString` | `vecString` |
+| `vecStringRest` | Drops the first element; an empty vector stays empty. | `vecString` | `vecString` |
+| `vecStringReverse` | Reverses the order of the elements. | `vecString` | `vecString` |
+| `vecStringSet` | Overwrites an element: `v x i .vecStringSet` puts x at index i, i clamped into range; refuses an empty vector. | `vecString`, `string`, `int` | `vecString`; may refuse |
+| `vecStringSubVec` | Slices: `v i j .vecStringSubVec` gives elements i through j inclusive, each clamped into range; j below i gives just element i. | `vecString`, `int`, `int` | `vecString` |
+| `vecStringTake` | Keeps the front: `v n .vecStringTake` gives the first n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
+| `vecStringTakeLast` | Keeps the back: `v n .vecStringTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecString0` |  | — | `vecString` |
-| `vecString1` |  | — | `vecString` |
-| `vecString2` |  | — | `vecString` |
-| `vecString3` |  | — | `vecString` |
-| `vecString4` |  | — | `vecString` |
-| `vecString5` |  | — | `vecString` |
-| `vecString6` |  | — | `vecString` |
-| `vecString7` |  | — | `vecString` |
-| `vecString8` |  | — | `vecString` |
-| `vecString9` |  | — | `vecString` |
-| `vecStringLookupContaining` |  | — | `vecString`, `int`; may refuse |
-| `vecStringLookupContainingFrom` |  | `int` | `vecString`, `int`; may refuse |
-| `vecStringLookupEqual` |  | — | `vecString`, `int`; may refuse |
-| `vecStringLookupEqualFrom` |  | `int` | `vecString`, `int`; may refuse |
-| `vecStringLookupPrefix` |  | — | `vecString`, `int`; may refuse |
-| `vecStringLookupPrefixFrom` |  | `int` | `vecString`, `int`; may refuse |
-| `vecStringReadItems` |  | `int` | `vecString` |
-| `vecStringReadStack` |  | — | `vecString` |
-| `vecStringRef` |  | — | `binding`, `int`; may refuse |
+| `vecString0` | Pushes the run's constant 0 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString1` | Pushes the run's constant 1 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString2` | Pushes the run's constant 2 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString3` | Pushes the run's constant 3 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString4` | Pushes the run's constant 4 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString5` | Pushes the run's constant 5 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString6` | Pushes the run's constant 6 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString7` | Pushes the run's constant 7 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString8` | Pushes the run's constant 8 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecString9` | Pushes the run's constant 9 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
+| `vecStringLookupContaining` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
+| `vecStringLookupContainingFrom` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
+| `vecStringLookupEqual` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
+| `vecStringLookupEqualFrom` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
+| `vecStringLookupPrefix` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
+| `vecStringLookupPrefixFrom` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
+| `vecStringReadItems` | Copies the top n strings into a vector, leaving them: `n .vecStringReadItems`, n clamped to the stack's depth; the top string comes last. | `int` | `vecString` |
+| `vecStringReadStack` | Copies the whole string stack into a vector, leaving it; the bottom string comes first, and an empty stack gives an empty vector. | — | `vecString` |
+| `vecStringRef` | Binds a copy of the top vector of strings, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecStringIterate` |  | `vecString`, `code` | the rest of the program |
-| `vecStringWith` |  | `code`, `vecString` (read) | the rest of the program |
+| `vecStringIterate` | Loops over the vector: for each element, pushes it to the string stack and runs the block taken from `.code`, which returns there afterward. | `vecString`, `code` | the rest of the program |
+| `vecStringWith` | Binds a copy of the top vector of strings to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `vecString` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecStringPrint` |  | `vecString` | the printout |
+| `vecStringPrint` | Prints the top vector of strings and a newline to the output. | `vecString` | the printout |
 
 ## The stack's own instructions
 

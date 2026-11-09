@@ -8,28 +8,28 @@ The `.exec` stack is the program still to run: the interpreter pops its top item
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `execQuote` |  | `exec` | `code` |
+| `execQuote` | Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item block. | `exec` | `code` |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `execDoCount` |  | `int`, `code` | the rest of the program |
-| `execDoRange` |  | `int`, `int`, `code` | the rest of the program |
-| `execDoTimes` |  | `int`, `code` | the rest of the program |
-| `execDoWhile` |  | `bool`, `code` | the rest of the program |
-| `execIf` |  | `bool`, `code`, `code` | the rest of the program |
-| `execK` |  | `code`, `code` | the rest of the program |
-| `execS` |  | `code`, `code`, `code` | the rest of the program |
-| `execWhen` |  | `bool`, `code` | the rest of the program |
-| `execWhile` |  | `bool`, `code` | the rest of the program |
-| `execY` |  | `code` | the rest of the program |
+| `execDoCount` | Counts: `n ( body ) .execDoCount` pushes 0 to n − 1 in turn, running the body after each; the body then returns to `.code`, at once if n < 1. | `int`, `code` | the rest of the program |
+| `execDoRange` | Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 through b inclusive, running the body after each; the body then returns to `.code`. | `int`, `int`, `code` | the rest of the program |
+| `execDoTimes` | Repeats: `n ( body ) .execDoTimes` runs the body n times, pushing no index; the body then returns to `.code`, at once if n < 1. | `int`, `code` | the rest of the program |
+| `execDoWhile` | Runs the body once and then, only if the bool it took beforehand was true, loops as `.execWhile` does, testing a new bool after each pass. | `bool`, `code` | the rest of the program |
+| `execIf` | Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding the other block. | `bool`, `code`, `code` | the rest of the program |
+| `execK` | Keeps the first block: `( a ) ( b ) .execK` runs a and discards b. | `code`, `code` | the rest of the program |
+| `execS` | Applies the S combinator: `( a ) ( b ) ( c ) .execS` runs a, c, b, then c again. | `code`, `code`, `code` | the rest of the program |
+| `execWhen` | Runs the block when the bool is true, and discards it otherwise. | `bool`, `code` | the rest of the program |
+| `execWhile` | Loops: runs the body while the top bool is true, taking a new bool before each pass; a false bool ends the loop and discards the body. | `bool`, `code` | the rest of the program |
+| `execY` | Recurs: `( a ) .execY` runs a, then puts a back on `.code` and runs `.execY` again, looping until the steps run out or the body intervenes. | `code` | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `execPrint` |  | `exec` | the printout |
+| `execPrint` | Prints the next item on `.exec` and a newline to the output, so that item never runs. | `exec` | the printout |
 
 ## The stack's own instructions
 

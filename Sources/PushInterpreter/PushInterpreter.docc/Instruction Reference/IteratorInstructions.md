@@ -8,56 +8,56 @@ The `.iterator` stack holds first-class loops: a source (a range, a collection o
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `iteratorEq` |  | `iterator` (read), `iterator` (read) | `bool` |
-| `iteratorFromCode` |  | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
-| `iteratorFromCodeDoPoints` |  | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
-| `iteratorFromCodeEmitPoints` |  | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
-| `iteratorFromCodeIntoExec` |  | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
-| `iteratorFromCodePoints` |  | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
-| `iteratorFromIntRange` |  | `int`, `int`, `int`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromString` |  | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromStringLetters` |  | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromStringWords` |  | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromVecBool` |  | `vecBool`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromVecDouble` |  | `vecDouble`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromVecInt` |  | `vecInt`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorFromVecString` |  | `vecString`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
-| `iteratorOverCode` |  | `code`, `code` | `iterator`; may refuse |
-| `iteratorOverString` |  | `string`, `code` | `iterator`; may refuse |
-| `iteratorOverVecBool` |  | `vecBool`, `code` | `iterator`; may refuse |
-| `iteratorOverVecDouble` |  | `vecDouble`, `code` | `iterator`; may refuse |
-| `iteratorOverVecInt` |  | `vecInt`, `code` | `iterator`; may refuse |
-| `iteratorOverVecString` |  | `vecString`, `code` | `iterator`; may refuse |
-| `iteratorPeekBody` |  | `iterator` | `iterator` or `iterator`, `code` |
-| `iteratorPeekEnd` |  | `iterator` | `iterator` or `iterator`, `int` |
-| `iteratorPeekLaps` |  | `iterator` | `iterator`, `int` |
-| `iteratorPeekStart` |  | `iterator` | `iterator` or `iterator`, `bool` or `iterator`, `int` or `iterator`, `double` or `iterator`, `code` or `iterator`, `exec` or `iterator`, `char` or `iterator`, `string` or `iterator`, `vecBool` or `iterator`, `vecInt` or `iterator`, `vecDouble` or `iterator`, `vecString` or `iterator`, `iterator` or `iterator`, `binding` |
-| `iteratorPeekStride` |  | `iterator` | `iterator`, `int` |
-| `iteratorPopState` |  | `iterator` | `iterator` or `code` or — |
-| `iteratorQuote` |  | `iterator` | `code` |
-| `iteratorRepeating` |  | `code`, `int`, `int`, `int` | `iterator`; may refuse |
-| `iteratorRepeatingIntoExec` |  | `code`, `int`, `int`, `int` | `iterator`; may refuse |
-| `iteratorRestart` |  | `iterator` | `iterator`; may refuse |
-| `iteratorSetCounter` |  | `int`, `iterator` | `iterator` or `code` or —; may refuse |
-| `iteratorSetDepth` |  | `int`, `iterator` | `iterator` or `code` or —; may refuse |
-| `iteratorSetEnd` |  | `code`, `iterator` | `iterator` or `code` or —; may refuse |
-| `iteratorSetLaps` |  | `int`, `iterator` | `iterator` or `code` or —; may refuse |
-| `iteratorSetStart` |  | `code`, `iterator` | `iterator` or `code` or —; may refuse |
-| `vecFromIterator` |  | `iterator` | `vecBool` or `vecBool`, `code` or `vecDouble` or `vecDouble`, `code` or `vecInt` or `vecInt`, `code` or `vecString` or `vecString`, `code` or `string` or `string`, `code`; may refuse |
+| `iteratorEq` | Pushes whether the top two iterators are equal, leaving both. | `iterator` (read), `iterator` (read) | `bool` |
+| `iteratorFromCode` | Builds an unplayed iterator over a block's top-level items: `( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each landing on its stack (instructions run); refuses if nothing is left to emit. | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
+| `iteratorFromCodeDoPoints` | Builds an unplayed iterator over every point of a block, pre-order from the whole block: `( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point run, after the body; refuses if nothing is left to emit. | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
+| `iteratorFromCodeEmitPoints` | Builds an unplayed iterator over every point of a block, pre-order from the whole block: `( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point routed as it is; refuses if nothing is left to emit. | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
+| `iteratorFromCodeIntoExec` | Builds an unplayed iterator over a block's top-level items: `( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each sent to `.exec` to run after the body; refuses if nothing is left to emit. | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
+| `iteratorFromCodePoints` | Builds an unplayed iterator over every point of a block, pre-order from the whole block: `( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point boxed onto `.code`; refuses if nothing is left to emit. | `code`, `code`, `int`, `int`, `bool` | `iterator`; may refuse |
+| `iteratorFromIntRange` | Builds an unplayed counting iterator: `a b s i d e ( body )` counts from a toward b by step s, stopping short of b (one pass when a = b), from pass i at depth d, emitting if e; refuses s = 0 or nothing to emit. | `int`, `int`, `int`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromString` | Builds an unplayed iterator over a string's chars: `s i d e ( body )` starts at pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit. | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromStringLetters` | Builds an unplayed iterator over a string's chars, each as a one-char string: `s i d e ( body )` starts at pass i at depth d, emitting if e; refuses if nothing is left to emit. | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromStringWords` | Builds an unplayed iterator over a string's whitespace-separated words: `s i d e ( body )` starts at pass i at depth d, emitting if e; refuses if nothing is left to emit. | `string`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromVecBool` | Builds an unplayed iterator over a vector of bools's elements: `v i d e ( body )` starts at pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit. | `vecBool`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromVecDouble` | Builds an unplayed iterator over a vector of doubles's elements: `v i d e ( body )` starts at pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit. | `vecDouble`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromVecInt` | Builds an unplayed iterator over a vector of ints's elements: `v i d e ( body )` starts at pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit. | `vecInt`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorFromVecString` | Builds an unplayed iterator over a vector of strings's elements: `v i d e ( body )` starts at pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit. | `vecString`, `int`, `int`, `bool`, `code` | `iterator`; may refuse |
+| `iteratorOverCode` | Builds an iterator over a block's top-level items and a body, written `( x ) ( body )`, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty block. | `code`, `code` | `iterator`; may refuse |
+| `iteratorOverString` | Builds an iterator over a string's chars and a body, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty string. | `string`, `code` | `iterator`; may refuse |
+| `iteratorOverVecBool` | Builds an iterator over a vector of bools's elements and a body, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty vector of bools. | `vecBool`, `code` | `iterator`; may refuse |
+| `iteratorOverVecDouble` | Builds an iterator over a vector of doubles's elements and a body, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty vector of doubles. | `vecDouble`, `code` | `iterator`; may refuse |
+| `iteratorOverVecInt` | Builds an iterator over a vector of ints's elements and a body, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty vector of ints. | `vecInt`, `code` | `iterator`; may refuse |
+| `iteratorOverVecString` | Builds an iterator over a vector of strings's elements and a body, ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an empty vector of strings. | `vecString`, `code` | `iterator`; may refuse |
+| `iteratorPeekBody` | Pushes a copy of the body onto `.code` without running it, leaving the iterator; pushes nothing for a bodyless iterator. | `iterator` | `iterator` or `iterator`, `code` |
+| `iteratorPeekEnd` | Pushes the loop's end bound (the count, for a repeating iterator), leaving the iterator; pushes nothing for an iterator that walks a source. | `iterator` | `iterator` or `iterator`, `int` |
+| `iteratorPeekLaps` | Pushes how many times the iterator goes round its source, 1 for one that does not cycle, leaving the iterator. | `iterator` | `iterator`, `int` |
+| `iteratorPeekStart` | Pushes where the loop starts (the first int of a count, the source of a walk, or the repeated item) onto its stack, leaving the iterator. | `iterator` | `iterator` or `iterator`, `bool` or `iterator`, `int` or `iterator`, `double` or `iterator`, `code` or `iterator`, `exec` or `iterator`, `char` or `iterator`, `string` or `iterator`, `vecBool` or `iterator`, `vecInt` or `iterator`, `vecDouble` or `iterator`, `vecString` or `iterator`, `iterator` or `iterator`, `binding` |
+| `iteratorPeekStride` | Pushes the step between passes, 1 for any but a counting iterator, leaving the iterator. | `iterator` | `iterator`, `int` |
+| `iteratorPopState` | Skips a pass, advancing the cursor without emitting or running the body; skipping the last pass ends the loop and returns its body to `.code`. | `iterator` | `iterator` or `code` or — |
+| `iteratorQuote` | Quotes an iterator as a one-item block on `.code`, parking it where no loop continues it. | `iterator` | `code` |
+| `iteratorRepeating` | Builds an unplayed iterator that emits x n times: `( x ) n i d` starts at pass i at depth d, each copy landing on its stack; refuses an empty block or nothing left to emit. | `code`, `int`, `int`, `int` | `iterator`; may refuse |
+| `iteratorRepeatingIntoExec` | Builds an unplayed iterator that emits x n times: `( x ) n i d` starts at pass i at depth d, each copy sent to `.exec`; refuses an empty block or nothing left to emit. | `code`, `int`, `int`, `int` | `iterator`; may refuse |
+| `iteratorRestart` | Rewinds the cursor to the first pass of the first lap, keeping the start, end, stride, laps, depth and body; refuses if that leaves nothing to emit. | `iterator` | `iterator`; may refuse |
+| `iteratorSetCounter` | Moves the cursor: `n .iteratorSetCounter` makes n the passes taken; a cursor below 0 or past the end ends the loop, returning its body to `.code`. | `int`, `iterator` | `iterator` or `code` or —; may refuse |
+| `iteratorSetDepth` | Sets how deep in `.exec` each pass queues the next: `n .iteratorSetDepth`; a negative n ends the loop, returning its body to `.code`. | `int`, `iterator` | `iterator` or `code` or —; may refuse |
+| `iteratorSetEnd` | Re-aims the end: `( x ) .iteratorSetEnd` makes x the end bound; refuses an empty block or a walking iterator; an end leaving nothing to emit ends the loop, returning its body to `.code`. | `code`, `iterator` | `iterator` or `code` or —; may refuse |
+| `iteratorSetLaps` | Sets how many times a walk goes round its source: `n .iteratorSetLaps`; refuses a counting or repeating iterator; n < 1 ends the loop, returning its body to `.code`. | `int`, `iterator` | `iterator` or `code` or —; may refuse |
+| `iteratorSetStart` | Re-aims the start: `( x ) .iteratorSetStart` makes x the start or source; refuses an empty block; a start leaving nothing to emit ends the loop, returning its body to `.code`. | `code`, `iterator` | `iterator` or `code` or —; may refuse |
+| `vecFromIterator` | Drains an iterator into a vector of what it emits, or of what its block makes of each (chars then make a string); refuses plain chars or mixed types, handing the iterator back. | `iterator` | `vecBool` or `vecBool`, `code` or `vecDouble` or `vecDouble`, `code` or `vecInt` or `vecInt`, `code` or `vecString` or `vecString`, `code` or `string` or `string`, `code`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `iteratorPlay` |  | `iterator` | the rest of the program |
-| `iteratorPlayDelayed` |  | `int`, `iterator` | the rest of the program |
-| `iteratorStep` |  | `iterator` | the rest of the program |
+| `iteratorPlay` | Plays the loop out: each pass emits the current item, runs the body, and queues the next pass at the iterator's depth in `.exec`; at the end the body returns to `.code`. | `iterator` | the rest of the program |
+| `iteratorPlayDelayed` | Sets the depth, then plays: `n .iteratorPlayDelayed` stores n as the iterator's depth in `.exec` and plays as `.iteratorPlay` does; a negative n makes this pass the last. | `int`, `iterator` | the rest of the program |
+| `iteratorStep` | Runs one pass by hand, emitting the current item and running the body, and leaves the advanced iterator; after the last pass the iterator goes and its body returns to `.code`. | `iterator` | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `iteratorPrint` |  | `iterator` | the printout |
+| `iteratorPrint` | Prints the top iterator and a newline to the output, ending its loop. | `iterator` | the printout |
 
 ## The stack's own instructions
 

@@ -8,36 +8,36 @@ The `.binding` stack holds keyed bindings: an int key and any item. The topmost 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `bindingEq` |  | `binding` (read), `binding` (read) | `bool` |
-| `bindingFromCode` |  | `code` | `binding` or `error`; may refuse |
-| `bindingQuote` |  | `binding` | `code` |
-| `bindingRekey` |  | `binding`, `int` | `binding` |
+| `bindingEq` | Pushes whether the top two bindings are equal, leaving both. | `binding` (read), `binding` (read) | `bool` |
+| `bindingFromCode` | Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator or a binding. | `code` | `binding` or `error`; may refuse |
+| `bindingQuote` | Turns the top binding into the block `( k value )` on `.code`. | `binding` | `code` |
+| `bindingRekey` | Gives the top binding the key k from `.int`, shadowing any older binding of k. | `binding`, `int` | `binding` |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `refBindingDepth` |  | — | `int`; may refuse |
-| `refDeref` |  | — | the rest of the program; may refuse |
-| `refDerefBelow` |  | `int` | the rest of the program; may refuse |
-| `refDerefToCode` |  | — | `code`; may refuse |
-| `refDerefToCodeBelow` |  | `int` | `code`; may refuse |
-| `refFloorKey` |  | — | `int`; may refuse |
-| `refFresh` |  | — | `int` |
-| `refKeyOf` |  | — | `int`; may refuse |
-| `refNearestKey` |  | — | `int`; may refuse |
+| `refBindingDepth` | Pushes the depth of key k's topmost binding on `.binding`, leaving k; refuses when k is unbound. | — | `int`; may refuse |
+| `refDeref` | Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value lands on its stack; refuses when k is unbound. | — | the rest of the program; may refuse |
+| `refDerefBelow` | Runs the value bound to key k at depth i or below on `.binding`, as `.refDeref` does, leaving k: `k i .refDerefBelow` reaches shadowed bindings; refuses when there is none. | `int` | the rest of the program; may refuse |
+| `refDerefToCode` | Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted, leaving k; refuses when k is unbound. | — | `code`; may refuse |
+| `refDerefToCodeBelow` | Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as `.refDerefToCode` does, leaving k: `k i .refDerefToCodeBelow`; refuses when there is none. | `int` | `code`; may refuse |
+| `refFloorKey` | Pushes the greatest bound key at or below k, leaving k; refuses when there is none. | — | `int`; may refuse |
+| `refFresh` | Pushes a fresh key onto `.int`, one not drawn before in this run. | — | `int` |
+| `refKeyOf` | Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item, leaving the block; refuses on a miss. | — | `int`; may refuse |
+| `refNearestKey` | Pushes the bound key nearest k, the topmost on a tie, leaving k; refuses when nothing is bound. | — | `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `refScope` |  | `int`, `code` | the rest of the program |
+| `refScope` | Runs a body with key k pushed onto `.int`, then removes k's topmost binding: `k ( b ) .refScope`. | `int`, `code` | the rest of the program |
 
 ## Rearranging the stack
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `refUnbind` |  | `int` (read) | `binding`, rearranged; may refuse |
+| `refUnbind` | Removes key k's topmost binding, leaving k; refuses when k is unbound. | `int` (read) | `binding`, rearranged; may refuse |
 
 ## The stack's own instructions
 

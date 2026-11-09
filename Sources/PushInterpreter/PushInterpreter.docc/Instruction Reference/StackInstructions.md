@@ -8,18 +8,18 @@ An index or a count comes from `.int`, and is clamped into the stack rather than
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `intDeepDup` |  | `int`, 2 `int` items | `int`, rearranged |
-| `intDeleteAtDepth` |  | `int`, a `int` item | `int`, rearranged |
-| `intDup` |  | a `int` item | `int`, rearranged |
-| `intDupItems` |  | `int` | `int`, rearranged |
-| `intDupTimes` |  | `int`, a `int` item | `int`, rearranged |
-| `intFlush` |  | — | `int`, rearranged |
-| `intPop` |  | a `int` item | `int`, rearranged |
-| `intPopItems` |  | `int` | `int`, rearranged |
-| `intRot` |  | 3 `int` items | `int`, rearranged |
-| `intShove` |  | `int`, a `int` item | `int`, rearranged |
-| `intStackDepth` |  | — | `int` |
-| `intStackIsEmpty` |  | — | `bool` |
-| `intSwap` |  | 2 `int` items | `int`, rearranged |
-| `intYank` |  | `int`, 2 `int` items | `int`, rearranged |
-| `intYankDup` |  | `int`, 2 `int` items | `int`, rearranged |
+| `intDeepDup` | Copies the int i up from the bottom (0 is the bottom) and puts the copy just above it; i is clamped into the stack. | `int`, 2 `int` items | `int`, rearranged |
+| `intDeleteAtDepth` | Deletes the int at depth i (counted once i is popped); i is clamped into the stack. | `int`, a `int` item | `int`, rearranged |
+| `intDup` | Copies the top int. | a `int` item | `int`, rearranged |
+| `intDupItems` | Copies the top n ints, keeping their order; n is clamped between 0 and one less than the depth. | `int` | `int`, rearranged |
+| `intDupTimes` | Pushes n more copies of the top int; n ≤ 0 copies nothing. | `int`, a `int` item | `int`, rearranged |
+| `intFlush` | Discards every int. | — | `int`, rearranged |
+| `intPop` | Discards the top int. | a `int` item | `int`, rearranged |
+| `intPopItems` | Discards the top n ints; n is clamped between 0 and the depth. | `int` | `int`, rearranged |
+| `intRot` | Moves the third int from the top up to the top, above the other two. | 3 `int` items | `int`, rearranged |
+| `intShove` | Moves the top int down to depth i (counted once i is popped), clamped into the stack; undoes `i .intYank`. | `int`, a `int` item | `int`, rearranged |
+| `intStackDepth` | Pushes how many ints there are. | — | `int` |
+| `intStackIsEmpty` | Pushes true when there are no ints, false otherwise. | — | `bool` |
+| `intSwap` | Swaps the top two ints. | 2 `int` items | `int`, rearranged |
+| `intYank` | Moves the int at depth i (counted once i is popped) to the top; i is clamped into the stack. | `int`, 2 `int` items | `int`, rearranged |
+| `intYankDup` | Copies the int at depth i (counted once i is popped) onto the top; i is clamped into the stack. | `int`, 2 `int` items | `int`, rearranged |

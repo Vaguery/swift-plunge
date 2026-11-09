@@ -59,6 +59,11 @@ nonisolated extension PushStack {
         }
     }
 
+    /// `noun` with its article: "an int", "a block".
+    var aNoun: String {
+        ("aeiou".contains(noun.first!) ? "an " : "a ") + noun
+    }
+
     /// `noun` for several items: "ints", "blocks", "vectors of strings".
     var plural: String {
         switch self {

@@ -94,7 +94,7 @@ nonisolated extension Interpreter {
             result.append(y.value)
             return Built(result, members: x.origins() + [Origin.item(y)])
         }
-        .described("Appends \(V.Scalar.pushStack.noun): `v x .\(instruction)` gives v with x added at the end.")
+        .described("Appends \(V.Scalar.pushStack.aNoun): `v x .\(instruction)` gives v with x added at the end.")
     }
 
     // returns a new vector formed by placing y's elements before x's

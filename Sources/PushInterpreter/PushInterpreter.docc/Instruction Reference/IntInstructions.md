@@ -8,63 +8,63 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `intAbs` |  | `int` | `int`; may refuse |
-| `intAdd` |  | `int`, `int` | `int`; may refuse |
-| `intDec` |  | `int` | `int`; may refuse |
-| `intEq` |  | `int` (read), `int` (read) | `bool` |
-| `intFromBool` |  | `bool` | `int` |
-| `intFromChar` |  | `char` | `int`; may refuse |
-| `intFromDouble` |  | `double` | `int`; may refuse |
-| `intFromString` |  | `string` | `int`; may refuse |
-| `intGT` |  | `int` (read), `int` (read) | `bool` |
-| `intGTE` |  | `int` (read), `int` (read) | `bool` |
-| `intInc` |  | `int` | `int`; may refuse |
-| `intLT` |  | `int` (read), `int` (read) | `bool` |
-| `intLTE` |  | `int` (read), `int` (read) | `bool` |
-| `intMax` |  | `int`, `int` | `int` |
-| `intMin` |  | `int`, `int` | `int` |
-| `intMod` |  | `int`, `int` | `int`; may refuse |
-| `intMultiply` |  | `int`, `int` | `int`; may refuse |
-| `intNegate` |  | `int` | `int`; may refuse |
-| `intPeekMax` |  | `int` (read), `int` (read) | `int` |
-| `intPeekMin` |  | `int` (read), `int` (read) | `int` |
-| `intPow` |  | `int`, `int` | `int`; may refuse |
-| `intQuot` |  | `int`, `int` | `int`; may refuse |
-| `intQuote` |  | `int` | `code` |
-| `intSign` |  | `int` | `int` |
-| `intSubtract` |  | `int`, `int` | `int`; may refuse |
+| `intAbs` | Takes the absolute value; refuses the most negative int, whose absolute value overflows. | `int` | `int`; may refuse |
+| `intAdd` | Adds two ints; refuses on overflow. | `int`, `int` | `int`; may refuse |
+| `intDec` | Subtracts 1; refuses on overflow. | `int` | `int`; may refuse |
+| `intEq` | Pushes whether the top two ints are equal, leaving both. | `int` (read), `int` (read) | `bool` |
+| `intFromBool` | Converts a bool: 1 for true, 0 for false. | `bool` | `int` |
+| `intFromChar` | Converts a char to its Unicode scalar value; refuses a char made of several scalars. | `char` | `int`; may refuse |
+| `intFromDouble` | Converts a double, truncating toward zero; refuses one that is not finite or out of range. | `double` | `int`; may refuse |
+| `intFromString` | Parses a string as an integer; refuses one that is not. | `string` | `int`; may refuse |
+| `intGT` | Compares, leaving both ints: `a b .intGT` gives a > b. | `int` (read), `int` (read) | `bool` |
+| `intGTE` | Compares, leaving both ints: `a b .intGTE` gives a ≥ b. | `int` (read), `int` (read) | `bool` |
+| `intInc` | Adds 1; refuses on overflow. | `int` | `int`; may refuse |
+| `intLT` | Compares, leaving both ints: `a b .intLT` gives a < b. | `int` (read), `int` (read) | `bool` |
+| `intLTE` | Compares, leaving both ints: `a b .intLTE` gives a ≤ b. | `int` (read), `int` (read) | `bool` |
+| `intMax` | Keeps the larger of two ints. | `int`, `int` | `int` |
+| `intMin` | Keeps the smaller of two ints. | `int`, `int` | `int` |
+| `intMod` | Takes the remainder: `a b .intMod` gives a mod b, with the sign of a; refuses when b is 0. | `int`, `int` | `int`; may refuse |
+| `intMultiply` | Multiplies two ints; refuses on overflow. | `int`, `int` | `int`; may refuse |
+| `intNegate` | Negates; refuses the most negative int, whose negation overflows. | `int` | `int`; may refuse |
+| `intPeekMax` | Pushes the larger of the top two ints, leaving both. | `int` (read), `int` (read) | `int` |
+| `intPeekMin` | Pushes the smaller of the top two ints, leaving both. | `int` (read), `int` (read) | `int` |
+| `intPow` | Raises to a power: `b e .intPow` gives b to the e; refuses on overflow, or a negative e unless b is ±1. | `int`, `int` | `int`; may refuse |
+| `intQuot` | Divides, truncating toward zero: `a b .intQuot` gives a ÷ b; refuses when b is 0 or on overflow. | `int`, `int` | `int`; may refuse |
+| `intQuote` | Quotes an int as a one-item block: `5` becomes `( 5 )`. | `int` | `code` |
+| `intSign` | Gives the sign of an int: −1, 0 or 1. | `int` | `int` |
+| `intSubtract` | Subtracts: `a b .intSubtract` gives a − b; refuses on overflow. | `int`, `int` | `int`; may refuse |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `int0` |  | — | `int` |
-| `int1` |  | — | `int` |
-| `int2` |  | — | `int` |
-| `int3` |  | — | `int` |
-| `int4` |  | — | `int` |
-| `int5` |  | — | `int` |
-| `int6` |  | — | `int` |
-| `int7` |  | — | `int` |
-| `int8` |  | — | `int` |
-| `int9` |  | — | `int` |
-| `intLookupEqual` |  | — | `int`, `int`; may refuse |
-| `intLookupEqualFrom` |  | `int` | `int`, `int`; may refuse |
-| `intLookupNearest` |  | — | `int`, `int`; may refuse |
-| `intLookupNearestFrom` |  | `int` | `int`, `int`; may refuse |
-| `intRef` |  | — | `binding`, `int`; may refuse |
+| `int0` | Pushes the run's constant 0 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int1` | Pushes the run's constant 1 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int2` | Pushes the run's constant 2 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int3` | Pushes the run's constant 3 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int4` | Pushes the run's constant 4 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int5` | Pushes the run's constant 5 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int6` | Pushes the run's constant 6 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int7` | Pushes the run's constant 7 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int8` | Pushes the run's constant 8 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `int9` | Pushes the run's constant 9 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
+| `intLookupEqual` | Reads the top int as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `int`, `int`; may refuse |
+| `intLookupEqualFrom` | Reads the top int as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `int`, `int`; may refuse |
+| `intLookupNearest` | Reads the top int as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `int`, `int`; may refuse |
+| `intLookupNearestFrom` | Reads the top int as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `int`, `int`; may refuse |
+| `intRef` | Binds a copy of the top int, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `intWith` |  | `code`, `int` (read) | the rest of the program |
+| `intWith` | Binds a copy of the top int to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `int` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `intPrint` |  | `int` | the printout |
+| `intPrint` | Prints the top int and a newline to the output. | `int` | the printout |
 
 ## The stack's own instructions
 

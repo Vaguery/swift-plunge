@@ -8,93 +8,93 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecDoubleButLast` |  | `vecDouble` | `vecDouble` |
-| `vecDoubleConcat` |  | `vecDouble`, `vecDouble` | `vecDouble` |
-| `vecDoubleConj` |  | `vecDouble`, `double` | `vecDouble` |
-| `vecDoubleConstruct` |  | `vecDouble`, n × `double` | `vecDouble` |
-| `vecDoubleContains` |  | `vecDouble` (read), `double` (read) | `bool` |
-| `vecDoubleContainsSubVec` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleCut` |  | `vecDouble`, `int` | `vecDouble`, `vecDouble` |
-| `vecDoubleDifference` |  | `vecDouble`, `vecDouble` | `vecDouble` |
-| `vecDoubleDistinct` |  | `vecDouble` | `vecDouble` |
-| `vecDoubleDrop` |  | `vecDouble`, `int` | `vecDouble` |
-| `vecDoubleDropLast` |  | `vecDouble`, `int` | `vecDouble` |
-| `vecDoubleEq` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleFilter` |  | `vecDouble`, `code` | `vecDouble`; may refuse |
-| `vecDoubleFindNearest` |  | `vecDouble` (read), `double` (read) | `double`, `int`; may refuse |
-| `vecDoubleFindNearestFrom` |  | `vecDouble` (read), `double` (read), `int` (read) | `double`, `int`; may refuse |
-| `vecDoubleFirst` |  | `vecDouble` | `double`; may refuse |
-| `vecDoubleGT` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleGTE` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleIndexOf` |  | `vecDouble` (read), `double` (read) | `int`; may refuse |
-| `vecDoubleIndexOfFrom` |  | `vecDouble` (read), `double` (read), `int` (read) | `int`; may refuse |
-| `vecDoubleIndexOfSubVec` |  | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
-| `vecDoubleIntersect` |  | `vecDouble`, `vecDouble` | `vecDouble` |
-| `vecDoubleIsSubset` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleItemIsEmpty` |  | `vecDouble` (read) | `bool` |
-| `vecDoubleLT` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleLTE` |  | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleLast` |  | `vecDouble` | `double`; may refuse |
-| `vecDoubleLength` |  | `vecDouble` (read) | `int` |
-| `vecDoubleMap` |  | `vecDouble`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
-| `vecDoubleMax` |  | `vecDouble` (read) | `double`; may refuse |
-| `vecDoubleMin` |  | `vecDouble` (read) | `double`; may refuse |
-| `vecDoubleNth` |  | `vecDouble`, `int` | `double`; may refuse |
-| `vecDoubleOccurrencesOf` |  | `vecDouble` (read), `double` (read) | `int` |
-| `vecDoubleOccurrencesOfSubVec` |  | `vecDouble` (read), `vecDouble` (read) | `int` |
-| `vecDoublePeekNth` |  | `vecDouble` (read), `int` (read) | `double`; may refuse |
-| `vecDoublePushAll` |  | `vecDouble` | `double`, one per step |
-| `vecDoubleQuote` |  | `vecDouble` | `code` |
-| `vecDoubleReduce` |  | `vecDouble`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
-| `vecDoubleRemove` |  | `vecDouble`, `double` | `vecDouble` |
-| `vecDoubleReplace` |  | `vecDouble`, `double`, `double` | `vecDouble` |
-| `vecDoubleReplaceFirst` |  | `vecDouble`, `double`, `double` | `vecDouble` |
-| `vecDoubleReplaceFirstSubVec` |  | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
-| `vecDoubleReplaceSubVec` |  | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
-| `vecDoubleRest` |  | `vecDouble` | `vecDouble` |
-| `vecDoubleReverse` |  | `vecDouble` | `vecDouble` |
-| `vecDoubleSet` |  | `vecDouble`, `double`, `int` | `vecDouble`; may refuse |
-| `vecDoubleSubVec` |  | `vecDouble`, `int`, `int` | `vecDouble` |
-| `vecDoubleSum` |  | `vecDouble` (read) | `double`; may refuse |
-| `vecDoubleTake` |  | `vecDouble`, `int` | `vecDouble` |
-| `vecDoubleTakeLast` |  | `vecDouble`, `int` | `vecDouble` |
+| `vecDoubleButLast` | Drops the last element; an empty vector stays empty. | `vecDouble` | `vecDouble` |
+| `vecDoubleConcat` | Joins two vectors: `a b .vecDoubleConcat` gives the elements of a followed by those of b. | `vecDouble`, `vecDouble` | `vecDouble` |
+| `vecDoubleConj` | Appends a double: `v x .vecDoubleConj` gives v with x added at the end. | `vecDouble`, `double` | `vecDouble` |
+| `vecDoubleConstruct` | Builds a vector of the top n doubles, consuming them, where n is the length of a template vector, also consumed; the top double comes last. | `vecDouble`, n × `double` | `vecDouble` |
+| `vecDoubleContains` | Tells whether x is an element: `v x .vecDoubleContains`, leaving both. | `vecDouble` (read), `double` (read) | `bool` |
+| `vecDoubleContainsSubVec` | Tells whether a run occurs: `w v .vecDoubleContainsSubVec` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleCut` | Splits at a gap: `v i .vecDoubleCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble`, `vecDouble` |
+| `vecDoubleDifference` | Filters: `a b .vecDoubleDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
+| `vecDoubleDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecDouble` | `vecDouble` |
+| `vecDoubleDrop` | Drops the front: `v n .vecDoubleDrop` removes the first n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
+| `vecDoubleDropLast` | Drops the back: `v n .vecDoubleDropLast` removes the last n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
+| `vecDoubleEq` | Pushes whether the top two vectors of doubles are equal, leaving both. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleFilter` | Keeps the elements of a vector of doubles for which the block, run with the element as `.input0`, last pushes true; refuses when steps run out. | `vecDouble`, `code` | `vecDouble`; may refuse |
+| `vecDoubleFindNearest` | Finds the element of v nearest x, the first on a tie, pushing its index and it, leaving both; refuses on an empty v. | `vecDouble` (read), `double` (read) | `double`, `int`; may refuse |
+| `vecDoubleFindNearestFrom` | Finds the element of v nearest x at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `vecDouble` (read), `double` (read), `int` (read) | `double`, `int`; may refuse |
+| `vecDoubleFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
+| `vecDoubleGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a NaN element ties with anything. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a = b; a NaN element ties in the order but is never equal. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleIndexOf` | Finds x: `v x .vecDoubleIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecDouble` (read), `double` (read) | `int`; may refuse |
+| `vecDoubleIndexOfFrom` | Finds an element from an index: `v x i .vecDoubleIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecDouble` (read), `double` (read), `int` (read) | `int`; may refuse |
+| `vecDoubleIndexOfSubVec` | Finds a run: `w v .vecDoubleIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
+| `vecDoubleIntersect` | Filters: `a b .vecDoubleIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
+| `vecDoubleIsSubset` | Tells whether every element of a occurs in b: `a b .vecDoubleIsSubset`, leaving both. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecDouble` (read) | `bool` |
+| `vecDoubleLT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLT` gives a < b; a NaN element ties with anything. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a = b; a NaN element ties in the order but is never equal. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
+| `vecDoubleLength` | Counts the elements, leaving the vector. | `vecDouble` (read) | `int` |
+| `vecDoubleMap` | Runs the block on each element of a vector of doubles, bound as `.input0`, collecting each run's last pushed value (the element if none); refuses mixed types or when steps run out. | `vecDouble`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `vecDoubleMax` | Pushes the greatest element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `double`; may refuse |
+| `vecDoubleMin` | Pushes the least element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `double`; may refuse |
+| `vecDoubleNth` | Picks an element: `v i .vecDoubleNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecDouble`, `int` | `double`; may refuse |
+| `vecDoubleOccurrencesOf` | Counts x: `v x .vecDoubleOccurrencesOf` gives how many elements equal x, leaving both. | `vecDouble` (read), `double` (read) | `int` |
+| `vecDoubleOccurrencesOfSubVec` | Counts a run: `w v .vecDoubleOccurrencesOfSubVec` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecDouble` (read), `vecDouble` (read) | `int` |
+| `vecDoublePeekNth` | Picks an element: `v i .vecDoublePeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecDouble` (read), `int` (read) | `double`; may refuse |
+| `vecDoublePushAll` | Pushes every element onto the double stack, front to back, so the last element ends on top; consumes the vector. | `vecDouble` | `double`, one per step |
+| `vecDoubleQuote` | Wraps the vector in a one-item block. | `vecDouble` | `code` |
+| `vecDoubleReduce` | Folds the block over a vector of doubles from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecDouble`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecDoubleRemove` | Removes every x: `v x .vecDoubleRemove` gives v without its elements equal to x. | `vecDouble`, `double` | `vecDouble` |
+| `vecDoubleReplace` | Substitutes: `v a b .vecDoubleReplace` replaces every element equal to a with b. | `vecDouble`, `double`, `double` | `vecDouble` |
+| `vecDoubleReplaceFirst` | Substitutes once: `v a b .vecDoubleReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecDouble`, `double`, `double` | `vecDouble` |
+| `vecDoubleReplaceFirstSubVec` | Replaces a run: `v w r .vecDoubleReplaceFirstSubVec` puts r in place of the first w in v; an empty w changes nothing. | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
+| `vecDoubleReplaceSubVec` | Replaces runs: `v w r .vecDoubleReplaceSubVec` puts r in place of every non-overlapping w in v, left to right; an empty w changes nothing. | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
+| `vecDoubleRest` | Drops the first element; an empty vector stays empty. | `vecDouble` | `vecDouble` |
+| `vecDoubleReverse` | Reverses the order of the elements. | `vecDouble` | `vecDouble` |
+| `vecDoubleSet` | Overwrites an element: `v x i .vecDoubleSet` puts x at index i, i clamped into range; refuses an empty vector. | `vecDouble`, `double`, `int` | `vecDouble`; may refuse |
+| `vecDoubleSubVec` | Slices: `v i j .vecDoubleSubVec` gives elements i through j inclusive, each clamped into range; j below i gives just element i. | `vecDouble`, `int`, `int` | `vecDouble` |
+| `vecDoubleSum` | Sums the elements, leaving the vector; an empty vector gives 0; refuses a result that is not finite. | `vecDouble` (read) | `double`; may refuse |
+| `vecDoubleTake` | Keeps the front: `v n .vecDoubleTake` gives the first n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
+| `vecDoubleTakeLast` | Keeps the back: `v n .vecDoubleTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecDouble0` |  | — | `vecDouble` |
-| `vecDouble1` |  | — | `vecDouble` |
-| `vecDouble2` |  | — | `vecDouble` |
-| `vecDouble3` |  | — | `vecDouble` |
-| `vecDouble4` |  | — | `vecDouble` |
-| `vecDouble5` |  | — | `vecDouble` |
-| `vecDouble6` |  | — | `vecDouble` |
-| `vecDouble7` |  | — | `vecDouble` |
-| `vecDouble8` |  | — | `vecDouble` |
-| `vecDouble9` |  | — | `vecDouble` |
-| `vecDoubleLookupContaining` |  | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupContainingFrom` |  | `int` | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupEqual` |  | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupEqualFrom` |  | `int` | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupPrefix` |  | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupPrefixFrom` |  | `int` | `vecDouble`, `int`; may refuse |
-| `vecDoubleReadItems` |  | `int` | `vecDouble` |
-| `vecDoubleReadStack` |  | — | `vecDouble` |
-| `vecDoubleRef` |  | — | `binding`, `int`; may refuse |
+| `vecDouble0` | Pushes the run's constant 0 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble1` | Pushes the run's constant 1 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble2` | Pushes the run's constant 2 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble3` | Pushes the run's constant 3 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble4` | Pushes the run's constant 4 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble5` | Pushes the run's constant 5 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble6` | Pushes the run's constant 6 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble7` | Pushes the run's constant 7 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble8` | Pushes the run's constant 8 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDouble9` | Pushes the run's constant 9 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
+| `vecDoubleLookupContaining` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupContainingFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupEqual` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupEqualFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupPrefix` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupPrefixFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
+| `vecDoubleReadItems` | Copies the top n doubles into a vector, leaving them: `n .vecDoubleReadItems`, n clamped to the stack's depth; the top double comes last. | `int` | `vecDouble` |
+| `vecDoubleReadStack` | Copies the whole double stack into a vector, leaving it; the bottom double comes first, and an empty stack gives an empty vector. | — | `vecDouble` |
+| `vecDoubleRef` | Binds a copy of the top vector of doubles, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecDoubleIterate` |  | `vecDouble`, `code` | the rest of the program |
-| `vecDoubleWith` |  | `code`, `vecDouble` (read) | the rest of the program |
+| `vecDoubleIterate` | Loops over the vector: for each element, pushes it to the double stack and runs the block taken from `.code`, which returns there afterward. | `vecDouble`, `code` | the rest of the program |
+| `vecDoubleWith` | Binds a copy of the top vector of doubles to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `vecDouble` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `vecDoublePrint` |  | `vecDouble` | the printout |
+| `vecDoublePrint` | Prints the top vector of doubles and a newline to the output. | `vecDouble` | the printout |
 
 ## The stack's own instructions
 

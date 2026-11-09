@@ -8,73 +8,73 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `doubleAbs` |  | `double` | `double`; may refuse |
-| `doubleAdd` |  | `double`, `double` | `double`; may refuse |
-| `doubleCeil` |  | `double` | `double`; may refuse |
-| `doubleCos` |  | `double` | `double`; may refuse |
-| `doubleDec` |  | `double` | `double`; may refuse |
-| `doubleDivide` |  | `double`, `double` | `double`; may refuse |
-| `doubleEq` |  | `double` (read), `double` (read) | `bool` |
-| `doubleExp` |  | `double` | `double`; may refuse |
-| `doubleFloor` |  | `double` | `double`; may refuse |
-| `doubleFromBool` |  | `bool` | `double` |
-| `doubleFromChar` |  | `char` | `double` |
-| `doubleFromInt` |  | `int` | `double` |
-| `doubleFromString` |  | `string` | `double`; may refuse |
-| `doubleGT` |  | `double` (read), `double` (read) | `bool` |
-| `doubleGTE` |  | `double` (read), `double` (read) | `bool` |
-| `doubleInc` |  | `double` | `double`; may refuse |
-| `doubleLT` |  | `double` (read), `double` (read) | `bool` |
-| `doubleLTE` |  | `double` (read), `double` (read) | `bool` |
-| `doubleLog` |  | `double` | `double`; may refuse |
-| `doubleMax` |  | `double`, `double` | `double` |
-| `doubleMin` |  | `double`, `double` | `double` |
-| `doubleMod` |  | `double`, `double` | `double`; may refuse |
-| `doubleMultiply` |  | `double`, `double` | `double`; may refuse |
-| `doubleNegate` |  | `double` | `double`; may refuse |
-| `doublePeekMax` |  | `double` (read), `double` (read) | `double` |
-| `doublePeekMin` |  | `double` (read), `double` (read) | `double` |
-| `doublePow` |  | `double`, `double` | `double`; may refuse |
-| `doubleQuot` |  | `double`, `double` | `double`; may refuse |
-| `doubleQuote` |  | `double` | `code` |
-| `doubleRound` |  | `double` | `double`; may refuse |
-| `doubleSign` |  | `double` | `double`; may refuse |
-| `doubleSin` |  | `double` | `double`; may refuse |
-| `doubleSqrt` |  | `double` | `double`; may refuse |
-| `doubleSubtract` |  | `double`, `double` | `double`; may refuse |
-| `doubleTan` |  | `double` | `double`; may refuse |
+| `doubleAbs` | Takes the absolute value; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleAdd` | Adds two doubles; refuses a result that is not finite. | `double`, `double` | `double`; may refuse |
+| `doubleCeil` | Rounds up to a whole number; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleCos` | Takes the cosine of an angle in radians; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleDec` | Subtracts 1.0; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleDivide` | Divides: `a b .doubleDivide` gives a ÷ b; refuses when b is 0 or the result is not finite. | `double`, `double` | `double`; may refuse |
+| `doubleEq` | Pushes whether the top two doubles are equal, leaving both. | `double` (read), `double` (read) | `bool` |
+| `doubleExp` | Raises e to the given power; refuses a result that is not finite. | `double` | `double`; may refuse |
+| `doubleFloor` | Rounds down to a whole number; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleFromBool` | Converts a bool: 1.0 for true, 0.0 for false. | `bool` | `double` |
+| `doubleFromChar` | Converts a char to its ASCII code; any non-ASCII char gives 0.0. | `char` | `double` |
+| `doubleFromInt` | Converts an int to the nearest double. | `int` | `double` |
+| `doubleFromString` | Parses a string as a double; refuses one that is not a number or that reads as infinite or NaN. | `string` | `double`; may refuse |
+| `doubleGT` | Compares, leaving both doubles: `a b .doubleGT` gives a > b. | `double` (read), `double` (read) | `bool` |
+| `doubleGTE` | Compares, leaving both doubles: `a b .doubleGTE` gives a ≥ b. | `double` (read), `double` (read) | `bool` |
+| `doubleInc` | Adds 1.0; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleLT` | Compares, leaving both doubles: `a b .doubleLT` gives a < b. | `double` (read), `double` (read) | `bool` |
+| `doubleLTE` | Compares, leaving both doubles: `a b .doubleLTE` gives a ≤ b. | `double` (read), `double` (read) | `bool` |
+| `doubleLog` | Takes the natural logarithm; refuses zero, negatives and non-finite inputs. | `double` | `double`; may refuse |
+| `doubleMax` | Keeps the larger of two doubles. | `double`, `double` | `double` |
+| `doubleMin` | Keeps the smaller of two doubles. | `double`, `double` | `double` |
+| `doubleMod` | Takes the remainder: `a b .doubleMod` gives a mod b, with the sign of a; refuses when b is 0. | `double`, `double` | `double`; may refuse |
+| `doubleMultiply` | Multiplies two doubles; refuses a result that is not finite. | `double`, `double` | `double`; may refuse |
+| `doubleNegate` | Negates; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doublePeekMax` | Pushes the larger of the top two doubles, leaving both. | `double` (read), `double` (read) | `double` |
+| `doublePeekMin` | Pushes the smaller of the top two doubles, leaving both. | `double` (read), `double` (read) | `double` |
+| `doublePow` | Raises to a power: `b e .doublePow` gives b to the e; refuses a non-finite result (as for b < 0, e fractional). | `double`, `double` | `double`; may refuse |
+| `doubleQuot` | Divides, truncating toward zero: `a b .doubleQuot` gives a ÷ b as a whole number; refuses when b is 0 or on overflow. | `double`, `double` | `double`; may refuse |
+| `doubleQuote` | Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`. | `double` | `code` |
+| `doubleRound` | Rounds to the nearest whole number, halves away from zero (2.5 gives 3); refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleSign` | Gives the sign of a double: −1.0, 0.0 or 1.0; refuses NaN. | `double` | `double`; may refuse |
+| `doubleSin` | Takes the sine of an angle in radians; refuses a non-finite input. | `double` | `double`; may refuse |
+| `doubleSqrt` | Takes the square root; refuses a negative or non-finite input. | `double` | `double`; may refuse |
+| `doubleSubtract` | Subtracts: `a b .doubleSubtract` gives a − b; refuses a result that is not finite. | `double`, `double` | `double`; may refuse |
+| `doubleTan` | Takes the tangent of an angle in radians; refuses a non-finite input. | `double` | `double`; may refuse |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `double0` |  | — | `double` |
-| `double1` |  | — | `double` |
-| `double2` |  | — | `double` |
-| `double3` |  | — | `double` |
-| `double4` |  | — | `double` |
-| `double5` |  | — | `double` |
-| `double6` |  | — | `double` |
-| `double7` |  | — | `double` |
-| `double8` |  | — | `double` |
-| `double9` |  | — | `double` |
-| `doubleLookupEqual` |  | — | `double`, `int`; may refuse |
-| `doubleLookupEqualFrom` |  | `int` | `double`, `int`; may refuse |
-| `doubleLookupNearest` |  | — | `double`, `int`; may refuse |
-| `doubleLookupNearestFrom` |  | `int` | `double`, `int`; may refuse |
-| `doubleRef` |  | — | `binding`, `int`; may refuse |
+| `double0` | Pushes the run's constant 0 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double1` | Pushes the run's constant 1 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double2` | Pushes the run's constant 2 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double3` | Pushes the run's constant 3 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double4` | Pushes the run's constant 4 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double5` | Pushes the run's constant 5 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double6` | Pushes the run's constant 6 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double7` | Pushes the run's constant 7 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double8` | Pushes the run's constant 8 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `double9` | Pushes the run's constant 9 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
+| `doubleLookupEqual` | Reads the top double as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `double`, `int`; may refuse |
+| `doubleLookupEqualFrom` | Reads the top double as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `double`, `int`; may refuse |
+| `doubleLookupNearest` | Reads the top double as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `double`, `int`; may refuse |
+| `doubleLookupNearestFrom` | Reads the top double as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `double`, `int`; may refuse |
+| `doubleRef` | Binds a copy of the top double, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `doubleWith` |  | `code`, `double` (read) | the rest of the program |
+| `doubleWith` | Binds a copy of the top double to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `double` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `doublePrint` |  | `double` | the printout |
+| `doublePrint` | Prints the top double and a newline to the output. | `double` | the printout |
 
 ## The stack's own instructions
 

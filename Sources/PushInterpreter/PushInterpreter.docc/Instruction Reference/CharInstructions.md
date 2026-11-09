@@ -8,53 +8,53 @@ The `.char` stack holds single characters (Swift `Character`s, so one may be sev
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `charEq` |  | `char` (read), `char` (read) | `bool` |
-| `charFromDouble` |  | `double` | `char`; may refuse |
-| `charFromInt` |  | `int` | `char`; may refuse |
-| `charGT` |  | `char` (read), `char` (read) | `bool` |
-| `charGTE` |  | `char` (read), `char` (read) | `bool` |
-| `charIsDigit` |  | `char` (read) | `bool` |
-| `charIsLetter` |  | `char` (read) | `bool` |
-| `charIsLower` |  | `char` (read) | `bool` |
-| `charIsUpper` |  | `char` (read) | `bool` |
-| `charIsWhitespace` |  | `char` (read) | `bool` |
-| `charLT` |  | `char` (read), `char` (read) | `bool` |
-| `charLTE` |  | `char` (read), `char` (read) | `bool` |
-| `charLower` |  | `char` | `char`; may refuse |
-| `charQuote` |  | `char` | `code` |
-| `charUpper` |  | `char` | `char`; may refuse |
+| `charEq` | Pushes whether the top two chars are equal, leaving both. | `char` (read), `char` (read) | `bool` |
+| `charFromDouble` | Truncates a double toward zero and converts it to the char with that Unicode scalar value; refuses a non-finite or invalid value. | `double` | `char`; may refuse |
+| `charFromInt` | Converts an int to the char with that Unicode scalar value; refuses a negative value, a surrogate, or one past 0x10FFFF. | `int` | `char`; may refuse |
+| `charGT` | Compares in Unicode order, leaving both chars: `a b .charGT` gives a > b. | `char` (read), `char` (read) | `bool` |
+| `charGTE` | Compares in Unicode order, leaving both chars: `a b .charGTE` gives a ≥ b. | `char` (read), `char` (read) | `bool` |
+| `charIsDigit` | Tests whether the char stands for a whole number, in any script, leaving the char. | `char` (read) | `bool` |
+| `charIsLetter` | Tests whether the char is a letter, in any script, leaving the char. | `char` (read) | `bool` |
+| `charIsLower` | Tests whether the char is lowercase, leaving the char; a char with no case gives false. | `char` (read) | `bool` |
+| `charIsUpper` | Tests whether the char is uppercase, leaving the char; a char with no case gives false. | `char` (read) | `bool` |
+| `charIsWhitespace` | Tests whether the char is whitespace (space, tab, newline and the like), leaving the char. | `char` (read) | `bool` |
+| `charLT` | Compares in Unicode order, leaving both chars: `a b .charLT` gives a < b. | `char` (read), `char` (read) | `bool` |
+| `charLTE` | Compares in Unicode order, leaving both chars: `a b .charLTE` gives a ≤ b. | `char` (read), `char` (read) | `bool` |
+| `charLower` | Lowercases a char by Unicode's default rules; refuses one whose lowercase is several chars. | `char` | `char`; may refuse |
+| `charQuote` | Quotes a char as a one-item block on `.code`. | `char` | `code` |
+| `charUpper` | Uppercases a char by Unicode's default rules; refuses one whose uppercase is several chars, like ß. | `char` | `char`; may refuse |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `char0` |  | — | `char` |
-| `char1` |  | — | `char` |
-| `char2` |  | — | `char` |
-| `char3` |  | — | `char` |
-| `char4` |  | — | `char` |
-| `char5` |  | — | `char` |
-| `char6` |  | — | `char` |
-| `char7` |  | — | `char` |
-| `char8` |  | — | `char` |
-| `char9` |  | — | `char` |
-| `charLookupEqual` |  | — | `char`, `int`; may refuse |
-| `charLookupEqualFrom` |  | `int` | `char`, `int`; may refuse |
-| `charLookupNearest` |  | — | `char`, `int`; may refuse |
-| `charLookupNearestFrom` |  | `int` | `char`, `int`; may refuse |
-| `charRef` |  | — | `binding`, `int`; may refuse |
+| `char0` | Pushes the run's constant 0 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char1` | Pushes the run's constant 1 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char2` | Pushes the run's constant 2 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char3` | Pushes the run's constant 3 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char4` | Pushes the run's constant 4 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char5` | Pushes the run's constant 5 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char6` | Pushes the run's constant 6 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char7` | Pushes the run's constant 7 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char8` | Pushes the run's constant 8 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `char9` | Pushes the run's constant 9 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
+| `charLookupEqual` | Reads the top char as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `char`, `int`; may refuse |
+| `charLookupEqualFrom` | Reads the top char as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `char`, `int`; may refuse |
+| `charLookupNearest` | Reads the top char as a probe and copies the one below nearest it by code point, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `char`, `int`; may refuse |
+| `charLookupNearestFrom` | Reads the top char as a probe and copies the one below nearest it by code point, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `char`, `int`; may refuse |
+| `charRef` | Binds a copy of the top char, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `charWith` |  | `code`, `char` (read) | the rest of the program |
+| `charWith` | Binds a copy of the top char to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `char` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `charPrint` |  | `char` | the printout |
+| `charPrint` | Prints the top char and a newline to the output. | `char` | the printout |
 
 ## The stack's own instructions
 
