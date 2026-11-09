@@ -182,8 +182,9 @@ Under each item, **Adds** names the tasks it gives a new short route.
 
 - **`Sum`, `Mean` (→ `.double`), `Max`, `Min`** on `vecInt` and `vecDouble`.
 - **`Max` and `Min`** also on `vecString` and `string` (by ordering).
-- **`Sort`** (ascending; `Reverse` gives descending) on every vector type and
-  `string`. `Distinct` moved to P1b, with the other set operations.
+- ~~**`Sort`**~~ **Dropped (the user, 2026-11-09):** basic Push benchmarks ask
+  for sorting to be evolved, and a built-in would answer them in one step.
+  `Distinct` moved to P1b, with the other set operations.
 
 Each is a query: it reads, does not take, and leaves its argument (Design
 Principles §5, I7). About 17 instructions.
@@ -193,7 +194,7 @@ Principles §5, I7). About 17 instructions.
   .intQuot`, possible because both are queries);
 - second and third routes to sum, max and min;
 - the first routes to sort and dedupe;
-- a median: `Sort`, then `Nth` of `Length` halved.
+- ~~a median: `Sort`, then `Nth` of `Length` halved~~ (no `Sort`).
 
 ### P1b. Set operations on every collection (added 2026-11-09)
 
@@ -211,7 +212,7 @@ weighs the type.
   the multiplicity §17 asks for.
 
 **Adds:**
-- **Dedupe:** `Distinct`, alongside `Sort`.
+- **Dedupe:** `Distinct`.
 - **Filtering by membership, the most common filter in benchmarks, in 1 step:**
   - remove the vowels: `"hello" "aeiou" .stringDifference` gives `"hll"`
     (today that is five `stringRemoveChar`);
@@ -422,9 +423,8 @@ first version, kept for the record.
 In all, about 195, taking 607 to about 800. Only `.ref` is a new stack.
 
 **With P1–P6 and P9, every task in §2 has at least two routes within 5 steps.**
-Dedupe has two:
-- `Distinct`;
-- `Sort` with `Distinct`.
+Dedupe has one direct route, `Distinct`; the second is an evolved loop
+(`Iterate` with `Contains` and `Conj`), since `Sort` was dropped.
 
 Filters have two routes as well:
 - P2's predicate;
@@ -483,7 +483,8 @@ What it adds beyond P1b:
 
 1. **Equality regardless of order and repetition.** Two sets are equal when they
    have the same members, so "same letters?" is a direct comparison. With P1b
-   it is `Sort` and `Distinct` on both sides first, about 5 steps.
+   it is `IsSubset` both ways: `.stringIsSubset .stringSwap .stringIsSubset
+   .boolAnd`, 4 steps, since `IsSubset` reads and leaves.
 2. **A conversion out that filters by type.** `vecIntFromSet` would keep only
    the int members, and a `string` built from the set only its chars. P4's
    `vecFromCode` refuses a mixed block instead. That is a second route to a
@@ -1028,8 +1029,9 @@ named tokens produce ints, because ints are what the language is short of.
 4. **Queries.**
    - The fact-reporting collection instructions read and leave: `Sum`, `Mean`,
      `Max`, `Min`, `IsSubset`.
-   - The transforming ones consume, as other transforms do: `Sort`, `Distinct`,
-     `Intersect`, `Difference`.
+   - The transforming ones consume, as other transforms do: `Distinct`,
+     `Intersect`, `Difference`. (`Sort` was dropped: benchmarks ask for it to be
+     evolved.)
 5. **Structures.**
    - Build **pattern lookup on the existing stacks** (§8) and the **`.ref`
      stack**.
