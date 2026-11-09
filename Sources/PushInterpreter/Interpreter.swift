@@ -193,6 +193,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: introspectionBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: outputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: intBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: numericBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: iteratorBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecBoolBehaviors, intoLanguage: &starter)
