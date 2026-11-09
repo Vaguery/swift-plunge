@@ -24,8 +24,9 @@ nonisolated struct ChainEdge: Sendable {
 
 /// **A tree of instructions that produces one value**: an instruction applied to
 /// trees for each of its arguments, or a leaf (an input or a constant). It is the
-/// shape of a provenance DAG, read top-down, and like a crux it is a well-formed
-/// fragment: run alone, it leaves its result and nothing else.
+/// shape of a provenance DAG, read top-down. Written as an argument
+/// (`fragment`) it leaves its result and nothing else; written as a whole
+/// program it leaves its result on top.
 nonisolated indirect enum Derivation: Sendable {
     case leaf(PushInstruction)
     case apply(ChainEdge, [Derivation])
@@ -38,17 +39,36 @@ nonisolated indirect enum Derivation: Sendable {
         }
     }
 
-    /// The fragment as a program. Arguments are written in reverse requirement
-    /// order, so the first requirement's value ends on top where it claims; a
-    /// query is followed by the cleanup of what it read.
+    /// The tree as a whole program, judged as Push judges one: by the top item of
+    /// the goal stack. So the last instruction is not cleaned up; a query leaves
+    /// its operands underneath, where they do no harm.
     var program: [any Item] {
         switch self {
         case .leaf(let name):
             return [InstructionItem(name)]
         case .apply(let edge, let children):
-            return children.reversed().flatMap(\.program)
+            return Self.arguments(children) + [InstructionItem(edge.name)]
+        }
+    }
+
+    /// The tree as an **argument** to another instruction: a query is followed by
+    /// the cleanup of what it read, so it leaves only its result, and a sibling
+    /// on the same stack is not displaced (the composition invariant, Design
+    /// Principles §1).
+    var fragment: [any Item] {
+        switch self {
+        case .leaf(let name):
+            return [InstructionItem(name)]
+        case .apply(let edge, let children):
+            return Self.arguments(children)
                 + Behavior.reading(sorted: edge.readCounts, producing: edge.result, from: [InstructionItem(edge.name)])
         }
+    }
+
+    /// Arguments in reverse requirement order, so the first requirement's value
+    /// ends on top, where it claims.
+    private static func arguments(_ children: [Derivation]) -> [any Item] {
+        children.reversed().flatMap(\.fragment)
     }
 }
 
@@ -56,7 +76,8 @@ nonisolated indirect enum Derivation: Sendable {
 /// **Backward chaining over the declared signatures.** Built for one problem: the
 /// type of each input it binds, and whether the program may use constants. It
 /// counts the trees up to a given height that produce a stack, and samples them
-/// uniformly by those counts.
+/// uniformly by those counts. Its worth to a search is how many *different*
+/// results it reaches quickly, told apart by their cruxes.
 ///
 /// Uses only the part of the map that is already exact: operations whose
 /// `Produces` is a single fixed result and whose arguments are taken or read from

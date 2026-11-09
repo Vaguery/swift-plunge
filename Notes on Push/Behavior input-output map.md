@@ -230,10 +230,37 @@ For a problem binding an int and a string, with constants:
 
 Without constants, `.bool` has 13, 4,328 and 5.8e8 trees at heights 1–3.
 
-**Check.** *Backward Chaining Tests* sample 300 trees of height ≤ 3 for each of eight goals, bind random
-inputs and constants, and run them. Every tree that runs without a refusal leaves exactly one item on its
-goal stack and nothing on any other: the declared signatures and the composition invariant agree. Most
-refusals are #42's domain errors on random constants (`IndexOf` finding nothing).
+**What counts (ruled 2026-11-08).** A program is judged as Push judges one, by the top item of the goal
+stack; anything under it is fine. So a tree written as a whole program (`Derivation.program`) has no
+cleanup after its last instruction, and only a tree used as an argument (`Derivation.fragment`) cleans up
+what a query read, so it does not displace a sibling. And the strength of chaining is reaching many
+**different results** quickly, told apart by their cruxes **up to the choice of constants**: any constant
+can be tuned to any other's value, so `( .int3 x .intAdd )` and `( .int8 x .intAdd )` are one result.
+`Interpreter.cruxShape` renames each type's constants in order of first appearance (`.int3 .int8` →
+`.int0 .int1`), at every depth, which keeps `( .int3 .int3 … )`, one parameter used twice, apart from
+`( .int3 .int8 … )`, two. Inputs are not renamed.
+
+**Check.** *Backward Chaining Tests* sample 300 trees for each of eight goals, bind random inputs and
+constants, run them, and measure (a) how many leave something on the goal stack and (b) how many distinct
+crux shapes the top items have. Refusals deep in a tree (mostly #42's errors on random constants, `IndexOf`
+finding nothing) starve what is above them.
+
+| Goal | Reached (of 300) | Distinct cruxes, h ≤ 3 | Distinct shapes, h ≤ 3 | Shapes, h ≤ 2 |
+|---|---|---|---|---|
+| `.int` | 174 | 174 | 174 | 163 of 175 |
+| `.bool` | 299 | 299 | 299 | 292 of 297 |
+| `.string` | 300 | 300 | 300 | 297 |
+| `.vecInt` | 300 | 300 | 300 | 279 |
+| `.vecString` | 300 | 300 | 300 | 297 |
+| `.code` | 300 | 297 | 283 | 168 |
+| `.char` | 167 | 54 | **22** | 24 of 210 |
+| `.double` | 173 | 55 | **20** | 97 of 237 |
+
+**`.char` and `.double` collapse.** Most of their producers take an element out of a string or vector, and
+an extracted element's crux is its address in its source (Containment law 1b), not the computation of its
+index; random index trees mostly clamp to 0. So 103 of the 167 `.char` programs are one result,
+`( .string0 0 .stringNth )`, the first letter of some constant string. A sampler aiming at distinct
+results would do better to keep only programs whose shape is new, or to weight the extraction edges down.
 
 Uniform over trees means weighted by arity: a node with many arguments has many more subtrees. That is
 why the seven-argument iterator constructors (`.cruxOnly`) are excluded by default, and it is a reason a

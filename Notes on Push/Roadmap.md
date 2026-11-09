@@ -311,6 +311,11 @@ A representation-neutral derivation graph, for other GP representations, is a la
     `.cruxOnly` out by default. *Backward Chaining Tests* run sampled trees for eight goals: every one that
     runs without a refusal leaves exactly its result and nothing else, so the declarations and the
     composition invariant agree. Not public yet.
+    **Ruled, same day:** a chained program is judged by the top item of its goal stack (Push's convention;
+    only an argument fragment cleans up), and its worth is the number of *distinct* results reached, by crux
+    up to the choice of constants (`Interpreter.cruxShape`: constants renamed per type in order of first
+    appearance; inputs kept). Measured: distinct for six goals, but `.char` and `.double` collapse to ~20
+    shapes in ~170 programs, since an extracted element's crux is its address, not its index's computation.
 
 42. **Every Behavior returns its intended output or an error** — **RULED and BUILT 2026-11-08** (three new
     `ErrorKind`s: `.emptyCollection`, `.notFound`, `.conversion`; clamping lives in `Position`) → *Error audit and
