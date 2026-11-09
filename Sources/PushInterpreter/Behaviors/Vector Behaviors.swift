@@ -1428,14 +1428,25 @@ nonisolated extension Interpreter {
     /// that cannot use a loop should not also destroy it. A *success* consumes it
     /// — exhausting it is the whole job — and returns its body to `.code` on the
     /// way out, the same courtesy every other ending pays (principle 5).
+    ///
+    /// **With a body, it collects what the body makes** (ruling I16, built
+    /// 2026-11-09): each element is executed and then the body runs, in a fresh
+    /// sub-interpreter, as `iteratorPlay` would run them, and the last value
+    /// pushed is that element's result (a body that pushes nothing leaves the
+    /// element). This is the stack-fed map: `( .intDup .intMultiply )` squares,
+    /// with no `.inputN` hole, beside the input-fed `vecXMap`. The results are
+    /// uniform or refused, and chars collect into a string, as map's do. Steps
+    /// are charged to the run.
     static let vecFromIterator_Behavior =
-    Behavior(
+    Behavior.applying(
         .vecFromIterator,
         takes: [.iterator],
         tags: [.fallible],
-        // A vector of the iterator's element type, and the body if it had one.
-        produces: .alternatives([PushStack.vecBool, .vecDouble, .vecInt, .vecString].flatMap { [[$0], [$0, .code]] }),
-        fxn: { a, recording in
+        // A vector of the iterator's element type (or of its body's results, or a
+        // string of chars), and the body if it had one.
+        produces: .alternatives([PushStack.vecBool, .vecDouble, .vecInt, .vecString, .string].flatMap { [[$0], [$0, .code]] }),
+        body: { a, context in
+            let recording = context.recording
             let iterator = a[0] as! IteratorItem
             // As `.codeFromIterator`: a success ends the loop and the farewell
             // hands the body back to `.code`, so the crux must pop it or the
@@ -1467,6 +1478,22 @@ nonisolated extension Interpreter {
             // type of an empty collection is a question with no answer, and
             // guessing it is worse than saying so.
             guard !items.isEmpty else { return refuse("\(iterator.pretty()) emitted nothing") }
+
+            if let body = iterator.body {
+                var results: [any Item] = []
+                for item in items {
+                    do throws(Interpreter.ApplicationFailure) {
+                        results.append(try Interpreter.apply(body, after: item, in: context) ?? item)
+                    } catch {
+                        return refuse("out of steps")
+                    }
+                }
+                guard let made = Interpreter.collected(results, call: recording(record())),
+                      let resting = PushStack.defaultStack(for: made) else {
+                    return refuse("the body's results are not all one collectable type")
+                }
+                return [Router(resting, made)] + Interpreter.iteratorFarewell(iterator)
+            }
 
             let members = recording.pieces(items.map { Origin.item($0) })
             let collected: (any Item)? =

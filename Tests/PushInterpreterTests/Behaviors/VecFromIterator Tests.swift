@@ -238,10 +238,26 @@ struct VecFromIteratorTests {
         let inty = loaded(walking(VecIntItem([1, 2]), body: CodeItem([IntItem(99)])))
         doThis(.vecFromIterator, to: inty)
 
-        #expect(stackString(inty, .vecInt) == "[ [1, 2] ]")
+        // Since ruling I16 (2026-11-09) a body's results are what is collected:
+        // `( 99 )` makes 99 of each element. It runs in a sub-interpreter, so this
+        // run's stacks never see it.
+        #expect(stackString(inty, .vecInt) == "[ [99, 99] ]")
         #expect(inty.stacks[.iterator]!.isEmpty, "collected to exhaustion, so gone")
-        #expect(stackString(inty, .code) == "[ ( 99 ) ]", "the body is handed back, unrun")
-        #expect(stackString(inty, .int) == "[ ]", "and never runs — collecting is not playing")
+        #expect(stackString(inty, .code) == "[ ( 99 ) ]", "the body is handed back")
+        #expect(stackString(inty, .int) == "[ ]", "and this run's stacks never see it run")
+    }
+
+    /// The stack-fed map (ruling I16): each element is executed, then the body,
+    /// and the last value pushed is collected. No `.inputN` hole is needed.
+    @Test func `with a body, it collects what the body makes`() {
+        let squares = loaded(walking(VecIntItem([1, 2, 3]),
+                                     body: CodeItem([InstructionItem(.intDup), InstructionItem(.intMultiply)])))
+        doThis(.vecFromIterator, to: squares)
+        #expect(stackString(squares, .vecInt) == "[ [1, 4, 9] ]")
+
+        let halves = loaded(walking(VecIntItem([1, 2]), body: CodeItem([InstructionItem(.doubleFromInt)])))
+        doThis(.vecFromIterator, to: halves)
+        #expect(stackString(halves, .vecDouble) == "[ [1.0, 2.0] ]", "the type follows the body's results")
     }
 
     /// Collecting is not playing, so `emits` — which exists to keep a counted

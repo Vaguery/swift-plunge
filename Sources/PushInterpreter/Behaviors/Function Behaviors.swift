@@ -38,9 +38,25 @@ nonisolated extension Interpreter {
 
     /// Runs `function` once with `bindings` over the environment in `context`,
     /// charging its steps; returns the last value it pushed, or nil if it pushed
-    /// none that is still there.
+    /// none that is still there. The input-fed form: the function's argument is
+    /// its `.input0` hole.
     static func apply(_ function: CodeItem, binding bindings: [PushInstruction: any Item],
                       in context: ReadContext) throws(ApplicationFailure) -> (any Item)? {
+        try run(function.value, binding: bindings, in: context)
+    }
+
+    /// The stack-fed form, as an iterator plays its body: `element` is executed
+    /// first, so it lands on its stack (or runs, if it is code to run), and then
+    /// `body`. A body that pushes nothing leaves the element as the result.
+    static func apply(_ body: CodeItem, after element: any Item,
+                      in context: ReadContext) throws(ApplicationFailure) -> (any Item)? {
+        try run([element] + body.value, binding: [:], in: context)
+    }
+
+    /// `program` run in a fresh sub-interpreter over this run's environment, with
+    /// `bindings` over its inputs, its steps charged to this run.
+    private static func run(_ program: [any Item], binding bindings: [PushInstruction: any Item],
+                            in context: ReadContext) throws(ApplicationFailure) -> (any Item)? {
         let budget = context.remainingSteps
         guard budget > 0 else { throw .outOfSteps }
         let sub = Interpreter()
@@ -49,7 +65,7 @@ nonisolated extension Interpreter {
         sub.config.stepLimit = budget
         var inputs = context.inputs
         for (slot, value) in bindings { inputs[slot] = value }
-        sub.load(inputs: inputs, constants: context.constants, program: function.value)
+        sub.load(inputs: inputs, constants: context.constants, program: program)
         sub.run()
         context.charge(sub.counter)
         guard sub.stacks[.exec]!.isEmpty else { throw .outOfSteps }
