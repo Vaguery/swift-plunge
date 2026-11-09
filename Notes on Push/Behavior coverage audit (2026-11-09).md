@@ -329,19 +329,24 @@ Two designs:
    - Linear lookup, and a dictionary could then be mangled by any `code`
      instruction.
 
-**Recommendation: (1).** It is the bigger addition to reach. It also provides
-the variables below for almost nothing.
+~~**Recommendation: (1).** It is the bigger addition to reach. It also provides
+the variables below for almost nothing.~~ **Superseded by §8:** a dictionary
+stack starves on three counts at once. Lookup by pattern on the stacks that
+already exist does the dictionary's job and starves on one.
 
-**Either way, its order must be fixed, not hashed.** Swift seeds `Hasher` afresh
-in every process. A `Dictionary` or `Set` stored as is would list its keys in a
-different order on each run. That order would then show up in `Keys`, in a
-dict's printout, in its crux and in any iterator over it, which is a
-stochastic Behavior by the back door (constraint 1).
-
-Store the entries in **insertion order** or **sorted order**, with a hash index
-beside them if lookup speed matters. Sorted has two advantages:
-- two dicts with the same contents are equal and print alike;
-- a crux has one canonical spelling.
+**Hashing is fine; only a hash-derived order must not leak** (the user's
+clarification, 2026-11-09).
+- Hashed keys and sets are not stochastic as long as the hashes stay internal
+  and their order is never shown.
+- Swift seeds `Hasher` afresh in every process, so a hash's *iteration* order
+  varies between runs. Anything that lists contents must not use it: `Keys`, a
+  printout, a crux, an iterator over the entries.
+- The remedy is **LIFO order, as in a stack**: entries listed newest first, with
+  the hash used only for lookup. This is the language's own convention, and it
+  matches §8's "topmost match", where a stack already behaves as an
+  insertion-ordered store.
+- Sorted order would remain an option, but only where a canonical spelling is
+  wanted.
 
 The same applies to any set type (§7).
 
@@ -405,9 +410,12 @@ The same applies to any set type (§7).
 | P4 | ≈ 9 | — |
 | P3 | ≈ 6 | a ruling on `vecFromIterator` |
 | P2 | ≈ 15 | #2's design |
-| P7 + P8 | ≈ 35 | the type registry (A4 / #37) |
+| ~~P7 + P8~~ | ~~≈ 35~~ | ~~the type registry (A4 / #37)~~ |
+| P7′ (pattern lookup, §8) | ≈ 43 | — |
+| P8 (variables as writable inputs) | ≈ 11 | — |
 
-In all, about 140, taking 607 to about 750. Excluding P7 and P8, about 105.
+In all, about 160, taking 607 to about 770. None of it needs a new stack or the
+type registry.
 
 **With P1–P6 and P9, every task in §2 has at least two routes within 5 steps.**
 Dedupe has two:
@@ -433,6 +441,8 @@ Word frequency and variables wait for P7.
 5. Are the new reductions queries (I7) from the start?
 6. Set operations on collections now, and a set type only with the dictionary
    (§7)?
+7. Pattern lookup (§8) instead of a dictionary type: read the probe, copy the
+   match, refuse on a miss? Measure the match rates first?
 
 
 ## 7. Sets: operations, or a type? (2026-11-09)
@@ -452,8 +462,9 @@ vectors:
 **(b) One multitype set, like `code`:**
 - Members of any type, compared by value (§9). `1` and `1.0` are different
   members, and so are `'a'` and `"a"`.
-- Stored sorted by a total order (type first, then value) for the reason in P7:
-  a hashed order would vary between runs.
+- Hashed internally and listed in LIFO order, as P7 says. Equality ignores
+  order, since two sets with the same members are equal however they were
+  built.
 - The cost is one stack: 12 structural rules, `Eq`, `Quote`, `setEmpty`, and
   about 12 operations. About 30 in all.
 
@@ -474,7 +485,7 @@ What it adds beyond P1b:
    limits keep collections small, so speed is not the argument; what remains is
    one honest instruction (`setAdd`) against two.
 4. **A home for a dictionary's keys.** `dictKeys` → set is natural. Without a
-   set type, `dictKeys` → `vecString`, sorted, works as well.
+   set type, `dictKeys` → `vecString`, newest first, works as well.
 
 There is a cost at membership. A multitype `setHas` must receive its probe from
 some stack. Either it takes the probe as code (`5 .intQuote .setHas`, one step
@@ -502,3 +513,162 @@ same pattern as `dictSet` in P7.
 - P7 gains the fixed-order requirement.
 - The totals rise by about 20.
 - Nothing in §5 changes.
+
+
+## 8. Key starvation, and lookup by pattern on every stack (2026-11-09)
+
+The user's concern: a dictionary's keys starve, whatever type they are. The
+user's alternative: a pattern-matching search, top-down, on every stack,
+extending the sieve's "find the top matrix item which matches as an argument".
+Pop an item, make it into a pattern, and find the topmost item on the same stack
+that matches it.
+
+### Why a dictionary stack starves
+
+`dictGet` succeeds only when three things hold at once:
+
+1. **A dictionary is on `.dict`.** Only `dictNew` and a chain of `dictSet`s put
+   one there. That is the profile of `.iterator`, whose instructions starve
+   about 100% of the time outside a loop (*Stack economics* §8). A `.dict`
+   would be empty almost every time a random program reached for it.
+2. **A key is on its stack.** `.string` is contested by everything that handles
+   text. An int key would draw on `.int`, the language's argument channel and
+   its most-taxed stack (§3).
+3. **The key is in the dictionary.** This is the failure the user is pointing
+   at, and the worst of the three, because **more supply does not cure it**.
+   - A random string is almost never a stored key.
+   - A hit happens only when keys and probes come from the same source, as in a
+     histogram of words split from one text. Then the key was already in hand,
+     and the dictionary only counts.
+   - `dictSet` adds a fourth requirement, a value, and its three arguments sit
+     on three stacks: the conjunction that makes the iterator constructors
+     unfireable (*Stack economics* §7).
+
+The third failure can be mitigated inside the design by making lookup
+**total**: return the entry with the greatest key not above the probe, clamped
+to the first. That is a sorted map's floor lookup (by key order, whatever the storage order), and it is "Claims may be
+clamped" (§12) applied to keys. It keeps order, it is deterministic, and it
+never misses on a non-empty dictionary. The first failure remains.
+
+### Pattern lookup: the stacks are already the store
+
+Every stack is a collection that a program keeps full by running. A lookup that
+searches a stack for an item resembling a probe needs no new stack, so
+requirement 1 disappears. Patterns coarser than equality also make requirement 3
+mostly disappear: a probe nearly always finds *something*.
+
+**The rule, for a stack X and a pattern kind K:**
+
+- **Read the probe** from the top of X. Read it, do not take it, so a key is
+  never used up. Repeated lookups with one key are what a dictionary is for, and
+  a consumed key would starve exactly the use the user worries about.
+- Search X **below the probe**, top-down, for the first item that matches the
+  probe under K.
+- **Copy the match to the top**, leaving it in place: the store survives a
+  lookup.
+- **No match: a refusal.** Nothing changes and nothing is consumed, as with an
+  empty stack.
+
+This is the **sieve made visible to a program**, which answers *Sieve
+arguments* question 5 with "yes, as instructions". It belongs to the
+**structural** class:
+- it rearranges within one stack and makes nothing new;
+- the copy keeps the matched item's own crux, so the copy records nothing (law
+  1);
+- the record names the item and not the position (*Sieve* §1), so it is not
+  contingent;
+- the composition invariant holds, because the probe is a read.
+
+Cost: one search, bounded by `maxStackDepth` and by each item's size limits, and
+one item produced (§4).
+
+### The pattern kinds
+
+The search is useful only when **the match is not the probe**. A copy of an item
+equal to the probe is just a `Dup`. So equality serves only as a *question*
+about the stack, not as a lookup.
+
+| Kind | Matches a candidate that… | Stacks | Never misses? |
+|---|---|---|---|
+| **Prefix** | begins with the probe's contents | string, 4 vectors, code | no, but a 1-element probe matches often |
+| **Containing** | contains the probe | string, 4 vectors, code | no |
+| **Nearest** | is closest to the probe in the type's order (ties to the topmost) | int, double, char, string, vecInt, vecDouble, vecString | **yes**, given one other item |
+| **Shape** | has the probe's tree with the same type at each leaf (`cruxShape`'s idea: atoms are parameters) | code | no |
+| **Kind** | emits what the probe emits | iterator | no (the sieve's original motivation) |
+| **Equal**, as a query | is equal to the probe → `xStackIndexOf` (depth onto `.int`, or a refusal) and `xStackContains` (→ `.bool`) | every data stack | (a question, not a lookup) |
+
+The kinds run from **exact to total** in how selective they are. Evolution can
+use a selective pattern when the data allow, and fall back on a total one when
+they do not. The diversity of patterns the user asks for is this spread of
+selectivity, more than a spread of types.
+
+### Three dictionaries, none of them a type
+
+1. **Association blocks on `.code`, looked up by prefix.**
+   - An entry is a block `( key value )`: `k .stringQuote v .intQuote
+     .codePair`, by the singleton-unwrap convention.
+   - A lookup is `k .stringQuote .codeLookupPrefix`, then `1 .codeEmitNthRoot`
+     to send the value to its own stack. That is 4 steps.
+   - **One `codeLookupPrefix` serves keys and values of every type**, because
+     anything quotes into code. It is the abstract dictionary constraint 3 asks
+     for, in one instruction.
+2. **Parallel stacks aligned by depth.** Keys on one stack, values on another:
+   `k .stringStackIndexOf .intYankDup` reads the int at the key's depth, in 2
+   steps.
+   - Fragile, because any push to either stack shifts the alignment. That is
+     tolerable for a route that is one of several, and it is the kind of
+     stack-native trick Push programs evolve.
+3. **Nearest lookup as a total table.** Store sorted pairs, or rely on order:
+   `x .intLookupNearest` finds the closest stored int. Rounding to a grid,
+   snapping to the nearest allowed value and piecewise tables all come from
+   this, and it cannot miss.
+
+The dictionary *type* would be a fourth route, the costliest, and the most
+starved.
+
+### Effects on the rest of the overview
+
+- **P7 is replaced by P7′ (pattern lookup):**
+
+  | Family | Instructions |
+  |---|---|
+  | `Prefix` | 6 |
+  | `Containing` | 6 |
+  | `Nearest` | 7 |
+  | `codeLookupShape` | 1 |
+  | `iteratorLookupKind` | 1 |
+  | `xStackIndexOf` | 11 |
+  | `xStackContains` | 11 |
+
+  About 43 in all, made by one factory per kind, as the structural rules are.
+  It needs **no type registry**, so it can come before A4. A planner
+  requirement kind `.finds(stack, pattern)` could be added at the same time,
+  ready for the matrices.
+- **The dictionary type is deferred** until the lookups have been measured with
+  the starvation probe. If it is ever built, give it the total floor lookup.
+- **P1b gains a stack-level membership test.** `xStackContains` asks "is this
+  among the items I have?", where `Contains` asks about the items inside one
+  collection.
+- **P8 (variables) is unchanged in purpose but loses its free ride.** A named
+  association block on `.code` can act as a variable (`( "x" 5 )`, looked up by
+  prefix). It is not private, though: any `code` instruction can move or eat
+  it. A real environment, writable inputs `var0…var9`, is still about 11
+  instructions with its own small storage, and no longer waits for a dictionary
+  type.
+- **Roadmap #34 (patterns as first-class items)** starts here. The kind is
+  carried in the instruction's name rather than in a pattern item. A pattern
+  stack would itself be an always-empty stack that starves, which is the
+  problem being solved. A first-class pattern can come later, if the kinds turn
+  out to want combining.
+
+### To measure before building
+
+Run the existing starvation probe (*Stack economics* Part 2) on random programs
+and compare three rates:
+- how often a lookup of each kind finds a match;
+- how often `.dict` would be non-empty;
+- how often a key would hit.
+
+The argument above predicts the order: nearest, prefix, containing, then
+equality, with the dictionary type last. Checking that is about a day's work.
+Debating it costs more.
