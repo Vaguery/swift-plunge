@@ -302,6 +302,15 @@ A representation-neutral derivation graph, for other GP representations, is a la
     constructors the survey found erring untagged are now `.fallible`. Still coarse: continuations, the
     iterator getters and `vecFromIterator` (alternatives over every element type, until iterators are typed
     by element), and inputs (`.binding`, typed per problem).
+    **Ruled 2026-11-08:** an iterator peek of an absent field (no end, no body) gives nothing and no error;
+    "the intended output" (#42) can be nothing, as an empty slice is empty.
+    **First backward chainer, same day** (`BackwardChainer`, *Search/BackwardChaining.swift*, internal): from
+    a problem's input types (and the constants), counts and uniformly samples the trees of instructions up to
+    a height that produce a wanted stack, and writes each as a program (`Derivation.program`, with a query's
+    `reading` cleanup). Uses the exact part of the map: 248 single-result operations on data stacks;
+    `.cruxOnly` out by default. *Backward Chaining Tests* run sampled trees for eight goals: every one that
+    runs without a refusal leaves exactly its result and nothing else, so the declarations and the
+    composition invariant agree. Not public yet.
 
 42. **Every Behavior returns its intended output or an error** — **RULED and BUILT 2026-11-08** (three new
     `ErrorKind`s: `.emptyCollection`, `.notFound`, `.conversion`; clamping lives in `Position`) → *Error audit and

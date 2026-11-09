@@ -200,7 +200,46 @@ Changed on the way: `splitting` returns a pair rather than a list, so a cut decl
   the blocks it runs (`execIf`: one of two `.code` blocks), leaving the types to the blocks' own edges.
 - **Inputs.** A `binding`'s type is fixed per problem, by its training cases; a search can refine the map
   per problem before chaining.
-- **Peeks that give nothing.** `iteratorPeekEnd` on a walking iterator and `iteratorPeekBody` on one
-  without a body hand back only the iterator, with no value and no error: by design (their doc comments),
-  but at odds with #42's "the intended output or an error". Open for a ruling.
+- **Peeks that give nothing — RULED 2026-11-08: correct as they are.** `iteratorPeekEnd` on a walking
+  iterator and `iteratorPeekBody` on one without a body hand back only the iterator. "The intended output"
+  of #42 can be nothing, as the slice of an empty vector is empty: an absent field is not a refusal, so no
+  error. Their declarations keep the bare-iterator alternative.
+
+## Backward chaining, first use (2026-11-08)
+
+`BackwardChainer` (internal, *Search/BackwardChaining.swift*) is built for one problem: the type of each
+input it binds, and whether constants may be used. Its leaves are those inputs and constants; its edges are
+the operations whose declaration is exact and simple, a single fixed result with arguments taken or read
+from data stacks (248 of 607; `.cruxOnly` excluded by default). Over them it
+
+- **counts** the trees of height ≤ h producing a stack (a leaf has height 0), by dynamic programming over
+  (stack, height), and
+- **samples** them uniformly, choosing each node in proportion to those counts, and
+- **writes** a tree as a program: arguments in reverse requirement order, so the first requirement's value
+  ends on top, and after a query the `Behavior.reading` cleanup, so the fragment leaves only its result.
+
+For a problem binding an int and a string, with constants:
+
+| Goal | Producers | h ≤ 0 | h ≤ 1 | h ≤ 2 | h ≤ 3 |
+|---|---|---|---|---|---|
+| `.int` | 44 | 11 | 2.8e3 | 6.3e8 | 1.7e25 |
+| `.bool` | 79 | 0 | 5.0e3 | 1.9e9 | 4.7e25 |
+| `.string` | 22 | 11 | 8.3e3 | 1.2e12 | 3.6e36 |
+| `.code` | 21 | 0 | 42 | 6.4e8 | 1.3e27 |
+| `.vecInt` | 14 | 10 | 7.4e3 | 1.0e12 | 2.3e36 |
+
+Without constants, `.bool` has 13, 4,328 and 5.8e8 trees at heights 1–3.
+
+**Check.** *Backward Chaining Tests* sample 300 trees of height ≤ 3 for each of eight goals, bind random
+inputs and constants, and run them. Every tree that runs without a refusal leaves exactly one item on its
+goal stack and nothing on any other: the declared signatures and the composition invariant agree. Most
+refusals are #42's domain errors on random constants (`IndexOf` finding nothing).
+
+Uniform over trees means weighted by arity: a node with many arguments has many more subtrees. That is
+why the seven-argument iterator constructors (`.cruxOnly`) are excluded by default, and it is a reason a
+search would more likely want a different measure (uniform over instructions at each node, or by size).
+
+Next steps the map now allows: chain through `alternatives` and the cuts (multi-result fragments with their
+selecting cruxes), give control a typed edge through the blocks it runs, and chain from a problem's
+*training cases* (binding types, and the type of the wanted output) to seed or constrain a search.
 
