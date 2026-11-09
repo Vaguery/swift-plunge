@@ -10,9 +10,10 @@ The `.binding` stack holds **bindings**: pairs of an int key and any item, writt
 current value; older ones below it are shadowed, not lost, so each variable is a
 stack of its own values.
 
-Instructions that make or use bindings use the verb **ref**. Instructions that
-treat a binding as a value, and the stack instructions every stack has, use the
-stack's name, **binding**.
+Instructions that work on the stack are named for it, as everywhere in Push:
+`bindingDeref`, `bindingUnbind`. The one exception is the verb **ref**, which
+makes a binding *from* another stack's item, just as `intQuote` makes a block
+from an int: `intRef`, `stringRef`, and so on.
 
 ## Keys
 
@@ -38,12 +39,12 @@ was, and pushes the key onto `.int`:
 
 Lookups read a key from the top of `.int` and leave it there:
 
-- `refDeref` runs what the key holds. A block's contents run, and any other item
-  lands on its stack.
-- `refDerefToCode` delivers it to `.code` as data, a block as it is and anything
-  else wrapped in a one-item block.
-- `refDerefBelow` and `refDerefToCodeBelow` take a depth from `.int` and search from
-  there, which reaches the older, shadowed bindings of the same key.
+- `bindingDeref` runs what the key holds. A block's contents run, and any other
+  item lands on its stack.
+- `bindingDerefToCode` delivers it to `.code` as data, a block as it is and
+  anything else wrapped in a one-item block.
+- `bindingDerefBelow` and `bindingDerefToCodeBelow` take a depth from `.int` and
+  search from there, which reaches the older, shadowed bindings of the same key.
 
 A key with no binding is a refusal, as if `.binding` were empty.
 
@@ -58,7 +59,7 @@ a value of any type:
 ```
 
 (The two pops clear the fresh key and the 7 that `intRef` left behind.)
-`refUnbind` removes a key's topmost binding, so its previous value comes back.
+`bindingUnbind` removes a key's topmost binding, so its previous value comes back.
 
 ## Scoped bindings
 
@@ -67,19 +68,19 @@ block taken from `.code`, then removes the binding. Inside the block, the
 binding's key is on top of `.int`:
 
 ```
-5 ( .refDerefToCode ) .intWith     →  .code holds ( 5 ); the binding is gone
+5 ( .bindingDerefToCode ) .intWith     →  .code holds ( 5 ); the binding is gone
 ```
 
-`refScope` does the same for a key that is already bound: `k ( body ) .refScope`
-runs the body, then unbinds k.
+`bindingScope` does the same for a key that is already bound:
+`k ( body ) .bindingScope` runs the body, then unbinds k.
 
 ## Finding keys
 
-- `refFresh` pushes a fresh key, without binding anything.
-- `refBindingDepth` gives how deep a key's topmost binding is.
-- `refNearestKey` gives the bound key nearest a given int.
-- `refFloorKey` gives the largest bound key at or below it.
-- `refKeyOf` gives the key bound to a value, the value given as a block on `.code`.
+- `bindingFreshKey` pushes a fresh key, without binding anything.
+- `bindingKeyDepth` gives how deep a key's topmost binding is.
+- `bindingNearestKey` gives the bound key nearest a given int.
+- `bindingFloorKey` gives the largest bound key at or below it.
+- `bindingKeyOf` gives the key bound to a value, the value given as a block on `.code`.
 
 They are useful because keys are ints: arithmetic can walk from one variable to
 the next, and these find the bound keys near wherever it lands.

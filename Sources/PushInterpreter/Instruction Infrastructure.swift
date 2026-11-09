@@ -344,10 +344,10 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case boolRef, intRef, doubleRef, charRef, stringRef, codeRef, vecBoolRef, vecIntRef, vecDoubleRef, vecStringRef
     case boolWith, intWith, doubleWith, charWith, stringWith, codeWith, vecBoolWith, vecIntWith, vecDoubleWith,
          vecStringWith
-    case bindingRekey, refScope, bindingQuote, bindingFromCode, refFresh
+    case bindingRekey, bindingScope, bindingQuote, bindingFromCode, bindingFreshKey
     // and the lookups.
-    case refDeref, refDerefBelow, refDerefToCode, refDerefToCodeBelow, refNearestKey, refFloorKey, refKeyOf,
-         refUnbind, refBindingDepth
+    case bindingDeref, bindingDerefBelow, bindingDerefToCode, bindingDerefToCodeBelow, bindingNearestKey, bindingFloorKey, bindingKeyOf,
+         bindingUnbind, bindingKeyDepth
 
     // Short iterator constructors (Behavior coverage audit, P3)
     case iteratorOverString, iteratorOverVecBool, iteratorOverVecInt, iteratorOverVecDouble,

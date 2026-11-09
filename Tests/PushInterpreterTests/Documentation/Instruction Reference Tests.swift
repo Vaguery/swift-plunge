@@ -81,7 +81,7 @@ struct InstructionReferenceTests {
         Subject(page: "IteratorInstructions", title: "Iterator instructions",
                 intro: "The `.iterator` stack holds first-class loops: a source (a range, a collection or a block), a cursor, and optionally a body to run each pass. Iterators are how the language counts, walks collections and collects results."),
         Subject(page: "BindingInstructions", title: "Binding instructions",
-                intro: "The `.binding` stack holds keyed bindings: an int key and any item. The topmost binding with a key is that variable's current value, and older ones below it are shadowed, so each variable is a stack of its own. The inputs are bound to keys 0, 1, 2, … at load, and fresh keys follow them. Instructions that make or look up bindings use the verb *ref*."),
+                intro: "The `.binding` stack holds keyed bindings: an int key and any item. The topmost binding with a key is that variable's current value, and older ones below it are shadowed, so each variable is a stack of its own. The inputs are bound to keys 0, 1, 2, … at load, and fresh keys follow them. The binders, `intRef`, `stringRef` and the rest, are on their source stacks' pages."),
         Subject(page: "VecBoolInstructions", title: "Vector of bool instructions",
                 intro: "The `.vecBool` stack holds vectors of bools. It shares its instruction families with the other vector types."),
         Subject(page: "VecIntInstructions", title: "Vector of int instructions",
@@ -98,7 +98,6 @@ struct InstructionReferenceTests {
     /// that are named for what they do rather than for a stack placed by hand.
     static func page(of name: PushInstruction) -> String {
         let raw = name.rawValue
-        if raw.hasPrefix("ref") { return "BindingInstructions" }
         if raw == "vecFromIterator" { return "IteratorInstructions" }
         if raw == "vecFromCode" { return "CodeInstructions" }
         let stacks = PushStack.allCases.map(\.rawValue).sorted { $0.count > $1.count }

@@ -119,7 +119,7 @@ struct DocumentationExamplesTests {
         #expect(assigned[.binding] == ["⟨3 ↦ 7⟩", "(1 items)"])
 
         let scoped = await Self.finalStacks([.code, .binding], after: [
-            IntItem(5), CodeItem([InstructionItem(.refDerefToCode)]), InstructionItem(.intWith)
+            IntItem(5), CodeItem([InstructionItem(.bindingDerefToCode)]), InstructionItem(.intWith)
         ])
         #expect(scoped[.code] == ["( 5 )", "(1 items)"])
         #expect(scoped[.binding] == ["(0 items)"])

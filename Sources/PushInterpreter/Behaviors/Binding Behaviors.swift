@@ -9,26 +9,26 @@
 //  key and pushes the key onto `.int`. `bindingRekey` gives the top pair another
 //  key, shadowing that key's older binding: assignment, for every type at once.
 //  `xWith` binds the top of X for the length of a body from `.code`; it is
-//  written as `.xRef ( body ) .refScope`, and `refScope` runs a body with a key
-//  on `.int` and removes that key's binding after.
+//  written as `.xRef ( body ) .bindingScope`, and `bindingScope` runs a body with
+//  a key on `.int` and removes that key's binding after.
 //
 //  **Looking up.** Every lookup reads its key from `.int` and leaves it, and a
-//  miss is a refusal, as if `.binding` were empty (ruling I20). `refDeref` runs
+//  miss is a refusal, as if `.binding` were empty (ruling I20). `bindingDeref` runs
 //  what a key holds (a block's contents go to `.exec`; anything else lands on
-//  its stack); `refDerefToCode` delivers it to `.code` as data (a block as it
+//  its stack); `bindingDerefToCode` delivers it to `.code` as data (a block as it
 //  is, anything else quoted). Their `…Below` forms take a depth from `.int` and
 //  search from it, which reaches the older bindings a key shadows.
-//  `refBindingDepth` gives that depth, `refUnbind` removes the topmost binding,
-//  and `refNearestKey`, `refFloorKey` and `refKeyOf` find keys: by distance,
-//  from below, and by value (a probe from `.code`).
+//  `bindingKeyDepth` gives that depth, `bindingUnbind` removes the topmost
+//  binding, and `bindingNearestKey`, `bindingFloorKey` and `bindingKeyOf` find
+//  keys: by distance, from below, and by value (a probe from `.code`).
 //
 //  **Nothing takes an argument from `.exec`** (ruling 12).
 //
-//  **Names** (the user, 2026-11-09; the stack was `.ref` until then): the noun
-//  is *binding*: the stack, the item, its generated family, and what treats a
-//  pair as a value (`bindingRekey`, `bindingQuote`, `bindingFromCode`). The verb
-//  is *ref*: binding (`xRef`, `refFresh`), scoping (`xWith`, `refScope`) and
-//  looking up (`refDeref`, the key finders, `refUnbind`).
+//  **Names** (the user, 2026-11-09; the stack was `.ref` until then): every
+//  instruction that works on the stack is named for it, `binding…`, as
+//  everywhere in the language. The verb *ref* survives only after a source
+//  stack, for the binders: `intRef` makes a binding from an int as `intQuote`
+//  makes a block from one. `xWith` follows them.
 //
 
 import DequeModule
@@ -87,11 +87,11 @@ nonisolated extension Interpreter {
     }
 
     /// `xWith`: binds the top of `stack` for the length of a body taken from
-    /// `.code` (ruling 11), as `.xRef ( body ) .refScope`. The top of `stack` must
+    /// `.code` (ruling 11), as `.xRef ( body ) .bindingScope`. The top of `stack` must
     /// be there, so the binder cannot starve between the two.
     static func refWith(_ name: PushInstruction, binder: PushInstruction, of stack: PushStack) -> Behavior {
         Behavior.control(name, requires: [.takes(.code), .reads(stack)]) { a, _ in
-            [Router(.exec, InstructionItem(.refScope)), Router(.exec, a[0]), Router(.exec, InstructionItem(binder))]
+            [Router(.exec, InstructionItem(.bindingScope)), Router(.exec, a[0]), Router(.exec, InstructionItem(binder))]
         }
         .described(
             "Binds a copy of the "
@@ -100,15 +100,16 @@ nonisolated extension Interpreter {
         )
     }
 
-    /// `k ( body ) .refScope` runs the body with k on `.int`, then removes k's
-    /// topmost binding: `k body… k .refUnbind .intPop`.
-    static let refScope_Behavior =
-        Behavior.control(.refScope, takes: [.int, .code]) { a, recording in
+    /// `k ( body ) .bindingScope` runs the body with k on `.int`, then removes k's
+    /// topmost binding: `k body… k .bindingUnbind .intPop`.
+    static let bindingScope_Behavior =
+        Behavior.control(.bindingScope, takes: [.int, .code]) { a, recording in
             // The body's items addressed in their block, as `codeDo` places them.
             let key = a[0], body = Containment.contents(of: a[1] as! CodeItem, recording)
-            return [.place([key] + body + [key, InstructionItem(.refUnbind), InstructionItem(.intPop)])]
+            return [.place([key] + body + [key, InstructionItem(.bindingUnbind), InstructionItem(.intPop)])]
         }
-        .described("Runs a body with key k pushed onto `.int`, then removes k's topmost binding: `k ( b ) .refScope`.")
+        .described("Runs a body with key k pushed onto `.int`, then removes k's topmost binding: "
+                   + "`k ( b ) .bindingScope`.")
 
     /// `k .bindingRekey` gives the top pair the key k (ruling 10).
     ///
@@ -130,9 +131,9 @@ nonisolated extension Interpreter {
         .described("Gives the top binding the key k from `.int`, shadowing any older binding of k.")
 
     /// A fresh key onto `.int`: a deterministic gensym.
-    static let refFresh_Behavior =
-        Behavior.contextRead(.refFresh, produces: .results([.int])) { _, context in
-            [Router(.int, IntItem(context.freshKey()).observed(by: .refFresh, context.recording))]
+    static let bindingFreshKey_Behavior =
+        Behavior.contextRead(.bindingFreshKey, produces: .results([.int])) { _, context in
+            [Router(.int, IntItem(context.freshKey()).observed(by: .bindingFreshKey, context.recording))]
         }
         .described("Pushes a fresh key onto `.int`, one not drawn before in this run.")
 
@@ -197,7 +198,7 @@ nonisolated extension Interpreter {
     /// instruction's is, read out of the environment as an input's is. Not tagged
     /// re-entrant: it does not re-push itself, and a block that looks itself up
     /// recurses as `codeDo` of a block holding `codeDo` does.
-    static func refDeref(_ name: PushInstruction, below: Bool) -> Behavior {
+    static func bindingDeref(_ name: PushInstruction, below: Bool) -> Behavior {
         refLookup(name, below: below, produces: .continuation) { value, context in
             if let block = value.exactly(CodeItem.self) {
                 // Each item addressed in its block, as `codeDo` places them.
@@ -207,37 +208,38 @@ nonisolated extension Interpreter {
         }
         .described(
             below
-                ? "Runs the value bound to key k at depth i or below on `.binding`, as `.refDeref` does, leaving k:"
-                  + " `k i .refDerefBelow` reaches shadowed bindings; refuses when there is none."
+                ? "Runs the value bound to key k at depth i or below on `.binding`, as `.bindingDeref` does, leaving k:"
+                  + " `k i .bindingDerefBelow` reaches shadowed bindings; refuses when there is none."
                 : "Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value"
                   + " lands on its stack; refuses when k is unbound."
         )
     }
 
     /// Delivers what a key holds to `.code`, as data.
-    static func refDerefToCode(_ name: PushInstruction, below: Bool) -> Behavior {
+    static func bindingDerefToCode(_ name: PushInstruction, below: Bool) -> Behavior {
         refLookup(name, below: below, produces: .results([.code])) { value, context in
             [Router(.code, asCode(value, by: name, context.recording))]
         }
         .described(
             below
                 ? "Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as"
-                  + " `.refDerefToCode` does, leaving k: `k i .refDerefToCodeBelow`; refuses when there is none."
+                  + " `.bindingDerefToCode` does, leaving k: `k i .bindingDerefToCodeBelow`;"
+                  + " refuses when there is none."
                 : "Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted,"
                   + " leaving k; refuses when k is unbound."
         )
     }
 
     /// The depth of a key's topmost binding, onto `.int`.
-    static let refBindingDepth_Behavior =
-        Behavior.contextRead(.refBindingDepth, tags: [.fallible], produces: .results([.int])) { _, context in
+    static let bindingKeyDepth_Behavior =
+        Behavior.contextRead(.bindingKeyDepth, tags: [.fallible], produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
-                return [refMissing(.refBindingDepth, on: .int, context.recording)]
+                return [refMissing(.bindingKeyDepth, on: .int, context.recording)]
             }
             guard let depth = bindingDepth(of: key.value, in: context.items(of: .binding)) else {
-                return [refMissing(.refBindingDepth, on: .binding, context.recording)]
+                return [refMissing(.bindingKeyDepth, on: .binding, context.recording)]
             }
-            return [Router(.int, IntItem(depth).observed(by: .refBindingDepth, context.recording))]
+            return [Router(.int, IntItem(depth).observed(by: .bindingKeyDepth, context.recording))]
         }
         .described("Pushes the depth of key k's topmost binding on `.binding`, leaving k; refuses when k is unbound.")
 
@@ -258,42 +260,42 @@ nonisolated extension Interpreter {
     }
 
     /// The key nearest k, the topmost on a tie; misses only on an empty `.binding`.
-    static let refNearestKey_Behavior = refKeyFinder(.refNearestKey) { k, keys in
+    static let bindingNearestKey_Behavior = refKeyFinder(.bindingNearestKey) { k, keys in
         keys.min { abs(Double($0) - Double(k)) < abs(Double($1) - Double(k)) }
     }
         .described("Pushes the bound key nearest k, the topmost on a tie, leaving k; refuses when nothing is bound.")
 
     /// The greatest key at or below k; misses when every key is above it.
-    static let refFloorKey_Behavior = refKeyFinder(.refFloorKey) { k, keys in
+    static let bindingFloorKey_Behavior = refKeyFinder(.bindingFloorKey) { k, keys in
         keys.filter { $0 <= k }.max()
     }
         .described("Pushes the greatest bound key at or below k, leaving k; refuses when there is none.")
 
     /// Reverse lookup: the key of the topmost binding whose value is the block on
     /// top of `.code` (read), or the one item that block holds.
-    static let refKeyOf_Behavior =
-        Behavior.contextRead(.refKeyOf, tags: [.fallible], produces: .results([.int])) { _, context in
+    static let bindingKeyOf_Behavior =
+        Behavior.contextRead(.bindingKeyOf, tags: [.fallible], produces: .results([.int])) { _, context in
             guard let probe = context.items(of: .code).first as? CodeItem else {
-                return [refMissing(.refKeyOf, on: .code, context.recording)]
+                return [refMissing(.bindingKeyOf, on: .code, context.recording)]
             }
             let target = probe.denotedItem
             guard let pair = context.items(of: .binding).lazy.compactMap({ $0 as? BindingItem })
                 .first(where: { $0.bound.isEqual(to: probe) || $0.bound.isEqual(to: target) }) else {
-                return [refMissing(.refKeyOf, on: .binding, context.recording)]
+                return [refMissing(.bindingKeyOf, on: .binding, context.recording)]
             }
-            return [Router(.int, IntItem(pair.key).observed(by: .refKeyOf, context.recording))]
+            return [Router(.int, IntItem(pair.key).observed(by: .bindingKeyOf, context.recording))]
         }
         .described("Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item,"
                    + " leaving the block; refuses on a miss.")
 
     /// Removes the topmost binding of the key on `.int` (read): weakening at the
     /// depth the key names.
-    static let refUnbind_Behavior =
-        Behavior(.refUnbind, requires: [.reads(.int)], tags: [.fallible], behaviorClass: .structural,
+    static let bindingUnbind_Behavior =
+        Behavior(.bindingUnbind, requires: [.reads(.int)], tags: [.fallible], behaviorClass: .structural,
                  body: .structural(.binding) { a, view in
                      let key = (a[0] as! IntItem).value
                      let depth = (0..<view.count).first { (view.item(at: $0) as? BindingItem)?.key == key }
-                     guard let depth else { return .loop([refMissing(.refUnbind, on: .binding, view.recording)]) }
+                     guard let depth else { return .loop([refMissing(.bindingUnbind, on: .binding, view.recording)]) }
                      return .positions(.remove(at: depth))
                  }, produces: .positions(.binding))
         .described("Removes key k's topmost binding, leaving k; refuses when k is unbound.")
@@ -303,20 +305,20 @@ nonisolated extension Interpreter {
 
     static let bindingBehaviors: [PushInstruction: Behavior] = {
         var family: [PushInstruction: Behavior] = [
-            .refScope: refScope_Behavior,
+            .bindingScope: bindingScope_Behavior,
             .bindingRekey: bindingRekey_Behavior,
-            .refFresh: refFresh_Behavior,
+            .bindingFreshKey: bindingFreshKey_Behavior,
             .bindingQuote: bindingQuote_Behavior,
             .bindingFromCode: bindingFromCode_Behavior,
-            .refDeref: refDeref(.refDeref, below: false),
-            .refDerefBelow: refDeref(.refDerefBelow, below: true),
-            .refDerefToCode: refDerefToCode(.refDerefToCode, below: false),
-            .refDerefToCodeBelow: refDerefToCode(.refDerefToCodeBelow, below: true),
-            .refBindingDepth: refBindingDepth_Behavior,
-            .refNearestKey: refNearestKey_Behavior,
-            .refFloorKey: refFloorKey_Behavior,
-            .refKeyOf: refKeyOf_Behavior,
-            .refUnbind: refUnbind_Behavior
+            .bindingDeref: bindingDeref(.bindingDeref, below: false),
+            .bindingDerefBelow: bindingDeref(.bindingDerefBelow, below: true),
+            .bindingDerefToCode: bindingDerefToCode(.bindingDerefToCode, below: false),
+            .bindingDerefToCodeBelow: bindingDerefToCode(.bindingDerefToCodeBelow, below: true),
+            .bindingKeyDepth: bindingKeyDepth_Behavior,
+            .bindingNearestKey: bindingNearestKey_Behavior,
+            .bindingFloorKey: bindingFloorKey_Behavior,
+            .bindingKeyOf: bindingKeyOf_Behavior,
+            .bindingUnbind: bindingUnbind_Behavior
         ]
         for (stack, binder) in BindingItem.binders {
             family[binder] = refBinder(binder, of: stack)
