@@ -37,6 +37,37 @@ public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable,
 
 }
 
+nonisolated extension PushStack {
+    /// What one item of this stack is called in prose: "an int", "a block", "a
+    /// vector of strings". For the instruction summaries of generated families.
+    var noun: String {
+        switch self {
+        case .bool: "bool"
+        case .int: "int"
+        case .double: "double"
+        case .char: "char"
+        case .string: "string"
+        case .code: "block"
+        case .exec: "pending item"
+        case .iterator: "iterator"
+        case .binding: "binding"
+        case .error: "error"
+        case .vecBool: "vector of bools"
+        case .vecInt: "vector of ints"
+        case .vecDouble: "vector of doubles"
+        case .vecString: "vector of strings"
+        }
+    }
+
+    /// `noun` for several items: "ints", "blocks", "vectors of strings".
+    var plural: String {
+        switch self {
+        case .vecBool, .vecInt, .vecDouble, .vecString: "vectors" + noun.dropFirst("vector".count)
+        default: noun + "s"
+        }
+    }
+}
+
 nonisolated extension PushStack: CustomStringConvertible {
     /// The case name. Without this, interpolating a stack (`"missing args: .\(stack)"`)
     /// falls back to runtime reflection, which profiling caught allocating in the

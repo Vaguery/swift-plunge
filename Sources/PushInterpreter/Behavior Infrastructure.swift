@@ -15,6 +15,19 @@ nonisolated final class Behavior: Sendable {
     // from many interpreters and tasks at once.
     let name: PushInstruction
 
+    /// **What the instruction does, in one sentence**, for the instruction
+    /// reference and `Runner.summary(of:)`. Declared beside the definition with
+    /// `described(_:)`; a generated family describes all its members from one
+    /// template. *Instruction Reference Tests* require one for every instruction.
+    let summary: String
+
+    /// This Behavior with `summary` as its description. Everything else is the
+    /// same, so a definition reads `Behavior.operation(…) { … }.described("…")`.
+    func described(_ summary: String) -> Behavior {
+        Behavior(name, requires: requirements, tags: tags, behaviorClass: behaviorClass, body: body,
+                 produces: produces, summary: summary)
+    }
+
     /// Everything this Behavior must find, **in order**. Order matters: each
     /// requirement claims the topmost item its predecessors have not, so
     /// `takes(.int), takes(.int)` claims index 0 then index 1 — the same two items
@@ -178,9 +191,11 @@ nonisolated final class Behavior: Sendable {
         tags: Set<InstructionTag>,
         behaviorClass: BehaviorClass,
         body: BehaviorBody,
-        produces: Produces
+        produces: Produces,
+        summary: String = ""
     ) {
         self.name = label
+        self.summary = summary
         self.requirements = requires
         self.tags = tags
         self.behaviorClass = behaviorClass

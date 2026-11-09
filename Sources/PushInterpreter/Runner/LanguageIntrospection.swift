@@ -101,6 +101,13 @@ public extension Runner {
         Interpreter.instructions(reading: stack).sorted { $0.rawValue < $1.rawValue }
     }
 
+    /// What `instruction` does, in one sentence: the summary its definition
+    /// declares, as the instruction reference shows it. Nil if the language has
+    /// no such instruction.
+    nonisolated func summary(of instruction: PushInstruction) -> String? {
+        Interpreter.language[instruction]?.summary
+    }
+
     /// What `instruction` takes and gives, read off its declarations — its edge
     /// in the language's input-output map (Roadmap #41). Nil if the language has
     /// no such instruction.
