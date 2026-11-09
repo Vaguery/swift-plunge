@@ -183,4 +183,30 @@ struct DocumentationExamplesTests {
         #expect(answer.item.pretty() == "396")
         #expect(CodeItem(answer.item.crux()).pretty() == "( 99 .input0 .intMultiply )")
     }
+
+    /// *Code and Control* and *Iterators and Loops*: the examples.
+    @Test func `code, control and iterators`() async {
+        let chosen = await Self.finalStacks([.int, .code], after: [
+            BoolItem(true), CodeItem([IntItem(10)]), CodeItem([IntItem(20)]), Self.op(.execIf)
+        ])
+        #expect(chosen[.int] == ["10", "(1 items)"] && chosen[.code] == ["(0 items)"])
+        let repeated = await Self.finalStacks([.int, .code], after: [
+            IntItem(1), IntItem(3), CodeItem([IntItem(2), Self.op(.intMultiply)]), Self.op(.execDoTimes)
+        ])
+        #expect(repeated[.int] == ["8", "(1 items)"] && repeated[.code] == ["( 2 .intMultiply )", "(1 items)"])
+        let counted = await Self.finalStacks([.int, .code], after: [
+            IntItem(3), CodeItem([]), Self.op(.execDoCount)
+        ])
+        #expect(counted[.int] == ["2", "1", "(3 items)"])
+        let walked = await Self.finalStacks([.int, .iterator, .code], after: [
+            VecIntItem([1, 2, 3]), CodeItem([IntItem(10), Self.op(.intMultiply)]), Self.op(.iteratorOverVecInt),
+            Self.op(.iteratorPlay)
+        ])
+        #expect(walked[.int] == ["30", "20", "(3 items)"] && walked[.code] == ["( 10 .intMultiply )", "(1 items)"])
+        let collected = await Self.finalStacks([.vecInt, .iterator, .code], after: [
+            VecIntItem([1, 2, 3]), CodeItem([IntItem(10), Self.op(.intMultiply)]), Self.op(.iteratorOverVecInt),
+            Self.op(.vecFromIterator)
+        ])
+        #expect(collected[.vecInt] == ["[10, 20, 30]", "(1 items)"])
+    }
 }

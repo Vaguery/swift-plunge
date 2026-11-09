@@ -29,6 +29,8 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 
 ### The language
 
+- <doc:CodeAndControl>
+- <doc:Iterators>
 - <doc:Variables>
 - <doc:SearchingTheStacks>
 - <doc:Functions>
