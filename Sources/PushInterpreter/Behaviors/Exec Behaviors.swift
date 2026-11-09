@@ -25,11 +25,15 @@ nonisolated extension Interpreter {
 
 
                 // Always runs the body at least once — `.exec` top→bottom is
-                // body, .codeDo.
+                // body, .codeDo. On a false bool that is the only pass, and the
+                // body goes under it, to land on `.code` once it has run, as every
+                // finished loop returns its body (the user's ruling, 2026-11-09;
+                // until then it was discarded).
                 var results = [
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, body),
                 ]
+                if !x.value { results.insert(Router(.exec, body), at: 0) }
 
                 if x.value {
                     // …then re-supplies the body to `.code` and hands off to
@@ -50,7 +54,7 @@ nonisolated extension Interpreter {
         )
         .described(
             "Runs the body once and then, only if the bool it took beforehand was true, loops as `.execWhile` does, "
-            + "testing a new bool after each pass.")
+            + "testing a new bool after each pass; when it stops, the body returns to `.code`.")
 
     // based on https://github.com/Vaguery/klapaucius/blob/17b55eb76feaa520a85d4df93597cccffe6bdba4/src/push/type/module/exec.clj#L13-L32
     //
@@ -367,11 +371,13 @@ nonisolated extension Interpreter {
             //
             // On a true guard, `.exec` top→bottom is body, .codeDo, body,
             // .execWhile: run the body, re-supply it to `.code`, and re-test the
-            // next BOOL. A false guard consumes both and stops.
+            // next BOOL. A false guard ends the loop and returns the body to
+            // `.code`, as every finished loop does (the user's ruling, 2026-11-09;
+            // until then it was discarded).
             fxn: { a, recording in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
-                var results = [Router]()
+                var results = [Router(.code, body)]
 
                 if x.value {
 
@@ -392,7 +398,7 @@ nonisolated extension Interpreter {
         )
         .described(
             "Loops: runs the body while the top bool is true, taking a new bool before each pass; a false bool ends "
-            + "the loop and discards the body.")
+            + "the loop and returns the body to `.code`.")
 
     static let execBehaviors:[PushInstruction : Behavior] =
     [

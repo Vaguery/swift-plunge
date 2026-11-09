@@ -309,12 +309,28 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .bool) == "[ false true false ]")
 
         doThis(.execDoWhile, to: inty)
-        #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo 33 22 ]")
+        // The one pass, then the body, under it, to land on `.code` once the pass
+        // has run: every finished loop returns its body (since 2026-11-09).
+        #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo ( 44 ) 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
         // The body copy is a duplication that stays on `.exec`, so it records no
         // provenance (law 1). It used to be tagged `index: 2`.
         #expect(topItem(inty, .exec).call.isEmpty)
         #expect(callString(topItem(inty, .exec)) == "( )")
+    }
+
+    @Test func `a while loop returns its body to code when it stops`() {
+        let inty = Interpreter()
+        inty.load(program: [BoolItem(false), CodeItem([IntItem(1)]), InstructionItem(.execWhile)])
+        inty.run(stepLimit: 100)
+        #expect(stackString(inty, .code) == "[ ( 1 ) ]")
+        #expect(stackString(inty, .int) == "[ ]", "a false bool runs no pass")
+
+        let once = Interpreter()
+        once.load(program: [BoolItem(false), CodeItem([IntItem(1)]), InstructionItem(.execDoWhile)])
+        once.run(stepLimit: 100)
+        #expect(stackString(once, .int) == "[ 1 ]", "do-while runs one pass")
+        #expect(stackString(once, .code) == "[ ( 1 ) ]")
     }
 
     @Test func `execDoWhile is a lot like execWhile when a true is found`() {
