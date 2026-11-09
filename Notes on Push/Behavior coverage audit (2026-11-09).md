@@ -178,7 +178,7 @@ the sense this language allows.
 
 Under each item, **Adds** names the tasks it gives a new short route.
 
-### P1. Collection reductions and orderings: queries, one factory
+### P1. Collection reductions and orderings: queries, one factory (**built** without `Sort` and `Mean`)
 
 - **`Sum`, `Max`, `Min`** on `vecInt` and `vecDouble`. ~~`Mean`~~ **dropped (the
   user, 2026-11-09):** it answers PSB1 *Vector Average* in one step, which
@@ -199,16 +199,22 @@ Principles §5, I7). About 17 instructions.
 - the first routes to sort and dedupe;
 - ~~a median: `Sort`, then `Nth` of `Length` halved~~ (no `Sort`).
 
-### P1b. Set operations on every collection (added 2026-11-09)
+### P1b. Set operations on every collection (added 2026-11-09; **built**)
 
 Treat a set as **operations on existing collections**, not yet as a type. §7
 weighs the type.
 
 - The family: **`Distinct`, `Intersect`, `Difference`, `IsSubset`**, on the four
   vector types, `string` and `code`, from one factory. About 24 instructions.
-- **Order is the first argument's**, and so is each element's provenance:
-  - `Distinct` keeps first occurrences;
-  - `[3,1,3,2] [2,3] .vecIntIntersect` gives `[3,2]`.
+- **Order is the first argument's**, and so is each element's provenance. This
+  is one rule for every set operation (the user: "preserve order where
+  possible, in a consistent way"; built 2026-11-09):
+  - `Distinct` keeps first occurrences: `[3,1,3,2,1]` gives `[3,1,2]`;
+  - `Intersect` and `Difference` are **filters**. They keep the first
+    argument's elements that are (are not) in the second, in the first's order
+    and with its repeats, so `[3,1,3,2] [2,3] .vecIntIntersect` gives
+    `[3,3,2]`. Set semantics are one `Distinct` away;
+  - the second argument only answers membership, and its order never shows.
 - On `code`, the members are the root items, compared by value (§9). It is the
   one multitype collection already in the language.
 - **No `Union`.** `Concat` then `Distinct` is a 2-step route already, which is
