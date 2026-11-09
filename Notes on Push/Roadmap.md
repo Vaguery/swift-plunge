@@ -118,7 +118,7 @@ A representation-neutral derivation graph, for other GP representations, is a la
 
 1. ~~**`.points(into:)`** — the depth-first code-tree walk~~ **BUILT** (`codeIteratePoints`, the `.points`
    IteratorKind). → *Code instruction planning.md*
-2. **map / filter** — apply a crux-function to each vector element. Concrete design done (approved, not yet
+2. ~~**map / filter**~~ **BUILT 2026-11-09** (map, filter, reduce; #45, *Function Behaviors.swift*). Original: apply a crux-function to each vector element. Concrete design done (approved, not yet
    built): one `BehaviorWithSideEffects` per op, **no iterator** (map/reduce produce one item — §4), a
    sub-`Interpreter` rebinds the function's `.inputN` holes per element. Note `.vecFromIterator`/
    `.codeFromIterator` are **not** this — they collect projections and never run a body.
@@ -386,8 +386,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
 
-45. **Behavior coverage** — **RULED 2026-11-09**; steps 1–2 **built** the same day (P1 without `Sort`/`Mean`,
-    P1b, P4, P5, P6, `codeDoIf`, `Peek` forms, `DropLast`/`TakeLast`; 694 instructions) → *Behavior coverage audit
+45. **Behavior coverage** — **RULED 2026-11-09**; steps 1–3 **built** the same day (P1 without `Sort`/`Mean`,
+    P1b, P2, P3, P4, P5, P6, `codeDoIf`, `Peek` forms, `DropLast`/`TakeLast`, I16; 715 instructions) → *Behavior coverage audit
     (2026-11-09).md*. The tasks with no short route (average, filter, sort, dedupe, case, substring
     index, conversions between vector types, keyed storage) and the rulings that settle them:
     - `stringDrop` from the front, plus `xDropLast`/`xTakeLast`;

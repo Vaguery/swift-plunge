@@ -1,5 +1,11 @@
 # Map and reduce from a crux-function
 
+**BUILT 2026-11-09** (*Behavior coverage audit* P2, §11 step 3): `vecXMap`, `vecXFilter`, `vecXReduce`
+and the `string` forms, in *Function Behaviors.swift*. Changed from this plan by later rulings: the result
+type follows the data (the last value the function pushed; I17), an element with no result passes through
+(I4), reduce folds from the first element with no seed, sub-run steps are charged to the run, and sub-runs
+use the language's default limits. The plan below is kept as written.
+
 *Design note. Written 2026-07-19, recording an approved-but-unstarted plan. The exploration behind it
 is the crux-to-function diagnostic (`Tests/…/Acceptance Tests (Slow)/CruxToFunction Diagnostics.swift`,
 committed `5f349b8`) plus the "map / filter — the pseudofunction work" line in `Roadmap.md` §A.2. Nothing

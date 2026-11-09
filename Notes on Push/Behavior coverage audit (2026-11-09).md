@@ -238,7 +238,7 @@ weighs the type.
 numbers"). Membership is one kind of filter; a predicate is the general kind.
 Sets are a second route to some filters, not a substitute.
 
-### P2. Map, filter and reduce (#2, as designed, plus filter)
+### P2. Map, filter and reduce (#2, as designed, plus filter) (**built**)
 
 - Build the approved design: one Behavior, no iterator; the function is a
   `CodeItem` with `.inputN` holes, rebound for each element.
@@ -257,7 +257,7 @@ Sets are a second route to some filters, not a substitute.
 - vector conversion;
 - dot product (zip aside): map and sum.
 
-### P3. Short iterator constructors
+### P3. Short iterator constructors (**built**, with two arguments)
 
 - One-argument **`iteratorOverX`** for each collection type (`string` letters,
   four vectors, code points): walk everything, stride 1, no body.
@@ -1147,6 +1147,26 @@ inputs.
 
 Every addition was checked against the PSB1 and PSB2 targets first: none answers
 one outright.
+
+**Step 3, built 2026-11-09, 694 → 715 instructions.** The user's choices, and
+what building them settled:
+- **A function's result is the last value it pushed**, on any stack
+  (`Interpreter.lastPush`, one store per push; throughput unchanged within
+  noise). Query debris does not matter: `( .input0 2 .intMod 0 .intEq )` maps to
+  bools.
+- **Sub-run steps are charged to the run's budget.** An `applying` body (a new
+  body kind of the operation class) reports work through a meter on
+  `ReadContext`, and `Behavior.act` adds it to the counter, so no body mutates
+  the interpreter. An application that would exceed what is left is refused.
+- **Reduce folds from the first element**; `.input0` is the accumulator and
+  `.input1` the element.
+- **Sub-runs use the language's default limits**, taking only the step budget
+  from the run. The crux fuzz found why: a reconstruction relaxes the limits,
+  and a function that inherited them behaved differently on replay.
+- **`vecFromIterator` with a body** is the stack-fed map (I16), beside the
+  input-fed `vecXMap`: two routes, for the two styles of function.
+- **The short constructors take two arguments**, a collection and a body, not
+  one: a body is what makes them useful.
 
 **Order of work**, a suggestion and not a ruling:
 1. The small fixes and the ruled leftovers (P9 and rulings 1–2).
