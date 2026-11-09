@@ -118,14 +118,16 @@ nonisolated extension Interpreter {
     /// empty pieces included, so joining them with `sep` gives `s` back. An
     /// empty separator splits into letters.
     static let stringSplitOn_Behavior =
-        Behavior.operation(.stringSplitOn, takes: StringItem.self, StringItem.self, gives: VecStringItem.self) { s, separator in
+        Behavior.operation(.stringSplitOn, takes: StringItem.self, StringItem.self,
+                           gives: VecStringItem.self) { s, separator in
             guard !separator.isEmpty else { return s.map { String($0) } }
             return s.split(separator: separator, omittingEmptySubsequences: false).map(String.init)
         }
 
     /// `v sep .vecStringJoin`: the strings of `v` with `sep` between each two.
     static let vecStringJoin_Behavior =
-        Behavior.operation(.vecStringJoin, takes: VecStringItem.self, StringItem.self, gives: StringItem.self) { v, separator in
+        Behavior.operation(.vecStringJoin, takes: VecStringItem.self, StringItem.self,
+                           gives: StringItem.self) { v, separator in
             v.joined(separator: separator)
         }
 
@@ -141,6 +143,6 @@ nonisolated extension Interpreter {
         .stringFromChars: stringFromChars_Behavior,
         .stringReadStack: stringReadStack_Behavior,
         .stringSplitOn: stringSplitOn_Behavior,
-        .vecStringJoin: vecStringJoin_Behavior,
+        .vecStringJoin: vecStringJoin_Behavior
     ]
 }

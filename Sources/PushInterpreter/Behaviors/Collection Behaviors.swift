@@ -272,6 +272,6 @@ nonisolated extension Interpreter {
         .vecDoubleIsSubset: vecDoubleIsSubset_Behavior,
         .vecStringIsSubset: vecStringIsSubset_Behavior,
         .stringIsSubset: stringIsSubset_Behavior,
-        .codeIsSubset: codeIsSubset_Behavior,
+        .codeIsSubset: codeIsSubset_Behavior
     ]
 }

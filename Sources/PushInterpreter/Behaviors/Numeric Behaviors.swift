@@ -38,7 +38,8 @@ nonisolated extension Interpreter {
     /// has an int answer only for a base of 1 or −1; otherwise it is refused, as
     /// is a result that overflows.
     static let intPow_Behavior =
-        Behavior.operation(.intPow, takes: IntItem.self, IntItem.self, gives: IntItem.self) { base, exponent throws(Refusal) in
+        Behavior.operation(.intPow, takes: IntItem.self, IntItem.self,
+                           gives: IntItem.self) { base, exponent throws(Refusal) in
             guard exponent >= 0 else {
                 switch base {
                 case 1: return 1
@@ -93,7 +94,8 @@ nonisolated extension Interpreter {
     /// `b e .doublePow` is b to the e. A negative base with a fractional
     /// exponent, or an overflow, is refused.
     static let doublePow_Behavior =
-        Behavior.operation(.doublePow, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { base, exponent throws(Refusal) in
+        Behavior.operation(.doublePow, takes: DoubleItem.self, DoubleItem.self,
+                           gives: DoubleItem.self) { base, exponent throws(Refusal) in
             try finite(Foundation.pow(base, exponent), .doublePow, "\(base) ^ \(exponent)")
         }
 
@@ -148,6 +150,6 @@ nonisolated extension Interpreter {
         .doubleLog: doubleLog_Behavior,
         .doubleFloor: doubleFloor_Behavior,
         .doubleCeil: doubleCeil_Behavior,
-        .doubleRound: doubleRound_Behavior,
+        .doubleRound: doubleRound_Behavior
     ]
 }

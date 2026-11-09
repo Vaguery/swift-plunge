@@ -58,7 +58,8 @@ nonisolated extension Interpreter {
     /// Where the second string first occurs in the first, counted in
     /// characters; an error if it does not. An empty needle is found at 0.
     static let stringIndexOf_Behavior =
-        Behavior.operation(.stringIndexOf, reads: StringItem.self, StringItem.self, gives: IntItem.self) { hay, needle throws(Refusal) in
+        Behavior.operation(.stringIndexOf, reads: StringItem.self, StringItem.self,
+                           gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let range = hay.firstRange(of: needle) else {
                 throw Refusal("Not found in .stringIndexOf: \(needle)", kind: .notFound)
             }
@@ -66,12 +67,14 @@ nonisolated extension Interpreter {
         }
 
     static let stringStartsWith_Behavior =
-        Behavior.operation(.stringStartsWith, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { x, prefix in
+        Behavior.operation(.stringStartsWith, reads: StringItem.self, StringItem.self,
+                           gives: BoolItem.self) { x, prefix in
             x.hasPrefix(prefix)
         }
 
     static let stringEndsWith_Behavior =
-        Behavior.operation(.stringEndsWith, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { x, suffix in
+        Behavior.operation(.stringEndsWith, reads: StringItem.self, StringItem.self,
+                           gives: BoolItem.self) { x, suffix in
             x.hasSuffix(suffix)
         }
 
@@ -100,6 +103,6 @@ nonisolated extension Interpreter {
         .stringIndexOf: stringIndexOf_Behavior,
         .stringStartsWith: stringStartsWith_Behavior,
         .stringEndsWith: stringEndsWith_Behavior,
-        .stringTrim: stringTrim_Behavior,
+        .stringTrim: stringTrim_Behavior
     ]
 }
