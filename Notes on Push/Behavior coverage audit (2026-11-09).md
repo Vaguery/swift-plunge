@@ -1274,7 +1274,10 @@ settled in building:
   depth clamped as `Yank`'s is. Deletion by pattern is for after grammars.
 - **Keys can be any int, negative included**; only fresh keys are drawn from
   the counter, which starts at N with no gap after the inputs. The holes a
-  program sees are its unbound input slots, whose keys stay empty.
+  program sees are its unbound input slots, whose keys stay empty. **Ruled
+  (the user, 2026-11-09): the counter stays at N**, not a separated start such
+  as 1000, so arithmetic walks from the inputs into a program's own variables
+  and the rule survives arbitrary-length slots.
 - **`bindingFromCode` takes exactly `( key value )`**, the value addressed in its
   block so it keeps a history.
 
