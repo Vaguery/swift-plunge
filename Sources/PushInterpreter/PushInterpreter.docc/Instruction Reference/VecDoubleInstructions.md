@@ -24,16 +24,16 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleFindNearest` | Finds the element of v nearest x, the first on a tie, pushing its index and it, leaving both; refuses on an empty v. | `vecDouble` (read), `double` (read) | `double`, `int`; may refuse |
 | `vecDoubleFindNearestFrom` | Finds the element of v nearest x at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `vecDouble` (read), `double` (read), `int` (read) | `double`, `int`; may refuse |
 | `vecDoubleFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
-| `vecDoubleGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a NaN element ties with anything. | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a = b; a NaN element ties in the order but is never equal. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a NaN sorts above every number. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a = b; a NaN sorts above every number and equals any other NaN. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleIndexOf` | Finds x: `v x .vecDoubleIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecDouble` (read), `double` (read) | `int`; may refuse |
 | `vecDoubleIndexOfFrom` | Finds an element from an index: `v x i .vecDoubleIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecDouble` (read), `double` (read), `int` (read) | `int`; may refuse |
 | `vecDoubleIndexOfSubVec` | Finds a run: `v w .vecDoubleIndexOfSubVec` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
 | `vecDoubleIntersect` | Filters: `a b .vecDoubleIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleIsSubset` | Tells whether every element of a occurs in b: `a b .vecDoubleIsSubset`, leaving both. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecDouble` (read) | `bool` |
-| `vecDoubleLT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLT` gives a < b; a NaN element ties with anything. | `vecDouble` (read), `vecDouble` (read) | `bool` |
-| `vecDoubleLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a = b; a NaN element ties in the order but is never equal. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleLT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLT` gives a < b; a NaN sorts above every number. | `vecDouble` (read), `vecDouble` (read) | `bool` |
+| `vecDoubleLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a = b; a NaN sorts above every number and equals any other NaN. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
 | `vecDoubleLength` | Counts the elements, leaving the vector. | `vecDouble` (read) | `int` |
 | `vecDoubleMap` | Runs the block on each element of a vector of doubles, bound as `.input0`, collecting each run's last pushed value (the element if none); refuses mixed types or when steps run out. | `vecDouble`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |

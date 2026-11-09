@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
 
     /// A total order on doubles: the usual one, with NaN greater than every number.
     @Sendable static func doublePrecedes(_ a: Double, _ b: Double) -> Bool {
-        a < b || (!a.isNaN && b.isNaN)
+        DoubleKey(value: a) < DoubleKey(value: b)
     }
 
     /// Where the first greatest (`greatest`) or first least element is.
@@ -138,8 +138,8 @@ nonisolated extension Interpreter {
     static func distinctBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior
     where V.Element: Hashable {
         Behavior.assembling(instruction, takes: V.self, gives: V.self) { x in
-            var seen = Set<V.Element>()
-            let kept = x.value.indices.filter { seen.insert(x.value[$0]).inserted }
+            var seen = Set<V.Key>()
+            let kept = x.value.indices.filter { seen.insert(V.key(x.value[$0])).inserted }
             let origins = x.origins()
             return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
         }
@@ -152,8 +152,8 @@ nonisolated extension Interpreter {
         _ instruction: PushInstruction, making itemType: V.Type, keeping: Bool
     ) -> Behavior where V.Element: Hashable {
         Behavior.assembling(instruction, takes: V.self, V.self, gives: V.self) { x, y in
-            let other = Set(y.value)
-            let kept = x.value.indices.filter { other.contains(x.value[$0]) == keeping }
+            let other = Set(y.value.map(V.key))
+            let kept = x.value.indices.filter { other.contains(V.key(x.value[$0])) == keeping }
             let origins = x.origins(0)
             return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
         }
@@ -165,7 +165,7 @@ nonisolated extension Interpreter {
     static func isSubsetBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior
     where V.Element: Hashable {
         Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { x, y in
-            Set(y).isSuperset(of: x)
+            Set(y.map(V.key)).isSuperset(of: x.map(V.key))
         }
         .described("Tells whether every element of a occurs in b: `a b .\(instruction)`, leaving both.")
     }

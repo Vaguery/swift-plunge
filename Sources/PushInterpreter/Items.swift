@@ -945,8 +945,10 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
         self.weight = value.count
     }
     
+    /// Equal as vector operations compare doubles: every NaN is the same NaN
+    /// (`DoubleKey`), so a vector holding one still equals itself.
     public static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
-        lhs.value == rhs.value
+        lhs.value.elementsEqual(rhs.value) { DoubleKey(value: $0) == DoubleKey(value: $1) }
     }
     
     public func pretty() -> String {

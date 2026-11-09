@@ -109,7 +109,7 @@ nonisolated extension Interpreter {
     where V.Element: Equatable {
         { probe, candidate in
             guard let p = probe as? V, let c = candidate as? V else { return false }
-            return c.value.starts(with: p.value)
+            return c.value.starts(with: p.value, by: V.same)
         }
     }
 
@@ -119,7 +119,7 @@ nonisolated extension Interpreter {
             guard let p = probe as? V, let c = candidate as? V else { return false }
             guard !p.value.isEmpty else { return true }
             guard p.value.count <= c.value.count else { return false }
-            return (0...(c.value.count - p.value.count)).contains { c.value[$0...].starts(with: p.value) }
+            return (0...(c.value.count - p.value.count)).contains { c.value[$0...].starts(with: p.value, by: V.same) }
         }
     }
 

@@ -35,11 +35,48 @@ nonisolated extension StringItem: ScalarItem {
 nonisolated protocol VectorItem: TracingItem where Value == [Element], ElementItem == Scalar {
     associatedtype Element
     associatedtype Scalar: ScalarItem where Scalar.Value == Element
+    /// **How vector operations compare elements**: equal keys are equal elements,
+    /// and an ordered key orders them. For most types the element is its own key;
+    /// for doubles every NaN is one value, above every number (`DoubleKey`), so a
+    /// vector can find, count, remove, dedupe and compare one. Every vector
+    /// operation compares through this, never `==` or `<` on the elements.
+    associatedtype Key: Hashable
+    static func key(_ element: Element) -> Key
     /// The instruction that takes element `k` out: an element's address in its
     /// source names it (`Pieces`).
     static var nthInstruction: PushInstruction { get }
     init(_ value: [Element], call: [any Item])
     init(_ value: [Element], call: [any Item], members: Pieces?)
+}
+
+nonisolated extension VectorItem where Element: Hashable, Key == Element {
+    static func key(_ element: Element) -> Element { element }
+}
+
+nonisolated extension VectorItem {
+    /// Whether two elements are the same, as vector operations compare them.
+    static func same(_ a: Element, _ b: Element) -> Bool { key(a) == key(b) }
+}
+
+/// **A double as vector operations compare it** (the user's ruling, 2026-11-09):
+/// the usual equality and order, except that every NaN is the same NaN and
+/// sorts above every number. Until then a NaN in a vector of doubles could not be
+/// found, counted, removed or deduplicated, and compared three different ways.
+/// +0 and −0 stay equal, as they are under `==`.
+nonisolated struct DoubleKey: Hashable, Comparable, Sendable {
+    let value: Double
+
+    static func == (a: DoubleKey, b: DoubleKey) -> Bool {
+        a.value == b.value || (a.value.isNaN && b.value.isNaN)
+    }
+
+    func hash(into hasher: inout Hasher) {
+        if value.isNaN { hasher.combine(UInt8(0)) } else { hasher.combine(value == 0 ? 0.0 : value) }
+    }
+
+    static func < (a: DoubleKey, b: DoubleKey) -> Bool {
+        a.value < b.value || (!a.value.isNaN && b.value.isNaN)
+    }
 }
 
 // A vector's elements, for `Behavior.extracting` (`TracingItem`).
@@ -59,6 +96,8 @@ nonisolated extension VecBoolItem: VectorItem {
 
 nonisolated extension VecDoubleItem: VectorItem {
     typealias Scalar = DoubleItem
+    typealias Key = DoubleKey
+    static func key(_ element: Double) -> DoubleKey { DoubleKey(value: element) }
     static var pushStack: PushStack { .vecDouble }
     static var nthInstruction: PushInstruction { .vecDoubleNth }
 }
@@ -181,7 +220,9 @@ nonisolated extension Interpreter {
     // returns whether the vector contains the scalar argument (non-destructively:
     // both the vector and the needle survive the read)
     static func containsBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
-        Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: BoolItem.self) { x, y in x.contains(y) }
+        Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: BoolItem.self) { x, y in
+            x.contains { V.same($0, y) }
+        }
         .described("Tells whether x is an element: `v x .\(instruction)`, leaving both.")
     }
 
@@ -245,7 +286,7 @@ nonisolated extension Interpreter {
     // then have quietly turned into a real position.
     static func indexOfBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: IntItem.self) { x, y throws(Refusal) in
-            guard let result = x.firstIndex(of: y) else {
+            guard let result = x.firstIndex(where: { V.same($0, y) }) else {
                 throw Refusal("Not found in .\(instruction)", kind: .notFound)
             }
             return result
@@ -259,7 +300,7 @@ nonisolated extension Interpreter {
     // (non-destructively: both the vector and the needle survive the read)
     static func occurrencesOfBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.Scalar.self, gives: IntItem.self) { x, y in
-            x.count(where: { $0 == y })
+            x.count(where: { V.same($0, y) })
         }
         .described("Counts x: `v x .\(instruction)` gives how many elements equal x, leaving both.")
     }
@@ -320,7 +361,7 @@ nonisolated extension Interpreter {
         // Written order: the vector searched (deeper) first, then the run sought on
         // top, as every search here is written (until 2026-11-09 the run came first).
         Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { hay, needle in
-            firstSubIndex(hay, needle) != nil
+            firstSubIndex(hay.map(V.key), needle.map(V.key)) != nil
         }
         .described(
             "Tells whether a run occurs: `v w .\(instruction)` asks if v holds w contiguously, leaving both; an "
@@ -331,7 +372,7 @@ nonisolated extension Interpreter {
     /// there is none (it used to answer −1).
     static func indexOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle throws(Refusal) in
-            guard let found = firstSubIndex(hay, needle) else {
+            guard let found = firstSubIndex(hay.map(V.key), needle.map(V.key)) else {
                 throw Refusal("Not found in .\(instruction)", kind: .notFound)
             }
             return found
@@ -344,7 +385,7 @@ nonisolated extension Interpreter {
     /// The number of non-overlapping occurrences of the sub-vector.
     static func occurrencesOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle in
-            subCount(hay, needle)
+            subCount(hay.map(V.key), needle.map(V.key))
         }
         .described(
             "Counts a run: `v w .\(instruction)` gives how many non-overlapping times w occurs in v, leaving both; "
@@ -358,7 +399,7 @@ nonisolated extension Interpreter {
     static func replaceSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         // Written order: the subject (deepest), the needle, the replacement on top.
         Behavior.assembling(instruction, takes: V.self, V.self, V.self, gives: V.self) { subject, needle, repl in
-            Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: false),
+            Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: false, by: V.same),
                   members: replacingSubSlots(subject, needle, repl, firstOnly: false))
         }
         .described(
@@ -370,7 +411,7 @@ nonisolated extension Interpreter {
     /// replace-all sibling.
     static func replaceFirstSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.assembling(instruction, takes: V.self, V.self, V.self, gives: V.self) { subject, needle, repl in
-            Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: true),
+            Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: true, by: V.same),
                   members: replacingSubSlots(subject, needle, repl, firstOnly: true))
         }
         .described(
@@ -417,7 +458,7 @@ nonisolated extension Interpreter {
         typealias Slotted = (value: V.Element, slot: Origin)
         func slotted(_ vector: V, _ tag: Int) -> [Slotted] { zip(vector.value, vector.origins(tag)).map { ($0, $1) } }
         return replacingSub(slotted(hay, 0), slotted(needle, 2), slotted(repl, 1), firstOnly: firstOnly) {
-            $0.value == $1.value
+            V.same($0.value, $1.value)
         }.map(\.slot)
     }
 
@@ -425,8 +466,8 @@ nonisolated extension Interpreter {
     static func removeBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.assembling(instruction, takes: V.self, V.Scalar.self, gives: V.self) { x, y in
             var result = x.value
-            result.removeAll(where: { $0 == y.value })
-            return Built(result, members: zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1))
+            result.removeAll(where: { V.same($0, y.value) })
+            return Built(result, members: zip(x.value, x.origins()).filter { !V.same($0.0, y.value) }.map(\.1))
         }
         .described("Removes every x: `v x .\(instruction)` gives v without its elements equal to x.")
     }
@@ -439,9 +480,9 @@ nonisolated extension Interpreter {
         // Written order: the vector, then the two scalars deepest first (target z,
         // then replacement y).
         Behavior.assembling(instruction, takes: V.self, V.Scalar.self, V.Scalar.self, gives: V.self) { x, z, y in
-            let result = x.value.map({ $0 == z.value ? y.value : $0 })
+            let result = x.value.map({ V.same($0, z.value) ? y.value : $0 })
             return Built(result,
-                         members: zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 })
+                         members: zip(x.value, x.origins()).map { V.same($0.0, z.value) ? Origin.item(y) : $0.1 })
         }
         .described("Substitutes: `v a b .\(instruction)` replaces every element equal to a with b.")
     }
@@ -453,7 +494,7 @@ nonisolated extension Interpreter {
     static func replaceFirstBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.assembling(instruction, takes: V.self, V.Scalar.self, V.Scalar.self, gives: V.self) { x, z, y in
             var result = x.value
-            let first = result.firstIndex(where: { $0 == z.value })
+            let first = result.firstIndex(where: { V.same($0, z.value) })
             if let idx = first {
                 result[idx] = y.value
             }
@@ -1086,26 +1127,29 @@ nonisolated extension Interpreter {
     // IEEE semantics, as for the scalars: a NaN element makes `<=` and `>=` false
     // where it decides the order. They are "less (greater) than, or equal", not
     // "not greater (less) than", which a NaN made true both ways (fixed 2026-11-08).
+    /// A vector of doubles as its comparisons order it (`DoubleKey`).
+    @Sendable static func keys(_ values: [Double]) -> [DoubleKey] { values.map(VecDoubleItem.key) }
+
     static let vecDoubleLT_Behavior =
-        comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) }
+        comparisonBehavior(.vecDoubleLT, making: VecDoubleItem.self) { keys($0).lexicographicallyPrecedes(keys($1)) }
         .described(
             "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLT` gives a < b; a "
-            + "NaN element ties with anything.")
+            + "NaN sorts above every number.")
     static let vecDoubleLTE_Behavior =
-        comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { $0.lexicographicallyPrecedes($1) || $0 == $1 }
+        comparisonBehavior(.vecDoubleLTE, making: VecDoubleItem.self) { !keys($1).lexicographicallyPrecedes(keys($0)) }
         .described(
             "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a "
-            + "= b; a NaN element ties in the order but is never equal.")
+            + "= b; a NaN sorts above every number and equals any other NaN.")
     static let vecDoubleGT_Behavior =
-        comparisonBehavior(.vecDoubleGT, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) }
+        comparisonBehavior(.vecDoubleGT, making: VecDoubleItem.self) { keys($1).lexicographicallyPrecedes(keys($0)) }
         .described(
             "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a "
-            + "NaN element ties with anything.")
+            + "NaN sorts above every number.")
     static let vecDoubleGTE_Behavior =
-        comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { $1.lexicographicallyPrecedes($0) || $0 == $1 }
+        comparisonBehavior(.vecDoubleGTE, making: VecDoubleItem.self) { !keys($0).lexicographicallyPrecedes(keys($1)) }
         .described(
             "Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a "
-            + "= b; a NaN element ties in the order but is never equal.")
+            + "= b; a NaN sorts above every number and equals any other NaN.")
 
     // ( [1,1,2,3] .vecDoublePushAll)
     //

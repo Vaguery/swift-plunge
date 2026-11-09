@@ -3,8 +3,12 @@
 //  PushInterpreterTests
 //
 //  Double comparisons follow IEEE 754: any comparison with a NaN is false.
-//  `doubleGTE`/`doubleLTE` (and the vector forms) used to be true, because they
-//  were "not less than" / "not greater than" (fixed 2026-11-08).
+//  `doubleGTE`/`doubleLTE` used to be true, because they were "not less than" /
+//  "not greater than" (fixed 2026-11-08).
+//
+//  Vector comparisons are vector operations, and since 2026-11-09 those treat
+//  every NaN as one value above every number (`DoubleKey`, the user's ruling),
+//  so a NaN decides a vector order like any other element.
 //
 
 @testable import PushInterpreter
@@ -39,10 +43,11 @@ struct NaNComparisonTests {
         return (topItem(inty, .bool) as! BoolItem).value
     }
 
-    @Test func `vector GTE and LTE are false where a NaN decides the order`() {
-        #expect(!compareVectors(.vecDoubleGTE, [.nan], [1]))
+    @Test func `in vectors a NaN sorts above every number`() {
+        #expect(compareVectors(.vecDoubleGTE, [.nan], [1]))
         #expect(!compareVectors(.vecDoubleLTE, [.nan], [1]))
         #expect(!compareVectors(.vecDoubleGTE, [1], [.nan]))
+        #expect(compareVectors(.vecDoubleGTE, [.nan], [.nan]), "one NaN equals another")
         // Decided before the NaN is reached: ordinary.
         #expect(compareVectors(.vecDoubleGTE, [2, .nan], [1, 5]))
         // And without NaN, as before.
