@@ -268,7 +268,7 @@ Sets are a second route to some filters, not a substitute.
   body, collect the body's results.** That is the second, independent route to
   map, through the iterator rather than the sub-interpreter.
 
-### P4. Code-and-data conversions (homoiconicity)
+### P4. Code-and-data conversions (homoiconicity) (**built**)
 
 - **`vecXQuote`** (4), so a vector can become code like every other data type.
 - **One `vecFromCode`** (generic): the vector's type is read off the block's
@@ -282,13 +282,14 @@ Sets are a second route to some filters, not a substitute.
 About 9 instructions.
 
 **Adds:**
-- a second way to reverse a string, through chars: deliver them, then read them
-  back with `stringReadStack` (the order to be checked when built);
+- a second way to reverse a string, through its letters: `s "" .stringSplitOn
+  .vecStringReverse "" .vecStringJoin`. (Delivering the chars and reading them
+  back is the identity, not a reversal: checked when built.)
 - a robust split and a join, which Spin Words needs and has to rebuild today;
 - vectors as code: pieces of a vector can be cut, wrapped and spliced by the
   code instructions and turned back into a vector.
 
-### P5. Numbers: one numeric factory over int and double
+### P5. Numbers: one numeric factory over int and double (**built**)
 
 | Instruction | int | double | Note |
 |---|---|---|---|
@@ -302,7 +303,7 @@ About 16 instructions.
 **Adds:** a 1-step abs and negate beside the existing 3–5-step routes, and the
 symbolic-regression basics.
 
-### P6. Strings and chars
+### P6. Strings and chars (**built**)
 
 - `charUpper`, `charLower`, `charIsUpper`, `charIsLower`;
 - `stringUpper`, `stringLower`;
@@ -1139,6 +1140,13 @@ inputs.
 | `refRekey` | 1 |
 | The lookups and their companions (`refDeref`, `refDerefToCode`, nearest, floor, reverse, `refUnbind`, `refBindingDepth`, `refFresh`) | 8 |
 | **Total** | **about 44** |
+
+**Built so far (2026-11-09), 607 → 694 instructions:**
+- step 1: ruling 1, `codeDoIf`, the `Peek` forms;
+- step 2: P1 without `Sort` and `Mean`, P1b, P4, P5, P6.
+
+Every addition was checked against the PSB1 and PSB2 targets first: none answers
+one outright.
 
 **Order of work**, a suggestion and not a ruling:
 1. The small fixes and the ruled leftovers (P9 and rulings 1–2).

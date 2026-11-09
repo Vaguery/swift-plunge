@@ -58,6 +58,12 @@ struct BackwardChainingTests {
     /// the first letter of some constant), 20 from 173 for `.double`.
     static let distinctFloor: [PushStack: Double] = [.char: 0.08, .double: 0.08]
 
+    /// The share of sampled programs that must reach their goal: a half, except
+    /// `.char`, measured at 147 of 300 once the coverage audit added char
+    /// producers that refuse more often on random arguments (`stringMax` on an
+    /// empty string, `charUpper` of `ß`).
+    static let reachFloor: [PushStack: Double] = [.char: 0.45]
+
     /// What a search wants from chaining: each sampled program leaves something on
     /// its goal stack, and the item on top is a result it had not reached before,
     /// told apart by its crux up to the choice of constants (`cruxShape`).
@@ -85,7 +91,8 @@ struct BackwardChainingTests {
         }
         // A refusal deep in a tree can starve everything above it; most come from
         // #42's errors on random constants (`IndexOf` finding nothing).
-        #expect(reached >= trials / 2, "only \(reached) of \(trials) reached .\(goal)")
+        #expect(Double(reached) >= (Self.reachFloor[goal] ?? 0.5) * Double(trials),
+                "only \(reached) of \(trials) reached .\(goal)")
         #expect(Double(cruxes.count) >= (Self.distinctFloor[goal] ?? 0.9) * Double(reached),
                 "\(cruxes.count) distinct cruxes from \(reached) programs reaching .\(goal)")
     }

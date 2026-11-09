@@ -386,7 +386,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
     comparison with NaN is false). `doubleGTE`/`doubleLTE` and `vecDoubleGTE`/`vecDoubleLTE` had been
     "not less/greater than", so a NaN made them true: a silent bug.
 
-45. **Behavior coverage** — **RULED 2026-11-09**, nothing built → *Behavior coverage audit
+45. **Behavior coverage** — **RULED 2026-11-09**; steps 1–2 **built** the same day (P1 without `Sort`/`Mean`,
+    P1b, P4, P5, P6, `codeDoIf`, `Peek` forms, `DropLast`/`TakeLast`; 694 instructions) → *Behavior coverage audit
     (2026-11-09).md*. The tasks with no short route (average, filter, sort, dedupe, case, substring
     index, conversions between vector types, keyed storage) and the rulings that settle them:
     - `stringDrop` from the front, plus `xDropLast`/`xTakeLast`;
