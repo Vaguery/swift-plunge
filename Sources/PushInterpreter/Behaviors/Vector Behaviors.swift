@@ -500,7 +500,8 @@ nonisolated extension Interpreter {
     //
     // return a stretch of the original vector from positions idx1...idx2
     // if idx1 is negative, make it zero
-    // if idx2 < idx1, return an empty vector
+    // both ends are inclusive and clamped, so the stretch is never empty: if
+    // idx2 < idx1 it is the element at idx1 alone
     //
     static func subVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         // Written order: the vector, then the two ints deepest first (z, then y).
@@ -870,9 +871,10 @@ nonisolated extension Interpreter {
     static let vecBoolReplaceFirst_Behavior =
         replaceFirstBehavior(.vecBoolReplaceFirst, making: VecBoolItem.self)
 
-    // ( [1,1,2,3] 1 9 .vecBoolSet)
+    // ( [1,1,2,3] 9 1 .vecBoolSet )
     //
-    // replace the element at position 1 in the argument (above) with 9
+    // replace the element at position 1 in the argument (above) with 9: the
+    // replacement is written before the position
     //
     static let vecBoolSet_Behavior =
         setBehavior(.vecBoolSet, making: VecBoolItem.self)
@@ -881,7 +883,8 @@ nonisolated extension Interpreter {
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
-    // if idx2 < idx1, return an empty vector
+    // both ends are inclusive and clamped, so the stretch is never empty: if
+    // idx2 < idx1 it is the element at idx1 alone
     //
     static let vecBoolSubVec_Behavior =
         subVecBehavior(.vecBoolSubVec, making: VecBoolItem.self)
@@ -1038,9 +1041,10 @@ nonisolated extension Interpreter {
     static let vecDoubleReplaceFirst_Behavior =
         replaceFirstBehavior(.vecDoubleReplaceFirst, making: VecDoubleItem.self)
 
-    // ( [1,1,2,3] 1 9 .vecDoubleSet)
+    // ( [1,1,2,3] 9 1 .vecDoubleSet )
     //
-    // replace the element at position 1 in the argument (above) with 9
+    // replace the element at position 1 in the argument (above) with 9: the
+    // replacement is written before the position
     //
     static let vecDoubleSet_Behavior =
         setBehavior(.vecDoubleSet, making: VecDoubleItem.self)
@@ -1049,7 +1053,8 @@ nonisolated extension Interpreter {
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
-    // if idx2 < idx1, return an empty vector
+    // both ends are inclusive and clamped, so the stretch is never empty: if
+    // idx2 < idx1 it is the element at idx1 alone
     //
     static let vecDoubleSubVec_Behavior =
         subVecBehavior(.vecDoubleSubVec, making: VecDoubleItem.self)
@@ -1231,9 +1236,10 @@ nonisolated extension Interpreter {
     static let vecIntReplaceFirst_Behavior =
         replaceFirstBehavior(.vecIntReplaceFirst, making: VecIntItem.self)
 
-    // ( [1,1,2,3] 1 9 .vecIntSet)
+    // ( [1,1,2,3] 9 1 .vecIntSet )
     //
-    // replace the element at position 1 in the argument (above) with 9
+    // replace the element at position 1 in the argument (above) with 9: the
+    // replacement is written before the position
     //
     static let vecIntSet_Behavior =
         setBehavior(.vecIntSet, making: VecIntItem.self)
@@ -1242,7 +1248,8 @@ nonisolated extension Interpreter {
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
-    // if idx2 < idx1, return an empty vector
+    // both ends are inclusive and clamped, so the stretch is never empty: if
+    // idx2 < idx1 it is the element at idx1 alone
     //
     static let vecIntSubVec_Behavior =
         subVecBehavior(.vecIntSubVec, making: VecIntItem.self)
@@ -1417,7 +1424,7 @@ nonisolated extension Interpreter {
     static let vecStringReplaceFirst_Behavior =
         replaceFirstBehavior(.vecStringReplaceFirst, making: VecStringItem.self)
 
-    // ( ["a","b","c"] 1 "foo" .vecStringSet)
+    // ( ["a","b","c"] "foo" 1 .vecStringSet )
     //
     // replace the element at position 1 in the argument (above) with "foo"
     //
@@ -1428,7 +1435,8 @@ nonisolated extension Interpreter {
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
-    // if idx2 < idx1, return an empty vector
+    // both ends are inclusive and clamped, so the stretch is never empty: if
+    // idx2 < idx1 it is the element at idx1 alone
     //
     static let vecStringSubVec_Behavior =
         subVecBehavior(.vecStringSubVec, making: VecStringItem.self)

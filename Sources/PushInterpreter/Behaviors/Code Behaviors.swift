@@ -335,7 +335,8 @@ nonisolated extension Interpreter {
                    "equal to n; a one-item n or r stands for its item.")
 
     static func replacePointsBehavior(_ instruction: PushInstruction, firstOnly: Bool) -> Behavior {
-        // Written `subject needle replacement`; the replacement goes in as itself.
+        // Written `subject needle replacement`. A one-item needle or replacement
+        // stands for its item (`denotedItem`), so `( 5 )` replaces with 5 itself.
         Behavior.composing(instruction, takes: CodeItem.self, CodeItem.self, CodeItem.self,
                            gives: CodeItem.self) { subject, needle, repl in
             let rebuilt = subject.replacingPoints(equalTo: needle.denotedItem, with: repl.denotedItem, firstOnly: firstOnly)
