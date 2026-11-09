@@ -425,6 +425,9 @@ Left for later, with the arguments in the coverage note:
     `codeIterate{Emit,Do}Points` (the three-way `PointsEmission`: boxed / whole / unwrapped).
 34. **Pattern as a first-class item** — connects sub-vector search, the sieve (§C), and `.points`. A
     research direction, not an instruction.
+    **Explored 2026-11-09** in *Grammars as patterns (PEG).md*: a pattern as a *reading of a code block*
+    (a grammar), no new type; one matcher for strings, vectors and code; PEG reading first, a CFG reading
+    and generator of the same blocks later. Questions open (§9 there); proposed as step 6, after `.ref`.
 35. **Naming reconciliation** (`stringSubstring`↔`subVec`, `stringSetChar`↔`set`, `stringConjChar`↔`conj`)
     — left as-is; renaming churns cruxes and tests for cosmetics.
 
