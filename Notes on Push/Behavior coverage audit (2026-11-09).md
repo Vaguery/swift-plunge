@@ -181,11 +181,11 @@ Under each item, **Adds** names the tasks it gives a new short route.
 
 - **`Sum`, `Mean` (→ `.double`), `Max`, `Min`** on `vecInt` and `vecDouble`.
 - **`Max` and `Min`** also on `vecString` and `string` (by ordering).
-- **`Sort`** (ascending; `Reverse` gives descending) and **`Distinct`** on every
-  vector type and `string`.
+- **`Sort`** (ascending; `Reverse` gives descending) on every vector type and
+  `string`. `Distinct` moved to P1b, with the other set operations.
 
 Each is a query: it reads, does not take, and leaves its argument (Design
-Principles §5, I7). About 22 instructions.
+Principles §5, I7). About 17 instructions.
 
 **Adds:**
 - average: 1 step (`vecIntMean`), or 3 steps (`.vecIntSum .vecIntLength
@@ -193,6 +193,39 @@ Principles §5, I7). About 22 instructions.
 - second and third routes to sum, max and min;
 - the first routes to sort and dedupe;
 - a median: `Sort`, then `Nth` of `Length` halved.
+
+### P1b. Set operations on every collection (added 2026-11-09)
+
+Treat a set as **operations on existing collections**, not yet as a type. §7
+weighs the type.
+
+- The family: **`Distinct`, `Intersect`, `Difference`, `IsSubset`**, on the four
+  vector types, `string` and `code`, from one factory. About 24 instructions.
+- **Order is the first argument's**, and so is each element's provenance:
+  - `Distinct` keeps first occurrences;
+  - `[3,1,3,2] [2,3] .vecIntIntersect` gives `[3,2]`.
+- On `code`, the members are the root items, compared by value (§9). It is the
+  one multitype collection already in the language.
+- **No `Union`.** `Concat` then `Distinct` is a 2-step route already, which is
+  the multiplicity §17 asks for.
+
+**Adds:**
+- **Dedupe:** `Distinct`, alongside `Sort`.
+- **Filtering by membership, the most common filter in benchmarks, in 1 step:**
+  - remove the vowels: `"hello" "aeiou" .stringDifference` gives `"hll"`
+    (today that is five `stringRemoveChar`);
+  - keep the allowed words: `.vecStringIntersect`.
+- **Several routes to a membership test:** `Contains`, `IndexOf`,
+  `Occurrences`, and now `IsSubset` against a one-element collection.
+- **Distinct count, all-unique and overlap:**
+  - distinct count: `.Distinct .Length`;
+  - "all unique?": `Distinct`, `Length`, compare with the original length;
+  - the overlap sizes behind Jaccard: `Intersect .Length` over `Concat .Distinct
+    .Length`. That is 6–8 steps, so it fits only as two short pieces.
+
+**What sets do not replace:** P2's filter by predicate ("keep the even
+numbers"). Membership is one kind of filter; a predicate is the general kind.
+Sets are a second route to some filters, not a substitute.
 
 ### P2. Map, filter and reduce (#2, as designed, plus filter)
 
@@ -299,6 +332,19 @@ Two designs:
 **Recommendation: (1).** It is the bigger addition to reach. It also provides
 the variables below for almost nothing.
 
+**Either way, its order must be fixed, not hashed.** Swift seeds `Hasher` afresh
+in every process. A `Dictionary` or `Set` stored as is would list its keys in a
+different order on each run. That order would then show up in `Keys`, in a
+dict's printout, in its crux and in any iterator over it, which is a
+stochastic Behavior by the back door (constraint 1).
+
+Store the entries in **insertion order** or **sorted order**, with a hash index
+beside them if lookup speed matters. Sorted has two advantages:
+- two dicts with the same contents are equal and print alike;
+- a crux has one canonical spelling.
+
+The same applies to any set type (§7).
+
 ### P8. Local variables (#39), on top of the dictionary
 
 - As the user observed, variables add flexibility of algorithm more than reach
@@ -352,7 +398,8 @@ the variables below for almost nothing.
 | Proposal | New instructions | Depends on |
 |---|---|---|
 | P9 (fixes and ruled items) | ≈ 8 | — |
-| P1 | ≈ 22 | — |
+| P1 | ≈ 17 | — |
+| P1b (set operations) | ≈ 24 | — |
 | P5 | ≈ 16 | — |
 | P6 | ≈ 10 | — |
 | P4 | ≈ 9 | — |
@@ -360,9 +407,16 @@ the variables below for almost nothing.
 | P2 | ≈ 15 | #2's design |
 | P7 + P8 | ≈ 35 | the type registry (A4 / #37) |
 
-In all, about 120, taking 607 to about 730. Excluding P7 and P8, about 85.
+In all, about 140, taking 607 to about 750. Excluding P7 and P8, about 105.
 
 **With P1–P6 and P9, every task in §2 has at least two routes within 5 steps.**
+Dedupe has two:
+- `Distinct`;
+- `Sort` with `Distinct`.
+
+Filters have two routes as well:
+- P2's predicate;
+- P1b's membership, where the filter is "in these" or "not in these".
 For example, average:
 - `vecIntMean`;
 - `.vecIntSum .vecIntLength .intQuot`;
@@ -377,3 +431,74 @@ Word frequency and variables wait for P7.
 3. Should map's result type follow the data (uniform or refuse)?
 4. A dictionary stack, or association lists in `.code`?
 5. Are the new reductions queries (I7) from the start?
+6. Set operations on collections now, and a set type only with the dictionary
+   (§7)?
+
+
+## 7. Sets: operations, or a type? (2026-11-09)
+
+The user asked whether a `set` type would serve dedupe, filtering and search
+better than P1b. Three designs:
+
+**(a) Typed sets** (`setInt`, `setString`, `setChar`, …), mirroring the
+vectors:
+- **Rejected.** Each is a new stack, so 12 structural rules, constants, a
+  `Quote` and an `Eq`, plus conversions to and from its vector.
+- That is about 40 instructions per type, mostly furniture. Across the five
+  candidate element types it is about 200, the largest pile in the language.
+- They would add almost no reach that P1b does not already give the vector of
+  the same type.
+
+**(b) One multitype set, like `code`:**
+- Members of any type, compared by value (§9). `1` and `1.0` are different
+  members, and so are `'a'` and `"a"`.
+- Stored sorted by a total order (type first, then value) for the reason in P7:
+  a hashed order would vary between runs.
+- The cost is one stack: 12 structural rules, `Eq`, `Quote`, `setEmpty`, and
+  about 12 operations. About 30 in all.
+
+What it adds beyond P1b:
+
+1. **Equality regardless of order and repetition.** Two sets are equal when they
+   have the same members, so "same letters?" is a direct comparison. With P1b
+   it is `Sort` and `Distinct` on both sides first, about 5 steps.
+2. **A conversion out that filters by type.** `vecIntFromSet` would keep only
+   the int members, and a `string` built from the set only its chars. P4's
+   `vecFromCode` refuses a mixed block instead. That is a second route to a
+   filter, by type, which only a multitype container offers. It could equally
+   be a second mode of `vecFromCode` (`vecIntFromCodeFiltering`), so it does not
+   by itself justify the type.
+3. **An accumulator for searches.** A "seen" set inside a loop serves "first
+   repeated element", cycle detection and graph visiting. A vector plus
+   `Contains`, or `Conj` then `Distinct`, does the same at linear cost. Size
+   limits keep collections small, so speed is not the argument; what remains is
+   one honest instruction (`setAdd`) against two.
+4. **A home for a dictionary's keys.** `dictKeys` → set is natural. Without a
+   set type, `dictKeys` → `vecString`, sorted, works as well.
+
+There is a cost at membership. A multitype `setHas` must receive its probe from
+some stack. Either it takes the probe as code (`5 .intQuote .setHas`, one step
+more), or it needs one per type (`intIsIn`, `stringIsIn`, …), which is the
+type-specific pile constraint 3 argues against. The quoted probe follows the
+same pattern as `dictSet` in P7.
+
+**(c) Sets as operations only:** P1b, which needs no new stack and costs about
+24 instructions over six collections.
+
+**Recommendation: (c) now; (b) only together with the dictionary, if at all.**
+- What (b) adds is real but small: canonical equality, filtering by type, and
+  one-step accumulation.
+- Each of these has a 2–5-step route through P1b and P4, so it would be a
+  further way to do things, not the first.
+- The dictionary is the one structure that cannot be had through operations on
+  existing collections. It needs the type registry anyway, and sets are the
+  dictionary with no values. If (b) is built, it should be built alongside the
+  dictionary, sharing its ordered storage and its quoted-probe convention, so
+  the two cost one design between them.
+
+**The overview changes as follows:**
+- P1 loses `Distinct` to P1b.
+- P2 still needs filter by predicate.
+- P7 gains the fixed-order requirement.
+- The totals rise by about 20.
+- Nothing in §5 changes.
