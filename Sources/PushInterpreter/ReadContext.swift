@@ -19,6 +19,20 @@ nonisolated struct ReadContext {
 
     init(_ interpreter: Interpreter) { self.interpreter = interpreter }
 
+    /// Work an `applying` body did that the step counter should see: steps run
+    /// in a sub-interpreter by map, filter and reduce. The body only reports it;
+    /// `Behavior.act` adds it to the counter, so no body mutates the interpreter.
+    let meter = WorkMeter()
+
+    /// The interpreter's settings, for building a sub-interpreter like it.
+    var settings: InterpreterSettings { interpreter.config }
+
+    /// The steps left in this run's budget, less what this read has charged.
+    var remainingSteps: Int { max(0, interpreter.config.stepLimit - interpreter.counter - meter.steps) }
+
+    /// Reports `steps` of work done (see `meter`).
+    func charge(_ steps: Int) { meter.steps += steps }
+
     /// The typed constant bindings (`.int3`, `.vecDouble8`).
     var constants: [PushInstruction: any Item] { interpreter.constants }
     /// The input bindings (`.input0` …).
@@ -37,4 +51,10 @@ nonisolated struct ReadContext {
 
     /// How many errors of `kind` are on `.error`, from the running tally.
     func errorCount(of kind: ErrorKind) -> Int { interpreter.stacks.errorCount(of: kind) }
+}
+
+
+/// The work a context read reports (`ReadContext.meter`).
+nonisolated final class WorkMeter {
+    var steps = 0
 }

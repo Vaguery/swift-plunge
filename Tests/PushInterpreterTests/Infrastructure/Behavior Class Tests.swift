@@ -69,7 +69,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 379,
+            .operation: 394,
             .structural: 144,   // 12 families × 12 stacks
             .contextRead: 129,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars
             .control: 29,
@@ -87,7 +87,7 @@ struct BehaviorClassTests {
     @Test func `every class has the body that lets it do what it says`() {
         for (name, behavior) in Interpreter.language {
             let fits = switch (behavior.behaviorClass, behavior.body) {
-            case (.operation, .values), (.control, .values), (.control, .control),
+            case (.operation, .values), (.operation, .applying), (.control, .values), (.control, .control),
                  (.structural, .structural), (.contextRead, .contextRead), (.channel, .channel): true
             default: false
             }

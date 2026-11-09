@@ -314,6 +314,11 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
 
+    // Map, filter and reduce (Behavior coverage audit, P2)
+    case vecBoolMap, vecIntMap, vecDoubleMap, vecStringMap, vecBoolFilter, vecIntFilter, vecDoubleFilter,
+         vecStringFilter, vecBoolReduce, vecIntReduce, vecDoubleReduce, vecStringReduce,
+         stringMap, stringFilter, stringReduce
+
     // Conversions (Behavior coverage audit, P4)
     case vecBoolQuote, vecIntQuote, vecDoubleQuote, vecStringQuote, vecFromCode,
          stringFromChars, stringReadStack, stringSplitOn, vecStringJoin

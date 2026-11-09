@@ -102,6 +102,23 @@ nonisolated extension Behavior {
     }
 
 
+    // MARK: - Applying a function
+
+    /// An operation that runs a function in a sub-interpreter (map, filter,
+    /// reduce): it takes data, and reads the environment through a
+    /// `ReadContext` that can also carry the work it did.
+    static func applying(
+        _ label: PushInstruction,
+        takes: [PushStack],
+        tags: Set<InstructionTag> = [],
+        produces: Produces,
+        body: @escaping @Sendable ([any Item], ReadContext) -> [Router]
+    ) -> Behavior {
+        Behavior(label, requires: takes.map { Requirement.takes($0) },
+                 tags: tags, behaviorClass: .operation, body: .applying(body), produces: produces)
+    }
+
+
     // MARK: - Context reads
 
     /// A source: consume `takes` (at most a count), read the interpreter through a

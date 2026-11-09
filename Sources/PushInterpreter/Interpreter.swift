@@ -189,6 +189,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: collectionBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: constantBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: execBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: functionBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: doubleBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: inputBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: introspectionBehaviors, intoLanguage: &starter)
@@ -232,6 +233,12 @@ nonisolated final class Interpreter {
     /// per step instead of re-summing all stacks; see `RunawayGuard`.
     @exclusivity(unchecked) private(set) var liveWeight: Int = 0
     @exclusivity(unchecked) var counter: Int = 0
+
+    /// The stack of the most recent push of a value: any stack but `.exec` and
+    /// `.error`. A function run in a sub-interpreter returns the top of this
+    /// stack, "the last thing it produced" (map, filter and reduce; Behavior
+    /// coverage audit, P2). One store per push.
+    @exclusivity(unchecked) var lastPush: PushStack? = nil
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
     @exclusivity(unchecked) var lastRunawayCheck = -1
@@ -344,6 +351,7 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
+        if stack != .exec && stack != .error { lastPush = stack }
         // No provenance stripping here: with `recordsProvenance` off, Behaviors never
         // build a `call` in the first place (every provenance expression is written
         // inside `recording(…)`; see `ProvenanceRecording`), so there is nothing to
@@ -558,6 +566,7 @@ nonisolated final class Interpreter {
               recorders: [AnyRecorder] = []) {
         // settings reset
         self.counter = 0
+        self.lastPush = nil
         self.lastRunawayCheck = -1
 
         // inputs and constants (both keyed by instruction token)

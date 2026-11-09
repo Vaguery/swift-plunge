@@ -266,6 +266,13 @@ nonisolated final class Behavior: Sendable {
         case .contextRead(let read):
             return read(arguments, ReadContext(interpreter))
 
+        case .applying(let apply):
+            let context = ReadContext(interpreter)
+            let results = apply(arguments, context)
+            // Work done in sub-interpreters counts against this run's budget.
+            interpreter.counter += context.meter.steps
+            return results
+
         case .control(let fxn):
             var results: [Router] = []
             for effect in fxn(arguments, interpreter.recording) {
