@@ -451,6 +451,8 @@ Word frequency and variables wait for P7.
      subroutines), or is it delivered to `.code`?
    - Is a miss an error of its own kind, or nothing?
    - Is `execLet` wanted from the start?
+9. Keys as ints from an interpreter-owned counter (§10): `refNew` deposits each
+   fresh key on `.int`, names are keys 0…9, and the counter starts at 10?
 
 
 ## 7. Sets: operations, or a type? (2026-11-09)
@@ -838,3 +840,104 @@ It is a new stack, so it pays the type-adding cost (#37), and building the type
 registry first would make that cheaper. **It is the one new stack this audit
 recommends**, because it is the one structure the existing stacks cannot provide
 privately.
+
+
+## 10. Where keys come from, and what to make extras of (2026-11-09)
+
+The user's point:
+- Hand-written programs use strings as keys. Evolved programs need a
+  **deterministic generator** that hands out a fresh key on demand.
+- The generator should be a standard run-time structure owned by the
+  interpreter.
+- The real decision is **what type to produce extras of**: something that is
+  starving and flexible, so that evolution can put the keys to other uses as
+  well.
+
+### Which type: the supply table answers it
+
+From *Stack economics* (the deepen/shallow ratio across the language) and §1
+above:
+
+| Type | Supply | Consumers | As a key | Verdict |
+|---|---|---|---|---|
+| **int** | **drains, 0.53**: the most-demanded stack, about half empty when wanted | **159 Behaviors**, 84 of them combinators | exact, nearest, floor and range lookups; **arithmetic on keys** | **the answer** |
+| code | starves, 0.29 | 42 | a key that could also be run, but a fresh one would only wrap a number, `( 10 )`; equality costs a tree walk | runner-up, for no gain over int |
+| double | drains, 0.80 | 32 | nearest lookups, and **keys *between* keys** (2.5 between 2 and 3); exact equality is fragile after arithmetic | an option for ordered insertion only |
+| string | drains, 0.70 | 48 | prefix and containing lookups, but generated keys share a prefix (`"k1"`, `"k2"`), so prefix matches everything | poor as generated keys |
+| bool, iterator | **pile up**, 1.52 and 2.43 | | | extras would be waste |
+
+**Ints win on every count:**
+
+- **Starving.** Every fresh key is one more int on the stack the whole language
+  draws its counts and indices from.
+- **Flexible.** A key used as an index, a count or a number is a key put to
+  another use, which is what the user asks for. The reverse also happens: a
+  computed int that equals a key reaches the binding. Small consecutive keys
+  collide with the small numbers programs compute most, so **hits are frequent**
+  (§8's third condition).
+- **Addressable.** `k .intInc` is the next variable. Ints make `.ref` a
+  **heap**:
+  - consecutive keys are an array;
+  - a value holding a key is a **pointer**;
+  - so linked lists, trees and graphs can be built from bindings.
+
+  These are structures *Structured data types* lists as needing new types.
+  Strings cannot be incremented, and double keys drift.
+
+### The generator
+
+- **A counting iterator owned by the interpreter**, not placed on `.iterator`,
+  where a program could consume or reorder it. It is built from the existing
+  `IteratorItem` counting kind, so nothing new is needed to step it.
+- It is **reset at every load**, so a run's keys are 10, 11, 12, … every time:
+  deterministic, with no hashing and no randomness.
+- **This is the standard structure the user asks for.** Should any other supply
+  be wanted later (fresh doubles for keys between keys, say), it is a second
+  owned iterator of another kind, with one instruction to draw from it.
+- **Its keys are names, not computations.** A fresh key records a **stand-in**
+  (`.refFresh_actuallyWas_12`), exactly as `pushStepCount` does (law 4b).
+  Recording `.refFresh` instead would replay as 10 on a fresh interpreter, not
+  12, which is the lie the round-trip sweep exists to catch.
+
+### The names are keys too
+
+- `ref0…ref9` and `bind0…bind9` (§9) are **keys 0 through 9**.
+- The counter **starts at 10**, so a fresh key never aliases a named variable by
+  construction.
+- Arithmetic can still reach the names on purpose, and so can computed small
+  ints by accident, which counts as a feature here.
+- A general lookup with the int 3 finds what `ref3` finds: two routes to one
+  binding.
+
+### Operations, revised from §9 for int keys
+
+| Operation | Key | Value | Starves? |
+|---|---|---|---|
+| **`refNew`** | fresh, **left on `.int`** | the next item on `.exec` | **never**, and it gives one int back |
+| **`refFresh`** | fresh, pushed to `.int` | none | never: a deterministic `gensym`, useful as a unique id or a label |
+| `refBind` | taken from `.int` (rebind or shadow) | the next item on `.exec` | needs an int |
+| `refBindCode` | taken from `.int` | from `.code` | needs an int and a block |
+| `refDeref`, `refUnbind`, `refBindingDepth` | **read** from `.int`, left in place | | needs an int; reading does not drain it |
+| `refDerefNearest`, `refDerefFloor` | read from `.int` | | **never misses** on a non-empty `.ref` |
+| reverse deref | the value probe is read from its stack; the key is returned to `.int` | | |
+
+**`refNew` is the answer to "what to make extras of", in one instruction.**
+- Binding a variable deposits an int on the stack that needs ints most.
+- It takes nothing from any stack, since `.exec` always has a next item.
+- So a program that binds variables feeds the rest of itself.
+
+**The cost to watch is that every fresh key lands on top of `.int`**, where the
+next int-taking instruction will use it as an index or a count.
+- That is the intended reuse, and any harm is bounded: keys are small, and
+  counts and indices are clamped (§12).
+- A key used as an index is consumed, though, and then that variable can be
+  reached only by a computed int, a nearest lookup, or its position on `.ref`.
+  That is three routes, which is enough.
+
+**Size:** §9's general operations take their keys from `.int` instead of
+`.code`, and gain `refNew`, `refFresh` and the floor variant. That is about 48 in
+all for P8′.
+
+**Other key types.** Keys stay *any* item (§9), and a quoted-probe variant can
+add string or code keys later if a problem wants them. The generator and the
+named tokens produce ints, because ints are what the language is short of.
