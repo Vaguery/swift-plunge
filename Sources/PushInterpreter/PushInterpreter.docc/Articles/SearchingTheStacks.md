@@ -26,6 +26,9 @@ matches:
     →  .string holds "apple pie" "apple" "apple pie" "pear"; .int holds 2
 ```
 
+On `.int` itself the position goes on top of the copy, so whatever takes it, a
+yank or a `…From` lookup, finds the copy on top and the match at that depth.
+
 When nothing matches, the lookup refuses and changes nothing, as if the stack
 were empty. Each lookup has a `…From` form that takes a starting depth from `.int`,
 so a program can walk every match: look up, use the copy, then look up again
