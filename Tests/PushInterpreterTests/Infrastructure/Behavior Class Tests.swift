@@ -69,7 +69,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 394,
+            .operation: 400,
             .structural: 144,   // 12 families × 12 stacks
             .contextRead: 129,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars
             .control: 29,

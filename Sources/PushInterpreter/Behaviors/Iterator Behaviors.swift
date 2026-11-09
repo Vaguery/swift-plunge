@@ -651,6 +651,45 @@ nonisolated extension Interpreter {
         iteratorWalking_Behavior(name, over: V.pushStack) { _ in .elements(into: nil) }
     }
 
+    /// **The short constructors** (Behavior coverage audit, P3): an iterator over
+    /// a whole collection from the collection and a body alone, `v ( body )`,
+    /// with the cursor at the start, nothing buried and every element emitted.
+    /// Two arguments, as `vecXIterate` takes, so a random program can actually
+    /// build one; the long forms above (`.cruxOnly`) set the rest. An empty body
+    /// makes a sequence. `iteratorPlay` then runs the body per element, and
+    /// `vecFromIterator` collects what it makes.
+    static func iteratorOver_Behavior(_ name: PushInstruction, over source: PushStack) -> Behavior {
+        Behavior(
+            name,
+            takes: [source, .code],
+            tags: [.fallible],
+            produces: .results([.iterator]),
+            fxn: { a, recording in
+                // A code source shares `.code` with the body, which is written last
+                // and so arrives first.
+                let (origin, body) = source == .code
+                    ? (a[1], a[0] as! CodeItem)
+                    : (a[0], a[1] as! CodeItem)
+                let iterator = IteratorItem(
+                    kind: .elements(into: nil),
+                    origin: origin,
+                    body: body,
+                    emits: true,
+                    cursor: 0,
+                    burial: 0,
+                    call: recording([origin, body, InstructionItem(name)]))
+                return iteratorBuilt(iterator, by: name, recording)
+            }
+        )
+    }
+
+    static let iteratorOverString_Behavior = iteratorOver_Behavior(.iteratorOverString, over: .string)
+    static let iteratorOverVecBool_Behavior = iteratorOver_Behavior(.iteratorOverVecBool, over: .vecBool)
+    static let iteratorOverVecInt_Behavior = iteratorOver_Behavior(.iteratorOverVecInt, over: .vecInt)
+    static let iteratorOverVecDouble_Behavior = iteratorOver_Behavior(.iteratorOverVecDouble, over: .vecDouble)
+    static let iteratorOverVecString_Behavior = iteratorOver_Behavior(.iteratorOverVecString, over: .vecString)
+    static let iteratorOverCode_Behavior = iteratorOver_Behavior(.iteratorOverCode, over: .code)
+
     /// Builds an iterator that walks a **code block's contents**, root level only,
     /// and leaves it alone.
     ///
@@ -823,6 +862,12 @@ nonisolated extension Interpreter {
         .iteratorFromVecBool : iteratorFromVecBool_Behavior,
         .iteratorFromVecDouble : iteratorFromVecDouble_Behavior,
         .iteratorFromVecInt : iteratorFromVecInt_Behavior,
+        .iteratorOverString : iteratorOverString_Behavior,
+        .iteratorOverVecBool : iteratorOverVecBool_Behavior,
+        .iteratorOverVecInt : iteratorOverVecInt_Behavior,
+        .iteratorOverVecDouble : iteratorOverVecDouble_Behavior,
+        .iteratorOverVecString : iteratorOverVecString_Behavior,
+        .iteratorOverCode : iteratorOverCode_Behavior,
         .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
         .iteratorPeekLaps : iteratorPeekLaps_Behavior,

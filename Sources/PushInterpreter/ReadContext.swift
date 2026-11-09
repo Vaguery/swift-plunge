@@ -24,9 +24,6 @@ nonisolated struct ReadContext {
     /// `Behavior.act` adds it to the counter, so no body mutates the interpreter.
     let meter = WorkMeter()
 
-    /// The interpreter's settings, for building a sub-interpreter like it.
-    var settings: InterpreterSettings { interpreter.config }
-
     /// The steps left in this run's budget, less what this read has charged.
     var remainingSteps: Int { max(0, interpreter.config.stepLimit - interpreter.counter - meter.steps) }
 

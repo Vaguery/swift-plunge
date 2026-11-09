@@ -22,7 +22,9 @@
 //  - **Reduce folds from the first element**, with `.input0` the accumulator and
 //    `.input1` the element; no seed is drawn, and an empty collection is refused.
 //  - **Sub-run steps are charged to this run's budget** (`ReadContext.charge`),
-//    and an application that would exceed what is left is refused.
+//    and an application that would exceed what is left is refused. Every other
+//    limit is the language's default, whatever the run's, so the result never
+//    depends on configuration and the crux replays.
 //
 //  Provenance: the result records `collection function .xMap`, which re-runs to
 //  the same result in the same environment (constants and inputs), the
@@ -60,7 +62,13 @@ nonisolated extension Interpreter {
         let budget = context.remainingSteps
         guard budget > 0 else { throw .outOfSteps }
         let sub = Interpreter()
-        sub.config = context.settings
+        // The language's default limits, not this run's: a function's result
+        // must not depend on how the run was configured, or its crux would not
+        // replay under the relaxed limits a reconstruction uses
+        // (`InterpreterSettings.reconstructing`). Only the step budget is this
+        // run's, and a function that finishes within it finishes the same way
+        // with more.
+        sub.config = Interpreter.defaultSettings
         sub.config.recordsProvenance = false
         sub.config.stepLimit = budget
         var inputs = context.inputs
@@ -173,7 +181,9 @@ nonisolated extension Interpreter {
         }
     }
 
-    static func vectorFilterBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+    static func vectorFilterBehavior<V: VectorItem>(
+        _ instruction: PushInstruction, making itemType: V.Type
+    ) -> Behavior {
         Behavior.applying(instruction, takes: [V.pushStack, .code], tags: [.fallible],
                           produces: .results([V.pushStack])) { a, context in
             let (vector, function) = (a[0] as! V, a[1] as! CodeItem)
@@ -187,7 +197,9 @@ nonisolated extension Interpreter {
         }
     }
 
-    static func vectorReduceBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+    static func vectorReduceBehavior<V: VectorItem>(
+        _ instruction: PushInstruction, making itemType: V.Type
+    ) -> Behavior {
         Behavior.applying(instruction, takes: [V.pushStack, .code], tags: [.fallible],
                           produces: foldResults) { a, context in
             let (vector, function) = (a[0] as! V, a[1] as! CodeItem)
@@ -229,8 +241,9 @@ nonisolated extension Interpreter {
                 return refusal(.stringFilter, "out of steps", context)
             }
             let origins = text.origins()
+            let call: [any Item] = [text, function, InstructionItem(.stringFilter)]
             return [Router(.string, StringItem(String(kept.map { characters[$0] }),
-                                               call: context.recording([text, function, InstructionItem(.stringFilter)]),
+                                               call: context.recording(call),
                                                members: context.recording.pieces(kept.map { origins[$0] })))]
         }
 
