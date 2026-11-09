@@ -74,3 +74,7 @@ To work on the code, see [ARCHITECTURE.md](ARCHITECTURE.md) and
 ```sh
 swift test
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
