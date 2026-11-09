@@ -80,4 +80,23 @@ struct CodeStage1Tests {
         f.run()
         #expect(stackString(f, .int) == "[ 2 ]", "false → else block ran")
     }
+
+    /// One block and a bool (ruling I1): true runs it; false hands it back to
+    /// `.code` untouched, where `execWhen` would discard it.
+    @Test func `codeDoIf runs the block or hands it back`() {
+        func run(_ condition: Bool) -> Interpreter {
+            let inty = Interpreter.recordingProvenance()
+            inty.load(program: [CodeItem([IntItem(7), IntItem(8)]), BoolItem(condition), InstructionItem(.codeDoIf)])
+            inty.run()
+            return inty
+        }
+        let yes = run(true)
+        #expect(stackString(yes, .int) == "[ 8 7 ]")
+        #expect(stackString(yes, .code) == "[ ]")
+
+        let no = run(false)
+        #expect(stackString(no, .int) == "[ ]")
+        #expect(stackString(no, .code) == "[ ( 7 8 ) ]")
+        #expect(stackString(no, .bool) == "[ ]", "the bool is consumed either way")
+    }
 }

@@ -49,6 +49,26 @@ nonisolated extension Interpreter {
             }
         )
 
+    /// **One block and a bool**: run the block if the bool is true; otherwise
+    /// hand it back to `.code` untouched (ruling I1, *CodeItem goes to code*
+    /// § codeDoIf). Built from the pieces already here: `.codeDo` when true,
+    /// the block replaced when false. It differs from `execWhen`, which discards
+    /// the block on false: here a refused block is still data the program owns,
+    /// as every other ending returns its body (principle 5).
+    static let codeDoIf_Behavior =
+        Behavior.control(
+            .codeDoIf,
+            takes: [.bool, .code],
+            fxn: { a, _ in
+                let (cond, block) = (a[0] as! BoolItem, a[1])
+                guard cond.value else { return [Router(.code, block)] }
+                return [
+                    Router(.exec, InstructionItem(.codeDo)),
+                    Router(.exec, block),
+                ]
+            }
+        )
+
     static let codeItemIsEmpty_Behavior =
         Behavior.operation(.codeItemIsEmpty, reads: CodeItem.self, gives: BoolItem.self) { x in x.isEmpty }
 
@@ -593,6 +613,7 @@ nonisolated extension Interpreter {
         .codeAppend : codeAppend_Behavior,
         .codePair : codePair_Behavior,
         .codeIf : codeIf_Behavior,
+        .codeDoIf : codeDoIf_Behavior,
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,

@@ -72,7 +72,7 @@ struct BehaviorClassTests {
             .operation: 305,
             .structural: 144,   // 12 families × 12 stacks
             .contextRead: 127,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 8 readItems/readStack
-            .control: 28,
+            .control: 29,
             .channel: 13,
         ], "\(counts)")
     }
