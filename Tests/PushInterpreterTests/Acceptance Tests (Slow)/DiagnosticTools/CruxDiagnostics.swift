@@ -205,17 +205,31 @@ func inspectCrux(
                        "crux is not a fixed point: re-running it yields \(again)" + caveat)
     }
     // The composition invariant. `.error` is ignored — a crux may legitimately
-    // re-raise — and `.exec` is known drained by the guard above.
+    // re-raise — and `.exec` is known drained by the guard above. What the load
+    // itself puts on a stack (the inputs' bindings on `.ref`) is the environment,
+    // not debris.
+    let baseline = loadedBaseline(inputs: inputs, constants: constants)
     var debris: [String] = []
     for stack in PushStack.allStacks where stack != .error {
         let found = redo.stacks[stack]!.count
-        let wanted = (stack == resting) ? 1 : 0
+        let wanted = baseline[stack, default: 0] + ((stack == resting) ? 1 : 0)
         if found != wanted { debris.append(".\(stack) holds \(found), wanted \(wanted)") }
     }
     if !debris.isEmpty {
         return .broken(.debris, "crux leaves debris — " + debris.joined(separator: "; ") + caveat)
     }
     return .holds
+}
+
+
+/// How many items each stack holds once `inputs` and `constants` are loaded and
+/// nothing has run: the bindings `.ref` starts with (ruling 8 of the coverage
+/// audit), zero elsewhere.
+func loadedBaseline(inputs: [PushInstruction: any Item],
+                    constants: [PushInstruction: any Item]) -> [PushStack: Int] {
+    let empty = Interpreter()
+    empty.load(inputs: inputs, constants: constants, program: [])
+    return Dictionary(uniqueKeysWithValues: PushStack.allCases.map { ($0, empty.stacks[$0]!.count) })
 }
 
 

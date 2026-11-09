@@ -179,6 +179,9 @@ struct CompositionInvariantTests {
         let harness = CruxRoundTripTests()
         let (inputs, constants) = harness.bindings
 
+        // What the load itself puts on a stack (the inputs' bindings on `.ref`) is
+        // the environment, not debris.
+        let baseline = loadedBaseline(inputs: inputs, constants: constants)
         var checked = 0
         var offenders: [String] = []
 
@@ -199,7 +202,7 @@ struct CompositionInvariantTests {
                 var debris: [String] = []
                 for stack in PushStack.allStacks {
                     let found = redo.stacks[stack]!.count
-                    let wanted = (stack == resting) ? 1 : 0
+                    let wanted = baseline[stack, default: 0] + ((stack == resting) ? 1 : 0)
                     if found != wanted {
                         debris.append(".\(stack) holds \(found), wanted \(wanted)")
                     }

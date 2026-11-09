@@ -264,7 +264,11 @@ nonisolated final class Behavior: Sendable {
             }
 
         case .contextRead(let read):
-            return read(arguments, ReadContext(interpreter))
+            let context = ReadContext(interpreter)
+            let results = read(arguments, context)
+            // Fresh keys drawn from the interpreter's supply.
+            interpreter.nextRefKey += context.meter.keysDrawn
+            return results
 
         case .applying(let apply):
             let context = ReadContext(interpreter)

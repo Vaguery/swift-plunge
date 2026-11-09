@@ -3,7 +3,7 @@
 //  PushInterpreter
 //
 
-/// `pretty()` for the containers — blocks and iterators — written as a loop over
+/// `pretty()` for the containers — blocks, iterators and pairs — written as a loop over
 /// an explicit stack instead of recursion.
 ///
 /// Blocks hold iterators and iterators hold blocks, nested up to `maxCodeDepth`
@@ -49,6 +49,10 @@ nonisolated enum NestedRendering {
                         pieces.append(.item(body))
                     }
                     pieces.append(.text("»"))
+                    pending.append(contentsOf: pieces.reversed())
+                } else if let pair = item as? RefItem {
+                    // `⟨key ↦ value⟩`.
+                    let pieces: [Piece] = [.text("⟨\(pair.key) ↦ "), .item(pair.bound), .text("⟩")]
                     pending.append(contentsOf: pieces.reversed())
                 } else {
                     output += item.pretty()

@@ -44,6 +44,7 @@ struct StackFlowProbe {
         case .iterator:  IteratorItem(kind: .counting(stride: 1), origin: IntItem(0),
                                       destination: IntItem(5), body: CodeItem([BoolItem(true)]),
                                       emits: true)
+        case .ref:       RefItem(key: 3, bound: IntItem(4))
         case .error:     ErrorItem("x")
         }
     }

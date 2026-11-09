@@ -13,6 +13,7 @@ public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable,
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
     case iterator
+    case ref
     case error
 
 
@@ -275,6 +276,7 @@ nonisolated extension PushStack {
         if type == StringItem.self { return .string }
         if type == CharItem.self { return .char }
         if type == IteratorItem.self { return .iterator }
+        if type == RefItem.self { return .ref }
         if type == VecIntItem.self { return .vecInt }
         if type == VecDoubleItem.self { return .vecDouble }
         if type == VecBoolItem.self { return .vecBool }

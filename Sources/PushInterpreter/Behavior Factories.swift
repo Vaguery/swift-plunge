@@ -98,6 +98,9 @@ nonisolated extension Behavior {
         case .move(let from, let to):
             guard from != to, let item = interpreter.take(at: from, from: stack) else { return }
             interpreter.insert(item, at: to, on: stack)
+
+        case .remove(let depth):
+            interpreter.take(at: depth, from: stack)
         }
     }
 

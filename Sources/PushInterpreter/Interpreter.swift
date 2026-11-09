@@ -199,6 +199,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: iteratorBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: lookupBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: findBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: refBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: stringBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: textBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: vecBoolBehaviors, intoLanguage: &starter)
@@ -241,6 +242,10 @@ nonisolated final class Interpreter {
     /// stack, "the last thing it produced" (map, filter and reduce; Behavior
     /// coverage audit, P2). One store per push.
     @exclusivity(unchecked) var lastPush: PushStack? = nil
+    /// The next fresh `.ref` key (ruling 7). Reset at every load to the number
+    /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`
+    /// for each key a context read draws (`ReadContext.freshKey`).
+    @exclusivity(unchecked) var nextRefKey = Interpreter.inputSlots.count
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
     @exclusivity(unchecked) var lastRunawayCheck = -1
@@ -570,6 +575,7 @@ nonisolated final class Interpreter {
         self.counter = 0
         self.lastPush = nil
         self.lastRunawayCheck = -1
+        self.nextRefKey = Self.inputSlots.count
 
         // inputs and constants (both keyed by instruction token)
         for (key,value) in inputs {
@@ -587,6 +593,8 @@ nonisolated final class Interpreter {
             self.stacks[stack]!.prepend(contentsOf: accepted)
         }
         
+        bindInputs()
+
         // program to run
         self.program = program
         self.stacks[.exec]!.prepend(contentsOf: program)
@@ -598,6 +606,38 @@ nonisolated final class Interpreter {
         self.recomputeLiveWeight()
     }
     
+    /// The input instructions, by slot: `.input0` is slot 0. Derived from the
+    /// instruction set, never written as a count, since the number of slots is
+    /// not fixed (the user, 2026-11-09).
+    static let inputSlots: [PushInstruction] = PushInstruction.allCases
+        .compactMap { name -> (slot: Int, name: PushInstruction)? in
+            guard name.rawValue.hasPrefix("input"), let slot = Int(name.rawValue.dropFirst(5)) else { return nil }
+            return (slot, name)
+        }
+        .sorted { $0.slot < $1.slot }
+        .map(\.name)
+
+    /// **Binds key *i* to input slot *i*** on `.ref`, for every bound input, in
+    /// slot order, so the last slot's pair is on top (ruling 8). `.inputN` stays
+    /// the direct path; this is the redundant one, and a program can shadow a
+    /// key without losing the input. Each pair records how to make it again from
+    /// `.inputN`, its key marked as minted by that instruction.
+    private func bindInputs() {
+        let recording = self.recording
+        for (slot, name) in Self.inputSlots.enumerated() {
+            guard var bound = inputs[name] else { continue }
+            bound.call = recording([InstructionItem(name)])
+            let key = IntItem(slot).minted(by: name, recording)
+            var pair = RefItem(key: slot, bound: bound)
+            if let rebuilt = RefItem.rebuilt(binding: bound, to: key) {
+                pair.call = recording(rebuilt)
+            } else {
+                pair = pair.observed(by: name, recording)
+            }
+            if requireAccepts(pair, on: .ref) { stacks[.ref]!.prepend(pair) }
+        }
+    }
+
     func record() {
         // Iterate values, not keys: `recorders[key]?.record` would mark the dictionary
         // as mutated and COW-copy its storage every step. `record` is non-mutating (the

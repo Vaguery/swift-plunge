@@ -88,6 +88,7 @@ struct BehaviorIOSurvey {
             case .string: StringItem(string())
             case .code: code()
             case .iterator: iterator()
+            case .ref: RefItem(key: int(), bound: chance(0.5) ? IntItem(int()) : code())
             case .exec: execItem()
             case .error: ErrorItem("seeded")
             default: vector(for: stack)

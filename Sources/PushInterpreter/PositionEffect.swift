@@ -26,4 +26,7 @@ nonisolated enum PositionEffect: Sendable, Equatable {
     /// Move the item at `from` to `to`: swap (1 → 0), rot (2 → 0), `Yank` (n → 0),
     /// `Shove` (0 → n).
     case move(from: Int, to: Int)
+    /// Remove the item at `depth`: weakening below the top, as `delete` is at
+    /// it. `refUnbind`, which finds the depth by the pair's key.
+    case remove(at: Int)
 }

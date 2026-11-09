@@ -9,7 +9,7 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    /// The twelve stacks that get generated families — the furniture here, and the
+    /// The thirteen stacks that get generated families — the furniture here, and the
     /// `…Eq` comparisons in `Comparison Behaviors.swift`.
     ///
     /// **`.error` is deliberately absent.** It gets no generated family at all,
@@ -32,6 +32,7 @@ nonisolated extension Interpreter {
         .vecDouble,
         .vecString,
         .iterator,
+        .ref,
     ]
 
     static var combinatorBehaviors: [PushInstruction: Behavior] {
@@ -368,6 +369,18 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
+    /// Deletes the item at a depth, the index clamped as `Yank`'s is: weakening
+    /// anywhere in the stack, where `Pop` is weakening at the top.
+    static func deleteAtDepthCombinator_Behavior(
+        for stack: PushStack,
+        into result: inout [PushInstruction: Behavior]
+    ) {
+        let name = PushInstruction(rawValue: "\(stack.rawValue)DeleteAtDepth")!
+        result[name] = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
+            .positions(.remove(at: Position.item((args[0] as! IntItem).value, count: view.count)))
+        }
+    }
+
     static func yankDupCombinator_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
@@ -404,6 +417,7 @@ nonisolated extension Interpreter {
         swapCombinator_Behavior(for: stack, into: &result)
         yankCombinator_Behavior(for: stack, into: &result)
         yankDupCombinator_Behavior(for: stack, into: &result)
+        deleteAtDepthCombinator_Behavior(for: stack, into: &result)
 
         return result
     }

@@ -257,7 +257,8 @@ A representation-neutral derivation graph, for other GP representations, is a la
     instead of a cap. First a stack-composition probe, to measure how compressible stacks really are.
     After the current speed-up round. → *Compressed stacks.md*
 
-39. **Local variables (`.ref`)** — noted 2026-11-07; nothing built. **RULED 2026-11-09** → *Behavior
+39. **Local variables (`.ref`)** — noted 2026-11-07. **RULED and BUILT 2026-11-09** (*RefItem.swift*,
+    *Ref Behaviors.swift*; what building settled is in the audit's "Step 5" note) → *Behavior
     coverage audit (2026-11-09).md* §11: a `.ref` stack of (int key, value) pairs, LIFO, so each key is a
     stack of its own bindings; keys 0–9 preloaded with the inputs; fresh keys from an owned counter
     from 10; per-type `xRef` and `xWith` binders; `refRekey`; lookups that run or deliver. The text
@@ -388,8 +389,9 @@ A representation-neutral derivation graph, for other GP representations, is a la
 
 45. **Behavior coverage** — **RULED 2026-11-09**; steps 1–4 **built** the same day (P1 without `Sort`/`Mean`,
     P1b, P2, P3, P4, P5, P6, `codeDoIf`, `Peek` forms, `DropLast`/`TakeLast`, I16; then pattern lookup on
-    the stacks and within collections, with `IndexOf…From`; 783 instructions). Next: `.ref` (step 5), then
-    grammars as patterns (step 6, *Grammars as patterns (PEG).md*) → *Behavior coverage audit
+    the stacks and within collections, with `IndexOf…From`; then `.ref` and `xDeleteAtDepth`; 845
+    instructions). Next: grammars as patterns (step 6 or later, *Grammars as patterns (PEG).md*), and
+    deletion by pattern after them → *Behavior coverage audit
     (2026-11-09).md*. The tasks with no short route (average, filter, sort, dedupe, case, substring
     index, conversions between vector types, keyed storage) and the rulings that settle them:
     - `stringDrop` from the front, plus `xDropLast`/`xTakeLast`;

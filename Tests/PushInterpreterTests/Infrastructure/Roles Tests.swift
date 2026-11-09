@@ -70,12 +70,13 @@ struct TagsTests {
     @Test func `the partition sizes are what the notes say`() {
         #expect(Interpreter.instructions(role: .constant).count == 80)
         #expect(Interpreter.instructions(role: .input).count == 10)
-        // 168, not the 180 it was: the 12 `…Eq` moved to `.comparison`, where they
-        // always belonged. See `Comparison Behaviors.swift`.
-        #expect(Interpreter.instructions(role: .combinator).count == 168)
-        // 39, not 40: `execEq` was removed (Roadmap #26).
-        #expect(Interpreter.instructions(role: .comparison).count == 39,
-                "11 Eq + 28 orderings")
+        // 168 once the 12 `…Eq` moved to `.comparison`, where they always
+        // belonged (`Comparison Behaviors.swift`); 195 with `.ref`'s family (14)
+        // and `xDeleteAtDepth` on the 13 family stacks (coverage audit, step 5).
+        #expect(Interpreter.instructions(role: .combinator).count == 195)
+        // `execEq` was removed (Roadmap #26); `refEq` came with `.ref`.
+        #expect(Interpreter.instructions(role: .comparison).count == 40,
+                "12 Eq + 28 orderings")
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.

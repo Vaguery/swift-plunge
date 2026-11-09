@@ -1,6 +1,7 @@
 # Grammars as patterns: PEGs in Push (2026-11-09)
 
-**Status: explored, not ruled.** Written before step 4b of the coverage audit
+**Status: explored, not ruled; saved for step 6 or later** (the user, 2026-11-09),
+its questions (§9) still open. Written before step 4b of the coverage audit
 (*Behavior coverage audit (2026-11-09)* §8, §11). It answers Roadmap #34
 (pattern as a first-class item) with a specific proposal, and asks the
 questions in §9.

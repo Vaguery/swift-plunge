@@ -1229,6 +1229,46 @@ Settled in building:
 - **Not built:** PEG or other grammar patterns (*Grammars as patterns
   (PEG).md*, explored the same day; proposed as step 6, after `.ref`).
 
+**Step 5, the `.ref` stack built 2026-11-09, 783 → 845 instructions**
+(*RefItem.swift*, *Ref Behaviors.swift*). As ruled (rulings 7–13), with these
+settled in building:
+- **A pair is a `RefItem`**: an int key (its `value`) and the item bound to
+  it. A literal pair in a program lands on `.ref`, as a block lands on `.code`.
+  `.ref` gets the generated family (dup, pop, swap, yank, …, `refEq`).
+- **Inputs are bound at load**, key *i* for slot *i*, in slot order (the last
+  slot's pair on top). The slots are derived from the `inputN` cases
+  (`Interpreter.inputSlots`), and so is the first fresh key; nothing says 10.
+  Only `load(inputs:)` binds them: inputs assigned after a load (as two test
+  harnesses did) are not on `.ref`.
+- **Fresh keys come from a counter the interpreter owns**, drawn through
+  `ReadContext.freshKey()` and advanced in `Behavior.act`, so no body mutates
+  the interpreter. Each fresh key is an observed stand-in.
+- **A bound pair's crux rebuilds it**: the item, its binder, the clean-up, then
+  the key and `refRekey` (`5 .intRef .intPop .intPop .intRef_actuallyWas_12
+  .refRekey`). `refRekey` of a pair that was itself re-keyed replaces the last
+  key rather than adding one, which keeps that crux a fixed point under replay
+  (the crux fuzz found it).
+- **`xWith` is a composition, `.xRef ( body ) .refScope`.** `refScope` (one
+  instruction beyond the 44 ruled) takes a key and a body and runs
+  `k body… k .refUnbind .intPop`; it is useful alone, as a scope around any
+  existing binding. The binder's key stays on `.int` after the body.
+- **`refDeref` is a context read whose output is the continuation**: a bound
+  block's items go to `.exec`, each addressed in its block as `codeDo` places
+  them; anything else lands on its stack. **Not tagged re-entrant**, against
+  ruling 13's wording: the tag means "re-pushes itself to drive a loop", which
+  it does not, and a block that dereferences itself recurses as `codeDo` of a
+  block holding `codeDo` does. `refDerefToCode` delivers a block as it is and
+  anything else quoted.
+- **The key finders return keys, not values**: `refNearestKey`, `refFloorKey`
+  (which misses when every key is above k), `refKeyOf` (reverse lookup, probe
+  from `.code`), `refBindingDepth`. Each feeds a deref.
+- **`refUnbind` is a structural rule** on `.ref` that reads its key and removes
+  the topmost binding, through a new position effect, `remove(at:)`.
+- **The user's addition: `xDeleteAtDepth` on all thirteen family stacks**, the
+  depth clamped as `Yank`'s is. Deletion by pattern is for after grammars.
+- **`refFromCode` takes exactly `( key value )`**, the value addressed in its
+  block so it keeps a history.
+
 **Order of work**, a suggestion and not a ruling:
 1. The small fixes and the ruled leftovers (P9 and rulings 1–2).
 2. Then P1, P1b, P5, P6 and P4, the operations needing no new machinery.

@@ -87,6 +87,7 @@ struct CruxRoundTripTests {
                             emits: true,
                             cursor: n % 3
                          )
+        case .ref:       RefItem(key: n, bound: IntItem(n + 1))
         case .error:     nil   // never seeded; never checked
         }
     }
@@ -115,8 +116,11 @@ struct CruxRoundTripTests {
     /// purpose: combinators peek below their arguments, and a behavior that
     /// cannot find its arguments produces only an ErrorItem, which tests
     /// nothing.
-    func seeded(depth: Int = 4) -> Interpreter {
+    /// `recording` is set before the load, since the load itself records: the
+    /// inputs' bindings on `.ref` (ruling 8 of the coverage audit).
+    func seeded(depth: Int = 4, recording: Bool = true) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
+        inty.config.recordsProvenance = recording
         let (inputs, constants) = bindings
         var initial: [PushStack: [any Item]] = [:]
         for stack in PushStack.allStacks where stack != .error {
@@ -323,6 +327,9 @@ struct CruxFuzzTests {
                     RandomCode.setRandomConstants(in: inty)
                     let inputs = inty.inputs
                     let constants = inty.constants
+                    // Loaded again with the bindings, as the Runner loads, so the
+                    // inputs are bound on `.ref` too (ruling 8 of the coverage audit).
+                    inty.load(inputs: inputs, constants: constants, program: program)
                     inty.run(stepLimit: settings.stepLimit)
 
                     let brokenBefore = tally.broken.count

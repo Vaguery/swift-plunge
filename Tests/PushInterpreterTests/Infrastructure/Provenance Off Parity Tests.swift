@@ -26,9 +26,7 @@ struct ProvenanceOffParityTests {
     let harness = CruxRoundTripTests()
 
     func seeded(depth: Int, recording: Bool) -> Interpreter {
-        let inty = harness.seeded(depth: depth)
-        inty.config.recordsProvenance = recording
-        return inty
+        harness.seeded(depth: depth, recording: recording)
     }
 
     /// Everything a run computes, as text: each stack's items (rendered with

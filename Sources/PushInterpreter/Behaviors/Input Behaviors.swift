@@ -14,8 +14,7 @@ nonisolated extension Interpreter {
     static var inputBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
-        for i in 0..<10 {
-            let instructionName = PushInstruction(rawValue: "input\(i)")!
+        for instructionName in inputSlots {
             result[instructionName] =
                 Behavior.contextRead(instructionName, produces: .binding) { _, context in
                         if var v = context.inputs[instructionName] {
