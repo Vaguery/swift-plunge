@@ -65,6 +65,10 @@ nonisolated extension Interpreter {
             let idx = range - Position.item((args[0] as! IntItem).value, count: view.count)
             return .positions(.copy(from: idx, to: idx))
         }
+        .described(
+            "Copies the \(stack.noun) i up from the bottom (0 is the bottom) and puts the copy just above it;"
+            + " i is clamped into the stack."
+        )
         result[name] = inst
     }
 
@@ -78,6 +82,7 @@ nonisolated extension Interpreter {
 
         name = PushInstruction(rawValue: "\(type)Dup")!
         inst = Behavior.structural(name, on: stack, needs: 1) { _, _ in .positions(.copy(from: 0, to: 0)) }
+        .described("Copies the top \(stack.noun).")
         result[name] = inst
     }
 
@@ -115,6 +120,10 @@ nonisolated extension Interpreter {
                 emits: true, recording: view.recording
             ))
         }
+        .described(
+            "Copies the top n \(stack.plural), keeping their order;"
+            + " n is clamped between 0 and one less than the depth."
+        )
         result[name] = inst
     }
 
@@ -158,6 +167,7 @@ nonisolated extension Interpreter {
                 emits: true, recording: view.recording
             ))
         }
+        .described("Pushes n more copies of the top \(stack.noun); n ≤ 0 copies nothing.")
         result[name] = inst
     }
 
@@ -185,6 +195,7 @@ nonisolated extension Interpreter {
                     )
                 ]
         }
+        .described("Pushes true when there are no \(stack.plural), false otherwise.")
         result[name] = inst
     }
 
@@ -225,6 +236,7 @@ nonisolated extension Interpreter {
                 ]
             }
         )
+        .described("Pushes whether the top two \(stack.plural) are equal, leaving both.")
         result[name] = inst
     }
 
@@ -238,6 +250,7 @@ nonisolated extension Interpreter {
 
         name = PushInstruction(rawValue: "\(type)Flush")!
         inst = Behavior.structural(name, on: stack) { _, view in .positions(.delete(top: view.count)) }
+        .described("Discards every \(stack.noun).")
         result[name] = inst
     }
 
@@ -251,6 +264,7 @@ nonisolated extension Interpreter {
 
         name = PushInstruction(rawValue: "\(type)Pop")!
         inst = Behavior.structural(name, on: stack, needs: 1) { _, _ in .positions(.delete(top: 1)) }
+        .described("Discards the top \(stack.noun).")
         result[name] = inst
     }
 
@@ -274,6 +288,7 @@ nonisolated extension Interpreter {
         inst = Behavior.structural(name, on: stack, takes: [.int]) { args, view in
             .positions(.delete(top: Position.gap((args[0] as! IntItem).value, count: view.count)))
         }
+        .described("Discards the top n \(stack.plural); n is clamped between 0 and the depth.")
         result[name] = inst
     }
 
@@ -288,6 +303,7 @@ nonisolated extension Interpreter {
         name = PushInstruction(rawValue: "\(type)Rot")!
         // The third item comes to the top: `x y z` (top first) becomes `z x y`.
         inst = Behavior.structural(name, on: stack, needs: 3) { _, _ in .positions(.move(from: 2, to: 0)) }
+        .described("Moves the third \(stack.noun) from the top up to the top, above the other two.")
         result[name] = inst
     }
 
@@ -307,6 +323,11 @@ nonisolated extension Interpreter {
         inst = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
             .positions(.move(from: 0, to: Position.gap((args[0] as! IntItem).value, count: view.count - 1)))
         }
+        .described(
+            "Moves the top \(stack.noun) down to depth i"
+            + (stack == .int ? " (counted once i is popped)" : "")
+            + ", clamped into the stack; undoes `i .\(type)Yank`."
+        )
         result[name] = inst
     }
 
@@ -333,6 +354,7 @@ nonisolated extension Interpreter {
                     )
                 ]
         }
+        .described("Pushes how many \(stack.plural) there are.")
         result[name] = inst
     }
 
@@ -349,6 +371,7 @@ nonisolated extension Interpreter {
 
         name = PushInstruction(rawValue: "\(type)Swap")!
         inst = Behavior.structural(name, on: stack, needs: 2) { _, _ in .positions(.move(from: 1, to: 0)) }
+        .described("Swaps the top two \(stack.plural).")
         result[name] = inst
     }
 
@@ -366,6 +389,11 @@ nonisolated extension Interpreter {
         inst = Behavior.structural(name, on: stack, takes: [.int], needs: 2) { args, view in
             .positions(.move(from: Position.item((args[0] as! IntItem).value, count: view.count), to: 0))
         }
+        .described(
+            "Moves the \(stack.noun) at depth i"
+            + (stack == .int ? " (counted once i is popped)" : "")
+            + " to the top; i is clamped into the stack."
+        )
         result[name] = inst
     }
 
@@ -379,6 +407,11 @@ nonisolated extension Interpreter {
         result[name] = Behavior.structural(name, on: stack, takes: [.int], needs: 1) { args, view in
             .positions(.remove(at: Position.item((args[0] as! IntItem).value, count: view.count)))
         }
+        .described(
+            "Deletes the \(stack.noun) at depth i"
+            + (stack == .int ? " (counted once i is popped)" : "")
+            + "; i is clamped into the stack."
+        )
     }
 
     static func yankDupCombinator_Behavior(
@@ -393,6 +426,11 @@ nonisolated extension Interpreter {
         inst = Behavior.structural(name, on: stack, takes: [.int], needs: 2) { args, view in
             .positions(.copy(from: Position.item((args[0] as! IntItem).value, count: view.count), to: 0))
         }
+        .described(
+            "Copies the \(stack.noun) at depth i"
+            + (stack == .int ? " (counted once i is popped)" : "")
+            + " onto the top; i is clamped into the stack."
+        )
         result[name] = inst
     }
 

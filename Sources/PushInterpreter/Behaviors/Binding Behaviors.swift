@@ -81,6 +81,9 @@ nonisolated extension Interpreter {
                                call: recording(BindingItem.rebuilt(binding: top, to: key) ?? []))
             return [Router(.binding, pair), Router(.int, key)]
         }
+        .described(
+            "Binds a copy of the top \(stack.noun), left in place, to a fresh key and pushes the key onto `.int`."
+        )
     }
 
     /// `xWith`: binds the top of `stack` for the length of a body taken from
@@ -90,6 +93,11 @@ nonisolated extension Interpreter {
         Behavior.control(name, requires: [.takes(.code), .reads(stack)]) { a, _ in
             [Router(.exec, InstructionItem(.refScope)), Router(.exec, a[0]), Router(.exec, InstructionItem(binder))]
         }
+        .described(
+            "Binds a copy of the "
+            + (stack == .code ? "block under the body" : "top \(stack.noun)")
+            + " to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding."
+        )
     }
 
     /// `k ( body ) .refScope` runs the body with k on `.int`, then removes k's
@@ -100,6 +108,7 @@ nonisolated extension Interpreter {
             let key = a[0], body = Containment.contents(of: a[1] as! CodeItem, recording)
             return [.place([key] + body + [key, InstructionItem(.refUnbind), InstructionItem(.intPop)])]
         }
+        .described("Runs a body with key k pushed onto `.int`, then removes k's topmost binding: `k ( b ) .refScope`.")
 
     /// `k .bindingRekey` gives the top pair the key k (ruling 10).
     ///
@@ -118,12 +127,14 @@ nonisolated extension Interpreter {
                      return [Router(.binding, BindingItem(key: key.value, bound: pair.bound,
                                                   call: recording(before + [key, InstructionItem(.bindingRekey)])))]
                  }, produces: .results([.binding]))
+        .described("Gives the top binding the key k from `.int`, shadowing any older binding of k.")
 
     /// A fresh key onto `.int`: a deterministic gensym.
     static let refFresh_Behavior =
         Behavior.contextRead(.refFresh, produces: .results([.int])) { _, context in
             [Router(.int, IntItem(context.freshKey()).observed(by: .refFresh, context.recording))]
         }
+        .described("Pushes a fresh key onto `.int`, one not drawn before in this run.")
 
 
     // MARK: - Pairs as data
@@ -136,6 +147,7 @@ nonisolated extension Interpreter {
                      return [Router(.code, CodeItem([IntItem(pair.key), pair.bound],
                                                     call: recording([pair, InstructionItem(.bindingQuote)])))]
                  }, produces: .results([.code]))
+        .described("Turns the top binding into the block `( k value )` on `.code`.")
 
     /// The block `( k value )` as a pair; refused for any other shape, and for a
     /// value that cannot be bound (an iterator or a pair).
@@ -153,6 +165,8 @@ nonisolated extension Interpreter {
                      let bound = Containment.contents(of: block, recording)[1]
                      return [Router(.binding, BindingItem(key: key.value, bound: bound, call: call))]
                  }, produces: .alternatives([[.binding], [.error]]))
+        .described("Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator"
+                   + " or a binding.")
 
 
     // MARK: - Lookups
@@ -191,6 +205,13 @@ nonisolated extension Interpreter {
             }
             return [Router(.exec, value)]
         }
+        .described(
+            below
+                ? "Runs the value bound to key k at depth i or below on `.binding`, as `.refDeref` does, leaving k:"
+                  + " `k i .refDerefBelow` reaches shadowed bindings; refuses when there is none."
+                : "Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value"
+                  + " lands on its stack; refuses when k is unbound."
+        )
     }
 
     /// Delivers what a key holds to `.code`, as data.
@@ -198,6 +219,13 @@ nonisolated extension Interpreter {
         refLookup(name, below: below, produces: .results([.code])) { value, context in
             [Router(.code, asCode(value, by: name, context.recording))]
         }
+        .described(
+            below
+                ? "Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as"
+                  + " `.refDerefToCode` does, leaving k: `k i .refDerefToCodeBelow`; refuses when there is none."
+                : "Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted,"
+                  + " leaving k; refuses when k is unbound."
+        )
     }
 
     /// The depth of a key's topmost binding, onto `.int`.
@@ -211,6 +239,7 @@ nonisolated extension Interpreter {
             }
             return [Router(.int, IntItem(depth).observed(by: .refBindingDepth, context.recording))]
         }
+        .described("Pushes the depth of key k's topmost binding on `.binding`, leaving k; refuses when k is unbound.")
 
     /// A key found from the key on `.int` (read) by `choose`, among the keys on
     /// `.binding` from the top down; onto `.int`, observed.
@@ -232,11 +261,13 @@ nonisolated extension Interpreter {
     static let refNearestKey_Behavior = refKeyFinder(.refNearestKey) { k, keys in
         keys.min { abs(Double($0) - Double(k)) < abs(Double($1) - Double(k)) }
     }
+        .described("Pushes the bound key nearest k, the topmost on a tie, leaving k; refuses when nothing is bound.")
 
     /// The greatest key at or below k; misses when every key is above it.
     static let refFloorKey_Behavior = refKeyFinder(.refFloorKey) { k, keys in
         keys.filter { $0 <= k }.max()
     }
+        .described("Pushes the greatest bound key at or below k, leaving k; refuses when there is none.")
 
     /// Reverse lookup: the key of the topmost binding whose value is the block on
     /// top of `.code` (read), or the one item that block holds.
@@ -252,6 +283,8 @@ nonisolated extension Interpreter {
             }
             return [Router(.int, IntItem(pair.key).observed(by: .refKeyOf, context.recording))]
         }
+        .described("Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item,"
+                   + " leaving the block; refuses on a miss.")
 
     /// Removes the topmost binding of the key on `.int` (read): weakening at the
     /// depth the key names.
@@ -263,6 +296,7 @@ nonisolated extension Interpreter {
                      guard let depth else { return .loop([refMissing(.refUnbind, on: .binding, view.recording)]) }
                      return .positions(.remove(at: depth))
                  }, produces: .positions(.binding))
+        .described("Removes key k's topmost binding, leaving k; refuses when k is unbound.")
 
 
     // MARK: - The family

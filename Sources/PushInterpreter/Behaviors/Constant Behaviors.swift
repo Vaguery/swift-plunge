@@ -37,6 +37,10 @@ nonisolated extension Interpreter {
                                                      call: context.recording([InstructionItem(instructionName)])))]
                         }
                     }
+                .described(
+                    "Pushes the run's constant \(i) for \(stack.plural), by way of `.exec`;"
+                    + " refuses when the run assigns none."
+                )
             }
         }
         return result

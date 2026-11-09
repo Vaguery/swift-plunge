@@ -61,6 +61,7 @@ nonisolated extension Interpreter {
         Behavior.contextRead(.pushStepCount, produces: .results([.int])) { _, context in
             [Router(.int, IntItem(context.stepCount).observed(by: .pushStepCount, context.recording))]
         }
+        .described("Pushes how many steps the run has completed, not counting this one.")
 
 
     /// How many errors are on `.error`. **The one error combinator**, and the only
@@ -70,6 +71,7 @@ nonisolated extension Interpreter {
             let depth = IntItem(context.depth(of: .error))
             return [Router(.int, depth.observed(by: .errorStackDepth, context.recording))]
         }
+        .described("Pushes how many errors the run has recorded on `.error`.")
 
 
     /// Counts the errors on `.error` of one kind.
@@ -97,14 +99,17 @@ nonisolated extension Interpreter {
     /// and gave a poor answer", which are very different things to a search.
     static let errorMissingArgCount_Behavior =
         errorCount_Behavior(.errorMissingArgCount, counting: .missingArgument)
+        .described("Pushes how many instructions so far found too few arguments to run.")
 
     /// How many `.inputN` reads found no binding.
     static let errorMissingInputCount_Behavior =
         errorCount_Behavior(.errorMissingInputCount, counting: .missingInput)
+        .described("Pushes how many input reads so far found no input supplied.")
 
     /// How many typed-constant reads (`.int3`, `.vecDouble8`) found no binding.
     static let errorMissingConstantCount_Behavior =
         errorCount_Behavior(.errorMissingConstantCount, counting: .missingConstant)
+        .described("Pushes how many constant reads (`.int3` and the like) so far found no constant assigned.")
 
 
     static let introspectionBehaviors: [PushInstruction: Behavior] =

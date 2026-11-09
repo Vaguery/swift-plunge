@@ -270,6 +270,10 @@ nonisolated extension Interpreter {
             }
             return i
         }
+        .described(
+            "Finds an element from an index: `v x i .\(name)` gives the index of the first x in v at index i"
+            + " or later, leaving all three; refuses on a miss."
+        )
     }
 
     static let stringIndexOfCharFrom_Behavior =
@@ -281,6 +285,10 @@ nonisolated extension Interpreter {
             }
             return i
         }
+        .described(
+            "Finds a char from an index: `c s i .stringIndexOfCharFrom` gives the index of the first c in s at index i"
+            + " or later, leaving all three; refuses on a miss."
+        )
 
     /// An empty needle is found at the start, if the start is within the string
     /// or at its end.
@@ -294,6 +302,10 @@ nonisolated extension Interpreter {
             }
             return hay.distance(from: hay.startIndex, to: range.lowerBound)
         }
+        .described(
+            "Finds a substring from an index: `s t i .stringIndexOfFrom` gives the index of the first t in s at index i"
+            + " or later, leaving all three; an empty t is found at i; refuses on a miss."
+        )
 
     static let indexOfFromBehaviors: [PushInstruction: Behavior] = [
         .vecBoolIndexOfFrom: indexOfFromBehavior(.vecBoolIndexOfFrom, VecBoolItem.self),
@@ -330,50 +342,158 @@ nonisolated extension Interpreter {
             (.vecString, .vecStringLookupEqual, .vecStringLookupEqualFrom)
         ]
         for (stack, name, fromName) in equalStacks {
-            add(both(name, fromName) { matching($0, on: stack, from: $1, equal) })
+            add(both(name, fromName) {
+                matching($0, on: stack, from: $1, equal)
+                    .described(
+                        "Reads the top \(stack.noun) as a probe and copies the topmost one below that equals it"
+                        + ($1 ? ", searching from depth i (at least 1)" : "")
+                        + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                    )
+            })
         }
 
         // Nearest: the types with a distance.
-        add(both(.intLookupNearest, .intLookupNearestFrom) { nearest($0, on: .int, from: $1, intDistance) })
-        add(both(.doubleLookupNearest, .doubleLookupNearestFrom) { nearest($0, on: .double, from: $1, doubleDistance) })
-        add(both(.charLookupNearest, .charLookupNearestFrom) { nearest($0, on: .char, from: $1, charDistance) })
+        add(both(.intLookupNearest, .intLookupNearestFrom) {
+            nearest($0, on: .int, from: $1, intDistance)
+                .described(
+                    "Reads the top int as a probe and copies the nearest one below it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", the topmost on a tie, pushing its depth + 1 onto `.int`"
+                    + ($1 ? "; refuses when i is past the bottom." : ".")
+                )
+        })
+        add(both(.doubleLookupNearest, .doubleLookupNearestFrom) {
+            nearest($0, on: .double, from: $1, doubleDistance)
+                .described(
+                    "Reads the top double as a probe and copies the nearest one below it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", the topmost on a tie, pushing its depth + 1 onto `.int`"
+                    + ($1 ? "; refuses when i is past the bottom." : ".")
+                )
+        })
+        add(both(.charLookupNearest, .charLookupNearestFrom) {
+            nearest($0, on: .char, from: $1, charDistance)
+                .described(
+                    "Reads the top char as a probe and copies the one below nearest it by code point"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", the topmost on a tie, pushing its depth + 1 onto `.int`"
+                    + ($1 ? "; refuses when i is past the bottom." : ".")
+                )
+        })
 
         // Prefix and Containing: the collections.
-        add(both(.stringLookupPrefix, .stringLookupPrefixFrom) { matching($0, on: .string, from: $1, stringPrefix) })
+        add(both(.stringLookupPrefix, .stringLookupPrefixFrom) {
+            matching($0, on: .string, from: $1, stringPrefix)
+                .described(
+                    "Reads the top string as a probe and copies the topmost one below that begins with it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
+        })
         add(both(.stringLookupContaining, .stringLookupContainingFrom) {
             matching($0, on: .string, from: $1, stringContaining)
+                .described(
+                    "Reads the top string as a probe and copies the topmost one below that contains it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
-        add(both(.codeLookupPrefix, .codeLookupPrefixFrom) { matching($0, on: .code, from: $1, codePrefix) })
+        add(both(.codeLookupPrefix, .codeLookupPrefixFrom) {
+            matching($0, on: .code, from: $1, codePrefix)
+                .described(
+                    "Reads the top block as a probe and copies the topmost one below whose items begin with its items"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
+        })
         add(both(.codeLookupContaining, .codeLookupContainingFrom) {
             matching($0, on: .code, from: $1, codeContaining)
+                .described(
+                    "Reads the top block as a probe and copies the topmost one below containing it, or its lone item,"
+                    + " anywhere inside"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecBoolLookupPrefix, .vecBoolLookupPrefixFrom) {
             matching($0, on: .vecBool, from: $1, vectorPrefix(VecBoolItem.self))
+                .described(
+                    "Reads the top vector of bools as a probe and copies the topmost one below that begins with it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecIntLookupPrefix, .vecIntLookupPrefixFrom) {
             matching($0, on: .vecInt, from: $1, vectorPrefix(VecIntItem.self))
+                .described(
+                    "Reads the top vector of ints as a probe and copies the topmost one below that begins with it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecDoubleLookupPrefix, .vecDoubleLookupPrefixFrom) {
             matching($0, on: .vecDouble, from: $1, vectorPrefix(VecDoubleItem.self))
+                .described(
+                    "Reads the top vector of doubles as a probe and copies the topmost one below that begins with it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecStringLookupPrefix, .vecStringLookupPrefixFrom) {
             matching($0, on: .vecString, from: $1, vectorPrefix(VecStringItem.self))
+                .described(
+                    "Reads the top vector of strings as a probe and copies the topmost one below that begins with it"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecBoolLookupContaining, .vecBoolLookupContainingFrom) {
             matching($0, on: .vecBool, from: $1, vectorContaining(VecBoolItem.self))
+                .described(
+                    "Reads the top vector of bools as a probe and copies the topmost one below that contains it"
+                    + " as a run"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecIntLookupContaining, .vecIntLookupContainingFrom) {
             matching($0, on: .vecInt, from: $1, vectorContaining(VecIntItem.self))
+                .described(
+                    "Reads the top vector of ints as a probe and copies the topmost one below that contains it"
+                    + " as a run"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecDoubleLookupContaining, .vecDoubleLookupContainingFrom) {
             matching($0, on: .vecDouble, from: $1, vectorContaining(VecDoubleItem.self))
+                .described(
+                    "Reads the top vector of doubles as a probe and copies the topmost one below that contains it"
+                    + " as a run"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
         add(both(.vecStringLookupContaining, .vecStringLookupContainingFrom) {
             matching($0, on: .vecString, from: $1, vectorContaining(VecStringItem.self))
+                .described(
+                    "Reads the top vector of strings as a probe and copies the topmost one below that contains it"
+                    + " as a run"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
         })
 
         // Shape: code.
-        add(both(.codeLookupShape, .codeLookupShapeFrom) { matching($0, on: .code, from: $1, sameShape) })
+        add(both(.codeLookupShape, .codeLookupShapeFrom) {
+            matching($0, on: .code, from: $1, sameShape)
+                .described(
+                    "Reads the top block as a probe and copies the topmost one below with its shape"
+                    + " (same nesting and instructions, atoms matching by type)"
+                    + ($1 ? ", searching from depth i (at least 1)" : "")
+                    + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                )
+        })
         return family
     }()
 
@@ -384,20 +504,64 @@ nonisolated extension Interpreter {
         func add(_ entries: [PushInstruction: Behavior]) { family.merge(entries) { first, _ in first } }
         add(both(.vecIntFindNearest, .vecIntFindNearestFrom) {
             findNearest($0, in: VecIntItem.self, from: $1, intDistance)
+                .described(
+                    $1
+                        ? "Finds the element of v nearest x at index i or later (`v x i`), the first on a tie, pushing"
+                          + " its index and then it, leaving all three; refuses when there is none."
+                        : "Finds the element of v nearest x, the first on a tie, pushing its index and then it, leaving"
+                          + " both; refuses on an empty v."
+                )
         })
         add(both(.vecDoubleFindNearest, .vecDoubleFindNearestFrom) {
             findNearest($0, in: VecDoubleItem.self, from: $1, doubleDistance)
+                .described(
+                    $1
+                        ? "Finds the element of v nearest x at index i or later, the first on a tie, pushing its index"
+                          + " and it, leaving all three; refuses when there is none."
+                        : "Finds the element of v nearest x, the first on a tie, pushing its index and it, leaving"
+                          + " both; refuses on an empty v."
+                )
         })
         add(both(.stringFindNearest, .stringFindNearestFrom) {
             findNearest($0, in: StringItem.self, from: $1, charDistance)
+                .described(
+                    $1
+                        ? "Finds the char of s nearest c by code point at index i or later, the first on a tie, pushing"
+                          + " its index and it, leaving all three; refuses when there is none."
+                        : "Finds the char of s nearest c by code point, the first on a tie, pushing its index and it,"
+                          + " leaving both; refuses on an empty s."
+                )
         })
         add(both(.vecStringFindPrefix, .vecStringFindPrefixFrom) {
             find($0, in: VecStringItem.self, from: $1, stringPrefix)
+                .described(
+                    $1
+                        ? "Finds the first string of v at index i or later that begins with s, pushing its index and"
+                          + " it, leaving all three; refuses when none does."
+                        : "Finds the first string of v that begins with s, pushing its index and it, leaving both;"
+                          + " refuses when none does."
+                )
         })
         add(both(.vecStringFindContaining, .vecStringFindContainingFrom) {
             find($0, in: VecStringItem.self, from: $1, stringContaining)
+                .described(
+                    $1
+                        ? "Finds the first string of v at index i or later that contains s, pushing its index and it,"
+                          + " leaving all three; refuses when none does."
+                        : "Finds the first string of v that contains s, pushing its index and it, leaving both; refuses"
+                          + " when none does."
+                )
         })
-        add(both(.codeFindPrefix, .codeFindPrefixFrom) { codeFind($0, from: $1, codePrefix) })
+        add(both(.codeFindPrefix, .codeFindPrefixFrom) {
+            codeFind($0, from: $1, codePrefix)
+                .described(
+                    $1
+                        ? "Finds a sub-block from root index i on: `( … ) ( p ) i .codeFindPrefixFrom` gives the first"
+                          + " that begins with p's items, and its index; refuses on a miss."
+                        : "Finds a sub-block: `( … ) ( p ) .codeFindPrefix` gives the first root item that is a block"
+                          + " beginning with p's items, and its index; refuses on a miss."
+                )
+        })
         add(indexOfFromBehaviors)
         return family
     }()

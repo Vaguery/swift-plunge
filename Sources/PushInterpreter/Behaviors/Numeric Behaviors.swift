@@ -23,16 +23,19 @@ nonisolated extension Interpreter {
             guard x != .min else { throw Refusal("Overflow in .intAbs: \(x)") }
             return abs(x)
         }
+        .described("Takes the absolute value; refuses the most negative int, whose absolute value overflows.")
 
     static let intNegate_Behavior =
         Behavior.operation(.intNegate, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
             guard x != .min else { throw Refusal("Overflow in .intNegate: \(x)") }
             return -x
         }
+        .described("Negates; refuses the most negative int, whose negation overflows.")
 
     /// −1, 0 or 1.
     static let intSign_Behavior =
         Behavior.operation(.intSign, takes: IntItem.self, gives: IntItem.self) { x in x.signum() }
+        .described("Gives the sign of an int: −1, 0 or 1.")
 
     /// `b e .intPow` is b to the e, by repeated squaring. A negative exponent
     /// has an int answer only for a base of 1 or −1; otherwise it is refused, as
@@ -63,6 +66,9 @@ nonisolated extension Interpreter {
             }
             return result
         }
+        .described(
+            "Raises to a power: `b e .intPow` gives b to the e; refuses on overflow, or a negative e unless b is ±1."
+        )
 
 
     // MARK: - Doubles
@@ -78,11 +84,13 @@ nonisolated extension Interpreter {
         Behavior.operation(.doubleAbs, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(abs(x), .doubleAbs, "\(x)")
         }
+        .described("Takes the absolute value; refuses a non-finite input.")
 
     static let doubleNegate_Behavior =
         Behavior.operation(.doubleNegate, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(-x, .doubleNegate, "\(x)")
         }
+        .described("Negates; refuses a non-finite input.")
 
     /// −1.0, 0.0 or 1.0; a NaN has no sign and is refused.
     static let doubleSign_Behavior =
@@ -90,6 +98,7 @@ nonisolated extension Interpreter {
             guard !x.isNaN else { throw Refusal("No sign in .doubleSign: \(x)") }
             return x > 0 ? 1 : (x < 0 ? -1 : 0)
         }
+        .described("Gives the sign of a double: −1.0, 0.0 or 1.0; refuses NaN.")
 
     /// `b e .doublePow` is b to the e. A negative base with a fractional
     /// exponent, or an overflow, is refused.
@@ -98,17 +107,23 @@ nonisolated extension Interpreter {
                            gives: DoubleItem.self) { base, exponent throws(Refusal) in
             try finite(Foundation.pow(base, exponent), .doublePow, "\(base) ^ \(exponent)")
         }
+        .described(
+            "Raises to a power: `b e .doublePow` gives b to the e;"
+            + " refuses a non-finite result (as for b < 0, e fractional)."
+        )
 
     static let doubleSqrt_Behavior =
         Behavior.operation(.doubleSqrt, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             guard x >= 0 else { throw Refusal("No real root in .doubleSqrt: \(x)") }
             return try finite(x.squareRoot(), .doubleSqrt, "\(x)")
         }
+        .described("Takes the square root; refuses a negative or non-finite input.")
 
     static let doubleExp_Behavior =
         Behavior.operation(.doubleExp, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(Foundation.exp(x), .doubleExp, "\(x)")
         }
+        .described("Raises e to the given power; refuses a result that is not finite.")
 
     /// The natural logarithm; refused for zero and below.
     static let doubleLog_Behavior =
@@ -116,22 +131,28 @@ nonisolated extension Interpreter {
             guard x > 0 else { throw Refusal("No logarithm in .doubleLog: \(x)") }
             return try finite(Foundation.log(x), .doubleLog, "\(x)")
         }
+        .described("Takes the natural logarithm; refuses zero, negatives and non-finite inputs.")
 
     static let doubleFloor_Behavior =
         Behavior.operation(.doubleFloor, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(x.rounded(.down), .doubleFloor, "\(x)")
         }
+        .described("Rounds down to a whole number; refuses a non-finite input.")
 
     static let doubleCeil_Behavior =
         Behavior.operation(.doubleCeil, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(x.rounded(.up), .doubleCeil, "\(x)")
         }
+        .described("Rounds up to a whole number; refuses a non-finite input.")
 
     /// To the nearest whole number, halves away from zero (2.5 → 3, −2.5 → −3).
     static let doubleRound_Behavior =
         Behavior.operation(.doubleRound, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             try finite(x.rounded(.toNearestOrAwayFromZero), .doubleRound, "\(x)")
         }
+        .described(
+            "Rounds to the nearest whole number, halves away from zero (2.5 gives 3); refuses a non-finite input."
+        )
 
 
     // MARK: - The family
