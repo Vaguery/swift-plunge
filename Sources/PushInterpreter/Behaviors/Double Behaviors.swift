@@ -155,11 +155,19 @@ nonisolated extension Interpreter {
         .described("Converts a bool: 1.0 for true, 0.0 for false.")
 
     /// The character's ASCII code; any non-ASCII character is 0.
+    /// The character's Unicode scalar value, as `.intFromChar` gives it and the
+    /// inverse of `.charFromDouble`. (Until 2026-11-09 this gave the ASCII code,
+    /// and 0.0 for anything else.) A character made of several scalars has no
+    /// single value, so it is refused.
     static let doubleFromChar_Behavior =
-        Behavior.operation(.doubleFromChar, takes: CharItem.self, gives: DoubleItem.self) { x in
-            x.isASCII ? Double(x.asciiValue!) : 0.0
+        Behavior.operation(.doubleFromChar, takes: CharItem.self, gives: DoubleItem.self) { c throws(Refusal) in
+            let scalars = c.unicodeScalars
+            guard scalars.count == 1, let scalar = scalars.first else {
+                throw Refusal("Several Unicode scalars in .doubleFromChar: \(c)", kind: .conversion)
+            }
+            return Double(scalar.value)
         }
-        .described("Converts a char to its ASCII code; any non-ASCII char gives 0.0.")
+        .described("Converts a char to its Unicode scalar value; refuses a char made of several scalars.")
 
     /// The string read as a number; an error if it is not one, or if it reads as
     /// a non-finite value.

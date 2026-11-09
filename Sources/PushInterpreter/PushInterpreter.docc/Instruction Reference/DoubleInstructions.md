@@ -18,7 +18,7 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 | `doubleExp` | Raises e to the given power; refuses a result that is not finite. | `double` | `double`; may refuse |
 | `doubleFloor` | Rounds down to a whole number; refuses a non-finite input. | `double` | `double`; may refuse |
 | `doubleFromBool` | Converts a bool: 1.0 for true, 0.0 for false. | `bool` | `double` |
-| `doubleFromChar` | Converts a char to its ASCII code; any non-ASCII char gives 0.0. | `char` | `double` |
+| `doubleFromChar` | Converts a char to its Unicode scalar value; refuses a char made of several scalars. | `char` | `double`; may refuse |
 | `doubleFromInt` | Converts an int to the nearest double. | `int` | `double` |
 | `doubleFromString` | Parses a string as a double; refuses one that is not a number or that reads as infinite or NaN. | `string` | `double`; may refuse |
 | `doubleGT` | Compares, leaving both doubles: `a b .doubleGT` gives a > b. | `double` (read), `double` (read) | `bool` |

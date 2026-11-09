@@ -154,12 +154,14 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 103.0 ]")
         #expect(callString(topItem(inty, .double)) == "( 'g' .doubleFromChar )")
 
+        // The Unicode scalar value, as `intFromChar` gives it (until 2026-11-09,
+        // ASCII only, and 0.0 for this one).
         doThis(.doubleFromChar, to: inty)
-        #expect(stackString(inty, .double) == "[ 0.0 103.0 ]")
+        #expect(stackString(inty, .double) == "[ 128521.0 103.0 ]")
         #expect(callString(topItem(inty, .double)) == "( '😉' .doubleFromChar )")
 
         doThis(.doubleFromChar, to: inty)
-        #expect(stackString(inty, .double) == "[ 10.0 0.0 103.0 ]")
+        #expect(stackString(inty, .double) == "[ 10.0 128521.0 103.0 ]")
         #expect(callString(topItem(inty, .double)) == "( '\n' .doubleFromChar )")
     }
 
