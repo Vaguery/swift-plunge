@@ -109,8 +109,10 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)DupItems")!
+        // n clamped to the whole stack, as `PopItems` clamps it. (Until
+        // 2026-11-09 it stopped one short, so a whole stack could not be copied.)
         inst = Behavior.structural(name, on: stack, takes: [.int]) { args, view in
-            let number = min(view.count - 1, max((args[0] as! IntItem).value, 0))
+            let number = min(view.count, max((args[0] as! IntItem).value, 0))
             guard view.count > 0, number > 0 else { return .unchanged }
             let box = CodeItem(Array(view.top(number).reversed()))
             return .loop(Interpreter.iteratorLoop(
@@ -122,7 +124,7 @@ nonisolated extension Interpreter {
         }
         .described(
             "Copies the top n \(stack.plural), keeping their order;"
-            + " n is clamped between 0 and one less than the depth."
+            + " n is clamped between 0 and the depth."
         )
         result[name] = inst
     }

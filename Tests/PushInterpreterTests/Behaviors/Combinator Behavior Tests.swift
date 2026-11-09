@@ -74,6 +74,20 @@ struct CombinatorBehaviorTests {
         #expect(callString(topItem(inty, .double)) == "( )")
     }
 
+    /// The count is clamped to the whole stack, as `PopItems` clamps it.
+    @Test func `DupItems can copy the whole stack`() {
+        loadDoubles(inty, doubles: [1.1, 2.2])
+        inty.stacks[.int] = [IntItem(99)]
+        doThis(.doubleDupItems, to: inty)
+        inty.run(stepLimit: 10_000)
+        #expect(stackString(inty, .double) == "[ 1.1 2.2 1.1 2.2 ]")
+
+        let single = Interpreter()
+        single.load(program: [DoubleItem(3.5), IntItem(1), InstructionItem(.doubleDupItems)])
+        single.run(stepLimit: 100)
+        #expect(stackString(single, .double) == "[ 3.5 3.5 ]", "one item, copied")
+    }
+
     @Test func `combinator DupTimes works`() {
         loadInts(inty, ints: [2,0,-5])
         loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4])

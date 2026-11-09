@@ -11,7 +11,7 @@ An index or a count comes from `.int`, and is clamped into the stack rather than
 | `intDeepDup` | Copies the int i up from the bottom (0 is the bottom) and puts the copy just above it; i is clamped into the stack. | `int`, 2 `int` items | `int`, rearranged |
 | `intDeleteAtDepth` | Deletes the int at depth i (counted once i is popped); i is clamped into the stack. | `int`, a `int` item | `int`, rearranged |
 | `intDup` | Copies the top int. | a `int` item | `int`, rearranged |
-| `intDupItems` | Copies the top n ints, keeping their order; n is clamped between 0 and one less than the depth. | `int` | `int`, rearranged |
+| `intDupItems` | Copies the top n ints, keeping their order; n is clamped between 0 and the depth. | `int` | `int`, rearranged |
 | `intDupTimes` | Pushes n more copies of the top int; n ≤ 0 copies nothing. | `int`, a `int` item | `int`, rearranged |
 | `intFlush` | Discards every int. | — | `int`, rearranged |
 | `intPop` | Discards the top int. | a `int` item | `int`, rearranged |
