@@ -21,6 +21,9 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-collections.git", from: "1.5.0"),
+        // Documentation only: `swift package generate-documentation` builds the
+        // DocC site. A build plugin; nothing from it is linked into the library.
+        .package(url: "https://github.com/swiftlang/swift-docc-plugin.git", from: "1.4.0"),
     ],
     targets: [
         .target(
