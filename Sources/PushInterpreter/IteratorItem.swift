@@ -447,6 +447,11 @@ nonisolated extension IteratorItem {
             guard value >= 0 else { return true }
             guard let current = currentValue() else { return true }
             guard let end = (destination as? IntItem)?.value else { return true }
+            // Exclusive of the end, as `hasNextPass` is: a cursor that has reached
+            // it has nothing to emit. The one exception is the single pass a range
+            // whose bounds are equal gets, at cursor 0. (Until 2026-11-09 a cursor
+            // set onto the end still emitted it once.)
+            if current == end { return value != 0 }
             return stride > 0 ? current > end : current < end
         case .repeating:
             return value < 0 || value >= (destination as? IntItem)?.value ?? 0
