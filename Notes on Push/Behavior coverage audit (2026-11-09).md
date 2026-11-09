@@ -352,6 +352,9 @@ The same applies to any set type (§7).
 
 ### P8. Local variables (#39), on top of the dictionary
 
+**Superseded by §9**, the `.ref` stack of keyed bindings. What follows is the
+first version, kept for the record.
+
 - As the user observed, variables add flexibility of algorithm more than reach
   in the graph.
 - The cheapest form is **one dictionary the interpreter owns**, plus ten tokens
@@ -412,10 +415,10 @@ The same applies to any set type (§7).
 | P2 | ≈ 15 | #2's design |
 | ~~P7 + P8~~ | ~~≈ 35~~ | ~~the type registry (A4 / #37)~~ |
 | P7′ (pattern lookup, §8) | ≈ 43 | — |
-| P8 (variables as writable inputs) | ≈ 11 | — |
+| ~~P8 (variables as writable inputs)~~ | ~~≈ 11~~ | |
+| P8′ (`.ref` stack, §9) | ≈ 45 | one new stack, so the type registry helps |
 
-In all, about 160, taking 607 to about 770. None of it needs a new stack or the
-type registry.
+In all, about 195, taking 607 to about 800. Only `.ref` is a new stack.
 
 **With P1–P6 and P9, every task in §2 has at least two routes within 5 steps.**
 Dedupe has two:
@@ -443,6 +446,11 @@ Word frequency and variables wait for P7.
    (§7)?
 7. Pattern lookup (§8) instead of a dictionary type: read the probe, copy the
    match, refuse on a miss? Measure the match rates first?
+8. For `.ref` (§9):
+   - Does a dereferenced code block **run** (Push3's way, which gives named
+     subroutines), or is it delivered to `.code`?
+   - Is a miss an error of its own kind, or nothing?
+   - Is `execLet` wanted from the start?
 
 
 ## 7. Sets: operations, or a type? (2026-11-09)
@@ -672,3 +680,161 @@ and compare three rates:
 The argument above predicts the order: nearest, prefix, containing, then
 equality, with the dictionary type last. Checking that is about a day's work.
 Debating it costs more.
+
+
+## 9. A `.ref` stack: keyed bindings, each variable a stack (2026-11-09)
+
+The user's design:
+- A **`.ref` stack whose items are the pairs of §8**, `( key value )`, kept on
+  a stack of their own.
+- A lookup **sieves** `.ref` for the topmost pair whose key matches. With the
+  ability to dereference the key from a matched right-hand side, this gives
+  explicitly keyed variable bindings.
+- Older pairs with the same key stay below. They are recovered over time as the
+  newer pairs are popped, **so each variable's storage becomes a stack in
+  itself.**
+
+It supersedes P8. It also answers #39's open question ("how the interpreter
+stores the bindings"): **on a stack, like everything else.**
+
+### What it is
+
+**An item.** A `RefItem` is a pair: a key and a value, each any item, compared
+by value (§9 of Design Principles).
+- It has a stack of its own, so the `code` instructions cannot cut, splice or
+  eat a binding. That was §8's objection to association blocks living on
+  `.code`.
+- It quotes to the block `( key value )` and is made from one, so it stays
+  homoiconic.
+
+**Shadowing, for free, from LIFO.**
+- Binding a key that is already bound pushes a new pair *above* the old one. A
+  lookup finds the new one; the old one waits underneath.
+- Removing the newest binding of a key brings the previous one back.
+- That is dynamic scoping, which Lisp's special variables and Forth's
+  dictionary both have. It costs no machinery beyond the sieve.
+
+**The order is the stack's.** No hash order is ever exposed (the user's
+clarification in P7). A hash index could sit beside the stack to speed lookups,
+without changing any result.
+
+### The operations
+
+| Operation | What it does | Argument | Notes |
+|---|---|---|---|
+| **bind** | push a new pair (shadowing any older binding of the key) | a key and a value | |
+| **deref** | the value of the topmost pair whose key matches → `.exec`, where it lands on its own stack; the pair stays | a key | |
+| **reverse deref** | the key of the topmost pair whose **value** matches → `.exec` | a value | "which variable holds 5?" With §8's nearest kind: "which index holds the value closest to x?", an argmax-like search for free |
+| **unbind** | remove the topmost pair with the key, bringing back the one beneath | a key | |
+| **binding depth** | how many bindings the key has: its own stack's depth → `.int` | a key | |
+| `refPop`, `refSwap`, … | positional, as on any stack | | `refPop` drops the newest binding of *any* variable: the user's "recovered over time by popping" |
+| `refQuote`, `refFromCode`, `refEq` | homoiconicity and equality | | |
+
+Shadowing then has several short routes:
+- `unbind`, by key;
+- `refPop`, by position;
+- `refYank` and `refShove`, which reorder bindings.
+
+### Key starvation, again
+
+The three conditions of §8, for `.ref`:
+
+1. **A store exists.** `.ref` holds one item per binding, and a lookup does not
+   consume the pair. So the stack fills after the first bind and stays filled.
+   That is the opposite of `.iterator`, whose items are consumed by the loop
+   that made them.
+2. **A key is in hand.** This is the decisive part. **Put the key in the
+   instruction's name, as `input0…input9` already do.** Ten tokens `ref0…ref9`
+   each dereference the binding of their own name.
+   - They take **no arguments at all**, so they cannot starve for a key.
+   - The name's key is a fixed item. A general lookup with that item as its
+     probe reaches the same binding, so the named and the general routes agree.
+3. **The key is bound.** With ten names instead of arbitrary strings, a miss
+   happens only if that name has never been bound. After *n* random binds, a
+   given name is bound with probability 1 − 0.9ⁿ: two-thirds after 10 binds.
+
+**Binding without starving** comes from the source Push3 used for
+`EXEC.DEFINE`: the next item on `.exec`.
+- `.exec` never starves (*Stack economics* §9): it is not empty while a program
+  runs.
+- `bind3 5` binds name 3 to `5`, and `bind3 ( … )` binds it to a block.
+- A computed value needs a second route, taking it from `.code`:
+  `x .intQuote .codeBind3`.
+
+So a named variable costs nothing to read and one argument, which `.exec`
+always supplies, to write. General keys remain available for programs that
+build them: **any item quoted is a key**, through `refBind`, `refDeref`,
+`refUnbind` and their pattern variants, which take the key from `.code`.
+
+### What dereferencing a block does
+
+Push3 pushed a bound value onto `.exec`, so **a bound block runs when its name
+is executed**. That makes bindings **named subroutines**:
+- `bind3 ( .intDup .intMultiply )`, then `.ref3`, squares whatever is on `.int`.
+- A block that mentions `.ref3` calls itself. That is recursion, and it ends at
+  the step limit unless it is guarded. These tokens therefore belong with the
+  runaway guard's re-entrant set, as `execY` does.
+
+The alternative is to deliver the block to `.code` as data, safe and inert. Both
+routes have uses. The note's suggestion, since "code is data until a program
+asks to run it" (§7):
+- **the named tokens run** (the program asked, by naming it);
+- **a general `refDerefToCode` delivers.**
+
+### Scope as a combinator
+
+With shadowing in place, a `let` is one control instruction:
+- **`execLet`**: bind, run the next block, then unbind. The binding is visible
+  only inside the block, and the outer binding returns after it.
+- That is lexical-looking scope from dynamic machinery.
+- Without it, the same thing takes 3 steps: `bind3 x ( … ) unbind3`. So `let`
+  is one more route, not the only one.
+
+### Provenance
+
+- **A dereferenced value keeps its own crux.** The binding is transparent, a
+  copy that records nothing (law 1). Nothing has to stand in for the value
+  (#39), and the crux reads as the computation that made the value, not as "the
+  value of variable 3".
+- The *pair* has a crux like any built item: its key's crux, its value's crux,
+  and `refBind`.
+- This is also what a crux needs to **name a shared node**. A value used three
+  times appears three times in the crux, each copy carrying the same history,
+  instead of being threaded through `Dup` and `YankDup`. (Compressing the
+  repetition is #36's business, not this one's.)
+
+### How this relates to §8
+
+`.ref` is pattern lookup specialized to pairs, so §8's kinds apply on either
+side of the pair:
+- **exact on the key**: variables;
+- **nearest on the key**: a total table, which never misses;
+- **prefix on the key**: namespaces, e.g. every key beginning `"pt."`;
+- **any kind on the value**: reverse lookup.
+
+One factory over (kind × side) builds them.
+
+The other routes stay, because the constraints ask for several:
+- association blocks on `.code`;
+- parallel stacks aligned by depth;
+- the nearest lookup on scalar stacks.
+
+### Size
+
+| Group | Instructions |
+|---|---|
+| Structural rules for `.ref` | 12 |
+| `refQuote`, `refFromCode`, `refEq` | 3 |
+| `ref0…ref9` (deref) | 10 |
+| `bind0…bind9` (from `.exec`) | 10 |
+| General `refBind`, `refDeref`, `refDerefToCode`, `refUnbind`, `refBindingDepth`, reverse deref, two pattern variants | about 8 |
+| `execLet` | 1 |
+| **Total** | **about 45** |
+
+The `codeBindN` family from `.code` would add 10 more. It could be left out,
+since `refBind` covers it in one more step.
+
+It is a new stack, so it pays the type-adding cost (#37), and building the type
+registry first would make that cheaper. **It is the one new stack this audit
+recommends**, because it is the one structure the existing stacks cannot provide
+privately.
