@@ -468,10 +468,9 @@ nonisolated extension IteratorItem {
     /// The counting engine is **exclusive** of its destination: an iterator from 7
     /// toward 4 emits 7, 6, 5 and stops, the rule `|dest − current| > |stride|`,
     /// which extends sensibly to wider strides (0→10 by 3 emits 0, 3, 6, 9).
-    /// `execDoCount`, `execDoTimes` and `iteratorFromIntRange` use it as is.
-    /// `.execDoRange` is *inclusive* (since 2026-11-07, Roadmap #25, as in Push3):
-    /// it hands the engine a destination one step past the program's, so
-    /// `4 7 .execDoRange` emits 7, 6, 5, 4.
+    /// `execDoCount`, `execDoTimes`, `execDoRange` and `iteratorFromIntRange` all
+    /// use it as is, so every counted loop in the language stops short of its end
+    /// (`execDoRange` was inclusive, as in Push3, until 2026-11-09).
     ///
     /// The subtraction can overflow — `Int.min` to `Int.max` — and an overflowing
     /// difference means the two are as far apart as it is possible to be, so it

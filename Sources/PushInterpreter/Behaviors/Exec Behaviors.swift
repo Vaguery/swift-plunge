@@ -173,19 +173,12 @@ nonisolated extension Interpreter {
                 // single pass either way.
                 let direction = y.value <= x.value ? 1 : -1
 
-                // **Inclusive of the destination** (2026-11-07, Roadmap #25), as
-                // in Push3: `4 7 .execDoRange` emits 7, 6, 5, 4, and equal bounds
-                // make one pass. The counting engine stops *before* its
-                // destination, and `execDoCount`, `execDoTimes`,
-                // `iteratorFromIntRange` and the collectors keep that, so this
-                // hands the engine a destination one step past `x`. That bound is
-                // a new value, and records `x direction .intAdd`. At the edge of
-                // `Int` it saturates to `x` itself, which costs the final pass only
-                // there, and keeps `x`'s own history (law 1: value unchanged).
-                let (past, overflowed) = x.value.addingReportingOverflow(direction)
-                let destination = overflowed
-                    ? x
-                    : IntItem(past, call: recording([x, IntItem(direction), InstructionItem(.intAdd)]))
+                // **Exclusive of the destination**, like every other counted loop
+                // (`execDoCount`, `execDoTimes`, `iteratorFromIntRange`):
+                // `4 7 .execDoRange` emits 4, 5, 6, and equal bounds make one pass.
+                // (Inclusive, as in Push3, from 2026-11-07 until the user ruled on
+                // 2026-11-09 that the language's ranges should agree.)
+                let destination = x
 
                 return iteratorLoop(
                     kind: .counting(stride: direction),
@@ -197,8 +190,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 through b inclusive, running the "
-            + "body after each; the body then returns to `.code`.")
+            "Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 up to but not including b (one "
+            + "pass when a = b), running the body after each; the body then returns to `.code`.")
 
     /// Build an iterator and hand it to `.iteratorPlay` — the shape every looping
     /// instruction in the language now reduces to, whether it counts a range or

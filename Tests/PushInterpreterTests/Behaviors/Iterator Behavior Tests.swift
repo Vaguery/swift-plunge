@@ -706,7 +706,7 @@ struct IteratorBehaviorTests {
     /// Nested loops are just two iterators resting on the same stack.
     @Test func `a loop body can run a loop of its own`() {
         let inty = Interpreter.recordingProvenance()
-        // Outer: 0→3. Inner, per pass: 0→3 again, pushing a `true` each time.
+        // Outer: 0 toward 3. Inner, per pass: 0 toward 3 again, pushing a `true` each time.
         inty.load(program: [
             IntItem(0), IntItem(3),
             CodeItem([
@@ -717,9 +717,9 @@ struct IteratorBehaviorTests {
         ])
         inty.run(stepLimit: 10_000)
 
-        // Four outer passes (0…3, inclusive since 2026-11-07), each running four
-        // inner ones: sixteen bodies.
-        #expect(inty.stacks[.bool]!.count == 16)
+        // Three outer passes (0, 1, 2: the range stops short of 3), each running
+        // three inner ones: nine bodies.
+        #expect(inty.stacks[.bool]!.count == 9)
         // Both loops finished and cleaned up after themselves.
         #expect(stackString(inty, .iterator) == "[ ]")
         #expect(inty.stacks[.error]!.isEmpty)
@@ -750,9 +750,9 @@ struct IteratorBehaviorTests {
         // loop able to interfere with an outer one.
         let inner = inty.stacks[.iterator]![0] as! IteratorItem
         let outer = inty.stacks[.iterator]![1] as! IteratorItem
-        // One past 9: the range is inclusive, and the engine stops before its end.
-        #expect((inner.destination as? IntItem)?.value == 10)
-        #expect((outer.destination as? IntItem)?.value == 10)
+        // 9 itself: the range stops short of its end, as the engine does.
+        #expect((inner.destination as? IntItem)?.value == 9)
+        #expect((outer.destination as? IntItem)?.value == 9)
 
         // Running on: the inner loop finishes and leaves the outer one behind,
         // untouched and still going.

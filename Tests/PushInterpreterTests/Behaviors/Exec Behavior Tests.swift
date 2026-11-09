@@ -104,10 +104,10 @@ struct ExecBehaviorTests {
         #expect(stackString(inty, .code) == "[ ( false ) ]")
     }
 
-    /// Was `execDoRange doesn't loop if the counters are the same`, which pinned
-    /// `3 4` making one pass. Since 2026-11-07 the range is inclusive (Roadmap
-    /// #25): adjacent bounds make two passes, and equal bounds one (below).
-    @Test func `execDoRange includes its destination when the bounds are adjacent`() {
+    /// Exclusive of its destination, like every counted loop (inclusive from
+    /// 2026-11-07, Roadmap #25, until the user ruled on 2026-11-09 that the
+    /// ranges should agree): adjacent bounds make one pass, and so do equal ones.
+    @Test func `execDoRange stops short of its destination`() {
         loadInts(inty, ints: [3, 4])
         // The body is a code argument now, so it waits on `.code`.
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))
@@ -119,21 +119,14 @@ struct ExecBehaviorTests {
         // instruction only builds, and `.iteratorPlay` does the work.
         doThis(.execDoRange, to: inty)
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
-        // The engine stops before its destination, so it is handed one past 3.
-        #expect(stackString(inty, .iterator) == "[ «4→2 by -1 @0 ( false )» ]")
+        #expect(stackString(inty, .iterator) == "[ «4→3 by -1 @0 ( false )» ]")
         #expect(stackString(inty, .int) == "[ ]")
 
-        // First pass: index 4, and the loop continues.
+        // The one pass: index 4. The spent iterator is consumed rather than
+        // coming to rest, and the body waits under the pass, returning to .code.
         inty.step()
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
-        #expect(stackString(inty, .int) == "[ 4 ]")
-
-        // Second and last pass: index 3, the destination. The index goes straight
-        // to `.int`, and the spent iterator is consumed rather than coming to rest.
-        for _ in 0..<4 { inty.step() }
-        // The body waits under the last pass, and returns to .code after it.
         #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
-        #expect(stackString(inty, .int) == "[ 3 4 ]")
+        #expect(stackString(inty, .int) == "[ 4 ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
@@ -142,7 +135,7 @@ struct ExecBehaviorTests {
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(false)]))
 
         doThis(.execDoRange, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «4→5 by 1 @0 ( false )» ]")
+        #expect(stackString(inty, .iterator) == "[ «4→4 by 1 @0 ( false )» ]")
         inty.step()
         // The body waits under the last pass, and returns to .code after it.
         #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
@@ -181,13 +174,13 @@ struct ExecBehaviorTests {
         // `.iteratorPlay` and one iterator; the bounds never touch `.int` again.
         doThis(.execDoRange, to: inty)
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
-        #expect(stackString(inty, .iterator) == "[ «7→3 by -1 @0 ( false )» ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @0 ( false )» ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
         inty.step()   // first pass: index 7, the body, and the loop's next copy
         #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
-        #expect(stackString(inty, .iterator) == "[ «7→3 by -1 @1 ( false )» ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @1 ( false )» ]")
         #expect(stackString(inty, .int) == "[ 7 ]")
         #expect(stackString(inty, .bool) == "[ ]")
 
@@ -205,24 +198,19 @@ struct ExecBehaviorTests {
 
         inty.step()   // second pass: index 6
         #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
-        #expect(stackString(inty, .iterator) == "[ «7→3 by -1 @2 ( false )» ]")
+        #expect(stackString(inty, .iterator) == "[ «7→4 by -1 @2 ( false )» ]")
         #expect(stackString(inty, .int) == "[ 6 7 ]")
 
         for _ in 0..<3 { inty.step() }   // run the body again
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
         #expect(stackString(inty, .bool) == "[ false false ]")
 
-        inty.step()   // third pass: index 5
-        #expect(stackString(inty, .exec) == "[ ( false ) .codeDo .iteratorPlay ]")
-        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
-
-        for _ in 0..<3 { inty.step() }   // run the body again
-        inty.step()   // fourth pass: index 4, the destination, and the loop ends there
+        inty.step()   // third and last pass: index 5, short of the destination 4
         // The body waits under the last pass, and returns to .code after it.
         #expect(stackString(inty, .exec) == "[ ( false ) .codeDo ( false ) ]")
-        #expect(stackString(inty, .int) == "[ 4 5 6 7 ]")
-        // The destination is INCLUDED (since 2026-11-07, Roadmap #25; it used to
-        // be excluded), and the spent iterator is consumed rather than resting.
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
+        // The destination is excluded (as it was before 2026-11-07, and again
+        // from 2026-11-09), and the spent iterator is consumed rather than resting.
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
@@ -235,9 +223,9 @@ struct ExecBehaviorTests {
         ])
         inty.run(stepLimit: 10_000)
 
-        #expect(stackString(inty, .int) == "[ 4 5 6 7 ]")
+        #expect(stackString(inty, .int) == "[ 5 6 7 ]")
         let last = inty.stacks[.int]!.first!
-        #expect(CodeItem(last.crux()).pretty() == "( 7 -3 .intAdd )")
+        #expect(CodeItem(last.crux()).pretty() == "( 7 -2 .intAdd )")
     }
 
     @Test func `execDoTimes doesn't loop if the counter is not positive`() {

@@ -50,8 +50,9 @@ struct ProvenanceTests {
         inty.config.stepLimit = 20_000
         inty.load(program: [
             IntItem(0),
-            // `.execDoRange` is inclusive (since 2026-11-07), so `0 n−1` is n passes.
-            IntItem(iterations - 1),
+            // `.execDoRange` stops short of its end (since 2026-11-09), so `0 n` is
+            // n passes, 0 through n − 1.
+            IntItem(iterations),
             CodeItem(body),                    // lands on .code, waiting
             InstructionItem(.execDoRange),
         ])
@@ -105,9 +106,9 @@ struct ProvenanceTests {
 
         let counter = inty.stacks[.int]!.first!
         #expect(counter.call.count == 3)
-        // Inclusive (since 2026-11-07): the last index is 10 itself.
-        #expect(CodeItem(counter.crux()).pretty() == "( 60 -50 .intAdd )")
-        #expect((rerun(counter.crux(), reading: .int) as? IntItem)?.value == 10)
+        // Exclusive (since 2026-11-09): the last index is 11, one short of 10.
+        #expect(CodeItem(counter.crux()).pretty() == "( 60 -49 .intAdd )")
+        #expect((rerun(counter.crux(), reading: .int) as? IntItem)?.value == 11)
     }
 
     /// `IteratorItem` is first-class now: it rests on `.iterator`, and its state
@@ -153,8 +154,8 @@ struct ProvenanceTests {
 
         let iterator = inty.stacks[.iterator]!.first as? IteratorItem
         #expect((iterator?.origin as? IntItem)?.value == 0)
-        // One past 200: the range is inclusive, and the engine stops before its end.
-        #expect((iterator?.destination as? IntItem)?.value == 201)
+        // 200 itself: the range stops short of its end, as the engine does.
+        #expect((iterator?.destination as? IntItem)?.value == 200)
         #expect(iterator?.stride == 1)
         #expect(iterator?.value == 0)          // the cursor
         // Neither bound is loose anywhere.

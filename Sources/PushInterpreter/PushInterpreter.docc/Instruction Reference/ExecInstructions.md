@@ -15,7 +15,7 @@ The `.exec` stack is the program still to run: the interpreter pops its top item
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `execDoCount` | Counts: `n ( body ) .execDoCount` pushes 0 to n − 1 in turn, running the body after each; the body then returns to `.code`, at once if n < 1. | `int`, `code` | the rest of the program |
-| `execDoRange` | Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 through b inclusive, running the body after each; the body then returns to `.code`. | `int`, `int`, `code` | the rest of the program |
+| `execDoRange` | Counts: `a b ( body ) .execDoRange` pushes a, then each int by ±1 up to but not including b (one pass when a = b), running the body after each; the body then returns to `.code`. | `int`, `int`, `code` | the rest of the program |
 | `execDoTimes` | Repeats: `n ( body ) .execDoTimes` runs the body n times, pushing no index; the body then returns to `.code`, at once if n < 1. | `int`, `code` | the rest of the program |
 | `execDoWhile` | Runs the body once and then, only if the bool it took beforehand was true, loops as `.execWhile` does, testing a new bool after each pass. | `bool`, `code` | the rest of the program |
 | `execIf` | Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding the other block. | `bool`, `code`, `code` | the rest of the program |

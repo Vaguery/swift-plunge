@@ -56,7 +56,8 @@ The loop instructions take a count from `.int` and a body from `.code`:
 
 - `execDoTimes` runs the body n times.
 - `execDoCount` pushes 0, 1, …, n − 1, running the body after each.
-- `execDoRange` counts from one int to another, including both ends.
+- `execDoRange` counts from one int toward another, stopping short of it, as
+  every counted loop does (equal bounds make one pass).
 - `execWhile` runs the body as long as the bool on top of `.bool` is true, taking
   a new bool before each pass; `execDoWhile` runs it once first.
 
