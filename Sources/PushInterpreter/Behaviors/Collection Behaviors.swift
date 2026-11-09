@@ -113,6 +113,129 @@ nonisolated extension Interpreter {
     static let stringMin_Behavior = stringExtremeBehavior(.stringMin, greatest: false)
 
 
+    // MARK: - Set operations (audit P1b)
+    //
+    // Sets as operations on the collections that exist, not as a type (audit
+    // §7). `Distinct` keeps first occurrences. `Intersect` and `Difference` are
+    // **filters**: they keep the first argument's elements that are (are not)
+    // in the second, in the first's order and with its repeats, so
+    // `"hello" "aeiou" .stringDifference` is `"hll"`; set semantics are one
+    // `Distinct` away, and `Concat` then `Distinct` is the union. Each kept
+    // element keeps its origin. `IsSubset` asks whether every element of the
+    // first is in the second, and reads both. Membership is a hashed test whose
+    // order never shows.
+
+    static func distinctBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior
+    where V.Element: Hashable {
+        Behavior.assembling(instruction, takes: V.self, gives: V.self) { x in
+            var seen = Set<V.Element>()
+            let kept = x.value.indices.filter { seen.insert(x.value[$0]).inserted }
+            let origins = x.origins()
+            return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
+        }
+    }
+
+    /// Keeps the elements of the first vector that are (`keeping: true`) or are
+    /// not in the second.
+    static func filterBehavior<V: VectorItem>(
+        _ instruction: PushInstruction, making itemType: V.Type, keeping: Bool
+    ) -> Behavior where V.Element: Hashable {
+        Behavior.assembling(instruction, takes: V.self, V.self, gives: V.self) { x, y in
+            let other = Set(y.value)
+            let kept = x.value.indices.filter { other.contains(x.value[$0]) == keeping }
+            let origins = x.origins(0)
+            return Built(kept.map { x.value[$0] }, members: kept.map { origins[$0] })
+        }
+    }
+
+    static func isSubsetBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior
+    where V.Element: Hashable {
+        Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { x, y in
+            Set(y).isSuperset(of: x)
+        }
+    }
+
+    static let vecBoolDistinct_Behavior = distinctBehavior(.vecBoolDistinct, making: VecBoolItem.self)
+    static let vecIntDistinct_Behavior = distinctBehavior(.vecIntDistinct, making: VecIntItem.self)
+    static let vecDoubleDistinct_Behavior = distinctBehavior(.vecDoubleDistinct, making: VecDoubleItem.self)
+    static let vecStringDistinct_Behavior = distinctBehavior(.vecStringDistinct, making: VecStringItem.self)
+    static let vecBoolIntersect_Behavior = filterBehavior(.vecBoolIntersect, making: VecBoolItem.self, keeping: true)
+    static let vecIntIntersect_Behavior = filterBehavior(.vecIntIntersect, making: VecIntItem.self, keeping: true)
+    static let vecDoubleIntersect_Behavior =
+        filterBehavior(.vecDoubleIntersect, making: VecDoubleItem.self, keeping: true)
+    static let vecStringIntersect_Behavior =
+        filterBehavior(.vecStringIntersect, making: VecStringItem.self, keeping: true)
+    static let vecBoolDifference_Behavior = filterBehavior(.vecBoolDifference, making: VecBoolItem.self, keeping: false)
+    static let vecIntDifference_Behavior = filterBehavior(.vecIntDifference, making: VecIntItem.self, keeping: false)
+    static let vecDoubleDifference_Behavior =
+        filterBehavior(.vecDoubleDifference, making: VecDoubleItem.self, keeping: false)
+    static let vecStringDifference_Behavior =
+        filterBehavior(.vecStringDifference, making: VecStringItem.self, keeping: false)
+    static let vecBoolIsSubset_Behavior = isSubsetBehavior(.vecBoolIsSubset, making: VecBoolItem.self)
+    static let vecIntIsSubset_Behavior = isSubsetBehavior(.vecIntIsSubset, making: VecIntItem.self)
+    static let vecDoubleIsSubset_Behavior = isSubsetBehavior(.vecDoubleIsSubset, making: VecDoubleItem.self)
+    static let vecStringIsSubset_Behavior = isSubsetBehavior(.vecStringIsSubset, making: VecStringItem.self)
+
+    // Strings: sets of characters.
+
+    static let stringDistinct_Behavior =
+        Behavior.assembling(.stringDistinct, takes: StringItem.self, gives: StringItem.self) { x in
+            let characters = Array(x.value)
+            var seen = Set<Character>()
+            let kept = characters.indices.filter { seen.insert(characters[$0]).inserted }
+            let origins = x.origins()
+            return Built(String(kept.map { characters[$0] }), members: kept.map { origins[$0] })
+        }
+
+    static func stringFilterBehavior(_ instruction: PushInstruction, keeping: Bool) -> Behavior {
+        Behavior.assembling(instruction, takes: StringItem.self, StringItem.self, gives: StringItem.self) { x, y in
+            let characters = Array(x.value)
+            let other = Set(y.value)
+            let kept = characters.indices.filter { other.contains(characters[$0]) == keeping }
+            let origins = x.origins(0)
+            return Built(String(kept.map { characters[$0] }), members: kept.map { origins[$0] })
+        }
+    }
+
+    static let stringIntersect_Behavior = stringFilterBehavior(.stringIntersect, keeping: true)
+    static let stringDifference_Behavior = stringFilterBehavior(.stringDifference, keeping: false)
+
+    static let stringIsSubset_Behavior =
+        Behavior.operation(.stringIsSubset, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { x, y in
+            Set(y).isSuperset(of: x)
+        }
+
+    // Code: the root items, compared by value (Design Principles §9), so the one
+    // multitype collection gets set operations too. Each kept item is the item
+    // itself, with its own history (law 1b).
+
+    static func contains(_ items: [any Item], _ item: any Item) -> Bool {
+        items.contains { $0.isEqual(to: item) }
+    }
+
+    static let codeDistinct_Behavior =
+        Behavior.composing(.codeDistinct, takes: CodeItem.self, gives: CodeItem.self) { x in
+            var kept: [any Item] = []
+            for item in x.value where !contains(kept, item) { kept.append(item) }
+            return kept
+        }
+
+    static let codeIntersect_Behavior =
+        Behavior.composing(.codeIntersect, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
+            x.value.filter { contains(y.value, $0) }
+        }
+
+    static let codeDifference_Behavior =
+        Behavior.composing(.codeDifference, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
+            x.value.filter { !contains(y.value, $0) }
+        }
+
+    static let codeIsSubset_Behavior =
+        Behavior.operation(.codeIsSubset, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { x, y in
+            x.allSatisfy { contains(y, $0) }
+        }
+
+
     // MARK: - The family
 
     static let collectionBehaviors: [PushInstruction: Behavior] = [
@@ -126,5 +249,29 @@ nonisolated extension Interpreter {
         .vecStringMin: vecStringMin_Behavior,
         .stringMax: stringMax_Behavior,
         .stringMin: stringMin_Behavior,
+        .vecBoolDistinct: vecBoolDistinct_Behavior,
+        .vecIntDistinct: vecIntDistinct_Behavior,
+        .vecDoubleDistinct: vecDoubleDistinct_Behavior,
+        .vecStringDistinct: vecStringDistinct_Behavior,
+        .stringDistinct: stringDistinct_Behavior,
+        .codeDistinct: codeDistinct_Behavior,
+        .vecBoolIntersect: vecBoolIntersect_Behavior,
+        .vecIntIntersect: vecIntIntersect_Behavior,
+        .vecDoubleIntersect: vecDoubleIntersect_Behavior,
+        .vecStringIntersect: vecStringIntersect_Behavior,
+        .stringIntersect: stringIntersect_Behavior,
+        .codeIntersect: codeIntersect_Behavior,
+        .vecBoolDifference: vecBoolDifference_Behavior,
+        .vecIntDifference: vecIntDifference_Behavior,
+        .vecDoubleDifference: vecDoubleDifference_Behavior,
+        .vecStringDifference: vecStringDifference_Behavior,
+        .stringDifference: stringDifference_Behavior,
+        .codeDifference: codeDifference_Behavior,
+        .vecBoolIsSubset: vecBoolIsSubset_Behavior,
+        .vecIntIsSubset: vecIntIsSubset_Behavior,
+        .vecDoubleIsSubset: vecDoubleIsSubset_Behavior,
+        .vecStringIsSubset: vecStringIsSubset_Behavior,
+        .stringIsSubset: stringIsSubset_Behavior,
+        .codeIsSubset: codeIsSubset_Behavior,
     ]
 }

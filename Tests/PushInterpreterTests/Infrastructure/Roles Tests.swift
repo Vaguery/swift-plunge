@@ -86,7 +86,9 @@ struct TagsTests {
             - Interpreter.instructions(role: .input).count
         let furniture = Double(Interpreter.instructions(role: .combinator).count)
             / Double(notEnvironment)
-        #expect(furniture > 0.30 && furniture < 0.42)
+        // Lowered from 0.30 on 2026-11-09: the coverage audit's additions are all
+        // `.other` (0.29 after the set operations, ~0.24 when the audit is built).
+        #expect(furniture > 0.20 && furniture < 0.42)
     }
 
     @Test func `the tags hold what their names claim`() {

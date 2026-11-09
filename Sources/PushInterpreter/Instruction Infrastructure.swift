@@ -314,6 +314,10 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
 
+    // Set operations on collections (Behavior coverage audit, P1b)
+    case vecBoolDistinct, vecIntDistinct, vecDoubleDistinct, vecStringDistinct, stringDistinct, codeDistinct, vecBoolIntersect, vecIntIntersect, vecDoubleIntersect, vecStringIntersect, stringIntersect, codeIntersect,
+         vecBoolDifference, vecIntDifference, vecDoubleDifference, vecStringDifference, stringDifference, codeDifference, vecBoolIsSubset, vecIntIsSubset, vecDoubleIsSubset, vecStringIsSubset, stringIsSubset, codeIsSubset
+
     case string0, string1, string2, string3, string4, string5, string6, string7, string8, string9
     
     // vecBool constants
