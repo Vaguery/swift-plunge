@@ -48,10 +48,10 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 | `int7` | Pushes the run's constant 7 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
 | `int8` | Pushes the run's constant 8 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
 | `int9` | Pushes the run's constant 9 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `intLookupEqual` | Reads the top int as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `int`, `int`; may refuse |
-| `intLookupEqualFrom` | Reads the top int as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `int`, `int`; may refuse |
-| `intLookupNearest` | Reads the top int as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `int`, `int`; may refuse |
-| `intLookupNearestFrom` | Reads the top int as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `int`, `int`; may refuse |
+| `intLookupEqual` | Reads the top int as a probe and copies the topmost one below that equals it, then its depth + 1 on top of the copy; refuses on a miss. | — | `int`, `int`; may refuse |
+| `intLookupEqualFrom` | Reads the top int as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), then its depth + 1 on top of the copy; refuses on a miss. | `int` | `int`, `int`; may refuse |
+| `intLookupNearest` | Reads the top int as a probe and copies the nearest one below it, the topmost on a tie, then its depth + 1 on top of the copy. | — | `int`, `int`; may refuse |
+| `intLookupNearestFrom` | Reads the top int as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, then its depth + 1 on top of the copy; refuses when i is past the bottom. | `int` | `int`, `int`; may refuse |
 | `intRef` | Binds a copy of the top int, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
 
 ## Control

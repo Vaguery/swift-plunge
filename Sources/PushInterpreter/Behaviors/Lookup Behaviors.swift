@@ -18,8 +18,12 @@
 //    so it records a stand-in (law 4b), as `StackDepth` does;
 //  - **no match is a refusal, as if the stack were empty**: a missing-arguments
 //    error, and nothing consumed (ruling I20).
-//  When the stack is `.int` itself, the position goes down first and the copy
-//  on top of it.
+//  When the stack is `.int` itself, the copy goes down first and the position
+//  on top of it, so whatever takes the position (a yank, a `…From`) pops it and
+//  finds the copy on top and the match at that depth, as on any other stack.
+//  (Until 2026-11-09 the copy went on top, burying the position.) To walk every
+//  match on `.int`, drop the copy from under the position: `.intSwap .intPop`,
+//  then `.intLookupEqualFrom`.
 //
 //  **`…From`** takes a start from `.int` and searches from that depth down,
 //  inclusive (never the probe itself). Walking every match is lookup, use the
@@ -63,7 +67,10 @@ nonisolated extension Interpreter {
                         .observed(by: name, context.recording))]
             }
             let position = IntItem(found + 1).observed(by: name, context.recording)
-            return [Router(.int, position), Router(stack, items[found])]
+            // Routers land in order: on `.int` the position goes last, on top.
+            return stack == .int
+                ? [Router(.int, items[found]), Router(.int, position)]
+                : [Router(.int, position), Router(stack, items[found])]
         }
     }
 
@@ -347,7 +354,10 @@ nonisolated extension Interpreter {
                     .described(
                         "Reads the top \(stack.noun) as a probe and copies the topmost one below that equals it"
                         + ($1 ? ", searching from depth i (at least 1)" : "")
-                        + ", pushing its depth + 1 onto `.int`; refuses on a miss."
+                        + (stack == .int
+                            ? ", then its depth + 1 on top of the copy"
+                            : ", pushing its depth + 1 onto `.int`")
+                        + "; refuses on a miss."
                     )
             })
         }
@@ -358,7 +368,7 @@ nonisolated extension Interpreter {
                 .described(
                     "Reads the top int as a probe and copies the nearest one below it"
                     + ($1 ? ", searching from depth i (at least 1)" : "")
-                    + ", the topmost on a tie, pushing its depth + 1 onto `.int`"
+                    + ", the topmost on a tie, then its depth + 1 on top of the copy"
                     + ($1 ? "; refuses when i is past the bottom." : ".")
                 )
         })

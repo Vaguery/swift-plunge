@@ -55,9 +55,13 @@ struct LookupBehaviorTests {
         #expect(stackString(alone, .int) == "[ 5 ]", "nothing below the probe")
     }
 
-    @Test func `on the int stack the copy lands above its position`() {
+    @Test func `on the int stack the position lands on top, so a yank reaches the match`() {
         let inty = Self.run([IntItem(40), IntItem(7), IntItem(12), Self.op(.intLookupNearest)])
-        #expect(stackString(inty, .int) == "[ 7 2 12 7 40 ]")
+        #expect(stackString(inty, .int) == "[ 2 7 12 7 40 ]", "the position above the copy")
+
+        let yanked = Self.run([IntItem(40), IntItem(7), IntItem(12), Self.op(.intLookupNearest),
+                               Self.op(.intYank)])
+        #expect(stackString(yanked, .int) == "[ 7 7 12 40 ]", "the yank takes the position and fetches the match")
     }
 
     @Test func `a dictionary as association blocks on code`() {
@@ -82,7 +86,7 @@ struct LookupBehaviorTests {
         #expect(inty.stacks[.error]!.count == 1)
 
         let found = Self.run([IntItem(2), IntItem(3), Self.op(.intAdd), IntItem(6), Self.op(.intLookupNearest)])
-        let copy = found.stacks[.int]!.first!
+        let copy = found.stacks[.int]![1]   // under its position
         #expect(copy.pretty() == "5")
         #expect(CodeItem(copy.crux()).pretty() == "( 2 3 .intAdd )")
     }
