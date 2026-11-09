@@ -158,6 +158,17 @@ nonisolated extension Interpreter {
             return Extraction(x, at: Position.item(y.value, count: x.value.count))
         }
 
+    /// `stringNth` without consuming: the string and the index stay where they
+    /// were (ruling I7). `stringNth` itself still consumes, so an element's
+    /// address crux stays `s 2 .stringNth`.
+    static let stringPeekNth_Behavior =
+        Behavior.extracting(.stringPeekNth, reads: StringItem.self, IntItem.self) { x, y throws(Refusal) in
+            guard !x.value.isEmpty else {
+                throw Refusal("Empty string in .stringPeekNth", kind: .emptyCollection)
+            }
+            return Extraction(x, at: Position.item(y.value, count: x.value.count))
+        }
+
     /// Pushes every character of a string to `.string` as a one-character
     /// *string* — not a char, which is the whole of the difference from
     /// `stringPushAllChars` — one per pass, front to back.
@@ -458,6 +469,7 @@ nonisolated extension Interpreter {
         .stringLast : stringLast_Behavior,
         .stringLength : stringLength_Behavior,
         .stringNth : stringNth_Behavior,
+        .stringPeekNth : stringPeekNth_Behavior,
         .stringNthWord : stringNthWord_Behavior,
         .stringOccurrencesOfChar : stringOccurrencesOfChar_Behavior,
         .stringParseToLetters : stringParseToLetters_Behavior,

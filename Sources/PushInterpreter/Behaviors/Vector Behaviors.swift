@@ -201,6 +201,19 @@ nonisolated extension Interpreter {
         }
     }
 
+    // `Nth` without consuming: the vector and the index stay where they were
+    // (ruling I7). `Nth` itself still consumes, so an element's address crux
+    // stays `v 2 .vecIntNth`.
+    static func peekNthBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+        Behavior.extracting(instruction, reads: V.self, IntItem.self) { x, y throws(Refusal) in
+            let range = x.value.count
+            guard range != 0 else {
+                throw Refusal("Empty vector in .\(instruction)", kind: .emptyCollection)
+            }
+            return Extraction(x, at: Position.item(y.value, count: range))
+        }
+    }
+
     // returns the index of the first occurrence of the scalar argument; an error
     // if there is none (non-destructively: both the vector and the needle survive
     // the read). It used to answer -1, which any index-taking instruction would
@@ -734,6 +747,8 @@ nonisolated extension Interpreter {
     static let vecBoolReverse_Behavior =
         reverseBehavior(.vecBoolReverse, making: VecBoolItem.self)
 
+    static let vecBoolPeekNth_Behavior =
+        peekNthBehavior(.vecBoolPeekNth, making: VecBoolItem.self)
     static let vecBoolTakeLast_Behavior =
         takeLastBehavior(.vecBoolTakeLast, making: VecBoolItem.self)
     static let vecBoolDropLast_Behavior =
@@ -875,6 +890,7 @@ nonisolated extension Interpreter {
         .vecBoolReadStack : vecBoolReadStack_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
         .vecBoolTakeLast : vecBoolTakeLast_Behavior,
+        .vecBoolPeekNth : vecBoolPeekNth_Behavior,
         .vecBoolDropLast : vecBoolDropLast_Behavior,
     ]
 
@@ -899,6 +915,8 @@ nonisolated extension Interpreter {
     static let vecDoubleReverse_Behavior =
         reverseBehavior(.vecDoubleReverse, making: VecDoubleItem.self)
 
+    static let vecDoublePeekNth_Behavior =
+        peekNthBehavior(.vecDoublePeekNth, making: VecDoubleItem.self)
     static let vecDoubleTakeLast_Behavior =
         takeLastBehavior(.vecDoubleTakeLast, making: VecDoubleItem.self)
     static let vecDoubleDropLast_Behavior =
@@ -1051,6 +1069,7 @@ nonisolated extension Interpreter {
         .vecDoubleReadStack : vecDoubleReadStack_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
         .vecDoubleTakeLast : vecDoubleTakeLast_Behavior,
+        .vecDoublePeekNth : vecDoublePeekNth_Behavior,
         .vecDoubleDropLast : vecDoubleDropLast_Behavior,
     ]
 
@@ -1077,6 +1096,8 @@ nonisolated extension Interpreter {
     static let vecIntReverse_Behavior =
         reverseBehavior(.vecIntReverse, making: VecIntItem.self)
 
+    static let vecIntPeekNth_Behavior =
+        peekNthBehavior(.vecIntPeekNth, making: VecIntItem.self)
     static let vecIntTakeLast_Behavior =
         takeLastBehavior(.vecIntTakeLast, making: VecIntItem.self)
     static let vecIntDropLast_Behavior =
@@ -1227,6 +1248,7 @@ nonisolated extension Interpreter {
         .vecIntReadStack : vecIntReadStack_Behavior,
         .vecIntTake : vecIntTake_Behavior,
         .vecIntTakeLast : vecIntTakeLast_Behavior,
+        .vecIntPeekNth : vecIntPeekNth_Behavior,
         .vecIntDropLast : vecIntDropLast_Behavior,
     ]
 
@@ -1256,6 +1278,8 @@ nonisolated extension Interpreter {
     static let vecStringReverse_Behavior =
         reverseBehavior(.vecStringReverse, making: VecStringItem.self)
 
+    static let vecStringPeekNth_Behavior =
+        peekNthBehavior(.vecStringPeekNth, making: VecStringItem.self)
     static let vecStringTakeLast_Behavior =
         takeLastBehavior(.vecStringTakeLast, making: VecStringItem.self)
     static let vecStringDropLast_Behavior =
@@ -1509,6 +1533,7 @@ nonisolated extension Interpreter {
         .vecStringReadStack : vecStringReadStack_Behavior,
         .vecStringTake : vecStringTake_Behavior,
         .vecStringTakeLast : vecStringTakeLast_Behavior,
+        .vecStringPeekNth : vecStringPeekNth_Behavior,
         .vecStringDropLast : vecStringDropLast_Behavior,
     ]
 

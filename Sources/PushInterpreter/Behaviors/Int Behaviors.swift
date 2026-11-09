@@ -39,6 +39,15 @@ nonisolated extension Interpreter {
     static let intMin_Behavior =
         Behavior.operation(.intMin, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in min(y, x) }
 
+    // The non-destructive siblings (ruling I7, named 2026-11-09): read the two
+    // ints, leave them, and push the larger (smaller). `Peek` is the language's
+    // label for a read that does not consume, as on the iterator getters.
+    static let intPeekMax_Behavior =
+        Behavior.operation(.intPeekMax, reads: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in max(y, x) }
+
+    static let intPeekMin_Behavior =
+        Behavior.operation(.intPeekMin, reads: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in min(y, x) }
+
     // The zero divisor is checked first: dividing by zero also reports overflow.
     static let intQuot_Behavior =
         Behavior.operation(.intQuot, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
@@ -126,6 +135,8 @@ nonisolated extension Interpreter {
             .intInc : intInc_Behavior,
             .intMax : intMax_Behavior,
             .intMin : intMin_Behavior,
+            .intPeekMax : intPeekMax_Behavior,
+            .intPeekMin : intPeekMin_Behavior,
             .intMod : intMod_Behavior,
             .intMultiply : intMultiply_Behavior,
             .intQuot : intQuot_Behavior,

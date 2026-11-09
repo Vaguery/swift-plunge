@@ -49,6 +49,14 @@ nonisolated extension Interpreter {
     static let doubleMax_Behavior =
         Behavior.operation(.doubleMax, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in max(x, y) }
 
+    // The non-destructive siblings (ruling I7): read both, leave them, push the
+    // larger (smaller).
+    static let doublePeekMax_Behavior =
+        Behavior.operation(.doublePeekMax, reads: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in max(x, y) }
+
+    static let doublePeekMin_Behavior =
+        Behavior.operation(.doublePeekMin, reads: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x in min(x, y) }
+
     static let doubleSubtract_Behavior =
         Behavior.operation(.doubleSubtract, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
             let result = y - x
@@ -155,6 +163,8 @@ nonisolated extension Interpreter {
             .doubleInc : doubleInc_Behavior,
             .doubleMax : doubleMax_Behavior,
             .doubleMin : doubleMin_Behavior,
+            .doublePeekMax : doublePeekMax_Behavior,
+            .doublePeekMin : doublePeekMin_Behavior,
             .doubleMod : doubleMod_Behavior,
             .doubleMultiply : doubleMultiply_Behavior,
             .doubleQuot : doubleQuot_Behavior,

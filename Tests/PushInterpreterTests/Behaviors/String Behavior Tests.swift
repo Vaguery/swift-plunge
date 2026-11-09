@@ -144,6 +144,16 @@ struct StringBehaviorTests {
         #expect(run(.stringDropLast, -3) == "[ \"abcdefghij\" ]")
     }
 
+    @Test func `stringPeekNth reads without consuming`() {
+        let inty = Interpreter.recordingProvenance()
+        loadInts(inty, ints: [1])
+        loadStrings(inty, strings: ["hello"])
+        doThis(.stringPeekNth, to: inty)
+        #expect(stackString(inty, .char) == "[ 'e' ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+        #expect(stackString(inty, .string) == "[ \"hello\" ]")
+    }
+
     @Test func stringFirst() {
         loadStrings(inty, strings: ["", "abcdefghij"])
         #expect(stackString(inty, .char) == "[ ]")

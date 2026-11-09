@@ -160,6 +160,29 @@ nonisolated extension Behavior {
     }
 
 
+    /// **Reads one element out of a container**, leaving the container and the
+    /// index where they were: the non-destructive sibling of `extracting(takes:)`
+    /// (the `Peek` forms, ruling I7). A traced element is still the item that went
+    /// in; otherwise its crux names this instruction and then removes what it
+    /// read (`Behavior.reading`), so the fragment leaves only the element.
+    static func extracting<each A: ValueItem, C: TracingItem>(
+        _ label: PushInstruction,
+        reads: repeat (each A).Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) throws(Refusal) -> Extraction<C>
+    ) -> Behavior {
+        let gives = C.ElementItem.pushStack
+        return typed(label, stacks: stacks(repeat each reads), reading: true, gives: gives,
+                     tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let extraction = try body(repeat each items(args, call.positions, repeat each reads))
+            let container = extraction.container, index = extraction.index
+            let element = container.tracedElement(at: index, recording)
+                ?? C.ElementItem(container.element(at: index), call: recording(call.recorded(producing: gives)))
+            return [Router(gives, element)]
+        }
+    }
+
+
     // MARK: - Items in, two containers out
 
     /// **Splits into two results on one stack**, the first produced ending deepest

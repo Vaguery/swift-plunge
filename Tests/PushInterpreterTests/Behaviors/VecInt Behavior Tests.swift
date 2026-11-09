@@ -738,4 +738,31 @@ struct VecIntBehaviorTests {
         #expect(run(.vecIntDropLast, -1).0 == "[ [1, 2, 3, 4, 5] ]")
     }
 
+    /// The `Peek` form reads (ruling I7): the vector and the index stay, the
+    /// element lands on top, and a fresh run of the crux leaves only the element.
+    @Test func `peekNth reads without consuming`() {
+        let inty = Interpreter.recordingProvenance()
+        loadInts(inty, ints: [3])
+        inty.stacks[.vecInt]!.prepend(VecIntItem([10, 20, 30, 40]))
+        doThis(.vecIntPeekNth, to: inty)
+        #expect(stackString(inty, .int) == "[ 40 3 ]")
+        #expect(stackString(inty, .vecInt) == "[ [10, 20, 30, 40] ]")
+
+        let replay = Interpreter()
+        replay.load(program: topItem(inty, .int).crux())
+        replay.run()
+        #expect(stackString(replay, .int) == "[ 40 ]")
+        #expect(stackString(replay, .vecInt) == "[ ]")
+    }
+
+    @Test func `peekMax and peekMin leave both operands`() {
+        let inty = Interpreter.recordingProvenance()
+        loadInts(inty, ints: [4, 9])
+        doThis(.intPeekMax, to: inty)
+        #expect(stackString(inty, .int) == "[ 9 4 9 ]")
+        doThis(.intPop, to: inty)
+        doThis(.intPeekMin, to: inty)
+        #expect(stackString(inty, .int) == "[ 4 4 9 ]")
+    }
+
 }
