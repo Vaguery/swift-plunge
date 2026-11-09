@@ -314,6 +314,17 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
 
+    // Pattern lookup on the stacks (Behavior coverage audit, §8)
+    case intLookupEqual, intLookupEqualFrom, doubleLookupEqual, doubleLookupEqualFrom, charLookupEqual, charLookupEqualFrom,
+         stringLookupEqual, stringLookupEqualFrom, codeLookupEqual, codeLookupEqualFrom, vecBoolLookupEqual, vecBoolLookupEqualFrom,
+         vecIntLookupEqual, vecIntLookupEqualFrom, vecDoubleLookupEqual, vecDoubleLookupEqualFrom, vecStringLookupEqual, vecStringLookupEqualFrom,
+         intLookupNearest, intLookupNearestFrom, doubleLookupNearest, doubleLookupNearestFrom, charLookupNearest, charLookupNearestFrom,
+         stringLookupPrefix, stringLookupPrefixFrom, stringLookupContaining, stringLookupContainingFrom, codeLookupPrefix, codeLookupPrefixFrom,
+         codeLookupContaining, codeLookupContainingFrom, vecBoolLookupPrefix, vecBoolLookupPrefixFrom, vecBoolLookupContaining, vecBoolLookupContainingFrom,
+         vecIntLookupPrefix, vecIntLookupPrefixFrom, vecIntLookupContaining, vecIntLookupContainingFrom, vecDoubleLookupPrefix, vecDoubleLookupPrefixFrom,
+         vecDoubleLookupContaining, vecDoubleLookupContainingFrom, vecStringLookupPrefix, vecStringLookupPrefixFrom, vecStringLookupContaining, vecStringLookupContainingFrom,
+         codeLookupShape, codeLookupShapeFrom
+
     // Short iterator constructors (Behavior coverage audit, P3)
     case iteratorOverString, iteratorOverVecBool, iteratorOverVecInt, iteratorOverVecDouble,
          iteratorOverVecString, iteratorOverCode

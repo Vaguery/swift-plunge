@@ -71,7 +71,7 @@ struct BehaviorClassTests {
         #expect(counts == [
             .operation: 400,
             .structural: 144,   // 12 families × 12 stacks
-            .contextRead: 129,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars
+            .contextRead: 179,  // 80 constants, 10 inputs, 24 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars, 50 lookups
             .control: 29,
             .channel: 13,
         ], "\(counts)")

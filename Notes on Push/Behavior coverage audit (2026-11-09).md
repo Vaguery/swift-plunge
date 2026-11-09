@@ -1168,6 +1168,35 @@ what building them settled:
 - **The short constructors take two arguments**, a collection and a body, not
   one: a body is what makes them useful.
 
+**Step 4, stack lookups built 2026-11-09, 715 → 765 instructions.** Equal on
+every value stack but `.bool`; Nearest on int, double and char; Prefix and
+Containing on string, code and the four vectors; Shape on code. Each has its
+`…From` variant, 50 in all. Settled in building:
+- **The position returned is the match's depth plus one**, in the stack as it
+  was: where the match sits under the copy, so `xYank` reaches it, and where the
+  next search starts once the copy has been used. `…From` is inclusive.
+- **Deferred:** Nearest for strings and vectors (they have an order, not a
+  distance; edit distance is too slow at the size limits); the iterator's kind;
+  lookups on `.exec` (a "goto").
+- **Measured** (*Lookup Match Rates.swift*, 300 random programs leaning on
+  lookups). Of the searches that had something to search, the hits were:
+
+  | Kind | Hits |
+  |---|---|
+  | Nearest | 100% |
+  | Shape | 67% |
+  | Prefix | 39% |
+  | Equal | 31% |
+  | Containing | 25% |
+
+  Code lookups hit most often (50–82%), because random code stacks hold many
+  similar blocks.
+  - The prediction's order held at the top (Nearest first) but not lower down:
+    Equal beats Containing, because duplication fills stacks with equal items.
+  - **Starvation, not matching, is the real limit.** About 70% of attempts
+    found fewer than two items on the searched stack. A dictionary type would
+    starve worse, on a stack only its own constructor fills.
+
 **Order of work**, a suggestion and not a ruling:
 1. The small fixes and the ruled leftovers (P9 and rulings 1–2).
 2. Then P1, P1b, P5, P6 and P4, the operations needing no new machinery.
