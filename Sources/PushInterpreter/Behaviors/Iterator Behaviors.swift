@@ -641,8 +641,9 @@ nonisolated extension Interpreter {
     ///
     /// `origin ( body ) cursor burial emits`, the body beside what it walks, as in
     /// every other loop constructor. The origin lands on its own stack, so only the
-    /// two ints share `.int`, and `burial`, written last of them, arrives on top. An empty body means a sequence rather than a loop (see
-    /// `IteratorItem.init`), which is how one constructor serves both.
+    /// two ints share `.int`, and `burial`, written last of them, arrives on top.
+    /// An empty body means a sequence rather than a loop (see `IteratorItem.init`),
+    /// which is how one constructor serves both.
     static func iteratorWalking_Behavior(
         _ name: PushInstruction,
         over source: PushStack,
