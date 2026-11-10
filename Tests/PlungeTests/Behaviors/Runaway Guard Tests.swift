@@ -1,6 +1,6 @@
 //
 //  Runaway Guard Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Exercises Interpreter.enforceRunawayGuard by seeding stacks directly into
 //  the mid-loop states it is meant to catch, rather than trying to hand-build a
@@ -8,7 +8,7 @@
 //  one gate: the data-side symptom, the control-side confirmation, or a knob.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

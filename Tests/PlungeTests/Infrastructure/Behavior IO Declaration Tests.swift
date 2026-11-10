@@ -1,6 +1,6 @@
 //
 //  Behavior IO Declaration Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Every Behavior declares what it produces (`Produces`). These
 //  drive each one on varied, seeded stacks (the `BehaviorIOSurvey` sampler) and
@@ -8,7 +8,7 @@
 //  input-output map is a property of the definitions that running confirms.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

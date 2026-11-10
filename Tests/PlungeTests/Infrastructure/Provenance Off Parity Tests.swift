@@ -1,6 +1,6 @@
 //
 //  Provenance Off Parity Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  With `recordsProvenance` off, Behaviors skip building provenance altogether: every
 //  `call` expression is written inside `recording(…)` (see `ProvenanceRecording`) and
@@ -17,7 +17,7 @@
 //  each one starved (no arguments) and nearly starved.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

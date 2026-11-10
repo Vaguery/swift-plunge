@@ -1,6 +1,6 @@
 //
 //  InstructionSignature.swift
-//  PushInterpreter
+//  Plunge
 //
 //  One instruction's edge in the language's input-output map.
 //

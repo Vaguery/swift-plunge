@@ -1,11 +1,11 @@
 //
 //  Stacks Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 5/30/26.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

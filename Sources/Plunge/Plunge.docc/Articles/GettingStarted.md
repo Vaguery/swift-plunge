@@ -4,21 +4,21 @@ Add the package, write a small Push program, and run it against some inputs.
 
 ## Add the package
 
-PushInterpreter is a Swift package. Add it to your `Package.swift`:
+Plunge is a Swift package. Add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Vaguery/swift-push-interpreter.git", branch: "main"),
+    .package(url: "https://github.com/Vaguery/swift-plunge.git", branch: "main"),
 ],
 targets: [
     .target(name: "MySearch", dependencies: [
-        .product(name: "PushInterpreter", package: "swift-push-interpreter"),
+        .product(name: "Plunge", package: "swift-plunge"),
     ]),
 ]
 ```
 
 The library needs Swift 6.2 and macOS or iOS 26, and it builds on Linux. Its one
-dependency is `DequeModule` from
+runtime dependency is `DequeModule` from
 [swift-collections](https://github.com/apple/swift-collections).
 
 ## Run a program
@@ -38,7 +38,7 @@ concurrently, and returns one ``CaseResult`` per pairing.
 This program squares its input: it pushes the input twice and multiplies.
 
 ```swift
-import PushInterpreter
+import Plunge
 
 let square = Individual(id: "square", program: program {
     PushInstruction.input0

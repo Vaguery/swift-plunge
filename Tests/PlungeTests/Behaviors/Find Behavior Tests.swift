@@ -1,13 +1,13 @@
 //
 //  Find Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Lookup within a collection: a query
 //  that reads a container and a probe, and gives the first matching element
 //  with its index; and `IndexOf` from a start.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

@@ -1,6 +1,6 @@
 //
 //  Iterator Cycling Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -16,7 +16,7 @@
 //     iterator that had done no laps.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

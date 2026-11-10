@@ -1,6 +1,6 @@
 //
 //  NaN Comparison Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Double comparisons follow IEEE 754: any comparison with a NaN is false.
 //  `doubleGTE`/`doubleLTE` used to be true, because they were "not less than" /
@@ -11,7 +11,7 @@
 //  so a NaN decides a vector order like any other element.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

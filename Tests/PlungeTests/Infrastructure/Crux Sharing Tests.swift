@@ -1,12 +1,12 @@
 //
 //  Crux Sharing Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A crux builds each shared node of its history once and reuses it by dup and
 //  yank, as the program did (`CruxSharing`, since 2026-11-07).
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @MainActor @Suite

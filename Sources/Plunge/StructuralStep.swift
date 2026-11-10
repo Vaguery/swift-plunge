@@ -1,6 +1,6 @@
 //
 //  StructuralStep.swift
-//  PushInterpreter
+//  Plunge
 //
 //  What a structural rule asks for on one step.
 //

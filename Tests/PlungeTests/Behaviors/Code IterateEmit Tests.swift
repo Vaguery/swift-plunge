@@ -1,6 +1,6 @@
 //
 //  Code IterateEmit Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -9,7 +9,7 @@
 //  to .exec whole or run, respectively. Bodyless walks isolate the emission.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

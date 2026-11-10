@@ -1,6 +1,6 @@
 //
 //  Binding Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  The `.binding` stack: keyed bindings, each variable a stack of its own.
 //

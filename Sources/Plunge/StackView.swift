@@ -1,6 +1,6 @@
 //
 //  StackView.swift
-//  PushInterpreter
+//  Plunge
 //
 //  The read-only view a structural rule gets of the one stack it works on.
 //

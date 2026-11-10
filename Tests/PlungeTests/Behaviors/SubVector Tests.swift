@@ -1,6 +1,6 @@
 //
 //  SubVector Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -13,7 +13,7 @@
 //  `concat`) — the tests pin the exact crux to catch a regression there.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

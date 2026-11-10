@@ -1,6 +1,6 @@
 //
 //  ExploratoryCruxSweep.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Worked examples of the tools in this folder, and the starting point for an
 //  exploratory session.**
@@ -38,7 +38,7 @@
 import DequeModule
 import Foundation
 import Testing
-@testable import PushInterpreter
+@testable import Plunge
 
 
 @Suite @MainActor

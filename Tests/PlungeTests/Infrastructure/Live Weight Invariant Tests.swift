@@ -1,6 +1,6 @@
 //
 //  Live Weight Invariant Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  `liveWeight` is maintained incrementally by the stack-mutation helpers so the
 //  memory guard is O(1) per step. Correctness rests on one invariant: the running
@@ -9,7 +9,7 @@
 //  delta, the incremental total drifts and this catches it, reproducibly.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
 

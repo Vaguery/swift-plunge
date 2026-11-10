@@ -1,12 +1,12 @@
 //
 //  CruxCompleteness.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  How much of what a run leaves on its stacks can explain itself. Written
 //  2026-11-07 as the baseline the later provenance work was measured against.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 
 /// A tally of every item a run leaves on a result stack, by how complete its crux
 /// is, and of whether that crux replays. Value stacks and `.error` are tallied

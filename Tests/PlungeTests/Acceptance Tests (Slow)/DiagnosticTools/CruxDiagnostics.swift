@@ -1,6 +1,6 @@
 //
 //  CruxDiagnostics.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Does one item's crux honor its claim, and if not, how does it fail?**
 //
@@ -36,7 +36,7 @@
 
 import DequeModule
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 
 
 /// How a crux failed to honor its claim. The four are genuinely different

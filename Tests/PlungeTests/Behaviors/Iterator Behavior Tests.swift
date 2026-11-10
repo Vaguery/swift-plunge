@@ -1,6 +1,6 @@
 //
 //  Iterator Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/16/26.
 //
@@ -9,7 +9,7 @@
 //  so most of these tests are about what does NOT appear on `.int`.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

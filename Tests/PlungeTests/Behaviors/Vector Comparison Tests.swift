@@ -1,6 +1,6 @@
 //
 //  Vector Comparison Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -11,7 +11,7 @@
 //  crux pops the two it read.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

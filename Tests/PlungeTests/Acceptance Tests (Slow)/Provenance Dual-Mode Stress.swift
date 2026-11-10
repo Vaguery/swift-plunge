@@ -1,6 +1,6 @@
 //
 //  Provenance Dual-Mode Stress.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A long soak for Phase 2's provenance gate: as many random programs as a time
 //  budget allows, each run twice — provenance recording off and on — on a fresh
@@ -34,7 +34,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 /// splitmix64, one per program, so programs are independent of scheduling.
@@ -400,9 +400,7 @@ struct ProvenanceDualModeStress {
         let cruxSampleEvery: UInt64 = 25
         let slowSeconds = 60.0
         func peakResidentMB() -> Int {
-            var usage = rusage()
-            getrusage(RUSAGE_SELF, &usage)
-            return Int(usage.ru_maxrss / 1_048_576)   // bytes on macOS
+            Int(PeakMemory.residentBytes() / 1_048_576)
         }
 
         let clock = ContinuousClock()

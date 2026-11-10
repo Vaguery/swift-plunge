@@ -1,6 +1,6 @@
 //
 //  Lookup Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Lookup by pattern on the stacks themselves: the sieve made visible to a
 //  program, and the language's keyed storage without a dictionary type.

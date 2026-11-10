@@ -1,6 +1,6 @@
 //
 //  Vector Snapshot Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -14,7 +14,7 @@
 //  readStack, so it composes.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

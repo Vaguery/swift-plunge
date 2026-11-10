@@ -1,6 +1,6 @@
 //
 //  Item Layout Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  An `any Item` holds a value of up to three words inline and puts anything larger
 //  in a heap box, allocated each time such a value becomes an `any Item`. Every item
@@ -9,7 +9,7 @@
 //  the sizes are pinned here. (Blocks and iterators are larger and are boxed.)
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 struct ItemLayoutTests {

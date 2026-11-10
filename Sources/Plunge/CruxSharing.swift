@@ -1,6 +1,6 @@
 //
 //  CruxSharing.swift
-//  PushInterpreter
+//  Plunge
 //
 //  A crux that builds each shared value once. Added 2026-11-07 for provenance
 //  completeness.

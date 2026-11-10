@@ -1,6 +1,6 @@
 //
 //  IteratorQuote Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -17,7 +17,7 @@
 //  a loop parked mid-flight comes back at the cursor it left at, and finishes.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

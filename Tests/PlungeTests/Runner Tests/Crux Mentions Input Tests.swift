@@ -1,6 +1,6 @@
 //
 //  Crux Mentions Input Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The worker summarizes input-blindness at evaluation time — walking the final
 //  result item's crux for the configured input tokens — so a caller can score it
@@ -9,7 +9,7 @@
 //  the end-to-end reporting through `evaluate`.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

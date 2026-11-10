@@ -1,11 +1,11 @@
 //
 //  Conversion Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Vectors and code, chars into strings, and a string and its pieces.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

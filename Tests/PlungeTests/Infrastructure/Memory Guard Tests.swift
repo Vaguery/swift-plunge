@@ -1,6 +1,6 @@
 //
 //  Memory Guard Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The runaway guard watches stack *depth*; this watches total live *weight* — the
 //  one quantity the local size caps never sum into. It catches the shape the
@@ -8,7 +8,7 @@
 //  combined content is over budget.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import DequeModule
 import Testing
 

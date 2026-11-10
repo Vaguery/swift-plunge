@@ -1,6 +1,6 @@
 //
 //  Throughput Benchmark.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The baseline every performance change is measured against: how many interpreter
 //  steps per second a fixed, seeded population of random programs runs at, under the
@@ -14,7 +14,7 @@
 //  Run alone:  swift test [-c release] --filter ThroughputBenchmark
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
 

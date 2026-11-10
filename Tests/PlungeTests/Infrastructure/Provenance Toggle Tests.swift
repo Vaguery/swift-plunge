@@ -1,6 +1,6 @@
 //
 //  Provenance Toggle Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  With `recordsProvenance` off (the default) no Behavior builds a `call`, so the
 //  deep call tree never exists. This must save memory without changing any value a
@@ -10,7 +10,7 @@
 //  `Provenance Off Parity Tests`.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

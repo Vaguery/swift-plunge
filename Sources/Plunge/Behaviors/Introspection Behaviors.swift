@@ -1,6 +1,6 @@
 //
 //  Introspection Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Instructions that let a program ask about the run it is part of: how far it
 //  has got, and what has gone wrong so far.

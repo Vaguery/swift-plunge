@@ -1,6 +1,6 @@
 //
 //  Provenance Cost Benchmark.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Runs the *same* seeded programs twice — once recording `call` provenance
 //  (`recordsProvenance = true`, the default) and once with it stripped at push
@@ -18,7 +18,7 @@
 //  a call tree when recording is on.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
 

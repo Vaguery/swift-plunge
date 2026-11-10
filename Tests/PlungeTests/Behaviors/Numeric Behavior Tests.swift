@@ -1,13 +1,13 @@
 //
 //  Numeric Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Abs, negate, sign and power for ints and doubles; sqrt, exp, log and the
 //  roundings for doubles. Every result is the
 //  intended one or an error.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

@@ -1,6 +1,6 @@
 //
 //  InstructionScalingProbe.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Which instructions get expensive when their arguments have grown as large as
 //  the size limits allow?**
@@ -20,7 +20,7 @@
 //  The table is printed and written to `PUSH_SCALING_OUT` if that is set.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
 import DequeModule

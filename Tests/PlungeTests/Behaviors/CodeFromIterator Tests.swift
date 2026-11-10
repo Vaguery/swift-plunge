@@ -1,6 +1,6 @@
 //
 //  CodeFromIterator Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -14,7 +14,7 @@
 //  vector is the special case where the emissions are uniform scalars.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

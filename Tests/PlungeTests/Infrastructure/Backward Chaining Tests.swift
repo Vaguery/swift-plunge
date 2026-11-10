@@ -1,6 +1,6 @@
 //
 //  Backward Chaining Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The first use of the input-output map: chaining backwards from
 //  a wanted stack to a problem's inputs and constants. Sampled trees are run, and
@@ -8,7 +8,7 @@
 //  nothing anywhere else.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

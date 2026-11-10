@@ -1,6 +1,6 @@
 //
 //  BackwardChaining.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Chaining backwards over the input-output map: from the stack a
 //  problem wants, through the instructions that produce it, down to the inputs

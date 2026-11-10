@@ -1,13 +1,13 @@
 //
 //  Containment Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The containment law: an item taken out of a container keeps its own history,
 //  and one born inside a container that has a history records its address. See
 //  `Containment`.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @MainActor @Suite

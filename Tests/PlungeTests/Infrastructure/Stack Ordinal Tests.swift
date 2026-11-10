@@ -1,6 +1,6 @@
 //
 //  Stack Ordinal Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Pins what the array-backed stacks and behavior table rely on: a payload-free
 //  enum's stored value is its case's position in `allCases`. If a compiler ever
@@ -8,7 +8,7 @@
 //  checked here for every case, rather than trusted.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

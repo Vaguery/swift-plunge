@@ -1,13 +1,13 @@
 //
 //  Item Archive Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Opt-in history encoding: `ItemArchive` carries items with their histories,
 //  writing each shared node once.
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @MainActor @Suite

@@ -1,12 +1,12 @@
 //
 //  Collection Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Reductions over whole collections: facts
 //  read and leave, and Max and Min are member reads.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

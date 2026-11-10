@@ -1,12 +1,12 @@
 //
 //  Builders Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/13/26.
 //
 //  Plain import: verifies the builders are public and ergonomic from outside.
 
-import PushInterpreter
+import Plunge
 import Testing
 
 @Suite

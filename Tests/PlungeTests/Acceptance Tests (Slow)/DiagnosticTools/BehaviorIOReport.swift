@@ -1,11 +1,11 @@
 //
 //  BehaviorIOReport.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Classifies and writes up what `BehaviorIOSurvey` observed.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 
 /// How an instruction's outputs vary, from its non-starved trials.
 enum OutputClass: String, CaseIterable {

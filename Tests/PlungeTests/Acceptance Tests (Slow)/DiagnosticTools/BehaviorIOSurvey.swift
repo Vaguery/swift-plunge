@@ -1,6 +1,6 @@
 //
 //  BehaviorIOSurvey.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A map of what every Behavior reads and writes. Inputs are
 //  declared (`requirements`); outputs are not, since a Behavior's results are
@@ -20,7 +20,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

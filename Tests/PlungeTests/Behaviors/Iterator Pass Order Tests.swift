@@ -1,6 +1,6 @@
 //
 //  Iterator Pass Order Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  What a pass emits comes before its body runs, wherever the emitted item
 //  goes: onto a data stack, or onto `.exec` to run (`…IntoExec` iterators, an
@@ -8,7 +8,7 @@
 //  2026-11-09 an item bound for `.exec` ran after the body.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

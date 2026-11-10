@@ -1,6 +1,6 @@
 //
 //  Introspection Instruction Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The five instructions that let a program ask about its own run, and the rule
 //  that keeps `.error` read-only.
@@ -8,7 +8,7 @@
 
 import DequeModule
 import Testing
-@testable import PushInterpreter
+@testable import Plunge
 
 
 @Suite @MainActor

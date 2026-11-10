@@ -1,6 +1,6 @@
 //
 //  Binding Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The `.binding` stack: keyed
 //  bindings, keys 0…N−1 holding the inputs, fresh keys from N, binders that read
@@ -8,7 +8,7 @@
 //  `xDeleteAtDepth`, the generated deletion at a depth.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

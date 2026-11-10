@@ -1,6 +1,6 @@
 //
 //  Collection Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Whole-collection facts (`Sum`, `Max`, `Min`) and the set operations
 //  (`Distinct`, `Intersect`, `Difference`, `IsSubset`). Each is written once and

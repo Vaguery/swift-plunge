@@ -1,6 +1,6 @@
 //
 //  RootCauseFinder.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Which instruction actually broke, as opposed to which item noticed?**
 //
@@ -31,7 +31,7 @@
 
 import DequeModule
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 
 
 /// A failing node with no failing descendant — the deepest point at which

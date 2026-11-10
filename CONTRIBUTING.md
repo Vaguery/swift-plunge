@@ -1,5 +1,11 @@
 # Contributing
 
+The library is under intense development, with major architectural changes
+planned before version 1.0. Contributions and feedback aren't being sought until
+those are finished.
+
+## Working on the code
+
 How to build, test and document changes to the interpreter. Read
 [ARCHITECTURE.md](ARCHITECTURE.md) first for how the pieces fit.
 
@@ -11,7 +17,7 @@ swift test
 ```
 
 The suite has about a thousand tests and takes a few minutes. Most of the time is
-in `Tests/PushInterpreterTests/Acceptance Tests (Slow)/`: fuzzers that run random
+in `Tests/PlungeTests/Acceptance Tests (Slow)/`: fuzzers that run random
 programs and replay every result's history, and stress runs. While working on one
 area, run its suites with `swift test --filter`, and run the whole suite before
 committing a change to the language.
@@ -24,13 +30,15 @@ The tests are grouped by what they cover:
 | `Infrastructure/` | the interpreter, provenance, limits and the language tables |
 | `Runner Tests/`, `Public API Tests/` | the public boundary |
 | `Generation Tests/` | random code, genomes, backward chaining |
-| `Documentation/` | the instruction reference and the article examples |
+| `Documentation/` | the instruction reference, the article and README examples, and the stated counts |
 | `Acceptance Tests (Slow)/` | fuzzing, crux replay, stress and measurements |
 
 Several tests pin counts that describe the whole language: how many
 instructions are in each Behavior class and role, and the shape of the
 input-output map. Adding instructions changes them on purpose; update them and
-say so in the commit.
+say so in the commit. The README and the DocC landing page also state the
+instruction and stack counts in prose; `Stated Counts Tests.swift` fails until
+they match the language.
 
 ## Adding an instruction
 
@@ -39,7 +47,7 @@ say so in the commit.
    constructor (`Typed Operations.swift`), and give it a summary with
    `.described("…")`.
 3. Register it in that file's dictionary.
-4. Test it in `Tests/PushInterpreterTests/Behaviors/`.
+4. Test it in `Tests/PlungeTests/Behaviors/`.
 5. Regenerate the instruction reference (below), and update any pinned counts.
 
 The language's conventions:
@@ -85,16 +93,16 @@ Without the variable, the same test fails if the committed pages are out of date
 
 ## Documentation
 
-The DocC catalog is `Sources/PushInterpreter/PushInterpreter.docc/`. Build or
+The DocC catalog is `Sources/Plunge/Plunge.docc/`. Build or
 preview the site with the DocC plugin:
 
 ```sh
-swift package --disable-sandbox preview-documentation --target PushInterpreter
-swift package --disable-sandbox generate-documentation --target PushInterpreter
+swift package --disable-sandbox preview-documentation --target Plunge
+swift package --disable-sandbox generate-documentation --target Plunge
 ```
 
 Code in the articles is compiled and run by
-`Tests/PushInterpreterTests/Documentation/Documentation Examples Tests.swift`, which
+`Tests/PlungeTests/Documentation/Documentation Examples Tests.swift`, which
 imports the module without `@testable`, so examples can use only the public API.
 Change an example in both places.
 

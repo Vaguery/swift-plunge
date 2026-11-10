@@ -1,6 +1,6 @@
 //
 //  Instruction Mix Probe.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -73,7 +73,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

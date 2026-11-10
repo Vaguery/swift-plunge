@@ -1,12 +1,12 @@
 //
 //  Router Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 5/30/26.
 //
 
 import DequeModule
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

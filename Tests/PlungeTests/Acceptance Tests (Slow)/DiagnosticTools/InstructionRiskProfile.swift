@@ -1,6 +1,6 @@
 //
 //  InstructionRiskProfile.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Does a program containing this instruction end badly more often than one that
 //  does not?**
@@ -43,7 +43,7 @@
 
 import Foundation
 import Testing
-@testable import PushInterpreter
+@testable import Plunge
 
 
 @Suite @MainActor

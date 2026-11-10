@@ -1,6 +1,6 @@
 //
 //  Crux RoundTrip Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/15/26.
 //
@@ -24,7 +24,7 @@
 import DequeModule
 import Foundation
 import Testing
-@testable import PushInterpreter
+@testable import Plunge
 
 
 // MARK: - The shared check

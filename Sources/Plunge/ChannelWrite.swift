@@ -1,6 +1,6 @@
 //
 //  ChannelWrite.swift
-//  PushInterpreter
+//  Plunge
 //
 //  What a channel Behavior sends to the printout.
 //

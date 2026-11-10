@@ -1,6 +1,6 @@
 //
 //  CruxSweep.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Generate a corpus of random programs, run them, and hand back every item
 //  that makes a claim worth checking.**
@@ -30,7 +30,7 @@
 
 import DequeModule
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 
 
 /// One item a swept program left behind, with everything needed to interrogate it

@@ -1,6 +1,6 @@
 //
 //  StandIn Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A stand-in marks a literal that stands in for a lost history: it runs as that
 //  literal, names its cause, and survives into every downstream crux. See
@@ -8,7 +8,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @MainActor @Suite

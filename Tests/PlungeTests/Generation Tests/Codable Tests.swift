@@ -1,6 +1,6 @@
 //
 //  Codable Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 6/23/26.
 //
@@ -9,7 +9,7 @@
 import DequeModule
 import Foundation
 import Testing
-@testable import PushInterpreter
+@testable import Plunge
 
 @Suite @MainActor
 struct CodableTests {

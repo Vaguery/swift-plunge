@@ -1,6 +1,6 @@
 //
 //  PushStack Type Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Tests for the PushStack type-acceptance predicate (Proposal A, Piece 1).
 //  These pin down the homogeneity invariant that the Behaviors' force-casts
@@ -8,7 +8,7 @@
 //  .error, which holds only ErrorItem) accepts a single Item type.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

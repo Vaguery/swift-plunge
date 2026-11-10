@@ -1,6 +1,6 @@
 //
 //  Cut Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -20,7 +20,7 @@
 //     piece's crux is verified **here** or nowhere.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

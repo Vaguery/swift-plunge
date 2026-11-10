@@ -1,6 +1,6 @@
 //
 //  Memory Guard Cost Benchmark.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The memory guard used to re-sum every stack every step (O(live items)/step →
 //  quadratic on a program that builds and holds a deep stack) — profiling put it at
@@ -11,7 +11,7 @@
 //  per-step re-sum ever came back.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
 

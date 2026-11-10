@@ -1,6 +1,6 @@
 //
 //  ProgramBuilder.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/19/26.
 //
@@ -14,7 +14,7 @@
 //  PlungeGP repo (`Genome Reference/`); this is not a genome, just a parser.
 //
 
-import PushInterpreter
+import Plunge
 
 /// A marker for explicit code-block nesting in a token stream — the open/close
 /// braces used to hand-author nested test programs. Replaces the departed

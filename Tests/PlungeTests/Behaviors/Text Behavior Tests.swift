@@ -1,11 +1,11 @@
 //
 //  Text Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Case, substring search, prefixes and suffixes, and trimming.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

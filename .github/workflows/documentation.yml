@@ -36,14 +36,14 @@ jobs:
       - name: Build the documentation
         run: |
           swift package --allow-writing-to-directory ./site \
-            generate-documentation --target PushInterpreter \
+            generate-documentation --target Plunge \
             --output-path ./site \
             --transform-for-static-hosting \
-            --hosting-base-path swift-push-interpreter
+            --hosting-base-path swift-plunge
 
       - name: Redirect the site root to the documentation
         run: |
-          echo '<script>window.location.href += "documentation/pushinterpreter"</script>' > ./site/index.html
+          echo '<script>window.location.href += "documentation/plunge"</script>' > ./site/index.html
 
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'

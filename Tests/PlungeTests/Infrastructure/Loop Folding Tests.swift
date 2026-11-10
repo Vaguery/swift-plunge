@@ -1,13 +1,13 @@
 //
 //  Loop Folding Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A loop's chain, over budget, is folded into a counted loop over its seed
 //  rather than elided (`CruxCompression.folded`), so a loop may run until
 //  `stepLimit` and keep its history (since 2026-11-07).
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @MainActor @Suite

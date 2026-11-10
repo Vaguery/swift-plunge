@@ -1,12 +1,12 @@
 //
 //  Streaming Evaluate Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  evaluate(streaming:) is the completion-order twin of evaluate(request:): it must
 //  yield exactly the same results, just as they finish rather than all at once.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

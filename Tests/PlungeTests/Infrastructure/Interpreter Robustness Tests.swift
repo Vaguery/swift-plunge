@@ -1,6 +1,6 @@
 //
 //  Interpreter Robustness Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Coverage + edge-case tests supporting Proposal A:
 //   - every registered Behavior runs its transform through the validated push
@@ -9,7 +9,7 @@
 //     trapping the interpreter loop.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

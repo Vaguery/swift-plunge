@@ -1,16 +1,16 @@
 //
 //  Public API Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/13/26.
 //
-//  NOTE: this file imports PushInterpreter WITHOUT `@testable`, so it sees only
+//  NOTE: this file imports Plunge WITHOUT `@testable`, so it sees only
 //  the public surface — exactly what the app's separate module sees. If it
 //  compiles, the public API is complete enough to build a program, run it, and
 //  read results.
 
 import Foundation
-import PushInterpreter
+import Plunge
 import Testing
 
 @Suite

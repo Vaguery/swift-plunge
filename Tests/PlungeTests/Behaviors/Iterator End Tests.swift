@@ -1,13 +1,13 @@
 //
 //  Iterator End Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  A counting iterator is exclusive of its end, whatever put its cursor there:
 //  stepping stops short of it, and (since 2026-11-09) so does a cursor set onto
 //  it. A range whose bounds are equal still gets its one pass.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

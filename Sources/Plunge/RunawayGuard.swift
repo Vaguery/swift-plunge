@@ -1,6 +1,6 @@
 //
 //  RunawayGuard.swift
-//  PushInterpreter
+//  Plunge
 //
 //  A cheap guard against runaway loops. The per-dimension size caps (see
 //  SizeLimits) bound how large a single item or stack may get, but a tight

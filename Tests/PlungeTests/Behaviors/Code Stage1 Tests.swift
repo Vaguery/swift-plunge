@@ -1,13 +1,13 @@
 //
 //  Code Stage1 Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
 //  codePair (wrap two) and execIf (which codeIf duplicated until 2026-11-10).
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

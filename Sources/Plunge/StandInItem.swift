@@ -1,6 +1,6 @@
 //
 //  StandInItem.swift
-//  PushInterpreter
+//  Plunge
 //
 //  A literal standing in for a history the interpreter could not, or chose not
 //  to, keep. Added 2026-11-07 for provenance completeness.

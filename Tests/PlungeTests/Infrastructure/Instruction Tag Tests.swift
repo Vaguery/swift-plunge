@@ -1,6 +1,6 @@
 //
 //  Instruction Tag Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The declared channel — the only classification here that *can* be wrong, which
 //  is what these are for.
@@ -17,7 +17,7 @@
 //    below, which pins the *decision* the measurement led to.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

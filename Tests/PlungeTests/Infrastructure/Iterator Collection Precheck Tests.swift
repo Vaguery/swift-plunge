@@ -1,6 +1,6 @@
 //
 //  Iterator Collection Precheck Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  `collected()` refuses an iterator that emits more than `collectionLimit`
 //  items. It used to find that out by walking to the limit, which cost about
@@ -10,7 +10,7 @@
 //  never changes a result: with it and without it, collection agrees exactly.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

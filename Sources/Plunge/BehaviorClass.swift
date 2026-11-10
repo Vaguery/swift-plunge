@@ -1,6 +1,6 @@
 //
 //  BehaviorClass.swift
-//  PushInterpreter
+//  Plunge
 //
 //  What kind of thing a Behavior does to the interpreter's state.
 //

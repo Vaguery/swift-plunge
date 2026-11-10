@@ -1,6 +1,6 @@
 //
 //  Code Gap Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The gap model (`CodeGaps.swift`) and the four instructions on it:
 //  codeCutAtGap, codeInsertAtGap, codeWrapRange, codeFlattenRange.
@@ -14,7 +14,7 @@
 //  the nested block and gap 4 its tail.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

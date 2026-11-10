@@ -1,7 +1,7 @@
-# ``PushInterpreter``
+# ``Plunge``
 
-An interpreter for the Push programming language, built to run the programs a
-genetic-programming search produces.
+An interpreter for Plunge, a dialect of the Push programming language, built to
+run the programs a genetic-programming search produces.
 
 ## Overview
 

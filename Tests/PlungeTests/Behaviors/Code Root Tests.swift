@@ -1,6 +1,6 @@
 //
 //  Code Root Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -8,7 +8,7 @@
 //  (iterate root elements with a mouse).
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

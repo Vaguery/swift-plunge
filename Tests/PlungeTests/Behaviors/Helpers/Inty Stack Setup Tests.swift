@@ -1,12 +1,12 @@
 //
 //  Inty Stack Setup Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Barbara Tozier on 6/25/26.
 //
 // verify interpreter setup works as expected
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

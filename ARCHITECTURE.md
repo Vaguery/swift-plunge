@@ -1,7 +1,7 @@
 # Architecture
 
 How the interpreter is put together, for people changing it. For what the
-language does, see the DocC documentation (`Sources/PushInterpreter/PushInterpreter.docc/`);
+language does, see the DocC documentation (`Sources/Plunge/Plunge.docc/`);
 for how to work on the code, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## The public boundary

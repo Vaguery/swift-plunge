@@ -1,12 +1,12 @@
 //
 //  RecorderSpec Codable Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/13/26.
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

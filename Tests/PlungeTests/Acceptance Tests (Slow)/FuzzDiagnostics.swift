@@ -1,6 +1,6 @@
 //
 //  FuzzDiagnostics.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Diagnostic profiling for the fuzzer. Steps an interpreter one window at a
 //  time so a run that *decelerates* (per-step cost climbing — e.g. the known
@@ -12,10 +12,10 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 
 // `SeededRNG` and `fuzzRNG` now live in the library beside `RandomCode`
-// (Sources/PushInterpreter/Generation/RandomCode.swift), which is where the draws
+// (Sources/Plunge/Generation/RandomCode.swift), which is where the draws
 // they serve live. Still a shared global, so fuzz suites must still run alone.
 
 /// One window of a profiled run: how long a block of steps took, what ran, and

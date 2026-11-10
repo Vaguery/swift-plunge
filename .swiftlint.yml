@@ -1,4 +1,4 @@
-# SwiftLint configuration for PushInterpreter.
+# SwiftLint configuration for Plunge.
 #
 # It records the conventions this codebase follows on purpose, so that what
 # SwiftLint still reports is worth reading. The working rule is "no new

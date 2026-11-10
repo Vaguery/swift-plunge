@@ -1,6 +1,6 @@
 //
 //  InstructionTag.swift
-//  PushInterpreter
+//  Plunge
 //
 //  **Tags: overlapping, labeled subsets of the language, in an open vocabulary.**
 //

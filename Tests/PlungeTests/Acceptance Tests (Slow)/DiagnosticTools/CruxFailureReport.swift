@@ -1,6 +1,6 @@
 //
 //  CruxFailureReport.swift
-//  PushInterpreterTests — DiagnosticTools
+//  PlungeTests — DiagnosticTools
 //
 //  **Tally verdicts so a sweep is readable, and keep enough of each kind to act
 //  on.**
@@ -29,7 +29,7 @@
 
 import DequeModule
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 
 
 /// Accumulated verdicts from a sweep, split by kind and by culprit.

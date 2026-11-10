@@ -1,12 +1,12 @@
 //
 //  Short Iterator Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The two-argument iterator constructors: a
 //  collection and a body make an iterator a random program can build.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

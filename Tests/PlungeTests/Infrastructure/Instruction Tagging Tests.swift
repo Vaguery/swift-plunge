@@ -1,12 +1,12 @@
 //
 //  Instruction Tagging Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Tags are an open, descriptive vocabulary, not a fixed ontology, so the one
 //  rule is that nothing goes unlabeled.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

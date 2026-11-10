@@ -1,6 +1,6 @@
 //
 //  Memory Guard Fuzz.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Loop-heavy random programs at a high step limit, run serially against the
 //  live-weight memory guard. Without the guard these are exactly the programs that
@@ -10,10 +10,9 @@
 //  enough that a single step cannot spike faster than the guard checks.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import Foundation
-import Darwin
 
 @Suite @MainActor
 struct MemoryGuardFuzz {
@@ -29,8 +28,9 @@ struct MemoryGuardFuzz {
         }
     }
 
+    /// The process's peak resident set size, in GB.
     private func peakRSSGB() -> Double {
-        var u = rusage(); getrusage(RUSAGE_SELF, &u); return Double(u.ru_maxrss) / 1_073_741_824
+        PeakMemory.residentBytes() / 1_073_741_824
     }
 
     /// A random program biased heavily toward looping, with int counts and small

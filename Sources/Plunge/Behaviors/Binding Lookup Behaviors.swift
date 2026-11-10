@@ -1,6 +1,6 @@
 //
 //  Binding Lookup Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  The `.binding` stack's lookups: every one reads its key from `.int` and
 //  leaves it. The derefs and `bindingDo` find a key's binding and run or deliver

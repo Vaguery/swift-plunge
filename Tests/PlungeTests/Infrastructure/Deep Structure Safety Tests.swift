@@ -1,6 +1,6 @@
 //
 //  Deep Structure Safety Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Walking or releasing a nested structure costs a stack frame per level, and a
 //  concurrency worker thread's stack is small (512 KB) — the thread every Runner
@@ -14,7 +14,7 @@
 //  detached task, so a regression crashes here rather than in a long run.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite

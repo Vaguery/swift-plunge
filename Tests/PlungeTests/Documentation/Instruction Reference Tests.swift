@@ -1,6 +1,6 @@
 //
 //  Instruction Reference Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The instruction reference in the DocC catalog is generated from the language
 //  itself: each instruction's summary (declared beside its definition with
@@ -13,7 +13,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite
@@ -51,7 +51,7 @@ struct InstructionReferenceTests {
 
     static let referenceFolder = URL(filePath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-        .appending(path: "Sources/PushInterpreter/PushInterpreter.docc/Instruction Reference")
+        .appending(path: "Sources/Plunge/Plunge.docc/Instruction Reference")
 
 
     // MARK: - Pages

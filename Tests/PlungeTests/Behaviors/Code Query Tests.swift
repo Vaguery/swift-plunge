@@ -1,6 +1,6 @@
 //
 //  Code Query Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -9,7 +9,7 @@
 //  arguments survive, the crux pops what it read.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

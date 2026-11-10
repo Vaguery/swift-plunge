@@ -1,6 +1,6 @@
 //
 //  RandomCode Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -13,7 +13,7 @@
 //  `randomInstruction()` was really ~33% other, ~31% constants and ~26% inputs.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

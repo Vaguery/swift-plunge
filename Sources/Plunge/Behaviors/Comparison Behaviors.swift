@@ -1,6 +1,6 @@
 //
 //  Comparison Behaviors.swift
-//  PushInterpreter
+//  Plunge
 //
 //  **The instructions that order or equate two values of one stack and hand back
 //  a `.bool`**: the 12 generated `…Eq` (whose factory is at the end of this file)

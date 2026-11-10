@@ -1,6 +1,6 @@
 //
 //  Provenance Test Helpers.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  `recordsProvenance` is off by default. Tests that pin what a Behavior records
 //  (`callString`, `crux()`, `call`, `callWeight`, the round-trip sweeps) ask for it
@@ -8,7 +8,7 @@
 //  so its value assertions exercise the path a search actually takes.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 extension Interpreter {

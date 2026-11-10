@@ -1,12 +1,12 @@
 //
 //  Behavior Tests Helper.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Barbara Tozier on 6/24/26.
 //
 
 import DequeModule
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 //

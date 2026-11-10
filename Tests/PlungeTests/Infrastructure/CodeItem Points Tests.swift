@@ -1,6 +1,6 @@
 //
 //  CodeItem Points Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -10,7 +10,7 @@
 //  behavior depends on it.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

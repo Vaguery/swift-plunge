@@ -1,6 +1,6 @@
 //
 //  Error Tally Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The `errorCount*` instructions read a lazy per-kind tally
 //  (`StackSet.errorCount(of:)`) instead of scanning `.error`, which is unbounded
@@ -9,7 +9,7 @@
 //  recount: mid-run, across reuse of one interpreter, and after direct writes.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import DequeModule
 import Testing
 

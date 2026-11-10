@@ -1,6 +1,6 @@
 //
 //  PositionEffect.swift
-//  PushInterpreter
+//  Plunge
 //
 //  A structural rule's whole effect, as data.
 //

@@ -1,6 +1,6 @@
 //
 //  Unbounded Collection Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Regression for a search-killing hang (2026-11-04). A counting iterator with
 //  stride 0 never moves, so it never reaches its end; `promisedPasses` had no span
@@ -15,7 +15,7 @@
 //  stack some other way.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

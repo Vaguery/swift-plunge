@@ -1,6 +1,6 @@
 //
 //  Lookup Match Rates.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Measures how often pattern lookups
 //  find something in the stacks random programs actually build. Each attempt
@@ -13,7 +13,7 @@
 //  Equal. A dictionary type would sit below all of them.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

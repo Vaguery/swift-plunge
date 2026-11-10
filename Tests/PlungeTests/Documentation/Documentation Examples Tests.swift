@@ -1,16 +1,16 @@
 //
 //  Documentation Examples Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
-//  The code in the DocC articles, compiled and run, so an example cannot drift
-//  from the library. This file imports the module *without* `@testable`: an
+//  The code in the DocC articles and the README, compiled and run, so an example
+//  cannot drift from the library. This file imports the module *without* `@testable`: an
 //  example may use only the public API, as a reader's code would.
 //
 //  Each test names the article and section its code comes from; keep the two
 //  identical.
 //
 
-import PushInterpreter
+import Plunge
 import Testing
 
 @Suite
@@ -49,6 +49,31 @@ struct DocumentationExamplesTests {
             return last.item.pretty()
         }
         #expect(answers == ["9", "25"])
+    }
+
+    /// `README.md`, "Quick start".
+    @Test func `readme: quick start`() async {
+        let square = Individual(id: "square", program: program {
+            PushInstruction.input0
+            PushInstruction.input0
+            PushInstruction.intMultiply
+        })
+        let cases = [TrainingCase(id: "three", inputs: [.input0: IntItem(3)])]
+
+        let runner = Runner(configuration: RunnerConfiguration(recorders: [
+            RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
+        ]))
+        await runner.register(individuals: [square])
+        await runner.register(trainingCases: cases)
+        let results = await runner.evaluate(pairings: [Pairing(individual: "square", trainingCase: "three")])
+        // results[0].traces["answer"] holds 9
+
+        // Not in the README: the check that keeps it honest.
+        guard case .items(let answers)? = results.first?.traces["answer"], let last = answers.last ?? nil else {
+            Issue.record("the README's program recorded no answer")
+            return
+        }
+        #expect(last.item.pretty() == "9")
     }
 
     /// *Tagging Instructions*, "Adding your own tags".

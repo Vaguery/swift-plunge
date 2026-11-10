@@ -1,6 +1,6 @@
 //
 //  VecFromIterator Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/17/26.
 //
@@ -19,7 +19,7 @@
 //     argument.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

@@ -1,6 +1,6 @@
 //
 //  ControlEffect.swift
-//  PushInterpreter
+//  Plunge
 //
 //  What a control Behavior writes, beyond its ordinary results.
 //

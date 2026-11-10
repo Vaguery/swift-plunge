@@ -1,6 +1,6 @@
 //
 //  Typed Operations.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Operations declared by their argument and result types.
 //

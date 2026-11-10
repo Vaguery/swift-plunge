@@ -1,6 +1,6 @@
 //
 //  Runner Acceptance Tests.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Created by Bill Tozier on 7/14/26.
 //
@@ -8,7 +8,7 @@
 //  surface, the way the search process will. RandomCode is a test helper.
 
 import Foundation
-import PushInterpreter
+import Plunge
 import Testing
 
 @Suite

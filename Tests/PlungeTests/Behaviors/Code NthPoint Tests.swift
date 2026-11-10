@@ -1,6 +1,6 @@
 //
 //  Code NthPoint Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -9,7 +9,7 @@
 //  block and index; the Peek forms leave them.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

@@ -1,6 +1,6 @@
 //
 //  Stack Flow Probe.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/16/26.
 //
@@ -13,7 +13,7 @@
 //  after adding instructions to see whether the balance moves.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 

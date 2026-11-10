@@ -1,12 +1,12 @@
 //
 //  Typed Operation Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  The typed operation constructor: arguments declared in written
 //  order, `call` and requirements derived from them, refusals routed to `.error`.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

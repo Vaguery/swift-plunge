@@ -1,6 +1,6 @@
 //
 //  Refusal.swift
-//  PushInterpreter
+//  Plunge
 //
 //  What a typed operation's body throws when it cannot produce its result.
 //

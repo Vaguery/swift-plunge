@@ -1,6 +1,6 @@
 //
 //  Behavior Class Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Every Behavior declares one `BehaviorClass`. The class is
 //  judgment, like a tag, so these tests do not re-derive it. They check each
@@ -8,7 +8,7 @@
 //  a well-stocked interpreter.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

@@ -1,6 +1,6 @@
 //
 //  InstructionTagging.swift
-//  PushInterpreter
+//  Plunge
 //
 //  The table from tags to instructions, and the place to add your own.
 //

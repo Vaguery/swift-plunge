@@ -1,6 +1,6 @@
 //
 //  CruxShape.swift
-//  PushInterpreter
+//  Plunge
 //
 //  Cruxes compared up to the choice of constants.
 //

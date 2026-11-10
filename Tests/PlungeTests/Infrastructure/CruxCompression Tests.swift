@@ -1,6 +1,6 @@
 //
 //  CruxCompression Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/22/26.
 //
@@ -9,7 +9,7 @@
 //  and reconstruct (running it) round-trip.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor
@@ -24,7 +24,7 @@ struct CruxCompressionTests {
             trainingCases: [TrainingCase(id: "c", inputs: [:])],
             pairings: [Pairing(individual: "i", trainingCase: "c")],
             configuration: config)
-        let results = await PushInterpreter.evaluate(request: request)
+        let results = await Plunge.evaluate(request: request)
         guard case let .items(readings)? = results.first?.traces["r"],
               let item = readings.last ?? nil else { return nil }
         return (item.item as? DoubleItem)?.value
@@ -45,7 +45,7 @@ struct CruxCompressionTests {
             trainingCases: [TrainingCase(id: "c", inputs: [:])],
             pairings: [Pairing(individual: "i", trainingCase: "c")],
             configuration: config)
-        let results = await PushInterpreter.evaluate(request: request)
+        let results = await Plunge.evaluate(request: request)
         guard case let .items(readings)? = results.first?.traces["r"] else { return nil }
         return (readings.last ?? nil)?.item
     }

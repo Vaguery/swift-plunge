@@ -1,6 +1,6 @@
 //
 //  Final Only Recorder Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  `run` takes a `.finalOnly` recorder's one reading at the end of the run instead
 //  of after every step. These hold it to what recording after every step gave: the
@@ -8,7 +8,7 @@
 //  for a run that took no step.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 struct FinalOnlyRecorderTests {

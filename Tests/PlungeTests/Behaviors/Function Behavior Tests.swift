@@ -1,13 +1,13 @@
 //
 //  Function Behavior Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Map, filter and reduce: a function is a block
 //  with `.inputN` holes, run in a sub-interpreter; its result is the last value
 //  it pushed; sub-run steps are charged to the program.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

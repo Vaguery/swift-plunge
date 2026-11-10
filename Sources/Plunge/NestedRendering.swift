@@ -1,6 +1,6 @@
 //
 //  NestedRendering.swift
-//  PushInterpreter
+//  Plunge
 //
 
 /// `pretty()` for the containers — blocks, iterators and pairs — written as a loop over

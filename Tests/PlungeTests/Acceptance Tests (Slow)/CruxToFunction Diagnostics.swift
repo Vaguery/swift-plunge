@@ -1,6 +1,6 @@
 //
 //  CruxToFunction Diagnostics.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Checks the logic behind the planned crux-to-function work
 //  (`codeFuncFromXCrux`): can a resolved value's crux be turned into a reusable
@@ -53,7 +53,7 @@
 //
 
 import Foundation
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 
 @Suite @MainActor

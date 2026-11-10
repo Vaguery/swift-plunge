@@ -1,6 +1,6 @@
 //
 //  Code Iterate Tests.swift
-//  PushInterpreterTests
+//  PlungeTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
@@ -8,7 +8,7 @@
 //  a tree, each boxed as .code, recording the codePeekNth crux.
 //
 
-@testable import PushInterpreter
+@testable import Plunge
 import Testing
 import DequeModule
 
