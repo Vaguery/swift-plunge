@@ -156,7 +156,8 @@ nonisolated extension Interpreter {
     /// The root item at the `.int` index (clamped), yielded as `.code`, consuming
     /// the block and the index. An empty block has no root items, so it refuses.
     static let codeNthRoot_Behavior =
-        Behavior.operation(.codeNthRoot, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
+        Behavior.operation(.codeNthRoot, takes: CodeItem.self, IntItem.self,
+                           gives: CodeItem.self) { x, i throws(Refusal) in
             guard let element = rootPicker(CodeItem(x), i) else {
                 throw Refusal("Empty block in .\(PushInstruction.codeNthRoot)", kind: .emptyCollection)
             }
