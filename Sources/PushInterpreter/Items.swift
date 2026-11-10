@@ -1067,7 +1067,7 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     /// a string with no words. An index into a non-empty collection clamps and
     /// never errs; this is the one case where no position exists.
     case emptyCollection
-    /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOfChar`,
+    /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOf`,
     /// `.codeIndexOfPoint`, `.codeContainer`. These used to answer `-1` (which
     /// every index-taking instruction would then quietly accept) or nothing at all.
     case notFound

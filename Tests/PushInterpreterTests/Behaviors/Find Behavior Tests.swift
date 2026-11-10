@@ -101,17 +101,17 @@ struct FindBehaviorTests {
         #expect(stackString(vec, .int) == "[ 2 1 5 ]")
         #expect(Self.replays(vec.stacks[.int]!.first!, on: .int))
 
-        let char = Self.run([CharItem("a"), StringItem("banana"), IntItem(2), Self.op(.stringIndexOfCharFrom)])
+        let char = Self.run([StringItem("banana"), CharItem("a"), IntItem(2), Self.op(.stringIndexOfFrom)])
         #expect(stackString(char, .int) == "[ 3 2 ]")
 
-        let text = Self.run([StringItem("abcabc"), StringItem("bc"), IntItem(2), Self.op(.stringIndexOfFrom)])
+        let text = Self.run([StringItem("abcabc"), StringItem("bc"), IntItem(2), Self.op(.stringIndexOfRunFrom)])
         #expect(stackString(text, .int) == "[ 4 2 ]", "counted from the front, not from the start")
 
-        let none = Self.run([StringItem("abcabc"), StringItem("bc"), IntItem(5), Self.op(.stringIndexOfFrom)])
+        let none = Self.run([StringItem("abcabc"), StringItem("bc"), IntItem(5), Self.op(.stringIndexOfRunFrom)])
         #expect(stackString(none, .int) == "[ 5 ]")
         #expect(none.stacks[.error]!.count == 1)
 
-        let atEnd = Self.run([StringItem("ab"), StringItem(""), IntItem(2), Self.op(.stringIndexOfFrom)])
+        let atEnd = Self.run([StringItem("ab"), StringItem(""), IntItem(2), Self.op(.stringIndexOfRunFrom)])
         #expect(stackString(atEnd, .int) == "[ 2 2 ]", "an empty needle is found at the start")
     }
 }

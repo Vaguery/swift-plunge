@@ -67,7 +67,7 @@ nonisolated extension Interpreter {
     /// How many errors are on `.error`. **The one error combinator**, and the only
     /// instruction in the language that names a stack it cannot alter.
     static let errorStackDepth_Behavior =
-        Behavior.contextRead(.errorStackDepth, produces: .results([.int])) { _, context in
+        Behavior.contextRead(.errorStackDepth, observes: [.error], produces: .results([.int])) { _, context in
             let depth = IntItem(context.depth(of: .error))
             return [Router(.int, depth.observed(by: .errorStackDepth, context.recording))]
         }

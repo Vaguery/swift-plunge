@@ -117,10 +117,10 @@ struct ContainmentTests {
 
     @Test func `a string's characters keep their members, letters included`() {
         let last = run([StringItem("x")] + letterFromInt
-                       + [InstructionItem(.stringConjChar), InstructionItem(.stringLast)])
+                       + [InstructionItem(.stringConj), InstructionItem(.stringLast)])
         #expect(CodeItem(topItem(last, .char).crux()).pretty() == "( 65 .charFromInt )")
-        let letters = run([StringItem("x")] + letterFromInt + [InstructionItem(.stringConjChar),
-                          InstructionItem(.stringParseToLetters)])
+        let letters = run([StringItem("x")] + letterFromInt + [InstructionItem(.stringConj),
+                          InstructionItem(.stringPushAllLetters)])
         #expect(stackString(letters, .string) == "[ \"A\" \"x\" ]", "65 is 'A' (its Unicode scalar value)")
         #expect(CodeItem(topItem(letters, .string).crux()).pretty() == "( 65 .charFromInt .stringFromChar )")
         #expect(letters.stacks[.string]!.allSatisfy { holds($0) })

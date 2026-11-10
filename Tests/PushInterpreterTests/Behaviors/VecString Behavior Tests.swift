@@ -527,7 +527,7 @@ struct VecStringBehaviorTests {
         #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\"] \"-\" 2 .vecStringSet )")
     }
 
-    @Test func vecStringSubVec() {
+    @Test func vecStringSlice() {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
@@ -536,27 +536,27 @@ struct VecStringBehaviorTests {
                          VecStringItem(["1","11","111","1111"])
                         ])
 
-        doThis(.vecStringSubVec, to: inty)
+        doThis(.vecStringSlice, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\", \"d\", \"e\"] [\"z\", \"y\", \"x\", \"w\"] [\"1\", \"11\", \"111\", \"1111\"] ]")
-        #expect(callString(topItem(inty, .vecString)) == "( [] 9 1 .vecStringSubVec )")
+        #expect(callString(topItem(inty, .vecString)) == "( [] 9 1 .vecStringSlice )")
 
         doThis(.vecStringPop, to: inty)
 
-        doThis(.vecStringSubVec, to: inty)
+        doThis(.vecStringSlice, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"c\", \"d\"] [\"z\", \"y\", \"x\", \"w\"] [\"1\", \"11\", \"111\", \"1111\"] ]")
-        #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\", \"c\", \"d\", \"e\"] 2 3 .vecStringSubVec )")
+        #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\", \"c\", \"d\", \"e\"] 2 3 .vecStringSlice )")
 
         doThis(.vecStringPop, to: inty)
 
-        doThis(.vecStringSubVec, to: inty)
+        doThis(.vecStringSlice, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"z\", \"y\", \"x\"] [\"1\", \"11\", \"111\", \"1111\"] ]")
-        #expect(callString(topItem(inty, .vecString)) == "( [\"z\", \"y\", \"x\", \"w\"] -1 2 .vecStringSubVec )")
+        #expect(callString(topItem(inty, .vecString)) == "( [\"z\", \"y\", \"x\", \"w\"] -1 2 .vecStringSlice )")
 
         doThis(.vecStringPop, to: inty)
 
-        doThis(.vecStringSubVec, to: inty)
+        doThis(.vecStringSlice, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"11\"] ]")
-        #expect(callString(topItem(inty, .vecString)) == "( [\"1\", \"11\", \"111\", \"1111\"] 1 1 .vecStringSubVec )")
+        #expect(callString(topItem(inty, .vecString)) == "( [\"1\", \"11\", \"111\", \"1111\"] 1 1 .vecStringSlice )")
     }
 
     @Test func vecStringTake() {

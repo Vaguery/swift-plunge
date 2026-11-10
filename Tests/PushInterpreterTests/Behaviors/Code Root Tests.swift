@@ -23,12 +23,12 @@ struct CodeRootTests {
         #expect(stackString(inty, .code) == "[ ( 3 4 ) ( 1 2 ) ]", "suffix on top, prefix deeper")
     }
 
-    @Test func `cutRootAtGap then codeAppend is the identity`() {
+    @Test func `cutRootAtGap then codeConcat is the identity`() {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3), IntItem(4)]))
         inty.stacks[.int]!.prepend(IntItem(2))
         doThis(.codeCutRootAtGap, to: inty)
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 2 3 4 ) ]")
     }
 

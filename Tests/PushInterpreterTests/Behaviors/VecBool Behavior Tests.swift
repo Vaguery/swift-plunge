@@ -558,7 +558,7 @@ struct VecBoolBehaviorTests {
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true, true, true] false 43 .vecBoolSet )")
     }
 
-    @Test func vecBoolSubVec() {
+    @Test func vecBoolSlice() {
         loadInts(inty, ints: [1,9,2,1,2,-1,1,1])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
@@ -567,27 +567,27 @@ struct VecBoolBehaviorTests {
                          VecBoolItem([true, true, false, false, true])
                         ])
 
-        doThis(.vecBoolSubVec, to: inty)
+        doThis(.vecBoolSlice, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, true, false, false, true] [true, true, false, false, true] [true, true, false, false, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] 9 1 .vecBoolSubVec )")
+        #expect(callString(topItem(inty, .vecBool)) == "( [] 9 1 .vecBoolSlice )")
 
         doThis(.vecBoolPop, to: inty)
 
-        doThis(.vecBoolSubVec, to: inty)
+        doThis(.vecBoolSlice, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false] [true, true, false, false, true] [true, true, false, false, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 2 .vecBoolSubVec )")
+        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 2 .vecBoolSlice )")
 
         doThis(.vecBoolPop, to: inty)
 
-        doThis(.vecBoolSubVec, to: inty)
+        doThis(.vecBoolSlice, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false] [true, true, false, false, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] -1 2 .vecBoolSubVec )")
+        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] -1 2 .vecBoolSlice )")
 
         doThis(.vecBoolPop, to: inty)
 
-        doThis(.vecBoolSubVec, to: inty)
+        doThis(.vecBoolSlice, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 1 .vecBoolSubVec )")
+        #expect(callString(topItem(inty, .vecBool)) == "( [true, true, false, false, true] 1 1 .vecBoolSlice )")
     }
 
     @Test func vecBoolTake() {

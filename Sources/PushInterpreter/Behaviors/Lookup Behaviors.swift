@@ -54,7 +54,7 @@ nonisolated extension Interpreter {
         locate: @escaping @Sendable (_ probe: any Item, _ items: Deque<any Item>, _ start: Int) -> Int?
     ) -> Behavior {
         let produces: Produces = .results(stack == .int ? [.int, .int] : [stack, .int])
-        return Behavior.contextRead(name, takes: from ? [.int] : [], tags: [.fallible],
+        return Behavior.contextRead(name, takes: from ? [.int] : [], observes: [stack], tags: [.fallible],
                                     produces: produces) { a, context in
             let items = context.items(of: stack)
             let start = from ? max(1, (a[0] as! IntItem).value) : 1
@@ -264,8 +264,7 @@ nonisolated extension Interpreter {
     }
 
     /// `IndexOf` from a start, which a search that walks every occurrence needs:
-    /// `v x start .vecIntIndexOfFrom`, `c s start .stringIndexOfCharFrom` (the
-    /// order of `stringIndexOfChar`), `hay needle start .stringIndexOfFrom`.
+    /// `v x start .vecIntIndexOfFrom`, `s c start .stringIndexOfFrom`, `hay needle start .stringIndexOfRunFrom`.
     /// The index is counted from the front, not from the start.
     static func indexOfFromBehavior<V: VectorItem>(_ name: PushInstruction, _ type: V.Type) -> Behavior
     where V.Element: Equatable {
@@ -282,34 +281,34 @@ nonisolated extension Interpreter {
         )
     }
 
-    static let stringIndexOfCharFrom_Behavior =
-        Behavior.operation(.stringIndexOfCharFrom, reads: CharItem.self, StringItem.self, IntItem.self,
-                           gives: IntItem.self) { c, s, start throws(Refusal) in
+    static let stringIndexOfFrom_Behavior =
+        Behavior.operation(.stringIndexOfFrom, reads: StringItem.self, CharItem.self, IntItem.self,
+                           gives: IntItem.self) { s, c, start throws(Refusal) in
             let characters = Array(s)
             guard let i = firstIndex(characters.count, from: start, where: { characters[$0] == c }) else {
-                throw Refusal("Not found in .stringIndexOfCharFrom: \(c)", kind: .notFound)
+                throw Refusal("Not found in .stringIndexOfFrom: \(c)", kind: .notFound)
             }
             return i
         }
         .described(
-            "Finds a char from an index: `c s i .stringIndexOfCharFrom` gives the index of the first c in s at index i"
+            "Finds a char from an index: `s c i .stringIndexOfFrom` gives the index of the first c in s at index i"
             + " or later, leaving all three; refuses on a miss."
         )
 
     /// An empty needle is found at the start, if the start is within the string
     /// or at its end.
-    static let stringIndexOfFrom_Behavior =
-        Behavior.operation(.stringIndexOfFrom, reads: StringItem.self, StringItem.self, IntItem.self,
+    static let stringIndexOfRunFrom_Behavior =
+        Behavior.operation(.stringIndexOfRunFrom, reads: StringItem.self, StringItem.self, IntItem.self,
                            gives: IntItem.self) { hay, needle, start throws(Refusal) in
             let from = max(0, start)
             guard from <= hay.count,
                   let range = hay[hay.index(hay.startIndex, offsetBy: from)...].firstRange(of: needle) else {
-                throw Refusal("Not found in .stringIndexOfFrom: \(needle)", kind: .notFound)
+                throw Refusal("Not found in .stringIndexOfRunFrom: \(needle)", kind: .notFound)
             }
             return hay.distance(from: hay.startIndex, to: range.lowerBound)
         }
         .described(
-            "Finds a substring from an index: `s t i .stringIndexOfFrom` gives the index of the first t in s at index i"
+            "Finds a substring from an index: `s t i .stringIndexOfRunFrom` gives the index of the first t in s at index i"
             + " or later, leaving all three; an empty t is found at i; refuses on a miss."
         )
 
@@ -318,8 +317,8 @@ nonisolated extension Interpreter {
         .vecIntIndexOfFrom: indexOfFromBehavior(.vecIntIndexOfFrom, VecIntItem.self),
         .vecDoubleIndexOfFrom: indexOfFromBehavior(.vecDoubleIndexOfFrom, VecDoubleItem.self),
         .vecStringIndexOfFrom: indexOfFromBehavior(.vecStringIndexOfFrom, VecStringItem.self),
-        .stringIndexOfCharFrom: stringIndexOfCharFrom_Behavior,
-        .stringIndexOfFrom: stringIndexOfFrom_Behavior
+        .stringIndexOfFrom: stringIndexOfFrom_Behavior,
+        .stringIndexOfRunFrom: stringIndexOfRunFrom_Behavior
     ]
 
 

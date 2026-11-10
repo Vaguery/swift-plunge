@@ -171,7 +171,7 @@ struct BehaviorIODeclarationTests {
         #expect(bools.isSuperset(of: [.intGT, .boolEq, .intStackIsEmpty, .boolAnd]))
         #expect(!bools.contains(.intAdd))
         #expect(Interpreter.producers[.int]?.contains(.int3) == true, "a constant counts where it rests")
-        #expect(Interpreter.producers[.char]?.contains(.stringPushAllChars) == true,
+        #expect(Interpreter.producers[.char]?.contains(.stringPushAll) == true,
                 "a delivery counts where it delivers")
         #expect(Interpreter.producers.values.allSatisfy { !$0.contains(.execIf) }, "a continuation produces no type")
     }

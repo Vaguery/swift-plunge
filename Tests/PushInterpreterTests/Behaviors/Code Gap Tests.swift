@@ -114,12 +114,12 @@ struct CodeGapTests {
     /// A cut between root elements still round-trips, exactly as
     /// `codeCutRootAtGap` does — the gap model generalizes that case rather than
     /// replacing it.
-    @Test func `a root-level cut still rejoins under codeAppend`() {
+    @Test func `a root-level cut still rejoins under codeConcat`() {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(nested)
         inty.stacks[.int]!.prepend(IntItem(1))       // between 1 and the block
         doThis(.codeCutAtGap, to: inty)
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 ( 2 3 ) 4 ) ]")
     }
 
@@ -131,7 +131,7 @@ struct CodeGapTests {
         inty.stacks[.code]!.prepend(nested)
         inty.stacks[.int]!.prepend(IntItem(3))       // inside ( 2 3 )
         doThis(.codeCutAtGap, to: inty)
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 ( 2 ) 3 4 ) ]",
                 "the split block came back as one block and two loose leaves")
         #expect(stackString(inty, .code) != "[ ( 1 ( 2 3 ) 4 ) ]")

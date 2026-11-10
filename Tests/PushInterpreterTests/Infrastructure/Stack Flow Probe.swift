@@ -23,7 +23,7 @@ struct StackFlowProbe {
     nonisolated static let disabledTests = true
 
     /// One plausible item per stack. Deliberately *not* minimal: strings have
-    /// spaces so `stringSplit` has work to do, vectors have several elements, and
+    /// spaces so `stringPushAllWords` has work to do, vectors have several elements, and
     /// the iterator has a body that pushes a `.bool` — which is worth remembering
     /// when reading the results, since playing it therefore shows up as a bool
     /// producer.

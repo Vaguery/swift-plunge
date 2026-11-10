@@ -25,7 +25,21 @@ nonisolated final class Behavior: Sendable {
     /// same, so a definition reads `Behavior.operation(…) { … }.described("…")`.
     func described(_ summary: String) -> Behavior {
         Behavior(name, requires: requirements, tags: tags, behaviorClass: behaviorClass, body: body,
-                 produces: produces, summary: summary)
+                 produces: produces, observes: observes, summary: summary)
+    }
+
+    /// **The stacks a context read looks at without taking or reading an
+    /// argument from them**: a lookup searches its stack, a binder copies the top
+    /// of its source, a key query reads k on `.int` and the bindings. Its
+    /// `requirements` cannot say so, because nothing is claimed; this does, so the
+    /// input-output map and the automatic tags see what the Behavior sees.
+    /// `Behavior IO Declaration Tests` check it against what each body reads.
+    let observes: [PushStack]
+
+    /// This Behavior, declaring that it looks at `stacks` (see `observes`).
+    func observing(_ stacks: PushStack...) -> Behavior {
+        Behavior(name, requires: requirements, tags: tags, behaviorClass: behaviorClass, body: body,
+                 produces: produces, observes: stacks, summary: summary)
     }
 
     /// Everything this Behavior must find, **in order**. Order matters: each
@@ -192,10 +206,12 @@ nonisolated final class Behavior: Sendable {
         behaviorClass: BehaviorClass,
         body: BehaviorBody,
         produces: Produces,
+        observes: [PushStack] = [],
         summary: String = ""
     ) {
         self.name = label
         self.summary = summary
+        self.observes = observes
         self.requirements = requires
         self.tags = tags
         self.behaviorClass = behaviorClass

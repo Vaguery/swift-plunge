@@ -14,21 +14,21 @@ struct CodeBehaviorTests {
 
     let inty = Interpreter.recordingProvenance()
 
-    @Test func codeAppend() {
+    @Test func codeConcat() {
         loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]])
         #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
 
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( false 2 1 ) ( \"abc\" ( false 1.1 ) ) ]")
-        #expect(callString(topItem(inty, .code)) == "( ( false 2 ) ( 1 ) .codeAppend )")
+        #expect(callString(topItem(inty, .code)) == "( ( false 2 ) ( 1 ) .codeConcat )")
 
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
-        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeAppend )")
+        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeConcat )")
 
-        doThis(.codeAppend, to: inty)
+        doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( \"abc\" ( false 1.1 ) false 2 1 ) ]")
-        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeAppend )")
+        #expect(callString(topItem(inty, .code)) == "( ( \"abc\" ( false 1.1 ) ) ( false 2 1 ) .codeConcat )")
     }
 
     @Test func `codeItemIsEmpty works with empty code`() {

@@ -666,7 +666,7 @@ struct VecIntBehaviorTests {
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 9, 9, 9, 9] -1 7 .vecIntSet )")
     }
 
-    @Test func vecIntSubVec() {
+    @Test func vecIntSlice() {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
@@ -675,27 +675,27 @@ struct VecIntBehaviorTests {
                          VecIntItem([1,11,111,1111])
                         ])
 
-        doThis(.vecIntSubVec, to: inty)
+        doThis(.vecIntSlice, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] [9, 8, 7, 6, 9] [9, 9, 9, 9, 9] [1, 11, 111, 1111] ]")
-        #expect(callString(topItem(inty, .vecInt)) == "( [] 9 1 .vecIntSubVec )")
+        #expect(callString(topItem(inty, .vecInt)) == "( [] 9 1 .vecIntSlice )")
 
         doThis(.vecIntPop, to: inty)
 
-        doThis(.vecIntSubVec, to: inty)
+        doThis(.vecIntSlice, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [7, 6] [9, 9, 9, 9, 9] [1, 11, 111, 1111] ]")
-        #expect(callString(topItem(inty, .vecInt)) == "( [9, 8, 7, 6, 9] 2 3 .vecIntSubVec )")
+        #expect(callString(topItem(inty, .vecInt)) == "( [9, 8, 7, 6, 9] 2 3 .vecIntSlice )")
 
         doThis(.vecIntPop, to: inty)
 
-        doThis(.vecIntSubVec, to: inty)
+        doThis(.vecIntSlice, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 9, 9] [1, 11, 111, 1111] ]")
-        #expect(callString(topItem(inty, .vecInt)) == "( [9, 9, 9, 9, 9] -1 2 .vecIntSubVec )")
+        #expect(callString(topItem(inty, .vecInt)) == "( [9, 9, 9, 9, 9] -1 2 .vecIntSlice )")
 
         doThis(.vecIntPop, to: inty)
 
-        doThis(.vecIntSubVec, to: inty)
+        doThis(.vecIntSlice, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [11] ]")
-        #expect(callString(topItem(inty, .vecInt)) == "( [1, 11, 111, 1111] 1 1 .vecIntSubVec )")
+        #expect(callString(topItem(inty, .vecInt)) == "( [1, 11, 111, 1111] 1 1 .vecIntSlice )")
     }
 
     @Test func vecIntTake() {

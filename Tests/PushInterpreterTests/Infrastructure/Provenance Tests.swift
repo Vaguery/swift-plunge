@@ -301,7 +301,7 @@ struct ProvenanceTests {
     // MARK: - Law 5: selecting one of several results on one stack
     //
     // **Nothing in the language emits a law-5 record any more.** Its four users —
-    // `stringPushAllChars`, `stringParseToLetters`, `stringSplit` and the generic
+    // `stringPushAll`, `stringPushAllLetters`, `stringPushAllWords` and the generic
     // `vecXPushAll` — all became iterators, and an iterator never puts several
     // results on a stack at once: it emits one per pass, and each says what it is
     // (`v 2 .vecIntNth`) rather than which of a pile it was.
@@ -344,7 +344,7 @@ struct ProvenanceTests {
     /// was on top, but it stranded every sibling. Embedded in a larger crux the
     /// debris shifted the enclosing instruction's arguments, which is how a
     /// `.vecDoubleCut` pair silently fed the wrong operands to
-    /// `.vecDoubleReplaceSubVec`.
+    /// `.vecDoubleReplaceRun`.
     @Test func `a selected result leaves nothing behind`() {
         let source: [any Item] = [VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll)]
 

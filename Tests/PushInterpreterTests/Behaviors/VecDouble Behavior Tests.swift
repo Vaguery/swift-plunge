@@ -533,7 +533,7 @@ struct VecDoubleBehaviorTests {
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -1.0 2 .vecDoubleSet )")
     }
 
-    @Test func vecDoubleSubVec() {
+    @Test func vecDoubleSlice() {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
@@ -542,27 +542,27 @@ struct VecDoubleBehaviorTests {
                          VecDoubleItem([1,11,111,1111])
                         ])
 
-        doThis(.vecDoubleSubVec, to: inty)
+        doThis(.vecDoubleSlice, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9 1 .vecDoubleSubVec )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9 1 .vecDoubleSlice )")
 
         doThis(.vecDoublePop, to: inty)
 
-        doThis(.vecDoubleSubVec, to: inty)
+        doThis(.vecDoubleSlice, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [7.0, 6.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 2 3 .vecDoubleSubVec )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 8.0, 7.0, 6.0, 9.0] 2 3 .vecDoubleSlice )")
 
         doThis(.vecDoublePop, to: inty)
 
-        doThis(.vecDoubleSubVec, to: inty)
+        doThis(.vecDoubleSlice, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -1 2 .vecDoubleSubVec )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 9.0, 9.0, 9.0, 9.0] -1 2 .vecDoubleSlice )")
 
         doThis(.vecDoublePop, to: inty)
 
-        doThis(.vecDoubleSubVec, to: inty)
+        doThis(.vecDoubleSlice, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [11.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 11.0, 111.0, 1111.0] 1 1 .vecDoubleSubVec )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 11.0, 111.0, 1111.0] 1 1 .vecDoubleSlice )")
     }
 
     @Test func vecDoubleTake() {

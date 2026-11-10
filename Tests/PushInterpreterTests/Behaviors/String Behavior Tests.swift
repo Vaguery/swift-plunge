@@ -45,51 +45,51 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .string)) == "( \"123\" \"abcd\" .stringConcat )")
     }
 
-    @Test func stringConjChar() {
+    @Test func stringConj() {
         loadChars(inty, chars: ["w", "•"])
         loadStrings(inty, strings: ["", "abcd"])
         #expect(stackString(inty, .char) == "[ 'w' '•' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcd\" ]")
 
-        doThis(.stringConjChar, to: inty)
+        doThis(.stringConj, to: inty)
         #expect(stackString(inty, .char) == "[ '•' ]")
         #expect(stackString(inty, .string) == "[ \"w\" \"abcd\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"\" 'w' .stringConjChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" 'w' .stringConj )")
 
-        doThis(.stringConjChar, to: inty)
+        doThis(.stringConj, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"w•\" \"abcd\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"w\" '•' .stringConjChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"w\" '•' .stringConj )")
     }
 
-    @Test func stringContains() {
+    @Test func stringContainsRun() {
         // Reads both strings and leaves both; the crux pops both.
         loadStrings(inty, strings: ["bc", "abcd"])   // x = "bc" (top), y = "abcd"
-        doThis(.stringContains, to: inty)
+        doThis(.stringContainsRun, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]", "\"abcd\" contains \"bc\"")
         #expect(stackString(inty, .string) == "[ \"bc\" \"abcd\" ]", "both survive the read")
-        #expect(callString(topItem(inty, .bool)) == "( \"abcd\" \"bc\" .stringContains 2 .stringPopItems )")
+        #expect(callString(topItem(inty, .bool)) == "( \"abcd\" \"bc\" .stringContainsRun 2 .stringPopItems )")
 
         let miss = Interpreter.recordingProvenance()
         loadStrings(miss, strings: ["xy", "abcd"])
-        doThis(.stringContains, to: miss)
+        doThis(.stringContainsRun, to: miss)
         #expect(stackString(miss, .bool) == "[ false ]")
     }
 
-    @Test func stringContainsChar() {
+    @Test func stringContains() {
         // Reads the string and the char and leaves both; the crux pops both.
         loadChars(inty, chars: ["b"])
         loadStrings(inty, strings: ["abcd"])
-        doThis(.stringContainsChar, to: inty)
+        doThis(.stringContains, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .string) == "[ \"abcd\" ]", "the string survives the read")
         #expect(stackString(inty, .char) == "[ 'b' ]", "the char survives the read")
-        #expect(callString(topItem(inty, .bool)) == "( 'b' \"abcd\" .stringContainsChar 1 .charPopItems 1 .stringPopItems )")
+        #expect(callString(topItem(inty, .bool)) == "( \"abcd\" 'b' .stringContains 1 .charPopItems 1 .stringPopItems )")
 
         let miss = Interpreter.recordingProvenance()
         loadChars(miss, chars: ["x"])
         loadStrings(miss, strings: ["abcd"])
-        doThis(.stringContainsChar, to: miss)
+        doThis(.stringContains, to: miss)
         #expect(stackString(miss, .bool) == "[ false ]")
     }
 
@@ -107,23 +107,23 @@ struct StringBehaviorTests {
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ 4 -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"abcdefghij\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 0 \"abcdefghij\" .stringDrop )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" 0 .stringDrop )")
 
         // Drops from the front, as `vecXDrop` does (since 2026-11-09).
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"efghij\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 4 \"abcdefghij\" .stringDrop )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" 4 .stringDrop )")
 
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ 99 ]")
         #expect(stackString(inty, .string) == "[ \"efghij\" ]")
-        #expect(callString(topItem(inty, .string)) == "( -14 \"efghij\" .stringDrop )")
+        #expect(callString(topItem(inty, .string)) == "( \"efghij\" -14 .stringDrop )")
 
         doThis(.stringDrop, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 99 \"efghij\" .stringDrop )")
+        #expect(callString(topItem(inty, .string)) == "( \"efghij\" 99 .stringDrop )")
     }
 
     /// Both ends, both ways: `Take`/`Drop` split at n from the front,
@@ -277,21 +277,21 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .bool)) == "( \"abc\" \"xyz\" .stringGTE 2 .stringPopItems )")
     }
 
-    @Test func stringIndexOfChar() {
+    @Test func stringIndexOf() {
         // Found: the index, both operands surviving; the crux pops both.
         loadChars(inty, chars: ["b"])
         loadStrings(inty, strings: ["abcd"])
-        doThis(.stringIndexOfChar, to: inty)
+        doThis(.stringIndexOf, to: inty)
         #expect(stackString(inty, .int) == "[ 1 ]")
         #expect(stackString(inty, .string) == "[ \"abcd\" ]", "the string survives")
         #expect(stackString(inty, .char) == "[ 'b' ]", "the char survives")
-        #expect(callString(topItem(inty, .int)) == "( 'b' \"abcd\" .stringIndexOfChar 1 .charPopItems 1 .stringPopItems )")
+        #expect(callString(topItem(inty, .int)) == "( \"abcd\" 'b' .stringIndexOf 1 .charPopItems 1 .stringPopItems )")
 
         // Not found → nothing is pushed (the operands still survive).
         let absent = Interpreter.recordingProvenance()
         loadChars(absent, chars: ["z"])
         loadStrings(absent, strings: ["abcd"])
-        doThis(.stringIndexOfChar, to: absent)
+        doThis(.stringIndexOf, to: absent)
         #expect(stackString(absent, .int) == "[ ]", "no index for an absent char")
         #expect(stackString(absent, .string) == "[ \"abcd\" ]")
         #expect(stackString(absent, .char) == "[ 'z' ]")
@@ -403,18 +403,18 @@ struct StringBehaviorTests {
     @Test func `stringIterate might be weird when recursive`() {
         loadStrings(inty, strings: ["boo", "tan"])
         inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.stringConjChar),
+            contentsOf: [InstructionItem(.stringConj),
                         ])
 
         #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .stringConjChar ]")
+        #expect(stackString(inty, .exec) == "[ .stringConj ]")
 
         doThis(.stringIterate, to: inty)
 
         #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .exec) == "[ .stringConjChar ]")
+        #expect(stackString(inty, .exec) == "[ .stringConj ]")
 
         inty.step()
 
@@ -566,35 +566,35 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .char)) == "( \"abcdefghi\" 22 .stringNth )")
     }
 
-    @Test func stringOccurrencesOfChar() {
+    @Test func stringOccurrencesOf() {
         loadChars(inty, chars: ["o"])
         loadStrings(inty, strings: ["boo"])
-        doThis(.stringOccurrencesOfChar, to: inty)
+        doThis(.stringOccurrencesOf, to: inty)
         #expect(stackString(inty, .int) == "[ 2 ]")
         #expect(stackString(inty, .string) == "[ \"boo\" ]", "the string survives")
         #expect(stackString(inty, .char) == "[ 'o' ]", "the char survives")
-        #expect(callString(topItem(inty, .int)) == "( 'o' \"boo\" .stringOccurrencesOfChar 1 .charPopItems 1 .stringPopItems )")
+        #expect(callString(topItem(inty, .int)) == "( \"boo\" 'o' .stringOccurrencesOf 1 .charPopItems 1 .stringPopItems )")
 
         let none = Interpreter.recordingProvenance()
         loadChars(none, chars: ["f"])
         loadStrings(none, strings: ["bee"])
-        doThis(.stringOccurrencesOfChar, to: none)
+        doThis(.stringOccurrencesOf, to: none)
         #expect(stackString(none, .int) == "[ 0 ]")
     }
 
     /// The order is unchanged — front-to-back, so "e" ends up on top — but the
     /// letters arrive one per pass rather than all at once, and each records what
     /// it *is* rather than how far down a pile it landed.
-    @Test func stringParseToLetters() {
+    @Test func stringPushAllLetters() {
         loadStrings(inty, strings: ["", "live"])
         #expect(stackString(inty, .string) == "[ \"\" \"live\" ]")
 
         // An empty string yields nothing at all — not even an iterator.
-        doThis(.stringParseToLetters, to: inty)
+        doThis(.stringPushAllLetters, to: inty)
         #expect(stackString(inty, .string) == "[ \"live\" ]")
         #expect(stackString(inty, .iterator) == "[ ]")
 
-        doThis(.stringParseToLetters, to: inty)
+        doThis(.stringPushAllLetters, to: inty)
         #expect(stackString(inty, .string) == "[ ]")
         inty.run(stepLimit: 10_000)
 
@@ -611,9 +611,9 @@ struct StringBehaviorTests {
             == "( \"live\" 2 .stringNth .stringFromChar )")
     }
 
-    @Test func `stringParseToLetters letters each reconstruct`() {
+    @Test func `stringPushAllLetters letters each reconstruct`() {
         loadStrings(inty, strings: ["live"])
-        doThis(.stringParseToLetters, to: inty)
+        doThis(.stringPushAllLetters, to: inty)
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"e\" \"v\" \"i\" \"l\" ]")
 
@@ -633,174 +633,174 @@ struct StringBehaviorTests {
 
     /// The order is unchanged — front-to-back, so 'r' ends up on top — but the
     /// characters arrive one per pass rather than all at once.
-    @Test func stringPushAllChars() {
+    @Test func stringPushAll() {
         loadStrings(inty, strings: ["bar", "fizz", ""])
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"bar\" \"fizz\" \"\" ]")
 
-        doThis(.stringPushAllChars, to: inty)
+        doThis(.stringPushAll, to: inty)
         #expect(stackString(inty, .char) == "[ ]")   // nothing until it runs
         inty.run(stepLimit: 10_000)
 
         #expect(stackString(inty, .char) == "[ 'r' 'a' 'b' ]")
         // Each char names its own index. It used to record the discard that
-        // surfaced it from a pile — `"bar" .stringPushAllChars 2 .charPopItems`.
+        // surfaced it from a pile — `"bar" .stringPushAll 2 .charPopItems`.
         #expect(callString(topItem(inty, .char)) == "( \"bar\" 2 .stringNth )")
         #expect(CodeItem(inty.stacks[.char]![2].crux()).pretty()
             == "( \"bar\" 0 .stringNth )")
         #expect(stackString(inty, .string) == "[ \"fizz\" \"\" ]")
 
-        doThis(.stringPushAllChars, to: inty)
+        doThis(.stringPushAll, to: inty)
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
         #expect(callString(topItem(inty, .char)) == "( \"fizz\" 3 .stringNth )")
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
         // An empty string yields nothing at all — not even an iterator.
-        doThis(.stringPushAllChars, to: inty)
+        doThis(.stringPushAll, to: inty)
         #expect(stackString(inty, .char) == "[ 'z' 'z' 'i' 'f' 'r' 'a' 'b' ]")
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .iterator) == "[ ]")
     }
 
-    @Test func stringRemoveChar() {
+    @Test func stringRemove() {
         loadChars(inty, chars: [" ","o","b"])
         loadStrings(inty, strings: ["", "boo", "bee"])
         #expect(stackString(inty, .char) == "[ ' ' 'o' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
 
-        doThis(.stringRemoveChar, to: inty)
+        doThis(.stringRemove, to: inty)
         #expect(stackString(inty, .char) == "[ 'o' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( ' ' \"\" .stringRemoveChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" ' ' .stringRemove )")
 
         doThis(.stringPop, to: inty)
 
-        doThis(.stringRemoveChar, to: inty)
+        doThis(.stringRemove, to: inty)
         #expect(stackString(inty, .char) == "[ 'b' ]")
         #expect(stackString(inty, .string) == "[ \"b\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 'o' \"boo\" .stringRemoveChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"boo\" 'o' .stringRemove )")
 
-        doThis(.stringRemoveChar, to: inty)
+        doThis(.stringRemove, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 'b' \"b\" .stringRemoveChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"b\" 'b' .stringRemove )")
     }
 
-    @Test func stringReplace() {
+    @Test func stringReplaceRun() {
         loadStrings(inty, strings: ["-", "", ""])
         #expect(stackString(inty, .string) == "[ \"-\" \"\" \"\" ]")
 
-        doThis(.stringReplace, to: inty)
+        doThis(.stringReplaceRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"-\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplace )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplaceRun )")
 
         loadStrings(inty, strings: [" a","1 ", "00 11 22"])
         #expect(stackString(inty, .string) == "[ \" a\" \"1 \" \"00 11 22\" \"-\" ]")
 
-        doThis(.stringReplace, to: inty)
+        doThis(.stringReplaceRun, to: inty)
         #expect(stackString(inty, .string) ==  "[ \"00 1 a22\" \"-\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"00 11 22\" \"1 \" \" a\" .stringReplace )")
+        #expect(callString(topItem(inty, .string)) == "( \"00 11 22\" \"1 \" \" a\" .stringReplaceRun )")
 
         doThis(.stringFlush, to: inty)
 
         loadStrings(inty, strings: ["1234", " w", "just write words"])
         #expect(stackString(inty, .string) == "[ \"1234\" \" w\" \"just write words\" ]")
 
-        doThis(.stringReplace, to: inty)
+        doThis(.stringReplaceRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"just1234rite1234ords\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \" w\" \"1234\" .stringReplace )")
+        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \" w\" \"1234\" .stringReplaceRun )")
 
         doThis(.stringFlush, to: inty)
 
         loadStrings(inty, strings: ["", "t", "just write words"])
         #expect(stackString(inty, .string) == "[ \"\" \"t\" \"just write words\" ]")
 
-        doThis(.stringReplace, to: inty)
+        doThis(.stringReplaceRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"jus wrie words\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \"t\" \"\" .stringReplace )")
+        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \"t\" \"\" .stringReplaceRun )")
     }
 
-    @Test func stringReplaceChar() {
+    @Test func stringReplace() {
         loadChars(inty, chars: [" ","o","e", "b"])
         loadStrings(inty, strings: ["", "boo", "bee"])
         #expect(stackString(inty, .char) == "[ ' ' 'o' 'e' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
 
-        doThis(.stringReplaceChar, to: inty)
+        doThis(.stringReplace, to: inty)
         #expect(stackString(inty, .char) == "[ 'e' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 'o' ' ' \"\" .stringReplaceChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" 'o' ' ' .stringReplace )")
 
         doThis(.stringPop, to: inty)
 
-        doThis(.stringReplaceChar, to: inty)
+        doThis(.stringReplace, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"eoo\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 'b' 'e' \"boo\" .stringReplaceChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"boo\" 'b' 'e' .stringReplace )")
 
-        doThis(.stringReplaceChar, to: inty)
+        doThis(.stringReplace, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"eoo\" \"bee\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 'b' 'e' \"boo\" .stringReplaceChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"boo\" 'b' 'e' .stringReplace )")
     }
 
-    @Test func stringReplaceFirst() {
+    @Test func stringReplaceFirstRun() {
         loadStrings(inty, strings: ["-", "", ""])
         #expect(stackString(inty, .string) == "[ \"-\" \"\" \"\" ]")
 
-        doThis(.stringReplaceFirst, to: inty)
+        doThis(.stringReplaceFirstRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"-\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplaceFirst )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplaceFirstRun )")
 
         loadStrings(inty, strings: [" a","1 ", "00 11 22"])
         #expect(stackString(inty, .string) == "[ \" a\" \"1 \" \"00 11 22\" \"-\" ]")
 
-        doThis(.stringReplaceFirst, to: inty)
+        doThis(.stringReplaceFirstRun, to: inty)
         #expect(stackString(inty, .string) ==  "[ \"00 1 a22\" \"-\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"00 11 22\" \"1 \" \" a\" .stringReplaceFirst )")
+        #expect(callString(topItem(inty, .string)) == "( \"00 11 22\" \"1 \" \" a\" .stringReplaceFirstRun )")
 
         doThis(.stringFlush, to: inty)
 
         loadStrings(inty, strings: ["1234", " w", "just write words"])
         #expect(stackString(inty, .string) == "[ \"1234\" \" w\" \"just write words\" ]")
 
-        doThis(.stringReplaceFirst, to: inty)
+        doThis(.stringReplaceFirstRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"just1234rite words\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \" w\" \"1234\" .stringReplaceFirst )")
+        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \" w\" \"1234\" .stringReplaceFirstRun )")
 
         doThis(.stringFlush, to: inty)
 
         loadStrings(inty, strings: ["", "t", "just write words"])
         #expect(stackString(inty, .string) == "[ \"\" \"t\" \"just write words\" ]")
 
-        doThis(.stringReplaceFirst, to: inty)
+        doThis(.stringReplaceFirstRun, to: inty)
         #expect(stackString(inty, .string) == "[ \"jus write words\" ]")
-        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \"t\" \"\" .stringReplaceFirst )")
+        #expect(callString(topItem(inty, .string)) == "( \"just write words\" \"t\" \"\" .stringReplaceFirstRun )")
     }
 
-    @Test func stringReplaceFirstChar() {
+    @Test func stringReplaceFirst() {
         loadChars(inty, chars: ["-", "2", ".","2", "!"," "])
         loadStrings(inty, strings: ["", "00 11 22"])
         #expect(stackString(inty, .char) == "[ '-' '2' '.' '2' '!' ' ' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"00 11 22\" ]")
 
-        doThis(.stringReplaceFirstChar, to: inty)
+        doThis(.stringReplaceFirst, to: inty)
         #expect(stackString(inty, .char) == "[ '.' '2' '!' ' ' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"00 11 22\" ]")
-        #expect(callString(topItem(inty, .string)) == "( '2' '-' \"\" .stringReplaceFirstChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" '2' '-' .stringReplaceFirst )")
 
         doThis(.stringPop, to: inty)
 
-        doThis(.stringReplaceFirstChar, to: inty)
+        doThis(.stringReplaceFirst, to: inty)
         #expect(stackString(inty, .char) == "[ '!' ' ' ]")
         #expect(stackString(inty, .string) == "[ \"00 11 .2\" ]")
-        #expect(callString(topItem(inty, .string)) == "( '2' '.' \"00 11 22\" .stringReplaceFirstChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"00 11 22\" '2' '.' .stringReplaceFirst )")
 
-        doThis(.stringReplaceFirstChar, to: inty)
+        doThis(.stringReplaceFirst, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"00!11 .2\" ]")
-        #expect(callString(topItem(inty, .string)) == "( ' ' '!' \"00 11 .2\" .stringReplaceFirstChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"00 11 .2\" ' ' '!' .stringReplaceFirst )")
     }
 
     @Test func stringRest() {
@@ -831,7 +831,7 @@ struct StringBehaviorTests {
         #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" .stringReverse )")
     }
     
-    @Test func stringSetChar() {
+    @Test func stringSet() {
         loadChars(inty, chars: ["-", ".", "?", "+"])
         loadInts(inty, ints: [11, 2, -222, 13])
         loadStrings(inty, strings: ["", "0123456789"])
@@ -841,41 +841,41 @@ struct StringBehaviorTests {
 
         // An empty string has no char to replace: an error, and the arguments are
         // consumed (it used to hand the empty string back).
-        doThis(.stringSetChar, to: inty)
+        doThis(.stringSet, to: inty)
         #expect(stackString(inty, .char) == "[ '.' '?' '+' ]")
         #expect(stackString(inty, .int) == "[ 2 -222 13 ]")
         #expect(stackString(inty, .string) == "[ \"0123456789\" ]")
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
 
-        doThis(.stringSetChar, to: inty)
+        doThis(.stringSet, to: inty)
         #expect(stackString(inty, .char) == "[ '?' '+' ]")
         #expect(stackString(inty, .int) == "[ -222 13 ]")
         #expect(stackString(inty, .string) == "[ \"01.3456789\" ]")
-        #expect(callString(topItem(inty, .string)) == "( '.' 2 \"0123456789\" .stringSetChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"0123456789\" '.' 2 .stringSet )")
 
-        doThis(.stringSetChar, to: inty)
+        doThis(.stringSet, to: inty)
         #expect(stackString(inty, .char) == "[ '+' ]")
         #expect(stackString(inty, .int) == "[ 13 ]")
         #expect(stackString(inty, .string) == "[ \"?1.3456789\" ]")
-        #expect(callString(topItem(inty, .string)) == "( '?' -222 \"01.3456789\" .stringSetChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"01.3456789\" '?' -222 .stringSet )")
 
         // Past the end clamps to the last char (it used to wrap: 13 % 10 == 3).
-        doThis(.stringSetChar, to: inty)
+        doThis(.stringSet, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"?1.345678+\" ]")
-        #expect(callString(topItem(inty, .string)) == "( '+' 13 \"?1.3456789\" .stringSetChar )")
+        #expect(callString(topItem(inty, .string)) == "( \"?1.3456789\" '+' 13 .stringSet )")
     }
 
     /// The order is unchanged — front-to-back, so the last word ends up on top —
     /// but the words arrive one per pass, and each names itself with the new
     /// `.stringNthWord` rather than recording how far down a pile it landed.
-    @Test func stringSplit() {
+    @Test func stringPushAllWords() {
         loadStrings(inty, strings: [""])
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
         // No words at all: nothing, not even an iterator.
-        doThis(.stringSplit, to: inty)
+        doThis(.stringPushAllWords, to: inty)
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .iterator) == "[ ]")
 
@@ -884,7 +884,7 @@ struct StringBehaviorTests {
         loadStrings(inty, strings: ["abcde"])
         #expect(stackString(inty, .string) == "[ \"abcde\" ]")
 
-        doThis(.stringSplit, to: inty)
+        doThis(.stringPushAllWords, to: inty)
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"abcde\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"abcde\" 0 .stringNthWord )")
@@ -894,7 +894,7 @@ struct StringBehaviorTests {
         loadStrings(inty, strings: ["ab    cd \ne\tf"])
         #expect(stackString(inty, .string) == "[ \"ab    cd \ne\tf\" ]")
 
-        doThis(.stringSplit, to: inty)
+        doThis(.stringPushAllWords, to: inty)
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .string) == "[ \"f\" \"e\" \"cd\" \"ab\" ]")
         // A word is not `origin[i]`, so no existing instruction could name one —
@@ -929,81 +929,81 @@ struct StringBehaviorTests {
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
     }
 
-    @Test func `stringSubstring works for empty`() {
+    @Test func `stringSlice works for empty`() {
         loadInts(inty, ints: [2,2])
         loadStrings(inty, strings: [""])
         #expect(stackString(inty, .int) == "[ 2 2 ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
     }
 
-    @Test func `stringSubstring works for nonempty with 2 huge indices`() {
+    @Test func `stringSlice works for nonempty with 2 huge indices`() {
         loadInts(inty, ints: [72, 94])
         loadStrings(inty, strings: ["lorex ipsum"])
         #expect(stackString(inty, .int) == "[ 72 94 ]")
         #expect(stackString(inty, .string) == "[ \"lorex ipsum\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"m\" ]")
         #expect(callString(topItem(inty, .string))
-            == "( \"lorex ipsum\" 94 72 .stringSubstring )")
+            == "( \"lorex ipsum\" 94 72 .stringSlice )")
      }
 
-    @Test func `stringSubstring works for nonempty with 2 negative indices`() {
+    @Test func `stringSlice works for nonempty with 2 negative indices`() {
         loadInts(inty, ints: [-22, -5])
         loadStrings(inty, strings: ["lorem ipsum"])
         #expect(stackString(inty, .int) == "[ -22 -5 ]")
         #expect(stackString(inty, .string) == "[ \"lorem ipsum\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"l\" ]")
     }
 
-    @Test func `stringSubstring works for nonempty with basic indices`() {
+    @Test func `stringSlice works for nonempty with basic indices`() {
         loadInts(inty, ints: [4, 2])
         loadStrings(inty, strings: ["lorem ipsum"])
         #expect(stackString(inty, .int) == "[ 4 2 ]")
         #expect(stackString(inty, .string) == "[ \"lorem ipsum\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"rem\" ]")
     }
     
-    @Test func `stringSubstring works for nonempty with identical indices`() {
+    @Test func `stringSlice works for nonempty with identical indices`() {
         loadInts(inty, ints: [3, 3])
         loadStrings(inty, strings: ["lorem ipsum"])
         #expect(stackString(inty, .int) == "[ 3 3 ]")
         #expect(stackString(inty, .string) == "[ \"lorem ipsum\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"e\" ]")
     }
     
-    @Test func `stringSubstring works for nonempty with weird indices`() {
+    @Test func `stringSlice works for nonempty with weird indices`() {
         loadInts(inty, ints: [90, -5])
         loadStrings(inty, strings: ["lorem ipsum"])
         #expect(stackString(inty, .int) == "[ 90 -5 ]")
         #expect(stackString(inty, .string) == "[ \"lorem ipsum\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"lorem ipsum\" ]")
     }
 
-    @Test func `stringSubstring works for silly indices on empty strings`() {
+    @Test func `stringSlice works for silly indices on empty strings`() {
         loadInts(inty, ints: [-3, 22])
         loadStrings(inty, strings: [""])
         #expect(stackString(inty, .int) == "[ -3 22 ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
 
-        doThis(.stringSubstring, to: inty)
+        doThis(.stringSlice, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
     }
@@ -1022,22 +1022,22 @@ struct StringBehaviorTests {
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ 4 -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghij\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 0 \"abcdefghij\" .stringTake )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" 0 .stringTake )")
 
         doThis(.stringPop, to:inty)
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"abcd\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 4 \"abcdefghij\" .stringTake )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" 4 .stringTake )")
 
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ 99 ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
-        #expect(callString(topItem(inty, .string)) == "( -14 \"abcd\" .stringTake )")
+        #expect(callString(topItem(inty, .string)) == "( \"abcd\" -14 .stringTake )")
 
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
-        #expect(callString(topItem(inty, .string)) == "( 99 \"\" .stringTake )")
+        #expect(callString(topItem(inty, .string)) == "( \"\" 99 .stringTake )")
     }
 }

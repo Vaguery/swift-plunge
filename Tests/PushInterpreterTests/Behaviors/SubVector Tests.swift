@@ -5,7 +5,7 @@
 //  Created by Bill Tozier on 7/18/26.
 //
 //  Whole-subsequence search and replace on vectors — the analog of string's
-//  `stringContains`/`stringReplace` (as opposed to the element-wise forms).
+//  `stringContainsRun`/`stringReplaceRun` (as opposed to the element-wise forms).
 //  Search is a non-destructive query (both vectors survive, crux pops both);
 //  replace is a transform (consumes all three).
 //
@@ -22,7 +22,7 @@ struct SubVectorTests {
 
     /// The needle on top, the haystack beneath: written `v w .op`, the vector
     /// searched first, as every search is written (`v x .vecIntIndexOf`,
-    /// `hay needle .stringIndexOf`). Until 2026-11-09 the haystack was on top.
+    /// `hay needle .stringIndexOfRun`). Until 2026-11-09 the haystack was on top.
     func loadSearch(_ hay: [Int], _ needle: [Int]) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.vecInt]!.prepend(contentsOf: [VecIntItem(needle), VecIntItem(hay)] as [any Item])
@@ -34,54 +34,54 @@ struct SubVectorTests {
 
     @Test func `containsSubVec finds a contiguous run and survives both operands`() {
         let inty = loadSearch([1, 2, 3, 4], [2, 3])
-        doThis(.vecIntContainsSubVec, to: inty)
+        doThis(.vecIntContainsRun, to: inty)
         #expect((topItem(inty, .bool) as! BoolItem).value)
         #expect(stackString(inty, .vecInt) == "[ [2, 3] [1, 2, 3, 4] ]", "both survive the read")
         #expect(callString(topItem(inty, .bool))
-                == "( [1, 2, 3, 4] [2, 3] .vecIntContainsSubVec 2 .vecIntPopItems )")
+                == "( [1, 2, 3, 4] [2, 3] .vecIntContainsRun 2 .vecIntPopItems )")
 
         // Non-contiguous → not found.
         let miss = loadSearch([1, 2, 3, 4], [2, 4])
-        doThis(.vecIntContainsSubVec, to: miss)
+        doThis(.vecIntContainsRun, to: miss)
         #expect((topItem(miss, .bool) as! BoolItem).value == false)
 
         // Empty needle is a vacuous prefix → contained.
         let empty = loadSearch([1, 2], [])
-        doThis(.vecIntContainsSubVec, to: empty)
+        doThis(.vecIntContainsRun, to: empty)
         #expect((topItem(empty, .bool) as! BoolItem).value)
     }
 
     @Test func `indexOfSubVec returns the start, or an error if absent`() {
         let inty = loadSearch([5, 1, 2, 3], [1, 2])
-        doThis(.vecIntIndexOfSubVec, to: inty)
+        doThis(.vecIntIndexOfRun, to: inty)
         #expect((topItem(inty, .int) as! IntItem).value == 1)
 
         // Absent: an error, where it used to answer -1.
         let miss = loadSearch([5, 1, 2, 3], [9, 9])
-        doThis(.vecIntIndexOfSubVec, to: miss)
+        doThis(.vecIntIndexOfRun, to: miss)
         #expect(stackString(miss, .int) == "[ ]")
         #expect((topItem(miss, .error) as? ErrorItem)?.kind == .notFound)
     }
 
     @Test func `occurrencesOfSubVec counts non-overlapping runs`() {
         let inty = loadSearch([1, 1, 1, 1], [1, 1])
-        doThis(.vecIntOccurrencesOfSubVec, to: inty)
+        doThis(.vecIntOccurrencesOfRun, to: inty)
         #expect((topItem(inty, .int) as! IntItem).value == 2, "non-overlapping: [1,1][1,1]")
 
         // Overlapping pattern counted non-overlapping: [1,2,1,2,1] contains [1,2] twice.
         let overlap = loadSearch([1, 2, 1, 2, 1], [1, 2])
-        doThis(.vecIntOccurrencesOfSubVec, to: overlap)
+        doThis(.vecIntOccurrencesOfRun, to: overlap)
         #expect((topItem(overlap, .int) as! IntItem).value == 2)
 
         // Empty needle counts 0.
         let empty = loadSearch([1, 2], [])
-        doThis(.vecIntOccurrencesOfSubVec, to: empty)
+        doThis(.vecIntOccurrencesOfRun, to: empty)
         #expect((topItem(empty, .int) as! IntItem).value == 0)
     }
 
     @Test func `a subvector search crux reproduces debris-free`() {
         let inty = loadSearch([1, 2, 3], [2, 3])
-        doThis(.vecIntIndexOfSubVec, to: inty)
+        doThis(.vecIntIndexOfRun, to: inty)
         let result = topItem(inty, .int)
 
         let redo = Interpreter.recordingProvenance()
@@ -104,38 +104,38 @@ struct SubVectorTests {
 
     @Test func `replaceSubVec substitutes every occurrence and consumes`() {
         let inty = loadReplace([1, 2, 3, 2, 3], [2, 3], [9])
-        doThis(.vecIntReplaceSubVec, to: inty)
+        doThis(.vecIntReplaceRun, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [1, 9, 9] ]", "both runs replaced, args consumed")
         #expect(callString(topItem(inty, .vecInt))
-                == "( [1, 2, 3, 2, 3] [2, 3] [9] .vecIntReplaceSubVec )")
+                == "( [1, 2, 3, 2, 3] [2, 3] [9] .vecIntReplaceRun )")
     }
 
     @Test func `replaceFirstSubVec substitutes only the first`() {
         let inty = loadReplace([1, 2, 3, 2, 3], [2, 3], [9])
-        doThis(.vecIntReplaceFirstSubVec, to: inty)
+        doThis(.vecIntReplaceFirstRun, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [1, 9, 2, 3] ]")
     }
 
     @Test func `replace with a longer or empty replacement`() {
         // Longer replacement (a splice).
         let grow = loadReplace([1, 2, 1], [2], [7, 7])
-        doThis(.vecIntReplaceSubVec, to: grow)
+        doThis(.vecIntReplaceRun, to: grow)
         #expect(stackString(grow, .vecInt) == "[ [1, 7, 7, 1] ]")
 
         // Empty replacement deletes the needle.
         let shrink = loadReplace([1, 2, 3], [2], [])
-        doThis(.vecIntReplaceSubVec, to: shrink)
+        doThis(.vecIntReplaceRun, to: shrink)
         #expect(stackString(shrink, .vecInt) == "[ [1, 3] ]")
 
         // Empty needle is a no-op (never matches).
         let noop = loadReplace([1, 2, 3], [], [9])
-        doThis(.vecIntReplaceSubVec, to: noop)
+        doThis(.vecIntReplaceRun, to: noop)
         #expect(stackString(noop, .vecInt) == "[ [1, 2, 3] ]")
     }
 
     @Test func `a replace crux reproduces the vector`() {
         let inty = loadReplace([1, 2, 3, 2, 3], [2, 3], [9])
-        doThis(.vecIntReplaceSubVec, to: inty)
+        doThis(.vecIntReplaceRun, to: inty)
         let result = topItem(inty, .vecInt)
 
         let redo = Interpreter.recordingProvenance()
@@ -152,21 +152,21 @@ struct SubVectorTests {
         let s = Interpreter.recordingProvenance()
         s.stacks[.vecString]!.prepend(contentsOf:
             [VecStringItem(["b"]), VecStringItem(["a", "b", "c"])] as [any Item])
-        doThis(.vecStringContainsSubVec, to: s)
+        doThis(.vecStringContainsRun, to: s)
         #expect((topItem(s, .bool) as! BoolItem).value)
 
         // bool subvectors — needle on top
         let b = Interpreter.recordingProvenance()
         b.stacks[.vecBool]!.prepend(contentsOf:
             [VecBoolItem([true, false]), VecBoolItem([false, true, false, true])] as [any Item])
-        doThis(.vecBoolIndexOfSubVec, to: b)
+        doThis(.vecBoolIndexOfRun, to: b)
         #expect((topItem(b, .int) as! IntItem).value == 1)
 
         // double replace
         let d = Interpreter.recordingProvenance()
         d.stacks[.vecDouble]!.prepend(contentsOf:
             [VecDoubleItem([0.0]), VecDoubleItem([2.0]), VecDoubleItem([1.0, 2.0, 3.0])] as [any Item])
-        doThis(.vecDoubleReplaceSubVec, to: d)
+        doThis(.vecDoubleReplaceRun, to: d)
         #expect(stackString(d, .vecDouble) == "[ [1.0, 0.0, 3.0] ]")
     }
 }

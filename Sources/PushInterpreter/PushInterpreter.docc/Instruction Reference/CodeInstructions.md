@@ -8,9 +8,9 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `codeAppend` | Concatenates two blocks' root items: `( a ) ( b c ) .codeAppend` gives `( a b c )`. | `code`, `code` | `code` |
-| `codeContainer` | Copies the block directly holding n's first occurrence in h, leaving both: `n h .codeContainer`; refuses if n is absent or is h itself. | `code` (read), `code` (read) | `code`; may refuse |
-| `codeContains` | Tests whether block n occurs as a point of block h, leaving both: `n h .codeContains`; a one-item n stands for its sole item. | `code` (read), `code` (read) | `bool` |
+| `codeConcat` | Concatenates two blocks' root items: `( a ) ( b c ) .codeConcat` gives `( a b c )`. | `code`, `code` | `code` |
+| `codeContainer` | Copies the block directly holding n's first occurrence in h, leaving both: `h n .codeContainer`; refuses if n is absent or is h itself. | `code` (read), `code` (read) | `code`; may refuse |
+| `codeContains` | Tests whether block n occurs as a point of block h, leaving both: `h n .codeContains`; a one-item n stands for its sole item. | `code` (read), `code` (read) | `bool` |
 | `codeCutAtGap` | Splits the whole tree at gap i (clamped), front part beneath, back on top; leaves keep their order, and blocks the cut crosses split in two. | `code`, `int` | `code`, `code` |
 | `codeCutRootAtGap` | Splits a block's root items at gap i, clamped to 0 through their count: the front part beneath, the back part on top. | `code`, `int` | `code`, `code` |
 | `codeDepth` | Measures how deeply blocks nest, leaving the block: `( )` is 0, a flat block 1, each nested level one more. | `code` (read) | `int` |
@@ -24,7 +24,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeFlattenPoint` | Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 flattens everything. | `code`, `int` | `code` |
 | `codeFlattenRange` | Flattens every block whose first or last gap lies between gaps i and j (clamped, either order); blocks enclosing the range keep their shape. | `code`, `int`, `int` | `code` |
 | `codeFromIterator` | Collects everything the iterator has left to emit into one block, its body returning to `.code` beneath; refuses, keeping the iterator, when that is too many items. | `iterator` | `code` or `code`, `code`; may refuse |
-| `codeIndexOfPoint` | Finds the first point of h equal to n, leaving both: `n h .codeIndexOfPoint`; a one-item n stands for its sole item; refuses when absent. | `code` (read), `code` (read) | `int`; may refuse |
+| `codeIndexOfPoint` | Finds the first point of h equal to n, leaving both: `h n .codeIndexOfPoint`; a one-item n stands for its sole item; refuses when absent. | `code` (read), `code` (read) | `int`; may refuse |
 | `codeInsertAtGap` | Inserts: `s x i .codeInsertAtGap` splices block x into s at gap i (clamped); a one-item x inserts its sole item. | `code`, `code`, `int` | `code` |
 | `codeIntersect` | Filters: `a b .codeIntersect` keeps the items of block a that also occur in b, compared by value, in a's order, repeats included. | `code`, `code` | `code` |
 | `codeIsSubset` | Tells whether every item of block a occurs in block b, compared by value: `a b .codeIsSubset`, leaving both. | `code` (read), `code` (read) | `bool` |

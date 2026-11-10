@@ -69,7 +69,7 @@ nonisolated extension Interpreter {
     /// `xRef`: binds a copy of the top of `stack` to a fresh key, leaving the
     /// item where it was, and pushes the key onto `.int`.
     static func refBinder(_ name: PushInstruction, of stack: PushStack) -> Behavior {
-        Behavior.contextRead(name, tags: [.fallible], produces: .results([.binding, .int])) { _, context in
+        Behavior.contextRead(name, observes: [stack], tags: [.fallible], produces: .results([.binding, .int])) { _, context in
             let recording = context.recording
             guard let top = context.items(of: stack).first else {
                 return [refMissing(name, on: stack, recording)]
@@ -177,7 +177,7 @@ nonisolated extension Interpreter {
     static func refLookup(_ name: PushInstruction, below: Bool, tags: Set<InstructionTag> = [],
                           produces: Produces,
                           deliver: @escaping @Sendable (any Item, ReadContext) -> [Router]) -> Behavior {
-        Behavior.contextRead(name, takes: below ? [.int] : [], tags: tags.union([.fallible]),
+        Behavior.contextRead(name, takes: below ? [.int] : [], observes: [.int, .binding], tags: tags.union([.fallible]),
                              produces: produces) { a, context in
             let handBack = below ? [Router(.int, a[0])] : []
             guard let key = context.items(of: .int).first as? IntItem else {
@@ -231,7 +231,8 @@ nonisolated extension Interpreter {
 
     /// The depth of a key's topmost binding, onto `.int`.
     static let bindingKeyDepth_Behavior =
-        Behavior.contextRead(.bindingKeyDepth, tags: [.fallible], produces: .results([.int])) { _, context in
+        Behavior.contextRead(.bindingKeyDepth, observes: [.int, .binding], tags: [.fallible],
+                             produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(.bindingKeyDepth, on: .int, context.recording)]
             }
@@ -246,7 +247,7 @@ nonisolated extension Interpreter {
     /// `.binding` from the top down; onto `.int`, observed.
     static func refKeyFinder(_ name: PushInstruction,
                              choose: @escaping @Sendable (Int, [Int]) -> Int?) -> Behavior {
-        Behavior.contextRead(name, tags: [.fallible], produces: .results([.int])) { _, context in
+        Behavior.contextRead(name, observes: [.int, .binding], tags: [.fallible], produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(name, on: .int, context.recording)]
             }
@@ -273,7 +274,8 @@ nonisolated extension Interpreter {
     /// Reverse lookup: the key of the topmost binding whose value is the block on
     /// top of `.code` (read), or the one item that block holds.
     static let bindingKeyOf_Behavior =
-        Behavior.contextRead(.bindingKeyOf, tags: [.fallible], produces: .results([.int])) { _, context in
+        Behavior.contextRead(.bindingKeyOf, observes: [.code, .binding], tags: [.fallible],
+                             produces: .results([.int])) { _, context in
             guard let probe = context.items(of: .code).first as? CodeItem else {
                 return [refMissing(.bindingKeyOf, on: .code, context.recording)]
             }

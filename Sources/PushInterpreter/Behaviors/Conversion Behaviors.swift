@@ -11,7 +11,7 @@
 //    the contents, uniform or refuse, as `vecFromIterator` does; a block holding
 //    exactly one vector gives that vector, so `vecXQuote` then `vecFromCode` is
 //    the identity.
-//  - **`stringFromChars`** and **`stringReadStack`** collect chars into a
+//  - **`stringReadItems`** and **`stringReadStack`** collect chars into a
 //    string, reading them and leaving them, as `vecXReadItems` and
 //    `vecXReadStack` do for scalars. Chars could be taken out of a string but
 //    never put back.
@@ -85,20 +85,20 @@ nonisolated extension Interpreter {
     // MARK: - Chars into strings
 
     /// The `call` of a string read from `chars` (in string order): re-push them,
-    /// read them with `stringFromChars`, and pop what was read.
+    /// read them with `stringReadItems`, and pop what was read.
     static func charsCrux(_ chars: [CharItem]) -> [any Item] {
         Behavior.reading(
             [.char: chars.count],
             producing: .string,
-            from: chars.map { $0 as any Item } + [IntItem(chars.count), InstructionItem(.stringFromChars)]
+            from: chars.map { $0 as any Item } + [IntItem(chars.count), InstructionItem(.stringReadItems)]
         )
     }
 
     /// A string of the top `k` chars, leaving them in place; `k` is clamped to
     /// what there is. Top-first, reversed, so the inverse of
-    /// `stringPushAllChars`, as `vecXReadItems` is of `vecXPushAll`.
-    static let stringFromChars_Behavior =
-        Behavior.contextRead(.stringFromChars, takes: [.int], produces: .results([.string])) { collected, context in
+    /// `stringPushAll`, as `vecXReadItems` is of `vecXPushAll`.
+    static let stringReadItems_Behavior =
+        Behavior.contextRead(.stringReadItems, takes: [.int], observes: [.char], produces: .results([.string])) { collected, context in
             let n = (collected[0] as! IntItem).value
             let items = context.items(of: .char)
             let k = Position.gap(n, count: items.count)
@@ -108,13 +108,13 @@ nonisolated extension Interpreter {
                                                members: context.recording.pieces(chars.map { Origin.item($0) })))]
         }
         .described(
-            "Copies the top n chars into a string, leaving them: `n .stringFromChars`, n clamped to the stack's "
+            "Copies the top n chars into a string, leaving them: `n .stringReadItems`, n clamped to the stack's "
             + "depth; the top char comes last.")
 
     /// A string of every char on `.char`, leaving them; empty if there are none.
-    /// Its crux reads them back with `stringFromChars`, so it composes.
+    /// Its crux reads them back with `stringReadItems`, so it composes.
     static let stringReadStack_Behavior =
-        Behavior.contextRead(.stringReadStack, produces: .results([.string])) { _, context in
+        Behavior.contextRead(.stringReadStack, observes: [.char], produces: .results([.string])) { _, context in
             let chars = Array(context.items(of: .char)).map { $0 as! CharItem }.reversed().map { $0 }
             return [Router(.string, StringItem(String(chars.map(\.value)),
                                                call: context.recording(charsCrux(chars)),
@@ -157,7 +157,7 @@ nonisolated extension Interpreter {
         .vecDoubleQuote: vecDoubleQuote_Behavior,
         .vecStringQuote: vecStringQuote_Behavior,
         .vecFromCode: vecFromCode_Behavior,
-        .stringFromChars: stringFromChars_Behavior,
+        .stringReadItems: stringReadItems_Behavior,
         .stringReadStack: stringReadStack_Behavior,
         .stringSplitOn: stringSplitOn_Behavior,
         .vecStringJoin: vecStringJoin_Behavior

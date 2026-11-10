@@ -13,8 +13,8 @@
 //  That pins against regression, but it cannot tell you the record is *true* —
 //  an expectation written by reading the code transcribes whatever the code says,
 //  bug and all. That is not hypothetical: `charGTE` recorded `.charGT`,
-//  `stringReplaceChar` recorded a two-argument instruction for a three-argument
-//  behavior, and `stringReplaceFirst` recorded the replace-all instruction. Only
+//  `stringReplace` recorded a two-argument instruction for a three-argument
+//  behavior, and `stringReplaceFirstRun` recorded the replace-all instruction. Only
 //  re-running the reconstruction catches that class.
 //
 //  So this file re-runs it. Slow, and deliberately so — it sweeps the whole
@@ -65,7 +65,7 @@ struct CruxRoundTripTests {
 
     /// Deterministic, plausible arguments for a stack. Small non-negative ints
     /// because so many behaviors read one as an index or a count; strings with a
-    /// space in them so `stringSplit` has something to do.
+    /// space in them so `stringPushAllWords` has something to do.
     func synthetic(for stack: PushStack, _ n: Int) -> (any Item)? {
         switch stack {
         case .bool:      BoolItem(n % 2 == 0)
@@ -171,12 +171,12 @@ struct CruxRoundTripTests {
     /// It held five entries until the CodeItem change landed, and all five closed
     /// at once:
     ///
-    /// - `codeAppend`, `codeEq`, `codeItemIsEmpty`, `codeWrapRoot` — a bare code
+    /// - `codeConcat`, `codeEq`, `codeItemIsEmpty`, `codeWrapRoot` — a bare code
     ///   block used not to be its own crux. `crux()` returns `[self]` for an empty
     ///   `call`, and for every scalar that literal reproduces the value; a
     ///   `CodeItem` was the exception, because a block in a program unwrapped onto
     ///   `.exec` and scattered instead of reaching `.code`. Now it comes to rest
-    ///   there intact, and `( 2 3 ) ( 1 2 ) .codeAppend` finds what it needs.
+    ///   there intact, and `( 2 3 ) ( 1 2 ) .codeConcat` finds what it needs.
     /// - `execEq` — its crux had to be **prefix** (provenance law 3b), which
     ///   reproduced single-item operands only. It was removed:
     ///   `( A ) ( B ) .codeEq` asks the same question.

@@ -42,7 +42,7 @@ public nonisolated enum Produces: Hashable, Sendable {
 
     /// An iterator loop delivering elements to `stack` over the following steps:
     /// a promise, returned as an iterator and `.iteratorPlay`, not the elements
-    /// (`vecIntPushAll`, `stringSplit`).
+    /// (`vecIntPushAll`, `stringPushAllWords`).
     case delivery(PushStack)
 
     /// Value-blind changes to `stack`'s positions — deleting, copying, moving —

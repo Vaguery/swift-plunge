@@ -125,16 +125,19 @@ nonisolated extension Behavior {
     // MARK: - Context reads
 
     /// A source: consume `takes` (at most a count), read the interpreter through a
-    /// read-only `ReadContext`, and return results.
+    /// read-only `ReadContext`, and return results. `observes` names the stacks
+    /// `read` looks at (see `Behavior.observes`).
     static func contextRead(
         _ label: PushInstruction,
         takes: [PushStack] = [],
+        observes: [PushStack] = [],
         tags: Set<InstructionTag> = [],
         produces: Produces,
         read: @escaping @Sendable ([any Item], ReadContext) -> [Router]
     ) -> Behavior {
         Behavior(label, requires: takes.map { Requirement.takes($0) },
-                 tags: tags, behaviorClass: .contextRead, body: .contextRead(read), produces: produces)
+                 tags: tags, behaviorClass: .contextRead, body: .contextRead(read), produces: produces,
+                 observes: observes)
     }
 
 

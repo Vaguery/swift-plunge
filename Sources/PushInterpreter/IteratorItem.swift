@@ -51,11 +51,11 @@ public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
     case elements(into: PushStack?)
 
     /// `origin` is a `StringItem`; pass `i` emits `String(origin[i])` — a
-    /// one-character *string* — to `.string`. This is `stringParseToLetters`.
+    /// one-character *string* — to `.string`. This is `stringPushAllLetters`.
     case letters
 
     /// `origin` is a `StringItem`; pass `i` emits its `i`-th whitespace-delimited
-    /// chunk to `.string`. This is `stringSplit`.
+    /// chunk to `.string`. This is `stringPushAllWords`.
     case words
 
     /// `origin` is a `CodeItem`; pass `i` emits its `i`-th **pre-order point**
@@ -760,7 +760,7 @@ nonisolated extension IteratorItem {
         }
 
         switch kind {
-        // A one-character *string*, not a char: `stringParseToLetters`. Two
+        // A one-character *string*, not a char: `stringPushAllLetters`. Two
         // instructions to reproduce, still O(1). Built exactly as `.stringNth` then
         // `.stringFromChar` would build it, members included, so a replay of
         // anything taken out of it agrees with the original.

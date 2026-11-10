@@ -14,17 +14,17 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    static let codeAppend_Behavior =
-        Behavior.operation(.codeAppend, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
+    static let codeConcat_Behavior =
+        Behavior.operation(.codeConcat, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
             y + x
         }
-        .described("Concatenates two blocks' root items: `( a ) ( b c ) .codeAppend` gives `( a b c )`.")
+        .described("Concatenates two blocks' root items: `( a ) ( b c ) .codeConcat` gives `( a b c )`.")
 
     /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
     /// `codeWrapRoot`, and Clojure's `list` with two arguments. Each argument is
     /// **denoted** (singleton-unwrap): a one-element block contributes its bare
     /// element, so `( 1 ) ( 2 3 ) .codePair` → `( 1 ( 2 3 ) )`, not
-    /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeAppend`, which concatenates
+    /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeConcat`, which concatenates
     /// contents flat.
     static let codePair_Behavior =
         Behavior.composing(.codePair, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
@@ -120,35 +120,35 @@ nonisolated extension Interpreter {
     /// *denoted* for the search (singleton-unwrap), but the crux re-pushes the
     /// original block, so re-running denotes it again.
     static let codeContains_Behavior =
-        Behavior.operation(.codeContains, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { needle, hay in
+        Behavior.operation(.codeContains, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { hay, needle in
             CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) != nil
         }
-        .described("Tests whether block n occurs as a point of block h, leaving both: `n h .codeContains`; a " +
+        .described("Tests whether block n occurs as a point of block h, leaving both: `h n .codeContains`; a " +
                    "one-item n stands for its sole item.")
 
     /// The pre-order index of the first point equal to the target; an error if
     /// there is none (it used to answer −1).
     static let codeIndexOfPoint_Behavior =
-        Behavior.operation(.codeIndexOfPoint, reads: CodeItem.self, CodeItem.self, gives: IntItem.self) { needle, hay throws(Refusal) in
+        Behavior.operation(.codeIndexOfPoint, reads: CodeItem.self, CodeItem.self, gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let found = CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) else {
                 throw Refusal("Not found in .codeIndexOfPoint", kind: .notFound)
             }
             return found
         }
-        .described("Finds the first point of h equal to n, leaving both: `n h .codeIndexOfPoint`; a one-item n " +
+        .described("Finds the first point of h equal to n, leaving both: `h n .codeIndexOfPoint`; a one-item n " +
                    "stands for its sole item; refuses when absent.")
 
     /// The block that directly contains the first point equal to the target —
     /// its parent. An error if the target is absent, or if it is the whole tree
     /// (which has no parent here). Reads both, leaves both.
     static let codeContainer_Behavior =
-        Behavior.operation(.codeContainer, reads: CodeItem.self, CodeItem.self, gives: CodeItem.self) { needle, hay throws(Refusal) in
+        Behavior.operation(.codeContainer, reads: CodeItem.self, CodeItem.self, gives: CodeItem.self) { hay, needle throws(Refusal) in
             guard let parent = CodeItem(hay).parentContaining(CodeItem(needle).denotedItem) else {
                 throw Refusal("No container found in .codeContainer", kind: .notFound)
             }
             return parent.value
         }
-        .described("Copies the block directly holding n's first occurrence in h, leaving both: `n h " +
+        .described("Copies the block directly holding n's first occurrence in h, leaving both: `h n " +
                    ".codeContainer`; refuses if n is absent or is h itself.")
 
     // MARK: - Point access (non-destructive)
@@ -347,7 +347,7 @@ nonisolated extension Interpreter {
 
     /// Split the **root** `.value` array at the indexed gap into two blocks — the
     /// `.code` analog of `vecXCut`/`stringCut`. Prefix deeper, suffix on top (so
-    /// `cut` then `codeAppend` rebuilds the original); law-5 multi-result crux.
+    /// `cut` then `codeConcat` rebuilds the original); law-5 multi-result crux.
     static let codeCutRootAtGap_Behavior =
         Behavior.splitting(.codeCutRootAtGap, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
             // Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
@@ -372,7 +372,7 @@ nonisolated extension Interpreter {
     ///
     /// **Leaves are preserved exactly**, in order, across the two pieces. Nesting
     /// on the cut path is not: a block the cut passes through becomes one block in
-    /// each piece, so cut-then-`codeAppend` is the identity only when the gap
+    /// each piece, so cut-then-`codeConcat` is the identity only when the gap
     /// happens to fall between root elements. That is a property of cutting trees;
     /// see the note in `CodeGaps.swift`.
     static let codeCutAtGap_Behavior =
@@ -677,7 +677,7 @@ nonisolated extension Interpreter {
         .iteratorQuote : iteratorQuote_Behavior,
         .boolQuote : boolQuote_Behavior,
         .charQuote : charQuote_Behavior,
-        .codeAppend : codeAppend_Behavior,
+        .codeConcat : codeConcat_Behavior,
         .codePair : codePair_Behavior,
         .codeIf : codeIf_Behavior,
         .codeDoIf : codeDoIf_Behavior,

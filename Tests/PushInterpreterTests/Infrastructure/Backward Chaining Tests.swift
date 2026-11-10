@@ -73,7 +73,7 @@ struct BackwardChainingTests {
     /// (as for the iterator constructors, `cruxOnly`), not the language's.
     static let arityThreeQueries: Set<PushInstruction> = [
         .vecBoolIndexOfFrom, .vecIntIndexOfFrom, .vecDoubleIndexOfFrom, .vecStringIndexOfFrom,
-        .stringIndexOfCharFrom, .stringIndexOfFrom
+        .stringIndexOfFrom, .stringIndexOfRunFrom
     ]
 
     /// What a search wants from chaining: each sampled program leaves something on

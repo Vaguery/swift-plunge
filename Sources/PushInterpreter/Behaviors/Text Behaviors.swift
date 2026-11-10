@@ -7,8 +7,8 @@
 //
 //  The queries (`IsUpper`, `IsLower`, `IndexOf`, `StartsWith`, `EndsWith`) read
 //  and leave their arguments, as every query does. Written order follows
-//  `stringContains`: the string first, then what is looked for, so
-//  `"hello" "ll" .stringIndexOf` is 2.
+//  `stringContainsRun`: the string first, then what is looked for, so
+//  `"hello" "ll" .stringIndexOfRun` is 2.
 //
 //  Case mapping is Unicode's default, not a locale's, so it is the same
 //  everywhere. A character whose upper or lower case is more than one character
@@ -64,15 +64,15 @@ nonisolated extension Interpreter {
 
     /// Where the second string first occurs in the first, counted in
     /// characters; an error if it does not. An empty needle is found at 0.
-    static let stringIndexOf_Behavior =
-        Behavior.operation(.stringIndexOf, reads: StringItem.self, StringItem.self,
+    static let stringIndexOfRun_Behavior =
+        Behavior.operation(.stringIndexOfRun, reads: StringItem.self, StringItem.self,
                            gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let range = hay.firstRange(of: needle) else {
-                throw Refusal("Not found in .stringIndexOf: \(needle)", kind: .notFound)
+                throw Refusal("Not found in .stringIndexOfRun: \(needle)", kind: .notFound)
             }
             return hay.distance(from: hay.startIndex, to: range.lowerBound)
         }
-        .described("Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOf`; an empty t " +
+        .described("Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOfRun`; an empty t " +
                    "gives 0; refuses when absent.")
 
     static let stringStartsWith_Behavior =
@@ -112,7 +112,7 @@ nonisolated extension Interpreter {
         .charIsLower: charIsLower_Behavior,
         .stringUpper: stringUpper_Behavior,
         .stringLower: stringLower_Behavior,
-        .stringIndexOf: stringIndexOf_Behavior,
+        .stringIndexOfRun: stringIndexOfRun_Behavior,
         .stringStartsWith: stringStartsWith_Behavior,
         .stringEndsWith: stringEndsWith_Behavior,
         .stringTrim: stringTrim_Behavior

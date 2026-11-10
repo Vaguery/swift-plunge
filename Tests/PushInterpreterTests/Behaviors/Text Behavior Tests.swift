@@ -40,11 +40,11 @@ struct TextBehaviorTests {
     }
 
     @Test func `indexOf finds a substring, counted in characters`() {
-        let inty = Self.run([StringItem("hello"), StringItem("ll"), InstructionItem(.stringIndexOf)])
+        let inty = Self.run([StringItem("hello"), StringItem("ll"), InstructionItem(.stringIndexOfRun)])
         #expect(stackString(inty, .int) == "[ 2 ]")
         #expect(inty.stacks[.string]!.count == 2, "a query leaves both")
 
-        let missing = Self.run([StringItem("hello"), StringItem("z"), InstructionItem(.stringIndexOf)])
+        let missing = Self.run([StringItem("hello"), StringItem("z"), InstructionItem(.stringIndexOfRun)])
         #expect(stackString(missing, .int) == "[ ]")
         #expect(missing.stacks[.error]!.count == 1)
     }

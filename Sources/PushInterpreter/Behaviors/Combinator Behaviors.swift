@@ -182,7 +182,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackIsEmpty")!
-        inst = Behavior.contextRead(name, produces: .results([.bool])) { _, context in
+        inst = Behavior.contextRead(name, observes: [stack], produces: .results([.bool])) { _, context in
                 let empty = context.depth(of: stack) == 0
                 return [
                     Router(
@@ -342,7 +342,7 @@ nonisolated extension Interpreter {
         var inst: Behavior
 
         name = PushInstruction(rawValue: "\(type)StackDepth")!
-        inst = Behavior.contextRead(name, produces: .results([.int])) { _, context in
+        inst = Behavior.contextRead(name, observes: [stack], produces: .results([.int])) { _, context in
                 let c = context.depth(of: stack)
                 return [
                     Router(

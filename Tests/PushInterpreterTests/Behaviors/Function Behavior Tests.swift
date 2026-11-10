@@ -79,7 +79,7 @@ struct FunctionBehaviorTests {
         #expect(stackString(inty, .vecInt) == "[ [2, 4] ]")
         #expect(Self.replays(inty, .vecInt))
 
-        let noVowels = Self.block(StringItem("aeiou"), Self.op(.input0), Self.op(.stringContainsChar),
+        let noVowels = Self.block(StringItem("aeiou"), Self.op(.input0), Self.op(.stringContains),
                                   Self.op(.boolNot))
         let text = Self.run([StringItem("hello"), noVowels, Self.op(.stringFilter)])
         #expect(stackString(text, .string) == "[ \"hll\" ]")

@@ -41,7 +41,7 @@
 //  So **every token sequence yields a CodeItem**, and nothing built on this can
 //  fail on a malformed intermediate. What that buys is the law the cut is designed
 //  around: no leaf is ever lost or reordered. What it costs is that nesting *on
-//  the cut path* changes, so unlike `codeCutRootAtGap`, cut-then-`codeAppend` is
+//  the cut path* changes, so unlike `codeCutRootAtGap`, cut-then-`codeConcat` is
 //  not the identity for an interior cut. A block split in two cannot reassemble;
 //  that is a property of cutting trees, not a defect here.
 //

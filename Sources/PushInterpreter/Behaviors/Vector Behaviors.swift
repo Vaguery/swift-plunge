@@ -324,7 +324,7 @@ nonisolated extension Interpreter {
 
     // MARK: - Sub-vector search and replace
     //
-    // The whole-subsequence analogs of string's `stringContains`/`stringReplace`
+    // The whole-subsequence analogs of string's `stringContainsRun`/`stringReplaceRun`
     // (as opposed to the element-wise `contains`/`replace` above). All operands
     // are vectors on the same `V.pushStack`, so — unlike the element forms, whose
     // arguments split across the vector and scalar stacks — the crux records them
@@ -357,7 +357,7 @@ nonisolated extension Interpreter {
 
     /// Whether the vector contains the **sub-vector** argument (contiguous),
     /// non-destructively — both vectors survive; the crux pops both.
-    static func containsSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+    static func containsRunBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         // Written order: the vector searched (deeper) first, then the run sought on
         // top, as every search here is written (until 2026-11-09 the run came first).
         Behavior.operation(instruction, reads: V.self, V.self, gives: BoolItem.self) { hay, needle in
@@ -370,7 +370,7 @@ nonisolated extension Interpreter {
 
     /// The index of the first contiguous occurrence of the sub-vector; an error if
     /// there is none (it used to answer −1).
-    static func indexOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+    static func indexOfRunBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let found = firstSubIndex(hay.map(V.key), needle.map(V.key)) else {
                 throw Refusal("Not found in .\(instruction)", kind: .notFound)
@@ -383,7 +383,7 @@ nonisolated extension Interpreter {
     }
 
     /// The number of non-overlapping occurrences of the sub-vector.
-    static func occurrencesOfSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+    static func occurrencesOfRunBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.operation(instruction, reads: V.self, V.self, gives: IntItem.self) { hay, needle in
             subCount(hay.map(V.key), needle.map(V.key))
         }
@@ -396,7 +396,7 @@ nonisolated extension Interpreter {
     /// sub-vector — a transform, so it **consumes** all three arguments. The
     /// subject is the deepest, then the needle, then the replacement on top; the
     /// crux re-pushes them in that order.
-    static func replaceSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+    static func replaceRunBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         // Written order: the subject (deepest), the needle, the replacement on top.
         Behavior.assembling(instruction, takes: V.self, V.self, V.self, gives: V.self) { subject, needle, repl in
             Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: false, by: V.same),
@@ -409,7 +409,7 @@ nonisolated extension Interpreter {
 
     /// Replace only the **first** occurrence of a sub-vector. Consumes, like its
     /// replace-all sibling.
-    static func replaceFirstSubVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
+    static func replaceFirstRunBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior where V.Element: Equatable {
         Behavior.assembling(instruction, takes: V.self, V.self, V.self, gives: V.self) { subject, needle, repl in
             Built(replacingSub(subject.value, needle.value, repl.value, firstOnly: true, by: V.same),
                   members: replacingSubSlots(subject, needle, repl, firstOnly: true))
@@ -538,14 +538,14 @@ nonisolated extension Interpreter {
             + "empty vector.")
     }
 
-    // ( vec idx1 idx2 .vecXSubVec )
+    // ( vec idx1 idx2 .vecXSlice )
     //
     // return a stretch of the original vector from positions idx1...idx2
     // if idx1 is negative, make it zero
     // both ends are inclusive and clamped, so the stretch is never empty: if
     // idx2 < idx1 it is the element at idx1 alone
     //
-    static func subVecBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
+    static func sliceBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         // Written order: the vector, then the two ints deepest first (z, then y).
         Behavior.assembling(instruction, takes: V.self, IntItem.self, IntItem.self, gives: V.self) { x, z, y in
             var result = x.value
@@ -606,7 +606,7 @@ nonisolated extension Interpreter {
     ///
     /// **The order changed here, deliberately.** This used to reverse before
     /// pushing, so element 0 landed on top, while its sibling
-    /// `stringPushAllChars` left the *last* character on top. Two instructions
+    /// `stringPushAll` left the *last* character on top. Two instructions
     /// doing the same job and disagreeing about a basic question, for years —
     /// each internally consistent, neither wrong on its own. Walking front to back
     /// settles it: collections are walked front-to-back.
@@ -724,7 +724,8 @@ nonisolated extension Interpreter {
     static func readItemsBehavior<V: VectorItem>(
         _ instruction: PushInstruction, making itemType: V.Type
     ) -> Behavior {
-        Behavior.contextRead(instruction, takes: [.int], produces: .results([V.pushStack])) { collected, context in
+        Behavior.contextRead(instruction, takes: [.int], observes: [V.Scalar.pushStack],
+                             produces: .results([V.pushStack])) { collected, context in
                 let n = (collected[0] as! IntItem).value
                 let stack = V.Scalar.pushStack
                 let items = context.items(of: stack)
@@ -759,7 +760,7 @@ nonisolated extension Interpreter {
         readItemsInstruction: PushInstruction,
         making itemType: V.Type
     ) -> Behavior {
-        Behavior.contextRead(instruction, produces: .results([V.pushStack])) { _, context in
+        Behavior.contextRead(instruction, observes: [V.Scalar.pushStack], produces: .results([V.pushStack])) { _, context in
                 let stack = V.Scalar.pushStack
                 let elements = Array(context.items(of: stack))
                     .map { $0 as! V.Scalar }
@@ -920,33 +921,33 @@ nonisolated extension Interpreter {
     static let vecBoolSet_Behavior =
         setBehavior(.vecBoolSet, making: VecBoolItem.self)
 
-    // ( [1,1,2,3] 1 2 .vecBoolSubVec)
+    // ( [1,1,2,3] 1 2 .vecBoolSlice)
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
     // both ends are inclusive and clamped, so the stretch is never empty: if
     // idx2 < idx1 it is the element at idx1 alone
     //
-    static let vecBoolSubVec_Behavior =
-        subVecBehavior(.vecBoolSubVec, making: VecBoolItem.self)
+    static let vecBoolSlice_Behavior =
+        sliceBehavior(.vecBoolSlice, making: VecBoolItem.self)
 
     static let vecBoolCut_Behavior =
         cutBehavior(.vecBoolCut, making: VecBoolItem.self)
 
-    static let vecBoolContainsSubVec_Behavior =
-        containsSubVecBehavior(.vecBoolContainsSubVec, making: VecBoolItem.self)
+    static let vecBoolContainsRun_Behavior =
+        containsRunBehavior(.vecBoolContainsRun, making: VecBoolItem.self)
 
-    static let vecBoolIndexOfSubVec_Behavior =
-        indexOfSubVecBehavior(.vecBoolIndexOfSubVec, making: VecBoolItem.self)
+    static let vecBoolIndexOfRun_Behavior =
+        indexOfRunBehavior(.vecBoolIndexOfRun, making: VecBoolItem.self)
 
-    static let vecBoolOccurrencesOfSubVec_Behavior =
-        occurrencesOfSubVecBehavior(.vecBoolOccurrencesOfSubVec, making: VecBoolItem.self)
+    static let vecBoolOccurrencesOfRun_Behavior =
+        occurrencesOfRunBehavior(.vecBoolOccurrencesOfRun, making: VecBoolItem.self)
 
-    static let vecBoolReplaceSubVec_Behavior =
-        replaceSubVecBehavior(.vecBoolReplaceSubVec, making: VecBoolItem.self)
+    static let vecBoolReplaceRun_Behavior =
+        replaceRunBehavior(.vecBoolReplaceRun, making: VecBoolItem.self)
 
-    static let vecBoolReplaceFirstSubVec_Behavior =
-        replaceFirstSubVecBehavior(.vecBoolReplaceFirstSubVec, making: VecBoolItem.self)
+    static let vecBoolReplaceFirstRun_Behavior =
+        replaceFirstRunBehavior(.vecBoolReplaceFirstRun, making: VecBoolItem.self)
 
     static let vecBoolReadItems_Behavior =
         readItemsBehavior(.vecBoolReadItems, making: VecBoolItem.self)
@@ -996,13 +997,13 @@ nonisolated extension Interpreter {
         .vecBoolRest : vecBoolRest_Behavior,
         .vecBoolReverse : vecBoolReverse_Behavior,
         .vecBoolSet : vecBoolSet_Behavior,
-        .vecBoolSubVec : vecBoolSubVec_Behavior,
+        .vecBoolSlice : vecBoolSlice_Behavior,
         .vecBoolCut : vecBoolCut_Behavior,
-        .vecBoolContainsSubVec : vecBoolContainsSubVec_Behavior,
-        .vecBoolIndexOfSubVec : vecBoolIndexOfSubVec_Behavior,
-        .vecBoolOccurrencesOfSubVec : vecBoolOccurrencesOfSubVec_Behavior,
-        .vecBoolReplaceSubVec : vecBoolReplaceSubVec_Behavior,
-        .vecBoolReplaceFirstSubVec : vecBoolReplaceFirstSubVec_Behavior,
+        .vecBoolContainsRun : vecBoolContainsRun_Behavior,
+        .vecBoolIndexOfRun : vecBoolIndexOfRun_Behavior,
+        .vecBoolOccurrencesOfRun : vecBoolOccurrencesOfRun_Behavior,
+        .vecBoolReplaceRun : vecBoolReplaceRun_Behavior,
+        .vecBoolReplaceFirstRun : vecBoolReplaceFirstRun_Behavior,
         .vecBoolReadItems : vecBoolReadItems_Behavior,
         .vecBoolReadStack : vecBoolReadStack_Behavior,
         .vecBoolTake : vecBoolTake_Behavior,
@@ -1090,33 +1091,33 @@ nonisolated extension Interpreter {
     static let vecDoubleSet_Behavior =
         setBehavior(.vecDoubleSet, making: VecDoubleItem.self)
 
-    // ( [1,1,2,3] 1 2 .vecDoubleSubVec)
+    // ( [1,1,2,3] 1 2 .vecDoubleSlice)
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
     // both ends are inclusive and clamped, so the stretch is never empty: if
     // idx2 < idx1 it is the element at idx1 alone
     //
-    static let vecDoubleSubVec_Behavior =
-        subVecBehavior(.vecDoubleSubVec, making: VecDoubleItem.self)
+    static let vecDoubleSlice_Behavior =
+        sliceBehavior(.vecDoubleSlice, making: VecDoubleItem.self)
 
     static let vecDoubleCut_Behavior =
         cutBehavior(.vecDoubleCut, making: VecDoubleItem.self)
 
-    static let vecDoubleContainsSubVec_Behavior =
-        containsSubVecBehavior(.vecDoubleContainsSubVec, making: VecDoubleItem.self)
+    static let vecDoubleContainsRun_Behavior =
+        containsRunBehavior(.vecDoubleContainsRun, making: VecDoubleItem.self)
 
-    static let vecDoubleIndexOfSubVec_Behavior =
-        indexOfSubVecBehavior(.vecDoubleIndexOfSubVec, making: VecDoubleItem.self)
+    static let vecDoubleIndexOfRun_Behavior =
+        indexOfRunBehavior(.vecDoubleIndexOfRun, making: VecDoubleItem.self)
 
-    static let vecDoubleOccurrencesOfSubVec_Behavior =
-        occurrencesOfSubVecBehavior(.vecDoubleOccurrencesOfSubVec, making: VecDoubleItem.self)
+    static let vecDoubleOccurrencesOfRun_Behavior =
+        occurrencesOfRunBehavior(.vecDoubleOccurrencesOfRun, making: VecDoubleItem.self)
 
-    static let vecDoubleReplaceSubVec_Behavior =
-        replaceSubVecBehavior(.vecDoubleReplaceSubVec, making: VecDoubleItem.self)
+    static let vecDoubleReplaceRun_Behavior =
+        replaceRunBehavior(.vecDoubleReplaceRun, making: VecDoubleItem.self)
 
-    static let vecDoubleReplaceFirstSubVec_Behavior =
-        replaceFirstSubVecBehavior(.vecDoubleReplaceFirstSubVec, making: VecDoubleItem.self)
+    static let vecDoubleReplaceFirstRun_Behavior =
+        replaceFirstRunBehavior(.vecDoubleReplaceFirstRun, making: VecDoubleItem.self)
 
     static let vecDoubleReadItems_Behavior =
         readItemsBehavior(.vecDoubleReadItems, making: VecDoubleItem.self)
@@ -1192,13 +1193,13 @@ nonisolated extension Interpreter {
         .vecDoubleRest : vecDoubleRest_Behavior,
         .vecDoubleReverse : vecDoubleReverse_Behavior,
         .vecDoubleSet : vecDoubleSet_Behavior,
-        .vecDoubleSubVec : vecDoubleSubVec_Behavior,
+        .vecDoubleSlice : vecDoubleSlice_Behavior,
         .vecDoubleCut : vecDoubleCut_Behavior,
-        .vecDoubleContainsSubVec : vecDoubleContainsSubVec_Behavior,
-        .vecDoubleIndexOfSubVec : vecDoubleIndexOfSubVec_Behavior,
-        .vecDoubleOccurrencesOfSubVec : vecDoubleOccurrencesOfSubVec_Behavior,
-        .vecDoubleReplaceSubVec : vecDoubleReplaceSubVec_Behavior,
-        .vecDoubleReplaceFirstSubVec : vecDoubleReplaceFirstSubVec_Behavior,
+        .vecDoubleContainsRun : vecDoubleContainsRun_Behavior,
+        .vecDoubleIndexOfRun : vecDoubleIndexOfRun_Behavior,
+        .vecDoubleOccurrencesOfRun : vecDoubleOccurrencesOfRun_Behavior,
+        .vecDoubleReplaceRun : vecDoubleReplaceRun_Behavior,
+        .vecDoubleReplaceFirstRun : vecDoubleReplaceFirstRun_Behavior,
         .vecDoubleReadItems : vecDoubleReadItems_Behavior,
         .vecDoubleReadStack : vecDoubleReadStack_Behavior,
         .vecDoubleTake : vecDoubleTake_Behavior,
@@ -1288,33 +1289,33 @@ nonisolated extension Interpreter {
     static let vecIntSet_Behavior =
         setBehavior(.vecIntSet, making: VecIntItem.self)
 
-    // ( [1,1,2,3] 1 2 .vecIntSubVec)
+    // ( [1,1,2,3] 1 2 .vecIntSlice)
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
     // both ends are inclusive and clamped, so the stretch is never empty: if
     // idx2 < idx1 it is the element at idx1 alone
     //
-    static let vecIntSubVec_Behavior =
-        subVecBehavior(.vecIntSubVec, making: VecIntItem.self)
+    static let vecIntSlice_Behavior =
+        sliceBehavior(.vecIntSlice, making: VecIntItem.self)
 
     static let vecIntCut_Behavior =
         cutBehavior(.vecIntCut, making: VecIntItem.self)
 
-    static let vecIntContainsSubVec_Behavior =
-        containsSubVecBehavior(.vecIntContainsSubVec, making: VecIntItem.self)
+    static let vecIntContainsRun_Behavior =
+        containsRunBehavior(.vecIntContainsRun, making: VecIntItem.self)
 
-    static let vecIntIndexOfSubVec_Behavior =
-        indexOfSubVecBehavior(.vecIntIndexOfSubVec, making: VecIntItem.self)
+    static let vecIntIndexOfRun_Behavior =
+        indexOfRunBehavior(.vecIntIndexOfRun, making: VecIntItem.self)
 
-    static let vecIntOccurrencesOfSubVec_Behavior =
-        occurrencesOfSubVecBehavior(.vecIntOccurrencesOfSubVec, making: VecIntItem.self)
+    static let vecIntOccurrencesOfRun_Behavior =
+        occurrencesOfRunBehavior(.vecIntOccurrencesOfRun, making: VecIntItem.self)
 
-    static let vecIntReplaceSubVec_Behavior =
-        replaceSubVecBehavior(.vecIntReplaceSubVec, making: VecIntItem.self)
+    static let vecIntReplaceRun_Behavior =
+        replaceRunBehavior(.vecIntReplaceRun, making: VecIntItem.self)
 
-    static let vecIntReplaceFirstSubVec_Behavior =
-        replaceFirstSubVecBehavior(.vecIntReplaceFirstSubVec, making: VecIntItem.self)
+    static let vecIntReplaceFirstRun_Behavior =
+        replaceFirstRunBehavior(.vecIntReplaceFirstRun, making: VecIntItem.self)
 
     static let vecIntReadItems_Behavior =
         readItemsBehavior(.vecIntReadItems, making: VecIntItem.self)
@@ -1377,13 +1378,13 @@ nonisolated extension Interpreter {
         .vecIntRest : vecIntRest_Behavior,
         .vecIntReverse : vecIntReverse_Behavior,
         .vecIntSet : vecIntSet_Behavior,
-        .vecIntSubVec : vecIntSubVec_Behavior,
+        .vecIntSlice : vecIntSlice_Behavior,
         .vecIntCut : vecIntCut_Behavior,
-        .vecIntContainsSubVec : vecIntContainsSubVec_Behavior,
-        .vecIntIndexOfSubVec : vecIntIndexOfSubVec_Behavior,
-        .vecIntOccurrencesOfSubVec : vecIntOccurrencesOfSubVec_Behavior,
-        .vecIntReplaceSubVec : vecIntReplaceSubVec_Behavior,
-        .vecIntReplaceFirstSubVec : vecIntReplaceFirstSubVec_Behavior,
+        .vecIntContainsRun : vecIntContainsRun_Behavior,
+        .vecIntIndexOfRun : vecIntIndexOfRun_Behavior,
+        .vecIntOccurrencesOfRun : vecIntOccurrencesOfRun_Behavior,
+        .vecIntReplaceRun : vecIntReplaceRun_Behavior,
+        .vecIntReplaceFirstRun : vecIntReplaceFirstRun_Behavior,
         .vecIntReadItems : vecIntReadItems_Behavior,
         .vecIntReadStack : vecIntReadStack_Behavior,
         .vecIntTake : vecIntTake_Behavior,
@@ -1475,33 +1476,33 @@ nonisolated extension Interpreter {
     static let vecStringSet_Behavior =
         setBehavior(.vecStringSet, making: VecStringItem.self)
 
-    // ( [1,1,2,3] 1 2 .vecStringSubVec)
+    // ( [1,1,2,3] 1 2 .vecStringSlice)
     //
     // return a stretch of the original vector from positions 1...2
     // if idx1 is negative, make it zero
     // both ends are inclusive and clamped, so the stretch is never empty: if
     // idx2 < idx1 it is the element at idx1 alone
     //
-    static let vecStringSubVec_Behavior =
-        subVecBehavior(.vecStringSubVec, making: VecStringItem.self)
+    static let vecStringSlice_Behavior =
+        sliceBehavior(.vecStringSlice, making: VecStringItem.self)
 
     static let vecStringCut_Behavior =
         cutBehavior(.vecStringCut, making: VecStringItem.self)
 
-    static let vecStringContainsSubVec_Behavior =
-        containsSubVecBehavior(.vecStringContainsSubVec, making: VecStringItem.self)
+    static let vecStringContainsRun_Behavior =
+        containsRunBehavior(.vecStringContainsRun, making: VecStringItem.self)
 
-    static let vecStringIndexOfSubVec_Behavior =
-        indexOfSubVecBehavior(.vecStringIndexOfSubVec, making: VecStringItem.self)
+    static let vecStringIndexOfRun_Behavior =
+        indexOfRunBehavior(.vecStringIndexOfRun, making: VecStringItem.self)
 
-    static let vecStringOccurrencesOfSubVec_Behavior =
-        occurrencesOfSubVecBehavior(.vecStringOccurrencesOfSubVec, making: VecStringItem.self)
+    static let vecStringOccurrencesOfRun_Behavior =
+        occurrencesOfRunBehavior(.vecStringOccurrencesOfRun, making: VecStringItem.self)
 
-    static let vecStringReplaceSubVec_Behavior =
-        replaceSubVecBehavior(.vecStringReplaceSubVec, making: VecStringItem.self)
+    static let vecStringReplaceRun_Behavior =
+        replaceRunBehavior(.vecStringReplaceRun, making: VecStringItem.self)
 
-    static let vecStringReplaceFirstSubVec_Behavior =
-        replaceFirstSubVecBehavior(.vecStringReplaceFirstSubVec, making: VecStringItem.self)
+    static let vecStringReplaceFirstRun_Behavior =
+        replaceFirstRunBehavior(.vecStringReplaceFirstRun, making: VecStringItem.self)
 
     static let vecStringReadItems_Behavior =
         readItemsBehavior(.vecStringReadItems, making: VecStringItem.self)
@@ -1697,13 +1698,13 @@ nonisolated extension Interpreter {
         .vecStringRest : vecStringRest_Behavior,
         .vecStringReverse : vecStringReverse_Behavior,
         .vecStringSet : vecStringSet_Behavior,
-        .vecStringSubVec : vecStringSubVec_Behavior,
+        .vecStringSlice : vecStringSlice_Behavior,
         .vecStringCut : vecStringCut_Behavior,
-        .vecStringContainsSubVec : vecStringContainsSubVec_Behavior,
-        .vecStringIndexOfSubVec : vecStringIndexOfSubVec_Behavior,
-        .vecStringOccurrencesOfSubVec : vecStringOccurrencesOfSubVec_Behavior,
-        .vecStringReplaceSubVec : vecStringReplaceSubVec_Behavior,
-        .vecStringReplaceFirstSubVec : vecStringReplaceFirstSubVec_Behavior,
+        .vecStringContainsRun : vecStringContainsRun_Behavior,
+        .vecStringIndexOfRun : vecStringIndexOfRun_Behavior,
+        .vecStringOccurrencesOfRun : vecStringOccurrencesOfRun_Behavior,
+        .vecStringReplaceRun : vecStringReplaceRun_Behavior,
+        .vecStringReplaceFirstRun : vecStringReplaceFirstRun_Behavior,
         .vecStringReadItems : vecStringReadItems_Behavior,
         .vecStringReadStack : vecStringReadStack_Behavior,
         .vecStringTake : vecStringTake_Behavior,

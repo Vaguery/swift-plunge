@@ -72,18 +72,18 @@ struct CruxTests {
             PushInstruction.intMultiply,
             PushInstruction.intQuote,
             PushInstruction.intQuote,
-            PushInstruction.codeAppend,
+            PushInstruction.codeConcat,
         ] as [Any]
         let prog2 = buildProgram(treeProg)
         let tree = CodeItem(prog2)
-        #expect(CodeItem(tree.crux()).pretty() == "( ( 1 11 .intAdd 3 33 .intMultiply .intQuote .intQuote .codeAppend ) )")
+        #expect(CodeItem(tree.crux()).pretty() == "( ( 1 11 .intAdd 3 33 .intMultiply .intQuote .intQuote .codeConcat ) )")
 
         inty.load(program:prog2)
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 12 ) ]")
 
         let answer1 = (topItem(inty, .code) as! CodeItem)
-        #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 1 11 .intAdd .intQuote .codeAppend )")
+        #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 1 11 .intAdd .intQuote .codeConcat )")
 
         inty.load(program:answer1.crux())
         inty.run()
@@ -110,16 +110,16 @@ struct CruxTests {
             IntItem(3), IntItem(33), InstructionItem(.intMultiply),
             InstructionItem(.intQuote),
             InstructionItem(.intQuote),
-            InstructionItem(.codeAppend),
+            InstructionItem(.codeConcat),
         ]
-        #expect(CodeItem(prog2).pretty() == "( ( 1 11 .intAdd ) ( 2 22 .intSubtract ) false .execIf 3 33 .intMultiply .intQuote .intQuote .codeAppend )")
+        #expect(CodeItem(prog2).pretty() == "( ( 1 11 .intAdd ) ( 2 22 .intSubtract ) false .execIf 3 33 .intMultiply .intQuote .intQuote .codeConcat )")
 
         inty.load(program:prog2)
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 -20 ) ]")
 
         let answer1 = (topItem(inty, .code) as! CodeItem)
-        #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 2 22 .intSubtract .intQuote .codeAppend )")
+        #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 2 22 .intSubtract .intQuote .codeConcat )")
 
         inty.load(program:answer1.crux())
         inty.run()

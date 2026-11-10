@@ -28,7 +28,7 @@ nonisolated extension Interpreter {
     /// resting on `.iterator`.
     ///
     /// **A bodyless iterator emits only its element.** Those are the sequences —
-    /// `stringPushAllChars` and the dup families — which have no mouse to run, and
+    /// `stringPushAll` and the dup families — which have no mouse to run, and
     /// pushing an empty block for them would cost two wasted steps per element.
     ///
     /// Provenance: the body copy is combinatory (laws 1 and 1b) and the `.codeDo`

@@ -50,9 +50,9 @@ struct ConversionBehaviorTests {
     }
 
     @Test func `chars collect back into a string`() {
-        let inty = Self.run([StringItem("abc"), InstructionItem(.stringPushAllChars),
-                             IntItem(3), InstructionItem(.stringFromChars)])
-        #expect(stackString(inty, .string) == "[ \"abc\" ]", "the inverse of stringPushAllChars")
+        let inty = Self.run([StringItem("abc"), InstructionItem(.stringPushAll),
+                             IntItem(3), InstructionItem(.stringReadItems)])
+        #expect(stackString(inty, .string) == "[ \"abc\" ]", "the inverse of stringPushAll")
         #expect(inty.stacks[.char]!.count == 3, "read, not taken")
         #expect(Self.replays(inty, .string))
 
@@ -62,7 +62,7 @@ struct ConversionBehaviorTests {
     }
 
     @Test func `a second way to reverse a string, through its letters`() {
-        // Reading chars back is the identity (it inverts `stringPushAllChars`),
+        // Reading chars back is the identity (it inverts `stringPushAll`),
         // so the second route goes through a vector of letters instead.
         let inty = Self.run([StringItem("abc"), StringItem(""), InstructionItem(.stringSplitOn),
                              InstructionItem(.vecStringReverse), StringItem(""), InstructionItem(.vecStringJoin)])

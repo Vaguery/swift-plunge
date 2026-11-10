@@ -21,79 +21,79 @@ nonisolated extension Interpreter {
         }
         .described("Joins two strings: `s t .stringConcat` gives s followed by t.")
 
-    static let stringConjChar_Behavior =
-        Behavior.assembling(.stringConjChar, takes: StringItem.self, CharItem.self, gives: StringItem.self) { y, x in
+    static let stringConj_Behavior =
+        Behavior.assembling(.stringConj, takes: StringItem.self, CharItem.self, gives: StringItem.self) { y, x in
             Built(y.value + String(x.value), members: y.origins() + [Origin.item(x)])
         }
         .described("Appends a char to the end of a string.")
 
-    static let stringContains_Behavior =
-        Behavior.operation(.stringContains, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in
+    static let stringContainsRun_Behavior =
+        Behavior.operation(.stringContainsRun, reads: StringItem.self, StringItem.self, gives: BoolItem.self) { y, x in
             // `firstRange(of:)` is stdlib and deterministic
             // (empty substring ⇒ contained); plain `.contains`
             // resolved to different overloads across Foundation
             // / module contexts once this code left the app target.
             y.firstRange(of: x) != nil
         }
-        .described("Tests whether t occurs in s, leaving both: `s t .stringContains`; an empty t gives true.")
+        .described("Tests whether t occurs in s, leaving both: `s t .stringContainsRun`; an empty t gives true.")
 
-    // Written order: the char (recorded first), then the string.
-    static let stringContainsChar_Behavior =
-        Behavior.operation(.stringContainsChar, reads: CharItem.self, StringItem.self, gives: BoolItem.self) { y, x in
+    // Written order: the string, then the char.
+    static let stringContains_Behavior =
+        Behavior.operation(.stringContains, reads: StringItem.self, CharItem.self, gives: BoolItem.self) { x, y in
             x.contains(y)
         }
-        .described("Tests whether the char occurs in the string, leaving both.")
+        .described("Tests whether a char occurs: `s c .stringContains`, leaving both.")
 
     /// The position of the first occurrence of the char; an error if there is none.
-    static let stringIndexOfChar_Behavior =
-        Behavior.operation(.stringIndexOfChar, reads: CharItem.self, StringItem.self, gives: IntItem.self) { y, x throws(Refusal) in
+    static let stringIndexOf_Behavior =
+        Behavior.operation(.stringIndexOf, reads: StringItem.self, CharItem.self, gives: IntItem.self) { x, y throws(Refusal) in
             guard let idx = x.firstIndex(of: y) else {
-                throw Refusal("Not found in .stringIndexOfChar: \(y)", kind: .notFound)
+                throw Refusal("Not found in .stringIndexOf: \(y)", kind: .notFound)
             }
             return x.distance(from: x.startIndex, to: idx)
         }
-        .described("Finds the position of the char's first occurrence in the string, leaving both; refuses when " +
-                   "absent.")
+        .described("Finds a char: `s c .stringIndexOf` gives the index of its first occurrence, leaving both; " +
+                   "refuses when absent.")
 
     // the IntItem value is truncated at 0 before use as an index.
-    // Written order: the int (recorded first), then the string.
+    // Written order: the string, then the int.
     //
     // Drops from the **front**, as `vecXDrop` does, so `stringTake n` and
     // `stringDrop n` split a string the way they split a vector (since
     // 2026-11-09; it used to drop from the end, which is now `stringDropLast`).
     static let stringDrop_Behavior =
-        Behavior.assembling(.stringDrop, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+        Behavior.assembling(.stringDrop, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
             let toDrop = max(0, y.value)
             return Built(String(x.value.dropFirst(toDrop)), members: Array(x.origins().dropFirst(toDrop)))
         }
-        .described("Removes the first n characters of a string; a negative n removes none.")
+        .described("Drops the front: `s n .stringDrop` removes the first n characters; a negative n removes none.")
 
     // the string with its last n characters removed (n clamped at 0).
-    // Written order: the int (recorded first), then the string.
+    // Written order: the string, then the int.
     static let stringDropLast_Behavior =
-        Behavior.assembling(.stringDropLast, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+        Behavior.assembling(.stringDropLast, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
             let toDrop = max(0, y.value)
             return Built(String(x.value.dropLast(toDrop)), members: Array(x.origins().dropLast(toDrop)))
         }
-        .described("Removes the last n characters of a string; a negative n removes none.")
+        .described("Drops the back: `s n .stringDropLast` removes the last n characters; a negative n removes none.")
 
     // the last n characters of the string (n clamped at 0).
-    // Written order: the int (recorded first), then the string.
+    // Written order: the string, then the int.
     static let stringTakeLast_Behavior =
-        Behavior.assembling(.stringTakeLast, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+        Behavior.assembling(.stringTakeLast, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
             let toTake = max(0, y.value)
             return Built(String(x.value.suffix(toTake)), members: Array(x.origins().suffix(toTake)))
         }
-        .described("Keeps only the last n characters of a string; a negative n keeps none.")
+        .described("Keeps the back: `s n .stringTakeLast` gives the last n characters; a negative n keeps none.")
 
     // the IntItem value is truncated at 0 before use as an index.
-    // Written order: the int (recorded first), then the string.
+    // Written order: the string, then the int.
     static let stringTake_Behavior =
-        Behavior.assembling(.stringTake, takes: IntItem.self, StringItem.self, gives: StringItem.self) { y, x in
+        Behavior.assembling(.stringTake, takes: StringItem.self, IntItem.self, gives: StringItem.self) { x, y in
             let toTake = max(0, y.value)
             return Built(String(x.value.prefix(toTake)), members: Array(x.origins().prefix(toTake)))
         }
-        .described("Keeps only the first n characters of a string; a negative n keeps none.")
+        .described("Keeps the front: `s n .stringTake` gives the first n characters; a negative n keeps none.")
 
     static let stringItemIsEmpty_Behavior =
         Behavior.operation(.stringItemIsEmpty, reads: StringItem.self, gives: BoolItem.self) { x in x.isEmpty }
@@ -198,7 +198,7 @@ nonisolated extension Interpreter {
 
     /// Pushes every character of a string to `.string` as a one-character
     /// *string* — not a char, which is the whole of the difference from
-    /// `stringPushAllChars` — one per pass, front to back.
+    /// `stringPushAll` — one per pass, front to back.
     ///
     /// One element per Character (grapheme), which the `.letters` projection gets
     /// by indexing rather than by `split(separator: "")`, whose empty-separator
@@ -206,9 +206,9 @@ nonisolated extension Interpreter {
     ///
     /// Each letter records `x 2 .stringNth .stringFromChar` — two instructions to
     /// reproduce, still O(1), and still independent of every other letter.
-    static let stringParseToLetters_Behavior =
+    static let stringPushAllLetters_Behavior =
         Behavior(
-            .stringParseToLetters,
+            .stringPushAllLetters,
             takes: [.string],
             produces: .delivery(.string),
             fxn: { a, recording in
@@ -225,60 +225,60 @@ nonisolated extension Interpreter {
         .described("Pushes each character as a one-character string, one per step, front to back; the empty string " +
                    "gives nothing.")
 
-    // Written order: the char (recorded first), then the string.
-    static let stringOccurrencesOfChar_Behavior =
-        Behavior.operation(.stringOccurrencesOfChar, reads: CharItem.self, StringItem.self, gives: IntItem.self) { y, x in
+    // Written order: the string, then the char.
+    static let stringOccurrencesOf_Behavior =
+        Behavior.operation(.stringOccurrencesOf, reads: StringItem.self, CharItem.self, gives: IntItem.self) { x, y in
             x.filter({ $0 == y }).count
         }
-        .described("Counts how often the char occurs in the string, leaving both.")
+        .described("Counts a char: `s c .stringOccurrencesOf` gives how many times c occurs in s, leaving both.")
 
-    // Written order: the char (recorded first), then the string.
-    static let stringRemoveChar_Behavior =
-        Behavior.assembling(.stringRemoveChar, takes: CharItem.self, StringItem.self, gives: StringItem.self) { y, x in
+    // Written order: the string, then the char.
+    static let stringRemove_Behavior =
+        Behavior.assembling(.stringRemove, takes: StringItem.self, CharItem.self, gives: StringItem.self) { x, y in
             Built(x.value.filter({ $0 != y.value }),
                   members: zip(x.value, x.origins()).filter { $0.0 != y.value }.map(\.1))
         }
-        .described("Removes every occurrence of the char from the string.")
+        .described("Removes a char: `s c .stringRemove` gives s without its occurrences of c.")
 
-    // ( "0123" '2' '.' .stringReplaceChar ) -> "01.3"
+    // ( "0123" '2' '.' .stringReplace ) -> "01.3"
     //
-    // Written order: the target char (deeper), the replacement char, then the string.
-    static let stringReplaceChar_Behavior =
-        Behavior.assembling(.stringReplaceChar, takes: CharItem.self, CharItem.self, StringItem.self,
-                            gives: StringItem.self) { z, y, x in
+    // Written order: the string, the target char (deeper), then the replacement char.
+    static let stringReplace_Behavior =
+        Behavior.assembling(.stringReplace, takes: StringItem.self, CharItem.self, CharItem.self,
+                            gives: StringItem.self) { x, z, y in
             Built(x.value.replacing(String(z.value), with: String(y.value)),
                   members: zip(x.value, x.origins()).map { $0.0 == z.value ? Origin.item(y) : $0.1 })
         }
-        .described("Replaces chars: `a b s .stringReplaceChar` turns every a in s into b.")
+        .described("Replaces chars: `s a b .stringReplace` turns every a in s into b.")
 
-    static let stringReplaceFirstChar_Behavior =
-        Behavior.assembling(.stringReplaceFirstChar, takes: CharItem.self, CharItem.self, StringItem.self,
-                            gives: StringItem.self) { z, y, x in
+    static let stringReplaceFirst_Behavior =
+        Behavior.assembling(.stringReplaceFirst, takes: StringItem.self, CharItem.self, CharItem.self,
+                            gives: StringItem.self) { x, z, y in
             Built(x.value.replacing(String(z.value), with: String(y.value), maxReplacements: 1),
                   members: replacingFirstSlot(of: z.value, in: x, with: y))
         }
-        .described("Replaces one char: `a b s .stringReplaceFirstChar` turns the first a in s into b.")
+        .described("Replaces one char: `s a b .stringReplaceFirst` turns the first a in s into b.")
 
-    // ("foo" "o" "g" .stringReplace) -> "fgg"
+    // ("foo" "o" "g" .stringReplaceRun) -> "fgg"
     //
-    static let stringReplace_Behavior =
+    static let stringReplaceRun_Behavior =
         // z: in this context (deepest), y: target, x: replacement (top).
-        Behavior.assembling(.stringReplace, takes: StringItem.self, StringItem.self, StringItem.self,
+        Behavior.assembling(.stringReplaceRun, takes: StringItem.self, StringItem.self, StringItem.self,
                             gives: StringItem.self) { z, y, x in
             Built(z.value.replacing(y.value, with: x.value),
                   members: replacingSubstringSlots(z, y, x, firstOnly: false))
         }
-        .described("Replaces substrings: `s t u .stringReplace` puts u for every t in s; an empty t puts u between " +
+        .described("Replaces substrings: `s t u .stringReplaceRun` puts u for every t in s; an empty t puts u between " +
                    "all characters and at both ends.")
 
-    static let stringReplaceFirst_Behavior =
+    static let stringReplaceFirstRun_Behavior =
         // z: in this context (deepest), y: target, x: replacement (top).
-        Behavior.assembling(.stringReplaceFirst, takes: StringItem.self, StringItem.self, StringItem.self,
+        Behavior.assembling(.stringReplaceFirstRun, takes: StringItem.self, StringItem.self, StringItem.self,
                             gives: StringItem.self) { z, y, x in
             Built(z.value.replacing(y.value, with: x.value, maxReplacements: 1),
                   members: replacingSubstringSlots(z, y, x, firstOnly: true))
         }
-        .described("Replaces a substring: `s t u .stringReplaceFirst` puts u for the first t in s; an empty t puts " +
+        .described("Replaces a substring: `s t u .stringReplaceFirstRun` puts u for the first t in s; an empty t puts " +
                    "u at the front.")
 
     static let stringRest_Behavior =
@@ -289,12 +289,12 @@ nonisolated extension Interpreter {
 
     /// Replaces the char at the index, clamped to the string (`Position.item`).
     /// An empty string has no char to replace, so it is an error.
-    static let stringSetChar_Behavior =
-        // Written order: the char (recorded first), the index, then the string.
-        Behavior.assembling(.stringSetChar, takes: CharItem.self, IntItem.self, StringItem.self,
-                            gives: StringItem.self) { z, y, x throws(Refusal) in
+    static let stringSet_Behavior =
+        // Written order: the string, the char, then the index.
+        Behavior.assembling(.stringSet, takes: StringItem.self, CharItem.self, IntItem.self,
+                            gives: StringItem.self) { x, z, y throws(Refusal) in
             guard !x.value.isEmpty else {
-                throw Refusal("Empty string in .stringSetChar", kind: .emptyCollection)
+                throw Refusal("Empty string in .stringSet", kind: .emptyCollection)
             }
             var result = x.value
             let position = Position.item(y.value, count: result.count)
@@ -307,7 +307,7 @@ nonisolated extension Interpreter {
             }
             return Built(result, members: members())
         }
-        .described("Replaces the character at index i, clamped into range, with the char; refuses the empty string.")
+        .described("Overwrites a char: `s c i .stringSet` puts c at index i, i clamped into range; refuses the empty string.")
 
     /// Pushes every whitespace-delimited word of a string to `.string`, one per
     /// pass, front to back. A string with no words produces nothing.
@@ -317,9 +317,9 @@ nonisolated extension Interpreter {
     /// for these to have a record at all. That is the price of the last law-5
     /// user, and it buys a genuinely useful instruction — "the nth word of a
     /// string" is a thing a program wants regardless.
-    static let stringSplit_Behavior =
+    static let stringPushAllWords_Behavior =
         Behavior(
-            .stringSplit,
+            .stringPushAllWords,
             takes: [.string],
             produces: .delivery(.string),
             fxn: { a, recording in
@@ -341,7 +341,7 @@ nonisolated extension Interpreter {
     /// word count like its `stringNth` sibling. A string with no words is an
     /// error: there is no word to return.
     ///
-    /// Added for `stringSplit`'s iterator to have something honest to record, but
+    /// Added for `stringPushAllWords`'s iterator to have something honest to record, but
     /// useful in its own right.
     static let stringNthWord_Behavior =
         // Written order `[string, index]`, matching `stringNth` and the four
@@ -383,8 +383,8 @@ nonisolated extension Interpreter {
                    "part on top.")
 
     // Written order: the string, then the two ints deepest first (z, then y).
-    static let stringSubstring_Behavior =
-        Behavior.assembling(.stringSubstring, takes: StringItem.self, IntItem.self, IntItem.self,
+    static let stringSlice_Behavior =
+        Behavior.assembling(.stringSlice, takes: StringItem.self, IntItem.self, IntItem.self,
                             gives: StringItem.self) { x, z, y in
             let result = x.value
             var slice = Substring(result)
@@ -398,7 +398,7 @@ nonisolated extension Interpreter {
             }
             return Built(String(slice), members: x.origins(of: slice))
         }
-        .described("Takes characters i through j inclusive: `s i j .stringSubstring`; both clamped into range, a j " +
+        .described("Takes characters i through j inclusive: `s i j .stringSlice`; both clamped into range, a j " +
                    "below i gives character i alone.")
 
     // ( "abcd" .stringIterate MOUSE )
@@ -448,15 +448,15 @@ nonisolated extension Interpreter {
     /// was reworked to stop doing: a loop refusing to be one. Exploding all at
     /// once put the work outside `stepLimit` and the runaway guard's reach, and it
     /// forced every character to record *which of the pile it was* —
-    /// `s .stringPushAllChars 3 .charPopItems`, a law-5 selection. Now each
+    /// `s .stringPushAll 3 .charPopItems`, a law-5 selection. Now each
     /// character just says what it is, `s 2 .stringNth`: independent, O(1), and
     /// true regardless of how many passes have run.
     ///
     /// A sequence, not a loop: the iterator has no body, so a pass costs one step
     /// rather than three.
-    static let stringPushAllChars_Behavior =
+    static let stringPushAll_Behavior =
         Behavior(
-            .stringPushAllChars,
+            .stringPushAll,
             takes: [.string],
             produces: .delivery(.char),
             fxn: { a, recording in
@@ -475,7 +475,7 @@ nonisolated extension Interpreter {
     // MARK: - Members (`Pieces`)
 
     /// `x`'s origins with the first `target` character's replaced by `char`,
-    /// as `.stringReplaceFirstChar` replaces the character. Called only when
+    /// as `.stringReplaceFirst` replaces the character. Called only when
     /// recording.
     static func replacingFirstSlot(of target: Character, in x: StringItem, with char: CharItem) -> [Origin] {
         var origins = x.origins()
@@ -483,7 +483,7 @@ nonisolated extension Interpreter {
         return origins
     }
 
-    /// The origins of `.stringReplace`/`.stringReplaceFirst`'s result: each
+    /// The origins of `.stringReplaceRun`/`.stringReplaceFirstRun`'s result: each
     /// character's origin travels with it, from the subject or the replacement. The
     /// same left-to-right scan as the vectors' sub-vector replace; where it would
     /// not line up with Swift's own `replacing` (an empty target), the result's
@@ -504,16 +504,16 @@ nonisolated extension Interpreter {
         [
         .stringButLast : stringButLast_Behavior,
         .stringConcat : stringConcat_Behavior,
-        .stringConjChar : stringConjChar_Behavior,
+        .stringConj : stringConj_Behavior,
+        .stringContainsRun : stringContainsRun_Behavior,
         .stringContains : stringContains_Behavior,
-        .stringContainsChar : stringContainsChar_Behavior,
         .stringDrop : stringDrop_Behavior,
         .stringFirst : stringFirst_Behavior,
         .stringFromBool : stringFromBool_Behavior,
         .stringFromChar : stringFromChar_Behavior,
         .stringFromDouble : stringFromDouble_Behavior,
         .stringFromInt : stringFromInt_Behavior,
-        .stringIndexOfChar : stringIndexOfChar_Behavior,
+        .stringIndexOf : stringIndexOf_Behavior,
         .stringItemIsEmpty : stringItemIsEmpty_Behavior,
         .stringIterate : stringIterate_Behavior,
         .stringLast : stringLast_Behavior,
@@ -521,20 +521,20 @@ nonisolated extension Interpreter {
         .stringNth : stringNth_Behavior,
         .stringPeekNth : stringPeekNth_Behavior,
         .stringNthWord : stringNthWord_Behavior,
-        .stringOccurrencesOfChar : stringOccurrencesOfChar_Behavior,
-        .stringParseToLetters : stringParseToLetters_Behavior,
-        .stringPushAllChars : stringPushAllChars_Behavior,
-        .stringRemoveChar : stringRemoveChar_Behavior,
+        .stringOccurrencesOf : stringOccurrencesOf_Behavior,
+        .stringPushAllLetters : stringPushAllLetters_Behavior,
+        .stringPushAll : stringPushAll_Behavior,
+        .stringRemove : stringRemove_Behavior,
+        .stringReplaceRun : stringReplaceRun_Behavior,
         .stringReplace : stringReplace_Behavior,
-        .stringReplaceChar : stringReplaceChar_Behavior,
+        .stringReplaceFirstRun : stringReplaceFirstRun_Behavior,
         .stringReplaceFirst : stringReplaceFirst_Behavior,
-        .stringReplaceFirstChar : stringReplaceFirstChar_Behavior,
         .stringRest : stringRest_Behavior,
         .stringReverse : stringReverse_Behavior,
-        .stringSetChar : stringSetChar_Behavior,
-        .stringSplit : stringSplit_Behavior,
+        .stringSet : stringSet_Behavior,
+        .stringPushAllWords : stringPushAllWords_Behavior,
         .stringCut : stringCut_Behavior,
-        .stringSubstring : stringSubstring_Behavior,
+        .stringSlice : stringSlice_Behavior,
         .stringTake : stringTake_Behavior,
         .stringTakeLast : stringTakeLast_Behavior,
         .stringDropLast : stringDropLast_Behavior,
