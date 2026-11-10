@@ -163,7 +163,7 @@ struct BehaviorIODeclarationTests {
         for signature in Interpreter.signatures.values { counts[Self.shape(signature.produces), default: 0] += 1 }
         #expect(Interpreter.signatures.count == Interpreter.language.count)
         #expect(counts == [
-            "one result": 435, "fixed results": 79, "alternatives": 23,
+            "one result": 438, "fixed results": 79, "alternatives": 23,
             "deferred": 80, "input": 10, "delivery": 7,
             "positions": 170, "continuation": 42, "printout": 13
         ])

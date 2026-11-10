@@ -12,7 +12,7 @@ import Foundation
 /// analog of the `codeNth`/`codeEmitNth`/`codeDoNth` trio, and they differ only
 /// in what becomes of a point that is itself a sub-block:
 ///
-/// - `boxed` — every point boxed as `.code` (via `codeNthPoint`) and left resting
+/// - `boxed` — every point boxed as `.code` (via `codePeekNth`) and left resting
 ///   there. A leaf becomes `( leaf )`. This is `codeIterate`.
 /// - `whole` — the point routed **as it is**: a sub-block rests whole on `.code`,
 ///   a leaf routes to its own stack, an instruction runs. This is
@@ -782,7 +782,7 @@ nonisolated extension IteratorItem {
                 call: recording(record(.stringNthWord)),
                 members: recording.pieces(text.origins(of: chunks[index])))
 
-        // The i-th pre-order point. `.boxed` yields exactly what `codeNthPoint`
+        // The i-th pre-order point. `.boxed` yields exactly what `codePeekNth`
         // does — the point boxed as `.code`, recording that (nondestructive)
         // instruction's cleanup crux, reproducing debris-free. `.unwrapped` also
         // boxes: `iteratorPass` routes the box through `.codeDo`, which spills the
@@ -802,7 +802,7 @@ nonisolated extension IteratorItem {
                 call: recording(Behavior.reading(
                     [.code: 1, .int: 1],
                     producing: .code,
-                    from: [origin, IntItem(index), InstructionItem(.codeNthPoint)]
+                    from: [origin, IntItem(index), InstructionItem(.codePeekNth)]
                 )))
 
         // A vector's or string's element is the item that went in, if it kept a

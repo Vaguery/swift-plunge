@@ -5,7 +5,7 @@
 //  Created by Bill Tozier on 7/18/26.
 //
 //  codeIterate and its .points IteratorKind: emit every pre-order point of
-//  a tree, each boxed as .code, recording the codeNthPoint crux.
+//  a tree, each boxed as .code, recording the codePeekNth crux.
 //
 
 @testable import PushInterpreter
@@ -39,7 +39,7 @@ struct CodeIterateTests {
         #expect(emittedPoints(CodeItem([])) == ["( )"])
     }
 
-    @Test func `each emitted point records the codeNthPoint crux and reproduces`() throws {
+    @Test func `each emitted point records the codePeekNth crux and reproduces`() throws {
         let it = IteratorItem(kind: .points(.boxed), origin: tree, body: nil, emits: true)
         let points = try #require(it.collected(recording: .on))
         // point 2 is the leaf 1, boxed as ( 1 )

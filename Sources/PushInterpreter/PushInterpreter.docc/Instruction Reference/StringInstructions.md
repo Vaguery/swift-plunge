@@ -49,6 +49,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringNthWord` | Takes the whitespace-separated word at index i, clamped into range; refuses a string with no words. | `string`, `int` | `string`; may refuse |
 | `stringOccurrencesOf` | Counts a char: `s c .stringOccurrencesOf` gives how many times c occurs in s, leaving both. | `string` (read), `char` (read) | `int` |
 | `stringPeekNth` | Copies the character at index i, clamped into range, leaving the string and index; refuses the empty string. | `string` (read), `int` (read) | `char`; may refuse |
+| `stringPeekNthWord` | Copies the whitespace-separated word at index i, clamped into range, leaving the string and index; refuses a string with no words. | `string` (read), `int` (read) | `string`; may refuse |
 | `stringPushAll` | Pushes each character of a string as a char, one per step, front to back, so the last ends on top. | `string` | `char`, one per step |
 | `stringPushAllLetters` | Pushes each character as a one-character string, one per step, front to back; the empty string gives nothing. | `string` | `string`, one per step |
 | `stringPushAllWords` | Pushes each whitespace-separated word of a string, one per step, front to back; a string with no words gives nothing. | `string` | `string`, one per step |

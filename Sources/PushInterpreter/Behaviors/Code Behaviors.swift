@@ -145,19 +145,38 @@ nonisolated extension Interpreter {
         (point.exactly(CodeItem.self))?.value ?? [point]
     }
 
-    /// The pre-order point at the `.int` index (root at 0), yielded as `.code`.
-    static let codeNthPoint_Behavior =
-        Behavior.operation(.codeNthPoint, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+    /// The pre-order point at the `.int` index (root at 0), yielded as `.code`,
+    /// consuming the block and the index.
+    static let codeNth_Behavior =
+        Behavior.operation(.codeNth, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+            boxedPointContents(CodeItem(x).point(at: i))
+        }
+        .described("Takes point i (clamped) as a block; a leaf comes boxed as `( x )`.")
+
+    /// The root item at the `.int` index (clamped), yielded as `.code`, consuming
+    /// the block and the index. An empty block has no root items, so it refuses.
+    static let codeNthRoot_Behavior =
+        Behavior.operation(.codeNthRoot, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
+            guard let element = rootPicker(CodeItem(x), i) else {
+                throw Refusal("Empty block in .\(PushInstruction.codeNthRoot)", kind: .emptyCollection)
+            }
+            return boxedPointContents(element)
+        }
+        .described("Takes root item i (clamped) as a block; a leaf comes boxed as `( x )`; refuses an empty block.")
+
+    /// `codeNth` without consuming: the block and the index stay where they were.
+    static let codePeekNth_Behavior =
+        Behavior.operation(.codePeekNth, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             boxedPointContents(CodeItem(x).point(at: i))
         }
         .described("Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`.")
 
     /// The root `.value` element at the `.int` index (clamped), yielded as
     /// `.code`. An empty block has no root elements, so it is an error.
-    static let codeNthRoot_Behavior =
-        Behavior.operation(.codeNthRoot, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
+    static let codePeekNthRoot_Behavior =
+        Behavior.operation(.codePeekNthRoot, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
             guard let element = rootPicker(CodeItem(x), i) else {
-                throw Refusal("Empty block in .\(PushInstruction.codeNthRoot)", kind: .emptyCollection)
+                throw Refusal("Empty block in .\(PushInstruction.codePeekNthRoot)", kind: .emptyCollection)
             }
             return boxedPointContents(element)
         }
@@ -217,7 +236,7 @@ nonisolated extension Interpreter {
     /// The box is a **new** block, and a block met on `.exec` comes to rest on
     /// `.code` before `.codeDo` takes it, so it can be left there as a result (a
     /// run that stops between the two steps). It is exactly the block `twin`
-    /// (`.codeNthPoint`/`.codeNthRoot`) produces, so it records that history.
+    /// (`.codePeekNth`/`.codePeekNthRoot`) produces, so it records that history.
     static func doNthBehavior(
         _ instruction: PushInstruction,
         point pick: @escaping @Sendable (CodeItem, Int) -> (any Item)?,
@@ -250,13 +269,13 @@ nonisolated extension Interpreter {
     static let codeEmitNth_Behavior = emitNthBehavior(.codeEmitNth, point: pointPicker)
         .described("Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on " +
                    "`.code`, an instruction runs.")
-    static let codeDoNth_Behavior   = doNthBehavior(.codeDoNth, point: pointPicker, twin: .codeNthPoint)
+    static let codeDoNth_Behavior   = doNthBehavior(.codeDoNth, point: pointPicker, twin: .codePeekNth)
         .described("Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf " +
                    "goes to its stack.")
     static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker, tags: [.fallible])
         .described("Sends root item i (clamped) to `.exec` as it is, leaving the block and index; refuses an empty " +
                    "block.")
-    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codeNthRoot, tags: [.fallible])
+    static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codePeekNthRoot, tags: [.fallible])
         .described("Runs root item i (clamped), leaving the block and index: a sub-block's contents execute; " +
                    "refuses an empty block.")
 
@@ -669,8 +688,10 @@ nonisolated extension Interpreter {
         .codeContains : codeContains_Behavior,
         .codeIndexOf : codeIndexOf_Behavior,
         .codeContainer : codeContainer_Behavior,
-        .codeNthPoint : codeNthPoint_Behavior,
+        .codePeekNth : codePeekNth_Behavior,
+        .codeNth : codeNth_Behavior,
         .codeNthRoot : codeNthRoot_Behavior,
+        .codePeekNthRoot : codePeekNthRoot_Behavior,
         .codeDoNth : codeDoNth_Behavior,
         .codeDoNthRoot : codeDoNthRoot_Behavior,
         .codeEmitNth : codeEmitNth_Behavior,

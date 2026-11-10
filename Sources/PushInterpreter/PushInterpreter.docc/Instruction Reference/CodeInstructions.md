@@ -31,9 +31,11 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeItemIsEmpty` | Tests whether the block has no items, leaving the block. | `code` (read) | `bool` |
 | `codeLength` | Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5. | `code` (read) | `int` |
 | `codeLengthRoot` | Counts the block's root items, leaving the block. | `code` (read) | `int` |
-| `codeNthPoint` | Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`. | `code` (read), `int` (read) | `code` |
-| `codeNthRoot` | Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`; refuses an empty block. | `code` (read), `int` (read) | `code`; may refuse |
+| `codeNth` | Takes point i (clamped) as a block; a leaf comes boxed as `( x )`. | `code`, `int` | `code` |
+| `codeNthRoot` | Takes root item i (clamped) as a block; a leaf comes boxed as `( x )`; refuses an empty block. | `code`, `int` | `code`; may refuse |
 | `codePair` | Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block contributing its sole item. | `code`, `code` | `code` |
+| `codePeekNth` | Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`. | `code` (read), `int` (read) | `code` |
+| `codePeekNthRoot` | Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`; refuses an empty block. | `code` (read), `int` (read) | `code`; may refuse |
 | `codeRefAs` | Binds the top block to key k from `.int`, taking both and shadowing any older binding of k: `x k .codeRefAs`. | `code`, `int` | `binding` |
 | `codeRemoveNth` | Removes point i (clamped) with everything under it; removing point 0 gives `( )`. | `code`, `int` | `code` |
 | `codeReplace` | Replaces matching points: `s n r .codeReplace` puts r for every point of s equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |

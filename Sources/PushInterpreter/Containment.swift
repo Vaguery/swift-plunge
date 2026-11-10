@@ -13,7 +13,7 @@
 ///
 /// Items are born inside containers more often than it might seem: the contents of
 /// a block bound to `.input3`, a block a structural edit rebuilt along its path
-/// (`.codeWrapRange` makes a new inner block), the leaf a `.codeNthRoot` box
+/// (`.codeWrapRange` makes a new inner block), the leaf a `.codePeekNthRoot` box
 /// holds. Taken out bare, such an item looks like a literal of the program, and a
 /// crux built on it has lost its link to the container: an input-blind crux for a
 /// result that did depend on the input. The address keeps the link, and it is

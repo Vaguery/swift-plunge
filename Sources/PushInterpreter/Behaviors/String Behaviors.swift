@@ -358,6 +358,20 @@ nonisolated extension Interpreter {
         .described("Takes the whitespace-separated word at index i, clamped into range; refuses a string with no " +
                    "words.")
 
+    /// `stringNthWord` without consuming: the string and the index stay.
+    static let stringPeekNthWord_Behavior =
+        Behavior.assembling(.stringPeekNthWord, reads: StringItem.self, IntItem.self,
+                            gives: StringItem.self) { x, y throws(Refusal) in
+            let words = x.value.split { $0.isWhitespace }
+            guard !words.isEmpty else {
+                throw Refusal("No words in .stringPeekNthWord", kind: .emptyCollection)
+            }
+            let idx = Position.item(y.value, count: words.count)
+            return Built(String(words[idx]), members: x.origins(of: words[idx]))
+        }
+        .described("Copies the whitespace-separated word at index i, clamped into range, leaving the string and "
+                   + "index; refuses a string with no words.")
+
     /// Snips a string into two pieces at the indexed position, pushing **both** to
     /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
     /// `stringConcat` is the identity (concat consumes the deeper piece first).
@@ -521,6 +535,7 @@ nonisolated extension Interpreter {
         .stringNth : stringNth_Behavior,
         .stringPeekNth : stringPeekNth_Behavior,
         .stringNthWord : stringNthWord_Behavior,
+        .stringPeekNthWord : stringPeekNthWord_Behavior,
         .stringOccurrencesOf : stringOccurrencesOf_Behavior,
         .stringPushAllLetters : stringPushAllLetters_Behavior,
         .stringPushAll : stringPushAll_Behavior,

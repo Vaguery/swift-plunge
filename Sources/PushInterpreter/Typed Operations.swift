@@ -116,6 +116,25 @@ nonisolated extension Behavior {
     }
 
 
+    /// Builds a container from arguments it **reads and leaves**, and can refuse.
+    /// Tagged `.fallible`. The crux clears the read arguments, as a query's does.
+    static func assembling<each A: ValueItem, R: MemberItem>(
+        _ label: PushInstruction,
+        reads: repeat (each A).Type,
+        gives: R.Type,
+        tags: Set<InstructionTag> = [],
+        _ body: @escaping @Sendable (repeat each A) throws(Refusal) -> Built<R.Value>
+    ) -> Behavior {
+        typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack,
+              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+            let built = try body(repeat each items(args, call.positions, repeat each reads))
+            return [Router(R.pushStack, R(built.value,
+                                          call: recording(call.recorded(producing: R.pushStack)),
+                                          members: recording.pieces(built.members())))]
+        }
+    }
+
+
     // MARK: - Items in, a value out
 
     /// Builds a value **from the argument items themselves**, not just their

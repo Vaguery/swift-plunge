@@ -1040,4 +1040,18 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"\" 99 .stringTake )")
     }
+
+    @Test func `stringPeekNthWord copies a word, leaving the string and index`() {
+        let inty = Interpreter.recordingProvenance()
+        inty.load(program: [StringItem("to be or"), IntItem(1), InstructionItem(.stringPeekNthWord)])
+        inty.run()
+        #expect(stackString(inty, .string) == "[ \"be\" \"to be or\" ]")
+        #expect(stackString(inty, .int) == "[ 1 ]")
+
+        let redo = Interpreter.recordingProvenance()
+        redo.load(program: topItem(inty, .string).crux())
+        redo.run()
+        #expect(stackString(redo, .string) == "[ \"be\" ]", "the crux clears what it read")
+        #expect(redo.stacks[.int]!.isEmpty)
+    }
 }

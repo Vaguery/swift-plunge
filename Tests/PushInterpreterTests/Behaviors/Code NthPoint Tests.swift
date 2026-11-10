@@ -4,8 +4,9 @@
 //
 //  Created by Bill Tozier on 7/18/26.
 //
-//  codeNthPoint / codeNthRoot — point access, always yielding .code (a sub-block
-//  as-is, a leaf wrapped once), non-destructive.
+//  codeNth / codeNthRoot and their Peek forms — point access, always yielding
+//  .code (a sub-block as-is, a leaf wrapped once). The Nth forms consume the
+//  block and index; the Peek forms leave them.
 //
 
 @testable import PushInterpreter
@@ -28,25 +29,25 @@ struct CodeNthPointTests {
     }
 
     @Test func `nthPoint yields a sub-block as-is`() {
-        let inty = nth(.codeNthPoint, tree, 1)
+        let inty = nth(.codePeekNth, tree, 1)
         #expect(topItem(inty, .code).pretty() == "( 1 2 )")
         #expect(stackString(inty, .code) == "[ ( 1 2 ) ( ( 1 2 ) 3 ) ]", "result atop the surviving tree")
         #expect(stackString(inty, .int) == "[ 1 ]", "the index survives too")
     }
 
     @Test func `nthPoint wraps a leaf as code`() {
-        let inty = nth(.codeNthPoint, tree, 2)   // the leaf 1
+        let inty = nth(.codePeekNth, tree, 2)   // the leaf 1
         #expect(topItem(inty, .code).pretty() == "( 1 )", "a leaf becomes a one-item block")
     }
 
     @Test func `nthPoint 0 is the whole tree; index clamps`() {
-        #expect(nth(.codeNthPoint, tree, 0).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )")
-        #expect(nth(.codeNthPoint, tree, 5).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last point")
-        #expect(nth(.codeNthPoint, tree, -2).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )", "below 0 is the root")
+        #expect(nth(.codePeekNth, tree, 0).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )")
+        #expect(nth(.codePeekNth, tree, 5).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last point")
+        #expect(nth(.codePeekNth, tree, -2).stacks[.code]!.first!.pretty() == "( ( 1 2 ) 3 )", "below 0 is the root")
     }
 
     @Test func `nthPoint crux reproduces the point, debris-free`() {
-        let inty = nth(.codeNthPoint, tree, 3)   // the leaf 2
+        let inty = nth(.codePeekNth, tree, 3)   // the leaf 2
         let result = topItem(inty, .code)
         #expect(result.pretty() == "( 2 )")
 
@@ -60,17 +61,36 @@ struct CodeNthPointTests {
 
     @Test func `nthRoot indexes the root array, wrapping leaves`() {
         // root elements: 0:(1 2)  1:3
-        #expect(nth(.codeNthRoot, tree, 0).stacks[.code]!.first!.pretty() == "( 1 2 )")
-        #expect(nth(.codeNthRoot, tree, 1).stacks[.code]!.first!.pretty() == "( 3 )", "leaf wrapped")
-        #expect(nth(.codeNthRoot, tree, 3).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last element")
-        #expect(nth(.codeNthRoot, tree, -3).stacks[.code]!.first!.pretty() == "( 1 2 )", "below 0 is the first")
+        #expect(nth(.codePeekNthRoot, tree, 0).stacks[.code]!.first!.pretty() == "( 1 2 )")
+        #expect(nth(.codePeekNthRoot, tree, 1).stacks[.code]!.first!.pretty() == "( 3 )", "leaf wrapped")
+        #expect(nth(.codePeekNthRoot, tree, 3).stacks[.code]!.first!.pretty() == "( 3 )", "past the end is the last element")
+        #expect(nth(.codePeekNthRoot, tree, -3).stacks[.code]!.first!.pretty() == "( 1 2 )", "below 0 is the first")
     }
 
     @Test func `nthRoot on an empty block is an error`() {
-        let inty = nth(.codeNthRoot, CodeItem([]), 0)
+        let inty = nth(.codePeekNthRoot, CodeItem([]), 0)
         #expect(inty.stacks[.code]!.first!.pretty() == "( )", "the empty block survives, no result pushed")
         #expect(stackString(inty, .int) == "[ 0 ]")
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
     }
 
+
+    @Test func `the consuming forms take the block and index`() {
+        let point = nth(.codeNth, tree, 1)
+        #expect(stackString(point, .code) == "[ ( 1 2 ) ]", "only the point is left")
+        #expect(stackString(point, .int) == "[ ]")
+        let root = nth(.codeNthRoot, tree, 1)
+        #expect(stackString(root, .code) == "[ ( 3 ) ]", "root item 1, boxed")
+        #expect(stackString(root, .int) == "[ ]")
+        let empty = nth(.codeNthRoot, CodeItem([]), 0)
+        #expect(empty.stacks[.error]!.count == 1, "an empty block has no root item")
+
+        for result in [topItem(point, .code), topItem(root, .code)] {
+            let redo = Interpreter.recordingProvenance()
+            redo.load(program: result.crux())
+            redo.run()
+            #expect(stackString(redo, .code) == "[ \(result.pretty()) ]")
+            #expect(redo.stacks[.int]!.isEmpty)
+        }
+    }
 }

@@ -1063,7 +1063,7 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     /// The `RUNAWAY:` and `MEMORY:` markers: a run stopped early by a guard.
     case guardStop
     /// A read of an element from a collection that has none: `.vecIntFirst` or
-    /// `.stringNth` of an empty one, `.codeNthRoot` of `( )`, `.stringNthWord` of
+    /// `.stringNth` of an empty one, `.codePeekNthRoot` of `( )`, `.stringNthWord` of
     /// a string with no words. An index into a non-empty collection clamps and
     /// never errs; this is the one case where no position exists.
     case emptyCollection

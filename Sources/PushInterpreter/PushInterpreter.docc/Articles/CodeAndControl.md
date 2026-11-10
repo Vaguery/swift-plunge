@@ -23,10 +23,10 @@ run:
 
 Code instructions address a block in three ways:
 
-- its **root items**, the items at its top level (`codeNthRoot`,
+- its **root items**, the items at its top level (`codePeekNthRoot`,
   `codeLengthRoot`);
 - its **points**, every node of the tree in order, the block itself first
-  (`codeNthPoint`, `codeLength`): `( ( 1 2 ) 3 )` has five points;
+  (`codePeekNth`, `codeLength`): `( ( 1 2 ) 3 )` has five points;
 - its **gaps**, the places between items where something can be inserted or the
   block cut (`codeInsertAtGap`, `codeCutAtGap`).
 

@@ -83,7 +83,7 @@ struct LoopFoldingTests {
     /// The loop hands its body back to `.code` **after** its last pass, so a body
     /// that reads `.code` sees the same `.code` on every pass, and `( B ) K
     /// .execDoTimes` is `B` written `K` times. (Until 2026-11-07 the body landed
-    /// on `.code` with the last pass, which a folded `.codeNthPoint` chain
+    /// on `.code` with the last pass, which a folded `.codePeekNth` chain
     /// replayed one level short.)
     @Test func `a loop's last pass does not see its own body on .code`() {
         let dup = CodeItem([InstructionItem(.codeDup)])

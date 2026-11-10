@@ -131,7 +131,7 @@ nonisolated extension Interpreter {
     /// sat on top of `.code` all through the last pass, so a body that reads
     /// `.code` read its own loop's body on that pass and no other: `B` run `K`
     /// times by a loop was not `B` written `K` times. Found 2026-11-07 when a
-    /// folded crux (`CruxCompression.folded`) replayed a `.codeNthPoint` chain one
+    /// folded crux (`CruxCompression.folded`) replayed a `.codePeekNth` chain one
     /// level short.
     static func iteratorFarewell(_ iterator: IteratorItem, after payload: [Router]) -> [Router] {
         guard let body = iterator.body else { return payload }
