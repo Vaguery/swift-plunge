@@ -1,0 +1,28 @@
+# SwiftLint configuration for PushInterpreter.
+#
+# It records the conventions this codebase follows on purpose, so that what
+# SwiftLint still reports is worth reading. The working rule is "no new
+# violations": compare before and after a change, not against zero.
+
+included:
+  - Sources
+  - Tests
+excluded:
+  - .build
+
+identifier_name:
+  # Closures and argument lists use short names: `{ x, y in }`, `a[0]`, `i`.
+  min_length:
+    warning: 1
+    error: 1
+  # Every Behavior is named `<instruction>_Behavior` (`intAdd_Behavior`).
+  allowed_symbols: ["_"]
+
+# Behavior bodies cast their arguments with `as!`. That is safe by
+# construction: the planner has already checked that each argument came off the
+# stack its requirement names, so a failed cast would be a planner bug.
+force_cast: warning
+
+# A double blank line separates `// MARK:` sections.
+vertical_whitespace:
+  max_empty_lines: 2

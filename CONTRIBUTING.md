@@ -23,7 +23,7 @@ The tests are grouped by what they cover:
 | `Behaviors/` | instructions, one suite per family |
 | `Infrastructure/` | the interpreter, provenance, limits and the language tables |
 | `Runner Tests/`, `Public API Tests/` | the public boundary |
-| `Search Tests/` | random code, genomes, backward chaining |
+| `Generation Tests/` | random code, genomes, backward chaining |
 | `Documentation/` | the instruction reference and the article examples |
 | `Acceptance Tests (Slow)/` | fuzzing, crux replay, stress and measurements |
 
@@ -105,5 +105,7 @@ issue numbers or documents outside this repository.
 
 - Swift 6 with strict concurrency; the package is `nonisolated` throughout.
 - Run [SwiftLint](https://github.com/realm/SwiftLint) on the files you change,
-  and keep lines within 120 characters.
+  and add no new violations. `.swiftlint.yml` records the conventions the code
+  follows on purpose (short closure names, the `_Behavior` suffix, `as!` on
+  planner-checked arguments); keep lines within 120 characters.
 - One commit per change, with a message that says why.

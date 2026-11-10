@@ -1,5 +1,5 @@
 //
-//  Combinator Behavior Tests.swift
+//  Stack Family Behavior Tests.swift
 //  PushInterpreterTests
 //
 //  Created by Bill Tozier on 6/7/26.
@@ -10,7 +10,7 @@ import Testing
 import DequeModule
 
 @Suite @MainActor
-struct CombinatorBehaviorTests {
+struct StackFamilyBehaviorTests {
 
     let inty = Interpreter.recordingProvenance()
 
