@@ -431,7 +431,8 @@ struct ProvenanceDualModeStress {
         var slowest = (seconds: 0.0, seed: UInt64(0))
         var next = firstSeed
 
-        append(progress, "start: budget \(Int(budget)) s, first seed \(firstSeed), \(instructions.count) instructions, batch \(batchSize), ledger \(ledger.path)")
+        append(progress, "start: budget \(Int(budget)) s, first seed \(firstSeed), \(instructions.count) instructions, "
+               + "batch \(batchSize), ledger \(ledger.path)")
 
         // Trace mode: `PUSH_STRESS_TRACE=lo-hi` runs those seeds one at a time, still on
         // a worker thread, logging each seed before it runs — to pin down a crash.
@@ -501,9 +502,10 @@ struct ProvenanceDualModeStress {
                 }
             }
             next = range.upperBound
+            let result = batchFindings.isEmpty ? "passed" : batchFindings.sorted().joined(separator: ", ")
             DualModeStress.record([
                 "\(range.lowerBound)", "\(range.upperBound)", Date.now.formatted(.iso8601),
-                "\(instructions.count)", batchFindings.isEmpty ? "passed" : batchFindings.sorted().joined(separator: ", "),
+                "\(instructions.count)", result
             ].joined(separator: "\t"), in: ledger)
             append(progress, String(
                 format: "%8.0f s  done %d programs, %d steps; mismatches %d, off-call %d, slow %d (worst %.2f s, seed %llu); crux holds %d, broken %d, inconclusive %d; peak RSS %d MB",
