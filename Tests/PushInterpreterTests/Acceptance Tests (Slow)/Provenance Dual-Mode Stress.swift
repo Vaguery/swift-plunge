@@ -273,17 +273,6 @@ nonisolated enum DualModeStress {
             .joined(separator: "\n")
     }
 
-    /// How deeply `item`'s call tree nests (iteratively, so measuring cannot itself overflow).
-    static func callDepth(_ item: any Item) -> Int {
-        var deepest = 0
-        var pending: [(any Item, Int)] = [(item, 0)]
-        while let (next, depth) = pending.popLast() {
-            deepest = max(deepest, depth)
-            pending += next.call.map { ($0, depth + 1) }
-        }
-        return deepest
-    }
-
     /// Every place inside `item` that carries a `call` — walked with an explicit
     /// stack, since blocks legally nest up to `maxCodeDepth` and a recursive walk
     /// that deep overflows a worker thread (it did, here, at depth 965).
@@ -315,7 +304,7 @@ nonisolated enum DualModeStress {
             // Items too big to render cheaply are skipped: comparing a replay renders both.
             guard let item = on.stacks[stack]!.first, !item.call.isEmpty, item.weight < 100_000,
                   let resting = PushStack.defaultStack(for: item) else { continue }
-            stage("    crux of .\(stack) top (callWeight \(item.callWeight), call depth \(callDepth(item)))")
+            stage("    crux of .\(stack) top (callWeight \(item.callWeight), call depth \(item.callDepth))")
             let crux = item.crux()
             stage("    crux has \(crux.count) items; replaying")
             let room = max(c.settings.stepLimit, crux.count * 20)
