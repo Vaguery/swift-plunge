@@ -368,7 +368,7 @@ struct VecFromIteratorTests {
 
         let vector = inty.stacks[.vecInt]!.first!
         #expect(CodeItem(vector.crux()).pretty()
-                == "( [4, 5, 6] 0 0 true ( ) .iteratorFromVecInt .vecFromIterator )")
+                == "( [4, 5, 6] ( ) 0 0 true .iteratorFromVecInt .vecFromIterator )")
 
         let redo = Interpreter.recordingProvenance()
         redo.load(program: vector.crux())

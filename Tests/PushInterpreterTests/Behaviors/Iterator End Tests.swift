@@ -22,7 +22,7 @@ struct IteratorEndTests {
 
     static func op(_ name: PushInstruction) -> InstructionItem { InstructionItem(name) }
 
-    /// `a b s i d e ( body ) .iteratorFromIntRange`, then play it.
+    /// `a b s ( body ) i d e .iteratorFromIntRange`, then play it.
     static func range(_ a: Int, _ b: Int, cursor: Int) -> [any Item] {
         [IntItem(a), IntItem(b), IntItem(1), IntItem(cursor), IntItem(0), BoolItem(true), CodeItem([]),
          op(.iteratorFromIntRange), op(.iteratorPlay)]

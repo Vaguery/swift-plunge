@@ -176,7 +176,7 @@ struct CodeFromIteratorTests {
 
         let block = inty.stacks[.code]!.first!
         #expect(CodeItem(block.crux()).pretty()
-                == "( [4, 5, 6] 0 0 true ( ) .iteratorFromVecInt .codeFromIterator )")
+                == "( [4, 5, 6] ( ) 0 0 true .iteratorFromVecInt .codeFromIterator )")
 
         let redo = Interpreter.recordingProvenance()
         redo.load(program: block.crux())

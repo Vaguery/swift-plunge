@@ -302,7 +302,7 @@ struct IteratorBehaviorTests {
 
     @Test func `iteratorFromIntRange builds an iterator without running it`() {
         let inty = Interpreter.recordingProvenance()
-        // origin dest stride cursor burial emits (body)
+        // origin dest stride ( body ) cursor burial emits
         inty.load(program: [
             IntItem(2), IntItem(8), IntItem(3), IntItem(1), IntItem(0),
             BoolItem(true),

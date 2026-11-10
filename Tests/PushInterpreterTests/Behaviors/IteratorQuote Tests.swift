@@ -124,7 +124,7 @@ struct IteratorQuoteTests {
 
         let block = inty.stacks[.code]!.first!
         #expect(CodeItem(block.crux()).pretty()
-                == "( 0 4 1 2 0 true ( ) .iteratorFromIntRange .iteratorQuote )")
+                == "( 0 4 1 ( ) 2 0 true .iteratorFromIntRange .iteratorQuote )")
 
         let redo = Interpreter.recordingProvenance()
         redo.load(program: block.crux())

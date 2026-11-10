@@ -562,7 +562,7 @@ nonisolated extension Interpreter {
     /// continuation.
     ///
     /// This exists so `crux()` has something to say. An iterator's `call`
-    /// reconstructs it by state — `origin dest stride cursor burial emits (body)`
+    /// reconstructs it by state — `origin dest stride ( body ) cursor burial emits`
     /// — and re-running that reconstruction has to produce the iterator, not run
     /// its loop. Anything that ran the body here would make a crux a side effect.
     ///
@@ -576,7 +576,7 @@ nonisolated extension Interpreter {
     static let iteratorFromIntRange_Behavior =
         Behavior(
             .iteratorFromIntRange,
-            takes: [.int, .int, .int, .int, .int, .bool, .code],
+            takes: [.int, .int, .int, .code, .int, .int, .bool],
             // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
@@ -585,12 +585,11 @@ nonisolated extension Interpreter {
             produces: .results([.iterator]),
             fxn: { a, recording in
                 // `.int` is a stack, so the last argument written is on top:
-                // `origin dest stride cursor burial` arrives reversed.
-                let (burial, cursor, stride, destination, origin) = (
-                    a[0] as! IntItem, a[1] as! IntItem, a[2] as! IntItem,
-                    a[3] as! IntItem, a[4] as! IntItem
+                // `origin dest stride ( body ) cursor burial` arrives reversed on `.int`.
+                let (burial, cursor, stride, body) = (
+                    a[0] as! IntItem, a[1] as! IntItem, a[2] as! IntItem, a[3] as! CodeItem
                 )
-                let (emits, body) = (a[5] as! BoolItem, a[6] as! CodeItem)
+                let (destination, origin, emits) = (a[4] as! IntItem, a[5] as! IntItem, a[6] as! BoolItem)
 
                 // A counter that never moves never arrives: with stride 0 the value
                 // stays at `origin` forever, and `.codeFromIterator` once collected one until the process ran
@@ -605,7 +604,7 @@ nonisolated extension Interpreter {
                             ErrorItem(
                                 "Zero stride .iteratorFromIntRange: \(origin.value) to \(destination.value) by 0",
                                 call: recording([
-                                    origin, destination, stride, cursor, burial, emits, body,
+                                    origin, destination, stride, body, cursor, burial, emits,
                                     InstructionItem(.iteratorFromIntRange)
                                 ]))
                         )
@@ -621,14 +620,14 @@ nonisolated extension Interpreter {
                     cursor: cursor.value,
                     burial: burial.value,
                     call: recording([
-                        origin, destination, stride, cursor, burial, emits, body,
+                        origin, destination, stride, body, cursor, burial, emits,
                         InstructionItem(.iteratorFromIntRange),
                     ]))
                 return iteratorBuilt(iterator, by: .iteratorFromIntRange, recording)
             }
         )
         .described(
-            "Builds an unplayed counting iterator: `a b s i d e ( body )` counts from a toward b by step s, "
+            "Builds an unplayed counting iterator: `a b s ( body ) i d e` counts from a toward b by step s, "
             + "stopping short of b (one pass when a = b), from pass i at depth d, emitting if e; refuses s = 0 or "
             + "nothing to emit.")
 
@@ -640,9 +639,9 @@ nonisolated extension Interpreter {
     /// comes from and how the cursor projects: the state is the same shape either
     /// way. No bounds, because a walker's end is its origin's own length.
     ///
-    /// `origin cursor burial emits (body)`. The origin lands on its own stack, so
-    /// only the two ints share `.int` — `burial` is written last and arrives on
-    /// top. An empty body means a sequence rather than a loop (see
+    /// `origin ( body ) cursor burial emits`, the body beside what it walks, as in
+    /// every other loop constructor. The origin lands on its own stack, so only the
+    /// two ints share `.int`, and `burial`, written last of them, arrives on top. An empty body means a sequence rather than a loop (see
     /// `IteratorItem.init`), which is how one constructor serves both.
     static func iteratorWalking_Behavior(
         _ name: PushInstruction,
@@ -651,7 +650,7 @@ nonisolated extension Interpreter {
     ) -> Behavior {
         Behavior(
             name,
-            takes: [source, .int, .int, .bool, .code],
+            takes: [source, .code, .int, .int, .bool],
             // Measured to starve close to 100% of the time in random
             // programs — ~7 arguments is more than a genome reliably assembles. Still
             // correct, and still what a hand-built crux uses; just dead weight in a
@@ -660,9 +659,9 @@ nonisolated extension Interpreter {
             tags: [.cruxOnly, .fallible],
             produces: .results([.iterator]),
             fxn: { a, recording in
-                let origin = a[0]
-                let (burial, cursor) = (a[1] as! IntItem, a[2] as! IntItem)
-                let (emits, body) = (a[3] as! BoolItem, a[4] as! CodeItem)
+                let (origin, body) = (a[0], a[1] as! CodeItem)
+                let (burial, cursor) = (a[2] as! IntItem, a[3] as! IntItem)
+                let emits = a[4] as! BoolItem
 
                 let iterator = IteratorItem(
                     kind: kind(origin),
@@ -672,7 +671,7 @@ nonisolated extension Interpreter {
                     cursor: cursor.value,
                     burial: burial.value,
                     call: recording([
-                        origin, cursor, burial, emits, body,
+                        origin, body, cursor, burial, emits,
                         InstructionItem(name),
                     ]))
                 return iteratorBuilt(iterator, by: name, recording)
@@ -685,7 +684,7 @@ nonisolated extension Interpreter {
             .elements(into: nil)
         }
         .described(
-            "Builds an unplayed iterator over a string's chars: `s i d e ( body )` starts at pass i at depth d, "
+            "Builds an unplayed iterator over a string's chars: `s ( body ) i d e` starts at pass i at depth d, "
             + "emitting if e; an empty body makes a bare sequence; refuses if nothing is left to emit.")
 
     static let iteratorFromStringLetters_Behavior =
@@ -693,7 +692,7 @@ nonisolated extension Interpreter {
             .letters
         }
         .described(
-            "Builds an unplayed iterator over a string's chars, each as a one-char string: `s i d e ( body )` "
+            "Builds an unplayed iterator over a string's chars, each as a one-char string: `s ( body ) i d e` "
             + "starts at pass i at depth d, emitting if e; refuses if nothing is left to emit.")
 
     static let iteratorFromStringWords_Behavior =
@@ -701,7 +700,7 @@ nonisolated extension Interpreter {
             .words
         }
         .described(
-            "Builds an unplayed iterator over a string's whitespace-separated words: `s i d e ( body )` starts at "
+            "Builds an unplayed iterator over a string's whitespace-separated words: `s ( body ) i d e` starts at "
             + "pass i at depth d, emitting if e; refuses if nothing is left to emit.")
 
     static func iteratorFromVector_Behavior<V: VectorItem>(
@@ -710,7 +709,7 @@ nonisolated extension Interpreter {
     ) -> Behavior {
         iteratorWalking_Behavior(name, over: V.pushStack) { _ in .elements(into: nil) }
             .described(
-                "Builds an unplayed iterator over a \(V.pushStack.noun)'s elements: `v i d e ( body )` starts at "
+                "Builds an unplayed iterator over the elements of a \(V.pushStack.noun): `v ( body ) i d e` starts at "
                 + "pass i at depth d, emitting if e; an empty body makes a bare sequence; refuses if nothing is "
                 + "left to emit.")
     }
@@ -746,8 +745,9 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Builds an iterator over a \(source.noun)'s "
+            "Builds an iterator over the "
             + (source == .string ? "chars" : source == .code ? "top-level items" : "elements")
+            + " of \(source.aNoun)"
             + (source == .code ? " and a body, written `( x ) ( body )`," : " and a body,")
             + " ready to play from the first, emitting each; an empty body makes a bare sequence; refuses an "
             + "empty \(source.noun).")
@@ -798,7 +798,7 @@ nonisolated extension Interpreter {
                     cursor: cursor.value,
                     burial: burial.value,
                     call: recording([
-                        origin, cursor, burial, emits, body,
+                        origin, body, cursor, burial, emits,
                         InstructionItem(name),
                     ]))
                 return iteratorBuilt(iterator, by: name, recording)
@@ -845,7 +845,7 @@ nonisolated extension Interpreter {
                     emits: emits.value,
                     cursor: cursor.value,
                     burial: burial.value,
-                    call: recording([origin, cursor, burial, emits, body, InstructionItem(instruction)]))
+                    call: recording([origin, body, cursor, burial, emits, InstructionItem(instruction)]))
                 return iteratorBuilt(iterator, by: instruction, recording)
             }
         )

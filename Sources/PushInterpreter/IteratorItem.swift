@@ -631,16 +631,16 @@ nonisolated extension IteratorItem {
                 origin,
                 destination,
                 IntItem(stride),
+                body ?? CodeItem([]),
                 IntItem(value),
                 IntItem(burial),
                 BoolItem(emits),
-                body ?? CodeItem([]),
                 InstructionItem(.iteratorFromIntRange),
             ]
 
         // A walking iterator needs no bounds: its end is its origin's own length.
-        // The origin lands on its own stack, so only the two cursor-ish ints share
-        // `.int`, and `burial` is written last and so arrives on top.
+        // The body is written beside the origin; only the two cursor-ish ints share
+        // `.int`, and `burial` is written last of them and so arrives on top.
         //
         // `laps` is the single piece of state no constructor takes, so a cycling
         // walk has to rebuild itself and then say how far round it goes. At
@@ -651,10 +651,10 @@ nonisolated extension IteratorItem {
             guard laps > 1 else {
                 return [
                     origin,
+                    body ?? CodeItem([]),
                     IntItem(value),
                     IntItem(burial),
                     BoolItem(emits),
-                    body ?? CodeItem([]),
                     InstructionItem(name),
                 ]
             }
@@ -677,10 +677,10 @@ nonisolated extension IteratorItem {
             // fixed point.
             return [
                 origin,
+                body ?? CodeItem([]),
                 IntItem(0),
                 IntItem(burial),
                 BoolItem(emits),
-                body ?? CodeItem([]),
                 InstructionItem(name),
                 IntItem(laps),
                 InstructionItem(.iteratorSetLaps),
