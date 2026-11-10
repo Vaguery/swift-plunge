@@ -22,7 +22,7 @@
 /// a role says "this is where the behavior was registered", which is a fact about
 /// code organization and only *becomes* a fact about instructions if the
 /// dictionaries are curated to make it one. That is not automatic, and it was
-/// wrong once: every `…Eq` was roled `.combinator` purely because
+/// wrong once: every `…Eq` was roled `.stackFamily` purely because
 /// `eqCombinator_Behavior` sat in the same generator loop as dup and swap. Treat
 /// these as **provisionally** disjoint — the partition is a property worth keeping,
 /// not evidence that the categories are natural.
@@ -49,18 +49,23 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
     /// The 10 `input0…input9` tokens. Like constants, they read a binding.
     case input
 
-    /// The language's furniture: dup, swap, rot, pop, flush, yank, shove,
-    /// stackDepth… — the ~14 that exist for every stack.
+    /// The family generated for every stack from one template: dup, swap, rot,
+    /// pop, flush, yank, shove, `DeleteAtDepth`… and the two measurements
+    /// `StackDepth` and `StackIsEmpty`, 15 per stack. This is a fact about how
+    /// the definitions are written, not a kind of behavior: the copying,
+    /// deleting and reordering ones carry the `stackCombinator` tag, and the two
+    /// measurements do not. (Earlier Push implementations called the whole
+    /// family "combinators"; the tag keeps that word for the rearrangements.)
     ///
     /// **Furniture only.** `…Eq` used to be generated into this family and so was
     /// roled here; it is a `.comparison` now, and no longer described as an
     /// instruction that "only shuffles a stack".
     ///
-    /// **Worth knowing before drawing uniformly: this is 41% of everything that
-    /// is not a constant or an input.** "Sample a random instruction" mostly
+    /// **Worth knowing before drawing uniformly: this is about a quarter of everything
+    /// that is not a constant or an input.** "Sample a random instruction" mostly
     /// samples furniture, which is why it earns a partition of its own rather than
     /// being left in `.other` to dominate it silently.
-    case combinator
+    case stackFamily
 
     /// Ordering and equality — the 11 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
     ///
@@ -83,17 +88,17 @@ nonisolated extension Interpreter {
     static let roles: [InstructionRole: Set<PushInstruction>] = {
         let constants = Set(constantBehaviors.keys)
         let inputs = Set(inputBehaviors.keys)
-        let combinators = Set(combinatorBehaviors.keys)
+        let stackFamily = Set(combinatorBehaviors.keys)
         let comparisons = Set(comparisonBehaviors.keys)
         return [
             .constant: constants,
             .input: inputs,
-            .combinator: combinators,
+            .stackFamily: stackFamily,
             .comparison: comparisons,
             .other: Set(language.keys)
                 .subtracting(constants)
                 .subtracting(inputs)
-                .subtracting(combinators)
+                .subtracting(stackFamily)
                 .subtracting(comparisons),
         ]
     }()

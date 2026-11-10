@@ -247,10 +247,10 @@ struct CruxToFunctionDiagnostics {
     @Test(.disabled(if: disabledTests))
     func `D2 an arbitrary CodeItem yields curryable resting cruxes`() {
         fuzzRNG = SeededRNG(seed: 0xBADF00D)
-        // Now allow combinators and iterators (they land in `.combinator`/`.other`)
+        // Now allow combinators and iterators (they land in `.stackFamily`/`.other`)
         // so some sources loop; the point is that a resting item's crux is still a
         // straight-line, curryable program even when the code that made it was not.
-        let mix = InstructionMix([.constant: 3, .other: 3, .combinator: 2, .input: 0])
+        let mix = InstructionMix([.constant: 3, .other: 3, .stackFamily: 2, .input: 0])
         let trials = 1000
 
         // split by whether the SOURCE program used an iterator instruction

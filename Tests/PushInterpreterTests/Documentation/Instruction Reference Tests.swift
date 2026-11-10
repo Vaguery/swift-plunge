@@ -113,7 +113,7 @@ struct InstructionReferenceTests {
     /// The generated family every stack has (dup, pop, swap, …): described once,
     /// on its own page, rather than on every stack's.
     static func isGeneratedFamily(_ name: PushInstruction) -> Bool {
-        Interpreter.instructions(role: .combinator).contains(name)
+        Interpreter.instructions(role: .stackFamily).contains(name)
     }
 
     static let sections: [(BehaviorClass, String)] = [

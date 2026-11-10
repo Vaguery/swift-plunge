@@ -56,7 +56,7 @@ struct TagsTests {
     @Test func `equality is not furniture`() {
         for eq: PushInstruction in [.intEq, .boolEq, .stringEq, .codeEq] {
             #expect(Interpreter.instructions(role: .comparison).contains(eq))
-            #expect(!Interpreter.instructions(role: .combinator).contains(eq))
+            #expect(!Interpreter.instructions(role: .stackFamily).contains(eq))
             #expect(!InstructionTagging.standard.instructions(tagged: .stackCombinator).contains(eq))
         }
     }
@@ -70,7 +70,7 @@ struct TagsTests {
         // 168 once the 12 `…Eq` moved to `.comparison`, where they always
         // belonged (`Comparison Behaviors.swift`); 195 with `.binding`'s family (14)
         // and `xDeleteAtDepth` on the 13 family stacks (2026-11-09).
-        #expect(Interpreter.instructions(role: .combinator).count == 195)
+        #expect(Interpreter.instructions(role: .stackFamily).count == 195)
         // `execEq` was removed; `bindingEq` came with `.binding`.
         #expect(Interpreter.instructions(role: .comparison).count == 40,
                 "12 Eq + 28 orderings")
@@ -82,7 +82,7 @@ struct TagsTests {
         let notEnvironment = Interpreter.language.count
             - Interpreter.instructions(role: .constant).count
             - Interpreter.instructions(role: .input).count
-        let furniture = Double(Interpreter.instructions(role: .combinator).count)
+        let furniture = Double(Interpreter.instructions(role: .stackFamily).count)
             / Double(notEnvironment)
         // Lowered from 0.30 on 2026-11-09: that day's additions are all `.other`
         // (0.29 after the set operations, ~0.24 once all of them were built).
@@ -92,7 +92,7 @@ struct TagsTests {
     @Test func `the tags hold what their names claim`() {
         #expect(Interpreter.instructions(role: .constant).contains(.int3))
         #expect(Interpreter.instructions(role: .input).contains(.input7))
-        #expect(Interpreter.instructions(role: .combinator).contains(.intDup))
+        #expect(Interpreter.instructions(role: .stackFamily).contains(.intDup))
         #expect(Interpreter.instructions(role: .other).contains(.intAdd))
 
         // And that the remainder really is a remainder: computing instructions

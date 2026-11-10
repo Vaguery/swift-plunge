@@ -63,7 +63,7 @@ struct SweptItem {
 /// least obvious: it reweights the generated programs by `InstructionRole`, so
 /// `.enriched(.other)` buys more computing and less stack furniture.
 ///
-/// Note what it *cannot* do. The tags are `.constant`, `.input`, `.combinator` and
+/// Note what it *cannot* do. The tags are `.constant`, `.input`, `.stackFamily` and
 /// `.other`, so there is no way to concentrate **loops** — and loops are where
 /// provenance has been hardest (the cycling-walker bug that closed #27 appeared
 /// once in 1,600 programs and could not be hunted deliberately). A mix keyed on

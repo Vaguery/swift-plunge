@@ -39,7 +39,7 @@ struct LookupMatchRates {
 
     @Test func `how often lookups find something in random programs`() {
         let lookups = Array(Self.searched.keys).sorted { $0.rawValue < $1.rawValue }
-        let mix = InstructionMix([.constant: 2, .input: 1, .combinator: 1, .comparison: 1, .other: 2],
+        let mix = InstructionMix([.constant: 2, .input: 1, .stackFamily: 1, .comparison: 1, .other: 2],
                                  focus: lookups, weight: 1.5)
         var byInstruction: [PushInstruction: Tally] = [:]
 

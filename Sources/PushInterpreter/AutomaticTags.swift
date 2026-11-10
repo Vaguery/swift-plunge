@@ -19,9 +19,8 @@ nonisolated extension Interpreter {
     /// The derived tags, computed once from `language`.
     static let automaticTags: [InstructionTag: Set<PushInstruction>] = {
         var result: [InstructionTag: Set<PushInstruction>] = [:]
-        let generatedFamily = Set(combinatorBehaviors.keys)
         for (name, behavior) in language {
-            for tag in AutomaticTagging(behavior, inGeneratedFamily: generatedFamily.contains(name)).tags {
+            for tag in AutomaticTagging(behavior).tags {
                 result[tag, default: []].insert(name)
             }
         }
@@ -52,7 +51,6 @@ nonisolated struct AutomaticTagging {
     }
 
     let behavior: Behavior
-    let inGeneratedFamily: Bool
     /// Consumed, in order (`.takes`, and `.takesMany` once).
     let taken: [PushStack]
     /// Read and left, in order.
@@ -66,9 +64,8 @@ nonisolated struct AutomaticTagging {
     /// Every stack it takes, reads, observes, needs, gives or rearranges, `.error` aside.
     let touched: Set<PushStack>
 
-    init(_ behavior: Behavior, inGeneratedFamily: Bool) {
+    init(_ behavior: Behavior) {
         self.behavior = behavior
-        self.inGeneratedFamily = inGeneratedFamily
         var taken: [PushStack] = [], read: [PushStack] = [], needed: Set<PushStack> = [], variadic = false
         for requirement in behavior.requirements {
             switch requirement {
@@ -140,7 +137,7 @@ nonisolated struct AutomaticTagging {
         let kind = behavior.behaviorClass
         if isCalculation { tags.insert(.calculation) }
         tags.formUnion(inspectionTags)
-        if kind == .structural || inGeneratedFamily { tags.insert(.stackCombinator) }
+        if kind == .structural { tags.insert(.stackCombinator) }
 
         let loops = reEntrant || isApplying || behavior.tags.contains(.looping)
         let applies = isApplying || (kind == .control && !read.isEmpty && taken.contains(.code) && !loops)

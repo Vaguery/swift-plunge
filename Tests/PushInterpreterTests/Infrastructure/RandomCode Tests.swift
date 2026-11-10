@@ -56,10 +56,10 @@ struct RandomCodeTests {
     /// Weights 3 : 2 each — so the target takes `3 / (3 + 2(n-1))` and the rest
     /// share the remainder evenly.
     @Test func `enriched weights the target three against two`() {
-        let realized = composition(of: .enriched(.combinator))
+        let realized = composition(of: .enriched(.stackFamily))
         let total = 3 + 2 * (roleCount - 1)
-        #expect(abs((realized[.combinator] ?? 0) - 3 / total) < 0.02)
-        for role in InstructionRole.allCases where role != .combinator {
+        #expect(abs((realized[.stackFamily] ?? 0) - 3 / total) < 0.02)
+        for role in InstructionRole.allCases where role != .stackFamily {
             #expect(abs((realized[role] ?? 0) - 2 / total) < 0.02, "\(role)")
         }
     }
@@ -89,16 +89,16 @@ struct RandomCodeTests {
         func fraction(_ tag: InstructionRole) -> Double {
             Double(Interpreter.instructions(role: tag).count) / total
         }
-        #expect(abs((realized[.combinator] ?? 0) - fraction(.combinator)) < 0.02)
+        #expect(abs((realized[.stackFamily] ?? 0) - fraction(.stackFamily)) < 0.02)
         #expect(abs((realized[.constant] ?? 0) - fraction(.constant)) < 0.02)
         #expect((realized[.input] ?? 0) < 0.03, "inputs are a sliver of the language")
         // 0.20, not 0.25, since 2026-11-09: that day's additions are all `.other`.
-        #expect(fraction(.combinator) > 0.20, "furniture is a large minority")
+        #expect(fraction(.stackFamily) > 0.20, "furniture is a large minority")
     }
 
     /// A weight of zero means never.
     @Test func `a tag weighted zero is never drawn`() {
-        let realized = composition(of: InstructionMix([.other: 1, .combinator: 1]), draws: 2_000)
+        let realized = composition(of: InstructionMix([.other: 1, .stackFamily: 1]), draws: 2_000)
         #expect(realized[.constant] == nil)
         #expect(realized[.input] == nil)
         #expect(abs((realized[.other] ?? 0) - 0.5) < 0.03)

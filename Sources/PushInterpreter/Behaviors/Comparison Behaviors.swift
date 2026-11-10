@@ -11,7 +11,7 @@
 //
 //  ## Why this exists
 //
-//  Every `…Eq` was roled `.combinator` — the language's furniture — because
+//  Every `…Eq` was roled `.stackFamily` — the language's furniture — because
 //  `eqCombinator_Behavior` happened to sit in the same per-stack generator loop as
 //  dup, pop, swap and rot. `Eq` was among the first families to be generated, and
 //  the rest of the furniture was added around it. Nothing about equality is

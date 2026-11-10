@@ -27,7 +27,7 @@ public extension Runner {
     }
 
     /// The language partitioned by **where each instruction is defined** —
-    /// `.constant`, `.input`, `.combinator`, `.comparison`, `.other` — each list
+    /// `.constant`, `.input`, `.stackFamily`, `.comparison`, `.other` — each list
     /// sorted. The five are a true partition: every defined instruction appears in
     /// exactly one. Count them for a by-role breakdown
     /// (`instructionsByRole.mapValues(\.count)`).
