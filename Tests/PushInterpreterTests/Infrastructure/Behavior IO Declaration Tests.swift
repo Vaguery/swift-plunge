@@ -165,7 +165,7 @@ struct BehaviorIODeclarationTests {
         #expect(counts == [
             "one result": 435, "fixed results": 79, "alternatives": 23,
             "deferred": 80, "input": 10, "delivery": 7,
-            "positions": 170, "continuation": 43, "printout": 13
+            "positions": 170, "continuation": 42, "printout": 13
         ])
     }
 

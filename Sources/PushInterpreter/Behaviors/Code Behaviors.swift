@@ -33,27 +33,6 @@ nonisolated extension Interpreter {
         .described("Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block " +
                    "contributing its sole item.")
 
-    /// The `.code` sibling of `execIf`: pop a bool and two blocks, run the chosen
-    /// one on `.exec`. Only the source stack differs — the mechanics (argument
-    /// order, `.codeDo` the winner, the loser recorded nowhere) are execIf's.
-    static let codeIf_Behavior =
-        Behavior.control(
-            .codeIf,
-            takes: [.bool, .code, .code],
-            fxn: { a, recording in
-                // Like execIf: `( then ) ( else ) .codeIf` — the last-written block
-                // is on top and arrives as a[1] (`else`), so a[2] is `then`.
-                let (cond, elseBlock, thenBlock) = (a[0] as! BoolItem, a[1], a[2])
-                var result = cond.value ? thenBlock : elseBlock
-                return [
-                    Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, result),
-                ]
-            }
-        )
-        .described("Runs one of two blocks: `( t ) ( e ) .codeIf` runs t if the bool is true, else e; the other is " +
-                   "discarded.")
-
     /// **One block and a bool**: run the block if the bool is true; otherwise
     /// hand it back to `.code` untouched. Built from the pieces already here:
     /// `.codeDo` when true, the block replaced when false. It differs from
@@ -72,7 +51,8 @@ nonisolated extension Interpreter {
                 ]
             }
         )
-        .described("Runs the block if the bool is true; otherwise leaves the block on `.code` untouched.")
+        .described("Runs the block as `.codeDo` would if the bool is true; otherwise does nothing, leaving the block on"
+                   + " `.code`. `.execWhen` discards it instead.")
 
     static let codeItemIsEmpty_Behavior =
         Behavior.operation(.codeItemIsEmpty, reads: CodeItem.self, gives: BoolItem.self) { x in x.isEmpty }
@@ -679,7 +659,6 @@ nonisolated extension Interpreter {
         .charQuote : charQuote_Behavior,
         .codeConcat : codeConcat_Behavior,
         .codePair : codePair_Behavior,
-        .codeIf : codeIf_Behavior,
         .codeDoIf : codeDoIf_Behavior,
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,

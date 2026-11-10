@@ -21,7 +21,7 @@ The `.exec` stack is the program still to run: the interpreter pops its top item
 | `execIf` | Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding the other block. | `bool`, `code`, `code` | the rest of the program |
 | `execK` | Keeps the first block: `( a ) ( b ) .execK` runs a and discards b. | `code`, `code` | the rest of the program |
 | `execS` | Applies the S combinator: `( a ) ( b ) ( c ) .execS` runs a, c, b, then c again. | `code`, `code`, `code` | the rest of the program |
-| `execWhen` | Runs the block when the bool is true, and discards it otherwise. | `bool`, `code` | the rest of the program |
+| `execWhen` | Runs the block when the bool is true and discards it otherwise: `.execIf` with an empty else. `.codeDoIf` leaves it on `.code` instead. | `bool`, `code` | the rest of the program |
 | `execWhile` | Loops: runs the body while the top bool is true, taking a new bool before each pass; a false bool ends the loop and returns the body to `.code`. | `bool`, `code` | the rest of the program |
 | `execY` | Recurs: `( a ) .execY` runs a, then puts a back on `.code` and runs `.execY` again, looping until the steps run out or the body intervenes. | `code` | the rest of the program |
 

@@ -75,7 +75,7 @@ struct BehaviorClassTests {
             .contextRead: 204,  // 80 constants, 10 inputs, 26 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars,
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,
                                 // bindingContainsKey, bindingOccurrencesOfKey
-            .control: 40,       // incl. 10 xWith and bindingScope
+            .control: 39,       // incl. 10 xWith and bindingScope
             .channel: 13,
         ], "\(counts)")
     }

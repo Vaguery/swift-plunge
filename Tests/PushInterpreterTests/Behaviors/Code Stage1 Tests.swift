@@ -4,7 +4,7 @@
 //
 //  Created by Bill Tozier on 7/18/26.
 //
-//  codePair (wrap two) and codeIf (execIf with a .code source).
+//  codePair (wrap two) and execIf (which codeIf duplicated until 2026-11-10).
 //
 
 @testable import PushInterpreter
@@ -57,15 +57,15 @@ struct CodeStage1Tests {
         #expect(stackString(redo, .code) == stackString(inty, .code))
     }
 
-    @Test func `codeIf runs the chosen block, true takes then`() {
+    @Test func `execIf runs the chosen block, true takes then`() {
         // Loaded as a program: the two blocks land on .code, the bool on .bool,
-        // then codeIf reads them. `then` is written first, so it is a[2].
+        // then execIf reads them. `then` is written first, so it is a[2].
         let prog = Interpreter.recordingProvenance()
         prog.load(program: [
             CodeItem([IntItem(1)]),   // goes to .code
             CodeItem([IntItem(2)]),   // goes to .code
             BoolItem(true),           // goes to .bool
-            InstructionItem(.codeIf),
+            InstructionItem(.execIf),
         ])
         prog.run()
         #expect(stackString(prog, .int) == "[ 1 ]", "true → then block ran")
@@ -75,7 +75,7 @@ struct CodeStage1Tests {
             CodeItem([IntItem(1)]),
             CodeItem([IntItem(2)]),
             BoolItem(false),
-            InstructionItem(.codeIf),
+            InstructionItem(.execIf),
         ])
         f.run()
         #expect(stackString(f, .int) == "[ 2 ]", "false → else block ran")

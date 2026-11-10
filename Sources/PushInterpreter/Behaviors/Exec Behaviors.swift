@@ -362,7 +362,8 @@ nonisolated extension Interpreter {
                 return results
             }
         )
-        .described("Runs the block when the bool is true, and discards it otherwise.")
+        .described("Runs the block when the bool is true and discards it otherwise: `.execIf` with an empty else."
+                   + " `.codeDoIf` leaves it on `.code` instead.")
 
     static let execWhile_Behavior =
         Behavior.control(

@@ -42,7 +42,7 @@ before the instruction:
 true ( 10 ) ( 20 ) .execIf     →  .int holds 10; the other block is discarded
 ```
 
-- `execIf` and `codeIf` choose between two blocks.
+- `execIf` chooses between two blocks; `execWhen` runs one or discards it, and `codeDoIf` runs one or leaves it.
 - `execWhen` runs a block or discards it.
 - `codeDoIf` runs a block or leaves it on `.code` untouched.
 

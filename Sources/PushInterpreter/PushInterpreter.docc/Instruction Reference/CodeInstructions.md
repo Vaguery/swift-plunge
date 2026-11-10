@@ -62,12 +62,11 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `codeDo` | Runs a block: its items go onto `.exec`, the first to run first. | `code` | the rest of the program |
-| `codeDoIf` | Runs the block if the bool is true; otherwise leaves the block on `.code` untouched. | `bool`, `code` | the rest of the program |
+| `codeDoIf` | Runs the block as `.codeDo` would if the bool is true; otherwise does nothing, leaving the block on `.code`. `.execWhen` discards it instead. | `bool`, `code` | the rest of the program |
 | `codeDoNth` | Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf goes to its stack. | `code` (read), `int` (read) | the rest of the program |
 | `codeDoNthRoot` | Runs root item i (clamped), leaving the block and index: a sub-block's contents execute; refuses an empty block. | `code` (read), `int` (read) | the rest of the program; may refuse |
 | `codeEmitNth` | Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on `.code`, an instruction runs. | `code` (read), `int` (read) | the rest of the program |
 | `codeEmitNthRoot` | Sends root item i (clamped) to `.exec` as it is, leaving the block and index; refuses an empty block. | `code` (read), `int` (read) | the rest of the program; may refuse |
-| `codeIf` | Runs one of two blocks: `( t ) ( e ) .codeIf` runs t if the bool is true, else e; the other is discarded. | `bool`, `code`, `code` | the rest of the program |
 | `codeIterate` | Loops: `x b .codeIterate` runs block b once per point of block x, root first, pushing each point as a block; b ends on `.code`. | `code`, `code` | the rest of the program |
 | `codeIterateDo` | Loops: `x b .codeIterateDo` runs block b once per point of block x, root first, also running each point; b ends on `.code`. | `code`, `code` | the rest of the program |
 | `codeIterateEmit` | Loops: `x b .codeIterateEmit` runs block b once per point of block x, root first, pushing each point as it is (an instruction runs); b ends on `.code`. | `code`, `code` | the rest of the program |
