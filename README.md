@@ -11,7 +11,7 @@ concurrently and within strict limits, and reports what you asked to observe.
 
 ## Features
 
-- **A large, modern Push dialect**: 845 instructions over 13 typed stacks: bools,
+- **A large, modern Push dialect**: 864 instructions over 13 typed stacks: bools,
   ints, doubles, chars, strings, four vector types, code, first-class loops
   (iterators) and keyed variables (bindings).
 - **Every program runs.** Missing arguments, bad values and size limits produce
