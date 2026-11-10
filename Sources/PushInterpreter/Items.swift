@@ -167,6 +167,19 @@ public nonisolated protocol Item: Pretty, Sendable {
     var nestingDepth: Int {get}
 
     func isEqual(to other: any Item) -> Bool
+
+    /// Moves into `work` whatever this item alone holds that would otherwise be
+    /// freed recursively with it: its history, and a block's contents. Called
+    /// only while a deep history is being freed, so that freeing it needs no
+    /// recursion; an item type with no history of its own need do nothing.
+    @_documentation(visibility: internal)
+    mutating func detachForRelease(into work: inout [any Item])
+}
+
+nonisolated public extension Item {
+    /// Nothing to hand over.
+    @_documentation(visibility: internal)
+    mutating func detachForRelease(into work: inout [any Item]) {}
 }
 
 nonisolated extension Item {
@@ -223,15 +236,67 @@ public nonisolated struct CallMeasure: Sendable, Hashable {
 /// because every source and item they name is also reachable from the
 /// container's `call`.
 nonisolated struct CallStorage: Sendable {
-    private final class Box: Sendable {
-        let call: [any Item]
+    /// Immutable to everyone but its own release: `call` and `members` are
+    /// emptied only by `deinit` and by `detach(into:)`, and only when nothing else
+    /// holds the box, which is why the unchecked `Sendable` is sound.
+    private final class Box: @unchecked Sendable {
+        var call: [any Item]
         let measure: CallMeasure
-        let members: Pieces?
+        var members: Pieces?
         init(call: [any Item], measure: CallMeasure, members: Pieces?) {
             self.call = call; self.measure = measure; self.members = members
         }
+
+        /// **Freeing a deep history without recursion.** Freed the ordinary way,
+        /// a history costs stack frames per level, and an item too large to sit
+        /// inline in an `any Item` (a block, a binding, an iterator) costs more:
+        /// on a concurrency worker thread a chain of blocks crashed the process at
+        /// 950 levels in release and under 800 in debug (measured 2026-11-10). So a
+        /// deep one is taken apart from a work list instead: each item hands over
+        /// its own history when nothing else holds it, and is then freed empty.
+        /// A shallow history is freed the ordinary way, which is cheaper.
+        deinit {
+            guard measure.depth > CallStorage.drainDepth else { return }
+            var work = call
+            call = []
+            CallStorage.appendItems(of: members, to: &work)
+            members = nil
+            CallStorage.drain(&work)
+        }
     }
-    private let box: Box?
+    private var box: Box?
+
+    /// Histories at most this deep are freed by ordinary recursion.
+    static let drainDepth: UInt32 = 32
+
+    /// Frees `work` one item at a time, each first handing over whatever only it
+    /// holds (`Item.detachForRelease(into:)`), so no release recurses.
+    static func drain(_ work: inout [any Item]) {
+        while var item = work.popLast() {
+            item.detachForRelease(into: &work)
+        }
+    }
+
+    /// The items a piece table names, for `drain`.
+    static func appendItems(of members: Pieces?, to work: inout [any Item]) {
+        guard let members else { return }
+        for run in members.runs {
+            switch run {
+            case .item(let item): work.append(item)
+            case .span(let source, _, _, _): work.append(source)
+            }
+        }
+    }
+
+    /// Moves this history into `work` if nothing else holds it, leaving it empty,
+    /// so freeing it recurses no further (`drain`).
+    mutating func detach(into work: inout [any Item]) {
+        guard box != nil, isKnownUniquelyReferenced(&box), let unique = box else { return }
+        work.append(contentsOf: unique.call)
+        unique.call = []
+        Self.appendItems(of: unique.members, to: &work)
+        unique.members = nil
+    }
 
     static let literal = CallStorage(box: nil)
     private init(box: Box?) { self.box = box }
@@ -264,19 +329,64 @@ nonisolated protocol HoldsCall: Item {
     var callStorage: CallStorage { get set }
 }
 
-nonisolated extension BoolItem: HoldsCall {}
-nonisolated extension CharItem: HoldsCall {}
-nonisolated extension CodeItem: HoldsCall {}
-nonisolated extension DoubleItem: HoldsCall {}
-nonisolated extension InstructionItem: HoldsCall {}
-nonisolated extension IntItem: HoldsCall {}
-nonisolated extension StringItem: HoldsCall {}
-nonisolated extension VecBoolItem: HoldsCall {}
-nonisolated extension VecDoubleItem: HoldsCall {}
-nonisolated extension VecIntItem: HoldsCall {}
-nonisolated extension VecStringItem: HoldsCall {}
-nonisolated extension ErrorItem: HoldsCall {}
-nonisolated extension IteratorItem: HoldsCall {}
+nonisolated extension BoolItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension CharItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension CodeItem: HoldsCall {
+    /// A block hands over its contents as well as its history, so a history that
+    /// runs through blocks is freed without recursion too.
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) {
+        callStorage.detach(into: &work)
+        work.append(contentsOf: value)
+        value = []
+    }
+}
+nonisolated extension DoubleItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension InstructionItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension IntItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension StringItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension VecBoolItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension VecDoubleItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension VecIntItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension VecStringItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension ErrorItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
+nonisolated extension IteratorItem: HoldsCall {
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
+}
 
 nonisolated extension HoldsCall {
     /// This item with `call` as its history, keeping its members: a fold

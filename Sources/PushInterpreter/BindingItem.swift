@@ -95,3 +95,12 @@ nonisolated extension BindingItem {
                 key, InstructionItem(.bindingRekey)]
     }
 }
+
+nonisolated extension BindingItem {
+    /// A pair hands over its history (`CallStorage.drain`); its bound value is
+    /// freed with it, one level down.
+    @_documentation(visibility: internal)
+    public mutating func detachForRelease(into work: inout [any Item]) {
+        callStorage.detach(into: &work)
+    }
+}

@@ -8,7 +8,9 @@
 //  the process twice this way: `crux()` recursing through a 2,463-deep call tree,
 //  and then the release of that same tree. These pin the fixes: `crux()` is
 //  iterative; provenance deeper than `maxCallDepth` is elided at push; a block
-//  nested deeper than `maxCodeDepth` is refused at push. Each deep case runs on a
+//  nested deeper than `maxCodeDepth` is refused at push; and a deep history is
+//  freed from a work list (`CallStorage.drain`), after a 1,000-deep chain of
+//  blocks crashed the soak on its release (2026-11-10). Each deep case runs on a
 //  detached task, so a regression crashes here rather than in a long run.
 //
 
@@ -158,5 +160,31 @@ struct DeepStructureSafetyTests {
             return block.pretty().count
         }.value
         #expect(length > 0)
+    }
+
+    /// A history far deeper than any walk could survive is freed without
+    /// recursion, whatever its items: blocks, iterators and bindings are freed
+    /// by more stack per level than ints.
+    @Test func `a deep history of large items is freed on a worker thread`() async {
+        let freed = await Task.detached { () -> Int in
+            var made = 0
+            let seeds: [any Item] = [
+                CodeItem([IntItem(1)]),
+                BindingItem(key: 1, bound: IntItem(2)),
+                IteratorItem(kind: .counting(stride: 1), origin: IntItem(0), destination: IntItem(5), emits: true),
+            ]
+            for seed in seeds {
+                var item = seed
+                for _ in 0..<20_000 {
+                    var next = item
+                    next.call = [item, InstructionItem(.codeReplace)]
+                    item = next
+                }
+                item = IntItem(0)
+                made += 1
+            }
+            return made
+        }.value
+        #expect(freed == 3)
     }
 }
