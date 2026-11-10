@@ -161,7 +161,7 @@ nonisolated struct AutomaticTagging {
         }
         let bindingResults = isFixedResults || { if case .alternatives = behavior.produces { true } else { false } }()
         if data.union(needed).contains(.binding) || behavior.produces == .positions(.binding)
-            || (bindingResults && outputs.contains(.binding) && Set(outputs).isSubset(of: [.binding, .int, .error])) {
+            || (bindingResults && outputs.contains(.binding) && Set(outputs).isSubset(of: [.binding, .int])) {
             tags.insert(.naming)
         }
         if Set(outputs).contains(.iterator) && behavior.produces != .continuation

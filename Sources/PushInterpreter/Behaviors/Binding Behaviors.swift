@@ -189,7 +189,7 @@ nonisolated extension Interpreter {
                      // The value as it is addressed in its block, so it keeps a history.
                      let bound = Containment.contents(of: block, recording)[1]
                      return [Router(.binding, BindingItem(key: key.value, bound: bound, call: call))]
-                 }, produces: .alternatives([[.binding], [.error]]))
+                 }, produces: .results([.binding]))
         .described("Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator"
                    + " or a binding.")
 

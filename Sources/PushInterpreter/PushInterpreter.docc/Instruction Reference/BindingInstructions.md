@@ -9,7 +9,7 @@ The `.binding` stack holds keyed bindings: an int key and any item. The topmost 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `bindingEq` | Pushes whether the top two bindings are equal, leaving both. | `binding` (read), `binding` (read) | `bool` |
-| `bindingFromCode` | Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator or a binding. | `code` | `binding` or `error`; may refuse |
+| `bindingFromCode` | Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator or a binding. | `code` | `binding`; may refuse |
 | `bindingQuote` | Turns the top binding into the block `( k value )` on `.code`. | `binding` | `code` |
 | `bindingRekey` | Gives the top binding the key k from `.int`, shadowing any older binding of k. | `binding`, `int` | `binding` |
 | `bindingUnpack` | Takes the top binding apart: its value onto its own stack (a block as data), then its key onto `.int`. | `binding` | `bool`, `int` or `char`, `int` or `code`, `int` or `double`, `int` or `int`, `int` or `string`, `int` or `vecBool`, `int` or `vecDouble`, `int` or `vecInt`, `int` or `vecString`, `int` |
