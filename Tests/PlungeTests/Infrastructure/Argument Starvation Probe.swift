@@ -143,7 +143,7 @@ struct ArgumentStarvationProbe {
             }
         }
 
-        func log(_ s: String) { print(s); fflush(stdout) }
+        func log(_ s: String) { print(s); fflush(nil) }
         // `String(format:)` with `%s` takes a C string, not a Swift one, and
         // silently prints nothing useful — hence plain padding.
         func pad(_ s: String, _ w: Int) -> String {

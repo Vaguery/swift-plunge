@@ -136,6 +136,6 @@ struct InstructionRiskProfile {
                          100 * with.stepLimitRate, 100 * without.stepLimitRate,
                          with.z(against: without)))
         }
-        fflush(stdout)
+        fflush(nil)
     }
 }

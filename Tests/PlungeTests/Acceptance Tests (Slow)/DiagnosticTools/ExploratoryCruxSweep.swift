@@ -60,7 +60,7 @@ struct ExploratoryCruxSweep {
         let report = sweep.report()
         print("=== BROAD SWEEP (\(sweep.programCount) programs) ===")
         print(report.summary())
-        fflush(stdout)
+        fflush(nil)
     }
 
 
@@ -77,7 +77,7 @@ struct ExploratoryCruxSweep {
         print("=== ROOT CAUSES (\(sweep.programCount) programs) ===")
         print(causes.isEmpty ? "none — no failing claims to attribute"
                              : rootCauseSummary(causes))
-        fflush(stdout)
+        fflush(nil)
     }
 
 
@@ -103,7 +103,7 @@ struct ExploratoryCruxSweep {
         let report = sweep.report()
         print("=== WORK-ENRICHED SWEEP (\(sweep.programCount) programs) ===")
         print(report.summary())
-        fflush(stdout)
+        fflush(nil)
     }
 
 
@@ -123,6 +123,6 @@ struct ExploratoryCruxSweep {
                   + "\(report.judged) judged, \(report.broken) broken, "
                   + "\(report.inconclusive) inconclusive")
         }
-        fflush(stdout)
+        fflush(nil)
     }
 }

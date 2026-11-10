@@ -309,7 +309,7 @@ struct CruxFuzzTests {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let encoder = JSONEncoder()
 
-        func log(_ message: String) { print(message); fflush(stdout) }
+        func log(_ message: String) { print(message); fflush(nil) }
 
         var tally = CruxCompleteness()
         var findings: [String] = []

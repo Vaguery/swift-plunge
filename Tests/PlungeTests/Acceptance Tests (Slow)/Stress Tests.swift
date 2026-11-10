@@ -105,7 +105,7 @@ struct Stress_Tests {
         var findings: [String] = []
 
         // Force-flush so progress is visible in Xcode's console during the long run.
-        func log(_ message: String) { print(message); fflush(stdout) }
+        func log(_ message: String) { print(message); fflush(nil) }
 
         // Refine one suspect the moment it appears: amplify it (hill-climb to
         // intensify the symptom), then simplify (delete chunks while the pathology
