@@ -20,10 +20,17 @@
 //      PUSH_STRESS_SECONDS=7200 swift test -c release -Xswiftc -enable-testing \
 //          --filter ProvenanceDualModeStress
 //
-//  `PUSH_STRESS_SEED` picks the first program seed (default 0); `PUSH_STRESS_DIR`
-//  is where the progress log, summary and any failing programs are written
-//  (default: the temporary directory). Every program is a pure function of its
-//  seed, so any finding replays with `DualModeStress.check(seed:...)`.
+//  **Each run explores new programs.** Every finished batch is recorded in a
+//  ledger (`Soak/dual-mode-ledger.tsv` at the package root, or
+//  `PUSH_STRESS_LEDGER`): its seed range, the date, how many instructions the
+//  language had, and what it found. A run starts after the highest seed the
+//  ledger has checked, so a clean run is never repeated; a batch that crashes is
+//  not recorded, so the next run meets it again. `PUSH_STRESS_SEED` picks the
+//  first seed instead, to reproduce something. `PUSH_STRESS_DIR` is where the
+//  progress log, summary and any failing programs are written (default: the
+//  temporary directory). Every program is a pure function of its seed (and of
+//  the language it is drawn from), so any finding replays with
+//  `DualModeStress.check(seed:...)` or `PUSH_STRESS_TRACE=lo-hi`.
 //
 
 import Foundation
@@ -43,6 +50,35 @@ nonisolated struct StressRNG: RandomNumberGenerator {
 }
 
 nonisolated enum DualModeStress {
+
+    /// The ledger of checked seed ranges, at the package root.
+    static let defaultLedger = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appending(path: "Soak/dual-mode-ledger.tsv")
+
+    /// The first seed no ledger line has checked: one past the highest range end.
+    static func nextUnchecked(in ledger: URL) -> UInt64 {
+        guard let text = try? String(contentsOf: ledger, encoding: .utf8) else { return 0 }
+        return text.split(separator: "\n").compactMap { line -> UInt64? in
+            let fields = line.split(separator: "\t")
+            guard fields.count >= 2, !line.hasPrefix("#") else { return nil }
+            return UInt64(fields[1])
+        }.max() ?? 0
+    }
+
+    /// Appends one line to the ledger, creating it with a header if need be.
+    static func record(_ line: String, in ledger: URL) {
+        let manager = FileManager.default
+        if !manager.fileExists(atPath: ledger.path) {
+            try? manager.createDirectory(at: ledger.deletingLastPathComponent(), withIntermediateDirectories: true)
+            manager.createFile(atPath: ledger.path, contents: Data(
+                "# from\tto (exclusive)\tdate\tinstructions\tresult\n".utf8))
+        }
+        guard let handle = try? FileHandle(forWritingTo: ledger) else { return }
+        _ = try? handle.seekToEnd()
+        handle.write(Data((line + "\n").utf8))
+        try? handle.close()
+    }
 
     /// One program and everything needed to run it again.
     struct Case: Sendable {
@@ -353,7 +389,8 @@ struct ProvenanceDualModeStress {
     func `thousands of random programs compute the same with recording off and on`() async throws {
         let environment = ProcessInfo.processInfo.environment
         let budget = Self.budget ?? 0
-        let firstSeed = environment["PUSH_STRESS_SEED"].flatMap(UInt64.init) ?? 0
+        let ledger = environment["PUSH_STRESS_LEDGER"].map { URL(fileURLWithPath: $0) } ?? DualModeStress.defaultLedger
+        let firstSeed = environment["PUSH_STRESS_SEED"].flatMap(UInt64.init) ?? DualModeStress.nextUnchecked(in: ledger)
         let dir = environment["PUSH_STRESS_DIR"].map { URL(fileURLWithPath: $0) } ?? URL.temporaryDirectory
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let progressURL = dir.appending(path: "stress-progress.log")
@@ -394,7 +431,7 @@ struct ProvenanceDualModeStress {
         var slowest = (seconds: 0.0, seed: UInt64(0))
         var next = firstSeed
 
-        append(progress, "start: budget \(Int(budget)) s, first seed \(firstSeed), \(instructions.count) instructions, batch \(batchSize)")
+        append(progress, "start: budget \(Int(budget)) s, first seed \(firstSeed), \(instructions.count) instructions, batch \(batchSize), ledger \(ledger.path)")
 
         // Trace mode: `PUSH_STRESS_TRACE=lo-hi` runs those seeds one at a time, still on
         // a worker thread, logging each seed before it runs — to pin down a crash.
@@ -433,7 +470,11 @@ struct ProvenanceDualModeStress {
                 for await outcome in group { all.append(outcome) }
                 return all
             }
+            var batchFindings: [String] = []
             for o in outcomes {
+                if o.mismatch != nil { batchFindings.append("mismatch \(o.seed)") }
+                if !o.offCallSites.isEmpty { batchFindings.append("off-call \(o.seed)") }
+                if !o.cruxBroken.isEmpty { batchFindings.append("crux \(o.seed)") }
                 programs += 1
                 steps += o.steps
                 byRegime[o.regime, default: 0] += 1
@@ -460,6 +501,10 @@ struct ProvenanceDualModeStress {
                 }
             }
             next = range.upperBound
+            DualModeStress.record([
+                "\(range.lowerBound)", "\(range.upperBound)", Date.now.formatted(.iso8601),
+                "\(instructions.count)", batchFindings.isEmpty ? "passed" : batchFindings.sorted().joined(separator: ", "),
+            ].joined(separator: "\t"), in: ledger)
             append(progress, String(
                 format: "%8.0f s  done %d programs, %d steps; mismatches %d, off-call %d, slow %d (worst %.2f s, seed %llu); crux holds %d, broken %d, inconclusive %d; peak RSS %d MB",
                 elapsed(), programs, steps, mismatches, offCallPrograms, slow.count, slowest.seconds, slowest.seed,
