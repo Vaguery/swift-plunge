@@ -37,30 +37,27 @@ struct TagsTests {
 
     /// **The two channels must agree about comparisons.**
     ///
-    /// The role answers "where is it defined" and the trait answers "what does it
-    /// compute", and for this one category they are deliberately the same set — so
-    /// "is `intGT` a comparison?" has one answer rather than two. Nothing enforces
-    /// that automatically: the role comes from `comparisonBehaviors`, a curated
-    /// dictionary, and the trait from a name suffix. This is the check that catches
-    /// a comparison registered into the wrong dictionary, which is the one failure
-    /// the arrangement is open to.
-    @Test func `the comparison role and the comparison trait are the same set`() {
+    /// The role answers "where is it defined" and the tag answers "what does it
+    /// compute". Every instruction registered as a comparison relates two values of
+    /// one type, so it carries the derived `comparison` tag; the tag is wider, since
+    /// it also counts containment (`stringContainsRun`, `vecIntIsSubset`). This
+    /// catches a non-comparison registered into `comparisonBehaviors`.
+    @Test func `every comparison by role carries the comparison tag`() {
         let role = Interpreter.instructions(role: .comparison)
-        let trait = Interpreter.instructions(trait: .comparison)
-        let roleOnly = role.subtracting(trait).map(\.rawValue).sorted()
-        let traitOnly = trait.subtracting(role).map(\.rawValue).sorted()
-        #expect(role == trait, "role-only: \(roleOnly); trait-only: \(traitOnly)")
+        let tag = InstructionTagging.standard.instructions(tagged: .comparison)
+        let roleOnly = role.subtracting(tag).map(\.rawValue).sorted()
+        #expect(role.isSubset(of: tag), "role-only: \(roleOnly)")
     }
 
     /// The specific misclassification this branch existed to fix: `…Eq` was
     /// generated in the same per-stack loop as dup and swap, so the role called it
-    /// furniture and `.stackPlumbing` — *combinators minus introspection* —
-    /// inherited that and described `.intEq` as "only shuffling a stack".
+    /// furniture, and a category built on the role described `.intEq` as "only
+    /// shuffling a stack".
     @Test func `equality is not furniture`() {
         for eq: PushInstruction in [.intEq, .boolEq, .stringEq, .codeEq] {
             #expect(Interpreter.instructions(role: .comparison).contains(eq))
             #expect(!Interpreter.instructions(role: .combinator).contains(eq))
-            #expect(!Interpreter.instructions(trait: .stackPlumbing).contains(eq))
+            #expect(!InstructionTagging.standard.instructions(tagged: .stackCombinator).contains(eq))
         }
     }
 

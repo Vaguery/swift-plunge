@@ -46,11 +46,34 @@ nonisolated struct ReadContext {
     var recording: ProvenanceRecording { interpreter.recording }
 
     /// How many items `stack` holds.
-    func depth(of stack: PushStack) -> Int { interpreter.stacks[stack]?.count ?? 0 }
+    func depth(of stack: PushStack) -> Int {
+        noteLooking(at: stack)
+        return interpreter.stacks[stack]?.count ?? 0
+    }
 
     /// The whole of `stack`, top first. A copy-on-write value: reading it copies
     /// nothing.
-    func items(of stack: PushStack) -> Deque<any Item> { interpreter.stacks[stack] ?? [] }
+    func items(of stack: PushStack) -> Deque<any Item> {
+        noteLooking(at: stack)
+        return interpreter.stacks[stack] ?? []
+    }
+
+    #if DEBUG
+    /// Collects the stacks a body looks at on one interpreter (not the
+    /// sub-interpreters a map runs), so a test can hold each Behavior's
+    /// `observes` to what it reads. Debug builds only.
+    final class StackWatch: @unchecked Sendable {
+        let target: ObjectIdentifier
+        var stacks: Set<PushStack> = []
+        init(_ interpreter: Interpreter) { target = ObjectIdentifier(interpreter) }
+    }
+    @TaskLocal static var watch: StackWatch?
+    private func noteLooking(at stack: PushStack) {
+        if let watch = Self.watch, watch.target == ObjectIdentifier(interpreter) { watch.stacks.insert(stack) }
+    }
+    #else
+    @inline(__always) private func noteLooking(at stack: PushStack) {}
+    #endif
 
     /// How many errors of `kind` are on `.error`, from the running tally.
     func errorCount(of kind: ErrorKind) -> Int { interpreter.stacks.errorCount(of: kind) }

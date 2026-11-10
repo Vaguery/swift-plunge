@@ -15,8 +15,7 @@ A library user sees a small surface:
 - **the items**: `IntItem`, `CodeItem`, `IteratorItem`, `BindingItem` and the rest,
   with `AnyItem` and `ItemArchive` to encode them;
 - **the language's vocabulary**: `PushInstruction`, `PushStack`, and the
-  introspection on `Runner` (`summary(of:)`, `signature(of:)`, roles, traits,
-  tags).
+  introspection on `Runner` (`summary(of:)`, `signature(of:)`, roles, tags).
 
 Everything else is internal, the `Interpreter` class included. That is
 deliberate: a search talks to the language through the `Runner`, so the machinery
@@ -143,10 +142,12 @@ Behaviors at launch:
 - `Interpreter.signatures` (`InstructionSignature`): what each instruction takes
   and gives, the language's input-output map;
 - roles (`Roles.swift`): a partition by where an instruction is registered;
-- traits (`Traits.swift`): overlapping categories derived from requirements and
-  names;
-- tags (`InstructionTag.swift`): judgments declared at each Behavior, such as
-  `.fallible` and `.reEntrant`;
+- tags (`InstructionTag.swift`, `InstructionTagging.swift`): an open vocabulary of
+  overlapping labels. The standard tagging joins the judgments declared at each
+  Behavior (`.fallible`, `.reEntrant`, …) with tags derived from the Behaviors'
+  declarations (`AutomaticTags.swift`), never from names. Context reads declare
+  the stacks they look at (`Behavior.observes`) so the derivation can see them;
+  the IO declaration tests check that in debug builds;
 - summaries: one sentence per instruction, from which the DocC instruction
   reference is generated.
 

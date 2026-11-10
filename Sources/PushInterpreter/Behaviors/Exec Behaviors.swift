@@ -63,6 +63,7 @@ nonisolated extension Interpreter {
         Behavior.control(
             .execDoCount,
             takes: [.int, .code],
+            tags: [.looping],
             // Counts from 0 up to `x`, leaving each index on `.int` for the body.
             //
             // It used to rewrite itself into an `.execDoRange` continuation and let
@@ -109,6 +110,7 @@ nonisolated extension Interpreter {
         Behavior.control(
             .execDoTimes,
             takes: [.int, .code],
+            tags: [.looping],
             // "Do the body, `x` times" — the index is the loop's business and is
             // never shown to the body, which is the whole of the difference from
             // `.execDoCount`. That distinction is now one flag on the iterator
@@ -154,6 +156,7 @@ nonisolated extension Interpreter {
         Behavior.control(
             .execDoRange,
             takes: [.int, .int, .code],
+            tags: [.looping],
             // Steps an index from `y` toward `x`, leaving it on `.int` each pass.
             //
             // This is where `.call` used to blow up: the next counter recorded

@@ -31,6 +31,11 @@ public nonisolated struct InstructionSignature: Hashable, Sendable {
     /// The stacks it consumes a number of items from that its arguments decide.
     public let variadic: Set<PushStack>
 
+    /// The stacks it looks at through the run's state without claiming an
+    /// argument: a lookup's stack, a binder's source, the bindings a key query
+    /// searches.
+    public let observes: Set<PushStack>
+
     /// What it puts out when it succeeds.
     public let produces: Produces
 
@@ -40,6 +45,15 @@ public nonisolated struct InstructionSignature: Hashable, Sendable {
     public let isPartial: Bool
 }
 
+
+public nonisolated extension InstructionSignature {
+
+    /// Whether it takes, reads, observes, needs, gives or rearranges `stack`.
+    func touches(_ stack: PushStack) -> Bool {
+        consumes[stack] != nil || reads[stack] != nil || needs[stack] != nil || variadic.contains(stack)
+            || observes.contains(stack) || produces.valueStacks.contains(stack) || produces == .positions(stack)
+    }
+}
 
 nonisolated extension Behavior {
 
@@ -56,7 +70,8 @@ nonisolated extension Behavior {
             }
         }
         return InstructionSignature(consumes: consumes, reads: reads, needs: needs, variadic: variadic,
-                                    produces: produces, isPartial: tags.contains(.fallible))
+                                    observes: Set(observes), produces: produces,
+                                    isPartial: tags.contains(.fallible))
     }
 }
 

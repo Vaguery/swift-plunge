@@ -53,9 +53,8 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
     /// stackDepth… — the ~14 that exist for every stack.
     ///
     /// **Furniture only.** `…Eq` used to be generated into this family and so was
-    /// roled here; it is a `.comparison` now, and the `.stackPlumbing` trait —
-    /// defined as this role minus its introspective measurements — stopped
-    /// describing `.intEq` as an instruction that "only shuffles a stack".
+    /// roled here; it is a `.comparison` now, and no longer described as an
+    /// instruction that "only shuffles a stack".
     ///
     /// **Worth knowing before drawing uniformly: this is 41% of everything that
     /// is not a constant or an input.** "Sample a random instruction" mostly
@@ -65,11 +64,9 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
 
     /// Ordering and equality — the 11 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
     ///
-    /// Exactly the `.comparison` **trait**, which is the point: the two channels
-    /// answer "where is it defined" and "what does it compute" and here they agree,
-    /// so "is `intGT` a comparison?" has one answer. `Instruction Role Tests`
-    /// asserts the equality, which is what catches a comparison registered into the
-    /// wrong dictionary.
+    /// Each of them carries the derived `comparison` tag, which also counts
+    /// containment tests such as `stringContainsRun`. `Roles Tests` asserts it,
+    /// which is what catches a non-comparison registered into the wrong dictionary.
     case comparison
 
     /// Everything else — the instructions that actually compute. The remainder,

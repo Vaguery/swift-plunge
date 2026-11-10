@@ -47,8 +47,8 @@ public extension Runner {
 
     /// The language indexed by **declared tag** — the judgment channel.
     ///
-    /// Unlike roles and traits, these are declared at each `Behavior` rather than
-    /// derived, so they are the only classification here that can be *wrong*. That
+    /// Unlike roles and the derived tags, these are declared at each `Behavior`, so
+    /// they are the only classification here that can be *wrong*. That
     /// is the price of carrying what `requirements` cannot know: that `.execY` is
     /// risky, or that the iterator constructors starve. Each tag records where its
     /// judgment came from — ask `InstructionTag.provenance` and `.rationale`.
@@ -64,29 +64,6 @@ public extension Runner {
     /// Every tag `instruction` declares — usually none.
     nonisolated func declaredTags(of instruction: PushInstruction) -> Set<InstructionTag> {
         Interpreter.declaredTags(of: instruction)
-    }
-
-    // MARK: - Renamed
-    //
-    // **Unavailable rather than deprecated, deliberately.** `InstructionTag` used
-    // to name this partition and now names a different thing entirely — the
-    // declared, overlapping judgment vocabulary. A deprecation warning can be
-    // ignored for a release, and ignoring it here would mean a caller keeping a
-    // compiling `instructionsByTag` whose meaning had silently changed underneath
-    // it. A compile error naming its replacement is much the cheaper outcome, and
-    // is the API-level form of the same rule that keeps derived and declared
-    // classification in separate channels.
-
-    @available(*, unavailable, renamed: "instructionsByRole",
-               message: "renamed: this is the role partition. `InstructionTag` now names the declared judgment tags, which are a different set — see `declaredTags(of:)`.")
-    nonisolated var instructionsByTag: [InstructionRole: [PushInstruction]] {
-        Interpreter.sortedRoles
-    }
-
-    @available(*, unavailable, renamed: "instructions(role:)",
-               message: "renamed: this is the role partition. `InstructionTag` now names the declared judgment tags — see `instructions(declaring:)`.")
-    nonisolated func instructions(tagged role: InstructionRole) -> [PushInstruction] {
-        Interpreter.sortedRoles[role] ?? []
     }
 
     /// The instructions that **consume** `stack` — pop items from it — sorted.
@@ -129,22 +106,33 @@ public extension Runner {
         Interpreter.alwaysSatisfied.sorted { $0.rawValue < $1.rawValue }
     }
 
-    /// The language categorized by overlapping `InstructionTrait`, each list
-    /// sorted. Unlike `instructionsByTag`, these are **advisory and overlapping**:
-    /// an instruction may appear in several lists or none. Use them to activate or
-    /// silence a whole behavioural class (e.g. `.controlFlow`, `.arithmetic`).
-    nonisolated var instructionsByTrait: [InstructionTrait: [PushInstruction]] {
-        Interpreter.sortedTraits
+    /// The library's tags (see `InstructionTagging.standard`): declared at the
+    /// Behaviors and derived from their declarations. Layer your own over it with
+    /// `adding(_:to:)` or `merging(_:)`.
+    nonisolated var tagging: InstructionTagging { .standard }
+
+    /// The language indexed by tag, each list sorted. Tags overlap: an instruction
+    /// appears under every tag it carries, and every instruction carries at least one.
+    nonisolated var instructionsByTag: [InstructionTag: [PushInstruction]] {
+        Self.sortedTags
     }
 
-    /// The instructions carrying `trait`, sorted.
-    nonisolated func instructions(trait: InstructionTrait) -> [PushInstruction] {
-        Interpreter.sortedTraits[trait] ?? []
+    /// The instructions carrying `tag` in the standard tagging, sorted.
+    nonisolated func instructions(tagged tag: InstructionTag) -> [PushInstruction] {
+        Self.sortedTags[tag] ?? []
     }
 
-    /// Every trait `instruction` carries — possibly empty, since traits do not
-    /// partition the language.
-    nonisolated func traits(of instruction: PushInstruction) -> Set<InstructionTrait> {
-        Interpreter.traits(of: instruction)
+    /// Every tag `instruction` carries in the standard tagging.
+    nonisolated func tags(of instruction: PushInstruction) -> Set<InstructionTag> {
+        InstructionTagging.standard.tags(of: instruction)
     }
+
+    /// The instructions that take, read, observe, need, give or rearrange `stack`,
+    /// sorted: everything that touches it, from the declarations.
+    nonisolated func instructions(touching stack: PushStack) -> [PushInstruction] {
+        Interpreter.signatures.filter { $0.value.touches(stack) }.keys.sorted { $0.rawValue < $1.rawValue }
+    }
+
+    private static let sortedTags: [InstructionTag: [PushInstruction]] =
+        InstructionTagging.standard.members.mapValues { $0.sorted { $0.rawValue < $1.rawValue } }
 }

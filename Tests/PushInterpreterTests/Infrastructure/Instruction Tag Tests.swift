@@ -35,8 +35,9 @@ struct InstructionTagTests {
             #expect(!tag.summary.isEmpty, "\(tag.rawValue) has no summary")
             #expect(!tag.rationale.contains("No rationale recorded"),
                     "\(tag.rawValue) has no rationale")
-            #expect(!Interpreter.instructions(declaring: tag).isEmpty,
-                    "\(tag.rawValue) is declared by nothing — either tag something or drop it")
+            // `complicated` is the catch-all, and may well be empty.
+            #expect(tag == .complicated || !InstructionTagging.standard.instructions(tagged: tag).isEmpty,
+                    "\(tag.rawValue) carries nothing: either tag something or drop it")
         }
     }
 
@@ -78,13 +79,10 @@ struct InstructionTagTests {
     }
 
     /// Every re-entrant instruction drives a loop, so every one of them should also
-    /// carry the derived `.looping` trait. **This is the honesty guard**: the two
-    /// channels reach the same conclusion by different routes — one declared at the
-    /// behavior, one computed from names — so a disagreement means one of them is
-    /// wrong and neither can hide it.
-    @Test func `reEntrant agrees with the derived looping trait`() {
+    /// carry the `.looping` tag.
+    @Test func `reEntrant instructions are looping`() {
         let declared = Interpreter.instructions(declaring: .reEntrant)
-        let derived = Interpreter.instructions(trait: .looping)
+        let derived = InstructionTagging.standard.instructions(tagged: .looping)
         let strays = declared.subtracting(derived).map(\.rawValue).sorted()
         #expect(strays.isEmpty, "declared re-entrant but not derived as looping: \(strays)")
     }
@@ -134,12 +132,12 @@ struct InstructionTagTests {
 
     // MARK: - fallible, and the line it draws
 
-    /// `.fallible` is refusal **after** the body runs; `.canStarve` is refusal
-    /// before it. Two questions, so two channels — and the derived one is not a
-    /// hand-declared restatement of something already computable.
-    @Test func `fallible and canStarve are different questions`() {
+    /// `.fallible` is refusal **after** the body runs; starvation is refusal
+    /// before it, and is computed from the requirements. Two questions, and the
+    /// declared one is not a restatement of something already computable.
+    @Test func `fallible and starvation are different questions`() {
         let fallible = Interpreter.instructions(declaring: .fallible)
-        let starve = Interpreter.instructions(trait: .canStarve)
+        let starve = Set(Interpreter.language.filter { !$0.value.requirements.isEmpty }.keys)
 
         #expect(fallible.contains(.intQuot), "divide by zero")
         #expect(fallible.contains(.doubleDivide), "divide by zero")
@@ -147,8 +145,7 @@ struct InstructionTagTests {
         #expect(fallible.contains(.charFromDouble), "overflow converting a double")
         #expect(!fallible.contains(.intDup), "a dup cannot refuse anything")
 
-        // canStarve is the exact complement of alwaysSatisfied — derived, so this
-        // cannot drift.
+        // Starving is the exact complement of alwaysSatisfied.
         #expect(starve.isDisjoint(with: Interpreter.alwaysSatisfied))
         #expect(starve.union(Interpreter.alwaysSatisfied) == Set(Interpreter.language.keys))
 

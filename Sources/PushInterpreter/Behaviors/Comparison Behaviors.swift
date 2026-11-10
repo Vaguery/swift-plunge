@@ -15,9 +15,8 @@
 //  `eqCombinator_Behavior` happened to sit in the same per-stack generator loop as
 //  dup, pop, swap and rot. `Eq` was among the first families to be generated, and
 //  the rest of the furniture was added around it. Nothing about equality is
-//  furniture, but the role said so, and the `.stackPlumbing` trait — defined as
-//  *combinators minus introspection* — inherited the mistake and described `.intEq`
-//  as an instruction "that only shuffles a stack".
+//  furniture, but the role said so, and a category built on the role inherited the
+//  mistake and described `.intEq` as an instruction "that only shuffles a stack".
 //
 //  ## Why the bodies stay where they are
 //
@@ -27,11 +26,10 @@
 //  source would have bought nothing: a role is about classification, not about
 //  which file a `static let` is typed into.
 //
-//  So the registrations move and the definitions do not, and the two channels now
-//  agree exactly: the `.comparison` **role** and the `.comparison` **trait** are the
-//  same 39 instructions. `Instruction Role Tests` asserts that, which is what
-//  catches a future comparison registered into the wrong dictionary — the one
-//  failure this arrangement is open to.
+//  So the registrations move and the definitions do not. Every instruction with
+//  the `.comparison` **role** carries the derived `comparison` **tag**, which is
+//  wider (it counts containment too); `Roles Tests` asserts that, which is what
+//  catches a non-comparison registered into this dictionary.
 //
 
 import DequeModule

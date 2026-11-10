@@ -35,6 +35,7 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - <doc:SearchingTheStacks>
 - <doc:Functions>
 - <doc:Provenance>
+- <doc:TaggingInstructions>
 - <doc:InstructionReference>
 
 ### Running programs
@@ -93,8 +94,9 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - ``Produces``
 - ``BehaviorClass``
 - ``InstructionRole``
-- ``InstructionTrait``
 - ``InstructionTag``
+- ``InstructionTagging``
+- ``TagFacet``
 - ``TagProvenance``
 - ``IteratorKind``
 - ``PointsEmission``
