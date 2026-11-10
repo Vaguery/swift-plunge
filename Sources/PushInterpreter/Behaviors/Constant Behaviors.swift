@@ -9,15 +9,15 @@ import DequeModule
 
 
 nonisolated extension Interpreter {
-    
+
     // ten for each of:
     //    .int, .double, .string, .char, .vecInt, .vecFloat, .vecString, .vecBool
-    
-    static var constantBehaviors:[PushInstruction : Behavior] {
-        var result:[PushInstruction : Behavior] = [:]
-        
-        let stacks:[PushStack] = [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
-        
+
+    static var constantBehaviors: [PushInstruction: Behavior] {
+        var result: [PushInstruction: Behavior] = [:]
+
+        let stacks: [PushStack] = [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
+
         for stack in stacks {
             for i in 0..<10 {
                 let instructionName = PushInstruction(rawValue: "\(stack)\(i)")!

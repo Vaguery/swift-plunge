@@ -80,7 +80,7 @@ nonisolated extension Interpreter {
                 .subtracting(constants)
                 .subtracting(inputs)
                 .subtracting(stackFamily)
-                .subtracting(comparisons),
+                .subtracting(comparisons)
         ]
     }()
 

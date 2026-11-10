@@ -17,38 +17,38 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleButLast() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([1,2,3]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([1, 2, 3]),
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleButLast )")
 
         doThis(.vecDoublePop, to: inty)
-        
+
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 2.0] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] .vecDoubleButLast )")
-        
+
         doThis(.vecDoublePop, to: inty)
-        
+
         doThis(.vecDoubleButLast, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] .vecDoubleButLast )")
     }
-    
+
     @Test func vecDoubleConcat() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([1,2,3]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([1, 2, 3]),
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] [] .vecDoubleConcat )")
-        
+
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0, 1.0, 2.0, 3.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] [1.0, 2.0, 3.0] .vecDoubleConcat )")
@@ -58,7 +58,7 @@ struct VecDoubleBehaviorTests {
         loadDoubles(inty, doubles: [-3, 0, 1])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         doThis(.vecDoubleConj, to: inty)
@@ -98,7 +98,7 @@ struct VecDoubleBehaviorTests {
         loadInts(inty, ints: [-3, 0, 1])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         doThis(.vecDoubleDrop, to: inty)
@@ -119,7 +119,7 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleFirst() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         doThis(.vecDoubleFirst, to: inty)
@@ -152,9 +152,9 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleItemIsEmpty() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]", "the vector survives")
@@ -170,7 +170,7 @@ struct VecDoubleBehaviorTests {
     @Test func `vecDoubleIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([4, 55]),
+            contentsOf: [VecDoubleItem([4, 55])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -208,7 +208,7 @@ struct VecDoubleBehaviorTests {
     @Test func `vecDoubleIterate works for >1 item`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([4, 55]),
+            contentsOf: [VecDoubleItem([4, 55])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -248,7 +248,7 @@ struct VecDoubleBehaviorTests {
 
     @Test func `vecDoubleIterate works for empty`() {
         inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([]),
+            contentsOf: [VecDoubleItem([])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -266,7 +266,7 @@ struct VecDoubleBehaviorTests {
 
     @Test func `vecDoubleIterate works for one item`() {
         inty.stacks[.vecDouble]!.prepend(
-            contentsOf: [VecDoubleItem([55]),
+            contentsOf: [VecDoubleItem([55])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -292,7 +292,7 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleLast() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         doThis(.vecDoubleLast, to: inty)
@@ -306,9 +306,9 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleLength() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         // Non-destructive: the vector is read, not consumed. It stays on
         // .vecDouble, and the crux pops what it read so it reproduces only the count.
         doThis(.vecDoubleLength, to: inty)
@@ -323,13 +323,13 @@ struct VecDoubleBehaviorTests {
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]")   // still there
         #expect(callString(topItem(inty, .int)) == "( [9.0, 99.0, 999.0] .vecDoubleLength 1 .vecDoublePopItems )")
     }
-    
+
     @Test func vecDoubleNth() {
         loadInts(inty, ints: [-3, 1, 7776])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999]),
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] [9.0, 99.0, 999.0] ]")
@@ -366,7 +366,7 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoublePushAll() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([1,22,333]),
+                         VecDoubleItem([1, 22, 333])
                         ])
 
         // An empty vector yields nothing at all — not even an iterator.
@@ -396,8 +396,8 @@ struct VecDoubleBehaviorTests {
         loadDoubles(inty, doubles: [9, 9, -99])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,8,7,6,9]),
-                         VecDoubleItem([9,9,9,9,9])
+                         VecDoubleItem([9, 8, 7, 6, 9]),
+                         VecDoubleItem([9, 9, 9, 9, 9])
                         ])
 
         doThis(.vecDoubleRemove, to: inty)
@@ -421,8 +421,8 @@ struct VecDoubleBehaviorTests {
         loadDoubles(inty, doubles: [1, 9, 1.0, 9.0, 2, 9])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9.0,8.0,7.0,6.0,9.0]),
-                         VecDoubleItem([9,9,9,9,9])
+                         VecDoubleItem([9.0, 8.0, 7.0, 6.0, 9.0]),
+                         VecDoubleItem([9, 9, 9, 9, 9])
                         ])
 
         doThis(.vecDoubleReplace, to: inty)
@@ -446,13 +446,13 @@ struct VecDoubleBehaviorTests {
         loadDoubles(inty, doubles: [1, 9, 1.0, 9.0, 3, 9])
        inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,8,7,6,9]),
-                         VecDoubleItem([9,9,9,9,9])
+                         VecDoubleItem([9, 8, 7, 6, 9]),
+                         VecDoubleItem([9, 9, 9, 9, 9])
                         ])
         inty.stacks[.double]!.prepend(
             contentsOf: [DoubleItem(1), DoubleItem(9),
                          DoubleItem(1), DoubleItem(9),
-                         DoubleItem(3), DoubleItem(9),
+                         DoubleItem(3), DoubleItem(9)
                         ])
 
         doThis(.vecDoubleReplaceFirst, to: inty)
@@ -475,30 +475,30 @@ struct VecDoubleBehaviorTests {
     @Test func vecDoubleRest() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecDoubleRest, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleRest )")
-        
+
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleRest, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] .vecDoubleRest )")
     }
-    
+
     @Test func vecDoubleReverse() {
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecDoubleReverse, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleReverse )")
-        
+
         doThis(.vecDoublePop, to: inty)
 
         doThis(.vecDoubleReverse, to: inty)
@@ -511,8 +511,8 @@ struct VecDoubleBehaviorTests {
         loadInts(inty, ints: [1, 2222, 2])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,8,7,6,9]),
-                         VecDoubleItem([9,9,9,9,9])
+                         VecDoubleItem([9, 8, 7, 6, 9]),
+                         VecDoubleItem([9, 9, 9, 9, 9])
                         ])
 
 
@@ -537,9 +537,9 @@ struct VecDoubleBehaviorTests {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,8,7,6,9]),
-                         VecDoubleItem([9,9,9,9,9]),
-                         VecDoubleItem([1,11,111,1111])
+                         VecDoubleItem([9, 8, 7, 6, 9]),
+                         VecDoubleItem([9, 9, 9, 9, 9]),
+                         VecDoubleItem([1, 11, 111, 1111])
                         ])
 
         doThis(.vecDoubleSlice, to: inty)
@@ -569,19 +569,19 @@ struct VecDoubleBehaviorTests {
         loadInts(inty, ints: [-3, 99, 1])
         inty.stacks[.vecDouble]!.prepend(
             contentsOf: [VecDoubleItem([]),
-                         VecDoubleItem([9,99,999])
+                         VecDoubleItem([9, 99, 999])
                         ])
 
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [] -3 .vecDoubleTake )")
-        
+
         doThis(.vecDoublePop, to: inty)
-        
+
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 99 .vecDoubleTake )")
-        
+
         doThis(.vecDoubleTake, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0] ]")
         #expect(callString(topItem(inty, .vecDouble)) == "( [9.0, 99.0, 999.0] 1 .vecDoubleTake )")

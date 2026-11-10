@@ -349,8 +349,7 @@ nonisolated extension Interpreter {
         var count = 0
         var i = 0
         while i <= hay.count - needle.count {
-            if hay[i..<i + needle.count].elementsEqual(needle) { count += 1; i += needle.count }
-            else { i += 1 }
+            if hay[i..<i + needle.count].elementsEqual(needle) { count += 1; i += needle.count } else { i += 1 }
         }
         return count
     }
@@ -437,7 +436,7 @@ nonisolated extension Interpreter {
         var i = 0
         var replaced = false
         while i < hay.count {
-            if (!firstOnly || !replaced),
+            if !firstOnly || !replaced,
                i <= hay.count - needle.count,
                hay[i..<i + needle.count].elementsEqual(needle, by: same) {
                 result.append(contentsOf: repl)
@@ -661,7 +660,7 @@ nonisolated extension Interpreter {
                 // could not be declared before there was a planner to declare it to.
                 .takesMany(V.Scalar.pushStack, count: { args in
                     (args[0] as? V)?.value.count ?? 0
-                }),
+                })
             ],
             produces: .results([V.pushStack]),
             fxn: { a, recording in
@@ -842,7 +841,6 @@ nonisolated extension Interpreter {
     /// Language assignments
 
 
-
     // returns a new vecBool with the old value's last element removed
     // if the argument was empty, an empty vector is pushed
     static let vecBoolButLast_Behavior =
@@ -974,42 +972,42 @@ nonisolated extension Interpreter {
         iterateBehavior(.vecBoolIterate, making: VecBoolItem.self)
 
 
-    static let vecBoolBehaviors: [PushInstruction : Behavior] =
+    static let vecBoolBehaviors: [PushInstruction: Behavior] =
     [
-        .vecBoolButLast : vecBoolButLast_Behavior,
-        .vecBoolConcat : vecBoolConcat_Behavior,
-        .vecBoolConj : vecBoolConj_Behavior,
-        .vecBoolContains : vecBoolContains_Behavior,
-        .vecBoolDrop : vecBoolDrop_Behavior,
-        .vecBoolFirst : vecBoolFirst_Behavior,
-        .vecBoolIndexOf : vecBoolIndexOf_Behavior,
-        .vecBoolItemIsEmpty : vecBoolItemIsEmpty_Behavior,
-        .vecBoolIterate : vecBoolIterate_Behavior,
-        .vecBoolLast : vecBoolLast_Behavior,
-        .vecBoolLength : vecBoolLength_Behavior,
-        .vecBoolNth : vecBoolNth_Behavior,
-        .vecBoolOccurrencesOf : vecBoolOccurrencesOf_Behavior,
-        .vecBoolPushAll : vecBoolPushAll_Behavior,
-        .vecBoolConstruct : vecBoolConstruct_Behavior,
-        .vecBoolRemove : vecBoolRemove_Behavior,
-        .vecBoolReplace : vecBoolReplace_Behavior,
-        .vecBoolReplaceFirst : vecBoolReplaceFirst_Behavior,
-        .vecBoolRest : vecBoolRest_Behavior,
-        .vecBoolReverse : vecBoolReverse_Behavior,
-        .vecBoolSet : vecBoolSet_Behavior,
-        .vecBoolSlice : vecBoolSlice_Behavior,
-        .vecBoolCut : vecBoolCut_Behavior,
-        .vecBoolContainsRun : vecBoolContainsRun_Behavior,
-        .vecBoolIndexOfRun : vecBoolIndexOfRun_Behavior,
-        .vecBoolOccurrencesOfRun : vecBoolOccurrencesOfRun_Behavior,
-        .vecBoolReplaceRun : vecBoolReplaceRun_Behavior,
-        .vecBoolReplaceFirstRun : vecBoolReplaceFirstRun_Behavior,
-        .vecBoolReadItems : vecBoolReadItems_Behavior,
-        .vecBoolReadStack : vecBoolReadStack_Behavior,
-        .vecBoolTake : vecBoolTake_Behavior,
-        .vecBoolTakeLast : vecBoolTakeLast_Behavior,
-        .vecBoolPeekNth : vecBoolPeekNth_Behavior,
-        .vecBoolDropLast : vecBoolDropLast_Behavior,
+        .vecBoolButLast: vecBoolButLast_Behavior,
+        .vecBoolConcat: vecBoolConcat_Behavior,
+        .vecBoolConj: vecBoolConj_Behavior,
+        .vecBoolContains: vecBoolContains_Behavior,
+        .vecBoolDrop: vecBoolDrop_Behavior,
+        .vecBoolFirst: vecBoolFirst_Behavior,
+        .vecBoolIndexOf: vecBoolIndexOf_Behavior,
+        .vecBoolItemIsEmpty: vecBoolItemIsEmpty_Behavior,
+        .vecBoolIterate: vecBoolIterate_Behavior,
+        .vecBoolLast: vecBoolLast_Behavior,
+        .vecBoolLength: vecBoolLength_Behavior,
+        .vecBoolNth: vecBoolNth_Behavior,
+        .vecBoolOccurrencesOf: vecBoolOccurrencesOf_Behavior,
+        .vecBoolPushAll: vecBoolPushAll_Behavior,
+        .vecBoolConstruct: vecBoolConstruct_Behavior,
+        .vecBoolRemove: vecBoolRemove_Behavior,
+        .vecBoolReplace: vecBoolReplace_Behavior,
+        .vecBoolReplaceFirst: vecBoolReplaceFirst_Behavior,
+        .vecBoolRest: vecBoolRest_Behavior,
+        .vecBoolReverse: vecBoolReverse_Behavior,
+        .vecBoolSet: vecBoolSet_Behavior,
+        .vecBoolSlice: vecBoolSlice_Behavior,
+        .vecBoolCut: vecBoolCut_Behavior,
+        .vecBoolContainsRun: vecBoolContainsRun_Behavior,
+        .vecBoolIndexOfRun: vecBoolIndexOfRun_Behavior,
+        .vecBoolOccurrencesOfRun: vecBoolOccurrencesOfRun_Behavior,
+        .vecBoolReplaceRun: vecBoolReplaceRun_Behavior,
+        .vecBoolReplaceFirstRun: vecBoolReplaceFirstRun_Behavior,
+        .vecBoolReadItems: vecBoolReadItems_Behavior,
+        .vecBoolReadStack: vecBoolReadStack_Behavior,
+        .vecBoolTake: vecBoolTake_Behavior,
+        .vecBoolTakeLast: vecBoolTakeLast_Behavior,
+        .vecBoolPeekNth: vecBoolPeekNth_Behavior,
+        .vecBoolDropLast: vecBoolDropLast_Behavior
     ]
 
 
@@ -1170,44 +1168,43 @@ nonisolated extension Interpreter {
     static let vecDoubleIterate_Behavior =
         iterateBehavior(.vecDoubleIterate, making: VecDoubleItem.self)
 
-    static let vecDoubleBehaviors: [PushInstruction : Behavior] =
+    static let vecDoubleBehaviors: [PushInstruction: Behavior] =
     [
-        .vecDoubleButLast : vecDoubleButLast_Behavior,
-        .vecDoubleConcat : vecDoubleConcat_Behavior,
-        .vecDoubleConj : vecDoubleConj_Behavior,
-        .vecDoubleContains : vecDoubleContains_Behavior,
-        .vecDoubleDrop : vecDoubleDrop_Behavior,
-        .vecDoubleFirst : vecDoubleFirst_Behavior,
-        .vecDoubleIndexOf : vecDoubleIndexOf_Behavior,
-        .vecDoubleItemIsEmpty : vecDoubleItemIsEmpty_Behavior,
-        .vecDoubleIterate : vecDoubleIterate_Behavior,
-        .vecDoubleLast : vecDoubleLast_Behavior,
-        .vecDoubleLength : vecDoubleLength_Behavior,
-        .vecDoubleNth : vecDoubleNth_Behavior,
-        .vecDoubleOccurrencesOf : vecDoubleOccurrencesOf_Behavior,
-        .vecDoublePushAll : vecDoublePushAll_Behavior,
-        .vecDoubleConstruct : vecDoubleConstruct_Behavior,
-        .vecDoubleRemove : vecDoubleRemove_Behavior,
-        .vecDoubleReplace : vecDoubleReplace_Behavior,
-        .vecDoubleReplaceFirst : vecDoubleReplaceFirst_Behavior,
-        .vecDoubleRest : vecDoubleRest_Behavior,
-        .vecDoubleReverse : vecDoubleReverse_Behavior,
-        .vecDoubleSet : vecDoubleSet_Behavior,
-        .vecDoubleSlice : vecDoubleSlice_Behavior,
-        .vecDoubleCut : vecDoubleCut_Behavior,
-        .vecDoubleContainsRun : vecDoubleContainsRun_Behavior,
-        .vecDoubleIndexOfRun : vecDoubleIndexOfRun_Behavior,
-        .vecDoubleOccurrencesOfRun : vecDoubleOccurrencesOfRun_Behavior,
-        .vecDoubleReplaceRun : vecDoubleReplaceRun_Behavior,
-        .vecDoubleReplaceFirstRun : vecDoubleReplaceFirstRun_Behavior,
-        .vecDoubleReadItems : vecDoubleReadItems_Behavior,
-        .vecDoubleReadStack : vecDoubleReadStack_Behavior,
-        .vecDoubleTake : vecDoubleTake_Behavior,
-        .vecDoubleTakeLast : vecDoubleTakeLast_Behavior,
-        .vecDoublePeekNth : vecDoublePeekNth_Behavior,
-        .vecDoubleDropLast : vecDoubleDropLast_Behavior,
+        .vecDoubleButLast: vecDoubleButLast_Behavior,
+        .vecDoubleConcat: vecDoubleConcat_Behavior,
+        .vecDoubleConj: vecDoubleConj_Behavior,
+        .vecDoubleContains: vecDoubleContains_Behavior,
+        .vecDoubleDrop: vecDoubleDrop_Behavior,
+        .vecDoubleFirst: vecDoubleFirst_Behavior,
+        .vecDoubleIndexOf: vecDoubleIndexOf_Behavior,
+        .vecDoubleItemIsEmpty: vecDoubleItemIsEmpty_Behavior,
+        .vecDoubleIterate: vecDoubleIterate_Behavior,
+        .vecDoubleLast: vecDoubleLast_Behavior,
+        .vecDoubleLength: vecDoubleLength_Behavior,
+        .vecDoubleNth: vecDoubleNth_Behavior,
+        .vecDoubleOccurrencesOf: vecDoubleOccurrencesOf_Behavior,
+        .vecDoublePushAll: vecDoublePushAll_Behavior,
+        .vecDoubleConstruct: vecDoubleConstruct_Behavior,
+        .vecDoubleRemove: vecDoubleRemove_Behavior,
+        .vecDoubleReplace: vecDoubleReplace_Behavior,
+        .vecDoubleReplaceFirst: vecDoubleReplaceFirst_Behavior,
+        .vecDoubleRest: vecDoubleRest_Behavior,
+        .vecDoubleReverse: vecDoubleReverse_Behavior,
+        .vecDoubleSet: vecDoubleSet_Behavior,
+        .vecDoubleSlice: vecDoubleSlice_Behavior,
+        .vecDoubleCut: vecDoubleCut_Behavior,
+        .vecDoubleContainsRun: vecDoubleContainsRun_Behavior,
+        .vecDoubleIndexOfRun: vecDoubleIndexOfRun_Behavior,
+        .vecDoubleOccurrencesOfRun: vecDoubleOccurrencesOfRun_Behavior,
+        .vecDoubleReplaceRun: vecDoubleReplaceRun_Behavior,
+        .vecDoubleReplaceFirstRun: vecDoubleReplaceFirstRun_Behavior,
+        .vecDoubleReadItems: vecDoubleReadItems_Behavior,
+        .vecDoubleReadStack: vecDoubleReadStack_Behavior,
+        .vecDoubleTake: vecDoubleTake_Behavior,
+        .vecDoubleTakeLast: vecDoubleTakeLast_Behavior,
+        .vecDoublePeekNth: vecDoublePeekNth_Behavior,
+        .vecDoubleDropLast: vecDoubleDropLast_Behavior
     ]
-
 
 
     // returns a new vecInt with the old value's last element removed
@@ -1355,47 +1352,43 @@ nonisolated extension Interpreter {
         iterateBehavior(.vecIntIterate, making: VecIntItem.self)
 
 
-    static let vecIntBehaviors: [PushInstruction : Behavior] =
+    static let vecIntBehaviors: [PushInstruction: Behavior] =
     [
-        .vecIntButLast : vecIntButLast_Behavior,
-        .vecIntConcat : vecIntConcat_Behavior,
-        .vecIntConj : vecIntConj_Behavior,
-        .vecIntContains : vecIntContains_Behavior,
-        .vecIntDrop : vecIntDrop_Behavior,
-        .vecIntFirst : vecIntFirst_Behavior,
-        .vecIntIndexOf : vecIntIndexOf_Behavior,
-        .vecIntItemIsEmpty : vecIntItemIsEmpty_Behavior,
-        .vecIntIterate : vecIntIterate_Behavior,
-        .vecIntLast : vecIntLast_Behavior,
-        .vecIntLength : vecIntLength_Behavior,
-        .vecIntNth : vecIntNth_Behavior,
-        .vecIntOccurrencesOf : vecIntOccurrencesOf_Behavior,
-        .vecIntPushAll : vecIntPushAll_Behavior,
-        .vecIntConstruct : vecIntConstruct_Behavior,
-        .vecIntRemove : vecIntRemove_Behavior,
-        .vecIntReplace : vecIntReplace_Behavior,
-        .vecIntReplaceFirst : vecIntReplaceFirst_Behavior,
-        .vecIntRest : vecIntRest_Behavior,
-        .vecIntReverse : vecIntReverse_Behavior,
-        .vecIntSet : vecIntSet_Behavior,
-        .vecIntSlice : vecIntSlice_Behavior,
-        .vecIntCut : vecIntCut_Behavior,
-        .vecIntContainsRun : vecIntContainsRun_Behavior,
-        .vecIntIndexOfRun : vecIntIndexOfRun_Behavior,
-        .vecIntOccurrencesOfRun : vecIntOccurrencesOfRun_Behavior,
-        .vecIntReplaceRun : vecIntReplaceRun_Behavior,
-        .vecIntReplaceFirstRun : vecIntReplaceFirstRun_Behavior,
-        .vecIntReadItems : vecIntReadItems_Behavior,
-        .vecIntReadStack : vecIntReadStack_Behavior,
-        .vecIntTake : vecIntTake_Behavior,
-        .vecIntTakeLast : vecIntTakeLast_Behavior,
-        .vecIntPeekNth : vecIntPeekNth_Behavior,
-        .vecIntDropLast : vecIntDropLast_Behavior,
+        .vecIntButLast: vecIntButLast_Behavior,
+        .vecIntConcat: vecIntConcat_Behavior,
+        .vecIntConj: vecIntConj_Behavior,
+        .vecIntContains: vecIntContains_Behavior,
+        .vecIntDrop: vecIntDrop_Behavior,
+        .vecIntFirst: vecIntFirst_Behavior,
+        .vecIntIndexOf: vecIntIndexOf_Behavior,
+        .vecIntItemIsEmpty: vecIntItemIsEmpty_Behavior,
+        .vecIntIterate: vecIntIterate_Behavior,
+        .vecIntLast: vecIntLast_Behavior,
+        .vecIntLength: vecIntLength_Behavior,
+        .vecIntNth: vecIntNth_Behavior,
+        .vecIntOccurrencesOf: vecIntOccurrencesOf_Behavior,
+        .vecIntPushAll: vecIntPushAll_Behavior,
+        .vecIntConstruct: vecIntConstruct_Behavior,
+        .vecIntRemove: vecIntRemove_Behavior,
+        .vecIntReplace: vecIntReplace_Behavior,
+        .vecIntReplaceFirst: vecIntReplaceFirst_Behavior,
+        .vecIntRest: vecIntRest_Behavior,
+        .vecIntReverse: vecIntReverse_Behavior,
+        .vecIntSet: vecIntSet_Behavior,
+        .vecIntSlice: vecIntSlice_Behavior,
+        .vecIntCut: vecIntCut_Behavior,
+        .vecIntContainsRun: vecIntContainsRun_Behavior,
+        .vecIntIndexOfRun: vecIntIndexOfRun_Behavior,
+        .vecIntOccurrencesOfRun: vecIntOccurrencesOfRun_Behavior,
+        .vecIntReplaceRun: vecIntReplaceRun_Behavior,
+        .vecIntReplaceFirstRun: vecIntReplaceFirstRun_Behavior,
+        .vecIntReadItems: vecIntReadItems_Behavior,
+        .vecIntReadStack: vecIntReadStack_Behavior,
+        .vecIntTake: vecIntTake_Behavior,
+        .vecIntTakeLast: vecIntTakeLast_Behavior,
+        .vecIntPeekNth: vecIntPeekNth_Behavior,
+        .vecIntDropLast: vecIntDropLast_Behavior
     ]
-
-
-
-
 
 
     // returns a new vecString with the old value's last element removed
@@ -1542,7 +1535,6 @@ nonisolated extension Interpreter {
         iterateBehavior(.vecStringIterate, making: VecStringItem.self)
 
 
-
     // MARK: - Vector instructions belonging to no one vector type
 
     /// The second of the three ways to make a vector: drive an iterator to
@@ -1611,7 +1603,7 @@ nonisolated extension Interpreter {
             func refuse(_ why: String) -> [Router] {
                 [
                     Router(.iterator, iterator),
-                    Router(.error, ErrorItem("vecFromIterator: \(why)").observed(by: .vecFromIterator, recording)),
+                    Router(.error, ErrorItem("vecFromIterator: \(why)").observed(by: .vecFromIterator, recording))
                 ]
             }
 
@@ -1669,51 +1661,48 @@ nonisolated extension Interpreter {
         + "string); refuses plain chars or mixed types, handing the iterator back.")
 
 
-    static let vectorSharedBehaviors: [PushInstruction : Behavior] =
+    static let vectorSharedBehaviors: [PushInstruction: Behavior] =
     [
-        .vecFromIterator : vecFromIterator_Behavior,
+        .vecFromIterator: vecFromIterator_Behavior
     ]
 
 
-    static let vecStringBehaviors: [PushInstruction : Behavior] =
+    static let vecStringBehaviors: [PushInstruction: Behavior] =
     [
-        .vecStringButLast : vecStringButLast_Behavior,
-        .vecStringConcat : vecStringConcat_Behavior,
-        .vecStringConj : vecStringConj_Behavior,
-        .vecStringContains : vecStringContains_Behavior,
-        .vecStringDrop : vecStringDrop_Behavior,
-        .vecStringFirst : vecStringFirst_Behavior,
-        .vecStringIndexOf : vecStringIndexOf_Behavior,
-        .vecStringItemIsEmpty : vecStringItemIsEmpty_Behavior,
-        .vecStringIterate : vecStringIterate_Behavior,
-        .vecStringLast : vecStringLast_Behavior,
-        .vecStringLength : vecStringLength_Behavior,
-        .vecStringNth : vecStringNth_Behavior,
-        .vecStringOccurrencesOf : vecStringOccurrencesOf_Behavior,
-        .vecStringPushAll : vecStringPushAll_Behavior,
-        .vecStringConstruct : vecStringConstruct_Behavior,
-        .vecStringRemove : vecStringRemove_Behavior,
-        .vecStringReplace : vecStringReplace_Behavior,
-        .vecStringReplaceFirst : vecStringReplaceFirst_Behavior,
-        .vecStringRest : vecStringRest_Behavior,
-        .vecStringReverse : vecStringReverse_Behavior,
-        .vecStringSet : vecStringSet_Behavior,
-        .vecStringSlice : vecStringSlice_Behavior,
-        .vecStringCut : vecStringCut_Behavior,
-        .vecStringContainsRun : vecStringContainsRun_Behavior,
-        .vecStringIndexOfRun : vecStringIndexOfRun_Behavior,
-        .vecStringOccurrencesOfRun : vecStringOccurrencesOfRun_Behavior,
-        .vecStringReplaceRun : vecStringReplaceRun_Behavior,
-        .vecStringReplaceFirstRun : vecStringReplaceFirstRun_Behavior,
-        .vecStringReadItems : vecStringReadItems_Behavior,
-        .vecStringReadStack : vecStringReadStack_Behavior,
-        .vecStringTake : vecStringTake_Behavior,
-        .vecStringTakeLast : vecStringTakeLast_Behavior,
-        .vecStringPeekNth : vecStringPeekNth_Behavior,
-        .vecStringDropLast : vecStringDropLast_Behavior,
+        .vecStringButLast: vecStringButLast_Behavior,
+        .vecStringConcat: vecStringConcat_Behavior,
+        .vecStringConj: vecStringConj_Behavior,
+        .vecStringContains: vecStringContains_Behavior,
+        .vecStringDrop: vecStringDrop_Behavior,
+        .vecStringFirst: vecStringFirst_Behavior,
+        .vecStringIndexOf: vecStringIndexOf_Behavior,
+        .vecStringItemIsEmpty: vecStringItemIsEmpty_Behavior,
+        .vecStringIterate: vecStringIterate_Behavior,
+        .vecStringLast: vecStringLast_Behavior,
+        .vecStringLength: vecStringLength_Behavior,
+        .vecStringNth: vecStringNth_Behavior,
+        .vecStringOccurrencesOf: vecStringOccurrencesOf_Behavior,
+        .vecStringPushAll: vecStringPushAll_Behavior,
+        .vecStringConstruct: vecStringConstruct_Behavior,
+        .vecStringRemove: vecStringRemove_Behavior,
+        .vecStringReplace: vecStringReplace_Behavior,
+        .vecStringReplaceFirst: vecStringReplaceFirst_Behavior,
+        .vecStringRest: vecStringRest_Behavior,
+        .vecStringReverse: vecStringReverse_Behavior,
+        .vecStringSet: vecStringSet_Behavior,
+        .vecStringSlice: vecStringSlice_Behavior,
+        .vecStringCut: vecStringCut_Behavior,
+        .vecStringContainsRun: vecStringContainsRun_Behavior,
+        .vecStringIndexOfRun: vecStringIndexOfRun_Behavior,
+        .vecStringOccurrencesOfRun: vecStringOccurrencesOfRun_Behavior,
+        .vecStringReplaceRun: vecStringReplaceRun_Behavior,
+        .vecStringReplaceFirstRun: vecStringReplaceFirstRun_Behavior,
+        .vecStringReadItems: vecStringReadItems_Behavior,
+        .vecStringReadStack: vecStringReadStack_Behavior,
+        .vecStringTake: vecStringTake_Behavior,
+        .vecStringTakeLast: vecStringTakeLast_Behavior,
+        .vecStringPeekNth: vecStringPeekNth_Behavior,
+        .vecStringDropLast: vecStringDropLast_Behavior
     ]
 
 }
-
-
-

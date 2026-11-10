@@ -17,7 +17,8 @@
 //
 //  Off unless `PUSH_STRESS_SECONDS` is set. Run alone, in release:
 //
-//      PUSH_STRESS_SECONDS=7200 swift test -c release --filter ProvenanceDualModeStress
+//      PUSH_STRESS_SECONDS=7200 swift test -c release -Xswiftc -enable-testing \
+//          --filter ProvenanceDualModeStress
 //
 //  `PUSH_STRESS_SEED` picks the first program seed (default 0); `PUSH_STRESS_DIR`
 //  is where the progress log, summary and any failing programs are written
@@ -94,6 +95,13 @@ nonisolated enum DualModeStress {
             case 70..<73: return VecDoubleItem((0..<Int.random(in: 0...4, using: &rng)).map { _ in Double.random(in: -5...5, using: &rng) })
             case 73..<76: return VecBoolItem((0..<Int.random(in: 0...5, using: &rng)).map { _ in Bool.random(using: &rng) })
             case 76..<79: return VecStringItem((0..<Int.random(in: 0...3, using: &rng)).map { _ in ["a", "bc", "def", ""].randomElement(using: &rng)! })
+            case 79..<82:
+                // A literal pair, keyed among the input slots and just past them, so
+                // keyed lookups, pops and unpacks meet pairs the program did not bind.
+                guard depth < 5 else { return IntItem(Int.random(in: 0...9, using: &rng)) }
+                let bound = literal(depth: depth + 1)
+                guard !(bound is BindingItem) else { return bound }
+                return BindingItem(key: Int.random(in: -2...12, using: &rng), bound: bound)
             default:
                 guard depth < 5 else { return IntItem(Int.random(in: 0...9, using: &rng)) }
                 return CodeItem((0..<Int.random(in: 0...10, using: &rng)).map { _ in token(depth: depth + 1) })
@@ -125,7 +133,7 @@ nonisolated enum DualModeStress {
             ("vecInt", { VecIntItem([1, 2, 3].shuffled(using: &rng)) }),
             ("vecDouble", { VecDoubleItem([0.5, 1.5]) }),
             ("vecString", { VecStringItem(["p", "q"]) }),
-            ("vecBool", { VecBoolItem([true, false]) }),
+            ("vecBool", { VecBoolItem([true, false]) })
         ]
         for (prefix, make) in typed {
             for i in 0..<10 where Int.random(in: 0..<3, using: &rng) == 0 {

@@ -44,7 +44,7 @@ struct FibonacciGenomeTests {
     @Test func `the realized code fraction oscillates between a third and a half`() {
         let table: [(n: Int, blocks: Int, inCode: Int)] = [
             (30, 5, 12), (50, 6, 20), (100, 8, 54),
-            (150, 8, 54), (200, 9, 88), (250, 9, 88), (1_000, 12, 376),
+            (150, 8, 54), (200, 9, 88), (250, 9, 88), (1_000, 12, 376)
         ]
         for row in table {
             let lengths = FibonacciGenome.blockLengths(forGenomeOf: row.n)

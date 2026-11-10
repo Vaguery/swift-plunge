@@ -40,12 +40,12 @@ nonisolated struct Recorder<T> {
             if data.isEmpty { data.append(reading) } else { data[0] = reading }
         }
     }
-    
+
     mutating func reset() {
         data.removeAll()
     }
-    
-    func reportAll(steps:Int, fillWithLast:Bool = false, trim:Bool = false) -> [T?] {
+
+    func reportAll(steps: Int, fillWithLast: Bool = false, trim: Bool = false) -> [T?] {
         let readings = data.count
         if readings < steps {
             // A run that stops early simply recorded fewer readings; the truncated
@@ -94,11 +94,11 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
     func record(interpreter: Interpreter) { _box.record(interpreter: interpreter) }
     func reset() { _box.reset() }
     var dataAsAnyArray: [Any?] { _box.dataAsAnyArray }
-    
+
     func reportAll(steps: Int, fillWithLast: Bool = false, trim: Bool = false) -> [Any?] {
         _box.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }
-        
+
     init<T>(_ concrete: Recorder<T>) {
         self._box = RecorderBox(concrete)
     }
@@ -112,7 +112,7 @@ nonisolated private protocol AnyRecorderBox: AnyObject {
     func record(interpreter: Interpreter)
     func reset()
     var dataAsAnyArray: [Any?] { get }
-    func reportAll(steps:Int, fillWithLast:Bool, trim:Bool) -> [Any?]
+    func reportAll(steps: Int, fillWithLast: Bool, trim: Bool) -> [Any?]
 }
 
 // Box around a Recorder, permitting interaction indirectly
@@ -124,11 +124,11 @@ nonisolated private final class RecorderBox<T>: AnyRecorderBox {
     func record(interpreter: Interpreter) { base.record(interpreter: interpreter) }
     func reset() { base.reset() }
     var dataAsAnyArray: [Any?] { base.data.map { $0 } }
-    
+
     func reportAll(
-        steps:Int,
-        fillWithLast:Bool = false,
-        trim:Bool = false) -> [Any?] {
+        steps: Int,
+        fillWithLast: Bool = false,
+        trim: Bool = false) -> [Any?] {
         base.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }
 
@@ -137,4 +137,3 @@ nonisolated private final class RecorderBox<T>: AnyRecorderBox {
         self.base = base
     }
 }
-

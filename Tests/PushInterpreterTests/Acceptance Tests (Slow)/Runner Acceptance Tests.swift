@@ -95,7 +95,7 @@ struct RunnerAcceptanceTests {
             recorders: [
                 RecorderSpec("topInt", observing: .top(.int)),
                 RecorderSpec("errors", observing: .count(.error)),
-                RecorderSpec("steps", observing: .counter),
+                RecorderSpec("steps", observing: .counter)
             ]
         )
 

@@ -17,7 +17,7 @@ struct ConstantBehaviorTests {
     @Test func constantRecordsItsHistory() {
         inty.constants[.int2] = IntItem(17)
         Interpreter.language[.int2]!.act(on: inty)
-        let result = probeItemOnStack(inty,.exec,index:0) as! IntItem
+        let result = probeItemOnStack(inty, .exec, index: 0) as! IntItem
         #expect(result.call.contains(where: {($0 as! InstructionItem).value == .int2}))
         #expect(result.value == 17)
     }
@@ -26,14 +26,14 @@ struct ConstantBehaviorTests {
         inty.constants[.int2] = IntItem(17)
         inty.constants[.vecBool8] = VecBoolItem([false, false, true])
         let constantInstruction = Interpreter.language[.int2]
-        
+
         #expect(stackString(inty, .exec) == "[ ]")
         constantInstruction!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ 17 ]")
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ [false, false, true] 17 ]")
     }
-    
+
     @Test func constantWorksWhenUndefined() {
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.vecBool8]!.act(on: inty)

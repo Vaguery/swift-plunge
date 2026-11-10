@@ -46,7 +46,7 @@ nonisolated extension Interpreter {
         .described("Negates a bool.")
 
     static let boolNotP_Behavior =
-        Behavior.operation(.boolNotP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !y }
+        Behavior.operation(.boolNotP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, _ in !y }
         .described("Negates the deeper of two bools: `p q .boolNotP` gives ¬p, discarding q.")
 
     static let boolNotPandQ_Behavior =
@@ -54,7 +54,7 @@ nonisolated extension Interpreter {
         .described("Combines: `p q .boolNotPandQ` gives ¬p ∧ q.")
 
     static let boolNotQ_Behavior =
-        Behavior.operation(.boolNotQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !x }
+        Behavior.operation(.boolNotQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { _, x in !x }
         .described("Negates the top of two bools: `p q .boolNotQ` gives ¬q, discarding p.")
 
     static let boolOr_Behavior =
@@ -62,7 +62,7 @@ nonisolated extension Interpreter {
         .described("Gives true when either bool is true.")
 
     static let boolP_Behavior =
-        Behavior.operation(.boolP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in y }
+        Behavior.operation(.boolP, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, _ in y }
         .described("Keeps the deeper of two bools: `p q .boolP` gives p, discarding q.")
 
     static let boolPandNotQ_Behavior =
@@ -70,7 +70,7 @@ nonisolated extension Interpreter {
         .described("Combines: `p q .boolPandNotQ` gives p ∧ ¬q.")
 
     static let boolQ_Behavior =
-        Behavior.operation(.boolQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x }
+        Behavior.operation(.boolQ, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { _, x in x }
         .described("Keeps the top of two bools: `p q .boolQ` gives q, discarding p.")
 
     static let boolXnor_Behavior =
@@ -99,7 +99,7 @@ nonisolated extension Interpreter {
             .boolPandNotQ: boolPandNotQ_Behavior,
             .boolQ: boolQ_Behavior,
             .boolXnor: boolXnor_Behavior,
-            .boolXor: boolXor_Behavior,
+            .boolXor: boolXor_Behavior
         ]
 
 }

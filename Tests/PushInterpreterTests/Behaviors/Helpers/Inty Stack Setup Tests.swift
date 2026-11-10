@@ -12,7 +12,7 @@ import DequeModule
 
 @MainActor
 struct IntyStackSetupTests {
-    
+
     let inty = Interpreter()
 
     // MARK: loadBools tests
@@ -89,8 +89,8 @@ struct IntyStackSetupTests {
     @Test func `loadCode loads code items`() {
         loadCode(inty, code: [1, 2.2, false, CodeItem([IntItem(2)]) ])
         #expect(stackString(inty, .code) == "[ ( 1 ) ( 2.2 ) ( false ) ( 2 ) ]")
-        #expect(probeItemOnStack(inty, .code, index:0)! is CodeItem)
-        let top = probeItemOnStack(inty, .code, index:0)! as! CodeItem
+        #expect(probeItemOnStack(inty, .code, index: 0)! is CodeItem)
+        let top = probeItemOnStack(inty, .code, index: 0)! as! CodeItem
         #expect(top.value[0] is IntItem)
         #expect((top.value[0] as! IntItem).value == 1)
     }
@@ -106,11 +106,10 @@ struct IntyStackSetupTests {
         loadCode(inty, code: [ [], CodeItem([]) ] )
         #expect(stackString(inty, .code) ==
                 "[ ( [] ) ( ) ]")
-        #expect(probeItemOnStack(inty, .code, index:0)! is CodeItem)
-        let top = probeItemOnStack(inty, .code, index:0)! as! CodeItem
+        #expect(probeItemOnStack(inty, .code, index: 0)! is CodeItem)
+        let top = probeItemOnStack(inty, .code, index: 0)! as! CodeItem
         #expect(top.value[0] is VecIntItem)
 
     }
 
 }
-

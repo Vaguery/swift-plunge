@@ -145,7 +145,6 @@ struct CutTests {
     }
 
 
-
     // MARK: - the other three vector types
 
     @Test mutating func `vecBoolCut splits and reproduces`() {
@@ -177,7 +176,7 @@ struct CutTests {
         let cases: [(any Item, PushStack, PushInstruction, PushInstruction)] = [
             (VecBoolItem([true, false, true, false]), .vecBool, .vecBoolCut, .vecBoolConcat),
             (VecDoubleItem([1, 2, 3, 4]), .vecDouble, .vecDoubleCut, .vecDoubleConcat),
-            (VecStringItem(["w", "x", "y", "z"]), .vecString, .vecStringCut, .vecStringConcat),
+            (VecStringItem(["w", "x", "y", "z"]), .vecString, .vecStringCut, .vecStringConcat)
         ]
         for (vector, stack, cutInstr, concatInstr) in cases {
             inty = Interpreter.recordingProvenance()
@@ -249,7 +248,7 @@ struct CutTests {
     @Test func `each cut declares collection-plus-int`() {
         let expected: [(PushInstruction, PushStack)] = [
             (.vecBoolCut, .vecBool), (.vecDoubleCut, .vecDouble),
-            (.vecIntCut, .vecInt), (.vecStringCut, .vecString), (.stringCut, .string),
+            (.vecIntCut, .vecInt), (.vecStringCut, .vecString), (.stringCut, .string)
         ]
         for (instruction, stack) in expected {
             #expect(Interpreter.language[instruction]?.parameters == [stack, .int],

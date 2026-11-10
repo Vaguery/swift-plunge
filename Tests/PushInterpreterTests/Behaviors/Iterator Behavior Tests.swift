@@ -307,7 +307,7 @@ struct IteratorBehaviorTests {
             IntItem(2), IntItem(8), IntItem(3), IntItem(1), IntItem(0),
             BoolItem(true),
             CodeItem([BoolItem(true)]),
-            InstructionItem(.iteratorFromIntRange),
+            InstructionItem(.iteratorFromIntRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -326,7 +326,7 @@ struct IteratorBehaviorTests {
             IntItem(0), IntItem(5), IntItem(1), IntItem(0), IntItem(0),
             BoolItem(true),
             CodeItem([]),
-            InstructionItem(.iteratorFromIntRange),
+            InstructionItem(.iteratorFromIntRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -394,7 +394,7 @@ struct IteratorBehaviorTests {
         inty.load(program: [
             IntItem(0), IntItem(50),
             CodeItem([InstructionItem(.iteratorFlush)]),
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -423,7 +423,7 @@ struct IteratorBehaviorTests {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             CodeItem([IntItem(7)]), IntItem(4), IntItem(0), IntItem(0),
-            InstructionItem(.iteratorRepeating),
+            InstructionItem(.iteratorRepeating)
         ])
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .iterator) == "[ «7→4 @0» ]")
@@ -441,7 +441,7 @@ struct IteratorBehaviorTests {
     @Test func `a repeating iterator's crux reproduces it`() {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
-            DoubleItem(2.5), IntItem(3), InstructionItem(.doubleDupTimes),
+            DoubleItem(2.5), IntItem(3), InstructionItem(.doubleDupTimes)
         ])
         inty.run(stepLimit: 4)   // build it, do not finish the loop
 
@@ -458,7 +458,7 @@ struct IteratorBehaviorTests {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(2), IntItem(3), InstructionItem(.intAdd),   // 5, with a record
-            IntItem(2), InstructionItem(.intDupTimes),
+            IntItem(2), InstructionItem(.intDupTimes)
         ])
         inty.run(stepLimit: 10_000)
         #expect(stackString(inty, .int) == "[ 5 5 5 ]")
@@ -487,7 +487,7 @@ struct IteratorBehaviorTests {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.exec] = Deque([
             InstructionItem(.execDupItems), IntItem(7), InstructionItem(.intInc),
-            BoolItem(true),
+            BoolItem(true)
         ] as [any Item])
         inty.stacks[.int]!.prepend(IntItem(2))
 
@@ -629,7 +629,7 @@ struct IteratorBehaviorTests {
         inty.load(program: [
             IntItem(0), IntItem(4),
             CodeItem([BoolItem(true), InstructionItem(.iteratorRestart)]),
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run()
 
@@ -675,7 +675,7 @@ struct IteratorBehaviorTests {
         // cursor 99 on a 0→3 range: nothing left to emit.
         inty.load(program: [
             IntItem(0), IntItem(3), IntItem(1), IntItem(99), IntItem(0), BoolItem(true),
-            CodeItem([]), InstructionItem(.iteratorFromIntRange),
+            CodeItem([]), InstructionItem(.iteratorFromIntRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -688,7 +688,7 @@ struct IteratorBehaviorTests {
     @Test func `a long range's iterator round-trips through its crux`() {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
-            IntItem(0), IntItem(999_999), CodeItem([]), InstructionItem(.execDoRange),
+            IntItem(0), IntItem(999_999), CodeItem([]), InstructionItem(.execDoRange)
         ])
         for _ in 0..<4 { inty.step() }
 
@@ -710,9 +710,9 @@ struct IteratorBehaviorTests {
             IntItem(0), IntItem(3),
             CodeItem([
                 IntItem(0), IntItem(3), CodeItem([BoolItem(true)]),
-                InstructionItem(.execDoRange),
+                InstructionItem(.execDoRange)
             ]),
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -731,9 +731,9 @@ struct IteratorBehaviorTests {
         inty.load(program: [
             IntItem(0), IntItem(9),
             CodeItem([
-                IntItem(0), IntItem(9), CodeItem([]), InstructionItem(.execDoRange),
+                IntItem(0), IntItem(9), CodeItem([]), InstructionItem(.execDoRange)
             ]),
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         // Far enough in for the outer loop to have started its inner one.
         for _ in 0..<12 { inty.step() }
@@ -772,7 +772,7 @@ struct IteratorBehaviorTests {
         inty.load(program: [
             IntItem(0), IntItem(50),
             CodeItem([InstructionItem(.iteratorFlush)]),
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -810,7 +810,7 @@ struct IteratorBehaviorTests {
         let inty = Interpreter.recordingProvenance()
         let box = CodeItem([
             counting(from: 0, to: 3),
-            counting(from: 7, to: 9),
+            counting(from: 7, to: 9)
         ])
         // `origin ( body ) cursor burial emits` — the box of iterators to walk,
         // then an empty body, which makes this a sequence rather than a loop.
@@ -818,7 +818,7 @@ struct IteratorBehaviorTests {
             box, CodeItem([]),
             IntItem(0), IntItem(0), BoolItem(true),
             InstructionItem(.iteratorFromCodeRoot),
-            InstructionItem(.iteratorPlay),
+            InstructionItem(.iteratorPlay)
         ])
         inty.run(stepLimit: 10_000)
 

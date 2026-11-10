@@ -201,27 +201,27 @@ nonisolated extension Interpreter {
         )
 
 
-    static let intBehaviors:[PushInstruction : Behavior] =
+    static let intBehaviors: [PushInstruction: Behavior] =
         [
-            .intAdd : intAdd_Behavior,
-            .intDec : intDec_Behavior,
-            .intFromBool : intFromBool_Behavior,
-            .intFromChar : intFromChar_Behavior,
-            .intFromDouble : intFromDouble_Behavior,
-            .intFromString : intFromString_Behavior,
-            .intInc : intInc_Behavior,
-            .intMax : intMax_Behavior,
-            .intMin : intMin_Behavior,
-            .intPeekMax : intPeekMax_Behavior,
-            .intPeekMin : intPeekMin_Behavior,
-            .intMod : intMod_Behavior,
-            .intMultiply : intMultiply_Behavior,
-            .intQuot : intQuot_Behavior,
-            .intSubtract : intSubtract_Behavior,
+            .intAdd: intAdd_Behavior,
+            .intDec: intDec_Behavior,
+            .intFromBool: intFromBool_Behavior,
+            .intFromChar: intFromChar_Behavior,
+            .intFromDouble: intFromDouble_Behavior,
+            .intFromString: intFromString_Behavior,
+            .intInc: intInc_Behavior,
+            .intMax: intMax_Behavior,
+            .intMin: intMin_Behavior,
+            .intPeekMax: intPeekMax_Behavior,
+            .intPeekMin: intPeekMin_Behavior,
+            .intMod: intMod_Behavior,
+            .intMultiply: intMultiply_Behavior,
+            .intQuot: intQuot_Behavior,
+            .intSubtract: intSubtract_Behavior,
             .intAbs: intAbs_Behavior,
             .intNegate: intNegate_Behavior,
             .intSign: intSign_Behavior,
-            .intPow: intPow_Behavior,
+            .intPow: intPow_Behavior
         ]
 
 }

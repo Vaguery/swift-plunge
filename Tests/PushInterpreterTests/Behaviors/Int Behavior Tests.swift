@@ -13,7 +13,7 @@ import DequeModule
 struct IntBehaviorTests {
 
     var inty = Interpreter.recordingProvenance()
-    
+
     @Test func intAdd() {
         loadInts(inty, ints: [9, 11, 7])
         #expect(stackString(inty, .int) == "[ 9 11 7 ]")
@@ -22,19 +22,19 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ 20 7 ]")
         #expect(callString(topItem(inty, .int)) == "( 11 9 .intAdd )")
 
-        
+
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ 27 ]")
         #expect(callString(topItem(inty, .int)) == "( 7 20 .intAdd )")
     }
-    
+
     @Test func `intAdd handles overflow`() {
         loadInts(inty, ints: [1000, Int.max])
         #expect(stackString(inty, .int) == "[ 1000 9223372036854775807 ]")
 
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        
+
         #expect(stackString(inty, .error).contains("Overflow in .intAdd") )
         #expect(callString(topItem(inty, .error)) == "( 9223372036854775807 1000 .intAdd )")
     }
@@ -388,7 +388,7 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ -1 ]")
         #expect(callString(topItem(inty, .int)) == "( -7 4 .intQuot )")
 
-        loadInts(inty,ints: [0])
+        loadInts(inty, ints: [0])
         #expect(stackString(inty, .int) == "[ 0 -1 ]")
 
         doThis(.intQuot, to: inty)
@@ -428,7 +428,7 @@ struct IntBehaviorTests {
         #expect(stackString(inty, .int) == "[ -9 ]")
         #expect(callString(topItem(inty, .int)) == "( -7 2 .intSubtract )")
     }
-    
+
     @Test func `intSubtract handles overflow`() {
         loadInts(inty, ints: [1000, -Int.max])
         #expect(stackString(inty, .int) == "[ 1000 -9223372036854775807 ]")

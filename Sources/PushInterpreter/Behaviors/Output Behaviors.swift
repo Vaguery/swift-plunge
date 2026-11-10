@@ -66,22 +66,22 @@ nonisolated extension Interpreter {
         .described("Prints the top block and a newline to the output.")
 
 
-    static var outputBehaviors:[PushInstruction : Behavior] {
-        let result:[PushInstruction : Behavior] =
+    static var outputBehaviors: [PushInstruction: Behavior] {
+        let result: [PushInstruction: Behavior] =
         [
-            .boolPrint : boolPrint_Behavior,
-            .charPrint : charPrint_Behavior,
-            .codePrint : codePrint_Behavior,
-            .doublePrint : doublePrint_Behavior,
-            .execPrint : execPrint_Behavior,
-            .intPrint : intPrint_Behavior,
-            .iteratorPrint : iteratorPrint_Behavior,
-            .printNewline : printNewline_Behavior,
-            .stringPrint : stringPrint_Behavior,
-            .vecBoolPrint : vecBoolPrint_Behavior,
-            .vecDoublePrint : vecDoublePrint_Behavior,
-            .vecIntPrint : vecIntPrint_Behavior,
-            .vecStringPrint : vecStringPrint_Behavior,
+            .boolPrint: boolPrint_Behavior,
+            .charPrint: charPrint_Behavior,
+            .codePrint: codePrint_Behavior,
+            .doublePrint: doublePrint_Behavior,
+            .execPrint: execPrint_Behavior,
+            .intPrint: intPrint_Behavior,
+            .iteratorPrint: iteratorPrint_Behavior,
+            .printNewline: printNewline_Behavior,
+            .stringPrint: stringPrint_Behavior,
+            .vecBoolPrint: vecBoolPrint_Behavior,
+            .vecDoublePrint: vecDoublePrint_Behavior,
+            .vecIntPrint: vecIntPrint_Behavior,
+            .vecStringPrint: vecStringPrint_Behavior
 
         ]
         return result

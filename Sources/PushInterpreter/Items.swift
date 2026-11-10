@@ -391,30 +391,17 @@ nonisolated extension Item {
 }
 
 
-
-
-
-
 //  global == definition to help compare items that aren't the same exact type
 //
 public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     // Arrays must have the same count to be equal
     guard lhs.count == rhs.count else { return false }
-    
+
     // Compare elements line-by-line using zip
     return zip(lhs, rhs).allSatisfy { leftElement, rightElement in
         leftElement.isEqual(to: rightElement)
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 // creating structs for each PushType
@@ -431,16 +418,16 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    
+
     public init(_ value: Bool, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
     }
-    
+
     public static func == (lhs: BoolItem, rhs: BoolItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
@@ -458,20 +445,20 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    
+
     public init(_ value: Character, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
     }
-    
+
     public static func == (lhs: CharItem, rhs: CharItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public static func < (lhs: CharItem, rhs: CharItem) -> Bool {
         lhs.value < rhs.value
     }
-    
+
     public func pretty() -> String {
         "'\(value)'"
     }
@@ -576,7 +563,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     public static func == (lhs: CodeItem, rhs: CodeItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     /// `( a b c )`. Rendered by `NestedRendering`, which walks nested blocks and
     /// iterators with an explicit stack rather than recursing.
     public func pretty() -> String {
@@ -746,20 +733,20 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    
+
     public init(_ value: Double, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
     }
-    
+
     public static func == (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public static func < (lhs: DoubleItem, rhs: DoubleItem) -> Bool {
         lhs.value < rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
@@ -778,26 +765,25 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    
+
     public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
     }
-    
+
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public static func < (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
         lhs.value.rawValue < rhs.value.rawValue
     }
-    
+
     public func pretty() -> String {
         ".\(value)"
     }
 
 }
-
 
 
 public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
@@ -812,25 +798,24 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
-    
+
     public init(_ value: Int, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
     }
-    
+
     public static func == (lhs: IntItem, rhs: IntItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public static func < (lhs: IntItem, rhs: IntItem) -> Bool {
         lhs.value < rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
 }
-
 
 
 public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
@@ -865,15 +850,15 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
         self.value = value
         self.callStorage = CallStorage(call, members: members.flatMap { Containment.aligned($0, with: Array(value)) })
     }
-    
+
     public static func == (lhs: StringItem, rhs: StringItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public static func < (lhs: StringItem, rhs: StringItem) -> Bool {
         lhs.value < rhs.value
     }
-    
+
     public func pretty() -> String {
         "\"\(value)\""
     }
@@ -906,16 +891,15 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
     }
-    
+
     public static func == (lhs: VecBoolItem, rhs: VecBoolItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
 }
-
 
 
 public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
@@ -944,13 +928,13 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
     }
-    
+
     /// Equal as vector operations compare doubles: every NaN is the same NaN
     /// (`DoubleKey`), so a vector holding one still equals itself.
     public static func == (lhs: VecDoubleItem, rhs: VecDoubleItem) -> Bool {
         lhs.value.elementsEqual(rhs.value) { DoubleKey(value: $0) == DoubleKey(value: $1) }
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
@@ -983,16 +967,15 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.count
     }
-    
+
     public static func == (lhs: VecIntItem, rhs: VecIntItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
 }
-
 
 
 public nonisolated struct VecStringItem: Item, Equatable, Pretty {
@@ -1024,16 +1007,15 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
         self.callStorage = CallStorage(call, members: members.flatMap { $0.count == value.count ? $0 : nil })
         self.weight = value.reduce(0) { $0 + $1.utf8.count }
     }
-    
+
     public static func == (lhs: VecStringItem, rhs: VecStringItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public func pretty() -> String {
         "\(value)"
     }
 }
-
 
 
 /// Why an error was raised, as a value rather than as prose.
@@ -1153,7 +1135,7 @@ public nonisolated struct ErrorItem: Item, Equatable {
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
         lhs.value == rhs.value
     }
-    
+
     public func pretty() -> String {
         "« ‼️ \(value) »"
     }

@@ -296,7 +296,7 @@ struct StringBehaviorTests {
         #expect(stackString(absent, .string) == "[ \"abcd\" ]")
         #expect(stackString(absent, .char) == "[ 'z' ]")
     }
-    
+
     @Test func stringItemIsEmpty() {
         // Reads the string, leaves it, and the crux pops it.
         loadStrings(inty, strings: ["", "abcdefghij"])
@@ -403,7 +403,7 @@ struct StringBehaviorTests {
     @Test func `stringIterate might be weird when recursive`() {
         loadStrings(inty, strings: ["boo", "tan"])
         inty.stacks[.exec]!.prepend(
-            contentsOf: [InstructionItem(.stringConj),
+            contentsOf: [InstructionItem(.stringConj)
                         ])
 
         #expect(stackString(inty, .string) == "[ \"boo\" \"tan\" ]")
@@ -664,7 +664,7 @@ struct StringBehaviorTests {
     }
 
     @Test func stringRemove() {
-        loadChars(inty, chars: [" ","o","b"])
+        loadChars(inty, chars: [" ", "o", "b"])
         loadStrings(inty, strings: ["", "boo", "bee"])
         #expect(stackString(inty, .char) == "[ ' ' 'o' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
@@ -695,7 +695,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"-\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplaceRun )")
 
-        loadStrings(inty, strings: [" a","1 ", "00 11 22"])
+        loadStrings(inty, strings: [" a", "1 ", "00 11 22"])
         #expect(stackString(inty, .string) == "[ \" a\" \"1 \" \"00 11 22\" \"-\" ]")
 
         doThis(.stringReplaceRun, to: inty)
@@ -722,7 +722,7 @@ struct StringBehaviorTests {
     }
 
     @Test func stringReplace() {
-        loadChars(inty, chars: [" ","o","e", "b"])
+        loadChars(inty, chars: [" ", "o", "e", "b"])
         loadStrings(inty, strings: ["", "boo", "bee"])
         #expect(stackString(inty, .char) == "[ ' ' 'o' 'e' 'b' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"boo\" \"bee\" ]")
@@ -753,7 +753,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"-\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"\" \"\" \"-\" .stringReplaceFirstRun )")
 
-        loadStrings(inty, strings: [" a","1 ", "00 11 22"])
+        loadStrings(inty, strings: [" a", "1 ", "00 11 22"])
         #expect(stackString(inty, .string) == "[ \" a\" \"1 \" \"00 11 22\" \"-\" ]")
 
         doThis(.stringReplaceFirstRun, to: inty)
@@ -780,7 +780,7 @@ struct StringBehaviorTests {
     }
 
     @Test func stringReplaceFirst() {
-        loadChars(inty, chars: ["-", "2", ".","2", "!"," "])
+        loadChars(inty, chars: ["-", "2", ".", "2", "!", " "])
         loadStrings(inty, strings: ["", "00 11 22"])
         #expect(stackString(inty, .char) == "[ '-' '2' '.' '2' '!' ' ' ]")
         #expect(stackString(inty, .string) == "[ \"\" \"00 11 22\" ]")
@@ -830,7 +830,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ \"jihgfedcba\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" .stringReverse )")
     }
-    
+
     @Test func stringSet() {
         loadChars(inty, chars: ["-", ".", "?", "+"])
         loadInts(inty, ints: [11, 2, -222, 13])
@@ -930,7 +930,7 @@ struct StringBehaviorTests {
     }
 
     @Test func `stringSlice works for empty`() {
-        loadInts(inty, ints: [2,2])
+        loadInts(inty, ints: [2, 2])
         loadStrings(inty, strings: [""])
         #expect(stackString(inty, .int) == "[ 2 2 ]")
         #expect(stackString(inty, .string) == "[ \"\" ]")
@@ -974,7 +974,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"rem\" ]")
     }
-    
+
     @Test func `stringSlice works for nonempty with identical indices`() {
         loadInts(inty, ints: [3, 3])
         loadStrings(inty, strings: ["lorem ipsum"])
@@ -985,7 +985,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ ]")
         #expect(stackString(inty, .string) == "[ \"e\" ]")
     }
-    
+
     @Test func `stringSlice works for nonempty with weird indices`() {
         loadInts(inty, ints: [90, -5])
         loadStrings(inty, strings: ["lorem ipsum"])
@@ -1018,13 +1018,13 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .int) == "[ 0 4 -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghij\" \"abcdefghij\" ]")
 
-        doThis(.stringPop, to:inty)
+        doThis(.stringPop, to: inty)
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ 4 -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"\" \"abcdefghij\" ]")
         #expect(callString(topItem(inty, .string)) == "( \"abcdefghij\" 0 .stringTake )")
 
-        doThis(.stringPop, to:inty)
+        doThis(.stringPop, to: inty)
         doThis(.stringTake, to: inty)
         #expect(stackString(inty, .int) == "[ -14 99 ]")
         #expect(stackString(inty, .string) == "[ \"abcd\" ]")

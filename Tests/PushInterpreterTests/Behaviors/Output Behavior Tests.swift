@@ -12,7 +12,7 @@ import DequeModule
 
 @Suite @MainActor
 struct OutputBehaviorTests {
-    
+
     var inty = Interpreter()
 
     @Test func boolPrint() {
@@ -20,17 +20,17 @@ struct OutputBehaviorTests {
                   stacks: [.bool: [BoolItem(false)]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.boolPrint, to: inty)
         #expect(inty.printout == "false\n")
     }
-    
+
     @Test func charPrint() {
         inty.load(inputs: [:],
                   stacks: [.char: [CharItem(Character("x"))]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.charPrint, to: inty)
         #expect(inty.printout == "'x'\n")
     }
@@ -68,7 +68,7 @@ struct OutputBehaviorTests {
                   stacks: [.exec: [CharItem(Character("x"))]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.execPrint, to: inty)
         #expect(inty.printout == "'x'\n")
     }
@@ -78,7 +78,7 @@ struct OutputBehaviorTests {
                   stacks: [.int: [IntItem(1964)]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.intPrint, to: inty)
         #expect(inty.printout == "1964\n")
     }
@@ -98,47 +98,47 @@ struct OutputBehaviorTests {
                   stacks: [.string: [StringItem("purple")]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.stringPrint, to: inty)
         #expect(inty.printout == "\"purple\"\n")
     }
-    
+
     @Test func vecBoolPrint() {
         inty.load(inputs: [:],
                   stacks: [.vecBool: [VecBoolItem([true, true])]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.vecBoolPrint, to: inty)
         #expect(inty.printout == "[true, true]\n")
     }
-    
+
     @Test func vecDoublePrint() {
         inty.load(inputs: [:],
                   stacks: [.vecDouble: [VecDoubleItem([98.6, 98.1])]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.vecDoublePrint, to: inty)
         #expect(inty.printout == "[98.6, 98.1]\n")
     }
-    
+
     @Test func vecIntPrint() {
         inty.load(inputs: [:],
                   stacks: [.vecInt: [VecIntItem([1066, 32])]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.vecIntPrint, to: inty)
         #expect(inty.printout == "[1066, 32]\n")
     }
-    
+
     @Test func vecStringPrint() {
         inty.load(inputs: [:],
                   stacks: [.vecString: [VecStringItem(["foo", "bar"])]],
                   program: [])
         #expect(inty.printout.isEmpty)
-        
+
         doThis(.vecStringPrint, to: inty)
         #expect(inty.printout == "[\"foo\", \"bar\"]\n")
     }

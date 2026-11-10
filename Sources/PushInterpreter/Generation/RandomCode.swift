@@ -142,7 +142,7 @@ nonisolated struct InstructionMix: Sendable {
     /// generated program. That is why `.comparison` appears below, and why a test
     /// asserts every role is reachable under this mix.
     static let equalShares = InstructionMix([
-        .constant: 1, .input: 1, .stackFamily: 1, .comparison: 1, .other: 1,
+        .constant: 1, .input: 1, .stackFamily: 1, .comparison: 1, .other: 1
     ])
 
     /// Draw in proportion to how many instructions each tag holds — i.e. exactly

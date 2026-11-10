@@ -33,7 +33,7 @@ struct CodeStage1Tests {
         inty.load(program: [
             CodeItem([IntItem(1)]),               // ( 1 ), deeper
             CodeItem([IntItem(2), IntItem(3)]),   // ( 2 3 ), on top
-            InstructionItem(.codePair),
+            InstructionItem(.codePair)
         ])
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 1 ( 2 3 ) ) ]")
@@ -65,7 +65,7 @@ struct CodeStage1Tests {
             CodeItem([IntItem(1)]),   // goes to .code
             CodeItem([IntItem(2)]),   // goes to .code
             BoolItem(true),           // goes to .bool
-            InstructionItem(.execIf),
+            InstructionItem(.execIf)
         ])
         prog.run()
         #expect(stackString(prog, .int) == "[ 1 ]", "true → then block ran")
@@ -75,7 +75,7 @@ struct CodeStage1Tests {
             CodeItem([IntItem(1)]),
             CodeItem([IntItem(2)]),
             BoolItem(false),
-            InstructionItem(.execIf),
+            InstructionItem(.execIf)
         ])
         f.run()
         #expect(stackString(f, .int) == "[ 2 ]", "false → else block ran")

@@ -119,16 +119,16 @@ nonisolated extension Interpreter {
         .described("Tests whether the char is lowercase, leaving the char; a char with no case gives false.")
 
 
-    static let charBehaviors:[PushInstruction : Behavior] =
+    static let charBehaviors: [PushInstruction: Behavior] =
     [
-        .charFromDouble : charFromDouble_behavior,
-        .charFromInt : charFromInt_Behavior,
-        .charIsDigit : charIsDigit_Behavior,
-        .charIsLetter : charIsLetter_Behavior,
-        .charIsWhitespace : charIsWhitespace_Behavior,
+        .charFromDouble: charFromDouble_behavior,
+        .charFromInt: charFromInt_Behavior,
+        .charIsDigit: charIsDigit_Behavior,
+        .charIsLetter: charIsLetter_Behavior,
+        .charIsWhitespace: charIsWhitespace_Behavior,
         .charUpper: charUpper_Behavior,
         .charLower: charLower_Behavior,
         .charIsUpper: charIsUpper_Behavior,
-        .charIsLower: charIsLower_Behavior,
+        .charIsLower: charIsLower_Behavior
     ]
 }

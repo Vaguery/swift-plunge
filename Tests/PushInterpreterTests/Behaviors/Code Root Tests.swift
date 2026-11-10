@@ -90,7 +90,7 @@ struct CodeRootTests {
         inty.load(program: [
             CodeItem([IntItem(1), IntItem(2), IntItem(3)]),   // the code to iterate (deeper)
             CodeItem([]),                                     // mouse (empty), on top
-            InstructionItem(.codeIterateRoot),
+            InstructionItem(.codeIterateRoot)
         ])
         inty.run()
         // each root element (1, 2, 3) is an int, emitted to .int front-to-back
@@ -102,7 +102,7 @@ struct CodeRootTests {
         inty.load(program: [
             CodeItem([]),
             CodeItem([BoolItem(true)]),
-            InstructionItem(.codeIterateRoot),
+            InstructionItem(.codeIterateRoot)
         ])
         inty.run()
         #expect(inty.stacks[.iterator]!.isEmpty)

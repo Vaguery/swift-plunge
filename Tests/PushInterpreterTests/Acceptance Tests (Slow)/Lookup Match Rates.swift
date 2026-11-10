@@ -71,9 +71,13 @@ struct LookupMatchRates {
                 inty.step()
                 // A hit always leaves the searched stack deeper than it was.
                 let grew = inty.stacks[stack]!.count > before
-                if grew { byInstruction[instruction, default: Tally()].hit += 1 }
-                else if searchable { byInstruction[instruction, default: Tally()].miss += 1 }
-                else { byInstruction[instruction, default: Tally()].starved += 1 }
+                if grew {
+                    byInstruction[instruction, default: Tally()].hit += 1
+                } else if searchable {
+                    byInstruction[instruction, default: Tally()].miss += 1
+                } else {
+                    byInstruction[instruction, default: Tally()].starved += 1
+                }
             }
         }
 

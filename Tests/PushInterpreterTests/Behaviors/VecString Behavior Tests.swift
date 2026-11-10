@@ -11,54 +11,54 @@ import DequeModule
 
 @Suite @MainActor
 struct VecStringBehaviorTests {
-    
+
     var inty = Interpreter.recordingProvenance()
 
     @Test func vecStringButLast() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b", "c"]),
+                         VecStringItem(["a", "b", "c"]),
                          VecStringItem(["z"])
                         ])
-        
+
         doThis(.vecStringButLast, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\"] [\"z\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [] .vecStringButLast )")
 
         doThis(.vecStringPop, to: inty)
-        
+
         doThis(.vecStringButLast, to: inty)
         #expect(stackString(inty, .vecString) ==  "[ [\"a\", \"b\"] [\"z\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\", \"c\"] .vecStringButLast )")
-        
+
         doThis(.vecStringPop, to: inty)
-        
+
         doThis(.vecStringButLast, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"z\"] .vecStringButLast )")
     }
-    
+
     @Test func vecStringConcat() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b"]),
-                         VecStringItem(["x","y"])
+                         VecStringItem(["a", "b"]),
+                         VecStringItem(["x", "y"])
                         ])
-        
+
         doThis(.vecStringConcat, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"a\", \"b\"] [\"x\", \"y\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"a\", \"b\"] [] .vecStringConcat )")
-        
+
         doThis(.vecStringConcat, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"x\", \"y\", \"a\", \"b\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"x\", \"y\"] [\"a\", \"b\"] .vecStringConcat )")
     }
-    
+
     @Test func vecStringConj() {
         loadStrings(inty, strings: ["x", "y", "z"])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b"])
+                         VecStringItem(["a", "b"])
                         ])
 
         doThis(.vecStringConj, to: inty)
@@ -98,7 +98,7 @@ struct VecStringBehaviorTests {
         loadInts(inty, ints: [-3, 0, 1])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["x","y","z"])
+                         VecStringItem(["x", "y", "z"])
                         ])
 
         doThis(.vecStringDrop, to: inty)
@@ -119,7 +119,7 @@ struct VecStringBehaviorTests {
     @Test func vecStringFirst() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b"])
+                         VecStringItem(["a", "b"])
                         ])
 
         doThis(.vecStringFirst, to: inty)
@@ -150,9 +150,9 @@ struct VecStringBehaviorTests {
     @Test func vecStringIsEmpty() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b"])
+                         VecStringItem(["a", "b"])
                         ])
-        
+
         doThis(.vecStringItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\"] ]", "the vector survives")
@@ -168,7 +168,7 @@ struct VecStringBehaviorTests {
     @Test func `vecStringIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem(["1","2"]),
+            contentsOf: [VecStringItem(["1", "2"])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -206,7 +206,7 @@ struct VecStringBehaviorTests {
     @Test func `vecStringIterate works for >1 item`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem(["skunk", "badger"]),
+            contentsOf: [VecStringItem(["skunk", "badger"])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -246,7 +246,7 @@ struct VecStringBehaviorTests {
 
     @Test func `vecStringIterate works for empty`() {
         inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem([]),
+            contentsOf: [VecStringItem([])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -264,7 +264,7 @@ struct VecStringBehaviorTests {
 
     @Test func `vecStringIterate works for one item`() {
         inty.stacks[.vecString]!.prepend(
-            contentsOf: [VecStringItem(["joe"]),
+            contentsOf: [VecStringItem(["joe"])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -290,7 +290,7 @@ struct VecStringBehaviorTests {
     @Test func vecStringLast() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b"])
+                         VecStringItem(["a", "b"])
                         ])
 
         doThis(.vecStringLast, to: inty)
@@ -304,9 +304,9 @@ struct VecStringBehaviorTests {
     @Test func vecStringLength() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c"])
+                         VecStringItem(["a", "b", "c"])
                         ])
-        
+
         // Non-destructive: the vector is read, not consumed. It stays on
         // .vecString, and the crux pops what it read so it reproduces only the count.
         doThis(.vecStringLength, to: inty)
@@ -326,8 +326,8 @@ struct VecStringBehaviorTests {
         loadInts(inty, ints: [-3, 1, 7776])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["x","y","z"]),
-                         VecStringItem(["aa","bb","cc"])
+                         VecStringItem(["x", "y", "z"]),
+                         VecStringItem(["aa", "bb", "cc"])
                         ])
 
         #expect(stackString(inty, .vecString) == "[ [] [\"x\", \"y\", \"z\"] [\"aa\", \"bb\", \"cc\"] ]")
@@ -364,7 +364,7 @@ struct VecStringBehaviorTests {
     @Test func vecStringPushAll() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["1","22","333"]),
+                         VecStringItem(["1", "22", "333"])
                         ])
 
         // An empty vector yields nothing at all — not even an iterator.
@@ -394,8 +394,8 @@ struct VecStringBehaviorTests {
         loadStrings(inty, strings: ["f", "f", "u"])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["f","l","u","f","f"]),
-                         VecStringItem(["f","l","o","o","f"])
+                         VecStringItem(["f", "l", "u", "f", "f"]),
+                         VecStringItem(["f", "l", "o", "o", "f"])
                         ])
 
         doThis(.vecStringRemove, to: inty)
@@ -419,8 +419,8 @@ struct VecStringBehaviorTests {
         loadStrings(inty, strings: ["f", "g", "-", "f", "x", "u"])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["f","a","f"]),
-                         VecStringItem(["f","l","o"])
+                         VecStringItem(["f", "a", "f"]),
+                         VecStringItem(["f", "l", "o"])
                         ])
 
 
@@ -445,8 +445,8 @@ struct VecStringBehaviorTests {
        loadStrings(inty, strings: ["f", "g", "-", "f", "x", "u"])
        inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["f","a","f"]),
-                         VecStringItem(["f","l","o"])
+                         VecStringItem(["f", "a", "f"]),
+                         VecStringItem(["f", "l", "o"])
                         ])
 
 
@@ -470,13 +470,13 @@ struct VecStringBehaviorTests {
     @Test func vecStringRest() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c"])
+                         VecStringItem(["a", "b", "c"])
                         ])
-        
+
         doThis(.vecStringRest, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"b\", \"c\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [] .vecStringRest )")
-        
+
         doThis(.vecStringPop, to: inty)
 
         doThis(.vecStringRest, to: inty)
@@ -487,13 +487,13 @@ struct VecStringBehaviorTests {
     @Test func vecStringReverse() {
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","bc"])
+                         VecStringItem(["a", "bc"])
                         ])
-        
+
         doThis(.vecStringReverse, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] [\"a\", \"bc\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [] .vecStringReverse )")
-        
+
         doThis(.vecStringPop, to: inty)
 
         doThis(.vecStringReverse, to: inty)
@@ -503,11 +503,11 @@ struct VecStringBehaviorTests {
 
     @Test func vecStringSet() {
         loadInts(inty, ints: [1, 2222, 2])
-        loadStrings(inty, strings: ["-","-","-"])
+        loadStrings(inty, strings: ["-", "-", "-"])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c","d","e"]),
-                         VecStringItem(["a","b"])
+                         VecStringItem(["a", "b", "c", "d", "e"]),
+                         VecStringItem(["a", "b"])
                         ])
 
         // An empty vector has no element to replace: an error, arguments consumed.
@@ -531,9 +531,9 @@ struct VecStringBehaviorTests {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["a","b","c","d","e"]),
+                         VecStringItem(["a", "b", "c", "d", "e"]),
                          VecStringItem(["z", "y", "x", "w"]),
-                         VecStringItem(["1","11","111","1111"])
+                         VecStringItem(["1", "11", "111", "1111"])
                         ])
 
         doThis(.vecStringSlice, to: inty)
@@ -563,19 +563,19 @@ struct VecStringBehaviorTests {
         loadInts(inty, ints: [-3, 99, 1])
         inty.stacks[.vecString]!.prepend(
             contentsOf: [VecStringItem([]),
-                         VecStringItem(["x","y","z"])
+                         VecStringItem(["x", "y", "z"])
                         ])
-       
+
         doThis(.vecStringTake, to: inty)
         #expect(stackString(inty, .vecString) == "[ [] [\"x\", \"y\", \"z\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [] -3 .vecStringTake )")
-        
+
         doThis(.vecStringPop, to: inty)
-        
+
         doThis(.vecStringTake, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"x\", \"y\", \"z\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"x\", \"y\", \"z\"] 99 .vecStringTake )")
-        
+
         doThis(.vecStringTake, to: inty)
         #expect(stackString(inty, .vecString) == "[ [\"x\"] ]")
         #expect(callString(topItem(inty, .vecString)) == "( [\"x\", \"y\", \"z\"] 1 .vecStringTake )")

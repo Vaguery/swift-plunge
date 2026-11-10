@@ -54,13 +54,13 @@ struct IntrospectionInstructionTests {
     @Test func `introspection never alters the error stack`() {
         let introspection: [PushInstruction] = [
             .pushStepCount, .errorStackDepth,
-            .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
+            .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount
         ]
         for name in introspection {
             let inty = Interpreter.recordingProvenance()
             inty.stacks[.error]!.prepend(contentsOf: [
                 ErrorItem("first", kind: .missingArgument),
-                ErrorItem("second", kind: .missingInput),
+                ErrorItem("second", kind: .missingInput)
             ] as [any Item])
             let before = stackString(inty, .error)
 
@@ -81,7 +81,7 @@ struct IntrospectionInstructionTests {
 
         let dirty = Interpreter.recordingProvenance()
         dirty.stacks[.error]!.prepend(contentsOf: [
-            ErrorItem("a"), ErrorItem("b"), ErrorItem("c"),
+            ErrorItem("a"), ErrorItem("b"), ErrorItem("c")
         ] as [any Item])
         Interpreter.language[.errorStackDepth]!.act(on: dirty)
         #expect((topItem(dirty, .int) as! IntItem).value == 3)
@@ -94,7 +94,7 @@ struct IntrospectionInstructionTests {
             ErrorItem("intSubtract missing args: .int", kind: .missingArgument),
             ErrorItem("No input for input3", kind: .missingInput),
             ErrorItem("No constant assigned for int2", kind: .missingConstant),
-            ErrorItem("something else entirely", kind: .other),
+            ErrorItem("something else entirely", kind: .other)
         ] as [any Item])
 
         for (name, expected) in [(PushInstruction.errorMissingArgCount, 2),
@@ -162,7 +162,7 @@ struct IntrospectionInstructionTests {
     @Test func `introspection results record a stand-in`() {
         let names: [PushInstruction] = [
             .pushStepCount, .errorStackDepth,
-            .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount,
+            .errorMissingArgCount, .errorMissingInputCount, .errorMissingConstantCount
         ]
         for name in names {
             let inty = Interpreter.recordingProvenance()

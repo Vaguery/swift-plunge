@@ -59,7 +59,7 @@ struct SizeLimitsTests {
         let code = CodeItem([
             IntItem(1),                       // 1
             VecStringItem(["abcd"]),          // 4
-            CodeItem([StringItem("xyz")]),    // 3
+            CodeItem([StringItem("xyz")])    // 3
         ])
         #expect(code.weight == 8)
     }

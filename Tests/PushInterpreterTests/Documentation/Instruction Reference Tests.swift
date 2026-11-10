@@ -91,7 +91,7 @@ struct InstructionReferenceTests {
         Subject(page: "VecStringInstructions", title: "Vector of string instructions",
                 intro: "The `.vecString` stack holds vectors of strings: words, lines and lists of names. It shares its instruction families with the other vector types."),
         Subject(page: "EnvironmentInstructions", title: "Inputs, output and the interpreter",
-                intro: "These instructions read the program's environment (its inputs and the interpreter's state) or write to its printout. The constants of each type are on that type's page."),
+                intro: "These instructions read the program's environment (its inputs and the interpreter's state) or write to its printout. The constants of each type are on that type's page.")
     ]
 
     /// The page an instruction belongs on: its stack's, by name, with the few
@@ -121,7 +121,7 @@ struct InstructionReferenceTests {
         (.contextRead, "Reading the environment"),
         (.control, "Control"),
         (.structural, "Rearranging the stack"),
-        (.channel, "Output"),
+        (.channel, "Output")
     ]
 
     static func pages() -> [String: String] {

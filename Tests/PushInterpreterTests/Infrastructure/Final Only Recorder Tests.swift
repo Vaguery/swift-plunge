@@ -19,7 +19,7 @@ struct FinalOnlyRecorderTests {
         interpreter.load(program: program, recorders: [
             AnyRecorder(RecorderSpec("every", observing: .top(.int), keeping: .everyStep)),
             AnyRecorder(RecorderSpec("final", observing: .top(.int), keeping: .finalOnly)),
-            AnyRecorder(RecorderSpec("steps", observing: .counter, keeping: .finalOnly)),
+            AnyRecorder(RecorderSpec("steps", observing: .counter, keeping: .finalOnly))
         ])
         return interpreter
     }

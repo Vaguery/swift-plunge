@@ -635,7 +635,7 @@ nonisolated extension IteratorItem {
                 IntItem(value),
                 IntItem(burial),
                 BoolItem(emits),
-                InstructionItem(.iteratorFromIntRange),
+                InstructionItem(.iteratorFromIntRange)
             ]
 
         // A walking iterator needs no bounds: its end is its origin's own length.
@@ -655,7 +655,7 @@ nonisolated extension IteratorItem {
                     IntItem(value),
                     IntItem(burial),
                     BoolItem(emits),
-                    InstructionItem(name),
+                    InstructionItem(name)
                 ]
             }
             // **A cycling walk cannot be rebuilt cursor-first.** `value` counts
@@ -685,7 +685,7 @@ nonisolated extension IteratorItem {
                 IntItem(laps),
                 InstructionItem(.iteratorSetLaps),
                 IntItem(value),
-                InstructionItem(.iteratorSetCounter),
+                InstructionItem(.iteratorSetCounter)
             ]
 
         // The box is what lets one constructor serve all thirteen stacks: a
@@ -700,7 +700,7 @@ nonisolated extension IteratorItem {
                 IntItem(burial),
                 InstructionItem(
                     into == .exec ? .iteratorRepeatingIntoExec : .iteratorRepeating
-                ),
+                )
             ]
         }
     }

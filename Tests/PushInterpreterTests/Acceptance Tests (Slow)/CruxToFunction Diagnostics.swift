@@ -398,7 +398,7 @@ struct CruxToFunctionDiagnostics {
             it.load(stacks: [
                 .int: [IntItem(acc)],
                 .vecInt: [VecIntItem(vec)],
-                .code: [CodeItem([InstructionItem(op)])],
+                .code: [CodeItem([InstructionItem(op)])]
             ], program: [InstructionItem(.vecIntIterate)])
             it.run()
             return (it.stacks[.int]!.first as? IntItem)?.value
@@ -413,7 +413,7 @@ struct CruxToFunctionDiagnostics {
         let noSeed = Interpreter.recordingProvenance()
         noSeed.load(stacks: [
             .vecInt: [VecIntItem([1, 2, 3])],
-            .code: [CodeItem([InstructionItem(.intAdd)])],
+            .code: [CodeItem([InstructionItem(.intAdd)])]
         ], program: [InstructionItem(.vecIntIterate)])
         noSeed.run()
         #expect((noSeed.stacks[.int]!.first as? IntItem)?.value == 6, "e0 seeds the fold")
@@ -424,7 +424,7 @@ struct CruxToFunctionDiagnostics {
         let mapper = Interpreter.recordingProvenance()
         mapper.load(stacks: [
             .vecInt: [VecIntItem([1, 2, 3])],
-            .code: [CodeItem([IntItem(3), InstructionItem(.intAdd)])],
+            .code: [CodeItem([IntItem(3), InstructionItem(.intAdd)])]
         ], program: [InstructionItem(.vecIntIterate)])
         mapper.run()
         let mapped = mapper.stacks[.int]!.compactMap { ($0 as? IntItem)?.value }

@@ -60,7 +60,7 @@ struct VecFromIteratorTests {
             IntItem(0), IntItem(0),                 // cursor, burial
             BoolItem(true), CodeItem([]),           // emits, no body
             InstructionItem(.iteratorFromIntRange),
-            InstructionItem(.vecFromIterator),
+            InstructionItem(.vecFromIterator)
         ])
         inty.run()
 
@@ -77,7 +77,7 @@ struct VecFromIteratorTests {
             (VecBoolItem([true, false]), .vecBool, "[ [true, false] ]"),
             (VecDoubleItem([1.5, 2.5]), .vecDouble, "[ [1.5, 2.5] ]"),
             (VecIntItem([1, 2, 3]), .vecInt, "[ [1, 2, 3] ]"),
-            (VecStringItem(["a", "b"]), .vecString, "[ [\"a\", \"b\"] ]"),
+            (VecStringItem(["a", "b"]), .vecString, "[ [\"a\", \"b\"] ]")
         ]
         for (origin, resting, expected) in cases {
             let inty = loaded(walking(origin))

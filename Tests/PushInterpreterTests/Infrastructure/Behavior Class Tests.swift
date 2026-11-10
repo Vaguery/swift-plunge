@@ -76,7 +76,7 @@ struct BehaviorClassTests {
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,
                                 // bindingContainsKey, bindingOccurrencesOfKey
             .control: 39,       // incl. 10 xWith and bindingScope
-            .channel: 13,
+            .channel: 13
         ], "\(counts)")
     }
 

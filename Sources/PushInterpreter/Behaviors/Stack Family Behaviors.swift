@@ -39,7 +39,7 @@ nonisolated extension Interpreter {
         .vecDouble,
         .vecString,
         .iterator,
-        .binding,
+        .binding
     ]
 
     static var stackFamilyBehaviors: [PushInstruction: Behavior] {
@@ -402,8 +402,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func stackFamily(for stack: PushStack) -> [PushInstruction: Behavior]
-    {
+    static func stackFamily(for stack: PushStack) -> [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
         deepDupFamily_Behavior(for: stack, into: &result)

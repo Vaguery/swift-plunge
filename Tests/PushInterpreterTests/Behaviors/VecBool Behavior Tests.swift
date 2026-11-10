@@ -11,44 +11,44 @@ import DequeModule
 
 @Suite @MainActor
 struct VecBoolBehaviorTests {
-    
+
     var inty = Interpreter.recordingProvenance()
-    
+
     @Test func vecBoolButLast() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, true, false]),
                          VecBoolItem([true])
                         ])
-        
+
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [false, true, false] [true] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolButLast )")
 
         doThis(.vecBoolPop, to: inty)
-        
+
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, true] [true] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [false, true, false] .vecBoolButLast )")
-        
+
         doThis(.vecBoolPop, to: inty)
-        
+
         doThis(.vecBoolButLast, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true] .vecBoolButLast )")
     }
-    
+
     @Test func vecBoolConcat() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, false]),
                          VecBoolItem([true, true])
                         ])
-        
+
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] [true, true] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [false, false] [] .vecBoolConcat )")
-        
+
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true, true] [false, false] .vecBoolConcat )")
@@ -159,7 +159,7 @@ struct VecBoolBehaviorTests {
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false])
                         ])
-        
+
         doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         #expect(stackString(inty, .vecBool) == "[ [] [false] ]", "the vector survives")
@@ -175,7 +175,7 @@ struct VecBoolBehaviorTests {
     @Test func `vecBoolIterate records provenance only for its derived results`() {
         loadInts(inty, ints: [0])
         inty.stacks[.vecBool]!.prepend(
-            contentsOf: [VecBoolItem([false, true]),
+            contentsOf: [VecBoolItem([false, true])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -214,7 +214,7 @@ struct VecBoolBehaviorTests {
     @Test func `vecBoolIterate works for >1 item`() {
         loadInts(inty, ints: [17])
         inty.stacks[.vecBool]!.prepend(
-            contentsOf: [VecBoolItem([false, true, false]),
+            contentsOf: [VecBoolItem([false, true, false])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -266,7 +266,7 @@ struct VecBoolBehaviorTests {
 
     @Test func `vecBoolIterate works for empty`() {
         inty.stacks[.vecBool]!.prepend(
-            contentsOf: [VecBoolItem([]),
+            contentsOf: [VecBoolItem([])
                         ])
         // The mouse is a code argument now, so it waits on `.code` as a block.
         inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
@@ -284,7 +284,7 @@ struct VecBoolBehaviorTests {
 
     @Test func `vecBoolIterate works for one item`() {
         inty.stacks[.vecBool]!.prepend(
-            contentsOf: [VecBoolItem([false]),
+            contentsOf: [VecBoolItem([false])
                         ])
         // The mouse is a code argument now, so it waits on `.code` as a block.
         inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
@@ -325,7 +325,7 @@ struct VecBoolBehaviorTests {
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([false, false, false])
                         ])
-        
+
         // Non-destructive: the vector is read, not consumed. It stays on .vecBool,
         // and the crux pops what it read so it reproduces only the count.
         doThis(.vecBoolLength, to: inty)
@@ -340,7 +340,7 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .vecBool) == "[ [false, false, false] ]")   // still there
         #expect(callString(topItem(inty, .int)) == "( [false, false, false] .vecBoolLength 1 .vecBoolPopItems )")
     }
-    
+
     @Test func vecBoolNth() {
         loadInts(inty, ints: [-3, 1, 7777])
         inty.stacks[.vecBool]!.prepend(
@@ -390,7 +390,7 @@ struct VecBoolBehaviorTests {
     @Test func vecBoolPushAll() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true, false, true, true]),
+                         VecBoolItem([true, false, true, true])
                         ])
 
         // An empty vector yields nothing at all — not even an iterator.
@@ -496,28 +496,28 @@ struct VecBoolBehaviorTests {
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, false, false])
                         ])
-        
+
         doThis(.vecBoolRest, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolRest )")
-        
+
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolRest, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] .vecBoolRest )")
     }
-    
+
     @Test func vecBoolReverse() {
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, true, false])
                         ])
-        
+
         doThis(.vecBoolReverse, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, true, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolReverse )")
-        
+
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolReverse, to: inty)
@@ -530,9 +530,9 @@ struct VecBoolBehaviorTests {
         loadInts(inty, ints: [1, 2, -8, 43])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
-                         VecBoolItem([true,true,true,true]),
-                         VecBoolItem([true,true,true,true,]),
-                         VecBoolItem([true,true,true,true,]),
+                         VecBoolItem([true, true, true, true]),
+                         VecBoolItem([true, true, true, true ]),
+                         VecBoolItem([true, true, true, true ])
                         ])
 
         // An empty vector has no element to replace: an error, arguments consumed.
@@ -559,7 +559,7 @@ struct VecBoolBehaviorTests {
     }
 
     @Test func vecBoolSlice() {
-        loadInts(inty, ints: [1,9,2,1,2,-1,1,1])
+        loadInts(inty, ints: [1, 9, 2, 1, 2, -1, 1, 1])
         inty.stacks[.vecBool]!.prepend(
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, true, false, false, true]),
@@ -596,21 +596,21 @@ struct VecBoolBehaviorTests {
             contentsOf: [VecBoolItem([]),
                          VecBoolItem([true, false, false])
                         ])
-       
+
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [] -3 .vecBoolTake )")
-        
+
         doThis(.vecBoolPop, to: inty)
-        
+
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, false, false] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 99 .vecBoolTake )")
-        
+
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 1 .vecBoolTake )")
-        
+
         doThis(.vecBoolTake, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [] ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true] -1 .vecBoolTake )")

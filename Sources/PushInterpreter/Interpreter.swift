@@ -39,19 +39,19 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // INHERITED, loosely after propeller's limits.cljc:
     //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     // None of these six was chosen here on its own merits.
-    public var stepLimit       : Int = 1_000
-    public var maxStackDepth   : Int = 10_000
-    public var maxStringLength : Int = 1_000
-    public var maxVectorLength : Int = 1_000
-    public var maxCodePoints   : Int = 1_000
-    public var maxCodeDepth    : Int = 1_000
+    public var stepLimit: Int = 1_000
+    public var maxStackDepth: Int = 10_000
+    public var maxStringLength: Int = 1_000
+    public var maxVectorLength: Int = 1_000
+    public var maxCodePoints: Int = 1_000
+    public var maxCodeDepth: Int = 1_000
     // CHOSEN. Total recursive content (Item.weight) allowed in a single pushed
     // item. Supplements the per-dimension caps above to bound nested content — a
     // vector of long strings, or code whose leaves are large — that the
     // count-only caps cannot see. The number is a policy: large enough not to
     // refuse anything the per-dimension caps already allow, small enough to catch
     // their product. Nothing else depends on it.
-    public var maxItemWeight   : Int = 100_000
+    public var maxItemWeight: Int = 100_000
     // CHOSEN, and the most forgiving number here: over-budget provenance is
     // ELIDED rather than refused, and eliding costs the explanation but never the
     // value — the elided history is replaced by a stand-in (`StandInItem`), a
@@ -66,7 +66,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // as the crux, which builds each shared node once (`CruxSharing`), and kept
     // if that fits. That used to be
     // the last unbounded dimension in the system.
-    public var maxCallWeight   : Int = 10_000
+    public var maxCallWeight: Int = 10_000
     // DERIVED from the stack a concurrency worker thread gets (512 KB), and NOT a
     // preference. The deepest provenance a pushed item may keep, elided like
     // `maxCallWeight`. Weight bounds a call tree's size, not its depth (a chain
@@ -75,7 +75,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // releasing a 2,463-deep tree on a worker thread, and dropping a 5,000-deep
     // chain there crashes outright (2,000 does not). 1,000 leaves room for frames
     // larger than that measurement's. Raise it only for runs on big-stack threads.
-    public var maxCallDepth    : Int = 1_000
+    public var maxCallDepth: Int = 1_000
     // (`maxIterations`, which clamped a counted loop's promised passes to 100 so
     // that it finished and its crux could be read back, was deleted 2026-11-08:
     // a crux folds a loop's chain into a counted loop over its seed,
@@ -167,18 +167,18 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
 
 
 nonisolated final class Interpreter {
-    
+
     static func integrateBehaviors(
-        fromThese: [PushInstruction:Behavior],
-        intoLanguage: inout [PushInstruction:Behavior]) {
+        fromThese: [PushInstruction: Behavior],
+        intoLanguage: inout [PushInstruction: Behavior]) {
         intoLanguage.merge(fromThese, uniquingKeysWith: { (first, _) in first })
     }
-        
+
     /// Built exactly once, on first access, and shared by every `Interpreter`.
     /// Safe to share because `Behavior`s hold no per-invocation mutable state
     /// (see `Behavior.act`); this replaces the former per-instance rebuild.
     static let language: [PushInstruction: Behavior] = {
-        var starter:[PushInstruction: Behavior] = [:]
+        var starter: [PushInstruction: Behavior] = [:]
 
         integrateBehaviors(fromThese: boolBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: charBehaviors, intoLanguage: &starter)
@@ -207,8 +207,8 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: vectorSharedBehaviors, intoLanguage: &starter)
         return starter
     }()
-    
-    
+
+
     static let defaultSettings = InterpreterSettings()
 
     /// `language` as an array-backed table, built once and shared by every
@@ -239,7 +239,7 @@ nonisolated final class Interpreter {
     /// `.error`. A function run in a sub-interpreter returns the top of this
     /// stack, "the last thing it produced" (map, filter and reduce). One store
     /// per push.
-    @exclusivity(unchecked) var lastPush: PushStack? = nil
+    @exclusivity(unchecked) var lastPush: PushStack?
     /// The next fresh `.binding` key. Reset at every load to the number
     /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`
     /// for each key a context read draws (`ReadContext.freshKey`).
@@ -247,7 +247,7 @@ nonisolated final class Interpreter {
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
     @exclusivity(unchecked) var lastRunawayCheck = -1
-    var inputs: [PushInstruction:any Item] = [:]
+    var inputs: [PushInstruction: any Item] = [:]
     // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
     // the constant behavior emits an ErrorItem for that case at runtime, so no
@@ -309,7 +309,7 @@ nonisolated final class Interpreter {
     var recorderNames: [String] {
         recorders.keys.sorted()
     }
-    
+
     init(stacks: StackSet = PushStack.emptyStacks()) {
         self.stacks = stacks
         self.recomputeLiveWeight()
@@ -564,8 +564,8 @@ nonisolated final class Interpreter {
         stacks[stack]!.removeAll()
     }
 
-    func load(inputs: [PushInstruction:any Item] = [:],
-              constants: [PushInstruction:any Item] = [:],
+    func load(inputs: [PushInstruction: any Item] = [:],
+              constants: [PushInstruction: any Item] = [:],
               stacks initial: [PushStack: [any Item]] = [:],
               program: [any Item] = [],
               recorders: [AnyRecorder] = []) {
@@ -576,7 +576,7 @@ nonisolated final class Interpreter {
         self.nextRefKey = Self.inputSlots.count
 
         // inputs and constants (both keyed by instruction token)
-        for (key,value) in inputs {
+        for (key, value) in inputs {
             self.inputs[key] = value
         }
         loadConstants(constants)
@@ -590,7 +590,7 @@ nonisolated final class Interpreter {
             let accepted = items.filter { self.requireAccepts($0, on: stack) }
             self.stacks[stack]!.prepend(contentsOf: accepted)
         }
-        
+
         bindInputs()
 
         // program to run
@@ -603,7 +603,7 @@ nonisolated final class Interpreter {
         // Anchor the incremental total to the freshly-loaded stacks.
         self.recomputeLiveWeight()
     }
-    
+
     /// The input instructions, by slot: `.input0` is slot 0. Derived from the
     /// instruction set, never written as a count, since the number of slots is
     /// not fixed.
@@ -697,7 +697,7 @@ nonisolated final class Interpreter {
         // enforce config size limits
     }
 
-    func run(inputs: [PushInstruction:any Item],
+    func run(inputs: [PushInstruction: any Item],
              stacks initial: [PushStack: [any Item]],
              program: [any Item],
              stepLimit: Int? = nil) {
@@ -750,12 +750,12 @@ nonisolated final class Interpreter {
             recorder.reset()
         }
     }
-    
+
 }
 
 
 nonisolated extension Interpreter {
-    
+
     /// Routes a literal popped off `.exec` to its own stack. `step` intercepts
     /// `CodeItem` and `InstructionItem` before this is reached, so the `.error`
     /// fallback catches only items that rest nowhere — which reaching here at
@@ -778,4 +778,3 @@ nonisolated extension Interpreter {
         return result
     }
 }
-

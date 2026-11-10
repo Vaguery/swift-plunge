@@ -11,7 +11,7 @@ import DequeModule
 
 @Suite @MainActor
 struct InputBehaviorTests {
-    
+
    let inty = Interpreter.recordingProvenance()
 
     @Test func `input records its history`() {
@@ -25,12 +25,12 @@ struct InputBehaviorTests {
 
     @Test func `inputs works when defined`() {
         inty.inputs[.input3] = IntItem(17)
-        
+
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.input3]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ 17 ]")
     }
-    
+
     @Test func `inputs works when undefined`() {
 
         #expect(stackString(inty, .exec) == "[ ]")

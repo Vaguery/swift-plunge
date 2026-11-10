@@ -9,7 +9,7 @@ import Foundation
 import DequeModule
 
 
-public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable, Codable, Sendable {
+public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, Codable, Sendable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
     case iterator
@@ -27,10 +27,10 @@ public nonisolated enum PushStack : String, CaseIterable, Comparable & Hashable,
         }
     }
 
-    
+
     static let allStacks = PushStack.allCases.sorted(by: {$0 < $1})
-    
-    
+
+
     static func emptyStacks() -> StackSet {
         StackSet()
     }
@@ -333,4 +333,3 @@ nonisolated extension PushStack {
     /// This stack's `Pop` instruction. Every stack has one.
     var popInstruction: PushInstruction { required(Self.popByOrdinal, "Pop") }
 }
-

@@ -118,6 +118,6 @@ nonisolated extension Interpreter {
         .errorStackDepth: errorStackDepth_Behavior,
         .errorMissingArgCount: errorMissingArgCount_Behavior,
         .errorMissingInputCount: errorMissingInputCount_Behavior,
-        .errorMissingConstantCount: errorMissingConstantCount_Behavior,
+        .errorMissingConstantCount: errorMissingConstantCount_Behavior
     ]
 }

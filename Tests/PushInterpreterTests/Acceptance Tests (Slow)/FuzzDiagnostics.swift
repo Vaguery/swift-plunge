@@ -134,8 +134,11 @@ nonisolated func renderProgram(_ program: [any Item], width: Int = 96, indent: S
 nonisolated func referencedInstructions(_ items: [any Item]) -> Set<PushInstruction> {
     var out: Set<PushInstruction> = []
     for item in items {
-        if let instr = item as? InstructionItem { out.insert(instr.value) }
-        else if let code = item as? CodeItem { out.formUnion(referencedInstructions(code.value)) }
+        if let instr = item as? InstructionItem {
+            out.insert(instr.value)
+        } else if let code = item as? CodeItem {
+            out.formUnion(referencedInstructions(code.value))
+        }
     }
     return out
 }

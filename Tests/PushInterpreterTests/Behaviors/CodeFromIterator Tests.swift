@@ -89,7 +89,7 @@ struct CodeFromIteratorTests {
                     emits: true
                 ),
                 "[ ( [1, 2] [1, 2] ) ]"
-            ),
+            )
         ]
         for (what, iterator, expected) in cases {
             let inty = loaded(iterator)
@@ -117,7 +117,7 @@ struct CodeFromIteratorTests {
             IntItem(0), IntItem(0),
             BoolItem(true), CodeItem([]),
             InstructionItem(.iteratorFromIntRange),
-            InstructionItem(.codeFromIterator),
+            InstructionItem(.codeFromIterator)
         ])
         inty.run()
 

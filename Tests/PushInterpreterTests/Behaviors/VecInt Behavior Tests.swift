@@ -13,43 +13,43 @@ import DequeModule
 struct VecIntBehaviorTests {
 
     var inty = Interpreter.recordingProvenance()
-    
-    
+
+
     @Test func vecIntButLast() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([1,2,3]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([1, 2, 3]),
+                         VecIntItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecIntButLast, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] [1, 2, 3] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [] .vecIntButLast )")
 
         doThis(.vecIntPop, to: inty)
-        
+
         doThis(.vecIntButLast, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [1, 2] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [1, 2, 3] .vecIntButLast )")
-        
+
         doThis(.vecIntPop, to: inty)
-        
+
         doThis(.vecIntButLast, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 99] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] .vecIntButLast )")
     }
-    
+
     @Test func vecIntConcat() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([1,2,3]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([1, 2, 3]),
+                         VecIntItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecIntConcat, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [1, 2, 3] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [1, 2, 3] [] .vecIntConcat )")
-        
+
         doThis(.vecIntConcat, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 99, 999, 1, 2, 3] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] [1, 2, 3] .vecIntConcat )")
@@ -59,7 +59,7 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [-3, 0, 1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntConj, to: inty)
@@ -101,7 +101,7 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [-3, 0, 1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntDrop, to: inty)
@@ -122,7 +122,7 @@ struct VecIntBehaviorTests {
     @Test func vecIntFirst() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntFirst, to: inty)
@@ -158,7 +158,7 @@ struct VecIntBehaviorTests {
         // Non-destructive: reads the vector, leaves it, and the crux pops it.
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntItemIsEmpty, to: inty)
@@ -176,7 +176,7 @@ struct VecIntBehaviorTests {
     @Test func `vecIntIterate records provenance only for its derived results`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([4, 55]),
+            contentsOf: [VecIntItem([4, 55])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -230,7 +230,7 @@ struct VecIntBehaviorTests {
     @Test func `vecIntIterate works for >1 item`() {
         loadBools(inty, bools: [false])
         inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([4, 55]),
+            contentsOf: [VecIntItem([4, 55])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -272,7 +272,7 @@ struct VecIntBehaviorTests {
 
     @Test func `vecIntIterate works for empty`() {
         inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([]),
+            contentsOf: [VecIntItem([])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -292,7 +292,7 @@ struct VecIntBehaviorTests {
 
     @Test func `vecIntIterate works for one item`() {
         inty.stacks[.vecInt]!.prepend(
-            contentsOf: [VecIntItem([88]),
+            contentsOf: [VecIntItem([88])
                         ])
         // The mouse is a block on `.code` now: an iterate takes its body as a
         // code argument, so it must already be resting there when it fires.
@@ -318,7 +318,7 @@ struct VecIntBehaviorTests {
     @Test func vecIntLast() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntLast, to: inty)
@@ -332,9 +332,9 @@ struct VecIntBehaviorTests {
     @Test func vecIntLength() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
-        
+
         // Non-destructive: the vector is read, not consumed. It stays on .vecInt,
         // and the crux pops what it read so it still reproduces only the count.
         doThis(.vecIntLength, to: inty)
@@ -354,8 +354,8 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [-3, 1, 7777])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999]),
+                         VecIntItem([9, 99, 999])
                         ])
 
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] [9, 99, 999] ]")
@@ -418,7 +418,7 @@ struct VecIntBehaviorTests {
     @Test func vecIntPushAll() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([1,22,333]),
+                         VecIntItem([1, 22, 333])
                         ])
 
         // An empty vector yields nothing at all — not even an iterator.
@@ -516,7 +516,7 @@ struct VecIntBehaviorTests {
             IntItem(2), IntItem(3), InstructionItem(.intAdd),      // 5
             IntItem(10), IntItem(4), InstructionItem(.intSubtract), // 6
             VecIntItem([0, 0]),
-            InstructionItem(.vecIntConstruct),
+            InstructionItem(.vecIntConstruct)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -534,8 +534,8 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [9, 9, -99])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,8,7,6,9]),
-                         VecIntItem([9,9,9,9,9])
+                         VecIntItem([9, 8, 7, 6, 9]),
+                         VecIntItem([9, 9, 9, 9, 9])
                         ])
 
         doThis(.vecIntRemove, to: inty)
@@ -559,8 +559,8 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [1, 9, 1, 9, 2, 9])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,8,7,6,9]),
-                         VecIntItem([9,9,9,9,9])
+                         VecIntItem([9, 8, 7, 6, 9]),
+                         VecIntItem([9, 9, 9, 9, 9])
                         ])
 
         doThis(.vecIntReplace, to: inty)
@@ -584,8 +584,8 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [1, 9, 1, 9, 3, 9])
        inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,8,7,6,9]),
-                         VecIntItem([9,9,9,9,9])
+                         VecIntItem([9, 8, 7, 6, 9]),
+                         VecIntItem([9, 9, 9, 9, 9])
                         ])
 
         doThis(.vecIntReplaceFirst, to: inty)
@@ -608,13 +608,13 @@ struct VecIntBehaviorTests {
     @Test func vecIntRest() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecIntRest, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [] .vecIntRest )")
-        
+
         doThis(.vecIntPop, to: inty)
 
         doThis(.vecIntRest, to: inty)
@@ -625,13 +625,13 @@ struct VecIntBehaviorTests {
     @Test func vecIntReverse() {
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
-        
+
         doThis(.vecIntReverse, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [] .vecIntReverse )")
-        
+
         doThis(.vecIntPop, to: inty)
 
         doThis(.vecIntReverse, to: inty)
@@ -643,8 +643,8 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [1, 9, 3, 2222, 7, -1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,8,7,6,9]),
-                         VecIntItem([9,9,9,9,9])
+                         VecIntItem([9, 8, 7, 6, 9]),
+                         VecIntItem([9, 9, 9, 9, 9])
                         ])
 
         // An empty vector has no element to replace: an error, and the
@@ -670,9 +670,9 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [1, 9, 3, 2, 2, -1, 1, 1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,8,7,6,9]),
-                         VecIntItem([9,9,9,9,9]),
-                         VecIntItem([1,11,111,1111])
+                         VecIntItem([9, 8, 7, 6, 9]),
+                         VecIntItem([9, 9, 9, 9, 9]),
+                         VecIntItem([1, 11, 111, 1111])
                         ])
 
         doThis(.vecIntSlice, to: inty)
@@ -702,19 +702,19 @@ struct VecIntBehaviorTests {
         loadInts(inty, ints: [-3, 99, 1])
         inty.stacks[.vecInt]!.prepend(
             contentsOf: [VecIntItem([]),
-                         VecIntItem([9,99,999])
+                         VecIntItem([9, 99, 999])
                         ])
 
         doThis(.vecIntTake, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [] [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [] -3 .vecIntTake )")
-        
+
         doThis(.vecIntPop, to: inty)
-        
+
         doThis(.vecIntTake, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9, 99, 999] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] 99 .vecIntTake )")
-        
+
         doThis(.vecIntTake, to: inty)
         #expect(stackString(inty, .vecInt) == "[ [9] ]")
         #expect(callString(topItem(inty, .vecInt)) == "( [9, 99, 999] 1 .vecIntTake )")

@@ -28,7 +28,7 @@ struct RecorderSpecTests {
     @Test func `addRecorders installs several at once`() {
         inty.addRecorders([
             RecorderSpec("topInt", observing: .top(.int)),
-            RecorderSpec("errCount", observing: .count(.error)),
+            RecorderSpec("errCount", observing: .count(.error))
         ])
         #expect(inty.recorderNames == ["errCount", "topInt"])
     }
@@ -43,7 +43,7 @@ struct RecorderSpecTests {
                     InstructionItem(.input0),
                     InstructionItem(.input1),
                     InstructionItem(.intAdd),
-                    InstructionItem(.intSwap),
+                    InstructionItem(.intSwap)
                   ])
         inty.run(stepLimit: 100)
 

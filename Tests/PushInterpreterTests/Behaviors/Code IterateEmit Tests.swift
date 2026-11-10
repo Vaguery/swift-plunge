@@ -32,14 +32,14 @@ struct CodeIterateEmitTests {
             "( 7 8 )",         // 1: subtree, whole
             "7",               // 2: bare leaf
             "8",               // 3: bare leaf
-            "9",               // 4: bare leaf
+            "9"               // 4: bare leaf
         ])
     }
 
     @Test func `boxed still wraps its leaves`() {
         // Contrast: the original codeIterate mode boxes every leaf.
         #expect(emitted(tree, .boxed) == [
-            "( ( 7 8 ) 9 )", "( 7 8 )", "( 7 )", "( 8 )", "( 9 )",
+            "( ( 7 8 ) 9 )", "( 7 8 )", "( 7 )", "( 8 )", "( 9 )"
         ])
     }
 
@@ -49,7 +49,7 @@ struct CodeIterateEmitTests {
         inty.load(program: [
             tree,             // deeper
             CodeItem([]),     // empty mouse, on top
-            InstructionItem(.codeIterateEmit),
+            InstructionItem(.codeIterateEmit)
         ])
         inty.run()
         // Leaves 7, 8, 9 route to .int, front-to-back (9 emitted last, on top).
@@ -64,7 +64,7 @@ struct CodeIterateEmitTests {
         inty.load(program: [
             tree,
             CodeItem([]),
-            InstructionItem(.codeIterateDo),
+            InstructionItem(.codeIterateDo)
         ])
         inty.run()
         // Every point is sent through .codeDo. The blocks unwrap:

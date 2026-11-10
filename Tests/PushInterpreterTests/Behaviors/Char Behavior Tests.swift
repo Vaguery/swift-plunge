@@ -17,7 +17,7 @@ struct CharBehaviorTests {
     /// Character codes are Unicode scalar values; a double is
     /// truncated toward zero first.
     @Test func charFromDouble() {
-        loadDoubles(inty, doubles: [65,97,32,91.5])
+        loadDoubles(inty, doubles: [65, 97, 32, 91.5])
         #expect(stackString(inty, .double) == "[ 65.0 97.0 32.0 91.5 ]")
 
         doThis(.charFromDouble, to: inty)
@@ -61,7 +61,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charFromInt() {
-        loadInts(inty, ints: [65,97,32,8364])
+        loadInts(inty, ints: [65, 97, 32, 8364])
         #expect(stackString(inty, .int) == "[ 65 97 32 8364 ]")
 
         doThis(.charFromInt, to: inty)
@@ -102,7 +102,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charGT() {
-        loadChars(inty, chars: ["g","d","b","x","&","&"])
+        loadChars(inty, chars: ["g", "d", "b", "x", "&", "&"])
         #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charGT, to: inty)
@@ -123,7 +123,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charGTE() {
-        loadChars(inty, chars: ["g","d","b","x","&","&"])
+        loadChars(inty, chars: ["g", "d", "b", "x", "&", "&"])
         #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charGTE, to: inty)
@@ -144,7 +144,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charIsDigit() {
-        loadChars(inty, chars: ["1","q","2️⃣","७"])
+        loadChars(inty, chars: ["1", "q", "2️⃣", "७"])
         #expect(stackString(inty, .char) == "[ '1' 'q' '2️⃣' '७' ]")
 
         doThis(.charIsDigit, to: inty)
@@ -218,7 +218,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charLT() {
-        loadChars(inty, chars: ["g","d","b","x","&","&"])
+        loadChars(inty, chars: ["g", "d", "b", "x", "&", "&"])
         #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charLT, to: inty)
@@ -239,7 +239,7 @@ struct CharBehaviorTests {
     }
 
     @Test func charLTE() {
-        loadChars(inty, chars: ["g","d","b","x","&","&"])
+        loadChars(inty, chars: ["g", "d", "b", "x", "&", "&"])
         #expect(stackString(inty, .char) == "[ 'g' 'd' 'b' 'x' '&' '&' ]")
 
         doThis(.charLTE, to: inty)

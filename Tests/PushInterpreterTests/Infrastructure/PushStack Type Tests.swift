@@ -17,29 +17,29 @@ struct PushStackTypeTests {
 
     /// One representative Item per homogeneous stack, paired with its home stack.
     static let homogeneousSamples: [(item: any Item, home: PushStack)] = [
-        (BoolItem(true),            .bool),
-        (IntItem(1),                .int),
-        (DoubleItem(1.0),           .double),
-        (CharItem(Character("a")),  .char),
-        (StringItem("x"),           .string),
-        (CodeItem([]),              .code),
-        (VecBoolItem([]),           .vecBool),
-        (VecIntItem([]),            .vecInt),
-        (VecDoubleItem([]),         .vecDouble),
-        (VecStringItem([]),         .vecString),
+        (BoolItem(true), .bool),
+        (IntItem(1), .int),
+        (DoubleItem(1.0), .double),
+        (CharItem(Character("a")), .char),
+        (StringItem("x"), .string),
+        (CodeItem([]), .code),
+        (VecBoolItem([]), .vecBool),
+        (VecIntItem([]), .vecInt),
+        (VecDoubleItem([]), .vecDouble),
+        (VecStringItem([]), .vecString),
         (IteratorItem(
             kind: .counting(stride: 1),
             origin: IntItem(0),
             destination: IntItem(3),
             body: CodeItem([]),
             emits: true
-        ),                          .iterator),
-        (ErrorItem("boom"),         .error),
+        ), .iterator),
+        (ErrorItem("boom"), .error)
     ]
 
     /// Items that only ever live on the heterogeneous `.exec` stack.
     static let execOnlySamples: [any Item] = [
-        InstructionItem(.intAdd),
+        InstructionItem(.intAdd)
     ]
 
     // MARK: isHeterogeneous

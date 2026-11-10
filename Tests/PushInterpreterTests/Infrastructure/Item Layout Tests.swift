@@ -27,7 +27,7 @@ struct ItemLayoutTests {
         ("VecIntItem", MemoryLayout<VecIntItem>.size),
         ("VecDoubleItem", MemoryLayout<VecDoubleItem>.size),
         ("VecBoolItem", MemoryLayout<VecBoolItem>.size),
-        ("VecStringItem", MemoryLayout<VecStringItem>.size),
+        ("VecStringItem", MemoryLayout<VecStringItem>.size)
     ])
     func `fits an existential's inline buffer`(type: String, size: Int) {
         #expect(size <= Self.inlineCapacity, "\(type) is \(size) bytes; over \(Self.inlineCapacity) it is heap-boxed")

@@ -13,7 +13,7 @@ import Testing
 @Suite @MainActor
 struct CruxTests {
 
-    func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
+    func stackString(_ interpreter: Interpreter, _ stack: PushStack) -> String {
         var result = "["
         let s = interpreter.stacks[stack]!
         for item in s {
@@ -27,7 +27,7 @@ struct CruxTests {
         interpreter.stacks[stack]!.first!
     }
 
-    func doThis(_ instruction:PushInstruction, to interpreter: Interpreter) {
+    func doThis(_ instruction: PushInstruction, to interpreter: Interpreter) {
         Interpreter.language[instruction]!.act(on: interpreter)
     }
 
@@ -47,7 +47,7 @@ struct CruxTests {
 
     @Test func `crux can work on a flat tree`() {
         let tree1 = IntItem(1,
-                           call:[
+                           call: [
                             IntItem(1),
                             IntItem(2),
                             CodeItem([
@@ -72,20 +72,20 @@ struct CruxTests {
             PushInstruction.intMultiply,
             PushInstruction.intQuote,
             PushInstruction.intQuote,
-            PushInstruction.codeConcat,
+            PushInstruction.codeConcat
         ] as [Any]
         let prog2 = buildProgram(treeProg)
         let tree = CodeItem(prog2)
         #expect(CodeItem(tree.crux()).pretty() == "( ( 1 11 .intAdd 3 33 .intMultiply .intQuote .intQuote .codeConcat ) )")
 
-        inty.load(program:prog2)
+        inty.load(program: prog2)
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 12 ) ]")
 
         let answer1 = (topItem(inty, .code) as! CodeItem)
         #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 1 11 .intAdd .intQuote .codeConcat )")
 
-        inty.load(program:answer1.crux())
+        inty.load(program: answer1.crux())
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 12 ) ]")
         let answer2 = (topItem(inty, .code) as! CodeItem)
@@ -110,18 +110,18 @@ struct CruxTests {
             IntItem(3), IntItem(33), InstructionItem(.intMultiply),
             InstructionItem(.intQuote),
             InstructionItem(.intQuote),
-            InstructionItem(.codeConcat),
+            InstructionItem(.codeConcat)
         ]
         #expect(CodeItem(prog2).pretty() == "( ( 1 11 .intAdd ) ( 2 22 .intSubtract ) false .execIf 3 33 .intMultiply .intQuote .intQuote .codeConcat )")
 
-        inty.load(program:prog2)
+        inty.load(program: prog2)
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 -20 ) ]")
 
         let answer1 = (topItem(inty, .code) as! CodeItem)
         #expect(CodeItem(answer1.crux()).pretty() == "( 3 33 .intMultiply .intQuote 2 22 .intSubtract .intQuote .codeConcat )")
 
-        inty.load(program:answer1.crux())
+        inty.load(program: answer1.crux())
         inty.run()
         #expect(stackString(inty, .code) == "[ ( 99 -20 ) ]")
         let answer2 = (topItem(inty, .code) as! CodeItem)
@@ -129,4 +129,3 @@ struct CruxTests {
 
     }
 }
-

@@ -31,7 +31,7 @@ struct RunnerCodableTests {
                 InstructionItem(.input0),
                 InstructionItem(.int0),
                 InstructionItem(.intAdd),
-                CodeItem([IntItem(1), StringItem("x")]),
+                CodeItem([IntItem(1), StringItem("x")])
             ],
             constants: [.int0: IntItem(10), .string3: StringItem("hi")]
         )
@@ -60,7 +60,7 @@ struct RunnerCodableTests {
             traces: [
                 "topInt": .items([nil, AnyItem(IntItem(15))]),
                 "count": .ints([2, 1]),
-                "out": .strings(["", "7"]),
+                "out": .strings(["", "7"])
             ]
         )
         let restored = try roundTrip(result)

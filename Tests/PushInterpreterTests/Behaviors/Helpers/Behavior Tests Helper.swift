@@ -13,8 +13,8 @@ import Testing
 // MARK: General helper functions
 //
 
-@MainActor 
-    public func stackString(_ interpreter:Interpreter, _ stack:PushStack) -> String {
+@MainActor
+    public func stackString(_ interpreter: Interpreter, _ stack: PushStack) -> String {
         var result = "["
         let s = interpreter.stacks[stack]!
         for item in s {
@@ -59,7 +59,7 @@ public func callString(_ item: any Item) -> String {
 /// recording on, and this checks that turning recording off — the default, and
 /// what a search runs — computes exactly the same thing.
 @MainActor
-    public func doThis(_ instruction:PushInstruction, to interpreter: Interpreter,
+    public func doThis(_ instruction: PushInstruction, to interpreter: Interpreter,
                        sourceLocation: SourceLocation = #_sourceLocation) {
         let twin = interpreter.config.recordsProvenance ? interpreter.offRecordingTwin() : nil
         Interpreter.language[instruction]!.act(on: interpreter)
@@ -72,7 +72,7 @@ public func callString(_ item: any Item) -> String {
     }
 
 @MainActor
-    public func doThisMany(times: Int, _ instruction:PushInstruction, to interpreter: Interpreter,
+    public func doThisMany(times: Int, _ instruction: PushInstruction, to interpreter: Interpreter,
                            sourceLocation: SourceLocation = #_sourceLocation) {
         for _ in 0..<times {
             doThis(instruction, to: interpreter, sourceLocation: sourceLocation)
@@ -171,6 +171,3 @@ public func callString(_ item: any Item) -> String {
         let newStack = strings.map({StringItem($0)})
         inty.stacks[.string]!.prepend(contentsOf: newStack)
     }
-
-
-

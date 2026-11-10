@@ -24,4 +24,3 @@ struct CodableTests {
         #expect(restored == program)
     }
 }
-

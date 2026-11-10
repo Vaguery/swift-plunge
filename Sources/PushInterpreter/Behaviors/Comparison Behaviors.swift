@@ -73,7 +73,7 @@ nonisolated extension Interpreter {
             .vecStringGT: vecStringGT_Behavior,
             .vecStringGTE: vecStringGTE_Behavior,
             .vecStringLT: vecStringLT_Behavior,
-            .vecStringLTE: vecStringLTE_Behavior,
+            .vecStringLTE: vecStringLTE_Behavior
         ], uniquingKeysWith: { first, _ in first })
 
         return result

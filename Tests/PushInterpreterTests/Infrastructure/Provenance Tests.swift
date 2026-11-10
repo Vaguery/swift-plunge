@@ -54,7 +54,7 @@ struct ProvenanceTests {
             // n passes, 0 through n − 1.
             IntItem(iterations),
             CodeItem(body),                    // lands on .code, waiting
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 20_000)
         return inty
@@ -100,7 +100,7 @@ struct ProvenanceTests {
         let inty = Interpreter.recordingProvenance()
         inty.config.stepLimit = 20_000
         inty.load(program: [
-            IntItem(60), IntItem(10), CodeItem([]), InstructionItem(.execDoRange),
+            IntItem(60), IntItem(10), CodeItem([]), InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 20_000)
 
@@ -141,7 +141,7 @@ struct ProvenanceTests {
     func midLoop() -> Interpreter {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
-            IntItem(0), IntItem(200), CodeItem([]), InstructionItem(.execDoRange),
+            IntItem(0), IntItem(200), CodeItem([]), InstructionItem(.execDoRange)
         ])
         for _ in 0..<4 { inty.step() }
         return inty
@@ -181,7 +181,7 @@ struct ProvenanceTests {
             IntItem(0),
             IntItem(iterations),
             CodeItem([InstructionItem(.intAdd)]),   // lands on .code, waiting
-            InstructionItem(.execDoRange),
+            InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 20_000)
         return inty
@@ -241,7 +241,7 @@ struct ProvenanceTests {
             var program: [any Item] = [
                 InstructionItem(.input0),
                 InstructionItem(.intDup),
-                InstructionItem(.intDup),
+                InstructionItem(.intDup)
             ]
             // Only the first group pops an `.int` position to act on.
             if takingAPosition.contains(shuffle) { program.append(IntItem(0)) }
@@ -289,7 +289,7 @@ struct ProvenanceTests {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(2), IntItem(3), InstructionItem(.intAdd),
-            InstructionItem(.intQuote),
+            InstructionItem(.intQuote)
         ])
         inty.run()
         let quoted = inty.stacks[.code]!.first!
@@ -367,7 +367,7 @@ struct ProvenanceTests {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             IntItem(10), IntItem(20), IntItem(30), IntItem(2),
-            InstructionItem(.intPopItems),
+            InstructionItem(.intPopItems)
         ])
         inty.run()
         #expect(stackString(inty, .int) == "[ 10 ]")
@@ -409,7 +409,7 @@ struct ProvenanceTests {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
             VecIntItem([10, 20, 30]), InstructionItem(.vecIntPushAll),
-            InstructionItem(.intAdd),
+            InstructionItem(.intAdd)
         ])
         inty.run()
         let sum = inty.stacks[.int]!.first! as! IntItem

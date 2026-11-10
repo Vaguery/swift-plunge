@@ -102,10 +102,15 @@ struct BehaviorIODeclarationTests {
             planner.commit(claims)
             ran += 1
             let before = Self.counts(inty)
+            #if DEBUG
+            // The stack watch exists in debug builds only.
             let watch = ReadContext.StackWatch(inty)
             let routers = ReadContext.$watch.withValue(watch) { behavior.computeResults(from: arguments, on: inty) }
             let undeclared = watch.stacks.subtracting(behavior.observes)
             #expect(undeclared.isEmpty, "looks at \(undeclared.sorted()) without declaring it in `observes`")
+            #else
+            let routers = behavior.computeResults(from: arguments, on: inty)
+            #endif
 
             let free: Set<PushStack> = switch behavior.produces {
             case .positions(let stack): [stack, .error]   // a copy refused at maxStackDepth

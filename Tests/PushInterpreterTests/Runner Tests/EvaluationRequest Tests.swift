@@ -65,7 +65,7 @@ struct EvaluationRequestTests {
         var request = addRequest()
         request.pairings = [
             Pairing(individual: "add", trainingCase: "c1"),
-            Pairing(individual: "ghost", trainingCase: "c1"),
+            Pairing(individual: "ghost", trainingCase: "c1")
         ]
         let results = await evaluate(request: request)
 

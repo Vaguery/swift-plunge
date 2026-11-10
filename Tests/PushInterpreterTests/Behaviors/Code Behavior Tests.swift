@@ -15,7 +15,7 @@ struct CodeBehaviorTests {
     let inty = Interpreter.recordingProvenance()
 
     @Test func codeConcat() {
-        loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]])
+        loadCode(inty, code: [1, [false, 2], ["abc", [false, 1.1]]])
         #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
 
         doThis(.codeConcat, to: inty)
@@ -52,7 +52,7 @@ struct CodeBehaviorTests {
     }
 
     @Test func `codeLengthRoot only measures in the code root`() {
-        loadCode(inty, code: [1, [false, 2], ["abc",[false, 1.1]]] )
+        loadCode(inty, code: [1, [false, 2], ["abc", [false, 1.1]]] )
         #expect(stackString(inty, .code) == "[ ( 1 ) ( false 2 ) ( \"abc\" ( false 1.1 ) ) ]")
 
         // Non-destructive: each read leaves its code, so pop between reads.
@@ -146,7 +146,7 @@ struct CodeBehaviorTests {
     }
 
     @Test func boolQuote() {
-        loadBools(inty, bools: [true , false])
+        loadBools(inty, bools: [true, false])
 
         #expect(stackString(inty, .bool) == "[ true false ]")
 
@@ -160,7 +160,7 @@ struct CodeBehaviorTests {
     }
 
     @Test func charQuote() {
-        loadChars(inty, chars: ["a" , "b"])
+        loadChars(inty, chars: ["a", "b"])
 
         #expect(stackString(inty, .char) == "[ 'a' 'b' ]")
 
@@ -174,7 +174,7 @@ struct CodeBehaviorTests {
     }
 
     @Test func stringQuote() {
-        loadStrings(inty, strings: ["aaa" , "bcd"])
+        loadStrings(inty, strings: ["aaa", "bcd"])
 
         #expect(stackString(inty, .string) == "[ \"aaa\" \"bcd\" ]")
 

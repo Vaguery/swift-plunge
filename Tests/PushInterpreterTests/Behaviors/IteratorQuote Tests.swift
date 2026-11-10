@@ -61,7 +61,7 @@ struct IteratorQuoteTests {
         inty.stacks[.iterator]!.prepend(counting(cursor: 2))
         inty.stacks[.exec] = Deque([
             InstructionItem(.iteratorQuote),
-            InstructionItem(.codeDo),
+            InstructionItem(.codeDo)
         ] as [any Item])
         inty.run()
 
@@ -81,7 +81,7 @@ struct IteratorQuoteTests {
             InstructionItem(.iteratorQuote),
             InstructionItem(.iteratorPlay),     // fires at an empty .iterator
             InstructionItem(.codeDo),           // unpark
-            InstructionItem(.iteratorPlay),     // and away it goes
+            InstructionItem(.iteratorPlay)     // and away it goes
         ] as [any Item])
         inty.run()
 
@@ -103,7 +103,7 @@ struct IteratorQuoteTests {
         inty.stacks[.exec] = Deque([
             InstructionItem(.iteratorQuote),
             InstructionItem(.codeDo),
-            InstructionItem(.iteratorPlay),
+            InstructionItem(.iteratorPlay)
         ] as [any Item])
         inty.run()
 

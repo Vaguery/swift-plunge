@@ -20,7 +20,7 @@ nonisolated extension Interpreter {
             // duplications of the block (law 1b — containment leaves no mark),
             // and the `.execWhile` and `.codeDo` tokens are freshly minted
             // (law 4). Nothing is derived, so nothing records a `call`.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
 
@@ -31,7 +31,7 @@ nonisolated extension Interpreter {
                 // until then it was discarded).
                 var results = [
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, body),
+                    Router(.exec, body)
                 ]
                 if !x.value { results.insert(Router(.exec, body), at: 0) }
 
@@ -229,7 +229,7 @@ nonisolated extension Interpreter {
 
         return [
             Router(.exec, InstructionItem(.iteratorPlay)),
-            Router(.iterator, iterator),
+            Router(.iterator, iterator)
         ]
     }
 
@@ -245,7 +245,7 @@ nonisolated extension Interpreter {
             // The chosen block RUNS — `.exec` top→bottom is chosen, .codeDo.
             // Selecting a block *without* running it is what the `.code`
             // combinators are for.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 // Argument order reverses when a code argument moves from `.exec`
                 // to `.code`: `.exec` was read forward from the program, but
                 // `.code` is a stack, so the LAST-written block is on top and
@@ -257,7 +257,7 @@ nonisolated extension Interpreter {
                 let result = x.value ? thenBlock : elseBlock
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, result),
+                    Router(.exec, result)
                 ]
             }
         )
@@ -273,14 +273,14 @@ nonisolated extension Interpreter {
             // value changes. The kept block runs, as it did when it was handed
             // back to `.exec`, which is why this is control: it writes the
             // continuation.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 // `K x y = x` keeps the first-written block, which off `.code`
                 // arrives as a[1] — see the note on `execIf` about the order
                 // reversing with the move from `.exec`.
                 let x = a[1]
                 return [
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, x),
+                    Router(.exec, x)
                 ]
             }
         )
@@ -297,13 +297,13 @@ nonisolated extension Interpreter {
             // `.exec` top→bottom: x, .codeDo, x, .execY — run the body, then
             // re-supply it to `.code` and recur. Routers are prepended one at a
             // time, so their order is the reverse of the resulting stack.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 let x = a[0]
                 return [
                     Router(.exec, InstructionItem(.execY)),
                     Router(.exec, x),
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, x),
+                    Router(.exec, x)
                 ]
             }
         )
@@ -322,7 +322,7 @@ nonisolated extension Interpreter {
             // top→bottom is x, z, y, z and every one of them is a block. The
             // `(y z)` grouping flattens harmlessly: `.exec` is flat, so `x z (y z)`
             // and `x z y z` execute identically.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 // Written `x y z .execS`, so off `.code` the top is z — see the
                 // note on `execIf` about the order reversing with the move from
                 // `.exec`.
@@ -337,7 +337,7 @@ nonisolated extension Interpreter {
                     Router(.exec, InstructionItem(.codeDo)),
                     Router(.exec, z),
                     Router(.exec, InstructionItem(.codeDo)),
-                    Router(.exec, x),
+                    Router(.exec, x)
                 ]
             }
         )
@@ -349,14 +349,14 @@ nonisolated extension Interpreter {
             takes: [.bool, .code],
             // Law 1: the block passes through untouched when the guard holds,
             // and runs. When it does not hold, it is discarded.
-            fxn: { a, recording in
+            fxn: { a, _ in
                 var (x, body) = (a[0] as! BoolItem, a[1])
                 var results = [Router]()
 
                 if x.value {
                     results = [
                         Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, body),
+                        Router(.exec, body)
                     ]
                 }
                 return results
@@ -378,7 +378,7 @@ nonisolated extension Interpreter {
             // next BOOL. A false guard ends the loop and returns the body to
             // `.code`, as every finished loop does (since 2026-11-09;
             // until then it was discarded).
-            fxn: { a, recording in
+            fxn: { a, _ in
                 let (x, body) = (a[0] as! BoolItem, a[1])
 
                 var results = [Router(.code, body)]
@@ -394,7 +394,7 @@ nonisolated extension Interpreter {
                         ),
                         Router(.exec, body),
                         Router(.exec, InstructionItem(.codeDo)),
-                        Router(.exec, body),
+                        Router(.exec, body)
                     ]
                 }
                 return results
@@ -404,17 +404,17 @@ nonisolated extension Interpreter {
             "Loops: runs the body while the top bool is true, taking a new bool before each pass; a false bool ends "
             + "the loop and returns the body to `.code`.")
 
-    static let execBehaviors:[PushInstruction : Behavior] =
+    static let execBehaviors: [PushInstruction: Behavior] =
     [
-        .execDoCount : execDoCount_Behavior,
-        .execDoRange : execDoRange_Behavior,
-        .execDoTimes : execDoTimes_Behavior,
-        .execDoWhile : execDoWhile_Behavior,
-        .execIf : execIf_Behavior,
-        .execK : execK_Behavior,
-        .execS : execS_Behavior,
-        .execWhen : execWhen_Behavior,
-        .execWhile : execWhile_Behavior,
-        .execY : execY_Behavior,
+        .execDoCount: execDoCount_Behavior,
+        .execDoRange: execDoRange_Behavior,
+        .execDoTimes: execDoTimes_Behavior,
+        .execDoWhile: execDoWhile_Behavior,
+        .execIf: execIf_Behavior,
+        .execK: execK_Behavior,
+        .execS: execS_Behavior,
+        .execWhen: execWhen_Behavior,
+        .execWhile: execWhile_Behavior,
+        .execY: execY_Behavior
     ]
 }

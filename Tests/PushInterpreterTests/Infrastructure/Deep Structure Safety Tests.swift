@@ -160,4 +160,3 @@ struct DeepStructureSafetyTests {
         #expect(length > 0)
     }
 }
-

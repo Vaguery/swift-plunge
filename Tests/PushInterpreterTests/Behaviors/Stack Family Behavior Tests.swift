@@ -41,7 +41,7 @@ struct StackFamilyBehaviorTests {
     }
 
     @Test func `combinator Dup works`() {
-        //MARK: verify this is what is expected
+        // MARK: verify this is what is expected
         loadInts(inty, ints: [11, 22])
         #expect(stackString(inty, .int) == "[ 11 22 ]")
 
@@ -52,7 +52,7 @@ struct StackFamilyBehaviorTests {
     /// The outcomes are exactly what they were; the copies simply arrive one per
     /// pass rather than all at once, so the loop has to run.
     @Test func `combinator DupItems works`() {
-        loadInts(inty, ints: [2,0,-5, 9])
+        loadInts(inty, ints: [2, 0, -5, 9])
         loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4])
         #expect(stackString(inty, .int) == "[ 2 0 -5 9 ]")
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")
@@ -89,7 +89,7 @@ struct StackFamilyBehaviorTests {
     }
 
     @Test func `combinator DupTimes works`() {
-        loadInts(inty, ints: [2,0,-5])
+        loadInts(inty, ints: [2, 0, -5])
         loadDoubles(inty, doubles: [1.1, 2.2, 3.3, 4.4])
         #expect(stackString(inty, .int) == "[ 2 0 -5 ]")
         #expect(stackString(inty, .double) == "[ 1.1 2.2 3.3 4.4 ]")

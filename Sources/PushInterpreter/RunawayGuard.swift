@@ -145,9 +145,13 @@ nonisolated extension Interpreter {
         var out: [Double] = []
         out.reserveCapacity(count)
         for item in deque.prefix(count) {
-            if let i = item as? IntItem { out.append(Double(i.value)) }
-            else if let d = item as? DoubleItem { out.append(d.value) }
-            else { return nil }
+            if let i = item as? IntItem {
+                out.append(Double(i.value))
+            } else if let d = item as? DoubleItem {
+                out.append(d.value)
+            } else {
+                return nil
+            }
         }
         return out
     }

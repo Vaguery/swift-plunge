@@ -188,7 +188,7 @@ nonisolated extension Interpreter {
 
             return [
                 .bury(InstructionItem(.iteratorPlay), depth: iterator.burial, under: payload),
-                .result(Router(.iterator, iterator.stepped(recording: recording))),
+                .result(Router(.iterator, iterator.stepped(recording: recording)))
             ]
         }
         .described(
@@ -233,7 +233,7 @@ nonisolated extension Interpreter {
                 // burial now stored on the iterator, and consume no more ints.
                 return [
                     .bury(InstructionItem(.iteratorPlay), depth: burial, under: payload),
-                    .result(Router(.iterator, iterator.stepped(recording: recording))),
+                    .result(Router(.iterator, iterator.stepped(recording: recording)))
                 ]
         }
         .described(
@@ -394,7 +394,7 @@ nonisolated extension Interpreter {
                 if let complaint = setting(&iterator, a[0]) {
                     return [
                         Router(.iterator, iterator),
-                        Router(.error, ErrorItem(complaint).observed(by: name, recording)),
+                        Router(.error, ErrorItem(complaint).observed(by: name, recording))
                     ]
                 }
                 // Nothing left to emit, so the loop is over — and hands its body
@@ -621,7 +621,7 @@ nonisolated extension Interpreter {
                     burial: burial.value,
                     call: recording([
                         origin, destination, stride, body, cursor, burial, emits,
-                        InstructionItem(.iteratorFromIntRange),
+                        InstructionItem(.iteratorFromIntRange)
                     ]))
                 return iteratorBuilt(iterator, by: .iteratorFromIntRange, recording)
             }
@@ -673,7 +673,7 @@ nonisolated extension Interpreter {
                     burial: burial.value,
                     call: recording([
                         origin, body, cursor, burial, emits,
-                        InstructionItem(name),
+                        InstructionItem(name)
                     ]))
                 return iteratorBuilt(iterator, by: name, recording)
             }
@@ -800,7 +800,7 @@ nonisolated extension Interpreter {
                     burial: burial.value,
                     call: recording([
                         origin, body, cursor, burial, emits,
-                        InstructionItem(name),
+                        InstructionItem(name)
                     ]))
                 return iteratorBuilt(iterator, by: name, recording)
             }
@@ -908,7 +908,7 @@ nonisolated extension Interpreter {
                     burial: burial.value,
                     call: recording([
                         box, count, cursor, burial,
-                        InstructionItem(name),
+                        InstructionItem(name)
                     ]))
                 return iteratorBuilt(iterator, by: name, recording)
             }
@@ -936,41 +936,41 @@ nonisolated extension Interpreter {
 
     static let iteratorBehaviors: [PushInstruction: Behavior] =
     [
-        .iteratorFromCodeRoot : iteratorFromCodeRoot_Behavior,
-        .iteratorFromCodeRootIntoExec : iteratorFromCodeRootIntoExec_Behavior,
-        .iteratorFromCode : iteratorFromCode_Behavior,
-        .iteratorFromCodeEmit : iteratorFromCodeEmit_Behavior,
-        .iteratorFromCodeDo : iteratorFromCodeDo_Behavior,
-        .iteratorRepeating : iteratorRepeating_Behavior,
-        .iteratorRepeatingIntoExec : iteratorRepeatingIntoExec_Behavior,
-        .iteratorFromString : iteratorFromString_Behavior,
-        .iteratorFromStringLetters : iteratorFromStringLetters_Behavior,
-        .iteratorFromStringWords : iteratorFromStringWords_Behavior,
-        .iteratorFromVecBool : iteratorFromVecBool_Behavior,
-        .iteratorFromVecDouble : iteratorFromVecDouble_Behavior,
-        .iteratorFromVecInt : iteratorFromVecInt_Behavior,
-        .iteratorOverString : iteratorOverString_Behavior,
-        .iteratorOverVecBool : iteratorOverVecBool_Behavior,
-        .iteratorOverVecInt : iteratorOverVecInt_Behavior,
-        .iteratorOverVecDouble : iteratorOverVecDouble_Behavior,
-        .iteratorOverVecString : iteratorOverVecString_Behavior,
-        .iteratorOverCodeRoot : iteratorOverCodeRoot_Behavior,
-        .iteratorFromVecString : iteratorFromVecString_Behavior,
-        .iteratorPeekBody : iteratorPeekBody_Behavior,
-        .iteratorPeekLaps : iteratorPeekLaps_Behavior,
-        .iteratorRestart : iteratorRestart_Behavior,
-        .iteratorSetStart : iteratorSetStart_Behavior,
-        .iteratorSetEnd : iteratorSetEnd_Behavior,
-        .iteratorSetCounter : iteratorSetCounter_Behavior,
-        .iteratorSetDepth : iteratorSetDepth_Behavior,
-        .iteratorSetLaps : iteratorSetLaps_Behavior,
-        .iteratorPeekEnd : iteratorPeekEnd_Behavior,
-        .iteratorFromIntRange : iteratorFromIntRange_Behavior,
-        .iteratorPlay : iteratorPlay_Behavior,
-        .iteratorPlayDelayed : iteratorPlayDelayed_Behavior,
-        .iteratorPopState : iteratorPopState_Behavior,
-        .iteratorPeekStart : iteratorPeekStart_Behavior,
-        .iteratorStep : iteratorStep_Behavior,
-        .iteratorPeekStride : iteratorPeekStride_Behavior,
+        .iteratorFromCodeRoot: iteratorFromCodeRoot_Behavior,
+        .iteratorFromCodeRootIntoExec: iteratorFromCodeRootIntoExec_Behavior,
+        .iteratorFromCode: iteratorFromCode_Behavior,
+        .iteratorFromCodeEmit: iteratorFromCodeEmit_Behavior,
+        .iteratorFromCodeDo: iteratorFromCodeDo_Behavior,
+        .iteratorRepeating: iteratorRepeating_Behavior,
+        .iteratorRepeatingIntoExec: iteratorRepeatingIntoExec_Behavior,
+        .iteratorFromString: iteratorFromString_Behavior,
+        .iteratorFromStringLetters: iteratorFromStringLetters_Behavior,
+        .iteratorFromStringWords: iteratorFromStringWords_Behavior,
+        .iteratorFromVecBool: iteratorFromVecBool_Behavior,
+        .iteratorFromVecDouble: iteratorFromVecDouble_Behavior,
+        .iteratorFromVecInt: iteratorFromVecInt_Behavior,
+        .iteratorOverString: iteratorOverString_Behavior,
+        .iteratorOverVecBool: iteratorOverVecBool_Behavior,
+        .iteratorOverVecInt: iteratorOverVecInt_Behavior,
+        .iteratorOverVecDouble: iteratorOverVecDouble_Behavior,
+        .iteratorOverVecString: iteratorOverVecString_Behavior,
+        .iteratorOverCodeRoot: iteratorOverCodeRoot_Behavior,
+        .iteratorFromVecString: iteratorFromVecString_Behavior,
+        .iteratorPeekBody: iteratorPeekBody_Behavior,
+        .iteratorPeekLaps: iteratorPeekLaps_Behavior,
+        .iteratorRestart: iteratorRestart_Behavior,
+        .iteratorSetStart: iteratorSetStart_Behavior,
+        .iteratorSetEnd: iteratorSetEnd_Behavior,
+        .iteratorSetCounter: iteratorSetCounter_Behavior,
+        .iteratorSetDepth: iteratorSetDepth_Behavior,
+        .iteratorSetLaps: iteratorSetLaps_Behavior,
+        .iteratorPeekEnd: iteratorPeekEnd_Behavior,
+        .iteratorFromIntRange: iteratorFromIntRange_Behavior,
+        .iteratorPlay: iteratorPlay_Behavior,
+        .iteratorPlayDelayed: iteratorPlayDelayed_Behavior,
+        .iteratorPopState: iteratorPopState_Behavior,
+        .iteratorPeekStart: iteratorPeekStart_Behavior,
+        .iteratorStep: iteratorStep_Behavior,
+        .iteratorPeekStride: iteratorPeekStride_Behavior
     ]
 }

@@ -25,7 +25,7 @@ struct DocumentationExamplesTests {
         })
         let cases = [
             TrainingCase(id: "three", inputs: [.input0: IntItem(3)]),
-            TrainingCase(id: "minus five", inputs: [.input0: IntItem(-5)]),
+            TrainingCase(id: "minus five", inputs: [.input0: IntItem(-5)])
         ]
 
         let runner = Runner(configuration: RunnerConfiguration(recorders: [

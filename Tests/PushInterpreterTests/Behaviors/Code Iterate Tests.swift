@@ -31,7 +31,7 @@ struct CodeIterateTests {
             "( 1 2 )",         // 1: subtree
             "( 1 )",           // 2: leaf 1, wrapped
             "( 2 )",           // 3: leaf 2, wrapped
-            "( 3 )",           // 4: leaf 3, wrapped
+            "( 3 )"           // 4: leaf 3, wrapped
         ])
     }
 
@@ -59,7 +59,7 @@ struct CodeIterateTests {
         inty.load(program: [
             CodeItem([IntItem(1), IntItem(2)]),   // the tree (deeper)
             CodeItem([]),                         // empty mouse (top)
-            InstructionItem(.codeIterate),
+            InstructionItem(.codeIterate)
         ])
         inty.run()
         // each point lands on .code; last emitted (the leaf 2 → (2)) on top

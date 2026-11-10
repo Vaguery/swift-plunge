@@ -30,7 +30,7 @@ struct AnyItemCodableTests {
             VecDoubleItem([1.0, 2.5]),
             VecIntItem([1, 2, 3]),
             VecStringItem(["a", "b"]),
-            ErrorItem("boom"),
+            ErrorItem("boom")
         ]
         for leaf in leaves {
             #expect(try roundTrip(leaf).isEqual(to: leaf))
@@ -117,7 +117,7 @@ struct AnyItemCodableTests {
         let program = CodeItem([
             IntItem(1),
             InstructionItem(.intAdd),
-            CodeItem([StringItem("x"), InstructionItem(.stringConcat)]),
+            CodeItem([StringItem("x"), InstructionItem(.stringConcat)])
         ])
         #expect(try roundTrip(program).isEqual(to: program))
     }
@@ -127,7 +127,7 @@ struct AnyItemCodableTests {
         let program: [any Item] = [
             InstructionItem(.input0),
             IntItem(7),
-            InstructionItem(.intAdd),
+            InstructionItem(.intAdd)
         ]
         let data = try JSONEncoder().encode(program.map(AnyItem.init))
         let restored = try JSONDecoder().decode([AnyItem].self, from: data).map(\.item)

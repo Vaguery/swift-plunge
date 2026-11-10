@@ -62,7 +62,7 @@ struct ExecBehaviorTests {
         inty.load(program: [
             IntItem(5),
             CodeItem([BoolItem(true)]),
-            InstructionItem(.execDoCount),
+            InstructionItem(.execDoCount)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -219,7 +219,7 @@ struct ExecBehaviorTests {
     @Test func `execDoRange indices record origin and offset`() {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [
-            IntItem(7), IntItem(4), CodeItem([]), InstructionItem(.execDoRange),
+            IntItem(7), IntItem(4), CodeItem([]), InstructionItem(.execDoRange)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -289,7 +289,7 @@ struct ExecBehaviorTests {
         inty.load(program: [
             IntItem(33),
             CodeItem([BoolItem(true)]),
-            InstructionItem(.execDoTimes),
+            InstructionItem(.execDoTimes)
         ])
         inty.run(stepLimit: 10_000)
 
@@ -439,10 +439,10 @@ struct ExecBehaviorTests {
         // 22 stay pending on `.exec` behind the instruction, as before.
         inty.stacks[.exec]!.prepend(contentsOf: [IntItem(33), IntItem(22)])
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
-        
+
         #expect(stackString(inty, .exec) == "[ 33 22 ]")
         #expect(stackString(inty, .bool) == "[ true false ]")
-        
+
         doThis(.execWhen, to: inty)
         #expect(stackString(inty, .exec) == "[ ( 44 ) .codeDo 33 22 ]")
         #expect(callString(topItem(inty, .exec)) == "( )")
@@ -497,9 +497,9 @@ struct ExecBehaviorTests {
         inty.stacks[.code]!.prepend(CodeItem([IntItem(44)]))
         inty.stacks[.code]!.prepend(CodeItem([BoolItem(true)]))
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1)]))
-        
+
         #expect(stackString(inty, .exec) == "[ ]")
-        
+
         // The `(.execY x)` continuation is pushed as two separate `.exec` items
         // rather than a CodeItem unwrapped on a later step, so each cycle of the
         // Y combinator now takes two steps instead of three.

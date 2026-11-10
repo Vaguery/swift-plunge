@@ -118,7 +118,7 @@ struct PlannerTests {
 
         let requirements: [Requirement] = [
             .takes(.vecInt),
-            .takesMany(.int, count: { args in (args[0] as! VecIntItem).value.count }),
+            .takesMany(.int, count: { args in (args[0] as! VecIntItem).value.count })
         ]
         let planner = Planner(for: inty)
         guard case .ready(let arguments, let claims) = planner.plan(requirements) else {
@@ -139,7 +139,7 @@ struct PlannerTests {
 
         let plan = Planner(for: inty).plan([
             .takes(.vecInt),
-            .takesMany(.int, count: { args in (args[0] as! VecIntItem).value.count }),
+            .takesMany(.int, count: { args in (args[0] as! VecIntItem).value.count })
         ])
 
         guard case .short(let stack) = plan else { Issue.record("two ints is not three"); return }

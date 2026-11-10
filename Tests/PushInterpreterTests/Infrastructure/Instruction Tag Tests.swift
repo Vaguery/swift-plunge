@@ -72,7 +72,7 @@ struct InstructionTagTests {
             .codeIterate, .codeIterateEmit, .codeIterateDo, .codeIterateRoot,
             .iteratorPlay, .iteratorPlayDelayed,
             .stringIterate,
-            .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
+            .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate
         ]
         #expect(Interpreter.instructions(declaring: .reEntrant) == expected)
         #expect(Interpreter.reEntrantInstructions == expected, "the runaway guard's set agrees")

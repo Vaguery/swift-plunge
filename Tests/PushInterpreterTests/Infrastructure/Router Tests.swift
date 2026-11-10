@@ -13,7 +13,7 @@ import Testing
 struct RouterTests {
 
     let inty = Interpreter()
-    
+
     @Test func `routing works`() {
         let r = Router(PushStack.int, IntItem(17) )
         inty.pushItem(r)

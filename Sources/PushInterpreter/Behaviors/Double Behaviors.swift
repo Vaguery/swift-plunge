@@ -270,28 +270,28 @@ nonisolated extension Interpreter {
         )
 
 
-    static let doubleBehaviors:[PushInstruction : Behavior] =
-        
+    static let doubleBehaviors: [PushInstruction: Behavior] =
+
         [
-            .doubleAdd : doubleAdd_Behavior,
-            .doubleCos : doubleCos_Behavior,
-            .doubleDec : doubleDec_Behavior,
-            .doubleDivide : doubleDivide_Behavior,
-            .doubleFromBool : doubleFromBool_Behavior,
-            .doubleFromChar : doubleFromChar_Behavior,
-            .doubleFromInt : doubleFromInt_Behavior,
-            .doubleFromString : doubleFromString_Behavior,
-            .doubleInc : doubleInc_Behavior,
-            .doubleMax : doubleMax_Behavior,
-            .doubleMin : doubleMin_Behavior,
-            .doublePeekMax : doublePeekMax_Behavior,
-            .doublePeekMin : doublePeekMin_Behavior,
-            .doubleMod : doubleMod_Behavior,
-            .doubleMultiply : doubleMultiply_Behavior,
-            .doubleQuot : doubleQuot_Behavior,
-            .doubleSin : doubleSin_Behavior,
-            .doubleSubtract : doubleSubtract_Behavior,
-            .doubleTan : doubleTan_Behavior,
+            .doubleAdd: doubleAdd_Behavior,
+            .doubleCos: doubleCos_Behavior,
+            .doubleDec: doubleDec_Behavior,
+            .doubleDivide: doubleDivide_Behavior,
+            .doubleFromBool: doubleFromBool_Behavior,
+            .doubleFromChar: doubleFromChar_Behavior,
+            .doubleFromInt: doubleFromInt_Behavior,
+            .doubleFromString: doubleFromString_Behavior,
+            .doubleInc: doubleInc_Behavior,
+            .doubleMax: doubleMax_Behavior,
+            .doubleMin: doubleMin_Behavior,
+            .doublePeekMax: doublePeekMax_Behavior,
+            .doublePeekMin: doublePeekMin_Behavior,
+            .doubleMod: doubleMod_Behavior,
+            .doubleMultiply: doubleMultiply_Behavior,
+            .doubleQuot: doubleQuot_Behavior,
+            .doubleSin: doubleSin_Behavior,
+            .doubleSubtract: doubleSubtract_Behavior,
+            .doubleTan: doubleTan_Behavior,
             .doubleAbs: doubleAbs_Behavior,
             .doubleNegate: doubleNegate_Behavior,
             .doubleSign: doubleSign_Behavior,
@@ -301,8 +301,7 @@ nonisolated extension Interpreter {
             .doubleLog: doubleLog_Behavior,
             .doubleFloor: doubleFloor_Behavior,
             .doubleCeil: doubleCeil_Behavior,
-            .doubleRound: doubleRound_Behavior,
+            .doubleRound: doubleRound_Behavior
         ]
-        
-}
 
+}

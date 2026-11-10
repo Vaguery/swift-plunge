@@ -436,7 +436,7 @@ nonisolated extension Behavior {
         for _ in 0..<max(0, producedAt) {
             result += [
                 InstructionItem(stack.swapInstruction),
-                InstructionItem(stack.popInstruction),
+                InstructionItem(stack.popInstruction)
             ]
         }
         return result
@@ -494,7 +494,7 @@ nonisolated extension Behavior {
                 for _ in 0..<count {
                     result += [
                         InstructionItem(stack.swapInstruction),
-                        InstructionItem(stack.popInstruction),
+                        InstructionItem(stack.popInstruction)
                     ]
                 }
             } else {
