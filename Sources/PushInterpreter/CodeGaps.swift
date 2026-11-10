@@ -17,7 +17,7 @@
 //      gap:              0   1      2   3      4       5   6      7 gaps
 //
 //  `gapCount` is `tokens.count + 1`, and an index is clamped to those gaps
-//  (`Position.gap`) — the same clamp `codeCutRootAtGap` uses, and for the same
+//  (`Position.gap`) — the same clamp `codeCutRoot` uses, and for the same
 //  reason it gives:
 //
 //  > Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
@@ -26,7 +26,7 @@
 //
 //  **The root's own boundary is deliberately not a token.** Excluding it is what
 //  keeps gap 0 meaning "before the first item" and gap N "after the last", exactly
-//  as at root level — so this generalizes `codeCutRootAtGap` rather than competing
+//  as at root level — so this generalizes `codeCutRoot` rather than competing
 //  with it. What the generalization adds is that interior gaps now reach *inside*
 //  nested blocks: above, gap 2 is the head of `( 2 3 )` and gap 4 is its tail.
 //  Head and tail are addressable at every level, not just the root's.
@@ -41,7 +41,7 @@
 //  So **every token sequence yields a CodeItem**, and nothing built on this can
 //  fail on a malformed intermediate. What that buys is the law the cut is designed
 //  around: no leaf is ever lost or reordered. What it costs is that nesting *on
-//  the cut path* changes, so unlike `codeCutRootAtGap`, cut-then-`codeConcat` is
+//  the cut path* changes, so unlike `codeCutRoot`, cut-then-`codeConcat` is
 //  not the identity for an interior cut. A block split in two cannot reassemble;
 //  that is a property of cutting trees, not a defect here.
 //
@@ -83,7 +83,7 @@ nonisolated extension CodeItem {
     var gapCount: Int { gapTokens.count + 1 }
 
     /// Any int, landed on a real gap by clamping (`Position.gap`), so the four gap
-    /// instructions cannot drift from each other or from `codeCutRootAtGap`.
+    /// instructions cannot drift from each other or from `codeCutRoot`.
     func gapIndex(_ n: Int) -> Int {
         Position.gap(n, count: gapCount - 1)
     }

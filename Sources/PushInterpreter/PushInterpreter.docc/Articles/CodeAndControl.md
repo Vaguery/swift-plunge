@@ -26,7 +26,7 @@ Code instructions address a block in three ways:
 - its **root items**, the items at its top level (`codeNthRoot`,
   `codeLengthRoot`);
 - its **points**, every node of the tree in order, the block itself first
-  (`codeNthPoint`, `codeLengthPoints`): `( ( 1 2 ) 3 )` has five points;
+  (`codeNthPoint`, `codeLength`): `( ( 1 2 ) 3 )` has five points;
 - its **gaps**, the places between items where something can be inserted or the
   block cut (`codeInsertAtGap`, `codeCutAtGap`).
 

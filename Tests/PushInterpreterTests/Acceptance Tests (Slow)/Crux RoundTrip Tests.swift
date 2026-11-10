@@ -171,7 +171,7 @@ struct CruxRoundTripTests {
     /// It held five entries until the CodeItem change landed, and all five closed
     /// at once:
     ///
-    /// - `codeConcat`, `codeEq`, `codeItemIsEmpty`, `codeWrapRoot` — a bare code
+    /// - `codeConcat`, `codeEq`, `codeItemIsEmpty`, `codeWrap` — a bare code
     ///   block used not to be its own crux. `crux()` returns `[self]` for an empty
     ///   `call`, and for every scalar that literal reproduces the value; a
     ///   `CodeItem` was the exception, because a block in a program unwrapped onto

@@ -79,20 +79,20 @@ struct CodeBehaviorTests {
         #expect(callString(topItem(inty, .int)) == "( ( ) .codeLengthRoot 1 .codePopItems )")
     }
 
-    @Test func `codeWrapRoot works with empty code`() {
+    @Test func `codeWrap works with empty code`() {
         loadCode(inty, code: [CodeItem([]) ] )
         #expect(stackString(inty, .code) == "[ ( ) ]")
 
-        doThis(.codeWrapRoot, to: inty)
+        doThis(.codeWrap, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
-        #expect(callString(topItem(inty, .code)) == "( ( ) .codeWrapRoot )")
+        #expect(callString(topItem(inty, .code)) == "( ( ) .codeWrap )")
     }
 
-    @Test func `codeWrapRoot works with non-empty code`() {
+    @Test func `codeWrap works with non-empty code`() {
         loadCode(inty, code: [ [1, [2.2, [3] ] ] ] )
         #expect(stackString(inty, .code) == "[ ( 1 ( 2.2 [3] ) ) ]")
 
-        doThis(.codeWrapRoot, to: inty)
+        doThis(.codeWrap, to: inty)
         #expect(stackString(inty, .code) == "[ ( ( 1 ( 2.2 [3] ) ) ) ]")
     }
 

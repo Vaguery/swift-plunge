@@ -51,7 +51,7 @@ struct ShortIteratorTests {
 
     @Test func `a code iterator takes its origin before its body`() {
         let origin = CodeItem([IntItem(2), IntItem(5)])
-        let inty = Self.run([origin, Self.square, InstructionItem(.iteratorOverCode),
+        let inty = Self.run([origin, Self.square, InstructionItem(.iteratorOverCodeRoot),
                              InstructionItem(.vecFromIterator)])
         #expect(stackString(inty, .vecInt) == "[ [4, 25] ]")
     }

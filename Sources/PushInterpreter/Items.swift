@@ -1068,7 +1068,7 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     /// never errs; this is the one case where no position exists.
     case emptyCollection
     /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOf`,
-    /// `.codeIndexOfPoint`, `.codeContainer`. These used to answer `-1` (which
+    /// `.codeIndexOf`, `.codeContainer`. These used to answer `-1` (which
     /// every index-taking instruction would then quietly accept) or nothing at all.
     case notFound
     /// A value with no counterpart in the target type: a string that is not a

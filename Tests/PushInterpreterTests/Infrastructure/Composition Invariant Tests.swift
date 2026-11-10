@@ -155,7 +155,7 @@ struct CompositionInvariantTests {
     // sibling. That left the rule stated, tested, and still broken for three whole
     // families, because nothing checked the instructions nobody had thought about:
     //
-    //  - **multi-result behaviors** (`.vecXCut`, `.stringCut`, `.codeCutRootAtGap`)
+    //  - **multi-result behaviors** (`.vecXCut`, `.stringCut`, `.codeCutRoot`)
     //    stranded the sibling result the selector did not want;
     //  - **the iterator collectors** (`.vecFromIterator`, `.codeFromIterator`) left
     //    the body their farewell hands back to `.code`;

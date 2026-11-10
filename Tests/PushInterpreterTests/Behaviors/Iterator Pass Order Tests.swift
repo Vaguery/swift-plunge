@@ -25,13 +25,13 @@ struct IteratorPassOrderTests {
 
     @Test func `an item emitted onto a data stack lands before the body runs`() {
         let inty = Self.run([CodeItem([IntItem(1), IntItem(2)]), CodeItem([IntItem(10)]), IntItem(0), IntItem(0),
-                             BoolItem(true), Self.op(.iteratorFromCode), Self.op(.iteratorPlay)])
+                             BoolItem(true), Self.op(.iteratorFromCodeRoot), Self.op(.iteratorPlay)])
         #expect(stackString(inty, .int) == "[ 10 2 10 1 ]", "pushed 1, 10, 2, 10")
     }
 
     @Test func `an item emitted onto exec runs before the body, too`() {
         let inty = Self.run([CodeItem([IntItem(1), IntItem(2)]), CodeItem([IntItem(10)]), IntItem(0), IntItem(0),
-                             BoolItem(true), Self.op(.iteratorFromCodeIntoExec), Self.op(.iteratorPlay)])
+                             BoolItem(true), Self.op(.iteratorFromCodeRootIntoExec), Self.op(.iteratorPlay)])
         #expect(stackString(inty, .int) == "[ 10 2 10 1 ]", "pushed 1, 10, 2, 10, as the data-stack form does")
     }
 

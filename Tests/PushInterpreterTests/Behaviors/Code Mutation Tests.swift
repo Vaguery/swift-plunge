@@ -5,8 +5,8 @@
 //  Created by Bill Tozier on 7/18/26.
 //
 //  Flatten and point-mutation transforms (they consume): codeFlatten,
-//  codeFlattenOnce, codeFlattenPoint, codeRemovePoint, codeReplaceAllPoints,
-//  codeReplaceFirstPoint.
+//  codeFlattenOnce, codeFlattenNth, codeRemoveNth, codeReplace,
+//  codeReplaceFirst.
 //
 
 @testable import PushInterpreter
@@ -45,27 +45,27 @@ struct CodeMutationTests {
 
     @Test func flattenPoint() {
         // flatten point 1, the (1 2) subtree — already flat, unchanged shape
-        let a = onTree(.codeFlattenPoint, tree, int: 1)
+        let a = onTree(.codeFlattenNth, tree, int: 1)
         #expect(stackString(a, .code) == "[ ( ( 1 2 ) 3 ) ]")
 
         // a nested subtree: ( (1 (2 3)) 4 ), flatten point 1 → ( (1 2 3) 4 )
         let nested = CodeItem([CodeItem([IntItem(1), CodeItem([IntItem(2), IntItem(3)])]), IntItem(4)])
-        let b = onTree(.codeFlattenPoint, nested, int: 1)
+        let b = onTree(.codeFlattenNth, nested, int: 1)
         #expect(stackString(b, .code) == "[ ( ( 1 2 3 ) 4 ) ]")
 
         // a leaf point is unchanged
-        let c = onTree(.codeFlattenPoint, tree, int: 2)
+        let c = onTree(.codeFlattenNth, tree, int: 2)
         #expect(stackString(c, .code) == "[ ( ( 1 2 ) 3 ) ]")
 
         // point 0 flattens the whole thing
-        let d = onTree(.codeFlattenPoint, nested, int: 0)
+        let d = onTree(.codeFlattenNth, nested, int: 0)
         #expect(stackString(d, .code) == "[ ( 1 2 3 4 ) ]")
     }
 
     @Test func removePoint() {
-        #expect(stackString(onTree(.codeRemovePoint, tree, int: 2), .code) == "[ ( ( 2 ) 3 ) ]")
-        #expect(stackString(onTree(.codeRemovePoint, tree, int: 1), .code) == "[ ( 3 ) ]", "whole subtree")
-        #expect(stackString(onTree(.codeRemovePoint, tree, int: 0), .code) == "[ ( ) ]", "root → empty")
+        #expect(stackString(onTree(.codeRemoveNth, tree, int: 2), .code) == "[ ( ( 2 ) 3 ) ]")
+        #expect(stackString(onTree(.codeRemoveNth, tree, int: 1), .code) == "[ ( 3 ) ]", "whole subtree")
+        #expect(stackString(onTree(.codeRemoveNth, tree, int: 0), .code) == "[ ( ) ]", "root → empty")
     }
 
     /// subject deepest, needle, replacement on top.
@@ -81,7 +81,7 @@ struct CodeMutationTests {
         // replacement ( 9 ) denotes the leaf 9. Every leaf-1 point in
         // ( 1 ( 1 2 ) 1 ) becomes 9.
         let subj = CodeItem([IntItem(1), CodeItem([IntItem(1), IntItem(2)]), IntItem(1)])
-        let inty = replace(.codeReplaceAllPoints, subj, CodeItem([IntItem(1)]), CodeItem([IntItem(9)]))
+        let inty = replace(.codeReplace, subj, CodeItem([IntItem(1)]), CodeItem([IntItem(9)]))
         #expect(stackString(inty, .code) == "[ ( 9 ( 9 2 ) 9 ) ]")
     }
 
@@ -90,22 +90,22 @@ struct CodeMutationTests {
         // replacement ( 9 ) denotes the leaf 9. Each ( 1 2 ) subtree → 9.
         let subj = CodeItem([CodeItem([IntItem(1), IntItem(2)]), CodeItem([IntItem(1), IntItem(2)])])
         let needle = CodeItem([IntItem(1), IntItem(2)])
-        let all = replace(.codeReplaceAllPoints, subj, needle, CodeItem([IntItem(9)]))
+        let all = replace(.codeReplace, subj, needle, CodeItem([IntItem(9)]))
         #expect(stackString(all, .code) == "[ ( 9 9 ) ]", "subtrees replaced by the leaf 9")
 
-        let first = replace(.codeReplaceFirstPoint, subj, needle, CodeItem([IntItem(9)]))
+        let first = replace(.codeReplaceFirst, subj, needle, CodeItem([IntItem(9)]))
         #expect(stackString(first, .code) == "[ ( 9 ( 1 2 ) ) ]", "only the first")
 
         // To replace a subtree WITH a singleton block, double-wrap the
         // replacement: (( 9 )) denotes the subtree ( 9 ).
-        let asBlock = replace(.codeReplaceAllPoints, subj, needle, CodeItem([CodeItem([IntItem(9)])]))
+        let asBlock = replace(.codeReplace, subj, needle, CodeItem([CodeItem([IntItem(9)])]))
         #expect(stackString(asBlock, .code) == "[ ( ( 9 ) ( 9 ) ) ]")
     }
 
     @Test func `mutation cruxes reproduce`() {
         for (instr, code, i) in [(PushInstruction.codeFlatten, tree, nil),
-                                 (.codeRemovePoint, tree, 2),
-                                 (.codeFlattenPoint, tree, 1)] as [(PushInstruction, CodeItem, Int?)] {
+                                 (.codeRemoveNth, tree, 2),
+                                 (.codeFlattenNth, tree, 1)] as [(PushInstruction, CodeItem, Int?)] {
             let inty = onTree(instr, code, int: i)
             let result = topItem(inty, .code)
             let redo = Interpreter.recordingProvenance()

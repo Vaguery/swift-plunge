@@ -52,9 +52,9 @@ struct ContainmentTests {
     }
 
     @Test func `a tree walk addresses by pre-order point`() {
-        let inty = run([InstructionItem(.input3), CodeItem([]), InstructionItem(.codeIterateEmitPoints)])
+        let inty = run([InstructionItem(.input3), CodeItem([]), InstructionItem(.codeIterateEmit)])
         let six = topItem(inty, .int)
-        #expect(six.crux().contains { ($0 as? InstructionItem)?.value == .codeEmitNthPoint })
+        #expect(six.crux().contains { ($0 as? InstructionItem)?.value == .codeEmitNth })
         #expect(holds(six))
     }
 
@@ -74,7 +74,7 @@ struct ContainmentTests {
         // `( 1 2 3 )` wrapped between gaps 1 and 3 is `( 1 ( 2 3 ) )`; the inner
         // block is new, and has no history of its own.
         let inty = run([CodeItem([IntItem(1), IntItem(2), IntItem(3)]), IntItem(1), IntItem(3),
-                        InstructionItem(.codeWrapPoints), InstructionItem(.codeDo)])
+                        InstructionItem(.codeWrapRange), InstructionItem(.codeDo)])
         let inner = topItem(inty, .code)
         #expect(inner.pretty() == "( 2 3 )")
         #expect(!inner.call.isEmpty)

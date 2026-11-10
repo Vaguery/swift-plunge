@@ -24,7 +24,7 @@ nonisolated extension Behavior {
                  tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
-    /// Control over arguments it reads and leaves (`codeEmitNthPoint`, …).
+    /// Control over arguments it reads and leaves (`codeEmitNth`, …).
     static func control(
         _ label: PushInstruction,
         reads: [PushStack],

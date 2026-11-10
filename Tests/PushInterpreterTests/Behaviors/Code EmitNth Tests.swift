@@ -24,7 +24,7 @@ struct CodeEmitNthTests {
 
     @Test func `emitNthPoint pushes a subtree whole onto code`() {
         let inty = Interpreter()
-        inty.load(program: [tree, IntItem(1), InstructionItem(.codeEmitNthPoint)])
+        inty.load(program: [tree, IntItem(1), InstructionItem(.codeEmitNth)])
         inty.run()
         // point 1 = ( 7 8 ) is a CodeItem, so it rests on .code whole, on top of
         // the (still-present, non-destructively read) original tree.
@@ -34,7 +34,7 @@ struct CodeEmitNthTests {
 
     @Test func `emitNthPoint routes a leaf point to its own stack`() {
         let inty = Interpreter()
-        inty.load(program: [tree, IntItem(2), InstructionItem(.codeEmitNthPoint)])
+        inty.load(program: [tree, IntItem(2), InstructionItem(.codeEmitNth)])
         inty.run()
         // point 2 = leaf 7 routes to .int, on top of the index 2.
         #expect(stackString(inty, .int) == "[ 7 2 ]")
@@ -45,7 +45,7 @@ struct CodeEmitNthTests {
 
     @Test func `doNthPoint runs a subtree's contents`() {
         let inty = Interpreter()
-        inty.load(program: [tree, IntItem(1), InstructionItem(.codeDoNthPoint)])
+        inty.load(program: [tree, IntItem(1), InstructionItem(.codeDoNth)])
         inty.run()
         // point 1 = ( 7 8 ) is unwrapped: 7 then 8 run onto .int, above index 1.
         #expect(stackString(inty, .int) == "[ 8 7 1 ]")
@@ -54,10 +54,10 @@ struct CodeEmitNthTests {
 
     @Test func `doNthPoint equals emitNthPoint on a leaf`() {
         let doInty = Interpreter()
-        doInty.load(program: [tree, IntItem(2), InstructionItem(.codeDoNthPoint)])
+        doInty.load(program: [tree, IntItem(2), InstructionItem(.codeDoNth)])
         doInty.run()
         let emitInty = Interpreter()
-        emitInty.load(program: [tree, IntItem(2), InstructionItem(.codeEmitNthPoint)])
+        emitInty.load(program: [tree, IntItem(2), InstructionItem(.codeEmitNth)])
         emitInty.run()
         #expect(stackString(doInty, .int) == stackString(emitInty, .int))
         #expect(stackString(doInty, .int) == "[ 7 2 ]")
@@ -105,7 +105,7 @@ struct CodeEmitNthTests {
     @Test func `index clamps to the point count`() {
         // 5 points; index 6 clamps to 4 → the leaf 9, which goes to `.int`.
         let inty = Interpreter()
-        inty.load(program: [tree, IntItem(6), InstructionItem(.codeEmitNthPoint)])
+        inty.load(program: [tree, IntItem(6), InstructionItem(.codeEmitNth)])
         inty.run()
         #expect(stackString(inty, .code) == "[ ( ( 7 8 ) 9 ) ]")
         #expect(stackString(inty, .int) == "[ 9 6 ]")

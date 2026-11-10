@@ -8,7 +8,7 @@
 import DequeModule
 
 // The `.code` instruction set is complete. The four gap-based ops that stood
-// unimplemented longest — codeCutAtGap, codeInsertAtGap, codeWrapPoints,
+// unimplemented longest — codeCutAtGap, codeInsertAtGap, codeWrapRange,
 // codeFlattenRange — are under "Tree-wide gap surgery" below, on the model in
 // `CodeGaps.swift`.
 
@@ -21,7 +21,7 @@ nonisolated extension Interpreter {
         .described("Concatenates two blocks' root items: `( a ) ( b c ) .codeConcat` gives `( a b c )`.")
 
     /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
-    /// `codeWrapRoot`, and Clojure's `list` with two arguments. Each argument is
+    /// `codeWrap`, and Clojure's `list` with two arguments. Each argument is
     /// **denoted** (singleton-unwrap): a one-element block contributes its bare
     /// element, so `( 1 ) ( 2 3 ) .codePair` → `( 1 ( 2 3 ) )`, not
     /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeConcat`, which concatenates
@@ -91,8 +91,8 @@ nonisolated extension Interpreter {
 
     /// The number of pre-order points in the whole tree, root included.
     /// `( (1 2) 3 )` → 5. (Contrast `codeLengthRoot`, the root `.value` count.)
-    static let codeLengthPoints_Behavior =
-        Behavior.operation(.codeLengthPoints, reads: CodeItem.self, gives: IntItem.self) { x in
+    static let codeLength_Behavior =
+        Behavior.operation(.codeLength, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).pointCount
         }
         .described("Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5.")
@@ -128,14 +128,14 @@ nonisolated extension Interpreter {
 
     /// The pre-order index of the first point equal to the target; an error if
     /// there is none (it used to answer −1).
-    static let codeIndexOfPoint_Behavior =
-        Behavior.operation(.codeIndexOfPoint, reads: CodeItem.self, CodeItem.self, gives: IntItem.self) { hay, needle throws(Refusal) in
+    static let codeIndexOf_Behavior =
+        Behavior.operation(.codeIndexOf, reads: CodeItem.self, CodeItem.self, gives: IntItem.self) { hay, needle throws(Refusal) in
             guard let found = CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) else {
-                throw Refusal("Not found in .codeIndexOfPoint", kind: .notFound)
+                throw Refusal("Not found in .codeIndexOf", kind: .notFound)
             }
             return found
         }
-        .described("Finds the first point of h equal to n, leaving both: `h n .codeIndexOfPoint`; a one-item n " +
+        .described("Finds the first point of h equal to n, leaving both: `h n .codeIndexOf`; a one-item n " +
                    "stands for its sole item; refuses when absent.")
 
     /// The block that directly contains the first point equal to the target —
@@ -267,10 +267,10 @@ nonisolated extension Interpreter {
         x.value.isEmpty ? nil : x.value[Position.item(i, count: x.value.count)]
     }
 
-    static let codeEmitNthPoint_Behavior = emitNthBehavior(.codeEmitNthPoint, point: pointPicker)
+    static let codeEmitNth_Behavior = emitNthBehavior(.codeEmitNth, point: pointPicker)
         .described("Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on " +
                    "`.code`, an instruction runs.")
-    static let codeDoNthPoint_Behavior   = doNthBehavior(.codeDoNthPoint, point: pointPicker, twin: .codeNthPoint)
+    static let codeDoNth_Behavior   = doNthBehavior(.codeDoNth, point: pointPicker, twin: .codeNthPoint)
         .described("Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf " +
                    "goes to its stack.")
     static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker, tags: [.fallible])
@@ -300,8 +300,8 @@ nonisolated extension Interpreter {
 
     /// Flatten the subtree at the indexed point in place. A leaf point is
     /// unchanged; point 0 (the root) flattens the whole thing (= codeFlatten).
-    static let codeFlattenPoint_Behavior =
-        Behavior.operation(.codeFlattenPoint, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+    static let codeFlattenNth_Behavior =
+        Behavior.operation(.codeFlattenNth, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             let tree = CodeItem(x)
             let point = tree.point(at: i)
             let flattened: any Item =
@@ -314,23 +314,23 @@ nonisolated extension Interpreter {
 
     /// Remove the point at the indexed location, subtree and all. Removing the
     /// root gives an empty block.
-    static let codeRemovePoint_Behavior =
-        Behavior.operation(.codeRemovePoint, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
+    static let codeRemoveNth_Behavior =
+        Behavior.operation(.codeRemoveNth, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             CodeItem(x).removingPoint(at: i).value
         }
         .described("Removes point i (clamped) with everything under it; removing point 0 gives `( )`.")
 
     /// Replace every point equal to `needle` with `replacement` (whole subtree),
     /// single pass. Consumes subject, needle, replacement (all `.code`).
-    static let codeReplaceAllPoints_Behavior =
-        replacePointsBehavior(.codeReplaceAllPoints, firstOnly: false)
-        .described("Replaces matching points: `s n r .codeReplaceAllPoints` puts r for every point of s equal to n; " +
+    static let codeReplace_Behavior =
+        replacePointsBehavior(.codeReplace, firstOnly: false)
+        .described("Replaces matching points: `s n r .codeReplace` puts r for every point of s equal to n; " +
                    "a one-item n or r stands for its item.")
 
     /// As above, but only the first matching point in pre-order.
-    static let codeReplaceFirstPoint_Behavior =
-        replacePointsBehavior(.codeReplaceFirstPoint, firstOnly: true)
-        .described("Replaces the first matching point: `s n r .codeReplaceFirstPoint` puts r for s's first point " +
+    static let codeReplaceFirst_Behavior =
+        replacePointsBehavior(.codeReplaceFirst, firstOnly: true)
+        .described("Replaces the first matching point: `s n r .codeReplaceFirst` puts r for s's first point " +
                    "equal to n; a one-item n or r stands for its item.")
 
     static func replacePointsBehavior(_ instruction: PushInstruction, firstOnly: Bool) -> Behavior {
@@ -348,8 +348,8 @@ nonisolated extension Interpreter {
     /// Split the **root** `.value` array at the indexed gap into two blocks — the
     /// `.code` analog of `vecXCut`/`stringCut`. Prefix deeper, suffix on top (so
     /// `cut` then `codeConcat` rebuilds the original); law-5 multi-result crux.
-    static let codeCutRootAtGap_Behavior =
-        Behavior.splitting(.codeCutRootAtGap, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
+    static let codeCutRoot_Behavior =
+        Behavior.splitting(.codeCutRoot, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
             // Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
             // everything → empty prefix) to N (after everything → empty suffix).
             // The index clamps over those gaps.
@@ -366,7 +366,7 @@ nonisolated extension Interpreter {
     // and why rebuilding repairs rather than refuses — is in `CodeGaps.swift`.
     // Read that first; these four are thin on top of it.
 
-    /// Split the **whole tree** at the indexed gap — `codeCutRootAtGap`'s sibling,
+    /// Split the **whole tree** at the indexed gap — `codeCutRoot`'s sibling,
     /// reaching inside nested blocks rather than only between root elements.
     /// Prefix deeper, suffix on top; law-5 multi-result crux.
     ///
@@ -388,7 +388,7 @@ nonisolated extension Interpreter {
     /// Splice one block into another's tree at the indexed gap.
     ///
     /// Written `subject insert n .codeInsertAtGap`, so the subject is deeper — the
-    /// argument order `codeReplaceFirstPoint` already uses. The insertion is
+    /// argument order `codeReplaceFirst` already uses. The insertion is
     /// **denoted** (`denotedItem`, singleton-unwrap), like every other code
     /// instruction that names a target: `( 5 )` inserts the bare leaf `5`,
     /// `( ( 5 ) )` inserts the block `( 5 )`.
@@ -418,8 +418,8 @@ nonisolated extension Interpreter {
     /// A wrap that crosses an existing block's boundary leaves the token stream
     /// unbalanced; `rebuilt(from:)` repairs it, which is the whole reason that
     /// function is total.
-    static let codeWrapPoints_Behavior =
-        Behavior.operation(.codeWrapPoints, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
+    static let codeWrapRange_Behavior =
+        Behavior.operation(.codeWrapRange, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
             // `top` is the last int written and `deep` the first, so the crux
             // names them `deep top` — law 3 records in *written* order. Getting
             // that backwards is invisible to the value here, since the pair is
@@ -442,10 +442,10 @@ nonisolated extension Interpreter {
     /// A block goes iff its head or tail gap falls inside the range. One that
     /// merely *encloses* the range keeps its shape, and so does one entirely
     /// outside it — so the effect stays where the program pointed. Indices are
-    /// sorted, as in `codeWrapPoints`.
+    /// sorted, as in `codeWrapRange`.
     static let codeFlattenRange_Behavior =
         Behavior.operation(.codeFlattenRange, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
-            // `deep top`, not `top deep` — see the note on `codeWrapPoints`.
+            // `deep top`, not `top deep` — see the note on `codeWrapRange`.
             let tree = CodeItem(x)
             let (lo, hi) = { let p = [tree.gapIndex(top), tree.gapIndex(deep)].sorted()
                              return (p[0], p[1]) }()
@@ -480,8 +480,8 @@ nonisolated extension Interpreter {
 
     /// Iterate every **pre-order point** of the tree, running the mouse once per
     /// point. The three variants differ only in how each point is handed on (see
-    /// `PointsEmission`): `codeIteratePoints` boxes it as `.code`,
-    /// `codeIterateEmitPoints` hands it on whole, and `codeIterateDoPoints` runs a
+    /// `PointsEmission`): `codeIterate` boxes it as `.code`,
+    /// `codeIterateEmit` hands it on whole, and `codeIterateDo` runs a
     /// sub-block's contents. The `.points` siblings of `codeIterateRoot`. A tree
     /// always has at least its root, so none of them ever does nothing.
     static func iteratePointsBehavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
@@ -503,18 +503,18 @@ nonisolated extension Interpreter {
         )
     }
 
-    static let codeIteratePoints_Behavior     = iteratePointsBehavior(.codeIteratePoints, .boxed)
-        .described("Loops: `x b .codeIteratePoints` runs block b once per point of block x, root first, pushing " +
+    static let codeIterate_Behavior     = iteratePointsBehavior(.codeIterate, .boxed)
+        .described("Loops: `x b .codeIterate` runs block b once per point of block x, root first, pushing " +
                    "each point as a block; b ends on `.code`.")
-    static let codeIterateEmitPoints_Behavior = iteratePointsBehavior(.codeIterateEmitPoints, .whole)
-        .described("Loops: `x b .codeIterateEmitPoints` runs block b once per point of block x, root first, pushing " +
+    static let codeIterateEmit_Behavior = iteratePointsBehavior(.codeIterateEmit, .whole)
+        .described("Loops: `x b .codeIterateEmit` runs block b once per point of block x, root first, pushing " +
                    "each point as it is (an instruction runs); b ends on `.code`.")
-    static let codeIterateDoPoints_Behavior   = iteratePointsBehavior(.codeIterateDoPoints, .unwrapped)
-        .described("Loops: `x b .codeIterateDoPoints` runs block b once per point of block x, root first, also " +
+    static let codeIterateDo_Behavior   = iteratePointsBehavior(.codeIterateDo, .unwrapped)
+        .described("Loops: `x b .codeIterateDo` runs block b once per point of block x, root first, also " +
                    "running each point; b ends on `.code`.")
 
-    static let codeWrapRoot_Behavior =
-        Behavior.composing(.codeWrapRoot, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
+    static let codeWrap_Behavior =
+        Behavior.composing(.codeWrap, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
         .described("Wraps a block in another: `( a b )` becomes `( ( a b ) )`.")
 
     static let execQuote_Behavior =
@@ -684,34 +684,34 @@ nonisolated extension Interpreter {
         .codeDo : codeDo_Behavior,
         .codeItemIsEmpty : codeItemIsEmpty_Behavior,
         .codeLengthRoot : codeLengthRoot_Behavior,
-        .codeLengthPoints : codeLengthPoints_Behavior,
+        .codeLength : codeLength_Behavior,
         .codeWidth : codeWidth_Behavior,
         .codeDepth : codeDepth_Behavior,
         .codeContains : codeContains_Behavior,
-        .codeIndexOfPoint : codeIndexOfPoint_Behavior,
+        .codeIndexOf : codeIndexOf_Behavior,
         .codeContainer : codeContainer_Behavior,
         .codeNthPoint : codeNthPoint_Behavior,
         .codeNthRoot : codeNthRoot_Behavior,
-        .codeDoNthPoint : codeDoNthPoint_Behavior,
+        .codeDoNth : codeDoNth_Behavior,
         .codeDoNthRoot : codeDoNthRoot_Behavior,
-        .codeEmitNthPoint : codeEmitNthPoint_Behavior,
+        .codeEmitNth : codeEmitNth_Behavior,
         .codeEmitNthRoot : codeEmitNthRoot_Behavior,
         .codeFlatten : codeFlatten_Behavior,
         .codeFlattenOnce : codeFlattenOnce_Behavior,
-        .codeFlattenPoint : codeFlattenPoint_Behavior,
+        .codeFlattenNth : codeFlattenNth_Behavior,
         .codeCutAtGap : codeCutAtGap_Behavior,
         .codeInsertAtGap : codeInsertAtGap_Behavior,
-        .codeWrapPoints : codeWrapPoints_Behavior,
+        .codeWrapRange : codeWrapRange_Behavior,
         .codeFlattenRange : codeFlattenRange_Behavior,
-        .codeRemovePoint : codeRemovePoint_Behavior,
-        .codeReplaceAllPoints : codeReplaceAllPoints_Behavior,
-        .codeReplaceFirstPoint : codeReplaceFirstPoint_Behavior,
-        .codeCutRootAtGap : codeCutRootAtGap_Behavior,
+        .codeRemoveNth : codeRemoveNth_Behavior,
+        .codeReplace : codeReplace_Behavior,
+        .codeReplaceFirst : codeReplaceFirst_Behavior,
+        .codeCutRoot : codeCutRoot_Behavior,
         .codeIterateRoot : codeIterateRoot_Behavior,
-        .codeIteratePoints : codeIteratePoints_Behavior,
-        .codeIterateEmitPoints : codeIterateEmitPoints_Behavior,
-        .codeIterateDoPoints : codeIterateDoPoints_Behavior,
-        .codeWrapRoot : codeWrapRoot_Behavior,
+        .codeIterate : codeIterate_Behavior,
+        .codeIterateEmit : codeIterateEmit_Behavior,
+        .codeIterateDo : codeIterateDo_Behavior,
+        .codeWrap : codeWrap_Behavior,
         .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
         .intQuote : intQuote_Behavior,

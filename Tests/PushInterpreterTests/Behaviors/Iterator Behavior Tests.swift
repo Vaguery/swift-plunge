@@ -817,7 +817,7 @@ struct IteratorBehaviorTests {
         inty.load(program: [
             box, CodeItem([]),
             IntItem(0), IntItem(0), BoolItem(true),
-            InstructionItem(.iteratorFromCode),
+            InstructionItem(.iteratorFromCodeRoot),
             InstructionItem(.iteratorPlay),
         ])
         inty.run(stepLimit: 10_000)

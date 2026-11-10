@@ -3,7 +3,7 @@
 //  PushInterpreterTests
 //
 //  The gap model (`CodeGaps.swift`) and the four instructions on it:
-//  codeCutAtGap, codeInsertAtGap, codeWrapPoints, codeFlattenRange.
+//  codeCutAtGap, codeInsertAtGap, codeWrapRange, codeFlattenRange.
 //
 //  The running example throughout is `( 1 ( 2 3 ) 4 )`:
 //
@@ -40,7 +40,7 @@ struct CodeGapTests {
         #expect(nested.gapTokens.count == 6)
         #expect(nested.gapCount == 7, "before-first and after-last both count")
 
-        // A flat block is exactly the root-array model codeCutRootAtGap uses.
+        // A flat block is exactly the root-array model codeCutRoot uses.
         #expect(CodeItem([IntItem(1), IntItem(2)]).gapCount == 3)
         #expect(CodeItem([]).gapCount == 1, "an empty block still has the one gap")
     }
@@ -112,7 +112,7 @@ struct CodeGapTests {
     }
 
     /// A cut between root elements still round-trips, exactly as
-    /// `codeCutRootAtGap` does — the gap model generalizes that case rather than
+    /// `codeCutRoot` does — the gap model generalizes that case rather than
     /// replacing it.
     @Test func `a root-level cut still rejoins under codeConcat`() {
         let inty = Interpreter.recordingProvenance()
@@ -174,13 +174,13 @@ struct CodeGapTests {
     }
 
 
-    // MARK: - codeWrapPoints
+    // MARK: - codeWrapRange
 
     @Test func `wrapPoints opens at the lower gap and closes at the higher`() {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(1)] as [any Item])
-        doThis(.codeWrapPoints, to: inty)
+        doThis(.codeWrapRange, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 ( 2 3 ) ) ]")
     }
 
@@ -190,7 +190,7 @@ struct CodeGapTests {
             inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
             // a[1] is the top .int, a[2] the one beneath.
             inty.stacks[.int]!.prepend(contentsOf: [IntItem(n), IntItem(m)] as [any Item])
-            doThis(.codeWrapPoints, to: inty)
+            doThis(.codeWrapRange, to: inty)
             return stackString(inty, .code)
         }
         #expect(wrap(3, 1) == wrap(1, 3))
@@ -200,7 +200,7 @@ struct CodeGapTests {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(1), IntItem(1)] as [any Item])
-        doThis(.codeWrapPoints, to: inty)
+        doThis(.codeWrapRange, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 ( ) 2 ) ]")
     }
 
@@ -211,7 +211,7 @@ struct CodeGapTests {
         inty.stacks[.code]!.prepend(nested)
         // Open at gap 1 (before the block), close at gap 3 (inside it).
         inty.stacks[.int]!.prepend(contentsOf: [IntItem(3), IntItem(1)] as [any Item])
-        doThis(.codeWrapPoints, to: inty)
+        doThis(.codeWrapRange, to: inty)
         #expect(leaves(topItem(inty, .code)) == ["1", "2", "3", "4"],
                 "the shape changes, but no leaf is lost")
     }
@@ -316,11 +316,11 @@ struct CodeGapTests {
         let wrap = Interpreter.recordingProvenance()
         wrap.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         wrap.stacks[.int]!.prepend(contentsOf: [IntItem(2), IntItem(0)] as [any Item])
-        doThis(.codeWrapPoints, to: wrap)
+        doThis(.codeWrapRange, to: wrap)
         // `0 2`, not `2 0`: the record names the ints in *written* order, deepest
         // first. Recording them the other way round is invisible to the value —
         // the pair gets sorted — and shows up only as a crux that is not a fixed
         // point, which is how the fuzzer caught it.
-        #expect(callString(topItem(wrap, .code)) == "( ( 1 2 ) 0 2 .codeWrapPoints )")
+        #expect(callString(topItem(wrap, .code)) == "( ( 1 2 ) 0 2 .codeWrapRange )")
     }
 }

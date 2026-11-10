@@ -73,7 +73,7 @@ struct CruxCompleteness {
     /// The instructions that take an element out of a container by position.
     static let addressInstructions: Set<PushInstruction> = {
         var names: Set<PushInstruction> = [.stringNth, .stringFirst, .stringLast, .stringNthWord,
-                                           .codeEmitNthRoot, .codeEmitNthPoint]
+                                           .codeEmitNthRoot, .codeEmitNth]
         for prefix in ["vecBool", "vecDouble", "vecInt", "vecString"] {
             for suffix in ["Nth", "First", "Last"] {
                 if let name = PushInstruction(rawValue: prefix + suffix) { names.insert(name) }

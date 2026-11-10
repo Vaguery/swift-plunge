@@ -113,7 +113,7 @@ struct DeepStructureSafetyTests {
         let (deepest, refusals, bound) = await Task.detached {
             let inty = Interpreter()
             inty.config.stepLimit = 100_000
-            inty.load(program: [CodeItem([IntItem(7)]), CodeItem([InstructionItem(.codeWrapRoot)]),
+            inty.load(program: [CodeItem([IntItem(7)]), CodeItem([InstructionItem(.codeWrap)]),
                                 IntItem(5_000), InstructionItem(.execDoTimes)])
             inty.run()
             let deepest = inty.stacks[.code]!.compactMap { ($0 as? CodeItem)?.nestingDepth }.max() ?? 0

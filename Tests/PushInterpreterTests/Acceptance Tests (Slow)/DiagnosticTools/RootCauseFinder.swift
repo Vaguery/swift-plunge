@@ -20,8 +20,8 @@
 //      .boolEq                     120     (all one cause — a step-budget artifact)
 //      .vecDoubleReplaceFirst        9
 //      .boolXor                      2
-//      .iteratorFromCode             1     <- a real bug, and the last one standing
-//      .iteratorFromCodeDoPoints     1     <- the same real bug
+//      .iteratorFromCodeRoot             1     <- a real bug, and the last one standing
+//      .iteratorFromCodeDo     1     <- the same real bug
 //      .vecIntReadItems              1
 //
 //  The counts are almost the least useful column. What mattered was that two

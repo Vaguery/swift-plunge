@@ -4,8 +4,8 @@
 //
 //  Created by Bill Tozier on 7/18/26.
 //
-//  Whole-tree queries: codeLengthPoints, codeWidth, codeDepth (unary), and
-//  codeContains, codeIndexOfPoint, codeContainer (binary). All non-destructive —
+//  Whole-tree queries: codeLength, codeWidth, codeDepth (unary), and
+//  codeContains, codeIndexOf, codeContainer (binary). All non-destructive —
 //  arguments survive, the crux pops what it read.
 //
 
@@ -28,10 +28,10 @@ struct CodeQueryTests {
     // MARK: - unary
 
     @Test func `lengthPoints, width, depth`() {
-        let a = loaded(tree); doThis(.codeLengthPoints, to: a)
+        let a = loaded(tree); doThis(.codeLength, to: a)
         #expect((topItem(a, .int) as! IntItem).value == 5)
         #expect(stackString(a, .code) == "[ ( ( 1 2 ) 3 ) ]", "the code survives")
-        #expect(callString(topItem(a, .int)) == "( ( ( 1 2 ) 3 ) .codeLengthPoints 1 .codePopItems )")
+        #expect(callString(topItem(a, .int)) == "( ( ( 1 2 ) 3 ) .codeLength 1 .codePopItems )")
 
         let b = loaded(tree); doThis(.codeWidth, to: b)
         #expect((topItem(b, .int) as! IntItem).value == 3, "leaves")
@@ -41,7 +41,7 @@ struct CodeQueryTests {
 
         // empty-block edges
         let e = loaded(CodeItem([CodeItem([]), IntItem(5)]))
-        doThis(.codeLengthPoints, to: e)
+        doThis(.codeLength, to: e)
         #expect((topItem(e, .int) as! IntItem).value == 3, "root, (), 5")
         let ew = loaded(CodeItem([CodeItem([]), IntItem(5)]))
         doThis(.codeWidth, to: ew)
@@ -84,7 +84,7 @@ struct CodeQueryTests {
         func idxOf(_ hay: CodeItem, _ needle: CodeItem) -> Int {
             let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [needle, hay] as [any Item])
-            doThis(.codeIndexOfPoint, to: inty)
+            doThis(.codeIndexOf, to: inty)
             return (topItem(inty, .int) as! IntItem).value
         }
         // ( 5 ( 5 ) ): points 0:root 1:5(leaf) 2:(5)(subtree) 3:5(leaf inside)
@@ -97,7 +97,7 @@ struct CodeQueryTests {
         func run(_ hay: CodeItem, _ target: CodeItem) -> Interpreter {
             let inty = Interpreter.recordingProvenance()
             inty.stacks[.code]!.prepend(contentsOf: [target, hay] as [any Item])
-            doThis(.codeIndexOfPoint, to: inty)
+            doThis(.codeIndexOf, to: inty)
             return inty
         }
         #expect((topItem(run(tree, CodeItem([IntItem(1), IntItem(2)])), .int) as! IntItem).value == 1)

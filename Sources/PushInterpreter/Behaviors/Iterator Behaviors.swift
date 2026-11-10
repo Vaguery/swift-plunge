@@ -42,7 +42,7 @@ nonisolated extension Interpreter {
             if case .points(.unwrapped) = iterator.kind {
                 // Do: the boxed point runs. A block met on `.exec` only rests on
                 // `.code` (it does not spill), so `.codeDo` is what unwraps it —
-                // the same mechanism `codeDoNthPoint` uses. A leaf's box `( x )`
+                // the same mechanism `codeDoNth` uses. A leaf's box `( x )`
                 // spills to `x`, so leaves behave as `whole` does.
                 runsFirst.append(Router(.exec, InstructionItem(.codeDo)))
                 runsFirst.append(Router(.exec, projected))
@@ -759,7 +759,7 @@ nonisolated extension Interpreter {
     static let iteratorOverVecInt_Behavior = iteratorOver_Behavior(.iteratorOverVecInt, over: .vecInt)
     static let iteratorOverVecDouble_Behavior = iteratorOver_Behavior(.iteratorOverVecDouble, over: .vecDouble)
     static let iteratorOverVecString_Behavior = iteratorOver_Behavior(.iteratorOverVecString, over: .vecString)
-    static let iteratorOverCode_Behavior = iteratorOver_Behavior(.iteratorOverCode, over: .code)
+    static let iteratorOverCodeRoot_Behavior = iteratorOver_Behavior(.iteratorOverCodeRoot, over: .code)
 
     /// Builds an iterator that walks a **code block's contents**, root level only,
     /// and leaves it alone.
@@ -772,7 +772,7 @@ nonisolated extension Interpreter {
     /// `into` is `.exec` for the `IntoExec` variant and derived otherwise. It
     /// cannot be an argument — a `PushStack` is not a Push value — which is why
     /// there are two names.
-    static func iteratorFromCode_Behavior(
+    static func iteratorFromCodeRoot_Behavior(
         _ name: PushInstruction,
         into: PushStack?
     ) -> Behavior {
@@ -814,17 +814,17 @@ nonisolated extension Interpreter {
             + "; refuses if nothing is left to emit.")
     }
 
-    static let iteratorFromCode_Behavior =
-        iteratorFromCode_Behavior(.iteratorFromCode, into: nil)
-    static let iteratorFromCodeIntoExec_Behavior =
-        iteratorFromCode_Behavior(.iteratorFromCodeIntoExec, into: .exec)
+    static let iteratorFromCodeRoot_Behavior =
+        iteratorFromCodeRoot_Behavior(.iteratorFromCodeRoot, into: nil)
+    static let iteratorFromCodeRootIntoExec_Behavior =
+        iteratorFromCodeRoot_Behavior(.iteratorFromCodeRootIntoExec, into: .exec)
 
     /// Construct-only: rebuild a **points** iterator by state. Same shape as
-    /// `iteratorFromCode`, but the walk is pre-order over the whole tree, not the
+    /// `iteratorFromCodeRoot`, but the walk is pre-order over the whole tree, not the
     /// root — so `crux()` for a points iterator names this. One per `PointsEmission`
     /// mode, because the mode is part of the iterator's identity and a rebuilt copy
     /// must carry it.
-    static func iteratorFromCodePoints_Behavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
+    static func iteratorFromCode_Behavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
         Behavior(
             instruction,
             takes: [.code, .code, .int, .int, .bool],
@@ -857,12 +857,12 @@ nonisolated extension Interpreter {
             + "; refuses if nothing is left to emit.")
     }
 
-    static let iteratorFromCodePoints_Behavior =
-        iteratorFromCodePoints_Behavior(.iteratorFromCodePoints, .boxed)
-    static let iteratorFromCodeEmitPoints_Behavior =
-        iteratorFromCodePoints_Behavior(.iteratorFromCodeEmitPoints, .whole)
-    static let iteratorFromCodeDoPoints_Behavior =
-        iteratorFromCodePoints_Behavior(.iteratorFromCodeDoPoints, .unwrapped)
+    static let iteratorFromCode_Behavior =
+        iteratorFromCode_Behavior(.iteratorFromCode, .boxed)
+    static let iteratorFromCodeEmit_Behavior =
+        iteratorFromCode_Behavior(.iteratorFromCodeEmit, .whole)
+    static let iteratorFromCodeDo_Behavior =
+        iteratorFromCode_Behavior(.iteratorFromCodeDo, .unwrapped)
 
     /// Builds an iterator that emits the **same item** over and over, `count`
     /// times, and leaves it alone. This is what the `xDupTimes` family rests on.
@@ -936,11 +936,11 @@ nonisolated extension Interpreter {
 
     static let iteratorBehaviors: [PushInstruction: Behavior] =
     [
+        .iteratorFromCodeRoot : iteratorFromCodeRoot_Behavior,
+        .iteratorFromCodeRootIntoExec : iteratorFromCodeRootIntoExec_Behavior,
         .iteratorFromCode : iteratorFromCode_Behavior,
-        .iteratorFromCodeIntoExec : iteratorFromCodeIntoExec_Behavior,
-        .iteratorFromCodePoints : iteratorFromCodePoints_Behavior,
-        .iteratorFromCodeEmitPoints : iteratorFromCodeEmitPoints_Behavior,
-        .iteratorFromCodeDoPoints : iteratorFromCodeDoPoints_Behavior,
+        .iteratorFromCodeEmit : iteratorFromCodeEmit_Behavior,
+        .iteratorFromCodeDo : iteratorFromCodeDo_Behavior,
         .iteratorRepeating : iteratorRepeating_Behavior,
         .iteratorRepeatingIntoExec : iteratorRepeatingIntoExec_Behavior,
         .iteratorFromString : iteratorFromString_Behavior,
@@ -954,7 +954,7 @@ nonisolated extension Interpreter {
         .iteratorOverVecInt : iteratorOverVecInt_Behavior,
         .iteratorOverVecDouble : iteratorOverVecDouble_Behavior,
         .iteratorOverVecString : iteratorOverVecString_Behavior,
-        .iteratorOverCode : iteratorOverCode_Behavior,
+        .iteratorOverCodeRoot : iteratorOverCodeRoot_Behavior,
         .iteratorFromVecString : iteratorFromVecString_Behavior,
         .iteratorPeekBody : iteratorPeekBody_Behavior,
         .iteratorPeekLaps : iteratorPeekLaps_Behavior,

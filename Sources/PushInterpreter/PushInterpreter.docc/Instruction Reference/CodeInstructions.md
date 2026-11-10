@@ -12,7 +12,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeContainer` | Copies the block directly holding n's first occurrence in h, leaving both: `h n .codeContainer`; refuses if n is absent or is h itself. | `code` (read), `code` (read) | `code`; may refuse |
 | `codeContains` | Tests whether block n occurs as a point of block h, leaving both: `h n .codeContains`; a one-item n stands for its sole item. | `code` (read), `code` (read) | `bool` |
 | `codeCutAtGap` | Splits the whole tree at gap i (clamped), front part beneath, back on top; leaves keep their order, and blocks the cut crosses split in two. | `code`, `int` | `code`, `code` |
-| `codeCutRootAtGap` | Splits a block's root items at gap i, clamped to 0 through their count: the front part beneath, the back part on top. | `code`, `int` | `code`, `code` |
+| `codeCutRoot` | Splits a block's root items at gap i, clamped to 0 through their count: the front part beneath, the back part on top. | `code`, `int` | `code`, `code` |
 | `codeDepth` | Measures how deeply blocks nest, leaving the block: `( )` is 0, a flat block 1, each nested level one more. | `code` (read) | `int` |
 | `codeDifference` | Filters: `a b .codeDifference` keeps the items of block a that do not occur in b, compared by value, in a's order, repeats included. | `code`, `code` | `code` |
 | `codeDistinct` | Removes repeated items from a block, comparing by value and keeping each first occurrence in order. | `code` | `code` |
@@ -20,27 +20,27 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeFindPrefix` | Finds a sub-block: `( … ) ( p ) .codeFindPrefix` gives the first root item that is a block beginning with p's items, and its index; refuses on a miss. | `code` (read), `code` (read) | `code`, `int`; may refuse |
 | `codeFindPrefixFrom` | Finds a sub-block from root index i on: `( … ) ( p ) i .codeFindPrefixFrom` gives the first that begins with p's items, and its index; refuses on a miss. | `code` (read), `code` (read), `int` (read) | `code`, `int`; may refuse |
 | `codeFlatten` | Flattens a block to its leaves, in order; nested empty blocks vanish. | `code` | `code` |
+| `codeFlattenNth` | Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 flattens everything. | `code`, `int` | `code` |
 | `codeFlattenOnce` | Flattens one level: each root item that is a block is replaced by its items. | `code` | `code` |
-| `codeFlattenPoint` | Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 flattens everything. | `code`, `int` | `code` |
 | `codeFlattenRange` | Flattens every block whose first or last gap lies between gaps i and j (clamped, either order); blocks enclosing the range keep their shape. | `code`, `int`, `int` | `code` |
 | `codeFromIterator` | Collects everything the iterator has left to emit into one block, its body returning to `.code` beneath; refuses, keeping the iterator, when that is too many items. | `iterator` | `code` or `code`, `code`; may refuse |
-| `codeIndexOfPoint` | Finds the first point of h equal to n, leaving both: `h n .codeIndexOfPoint`; a one-item n stands for its sole item; refuses when absent. | `code` (read), `code` (read) | `int`; may refuse |
+| `codeIndexOf` | Finds the first point of h equal to n, leaving both: `h n .codeIndexOf`; a one-item n stands for its sole item; refuses when absent. | `code` (read), `code` (read) | `int`; may refuse |
 | `codeInsertAtGap` | Inserts: `s x i .codeInsertAtGap` splices block x into s at gap i (clamped); a one-item x inserts its sole item. | `code`, `code`, `int` | `code` |
 | `codeIntersect` | Filters: `a b .codeIntersect` keeps the items of block a that also occur in b, compared by value, in a's order, repeats included. | `code`, `code` | `code` |
 | `codeIsSubset` | Tells whether every item of block a occurs in block b, compared by value: `a b .codeIsSubset`, leaving both. | `code` (read), `code` (read) | `bool` |
 | `codeItemIsEmpty` | Tests whether the block has no items, leaving the block. | `code` (read) | `bool` |
-| `codeLengthPoints` | Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5. | `code` (read) | `int` |
+| `codeLength` | Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5. | `code` (read) | `int` |
 | `codeLengthRoot` | Counts the block's root items, leaving the block. | `code` (read) | `int` |
 | `codeNthPoint` | Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`. | `code` (read), `int` (read) | `code` |
 | `codeNthRoot` | Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`; refuses an empty block. | `code` (read), `int` (read) | `code`; may refuse |
 | `codePair` | Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block contributing its sole item. | `code`, `code` | `code` |
 | `codeRefAs` | Binds the top block to key k from `.int`, taking both and shadowing any older binding of k: `x k .codeRefAs`. | `code`, `int` | `binding` |
-| `codeRemovePoint` | Removes point i (clamped) with everything under it; removing point 0 gives `( )`. | `code`, `int` | `code` |
-| `codeReplaceAllPoints` | Replaces matching points: `s n r .codeReplaceAllPoints` puts r for every point of s equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
-| `codeReplaceFirstPoint` | Replaces the first matching point: `s n r .codeReplaceFirstPoint` puts r for s's first point equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
+| `codeRemoveNth` | Removes point i (clamped) with everything under it; removing point 0 gives `( )`. | `code`, `int` | `code` |
+| `codeReplace` | Replaces matching points: `s n r .codeReplace` puts r for every point of s equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
+| `codeReplaceFirst` | Replaces the first matching point: `s n r .codeReplaceFirst` puts r for s's first point equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
 | `codeWidth` | Counts the block's leaves (items that are not blocks) at every depth, leaving the block. | `code` (read) | `int` |
-| `codeWrapPoints` | Wraps everything between gaps i and j (clamped, either order) in a new block; equal gaps insert `( )`, and crossed block edges are repaired. | `code`, `int`, `int` | `code` |
-| `codeWrapRoot` | Wraps a block in another: `( a b )` becomes `( ( a b ) )`. | `code` | `code` |
+| `codeWrap` | Wraps a block in another: `( a b )` becomes `( ( a b ) )`. | `code` | `code` |
+| `codeWrapRange` | Wraps everything between gaps i and j (clamped, either order) in a new block; equal gaps insert `( )`, and crossed block edges are repaired. | `code`, `int`, `int` | `code` |
 | `vecFromCode` | Turns a block of bools, ints, doubles or strings, all one type, into a vector; a block holding one vector gives it back; refuses anything else. | `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString`; may refuse |
 
 ## Reading the environment
@@ -63,14 +63,14 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 |---|---|---|---|
 | `codeDo` | Runs a block: its items go onto `.exec`, the first to run first. | `code` | the rest of the program |
 | `codeDoIf` | Runs the block if the bool is true; otherwise leaves the block on `.code` untouched. | `bool`, `code` | the rest of the program |
-| `codeDoNthPoint` | Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf goes to its stack. | `code` (read), `int` (read) | the rest of the program |
+| `codeDoNth` | Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf goes to its stack. | `code` (read), `int` (read) | the rest of the program |
 | `codeDoNthRoot` | Runs root item i (clamped), leaving the block and index: a sub-block's contents execute; refuses an empty block. | `code` (read), `int` (read) | the rest of the program; may refuse |
-| `codeEmitNthPoint` | Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on `.code`, an instruction runs. | `code` (read), `int` (read) | the rest of the program |
+| `codeEmitNth` | Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on `.code`, an instruction runs. | `code` (read), `int` (read) | the rest of the program |
 | `codeEmitNthRoot` | Sends root item i (clamped) to `.exec` as it is, leaving the block and index; refuses an empty block. | `code` (read), `int` (read) | the rest of the program; may refuse |
 | `codeIf` | Runs one of two blocks: `( t ) ( e ) .codeIf` runs t if the bool is true, else e; the other is discarded. | `bool`, `code`, `code` | the rest of the program |
-| `codeIterateDoPoints` | Loops: `x b .codeIterateDoPoints` runs block b once per point of block x, root first, also running each point; b ends on `.code`. | `code`, `code` | the rest of the program |
-| `codeIterateEmitPoints` | Loops: `x b .codeIterateEmitPoints` runs block b once per point of block x, root first, pushing each point as it is (an instruction runs); b ends on `.code`. | `code`, `code` | the rest of the program |
-| `codeIteratePoints` | Loops: `x b .codeIteratePoints` runs block b once per point of block x, root first, pushing each point as a block; b ends on `.code`. | `code`, `code` | the rest of the program |
+| `codeIterate` | Loops: `x b .codeIterate` runs block b once per point of block x, root first, pushing each point as a block; b ends on `.code`. | `code`, `code` | the rest of the program |
+| `codeIterateDo` | Loops: `x b .codeIterateDo` runs block b once per point of block x, root first, also running each point; b ends on `.code`. | `code`, `code` | the rest of the program |
+| `codeIterateEmit` | Loops: `x b .codeIterateEmit` runs block b once per point of block x, root first, pushing each point as it is (an instruction runs); b ends on `.code`. | `code`, `code` | the rest of the program |
 | `codeIterateRoot` | Loops: `x b .codeIterateRoot` runs block b once per root item of block x, pushing each item to its stack (an instruction runs); b ends on `.code`. | `code`, `code` | the rest of the program |
 | `codeWith` | Binds a copy of the block under the body to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `code` (read) | the rest of the program |
 

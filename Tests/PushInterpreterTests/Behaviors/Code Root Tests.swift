@@ -4,7 +4,7 @@
 //
 //  Created by Bill Tozier on 7/18/26.
 //
-//  codeCutRootAtGap (root-array split, vecXCut analog) and codeIterateRoot
+//  codeCutRoot (root-array split, vecXCut analog) and codeIterateRoot
 //  (iterate root elements with a mouse).
 //
 
@@ -19,7 +19,7 @@ struct CodeRootTests {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3), IntItem(4)]))
         inty.stacks[.int]!.prepend(IntItem(2))
-        doThis(.codeCutRootAtGap, to: inty)
+        doThis(.codeCutRoot, to: inty)
         #expect(stackString(inty, .code) == "[ ( 3 4 ) ( 1 2 ) ]", "suffix on top, prefix deeper")
     }
 
@@ -27,7 +27,7 @@ struct CodeRootTests {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3), IntItem(4)]))
         inty.stacks[.int]!.prepend(IntItem(2))
-        doThis(.codeCutRootAtGap, to: inty)
+        doThis(.codeCutRoot, to: inty)
         doThis(.codeConcat, to: inty)
         #expect(stackString(inty, .code) == "[ ( 1 2 3 4 ) ]")
     }
@@ -38,28 +38,28 @@ struct CodeRootTests {
         let g0 = Interpreter.recordingProvenance()
         g0.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         g0.stacks[.int]!.prepend(IntItem(0))
-        doThis(.codeCutRootAtGap, to: g0)
+        doThis(.codeCutRoot, to: g0)
         #expect(stackString(g0, .code) == "[ ( 1 2 ) ( ) ]", "empty prefix (deeper), whole suffix on top")
 
         // gap 2 (== count) → whole prefix, empty suffix — the after-the-final gap.
         let g2 = Interpreter.recordingProvenance()
         g2.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2)]))
         g2.stacks[.int]!.prepend(IntItem(2))
-        doThis(.codeCutRootAtGap, to: g2)
+        doThis(.codeCutRoot, to: g2)
         #expect(stackString(g2, .code) == "[ ( ) ( 1 2 ) ]", "whole prefix (deeper), empty suffix on top")
 
         // clamps over the gaps: 9 on a 3-item root (4 gaps) is gap 3, after everything.
         let w = Interpreter.recordingProvenance()
         w.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
         w.stacks[.int]!.prepend(IntItem(9))
-        doThis(.codeCutRootAtGap, to: w)
+        doThis(.codeCutRoot, to: w)
         #expect(stackString(w, .code) == "[ ( ) ( 1 2 3 ) ]")
 
         // empty block: one gap only, both pieces empty.
         let e = Interpreter.recordingProvenance()
         e.stacks[.code]!.prepend(CodeItem([]))
         e.stacks[.int]!.prepend(IntItem(3))
-        doThis(.codeCutRootAtGap, to: e)
+        doThis(.codeCutRoot, to: e)
         #expect(stackString(e, .code) == "[ ( ) ( ) ]")
     }
 
@@ -67,7 +67,7 @@ struct CodeRootTests {
         let inty = Interpreter.recordingProvenance()
         inty.stacks[.code]!.prepend(CodeItem([IntItem(1), IntItem(2), IntItem(3)]))
         inty.stacks[.int]!.prepend(IntItem(1))
-        doThis(.codeCutRootAtGap, to: inty)
+        doThis(.codeCutRoot, to: inty)
         let suffix = inty.stacks[.code]![0]   // ( 2 3 ), on top
         let prefix = inty.stacks[.code]![1]   // ( 1 ), deeper, records the discard pop
 

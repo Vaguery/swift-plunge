@@ -13,12 +13,12 @@ import Foundation
 /// in what becomes of a point that is itself a sub-block:
 ///
 /// - `boxed` — every point boxed as `.code` (via `codeNthPoint`) and left resting
-///   there. A leaf becomes `( leaf )`. This is `codeIteratePoints`.
+///   there. A leaf becomes `( leaf )`. This is `codeIterate`.
 /// - `whole` — the point routed **as it is**: a sub-block rests whole on `.code`,
 ///   a leaf routes to its own stack, an instruction runs. This is
-///   `codeIterateEmitPoints`.
+///   `codeIterateEmit`.
 /// - `unwrapped` — the point sent through `.exec` via `.codeDo`, so a sub-block's
-///   contents run. Identical to `whole` for a leaf. This is `codeIterateDoPoints`.
+///   contents run. Identical to `whole` for a leaf. This is `codeIterateDo`.
 public nonisolated enum PointsEmission: Sendable, Equatable, Codable {
     case boxed, whole, unwrapped
 }
@@ -714,9 +714,9 @@ nonisolated extension IteratorItem {
         case .words:   return .iteratorFromStringWords
         case .points(let mode):
             switch mode {
-            case .boxed:     return .iteratorFromCodePoints
-            case .whole:     return .iteratorFromCodeEmitPoints
-            case .unwrapped: return .iteratorFromCodeDoPoints
+            case .boxed:     return .iteratorFromCode
+            case .whole:     return .iteratorFromCodeEmit
+            case .unwrapped: return .iteratorFromCodeDo
             }
         case .elements(let into):
             switch origin {
@@ -726,8 +726,8 @@ nonisolated extension IteratorItem {
             case is VecIntItem:    return .iteratorFromVecInt
             case is VecStringItem: return .iteratorFromVecString
             case is CodeItem:      return into == .exec
-                                        ? .iteratorFromCodeIntoExec
-                                        : .iteratorFromCode
+                                        ? .iteratorFromCodeRootIntoExec
+                                        : .iteratorFromCodeRoot
             default:               return nil
             }
         default:
@@ -794,7 +794,7 @@ nonisolated extension IteratorItem {
             let point = source.points[index]
             if mode == .whole {
                 guard let tree = origin.exactly(CodeItem.self) else { return point }
-                return Containment.takenOut(point, of: tree, at: cursor, by: .codeEmitNthPoint, recording)
+                return Containment.takenOut(point, of: tree, at: cursor, by: .codeEmitNth, recording)
             }
             let contents = (point.exactly(CodeItem.self))?.value ?? [point]
             return CodeItem(

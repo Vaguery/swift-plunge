@@ -1,11 +1,11 @@
 //
-//  Code IterateEmitPoints Tests.swift
+//  Code IterateEmit Tests.swift
 //  PushInterpreterTests
 //
 //  Created by Bill Tozier on 7/18/26.
 //
-//  codeIterateEmitPoints (whole) and codeIterateDoPoints (unwrapped): the .exec
-//  cousins of codeIteratePoints, walking every pre-order point and handing each on
+//  codeIterateEmit (whole) and codeIterateDo (unwrapped): the .exec
+//  cousins of codeIterate, walking every pre-order point and handing each on
 //  to .exec whole or run, respectively. Bodyless walks isolate the emission.
 //
 
@@ -14,7 +14,7 @@ import Testing
 import DequeModule
 
 @Suite @MainActor
-struct CodeIterateEmitPointsTests {
+struct CodeIterateEmitTests {
 
     /// ( ( 7 8 ) 9 ): points 0:root 1:(7 8) 2:7 3:8 4:9.
     let tree = CodeItem([CodeItem([IntItem(7), IntItem(8)]), IntItem(9)])
@@ -37,7 +37,7 @@ struct CodeIterateEmitPointsTests {
     }
 
     @Test func `boxed still wraps its leaves`() {
-        // Contrast: the original codeIteratePoints mode boxes every leaf.
+        // Contrast: the original codeIterate mode boxes every leaf.
         #expect(emitted(tree, .boxed) == [
             "( ( 7 8 ) 9 )", "( 7 8 )", "( 7 )", "( 8 )", "( 9 )",
         ])
@@ -49,7 +49,7 @@ struct CodeIterateEmitPointsTests {
         inty.load(program: [
             tree,             // deeper
             CodeItem([]),     // empty mouse, on top
-            InstructionItem(.codeIterateEmitPoints),
+            InstructionItem(.codeIterateEmit),
         ])
         inty.run()
         // Leaves 7, 8, 9 route to .int, front-to-back (9 emitted last, on top).
@@ -64,7 +64,7 @@ struct CodeIterateEmitPointsTests {
         inty.load(program: [
             tree,
             CodeItem([]),
-            InstructionItem(.codeIterateDoPoints),
+            InstructionItem(.codeIterateDo),
         ])
         inty.run()
         // Every point is sent through .codeDo. The blocks unwrap:
@@ -80,10 +80,10 @@ struct CodeIterateEmitPointsTests {
     @Test func `doPoints equals emitPoints on a flat block of leaves`() {
         let flat = CodeItem([IntItem(1), IntItem(2), IntItem(3)])
         let doInty = Interpreter.recordingProvenance()
-        doInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateDoPoints)])
+        doInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateDo)])
         doInty.run()
         let emitInty = Interpreter.recordingProvenance()
-        emitInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateEmitPoints)])
+        emitInty.load(program: [flat, CodeItem([]), InstructionItem(.codeIterateEmit)])
         emitInty.run()
         // Only difference would be block handling; the sole block here is the root,
         // which doPoints unwraps (spilling its leaves) and emitPoints rests whole.
@@ -96,7 +96,7 @@ struct CodeIterateEmitPointsTests {
     @Test func `a whole points iterator reconstructs via its own constructor`() {
         var it = IteratorItem(kind: .points(.whole), origin: tree, body: nil, emits: true)
         it.call = it.reconstruction()
-        #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeEmitPoints"))
+        #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeEmit"))
         let redo = Interpreter.recordingProvenance()
         redo.load(program: it.crux())
         redo.run()
@@ -107,7 +107,7 @@ struct CodeIterateEmitPointsTests {
     @Test func `an unwrapped points iterator reconstructs via its own constructor`() {
         var it = IteratorItem(kind: .points(.unwrapped), origin: tree, body: nil, emits: true)
         it.call = it.reconstruction()
-        #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeDoPoints"))
+        #expect(CodeItem(it.call).pretty().contains(".iteratorFromCodeDo"))
         let redo = Interpreter.recordingProvenance()
         redo.load(program: it.crux())
         redo.run()

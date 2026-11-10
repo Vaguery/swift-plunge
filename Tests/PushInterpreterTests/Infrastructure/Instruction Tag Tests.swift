@@ -69,7 +69,7 @@ struct InstructionTagTests {
     @Test func `reEntrant is the set the hand-written list used to hold`() {
         let expected: Set<PushInstruction> = [
             .execDoWhile, .execWhile, .execY,
-            .codeIteratePoints, .codeIterateEmitPoints, .codeIterateDoPoints, .codeIterateRoot,
+            .codeIterate, .codeIterateEmit, .codeIterateDo, .codeIterateRoot,
             .iteratorPlay, .iteratorPlayDelayed,
             .stringIterate,
             .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,

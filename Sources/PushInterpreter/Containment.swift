@@ -13,7 +13,7 @@
 ///
 /// Items are born inside containers more often than it might seem: the contents of
 /// a block bound to `.input3`, a block a structural edit rebuilt along its path
-/// (`.codeWrapPoints` makes a new inner block), the leaf a `.codeNthRoot` box
+/// (`.codeWrapRange` makes a new inner block), the leaf a `.codeNthRoot` box
 /// holds. Taken out bare, such an item looks like a literal of the program, and a
 /// crux built on it has lost its link to the container: an input-blind crux for a
 /// result that did depend on the input. The address keeps the link, and it is
@@ -30,7 +30,7 @@
 nonisolated enum Containment {
 
     /// `element`, taken out of the block `container` at `index` by `instruction`
-    /// (`.codeEmitNthRoot` for a root position, `.codeEmitNthPoint` for a
+    /// (`.codeEmitNthRoot` for a root position, `.codeEmitNth` for a
     /// pre-order point): unchanged if it has a history of its own, if it does not
     /// rest on a stack (an instruction runs, a stand-in marks itself), or if the
     /// container is a literal; otherwise addressed.
