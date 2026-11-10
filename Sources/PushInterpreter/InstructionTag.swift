@@ -318,7 +318,8 @@ nonisolated extension InstructionTag {
         Entry(tag: .mayRunUnbounded, facet: .cost, provenance: .derived, summary: "Nothing in its arguments bounds it.",
               rationale: "reEntrant, and takes nothing but a bool and one block."),
         Entry(tag: .runsSubprograms, facet: .cost, provenance: .derived, summary: "Runs blocks in sub-interpreters.",
-              rationale: "An applying body, whose sub-interpreters' steps are charged to the run."),
+              rationale: "An applying body, whose sub-interpreters' steps are charged to the run. These are the "
+                  + "slowest instructions per step: about 20 to 430 times the median, measured 2026-11-10."),
 
         Entry(tag: .bridge, facet: .use, provenance: .derived, summary: "Gives a kind of data it did not take.",
               rationale: "An operation giving a stack, other than int or bool, that it neither took, read nor observed."),
