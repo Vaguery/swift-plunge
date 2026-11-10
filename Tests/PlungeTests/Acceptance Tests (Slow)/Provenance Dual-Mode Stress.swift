@@ -71,7 +71,7 @@ nonisolated enum DualModeStress {
         let manager = FileManager.default
         if !manager.fileExists(atPath: ledger.path) {
             try? manager.createDirectory(at: ledger.deletingLastPathComponent(), withIntermediateDirectories: true)
-            manager.createFile(atPath: ledger.path, contents: Data(
+            _ = manager.createFile(atPath: ledger.path, contents: Data(
                 "# from\tto (exclusive)\tdate\tinstructions\tresult\n".utf8))
         }
         guard let handle = try? FileHandle(forWritingTo: ledger) else { return }
@@ -385,8 +385,8 @@ struct ProvenanceDualModeStress {
         let progressURL = dir.appending(path: "stress-progress.log")
         let summaryURL = dir.appending(path: "stress-summary.txt")
         let findingsURL = dir.appending(path: "stress-findings.txt")
-        FileManager.default.createFile(atPath: progressURL.path, contents: nil)
-        FileManager.default.createFile(atPath: findingsURL.path, contents: nil)
+        _ = FileManager.default.createFile(atPath: progressURL.path, contents: nil)
+        _ = FileManager.default.createFile(atPath: findingsURL.path, contents: nil)
         let progress = try FileHandle(forWritingTo: progressURL)
         let findings = try FileHandle(forWritingTo: findingsURL)
         func append(_ handle: FileHandle, _ line: String) {

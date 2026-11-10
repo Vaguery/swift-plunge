@@ -101,7 +101,7 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - ``IteratorKind``
 - ``PointsEmission``
 
-### Provenance
+### Recording provenance
 
 - ``StandInItem``
 - ``ProvenanceRecording``
