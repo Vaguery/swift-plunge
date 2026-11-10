@@ -27,6 +27,6 @@ nonisolated enum PositionEffect: Sendable, Equatable {
     /// `Shove` (0 → n).
     case move(from: Int, to: Int)
     /// Remove the item at `depth`: weakening below the top, as `delete` is at
-    /// it. `bindingUnbind`, which finds the depth by the pair's key.
+    /// it. `bindingPopKey`, which finds the depth by the pair's key.
     case remove(at: Int)
 }

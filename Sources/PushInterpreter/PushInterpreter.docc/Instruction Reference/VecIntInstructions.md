@@ -46,6 +46,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntPushAll` | Pushes every element onto the int stack, front to back, so the last element ends on top; consumes the vector. | `vecInt` | `int`, one per step |
 | `vecIntQuote` | Wraps the vector in a one-item block. | `vecInt` | `code` |
 | `vecIntReduce` | Folds the block over a vector of ints from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecInt`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecIntRefAs` | Binds the top vector of ints to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecIntRefAs`. | `vecInt`, `int` | `binding` |
 | `vecIntRemove` | Removes every x: `v x .vecIntRemove` gives v without its elements equal to x. | `vecInt`, `int` | `vecInt` |
 | `vecIntReplace` | Substitutes: `v a b .vecIntReplace` replaces every element equal to a with b. | `vecInt`, `int`, `int` | `vecInt` |
 | `vecIntReplaceFirst` | Substitutes once: `v a b .vecIntReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecInt`, `int`, `int` | `vecInt` |

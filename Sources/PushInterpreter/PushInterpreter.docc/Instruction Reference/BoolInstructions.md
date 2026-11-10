@@ -25,6 +25,7 @@ The `.bool` stack holds `true` and `false`. Comparisons on other stacks put thei
 | `boolPandNotQ` | Combines: `p q .boolPandNotQ` gives p ∧ ¬q. | `bool`, `bool` | `bool` |
 | `boolQ` | Keeps the top of two bools: `p q .boolQ` gives q, discarding p. | `bool`, `bool` | `bool` |
 | `boolQuote` | Quotes a bool as a one-item block: `true` becomes `( true )`. | `bool` | `code` |
+| `boolRefAs` | Binds the top bool to key k from `.int`, taking both and shadowing any older binding of k: `x k .boolRefAs`. | `bool`, `int` | `binding` |
 | `boolXnor` | Gives true when the two bools are equal. | `bool`, `bool` | `bool` |
 | `boolXor` | Gives true when the two bools differ. | `bool`, `bool` | `bool` |
 

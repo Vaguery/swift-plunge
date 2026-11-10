@@ -126,7 +126,7 @@ struct DocumentationExamplesTests {
         return found
     }
 
-    /// *Variables and Bindings*: the three examples.
+    /// *Variables and Bindings*: the examples.
     @Test func `variables: bind, assign, scope`() async {
         let bound = await Self.finalStacks([.binding, .int], after: program {
             7; PushInstruction.intRef
@@ -135,9 +135,15 @@ struct DocumentationExamplesTests {
         #expect(bound[.int] == ["10", "7", "(2 items)"])
 
         let assigned = await Self.finalStacks([.binding], after: program {
-            7; PushInstruction.intRef; PushInstruction.intPop; PushInstruction.intPop; 3; PushInstruction.bindingRekey
+            7; 3; PushInstruction.intRefAs; "x"; 3; PushInstruction.stringRefAs
         })
-        #expect(assigned[.binding] == ["⟨3 ↦ 7⟩", "(1 items)"])
+        #expect(assigned[.binding] == ["⟨3 ↦ \"x\"⟩", "⟨3 ↦ 7⟩", "(2 items)"])
+
+        let unpacked = await Self.finalStacks([.binding, .int], after: program {
+            7; 3; PushInstruction.intRefAs; PushInstruction.bindingUnpack
+        })
+        #expect(unpacked[.int] == ["3", "7", "(2 items)"])
+        #expect(unpacked[.binding] == ["(0 items)"])
 
         let scoped = await Self.finalStacks([.code, .binding], after: [
             IntItem(5), CodeItem([InstructionItem(.bindingDerefToCode)]), InstructionItem(.intWith)

@@ -37,6 +37,7 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 | `doublePow` | Raises to a power: `b e .doublePow` gives b to the e; refuses a non-finite result (as for b < 0, e fractional). | `double`, `double` | `double`; may refuse |
 | `doubleQuot` | Divides, truncating toward zero: `a b .doubleQuot` gives a ÷ b as a whole number; refuses when b is 0 or on overflow. | `double`, `double` | `double`; may refuse |
 | `doubleQuote` | Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`. | `double` | `code` |
+| `doubleRefAs` | Binds the top double to key k from `.int`, taking both and shadowing any older binding of k: `x k .doubleRefAs`. | `double`, `int` | `binding` |
 | `doubleRound` | Rounds to the nearest whole number, halves away from zero (2.5 gives 3); refuses a non-finite input. | `double` | `double`; may refuse |
 | `doubleSign` | Gives the sign of a double: −1.0, 0.0 or 1.0; refuses NaN. | `double` | `double`; may refuse |
 | `doubleSin` | Takes the sine of an angle in radians; refuses a non-finite input. | `double` | `double`; may refuse |

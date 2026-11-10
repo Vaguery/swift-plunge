@@ -68,17 +68,17 @@ struct BindingBehaviorTests {
         #expect(Self.replays(inty.stacks[.binding]!.first!, on: .binding, inputs: inputs))
     }
 
-    @Test func `older bindings are reached below, and come back after an unbind`() {
+    @Test func `older bindings are reached from a depth, and come back after a pop`() {
         let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
         let shadow: [any Item] = [IntItem(7), Self.op(.intRef), Self.op(.intPop), Self.op(.intPop),
                                   IntItem(3), Self.op(.bindingRekey)]
         let depth = Self.run(shadow + [IntItem(3), Self.op(.bindingKeyDepth)], inputs: inputs)
         #expect(stackString(depth, .int) == "[ 0 3 ]")
 
-        let below = Self.run(shadow + [IntItem(3), IntItem(1), Self.op(.bindingDerefBelow)], inputs: inputs)
+        let below = Self.run(shadow + [IntItem(3), IntItem(1), Self.op(.bindingDerefFrom)], inputs: inputs)
         #expect(stackString(below, .int) == "[ 99 3 ]", "the shadowed binding, from depth 1")
 
-        let unbound = Self.run(shadow + [IntItem(3), Self.op(.bindingUnbind), Self.op(.bindingDeref)], inputs: inputs)
+        let unbound = Self.run(shadow + [IntItem(3), Self.op(.bindingPopKey), Self.op(.bindingDeref)], inputs: inputs)
         #expect(stackString(unbound, .int) == "[ 99 3 ]")
         #expect(unbound.stacks[.binding]!.count == 1)
     }
@@ -96,7 +96,7 @@ struct BindingBehaviorTests {
         #expect(Self.replays(quoted.stacks[.code]!.first!, on: .code))
     }
 
-    @Test func `with binds for the length of a body, then unbinds`() {
+    @Test func `with binds for the length of a body, then pops the binding`() {
         let body = CodeItem([Self.op(.bindingDerefToCode)])
         let inty = Self.run([IntItem(5), body, Self.op(.intWith)])
         #expect(inty.stacks[.code]!.first!.pretty() == "( 5 )", "the body saw the binding")
@@ -111,10 +111,10 @@ struct BindingBehaviorTests {
         #expect(inty.stacks[.error]!.first!.pretty().contains("missing args: .binding"))
 
         let below = Self.run([IntItem(7), Self.op(.intRef), Self.op(.intPop), IntItem(Self.fresh), IntItem(1),
-                              Self.op(.bindingDerefBelow)])
+                              Self.op(.bindingDerefFrom)])
         #expect(stackString(below, .int) == "[ 1 \(Self.fresh) 7 ]", "the depth is handed back")
 
-        let unbind = Self.run([IntItem(3), Self.op(.bindingUnbind)])
+        let unbind = Self.run([IntItem(3), Self.op(.bindingPopKey)])
         #expect(stackString(unbind, .int) == "[ 3 ]")
         #expect(unbind.stacks[.error]!.count == 1)
     }
@@ -146,6 +146,80 @@ struct BindingBehaviorTests {
 
         let byValue = Self.run([StringItem("s"), Self.op(.stringQuote), Self.op(.bindingKeyOf)], inputs: inputs)
         #expect(stackString(byValue, .int) == "[ 6 ]")
+    }
+
+    @Test func `assignment binds a value to a given key, taking both`() {
+        let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
+        let int = Self.run([IntItem(7), IntItem(3), Self.op(.intRefAs)], inputs: inputs)
+        #expect(stackString(int, .int) == "[ ]", "the value below, the key on top; both taken")
+        #expect(int.stacks[.binding]!.first!.pretty() == "⟨3 ↦ 7⟩", "shadowing the input bound to 3")
+        #expect(Self.replays(int.stacks[.binding]!.first!, on: .binding, inputs: inputs))
+
+        let string = Self.run([StringItem("x"), IntItem(-2), Self.op(.stringRefAs)])
+        #expect(string.stacks[.binding]!.first!.pretty() == "⟨-2 ↦ \"x\"⟩")
+        #expect(Self.replays(string.stacks[.binding]!.first!, on: .binding))
+    }
+
+    @Test func `unpacking puts the value on its stack and the key above it, and assignment undoes it`() {
+        let pair: [any Item] = [IntItem(7), IntItem(3), Self.op(.intRefAs)]
+        let int = Self.run(pair + [Self.op(.bindingUnpack)])
+        #expect(stackString(int, .int) == "[ 3 7 ]")
+        #expect(int.stacks[.binding]!.isEmpty)
+        #expect(Self.replays(int.stacks[.int]![0], on: .int), "the key, with the value cleared from under it")
+        #expect(Self.replays(int.stacks[.int]![1], on: .int), "the value, as it was bound")
+
+        let round = Self.run(pair + [Self.op(.bindingUnpack), Self.op(.intRefAs)])
+        #expect(round.stacks[.binding]!.map { $0.pretty() } == ["⟨3 ↦ 7⟩"])
+
+        let block = Self.run([CodeItem([IntItem(1), Self.op(.intAdd)]), Self.op(.codeRef), Self.op(.intPop),
+                              Self.op(.codePop), Self.op(.bindingUnpack)])
+        #expect(block.stacks[.code]!.first!.pretty() == "( 1 .intAdd )", "a block lands as data, not run")
+        #expect(stackString(block, .int) == "[ \(Self.fresh) ]")
+        #expect(Self.replays(block.stacks[.int]![0], on: .int))
+    }
+
+    @Test func `do pops a binding and runs its value`() {
+        let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
+        let shadow: [any Item] = [IntItem(7), IntItem(3), Self.op(.intRefAs)]
+        let int = Self.run(shadow + [IntItem(3), Self.op(.bindingDo)], inputs: inputs)
+        #expect(stackString(int, .int) == "[ 7 3 ]", "the value, above the key it left")
+        #expect(int.stacks[.binding]!.map { $0.pretty() } == ["⟨3 ↦ 99⟩"], "the input shows through again")
+        #expect(int.stacks[.error]!.isEmpty, "an int value never stands in for the key")
+
+        let add = CodeItem([IntItem(2), IntItem(3), Self.op(.intAdd)])
+        let block = Self.run([add, Self.op(.codeRef), Self.op(.codePop), Self.op(.bindingDo)])
+        #expect(stackString(block, .int) == "[ 5 \(Self.fresh) ]", "a block runs")
+        #expect(block.stacks[.binding]!.isEmpty)
+
+        let miss = Self.run([IntItem(4), Self.op(.bindingDo)])
+        #expect(stackString(miss, .int) == "[ 4 ]")
+        #expect(miss.stacks[.error]!.count == 1)
+    }
+
+    @Test func `whether a key is bound, and how many times, without refusing`() {
+        let inputs: [PushInstruction: any Item] = [.input3: IntItem(99)]
+        let twice: [any Item] = [IntItem(7), IntItem(3), Self.op(.intRefAs)]
+        let count = Self.run(twice + [IntItem(3), Self.op(.bindingOccurrencesOfKey)], inputs: inputs)
+        #expect(stackString(count, .int) == "[ 2 3 ]")
+        let bound = Self.run([IntItem(3), Self.op(.bindingContainsKey)], inputs: inputs)
+        #expect(stackString(bound, .bool) == "[ true ]")
+        #expect(stackString(bound, .int) == "[ 3 ]")
+
+        let unbound = Self.run([IntItem(5), Self.op(.bindingContainsKey), Self.op(.bindingOccurrencesOfKey)])
+        #expect(stackString(unbound, .bool) == "[ false ]")
+        #expect(stackString(unbound, .int) == "[ 0 5 ]")
+        #expect(unbound.stacks[.error]!.isEmpty)
+    }
+
+    @Test func `keys found from above`() {
+        let inputs: [PushInstruction: any Item] = [.input2: IntItem(20), .input6: StringItem("s")]
+        let ceiling = Self.run([IntItem(3), Self.op(.bindingCeilingKey)], inputs: inputs)
+        #expect(stackString(ceiling, .int) == "[ 6 3 ]")
+        let exact = Self.run([IntItem(2), Self.op(.bindingCeilingKey)], inputs: inputs)
+        #expect(stackString(exact, .int) == "[ 2 2 ]")
+        let none = Self.run([IntItem(7), Self.op(.bindingCeilingKey)], inputs: inputs)
+        #expect(stackString(none, .int) == "[ 7 ]")
+        #expect(none.stacks[.error]!.count == 1)
     }
 
     @Test func `fresh keys are a deterministic gensym, reset at every load`() {

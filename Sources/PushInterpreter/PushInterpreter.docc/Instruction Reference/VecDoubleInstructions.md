@@ -46,6 +46,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoublePushAll` | Pushes every element onto the double stack, front to back, so the last element ends on top; consumes the vector. | `vecDouble` | `double`, one per step |
 | `vecDoubleQuote` | Wraps the vector in a one-item block. | `vecDouble` | `code` |
 | `vecDoubleReduce` | Folds the block over a vector of doubles from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecDouble`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecDoubleRefAs` | Binds the top vector of doubles to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecDoubleRefAs`. | `vecDouble`, `int` | `binding` |
 | `vecDoubleRemove` | Removes every x: `v x .vecDoubleRemove` gives v without its elements equal to x. | `vecDouble`, `double` | `vecDouble` |
 | `vecDoubleReplace` | Substitutes: `v a b .vecDoubleReplace` replaces every element equal to a with b. | `vecDouble`, `double`, `double` | `vecDouble` |
 | `vecDoubleReplaceFirst` | Substitutes once: `v a b .vecDoubleReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecDouble`, `double`, `double` | `vecDouble` |

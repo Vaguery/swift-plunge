@@ -36,11 +36,13 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     /// instruction.
     case operation
 
-    /// **Value-blind rearrangement of positions**: deleting (pop, flush,
-    /// `PopItems`), copying (dup, `DupItems`, `DupTimes`, `DeepDup`,
-    /// `YankDup`) and reordering (swap, rot, `Yank`, `Shove`), the deep ones indexed
-    /// by an int. These are the structural rules of substructural logic: weakening,
-    /// contraction and exchange. Provenance law 1: rearranging records nothing.
+    /// **Rearrangement of positions, value-blind in its effect**: deleting (pop,
+    /// flush, `PopItems`), copying (dup, `DupItems`, `DupTimes`, `DeepDup`,
+    /// `YankDup`) and reordering (swap, rot, `Yank`, `Shove`). It moves, copies or
+    /// deletes items and never makes one. The position may be chosen by an int
+    /// argument (the deep ones) or, for `bindingPopKey`, by a key. These are the
+    /// structural rules of substructural logic: weakening, contraction and
+    /// exchange. Provenance law 1: rearranging records nothing.
     case structural
 
     /// **A source with no data arguments**: constants and inputs (reproducible), and

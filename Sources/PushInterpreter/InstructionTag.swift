@@ -272,7 +272,8 @@ nonisolated extension InstructionTag {
         Entry(tag: .calculation, facet: .kind, provenance: .derived, summary: "Arithmetic or logic within one scalar type.",
               rationale: "An operation whose arguments and results are all on one scalar stack."),
         Entry(tag: .inspection, facet: .kind, provenance: .derived, summary: "Reads its arguments and leaves them.",
-              rationale: "Reads or observes its arguments, takes nothing but an int, and gives fixed results other than a binding."),
+              rationale: "Reads or observes its arguments, takes nothing but an int, and gives fixed results other than a "
+                  + "binding, or one of a few (a getter whose field may be empty)."),
         Entry(tag: .detection, facet: .kind, provenance: .derived, summary: "An inspection that answers with a bool.",
               rationale: "An inspection giving one bool."),
         Entry(tag: .comparison, facet: .kind, provenance: .derived, summary: "Relates two values of one type.",
@@ -308,7 +309,7 @@ nonisolated extension InstructionTag {
         Entry(tag: .naming, facet: .kind, provenance: .derived, summary: "Makes, finds or changes bindings.",
               rationale: "Takes, reads, observes or rearranges .binding, or gives a binding."),
         Entry(tag: .iterators, facet: .kind, provenance: .derived, summary: "Builds, inspects or adjusts an iterator.",
-              rationale: "Gives an iterator, from an iterator or from other values."),
+              rationale: "Gives an iterator, from an iterator or from other values, or reads one."),
         Entry(tag: .complicated, facet: .kind, provenance: .derived, summary: "No other kind fits; see its summary.",
               rationale: "Carries no other kind tag and is not a print."),
 

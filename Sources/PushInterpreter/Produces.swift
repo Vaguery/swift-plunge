@@ -27,8 +27,9 @@ public nonisolated enum Produces: Hashable, Sendable {
     case results([PushStack])
 
     /// One of a few fixed result lists, chosen by the arguments' values: an
-    /// iterator getter's result type follows the iterator's kind, and a setter that
-    /// finishes its loop hands the body to `.code` instead of an iterator.
+    /// iterator getter's result type follows the iterator's kind, a setter that
+    /// finishes its loop hands the body to `.code` instead of an iterator, and
+    /// `bindingUnpack` puts a value on whichever stack it belongs to.
     case alternatives([[PushStack]])
 
     /// One literal on `.exec`, which rests on `stack` one step later: a deferred
@@ -86,9 +87,9 @@ nonisolated extension Produces {
     /// what an iterator getter may hand back when the field's type is not fixed.
     static let anyItem: [PushStack] = PushStack.allCases.filter { $0 != .error }
 
-    /// An iterator handed back, with or without one field's value on one of
-    /// `stacks`.
-    static func iteratorAnd(_ stacks: [PushStack]) -> Produces {
-        .alternatives([[.iterator]] + stacks.map { [.iterator, $0] })
+    /// Nothing, or one result on one of `stacks`: a getter whose field may be
+    /// empty.
+    static func optional(_ stacks: [PushStack]) -> Produces {
+        .alternatives([[]] + stacks.map { [$0] })
     }
 }

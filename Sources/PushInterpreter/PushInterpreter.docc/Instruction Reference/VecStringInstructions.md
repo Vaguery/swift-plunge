@@ -49,6 +49,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringPushAll` | Pushes every element onto the string stack, front to back, so the last element ends on top; consumes the vector. | `vecString` | `string`, one per step |
 | `vecStringQuote` | Wraps the vector in a one-item block. | `vecString` | `code` |
 | `vecStringReduce` | Folds the block over a vector of strings from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecString`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecStringRefAs` | Binds the top vector of strings to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecStringRefAs`. | `vecString`, `int` | `binding` |
 | `vecStringRemove` | Removes every x: `v x .vecStringRemove` gives v without its elements equal to x. | `vecString`, `string` | `vecString` |
 | `vecStringReplace` | Substitutes: `v a b .vecStringReplace` replaces every element equal to a with b. | `vecString`, `string`, `string` | `vecString` |
 | `vecStringReplaceFirst` | Substitutes once: `v a b .vecStringReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecString`, `string`, `string` | `vecString` |

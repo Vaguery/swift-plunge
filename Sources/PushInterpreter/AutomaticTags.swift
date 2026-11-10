@@ -97,6 +97,7 @@ nonisolated struct AutomaticTagging {
     }
 
     var isFixedResults: Bool { if case .results = behavior.produces { true } else { false } }
+    var isAlternatives: Bool { if case .alternatives = behavior.produces { true } else { false } }
     var isApplying: Bool { if case .applying = behavior.body { true } else { false } }
     var reEntrant: Bool { behavior.tags.contains(.reEntrant) }
     var fallible: Bool { behavior.tags.contains(.fallible) }
@@ -164,15 +165,16 @@ nonisolated struct AutomaticTagging {
             tags.insert(.naming)
         }
         if Set(outputs).contains(.iterator) && behavior.produces != .continuation
-            && Set(outputs).isSubset(of: [.iterator, .code, .int, .bool]) || isIteratorGetter {
+            && Set(outputs).isSubset(of: [.iterator, .code, .int, .bool])
+            || isIteratorSetter || read.contains(.iterator) {
             tags.insert(.iterators)
         }
         return tags
     }
 
-    /// An iterator in, an iterator out (a getter or a setter), with perhaps a
-    /// field's value, or the body of a loop it ended, beside it.
-    var isIteratorGetter: Bool { taken.contains(.iterator) && outputs.contains(.iterator) }
+    /// An iterator in, an iterator out (a setter), with perhaps the body of a loop
+    /// it ended beside it.
+    var isIteratorSetter: Bool { taken.contains(.iterator) && outputs.contains(.iterator) }
 
     var isCalculation: Bool {
         guard behavior.behaviorClass == .operation, case .values = behavior.body,
@@ -184,8 +186,8 @@ nonisolated struct AutomaticTagging {
     var inspectionTags: Set<InstructionTag> {
         let kind = behavior.behaviorClass
         guard !looked.isEmpty, Set(taken).isSubset(of: [.int]), needed.isEmpty,
-              kind == .operation || kind == .contextRead, isFixedResults,
-              !outputs.isEmpty, !outputs.contains(.binding) else { return [] }
+              kind == .operation || kind == .contextRead, isFixedResults || isAlternatives,
+              !outputs.isEmpty, !(isFixedResults && outputs.contains(.binding)) else { return [] }
         var tags: Set<InstructionTag> = [.inspection]
         if outputs == [.bool] {
             tags.insert(.detection)
@@ -243,7 +245,7 @@ nonisolated struct AutomaticTagging {
     }
 
     var isBridge: Bool {
-        behavior.behaviorClass == .operation && !isIteratorGetter
+        behavior.behaviorClass == .operation && !isIteratorSetter
             && !Set(outputs).subtracting(data).subtracting([.int, .bool]).isEmpty
     }
 }

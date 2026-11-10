@@ -34,6 +34,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeNthPoint` | Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`. | `code` (read), `int` (read) | `code` |
 | `codeNthRoot` | Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`; refuses an empty block. | `code` (read), `int` (read) | `code`; may refuse |
 | `codePair` | Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block contributing its sole item. | `code`, `code` | `code` |
+| `codeRefAs` | Binds the top block to key k from `.int`, taking both and shadowing any older binding of k: `x k .codeRefAs`. | `code`, `int` | `binding` |
 | `codeRemovePoint` | Removes point i (clamped) with everything under it; removing point 0 gives `( )`. | `code`, `int` | `code` |
 | `codeReplaceAllPoints` | Replaces matching points: `s n r .codeReplaceAllPoints` puts r for every point of s equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
 | `codeReplaceFirstPoint` | Replaces the first matching point: `s n r .codeReplaceFirstPoint` puts r for s's first point equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |

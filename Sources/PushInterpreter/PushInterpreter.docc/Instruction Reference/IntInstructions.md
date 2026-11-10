@@ -31,6 +31,7 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 | `intPow` | Raises to a power: `b e .intPow` gives b to the e; refuses on overflow, or a negative e unless b is ±1. | `int`, `int` | `int`; may refuse |
 | `intQuot` | Divides, truncating toward zero: `a b .intQuot` gives a ÷ b; refuses when b is 0 or on overflow. | `int`, `int` | `int`; may refuse |
 | `intQuote` | Quotes an int as a one-item block: `5` becomes `( 5 )`. | `int` | `code` |
+| `intRefAs` | Binds the top int to key k from `.int`, taking both and shadowing any older binding of k: `v k .intRefAs`. | `int`, `int` | `binding` |
 | `intSign` | Gives the sign of an int: −1, 0 or 1. | `int` | `int` |
 | `intSubtract` | Subtracts: `a b .intSubtract` gives a − b; refuses on overflow. | `int`, `int` | `int`; may refuse |
 

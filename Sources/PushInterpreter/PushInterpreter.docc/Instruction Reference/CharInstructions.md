@@ -22,6 +22,7 @@ The `.char` stack holds single characters (Swift `Character`s, so one may be sev
 | `charLTE` | Compares in Unicode order, leaving both chars: `a b .charLTE` gives a ≤ b. | `char` (read), `char` (read) | `bool` |
 | `charLower` | Lowercases a char by Unicode's default rules; refuses one whose lowercase is several chars. | `char` | `char`; may refuse |
 | `charQuote` | Quotes a char as a one-item block on `.code`. | `char` | `code` |
+| `charRefAs` | Binds the top char to key k from `.int`, taking both and shadowing any older binding of k: `x k .charRefAs`. | `char`, `int` | `binding` |
 | `charUpper` | Uppercases a char by Unicode's default rules; refuses one whose uppercase is several chars, like ß. | `char` | `char`; may refuse |
 
 ## Reading the environment

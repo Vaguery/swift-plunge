@@ -38,6 +38,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBoolPushAll` | Pushes every element onto the bool stack, front to back, so the last element ends on top; consumes the vector. | `vecBool` | `bool`, one per step |
 | `vecBoolQuote` | Wraps the vector in a one-item block. | `vecBool` | `code` |
 | `vecBoolReduce` | Folds the block over a vector of bools from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecBool`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecBoolRefAs` | Binds the top vector of bools to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecBoolRefAs`. | `vecBool`, `int` | `binding` |
 | `vecBoolRemove` | Removes every x: `v x .vecBoolRemove` gives v without its elements equal to x. | `vecBool`, `bool` | `vecBool` |
 | `vecBoolReplace` | Substitutes: `v a b .vecBoolReplace` replaces every element equal to a with b. | `vecBool`, `bool`, `bool` | `vecBool` |
 | `vecBoolReplaceFirst` | Substitutes once: `v a b .vecBoolReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecBool`, `bool`, `bool` | `vecBool` |

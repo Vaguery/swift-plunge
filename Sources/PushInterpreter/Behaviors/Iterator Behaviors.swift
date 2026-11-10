@@ -261,14 +261,11 @@ nonisolated extension Interpreter {
 
     // MARK: - Getters
 
-    /// The getters are non-destructive: they hand back the iterator unchanged —
-    /// which is what `Peek` in their names is there to promise.
-    ///
-    /// Push convention would have them consume it — `.stringFirst` eats its
-    /// string — but an iterator is a live loop rather than a value, and a getter
-    /// that killed the loop to report its stride would be unusable in the body,
-    /// which is exactly where a program wants to ask. `.iteratorPop` is there for
-    /// anyone who wants it gone.
+    /// The getters are queries: they read the iterator and leave it, which is
+    /// what `Peek` in their names promises, as `vecIntPeekNth` does. A getter that
+    /// consumed the loop to report its stride would be unusable in the body, which
+    /// is exactly where a program wants to ask. `.iteratorPop` is there for anyone
+    /// who wants it gone. A getter whose field is empty pushes nothing.
     ///
     /// Provenance is **law 1b, extended from CodeItems to iterators**: an item put
     /// into a container and taken back out is the item that went in, so `origin`,
@@ -279,27 +276,21 @@ nonisolated extension Interpreter {
         produces: Produces,
         reading field: @escaping @Sendable (IteratorItem, ProvenanceRecording) -> (any Item)?
     ) -> Behavior {
-        Behavior(
-            name,
-            takes: [.iterator],
-            produces: produces,
-            fxn: { a, recording in
-                let iterator = a[0] as! IteratorItem
-                var results = [Router(.iterator, iterator)]
-                if let item = field(iterator, recording),
-                   let resting = PushStack.defaultStack(for: item) {
-                    results.append(Router(resting, item))
-                }
-                return results
-            }
-        )
+        Behavior(name, requires: [.reads(.iterator)], tags: [], behaviorClass: .operation,
+                 body: .values { a, recording in
+                     guard let item = field(a[0] as! IteratorItem, recording),
+                           let resting = PushStack.defaultStack(for: item) else { return [] }
+                     return [Router(resting, item)]
+                 }, produces: produces)
     }
 
     /// Where the loop started, or the collection it walks. Lands on whatever stack
     /// that item belongs to, so it is `.int` for a counting loop and `.string` or a
     /// vector stack for one walking a collection.
     static let iteratorPeekStart_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStart, produces: .iteratorAnd(Produces.anyItem)) { iterator, _ in iterator.origin }
+        iteratorGetter_Behavior(.iteratorPeekStart, produces: .optional(Produces.anyItem)) { iterator, _ in
+            iterator.origin
+        }
         .described(
             "Pushes where the loop starts (the first int of a count, the source of a walk, or the repeated item) "
             + "onto its stack, leaving the iterator.")
@@ -307,7 +298,7 @@ nonisolated extension Interpreter {
     /// Where the loop ends. A `.elements` iterator has no end bound of its own —
     /// its end is its source's length — so this emits nothing for one.
     static let iteratorPeekEnd_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekEnd, produces: .iteratorAnd([.int])) { iterator, _ in iterator.destination }
+        iteratorGetter_Behavior(.iteratorPeekEnd, produces: .optional([.int])) { iterator, _ in iterator.destination }
         .described(
             "Pushes the loop's end bound (the count, for a repeating iterator), leaving the iterator; pushes "
             + "nothing for an iterator that walks a source.")
@@ -318,12 +309,12 @@ nonisolated extension Interpreter {
     /// back, so the `IntItem` really is produced here, from the iterator, and law 3
     /// applies — argument first, instruction last.
     ///
-    /// It records through `reading` because the getter hands its iterator back: a
-    /// bare `«iter» .iteratorPeekStride` reproduces the stride *and* leaves the
-    /// iterator on `.iterator`, which a same-stack sibling would then read. The
-    /// crux pops it, so the fragment leaves only the fact.
+    /// It records through `reading`, as every query does: a bare
+    /// `«iter» .iteratorPeekStride` reproduces the stride *and* leaves the
+    /// iterator it read on `.iterator`, which a same-stack sibling would then
+    /// read. The crux pops it, so the fragment leaves only the fact.
     static let iteratorPeekStride_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekStride, produces: .results([.iterator, .int])) { iterator, recording in
+        iteratorGetter_Behavior(.iteratorPeekStride, produces: .results([.int])) { iterator, recording in
             IntItem(
                 iterator.stride,
                 call: recording(Behavior.reading(
@@ -336,7 +327,7 @@ nonisolated extension Interpreter {
     /// The block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
     static let iteratorPeekBody_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekBody, produces: .iteratorAnd([.code])) { iterator, _ in iterator.body }
+        iteratorGetter_Behavior(.iteratorPeekBody, produces: .optional([.code])) { iterator, _ in iterator.body }
         .described(
             "Pushes a copy of the body onto `.code` without running it, leaving the iterator; pushes nothing for a "
             + "bodyless iterator.")
@@ -347,9 +338,9 @@ nonisolated extension Interpreter {
     /// Records like `.iteratorPeekStride`, and for the same reason: there is no
     /// contained item to hand back, so the `IntItem` really is produced here and
     /// law 3 applies — including the `reading` cleanup that pops the iterator the
-    /// getter hands back.
+    /// getter read.
     static let iteratorPeekLaps_Behavior =
-        iteratorGetter_Behavior(.iteratorPeekLaps, produces: .results([.iterator, .int])) { iterator, recording in
+        iteratorGetter_Behavior(.iteratorPeekLaps, produces: .results([.int])) { iterator, recording in
             IntItem(
                 iterator.laps,
                 call: recording(Behavior.reading(

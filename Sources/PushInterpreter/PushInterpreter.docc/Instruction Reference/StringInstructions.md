@@ -54,6 +54,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringPushAllWords` | Pushes each whitespace-separated word of a string, one per step, front to back; a string with no words gives nothing. | `string` | `string`, one per step |
 | `stringQuote` | Quotes a string as a one-item block on `.code`. | `string` | `code` |
 | `stringReduce` | Folds the block over a string's chars from the first, with the running value as `.input0` and the next char as `.input1`; refuses an empty string or when steps run out. | `string`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `stringRefAs` | Binds the top string to key k from `.int`, taking both and shadowing any older binding of k: `x k .stringRefAs`. | `string`, `int` | `binding` |
 | `stringRemove` | Removes a char: `s c .stringRemove` gives s without its occurrences of c. | `string`, `char` | `string` |
 | `stringReplace` | Replaces chars: `s a b .stringReplace` turns every a in s into b. | `string`, `char`, `char` | `string` |
 | `stringReplaceFirst` | Replaces one char: `s a b .stringReplaceFirst` turns the first a in s into b. | `string`, `char`, `char` | `string` |
