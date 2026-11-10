@@ -35,18 +35,15 @@ struct TagsTests {
         }
     }
 
-    /// **The two channels must agree about comparisons.**
-    ///
-    /// The role answers "where is it defined" and the tag answers "what does it
-    /// compute". Every instruction registered as a comparison relates two values of
-    /// one type, so it carries the derived `comparison` tag; the tag is wider, since
-    /// it also counts containment (`stringContainsRun`, `vecIntIsSubset`). This
-    /// catches a non-comparison registered into `comparisonBehaviors`.
-    @Test func `every comparison by role carries the comparison tag`() {
-        let role = Interpreter.instructions(role: .comparison)
+    /// **What is registered as a comparison is one.** The role is derived from the
+    /// `comparison` tag now, so this checks the other direction: every Behavior in
+    /// `comparisonBehaviors` relates two values of one type, which catches a
+    /// non-comparison registered there.
+    @Test func `every registered comparison carries the comparison tag`() {
+        let registered = Set(Interpreter.comparisonBehaviors.keys)
         let tag = InstructionTagging.standard.instructions(tagged: .comparison)
-        let roleOnly = role.subtracting(tag).map(\.rawValue).sorted()
-        #expect(role.isSubset(of: tag), "role-only: \(roleOnly)")
+        let untagged = registered.subtracting(tag).map(\.rawValue).sorted()
+        #expect(registered.isSubset(of: tag), "untagged: \(untagged)")
     }
 
     /// The specific misclassification this branch existed to fix: `…Eq` was
@@ -71,9 +68,11 @@ struct TagsTests {
         // belonged (`Comparison Behaviors.swift`); 195 with `.binding`'s family (14)
         // and `xDeleteAtDepth` on the 13 family stacks (2026-11-09).
         #expect(Interpreter.instructions(role: .stackFamily).count == 195)
-        // `execEq` was removed; `bindingEq` came with `.binding`.
-        #expect(Interpreter.instructions(role: .comparison).count == 40,
-                "12 Eq + 28 orderings")
+        // Derived from the `comparison` tag since 2026-11-10: the 12 Eq and 28
+        // orderings, plus containment and the other two-of-a-stack tests.
+        #expect(Interpreter.instructions(role: .comparison)
+                == InstructionTagging.standard.instructions(tagged: .comparison))
+        #expect(Interpreter.instructions(role: .comparison).count == 54)
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.

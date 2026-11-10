@@ -133,9 +133,8 @@ nonisolated struct InstructionMix: Sendable {
         Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map { ($0, 1.0) }),
         focus: containerInstructions, weight: 2)
 
-    /// Equal shares of constants, inputs, combinators and everything else.
-    /// Equal shares of every role — constants, inputs, combinators, comparisons
-    /// and everything else.
+    /// Equal shares of every role — constants, inputs, the stack family,
+    /// comparisons and everything else.
     ///
     /// **A role missing from this dictionary is drawn at weight zero**, not at some
     /// default: `randomRole()` filters to `weights[role] > 0`. So adding a role case
@@ -148,7 +147,7 @@ nonisolated struct InstructionMix: Sendable {
 
     /// Draw in proportion to how many instructions each tag holds — i.e. exactly
     /// what `language.keys.randomElement()` does. **This is not neutral**: it is
-    /// 34% combinators and 15% constants because that is the shape of the
+    /// about 23% stack family and 9% constants because that is the shape of the
     /// language, which nobody chose.
     static let uniformOverLanguage = InstructionMix(
         Dictionary(uniqueKeysWithValues: InstructionRole.allCases.map {

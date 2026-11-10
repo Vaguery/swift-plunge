@@ -1,52 +1,38 @@
 //
-//  Tags.swift
+//  Roles.swift
 //  PushInterpreter
 //
 //  Created by Bill Tozier on 7/17/26.
 //
-//  Named subsets of the language, so that "sample uniformly from the
-//  combinators" and "which instructions consume an .int" are questions with
-//  answers rather than string-matching exercises.
+//  The role partition, which shapes random test programs, and the computed
+//  stack questions: which instructions consume, read or need a stack.
 //
 
-/// **Where an instruction is defined** — the dictionary that registers it — used
-/// as the language's role partition.
+/// **A partition of the language for drawing random test programs** — the fuzz
+/// and diagnostic mixes in `RandomCode` — and nothing more.
 ///
-/// **These five partition it**, which is the property that makes them worth
-/// having: every instruction is in exactly one, `.other` is the remainder by
-/// construction, and a test asserts it. Add a dictionary to `Interpreter.language`
-/// without classifying it and the instruction lands in `.other` — never nowhere.
+/// Drawing a role first and then an instruction within it gives the sources (the
+/// constants and inputs) and the comparisons a far larger share than their
+/// numbers would, so a random program has a fighting chance of feeding its
+/// instructions instead of starving them. That proportion is chosen for testing.
+/// **It is not a description of the language and should not drive a search**;
+/// for that, use the tags (`InstructionTagging`), which overlap and are open.
 ///
-/// **A role is only as honest as the dictionaries are.** Being derived from them
-/// means it cannot silently drift from what the language holds — but it also means
-/// a role says "this is where the behavior was registered", which is a fact about
-/// code organization and only *becomes* a fact about instructions if the
-/// dictionaries are curated to make it one. That is not automatic, and it was
-/// wrong once: every `…Eq` was roled `.stackFamily` purely because
-/// `eqCombinator_Behavior` sat in the same generator loop as dup and swap. Treat
-/// these as **provisionally** disjoint — the partition is a property worth keeping,
-/// not evidence that the categories are natural.
-///
-/// Adding a role is one case here and one line in `Interpreter.roles`. Most of the
-/// interesting ones need no declaration at all: **anything about what an
-/// instruction *needs* is already computable**, because a Behavior's
-/// `requirements` say so (see `instructions(consuming:)`).
-///
-/// The exception, and it is a real gap: **anything about what an instruction
-/// *makes* is not.** A Behavior declares what it takes and nothing about its
-/// results — those are `Router`s computed at run time. So a `.converter` tag
-/// ("moves a value from one stack to another"), or a computed producers/consumers
-/// ratio for "Stack economics", would need Behaviors to declare their result
-/// stacks. Worth doing one day: the robustness sweep already drives every
-/// behavior in the language, so a declaration that lied about its Routers could
-/// be caught there rather than trusted.
+/// **Every role is derived, never registered**, so where a Behavior happens to be
+/// defined cannot move it: constants and inputs by what they produce, the stack
+/// family by the per-stack template that generates it, comparisons by the
+/// `comparison` tag. The five partition the language: every instruction is in
+/// exactly one, `.other` is the remainder by construction, and a test asserts it.
+/// (Until 2026-11-10 roles were the dictionaries that registered each Behavior,
+/// which made them a fact about code organization: every `…Eq` was once roled
+/// with dup and swap because it sat in the same generator loop.)
 public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, CaseIterable {
-    /// The 80 environment constants — `int0…int9`, `vecString0…9`, and so on.
-    /// They read a binding rather than computing anything, and take no arguments,
-    /// so they can never starve.
+    /// The 80 environment constants — `int0…int9`, `vecString0…9`, and so on:
+    /// everything that produces a deferred literal. They take no arguments, so
+    /// they can never starve.
     case constant
 
-    /// The 10 `input0…input9` tokens. Like constants, they read a binding.
+    /// The 10 `input0…input9` tokens: everything that produces an input.
     case input
 
     /// The family generated for every stack from one template: dup, swap, rot,
@@ -57,21 +43,15 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
     /// measurements do not. (Earlier Push implementations called the whole
     /// family "combinators"; the tag keeps that word for the rearrangements.)
     ///
-    /// **Furniture only.** `…Eq` used to be generated into this family and so was
-    /// roled here; it is a `.comparison` now, and no longer described as an
-    /// instruction that "only shuffles a stack".
-    ///
     /// **Worth knowing before drawing uniformly: this is about a quarter of everything
-    /// that is not a constant or an input.** "Sample a random instruction" mostly
-    /// samples furniture, which is why it earns a partition of its own rather than
-    /// being left in `.other` to dominate it silently.
+    /// that is not a constant or an input.** "Sample a random instruction" would
+    /// mostly sample this furniture, which is why it is a role of its own rather
+    /// than left in `.other` to dominate it silently.
     case stackFamily
 
-    /// Ordering and equality — the 11 `…Eq` and the 28 `…GT`/`…GTE`/`…LT`/`…LTE`.
-    ///
-    /// Each of them carries the derived `comparison` tag, which also counts
-    /// containment tests such as `stringContainsRun`. `Roles Tests` asserts it,
-    /// which is what catches a non-comparison registered into the wrong dictionary.
+    /// Everything carrying the derived `comparison` tag: ordering, equality and
+    /// containment, two items of one stack to a bool (`intLT`, `stringEq`,
+    /// `stringContainsRun`).
     case comparison
 
     /// Everything else — the instructions that actually compute. The remainder,
@@ -83,13 +63,14 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
 nonisolated extension Interpreter {
 
     /// The language, partitioned. Built once, beside `language` itself, and
-    /// derived from the behavior dictionaries rather than from name prefixes — so
-    /// a tag cannot drift out of step with what the language actually holds.
+    /// derived from the Behaviors' declarations (and the per-stack template)
+    /// rather than from where they are registered or what they are named.
     static let roles: [InstructionRole: Set<PushInstruction>] = {
-        let constants = Set(constantBehaviors.keys)
-        let inputs = Set(inputBehaviors.keys)
+        let constants = Set(language.filter { if case .deferred = $0.value.produces { true } else { false } }.keys)
+        let inputs = Set(language.filter { $0.value.produces == .input }.keys)
         let stackFamily = Set(combinatorBehaviors.keys)
-        let comparisons = Set(comparisonBehaviors.keys)
+        let comparisons = InstructionTagging.standard.instructions(tagged: .comparison)
+            .subtracting(constants).subtracting(inputs).subtracting(stackFamily)
         return [
             .constant: constants,
             .input: inputs,
