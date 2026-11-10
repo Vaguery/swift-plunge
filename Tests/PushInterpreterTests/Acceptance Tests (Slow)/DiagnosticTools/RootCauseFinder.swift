@@ -112,7 +112,7 @@ func deepestFailures(
 /// print(rootCauseSummary(causes))
 /// ```
 ///
-/// Read the summary for *entries with small counts you do not recognise*, not for
+/// Read the summary for *entries with small counts you do not recognize*, not for
 /// the biggest number. The big entries are usually one systemic cause; the
 /// singletons are where the interesting bugs were both times.
 @MainActor

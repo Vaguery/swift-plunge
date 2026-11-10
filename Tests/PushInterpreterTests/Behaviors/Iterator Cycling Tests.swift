@@ -61,7 +61,7 @@ struct IteratorCyclingTests {
     }
 
     /// One lap is what every walk did before `laps` existed, and must still do.
-    @Test func `one lap is exactly the old behaviour`() {
+    @Test func `one lap is exactly the old behavior`() {
         let inty = loaded(cycling(1))
         inty.run()
         #expect(stackString(inty, .int) == "[ 3 2 1 ]")

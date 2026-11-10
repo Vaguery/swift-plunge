@@ -188,7 +188,7 @@ struct CodeFromIteratorTests {
 
     /// The elements keep their own `call`s, so the block's contents can still say
     /// where each of them came from — this is law 1b working in the collector's
-    /// favour rather than against it.
+    /// favor rather than against it.
     @Test func `the collected elements keep their own provenance`() {
         var iterator = walking(VecIntItem([4, 5, 6]))
         iterator.call = iterator.reconstruction()

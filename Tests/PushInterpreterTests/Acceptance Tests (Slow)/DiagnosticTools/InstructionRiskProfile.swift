@@ -31,7 +31,7 @@
 //  ## What it can and cannot show
 //
 //  It measures **correlation between presence and a bad ending** in random
-//  programs. That is not the same as "destabilises an evolving population", which
+//  programs. That is not the same as "destabilizes an evolving population", which
 //  is what `.risky` is finally about and which only a long search can answer. Read
 //  a large z as grounds for the tag, and a small one as grounds for withholding it
 //  — not as proof either way.

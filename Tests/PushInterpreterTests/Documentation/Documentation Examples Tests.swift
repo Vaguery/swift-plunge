@@ -52,20 +52,20 @@ struct DocumentationExamplesTests {
     }
 
     /// *Tagging Instructions*, "Adding your own tags".
-    @Test func `tagging: add tags, find neighbours, disable by tag`() async {
+    @Test func `tagging: add tags, find neighbors, disable by tag`() async {
         let tagging = InstructionTagging.standard
             .adding("psb:vectorAverage", to: [.vecIntSum, .vecDoubleSum])
             .adding("myProject", to: [.intAdd, .intMultiply])
 
         _ = tagging.tags(of: .vecIntSum)          // the standard tags, and psb:vectorAverage
-        _ = tagging.neighbours(of: .intAdd).first // the instruction sharing most of its tags
+        _ = tagging.neighbors(of: .intAdd).first // the instruction sharing most of its tags
 
         let configuration = RunnerConfiguration(
             disabledBehaviors: tagging.instructions(taggedAnyOf: ["psb:vectorAverage"]))
 
         // Not in the article: the checks that keep it honest.
         #expect(tagging.tags(of: .vecIntSum).isSuperset(of: ["psb:vectorAverage", .measurement, .collection]))
-        #expect(tagging.neighbours(of: .intAdd).first.map { tagging.tags(of: $0).contains("myProject") } == true)
+        #expect(tagging.neighbors(of: .intAdd).first.map { tagging.tags(of: $0).contains("myProject") } == true)
         #expect(configuration.disabledBehaviors == [.vecIntSum, .vecDoubleSum])
         let runner = Runner(configuration: configuration)
         #expect(await !runner.activeInstructionNames.contains("vecIntSum"))

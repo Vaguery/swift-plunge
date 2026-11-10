@@ -178,7 +178,7 @@ nonisolated struct InstructionMix: Sendable {
             InstructionRole.allCases.map { ($0, $0 == role ? 3.0 : 8.0) }))
     }
 
-    /// The nine mixes the diagnostic sweeps: the balanced centre, plus each tag
+    /// The nine mixes the diagnostic sweeps: the balanced center, plus each tag
     /// **enriched** and **depleted** in turn.
     ///
     /// Orthogonal by design — one factor moved at a time, in both directions —

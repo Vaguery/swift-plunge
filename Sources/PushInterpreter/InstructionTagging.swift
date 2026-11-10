@@ -22,7 +22,7 @@
 /// runs with every instruction enabled, and an excluding tag is the rare,
 /// deliberate exception. To let a search lean on tags without losing the
 /// unusual instructions, use them as weights with a floor, or swap an instruction
-/// for one of its ``neighbours(of:)``.
+/// for one of its ``neighbors(of:)``.
 public nonisolated struct InstructionTagging: Sendable, Hashable, Codable {
 
     /// Each tag's instructions.
@@ -96,7 +96,7 @@ public nonisolated struct InstructionTagging: Sendable, Hashable, Codable {
     /// The instructions sharing a tag with `instruction`, most alike first (ties
     /// by name): candidates for a mutation that swaps one instruction for a
     /// relative.
-    public func neighbours(of instruction: PushInstruction) -> [PushInstruction] {
+    public func neighbors(of instruction: PushInstruction) -> [PushInstruction] {
         let own = tags(of: instruction)
         let candidates = instructions(taggedAnyOf: own).subtracting([instruction])
         return candidates

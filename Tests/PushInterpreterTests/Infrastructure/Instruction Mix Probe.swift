@@ -15,7 +15,7 @@
 //
 //  Ten mixes × four genome lengths (50, 100, 250, 500 — the range people set as
 //  initial GP arguments). The mixes are orthogonal by design: the balanced
-//  centre, then each tag **enriched** (a third of the draw) and **depleted** (a
+//  center, then each tag **enriched** (a third of the draw) and **depleted** (a
 //  ninth) in turn, so a difference can be attributed to the one thing that moved.
 //  Plus `language-shaped` as a control — what `language.keys.random()` gives you,
 //  which is 34% furniture and nobody's decision.

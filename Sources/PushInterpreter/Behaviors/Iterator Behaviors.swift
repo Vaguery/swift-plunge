@@ -167,7 +167,7 @@ nonisolated extension Interpreter {
     /// At burial 0, which is what every tight loop carries, the copy lands
     /// directly under the payload and this is an ordinary loop. A positive burial
     /// lets other pending work run in between, so the loop interleaves rather than
-    /// monopolising `.exec`. Reading the depth from the iterator rather than from
+    /// monopolizing `.exec`. Reading the depth from the iterator rather than from
     /// `.int` is the whole point: a thousand-pass loop consumes no arguments at
     /// all, which is what `.iteratorPlayDelayed` re-reading a delay every pass got
     /// wrong.

@@ -2,12 +2,12 @@
 //  CruxDiagnostics.swift
 //  PushInterpreterTests — DiagnosticTools
 //
-//  **Does one item's crux honour its claim, and if not, how does it fail?**
+//  **Does one item's crux honor its claim, and if not, how does it fail?**
 //
 //  This is the single place that re-runs a crux and judges the result. Everything
 //  else in DiagnosticTools is about *finding* items worth asking about (CruxSweep),
 //  *attributing* a failure to the instruction that caused it (RootCauseFinder), or
-//  *summarising* many answers (CruxFailureReport). The judging happens here, once,
+//  *summarizing* many answers (CruxFailureReport). The judging happens here, once,
 //  so a change to what "broken" means lands in one file.
 //
 //  ## Why a verdict rather than an optional String
@@ -39,7 +39,7 @@ import Foundation
 @testable import PushInterpreter
 
 
-/// How a crux failed to honour its claim. The four are genuinely different
+/// How a crux failed to honor its claim. The four are genuinely different
 /// diagnoses, and lumping them together makes a sweep much harder to read: a
 /// hundred `.debris` findings are usually one bug, a hundred `.wrongValue`
 /// findings usually are not.

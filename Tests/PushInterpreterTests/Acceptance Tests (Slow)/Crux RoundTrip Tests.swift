@@ -29,7 +29,7 @@ import Testing
 
 // MARK: - The shared check
 
-/// Whether an item's claim is one the language provably cannot honour yet, so
+/// Whether an item's claim is one the language provably cannot honor yet, so
 /// checking it would only re-find a gap already pinned by
 /// `CruxRoundTripTests.knownGapsPendingCodeItemChange`.
 ///

@@ -146,7 +146,7 @@ public nonisolated protocol Item: Pretty, Sendable {
     /// So each struct stores it and refreshes it from `call`'s `didSet`. It is
     /// maintained rather than computed on demand because the case that matters —
     /// a long accumulation chain — would otherwise cost a full walk per push, and
-    /// re-walking a chain that grows by one each step is the quadratic behaviour
+    /// re-walking a chain that grows by one each step is the quadratic behavior
     /// this whole exercise exists to remove.
     var callWeight: Int {get}
 

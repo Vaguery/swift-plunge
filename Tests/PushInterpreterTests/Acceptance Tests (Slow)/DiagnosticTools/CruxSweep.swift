@@ -57,7 +57,7 @@ struct SweptItem {
 }
 
 
-/// A parameterised corpus of random programs.
+/// A parameterized corpus of random programs.
 ///
 /// Every field is a knob an investigation has wanted at least once. `mix` is the
 /// least obvious: it reweights the generated programs by `InstructionRole`, so

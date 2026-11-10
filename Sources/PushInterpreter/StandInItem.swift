@@ -40,7 +40,7 @@
 /// count stand-ins. Assigning a `call` is ignored.
 ///
 /// **It is not forbidden anywhere.** A stand-in in evolved code is just a
-/// labelled constant, so there's no need for a category of instruction that
+/// labeled constant, so there's no need for a category of instruction that
 /// programs may not contain.
 public nonisolated struct StandInItem: Item, Equatable, Pretty {
 

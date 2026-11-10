@@ -7,7 +7,7 @@
 //
 //  Every test here is `.disabled` by default. They are instruments, not
 //  assertions: they answer "is anything wrong, and where" rather than pinning a
-//  behaviour, and a couple of them run for a minute. The suite's standing
+//  behavior, and a couple of them run for a minute. The suite's standing
 //  assertions live in `Crux RoundTrip Tests.swift` and
 //  `Composition Invariant Tests.swift`.
 //

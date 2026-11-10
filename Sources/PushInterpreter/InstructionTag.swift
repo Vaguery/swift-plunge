@@ -2,7 +2,7 @@
 //  InstructionTag.swift
 //  PushInterpreter
 //
-//  **Tags: overlapping, labelled subsets of the language, in an open vocabulary.**
+//  **Tags: overlapping, labeled subsets of the language, in an open vocabulary.**
 //
 //  A tag explains something about the instructions that carry it: what types they
 //  touch, what they do, what they cost, how they might be used. Tags overlap freely,
@@ -29,7 +29,7 @@
 //  or derived, because a number with no stated reason is indistinguishable from
 //  cargo. A tag gets the same discipline. `.risky` on `.execY` was first
 //  **inherited**, from Clojush and Push3 experience, and has since been **measured**
-//  here; saying which is the difference between a finding and a rumour.
+//  here; saying which is the difference between a finding and a rumor.
 //
 
 /// Where a tag's judgment came from: the taxonomy `Interpreter`'s limits use,
@@ -187,7 +187,7 @@ public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, S
     /// anyone who already did.
     ///
     /// That measurement shows correlation with a bad ending in *random* programs,
-    /// which is grounds for the tag. Whether something destabilises an evolving
+    /// which is grounds for the tag. Whether something destabilizes an evolving
     /// *population* only a long search can answer.
     public static let risky = InstructionTag("risky")
 
@@ -324,7 +324,7 @@ nonisolated extension InstructionTag {
 
         Entry(tag: .reEntrant, facet: .judgment, provenance: .inspected, summary: "Re-pushes itself onto .exec to drive a loop.",
               rationale: "Read off each behavior's own continuation: these are the instructions that put a copy of themselves back on .exec."),
-        Entry(tag: .risky, facet: .judgment, provenance: .measured, summary: "Known to destabilise an evolving population.",
+        Entry(tag: .risky, facet: .judgment, provenance: .measured, summary: "Known to destabilize an evolving population.",
               rationale: "Suggested by Clojush and Push3 experience, then measured here: .execY hits the step limit 76% of the time against a 32% baseline, z = 14 over 2,500 random programs. The same measurement is what keeps .execS out: it looks like it belongs and scores z = 1.0, which is noise. See InstructionRiskProfile."),
         Entry(tag: .cruxOnly, facet: .judgment, provenance: .measured, summary: "Starves in practice; useful in a crux, not in a genome.",
               rationale: "Measured: the iteratorFrom… constructors want about 7 arguments and starve close to 100% of the time in random programs."),

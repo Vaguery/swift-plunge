@@ -232,7 +232,7 @@ private func concurrencyWidth(_ configuration: RunnerConfiguration, count: Int) 
 /// interpreters, but each `CaseResult` is yielded the moment its task finishes,
 /// **in completion order** rather than request order. Each result carries its own
 /// `individual`/`trainingCase` ids, so an unordered stream is enough for a caller
-/// filling a grid live (e.g. the population×case heatmap). Cancelling the consumer
+/// filling a grid live (e.g. the population×case heatmap). Canceling the consumer
 /// (dropping the stream) cancels the in-flight work.
 nonisolated func evaluatePairingsStream(
     _ pairings: [Pairing],

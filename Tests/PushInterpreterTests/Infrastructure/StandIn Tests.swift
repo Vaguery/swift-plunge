@@ -87,7 +87,7 @@ struct StandInTests {
         #expect(topItem(inty, .error).call.isEmpty)
     }
 
-    @Test func `a stand-in in a program runs as a labelled constant`() {
+    @Test func `a stand-in in a program runs as a labeled constant`() {
         let five = StandInItem(standingInFor: IntItem(5), source: .intStackDepth, reason: .observed)
         let three = StandInItem(standingInFor: IntItem(3), source: nil, reason: .elided)
         let inty = run([five, three, InstructionItem(.intAdd)])

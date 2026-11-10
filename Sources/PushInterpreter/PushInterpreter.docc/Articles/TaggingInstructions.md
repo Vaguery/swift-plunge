@@ -58,7 +58,7 @@ let tagging = InstructionTagging.standard
     .adding("myProject", to: [.intAdd, .intMultiply])
 
 tagging.tags(of: .vecIntSum)          // the standard tags, and psb:vectorAverage
-tagging.neighbours(of: .intAdd).first // the instruction sharing most of its tags
+tagging.neighbors(of: .intAdd).first // the instruction sharing most of its tags
 ```
 
 ``InstructionTagging/merging(_:)`` combines two taggings, and

@@ -3,7 +3,7 @@
 //  PushInterpreterTests
 //
 //  Tags are an open, descriptive vocabulary, not a fixed ontology, so the one
-//  rule is that nothing goes unlabelled.
+//  rule is that nothing goes unlabeled.
 //
 
 @testable import PushInterpreter

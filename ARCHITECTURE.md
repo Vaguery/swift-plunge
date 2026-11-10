@@ -114,7 +114,7 @@ Pieces of the machinery:
 
 - `WrittenCall` and `Behavior.reading`: a query's history removes the arguments it
   read, so a crux leaves only its value (the **composition invariant**: a crux
-  used as an argument must not leave debris for its neighbours).
+  used as an argument must not leave debris for its neighbors).
 - `Containment`: an element taken out of a container records its address.
 - `StandInItem`: a marked literal for a value whose history can't be replayed.
 - `CruxSharing`: a crux builds a shared value once and duplicates it.

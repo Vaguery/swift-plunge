@@ -9,7 +9,7 @@ import Foundation
 
 
 /// How a `.points` walk hands each point on. The three modes are the pre-order
-/// analogue of the `codeNth`/`codeEmitNth`/`codeDoNth` trio, and they differ only
+/// analog of the `codeNth`/`codeEmitNth`/`codeDoNth` trio, and they differ only
 /// in what becomes of a point that is itself a sub-block:
 ///
 /// - `boxed` — every point boxed as `.code` (via `codeNthPoint`) and left resting
@@ -159,7 +159,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// **`nil` means this iterator is a sequence rather than a loop**: it only
     /// emits its elements, and a pass costs one step instead of three. Exploding
     /// a 200-character string costs 200 steps, not 600 — which against
-    /// `stepLimit` is a difference in behaviour, not just in speed.
+    /// `stepLimit` is a difference in behavior, not just in speed.
     ///
     /// An *empty* body is normalized to nil by `init`, so `CodeItem([])` can
     /// never be here to be confused with "no body". That is deliberate: it lets
@@ -218,7 +218,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
     /// Zero, the overwhelmingly common case, means "directly under the payload":
     /// a tight loop that comes back round as soon as its body is done. A positive
     /// burial lets other pending work run first, so the loop interleaves with it
-    /// rather than monopolising `.exec` — a coroutine, in effect.
+    /// rather than monopolizing `.exec` — a coroutine, in effect.
     ///
     /// It lives here rather than being re-read every pass because re-reading is
     /// what *causes* argument starvation: a thousand-pass loop would eat a

@@ -248,7 +248,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     ///
     /// That polymorphism is what lets this exist without a sieve. A genome cannot
     /// *ask* for "an iterator that emits Ints" — `.iterator` is homogeneous by
-    /// type and heterogeneous by behaviour, and asking for the top one and hoping
+    /// type and heterogeneous by behavior, and asking for the top one and hoping
     /// is all anything can do. So this
     /// takes whatever iterator is there and answers in kind, rather than
     /// demanding a type it has no way to find.

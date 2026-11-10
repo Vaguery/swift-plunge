@@ -104,7 +104,7 @@ struct RandomCodeTests {
         #expect(abs((realized[.other] ?? 0) - 0.5) < 0.03)
     }
 
-    /// The sweep is the balanced centre, each role enriched and depleted in turn,
+    /// The sweep is the balanced center, each role enriched and depleted in turn,
     /// and the language-shaped control — so it grows by two whenever a role is
     /// added, which `.comparison` did.
     @Test func `the standard sweep covers every role in both directions`() {

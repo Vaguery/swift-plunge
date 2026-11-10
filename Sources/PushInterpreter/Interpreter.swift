@@ -729,11 +729,11 @@ nonisolated final class Interpreter {
         deferringFinalOnly = true
         defer { deferringFinalOnly = false }
         while counter < config.stepLimit && !stacks[.exec]!.isEmpty {
-            // Bail promptly when the evaluating task is cancelled (e.g. the search was
+            // Bail promptly when the evaluating task is canceled (e.g. the search was
             // paused), rather than draining the whole step budget. The run is
             // nonisolated and runs inside the fan-out's child task, so this reflects
             // that task's cancellation. Asked every 256 steps rather than every step,
-            // where it was about 3% of step time; a cancelled run is abandoned, so
+            // where it was about 3% of step time; a canceled run is abandoned, so
             // when it stops changes no result.
             if counter & 0xFF == 0, Task.isCancelled { break }
             self.step()
