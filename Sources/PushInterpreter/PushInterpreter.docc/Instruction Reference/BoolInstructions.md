@@ -33,7 +33,7 @@ The `.bool` stack holds `true` and `false`. Comparisons on other stacks put thei
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `boolRef` | Binds a copy of the top bool, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `boolRef` | Binds a copy of the top bool, left in place, to a fresh key and pushes the key onto `.int`. | `bool` (read) | `binding`, `int` |
 
 ## Control
 

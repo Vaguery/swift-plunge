@@ -74,15 +74,15 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDouble7` | Pushes the run's constant 7 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
 | `vecDouble8` | Pushes the run's constant 8 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
 | `vecDouble9` | Pushes the run's constant 9 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `vecDoubleLookupContaining` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupContainingFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupEqual` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupEqualFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupPrefix` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecDouble`, `int`; may refuse |
-| `vecDoubleLookupPrefixFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupContaining` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecDouble` (read) | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupContainingFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecDouble` (read) | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupEqual` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecDouble` (read) | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupEqualFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecDouble` (read) | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupPrefix` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecDouble` (read) | `vecDouble`, `int`; may refuse |
+| `vecDoubleLookupPrefixFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecDouble` (read) | `vecDouble`, `int`; may refuse |
 | `vecDoubleReadItems` | Copies the top n doubles into a vector, leaving them: `n .vecDoubleReadItems`, n clamped to the stack's depth; the top double comes last. | `int` | `vecDouble` |
 | `vecDoubleReadStack` | Copies the whole double stack into a vector, leaving it; the bottom double comes first, and an empty stack gives an empty vector. | — | `vecDouble` |
-| `vecDoubleRef` | Binds a copy of the top vector of doubles, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `vecDoubleRef` | Binds a copy of the top vector of doubles, left in place, to a fresh key and pushes the key onto `.int`. | `vecDouble` (read) | `binding`, `int` |
 
 ## Control
 

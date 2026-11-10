@@ -18,19 +18,19 @@ The `.binding` stack holds keyed bindings: an int key and any item. The topmost 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `bindingCeilingKey` | Pushes the least bound key at or above k, leaving k; refuses when there is none. | — | `int`; may refuse |
-| `bindingContainsKey` | Pushes whether key k is bound, leaving k. | — | `bool`; may refuse |
-| `bindingDeref` | Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value lands on its stack; refuses when k is unbound. | — | the rest of the program; may refuse |
-| `bindingDerefFrom` | Runs the value bound to key k at depth i or below on `.binding`, as `.bindingDeref` does, leaving k: `k i .bindingDerefFrom` reaches shadowed bindings; refuses when there is none. | `int` | the rest of the program; may refuse |
-| `bindingDerefToCode` | Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted, leaving k; refuses when k is unbound. | — | `code`; may refuse |
-| `bindingDerefToCodeFrom` | Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as `.bindingDerefToCode` does, leaving k: `k i .bindingDerefToCodeFrom`; refuses when there is none. | `int` | `code`; may refuse |
-| `bindingDo` | Pops key k's topmost binding and runs its value, as `.bindingDeref` does, leaving k; refuses when k is unbound. | — | the rest of the program; may refuse |
-| `bindingFloorKey` | Pushes the greatest bound key at or below k, leaving k; refuses when there is none. | — | `int`; may refuse |
+| `bindingCeilingKey` | Pushes the least bound key at or above k, leaving k; refuses when there is none. | `int` (read) | `int`; may refuse |
+| `bindingContainsKey` | Pushes whether key k is bound, leaving k. | `int` (read) | `bool` |
+| `bindingDeref` | Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value lands on its stack; refuses when k is unbound. | `int` (read) | the rest of the program; may refuse |
+| `bindingDerefFrom` | Runs the value bound to key k at depth i or below on `.binding`, as `.bindingDeref` does, leaving k: `k i .bindingDerefFrom` reaches shadowed bindings; refuses when there is none. | `int`, `int` (read) | the rest of the program; may refuse |
+| `bindingDerefToCode` | Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted, leaving k; refuses when k is unbound. | `int` (read) | `code`; may refuse |
+| `bindingDerefToCodeFrom` | Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as `.bindingDerefToCode` does, leaving k: `k i .bindingDerefToCodeFrom`; refuses when there is none. | `int`, `int` (read) | `code`; may refuse |
+| `bindingDo` | Pops key k's topmost binding and runs its value, as `.bindingDeref` does, leaving k; refuses when k is unbound. | `int` (read) | the rest of the program; may refuse |
+| `bindingFloorKey` | Pushes the greatest bound key at or below k, leaving k; refuses when there is none. | `int` (read) | `int`; may refuse |
 | `bindingFreshKey` | Pushes a fresh key onto `.int`, one not drawn before in this run. | — | `int` |
-| `bindingKeyDepth` | Pushes the depth of key k's topmost binding on `.binding`, leaving k; refuses when k is unbound. | — | `int`; may refuse |
-| `bindingKeyOf` | Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item, leaving the block; refuses on a miss. | — | `int`; may refuse |
-| `bindingNearestKey` | Pushes the bound key nearest k, the topmost on a tie, leaving k; refuses when nothing is bound. | — | `int`; may refuse |
-| `bindingOccurrencesOfKey` | Pushes how many bindings key k has, the shadowed ones included, leaving k; 0 when it is unbound. | — | `int`; may refuse |
+| `bindingKeyDepth` | Pushes the depth of key k's topmost binding on `.binding`, leaving k; refuses when k is unbound. | `int` (read) | `int`; may refuse |
+| `bindingKeyOf` | Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item, leaving the block; refuses on a miss. | `code` (read) | `int`; may refuse |
+| `bindingNearestKey` | Pushes the bound key nearest k, the topmost on a tie, leaving k; refuses when nothing is bound. | `int` (read) | `int`; may refuse |
+| `bindingOccurrencesOfKey` | Pushes how many bindings key k has, the shadowed ones included, leaving k; 0 when it is unbound. | `int` (read) | `int` |
 
 ## Control
 

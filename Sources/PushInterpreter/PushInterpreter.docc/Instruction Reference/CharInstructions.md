@@ -39,11 +39,11 @@ The `.char` stack holds single characters (Swift `Character`s, so one may be sev
 | `char7` | Pushes the run's constant 7 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
 | `char8` | Pushes the run's constant 8 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
 | `char9` | Pushes the run's constant 9 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `charLookupEqual` | Reads the top char as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `char`, `int`; may refuse |
-| `charLookupEqualFrom` | Reads the top char as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `char`, `int`; may refuse |
-| `charLookupNearest` | Reads the top char as a probe and copies the one below nearest it by code point, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `char`, `int`; may refuse |
-| `charLookupNearestFrom` | Reads the top char as a probe and copies the one below nearest it by code point, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `char`, `int`; may refuse |
-| `charRef` | Binds a copy of the top char, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `charLookupEqual` | Reads the top char as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `char` (read) | `char`, `int`; may refuse |
+| `charLookupEqualFrom` | Reads the top char as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `char` (read) | `char`, `int`; may refuse |
+| `charLookupNearest` | Reads the top char as a probe and copies the one below nearest it by code point, the topmost on a tie, pushing its depth + 1 onto `.int`. | `char` (read) | `char`, `int`; may refuse |
+| `charLookupNearestFrom` | Reads the top char as a probe and copies the one below nearest it by code point, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int`, `char` (read) | `char`, `int`; may refuse |
+| `charRef` | Binds a copy of the top char, left in place, to a fresh key and pushes the key onto `.int`. | `char` (read) | `binding`, `int` |
 
 ## Control
 

@@ -59,11 +59,11 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 | `double7` | Pushes the run's constant 7 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
 | `double8` | Pushes the run's constant 8 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
 | `double9` | Pushes the run's constant 9 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `doubleLookupEqual` | Reads the top double as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `double`, `int`; may refuse |
-| `doubleLookupEqualFrom` | Reads the top double as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `double`, `int`; may refuse |
-| `doubleLookupNearest` | Reads the top double as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | — | `double`, `int`; may refuse |
-| `doubleLookupNearestFrom` | Reads the top double as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int` | `double`, `int`; may refuse |
-| `doubleRef` | Binds a copy of the top double, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `doubleLookupEqual` | Reads the top double as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `double` (read) | `double`, `int`; may refuse |
+| `doubleLookupEqualFrom` | Reads the top double as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `double` (read) | `double`, `int`; may refuse |
+| `doubleLookupNearest` | Reads the top double as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | `double` (read) | `double`, `int`; may refuse |
+| `doubleLookupNearestFrom` | Reads the top double as a probe and copies the nearest one below it, searching from depth i (at least 1), the topmost on a tie, pushing its depth + 1 onto `.int`; refuses when i is past the bottom. | `int`, `double` (read) | `double`, `int`; may refuse |
+| `doubleRef` | Binds a copy of the top double, left in place, to a fresh key and pushes the key onto `.int`. | `double` (read) | `binding`, `int` |
 
 ## Control
 

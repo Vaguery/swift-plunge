@@ -240,8 +240,9 @@ struct PlannerTests {
                     #expect(snapshot(inty) == before,
                             "\(instruction) refused but changed a stack: \(blamed)")
                     #expect(blamed.hasPrefix("\(instruction) missing args: ."))
-                    // The blame must be a stack the instruction actually declared.
-                    let declared = behavior.staticNeeds.keys.map { ".\($0)" }
+                    // The blame must be a stack the instruction actually declared: one it
+                    // needs, or, for a lookup's miss, one it observes.
+                    let declared = (Array(behavior.staticNeeds.keys) + behavior.observes).map { ".\($0)" }
                     let named = declared.filter { blamed.hasSuffix($0) }
                     #expect(!named.isEmpty,
                             "\(instruction) blamed a stack it never declared: \(blamed)")

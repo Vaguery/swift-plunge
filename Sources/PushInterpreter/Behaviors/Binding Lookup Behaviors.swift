@@ -19,7 +19,8 @@ nonisolated extension Interpreter {
     static func refLookup(_ name: PushInstruction, from: Bool, tags: Set<InstructionTag> = [],
                           produces: Produces,
                           deliver: @escaping @Sendable (any Item, ReadContext) -> [Router]) -> Behavior {
-        Behavior.contextRead(name, takes: from ? [.int] : [], observes: [.int, .binding], tags: tags.union([.fallible]),
+        Behavior.contextRead(name, takes: from ? [.int] : [], reads: [.int], observes: [.int, .binding],
+                             tags: tags.union([.fallible]),
                              produces: produces) { a, context in
             let handBack = from ? [Router(.int, a[0])] : []
             guard let key = context.items(of: .int).first as? IntItem else {
@@ -90,7 +91,7 @@ nonisolated extension Interpreter {
 
     /// The depth of a key's topmost binding, onto `.int`.
     static let bindingKeyDepth_Behavior =
-        Behavior.contextRead(.bindingKeyDepth, observes: [.int, .binding], tags: [.fallible],
+        Behavior.contextRead(.bindingKeyDepth, reads: [.int], observes: [.int, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(.bindingKeyDepth, on: .int, context.recording)]
@@ -106,7 +107,8 @@ nonisolated extension Interpreter {
     /// `.binding` from the top down; onto `.int`, observed.
     static func refKeyFinder(_ name: PushInstruction,
                              choose: @escaping @Sendable (Int, [Int]) -> Int?) -> Behavior {
-        Behavior.contextRead(name, observes: [.int, .binding], tags: [.fallible], produces: .results([.int])) { _, context in
+        Behavior.contextRead(name, reads: [.int], observes: [.int, .binding], tags: [.fallible],
+                             produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(name, on: .int, context.recording)]
             }
@@ -137,11 +139,10 @@ nonisolated extension Interpreter {
         .described("Pushes the least bound key at or above k, leaving k; refuses when there is none.")
 
     /// A fact about key k (read from `.int`) computed from the keys on `.binding`,
-    /// top first. An unbound key is an answer, not a refusal: it refuses only
-    /// when there is no key to read.
+    /// top first. An unbound key is an answer, not a refusal.
     static func keyQuery(_ name: PushInstruction, gives stack: PushStack,
                          _ answer: @escaping @Sendable (_ key: Int, _ keys: [Int]) -> any Item) -> Behavior {
-        Behavior.contextRead(name, observes: [.int, .binding], tags: [.fallible],
+        Behavior.contextRead(name, reads: [.int], observes: [.int, .binding],
                              produces: .results([stack])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
                 return [refMissing(name, on: .int, context.recording)]
@@ -165,7 +166,7 @@ nonisolated extension Interpreter {
     /// Reverse lookup: the key of the topmost binding whose value is the block on
     /// top of `.code` (read), or the one item that block holds.
     static let bindingKeyOf_Behavior =
-        Behavior.contextRead(.bindingKeyOf, observes: [.code, .binding], tags: [.fallible],
+        Behavior.contextRead(.bindingKeyOf, reads: [.code], observes: [.code, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
             guard let probe = context.items(of: .code).first as? CodeItem else {
                 return [refMissing(.bindingKeyOf, on: .code, context.recording)]

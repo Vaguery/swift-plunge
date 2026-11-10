@@ -54,7 +54,8 @@ nonisolated extension Interpreter {
         locate: @escaping @Sendable (_ probe: any Item, _ items: Deque<any Item>, _ start: Int) -> Int?
     ) -> Behavior {
         let produces: Produces = .results(stack == .int ? [.int, .int] : [stack, .int])
-        return Behavior.contextRead(name, takes: from ? [.int] : [], observes: [stack], tags: [.fallible],
+        return Behavior.contextRead(name, takes: from ? [.int] : [], reads: [stack], observes: [stack],
+                                    tags: [.fallible],
                                     produces: produces) { a, context in
             let items = context.items(of: stack)
             let start = from ? max(1, (a[0] as! IntItem).value) : 1

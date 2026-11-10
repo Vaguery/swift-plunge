@@ -98,14 +98,14 @@ struct BehaviorClassTests {
         }
     }
 
-    /// A source has no data arguments. `readItems` takes a count, and nothing in
-    /// the class takes more.
-    @Test func `a context read takes no data, at most a count`() {
+    /// A context read consumes no data. `readItems` takes a count, and nothing in
+    /// the class takes more; a probe, a key or an item to bind is read and left.
+    @Test func `a context read takes at most a count, and reads the rest`() {
         for name in members(.contextRead) {
             for requirement in Interpreter.language[name]!.requirements {
-                guard case .takes(.int) = requirement else {
-                    Issue.record("\(name) requires \(requirement)")
-                    continue
+                switch requirement {
+                case .takes(.int), .reads: continue
+                default: Issue.record("\(name) requires \(requirement)")
                 }
             }
         }

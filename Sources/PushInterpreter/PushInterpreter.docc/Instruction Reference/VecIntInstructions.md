@@ -74,15 +74,15 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecInt7` | Pushes the run's constant 7 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
 | `vecInt8` | Pushes the run's constant 8 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
 | `vecInt9` | Pushes the run's constant 9 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `vecIntLookupContaining` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecInt`, `int`; may refuse |
-| `vecIntLookupContainingFrom` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecInt`, `int`; may refuse |
-| `vecIntLookupEqual` | Reads the top vector of ints as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecInt`, `int`; may refuse |
-| `vecIntLookupEqualFrom` | Reads the top vector of ints as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecInt`, `int`; may refuse |
-| `vecIntLookupPrefix` | Reads the top vector of ints as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecInt`, `int`; may refuse |
-| `vecIntLookupPrefixFrom` | Reads the top vector of ints as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecInt`, `int`; may refuse |
+| `vecIntLookupContaining` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecInt` (read) | `vecInt`, `int`; may refuse |
+| `vecIntLookupContainingFrom` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecInt` (read) | `vecInt`, `int`; may refuse |
+| `vecIntLookupEqual` | Reads the top vector of ints as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecInt` (read) | `vecInt`, `int`; may refuse |
+| `vecIntLookupEqualFrom` | Reads the top vector of ints as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecInt` (read) | `vecInt`, `int`; may refuse |
+| `vecIntLookupPrefix` | Reads the top vector of ints as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecInt` (read) | `vecInt`, `int`; may refuse |
+| `vecIntLookupPrefixFrom` | Reads the top vector of ints as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecInt` (read) | `vecInt`, `int`; may refuse |
 | `vecIntReadItems` | Copies the top n ints into a vector, leaving them: `n .vecIntReadItems`, n clamped to the stack's depth; the top int comes last. | `int` | `vecInt` |
 | `vecIntReadStack` | Copies the whole int stack into a vector, leaving it; the bottom int comes first, and an empty stack gives an empty vector. | — | `vecInt` |
-| `vecIntRef` | Binds a copy of the top vector of ints, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `vecIntRef` | Binds a copy of the top vector of ints, left in place, to a fresh key and pushes the key onto `.int`. | `vecInt` (read) | `binding`, `int` |
 
 ## Control
 

@@ -85,15 +85,15 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `string7` | Pushes the run's constant 7 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
 | `string8` | Pushes the run's constant 8 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
 | `string9` | Pushes the run's constant 9 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `stringLookupContaining` | Reads the top string as a probe and copies the topmost one below that contains it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `string`, `int`; may refuse |
-| `stringLookupContainingFrom` | Reads the top string as a probe and copies the topmost one below that contains it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `string`, `int`; may refuse |
-| `stringLookupEqual` | Reads the top string as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `string`, `int`; may refuse |
-| `stringLookupEqualFrom` | Reads the top string as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `string`, `int`; may refuse |
-| `stringLookupPrefix` | Reads the top string as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `string`, `int`; may refuse |
-| `stringLookupPrefixFrom` | Reads the top string as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `string`, `int`; may refuse |
+| `stringLookupContaining` | Reads the top string as a probe and copies the topmost one below that contains it, pushing its depth + 1 onto `.int`; refuses on a miss. | `string` (read) | `string`, `int`; may refuse |
+| `stringLookupContainingFrom` | Reads the top string as a probe and copies the topmost one below that contains it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `string` (read) | `string`, `int`; may refuse |
+| `stringLookupEqual` | Reads the top string as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `string` (read) | `string`, `int`; may refuse |
+| `stringLookupEqualFrom` | Reads the top string as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `string` (read) | `string`, `int`; may refuse |
+| `stringLookupPrefix` | Reads the top string as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | `string` (read) | `string`, `int`; may refuse |
+| `stringLookupPrefixFrom` | Reads the top string as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `string` (read) | `string`, `int`; may refuse |
 | `stringReadItems` | Copies the top n chars into a string, leaving them: `n .stringReadItems`, n clamped to the stack's depth; the top char comes last. | `int` | `string` |
 | `stringReadStack` | Copies the whole char stack into a string, leaving it; the bottom char comes first, and an empty stack gives an empty string. | — | `string` |
-| `stringRef` | Binds a copy of the top string, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `stringRef` | Binds a copy of the top string, left in place, to a fresh key and pushes the key onto `.int`. | `string` (read) | `binding`, `int` |
 
 ## Control
 

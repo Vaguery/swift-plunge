@@ -45,10 +45,12 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     /// exchange. Provenance law 1: rearranging records nothing.
     case structural
 
-    /// **A source with no data arguments**: constants and inputs (reproducible), and
-    /// state reads — `StackDepth`, `StackIsEmpty`, the error counts,
-    /// `pushStepCount`, `readItems`, `readStack` — which are not, and so record
-    /// stand-ins (law 4b). Only a count may be taken as an argument.
+    /// **An answer that depends on more than its arguments**: constants and inputs
+    /// (reproducible), and reads of the interpreter's state, which are not, and so
+    /// record stand-ins (law 4b): `StackDepth`, `StackIsEmpty`, the error counts,
+    /// `pushStepCount`, `readItems`, `readStack`, the stack lookups, the binders
+    /// and the binding lookups. Only a count may be taken as an argument; a probe,
+    /// a key or an item to bind is read and left.
     case contextRead
 
     /// **A write to the continuation**: its output is the rest of the program, not

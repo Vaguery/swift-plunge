@@ -76,15 +76,15 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecString7` | Pushes the run's constant 7 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
 | `vecString8` | Pushes the run's constant 8 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
 | `vecString9` | Pushes the run's constant 9 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `vecStringLookupContaining` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
-| `vecStringLookupContainingFrom` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
-| `vecStringLookupEqual` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
-| `vecStringLookupEqualFrom` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
-| `vecStringLookupPrefix` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecString`, `int`; may refuse |
-| `vecStringLookupPrefixFrom` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecString`, `int`; may refuse |
+| `vecStringLookupContaining` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecString` (read) | `vecString`, `int`; may refuse |
+| `vecStringLookupContainingFrom` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecString` (read) | `vecString`, `int`; may refuse |
+| `vecStringLookupEqual` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecString` (read) | `vecString`, `int`; may refuse |
+| `vecStringLookupEqualFrom` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecString` (read) | `vecString`, `int`; may refuse |
+| `vecStringLookupPrefix` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecString` (read) | `vecString`, `int`; may refuse |
+| `vecStringLookupPrefixFrom` | Reads the top vector of strings as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecString` (read) | `vecString`, `int`; may refuse |
 | `vecStringReadItems` | Copies the top n strings into a vector, leaving them: `n .vecStringReadItems`, n clamped to the stack's depth; the top string comes last. | `int` | `vecString` |
 | `vecStringReadStack` | Copies the whole string stack into a vector, leaving it; the bottom string comes first, and an empty stack gives an empty vector. | — | `vecString` |
-| `vecStringRef` | Binds a copy of the top vector of strings, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `vecStringRef` | Binds a copy of the top vector of strings, left in place, to a fresh key and pushes the key onto `.int`. | `vecString` (read) | `binding`, `int` |
 
 ## Control
 

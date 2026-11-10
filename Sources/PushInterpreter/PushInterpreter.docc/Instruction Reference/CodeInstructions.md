@@ -47,15 +47,15 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `codeLookupContaining` | Reads the top block as a probe and copies the topmost one below containing it, or its lone item, anywhere inside, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `code`, `int`; may refuse |
-| `codeLookupContainingFrom` | Reads the top block as a probe and copies the topmost one below containing it, or its lone item, anywhere inside, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `code`, `int`; may refuse |
-| `codeLookupEqual` | Reads the top block as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `code`, `int`; may refuse |
-| `codeLookupEqualFrom` | Reads the top block as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `code`, `int`; may refuse |
-| `codeLookupPrefix` | Reads the top block as a probe and copies the topmost one below whose items begin with its items, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `code`, `int`; may refuse |
-| `codeLookupPrefixFrom` | Reads the top block as a probe and copies the topmost one below whose items begin with its items, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `code`, `int`; may refuse |
-| `codeLookupShape` | Reads the top block as a probe and copies the topmost one below with its shape (same nesting and instructions, atoms matching by type), pushing its depth + 1 onto `.int`; refuses on a miss. | — | `code`, `int`; may refuse |
-| `codeLookupShapeFrom` | Reads the top block as a probe and copies the topmost one below with its shape (same nesting and instructions, atoms matching by type), searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `code`, `int`; may refuse |
-| `codeRef` | Binds a copy of the top block, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `codeLookupContaining` | Reads the top block as a probe and copies the topmost one below containing it, or its lone item, anywhere inside, pushing its depth + 1 onto `.int`; refuses on a miss. | `code` (read) | `code`, `int`; may refuse |
+| `codeLookupContainingFrom` | Reads the top block as a probe and copies the topmost one below containing it, or its lone item, anywhere inside, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `code` (read) | `code`, `int`; may refuse |
+| `codeLookupEqual` | Reads the top block as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `code` (read) | `code`, `int`; may refuse |
+| `codeLookupEqualFrom` | Reads the top block as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `code` (read) | `code`, `int`; may refuse |
+| `codeLookupPrefix` | Reads the top block as a probe and copies the topmost one below whose items begin with its items, pushing its depth + 1 onto `.int`; refuses on a miss. | `code` (read) | `code`, `int`; may refuse |
+| `codeLookupPrefixFrom` | Reads the top block as a probe and copies the topmost one below whose items begin with its items, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `code` (read) | `code`, `int`; may refuse |
+| `codeLookupShape` | Reads the top block as a probe and copies the topmost one below with its shape (same nesting and instructions, atoms matching by type), pushing its depth + 1 onto `.int`; refuses on a miss. | `code` (read) | `code`, `int`; may refuse |
+| `codeLookupShapeFrom` | Reads the top block as a probe and copies the topmost one below with its shape (same nesting and instructions, atoms matching by type), searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `code` (read) | `code`, `int`; may refuse |
+| `codeRef` | Binds a copy of the top block, left in place, to a fresh key and pushes the key onto `.int`. | `code` (read) | `binding`, `int` |
 
 ## Control
 

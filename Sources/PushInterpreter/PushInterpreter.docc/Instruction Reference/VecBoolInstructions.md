@@ -65,15 +65,15 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBool7` | Pushes the run's constant 7 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
 | `vecBool8` | Pushes the run's constant 8 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
 | `vecBool9` | Pushes the run's constant 9 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `vecBoolLookupContaining` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecBool`, `int`; may refuse |
-| `vecBoolLookupContainingFrom` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecBool`, `int`; may refuse |
-| `vecBoolLookupEqual` | Reads the top vector of bools as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecBool`, `int`; may refuse |
-| `vecBoolLookupEqualFrom` | Reads the top vector of bools as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecBool`, `int`; may refuse |
-| `vecBoolLookupPrefix` | Reads the top vector of bools as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | — | `vecBool`, `int`; may refuse |
-| `vecBoolLookupPrefixFrom` | Reads the top vector of bools as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int` | `vecBool`, `int`; may refuse |
+| `vecBoolLookupContaining` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecBool` (read) | `vecBool`, `int`; may refuse |
+| `vecBoolLookupContainingFrom` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecBool` (read) | `vecBool`, `int`; may refuse |
+| `vecBoolLookupEqual` | Reads the top vector of bools as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecBool` (read) | `vecBool`, `int`; may refuse |
+| `vecBoolLookupEqualFrom` | Reads the top vector of bools as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecBool` (read) | `vecBool`, `int`; may refuse |
+| `vecBoolLookupPrefix` | Reads the top vector of bools as a probe and copies the topmost one below that begins with it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecBool` (read) | `vecBool`, `int`; may refuse |
+| `vecBoolLookupPrefixFrom` | Reads the top vector of bools as a probe and copies the topmost one below that begins with it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecBool` (read) | `vecBool`, `int`; may refuse |
 | `vecBoolReadItems` | Copies the top n bools into a vector, leaving them: `n .vecBoolReadItems`, n clamped to the stack's depth; the top bool comes last. | `int` | `vecBool` |
 | `vecBoolReadStack` | Copies the whole bool stack into a vector, leaving it; the bottom bool comes first, and an empty stack gives an empty vector. | — | `vecBool` |
-| `vecBoolRef` | Binds a copy of the top vector of bools, left in place, to a fresh key and pushes the key onto `.int`. | — | `binding`, `int`; may refuse |
+| `vecBoolRef` | Binds a copy of the top vector of bools, left in place, to a fresh key and pushes the key onto `.int`. | `vecBool` (read) | `binding`, `int` |
 
 ## Control
 

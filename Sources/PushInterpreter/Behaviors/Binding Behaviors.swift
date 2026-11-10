@@ -77,7 +77,8 @@ nonisolated extension Interpreter {
     /// `xRef`: binds a copy of the top of `stack` to a fresh key, leaving the
     /// item where it was, and pushes the key onto `.int`.
     static func refBinder(_ name: PushInstruction, of stack: PushStack) -> Behavior {
-        Behavior.contextRead(name, observes: [stack], tags: [.fallible], produces: .results([.binding, .int])) { _, context in
+        Behavior.contextRead(name, reads: [stack], observes: [stack],
+                             produces: .results([.binding, .int])) { _, context in
             let recording = context.recording
             guard let top = context.items(of: stack).first else {
                 return [refMissing(name, on: stack, recording)]
