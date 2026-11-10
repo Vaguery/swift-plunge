@@ -171,7 +171,7 @@ struct DeepStructureSafetyTests {
             let seeds: [any Item] = [
                 CodeItem([IntItem(1)]),
                 BindingItem(key: 1, bound: IntItem(2)),
-                IteratorItem(kind: .counting(stride: 1), origin: IntItem(0), destination: IntItem(5), emits: true),
+                IteratorItem(kind: .counting(stride: 1), origin: IntItem(0), destination: IntItem(5), emits: true)
             ]
             for seed in seeds {
                 var item = seed
