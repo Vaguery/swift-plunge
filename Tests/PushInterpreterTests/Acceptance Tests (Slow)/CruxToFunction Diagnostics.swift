@@ -264,7 +264,7 @@ struct CruxToFunctionDiagnostics {
             let program = RandomCode.randomProgram(len, mix: mix)
             let usedIterator = program.contains { item in
                 guard let instr = (item as? InstructionItem)?.value else { return false }
-                return PushInstruction.iterators.contains(instr)
+                return Interpreter.reEntrantInstructions.contains(instr)
             }
 
             // Frame it as "an arbitrary CodeItem, run": quote and codeDo.

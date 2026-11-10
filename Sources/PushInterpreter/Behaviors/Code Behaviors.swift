@@ -542,28 +542,6 @@ nonisolated extension Interpreter {
     )
     .described("Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item block.")
 
-
-    static let intQuote_Behavior =
-        Behavior.composing(.intQuote, takes: IntItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes an int as a one-item block: `5` becomes `( 5 )`.")
-
-    static let boolQuote_Behavior =
-        Behavior.composing(.boolQuote, takes: BoolItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a bool as a one-item block: `true` becomes `( true )`.")
-
-    static let stringQuote_Behavior =
-        Behavior.composing(.stringQuote, takes: StringItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a string as a one-item block on `.code`.")
-
-    static let charQuote_Behavior =
-        Behavior.composing(.charQuote, takes: CharItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a char as a one-item block on `.code`.")
-
-    static let doubleQuote_Behavior =
-        Behavior.composing(.doubleQuote, takes: DoubleItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`.")
-
-
     /// Unwraps the top `.code` block onto `.exec`, so its contents run.
     ///
     /// This is the only way a block executes: the Interpreter pushes any
@@ -591,7 +569,6 @@ nonisolated extension Interpreter {
         return [.place(Containment.contents(of: block, recording))]
     }
     .described("Runs a block: its items go onto `.exec`, the first to run first.")
-
 
     /// Drive an iterator to exhaustion and box what it emitted into one block.
     ///
@@ -655,7 +632,6 @@ nonisolated extension Interpreter {
     .described("Collects everything the iterator has left to emit into one block, its body returning to `.code` " +
                "beneath; refuses, keeping the iterator, when that is too many items.")
 
-
     /// Box a live iterator and park it on `.code`, where no continuation can
     /// reach it.
     ///
@@ -681,13 +657,10 @@ nonisolated extension Interpreter {
     )
     .described("Quotes an iterator as a one-item block on `.code`, parking it where no loop continues it.")
 
-
     static let codeBehaviors:[PushInstruction : Behavior] =
     [
         .codeFromIterator : codeFromIterator_Behavior,
         .iteratorQuote : iteratorQuote_Behavior,
-        .boolQuote : boolQuote_Behavior,
-        .charQuote : charQuote_Behavior,
         .codeConcat : codeConcat_Behavior,
         .codePair : codePair_Behavior,
         .codeDoIf : codeDoIf_Behavior,
@@ -725,10 +698,7 @@ nonisolated extension Interpreter {
         .codeIterateEmit : codeIterateEmit_Behavior,
         .codeIterateDo : codeIterateDo_Behavior,
         .codeWrap : codeWrap_Behavior,
-        .doubleQuote : doubleQuote_Behavior,
         .execQuote : execQuote_Behavior,
-        .intQuote : intQuote_Behavior,
-        .stringQuote : stringQuote_Behavior,
 
     ]
 }

@@ -80,6 +80,45 @@ nonisolated extension Interpreter {
         Behavior.operation(.charLTE, reads: CharItem.self, CharItem.self, gives: BoolItem.self) { y, x in y <= x }
         .described("Compares in Unicode order, leaving both chars: `a b .charLTE` gives a ≤ b.")
 
+    // MARK: - Case
+    //
+    // Case mapping is Unicode's default, not a locale's, so it is the same
+    // everywhere. A character whose upper or lower case is more than one character
+    // (`ß` → `SS`) has no char answer and is refused; the string forms have no such
+    // limit.
+
+    /// `character` mapped by `transform`, if that is still one character.
+    static func singleCharacter(_ character: Character, _ transform: (Character) -> String,
+                                _ instruction: PushInstruction) throws(Refusal) -> Character {
+        let mapped = transform(character)
+        guard mapped.count == 1, let result = mapped.first else {
+            throw Refusal("No single-character result in .\(instruction): \(character) → \(mapped)")
+        }
+        return result
+    }
+
+    static let charUpper_Behavior =
+        Behavior.operation(.charUpper, takes: CharItem.self, gives: CharItem.self) { x throws(Refusal) in
+            try singleCharacter(x, { $0.uppercased() }, .charUpper)
+        }
+        .described("Uppercases a char by Unicode's default rules; refuses one whose uppercase is several chars, " +
+                   "like ß.")
+
+    static let charLower_Behavior =
+        Behavior.operation(.charLower, takes: CharItem.self, gives: CharItem.self) { x throws(Refusal) in
+            try singleCharacter(x, { $0.lowercased() }, .charLower)
+        }
+        .described("Lowercases a char by Unicode's default rules; refuses one whose lowercase is several chars.")
+
+    static let charIsUpper_Behavior =
+        Behavior.operation(.charIsUpper, reads: CharItem.self, gives: BoolItem.self) { x in x.isUppercase }
+        .described("Tests whether the char is uppercase, leaving the char; a char with no case gives false.")
+
+    static let charIsLower_Behavior =
+        Behavior.operation(.charIsLower, reads: CharItem.self, gives: BoolItem.self) { x in x.isLowercase }
+        .described("Tests whether the char is lowercase, leaving the char; a char with no case gives false.")
+
+
     static let charBehaviors:[PushInstruction : Behavior] =
     [
         .charFromDouble : charFromDouble_behavior,
@@ -87,5 +126,9 @@ nonisolated extension Interpreter {
         .charIsDigit : charIsDigit_Behavior,
         .charIsLetter : charIsLetter_Behavior,
         .charIsWhitespace : charIsWhitespace_Behavior,
+        .charUpper: charUpper_Behavior,
+        .charLower: charLower_Behavior,
+        .charIsUpper: charIsUpper_Behavior,
+        .charIsLower: charIsLower_Behavior,
     ]
 }

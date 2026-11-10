@@ -1,9 +1,9 @@
-////
-////  String Behaviors.swift
-////  Propeller in Swift
-////
-////  Created by Bill Tozier on 5/9/26.
-////
+//
+//  String Behaviors.swift
+//  PushInterpreter
+//
+//  Created by Bill Tozier on 5/9/26.
+//
 
 import DequeModule
 
@@ -524,6 +524,107 @@ nonisolated extension Interpreter {
         }.map(\.slot)
     }
 
+    // MARK: - Case, searching for a run, prefixes, suffixes and trimming
+    //
+    // The queries read and leave their arguments, the string first, then what is
+    // looked for: `"hello" "ll" .stringIndexOfRun` is 2.
+
+    static let stringUpper_Behavior =
+        Behavior.operation(.stringUpper, takes: StringItem.self, gives: StringItem.self) { x in x.uppercased() }
+        .described("Uppercases a string by Unicode's default rules, so ß becomes SS.")
+
+    static let stringLower_Behavior =
+        Behavior.operation(.stringLower, takes: StringItem.self, gives: StringItem.self) { x in x.lowercased() }
+        .described("Lowercases a string by Unicode's default rules.")
+
+    /// Where the second string first occurs in the first, counted in
+    /// characters; an error if it does not. An empty needle is found at 0.
+    static let stringIndexOfRun_Behavior =
+        Behavior.operation(.stringIndexOfRun, reads: StringItem.self, StringItem.self,
+                           gives: IntItem.self) { hay, needle throws(Refusal) in
+            guard let range = hay.firstRange(of: needle) else {
+                throw Refusal("Not found in .stringIndexOfRun: \(needle)", kind: .notFound)
+            }
+            return hay.distance(from: hay.startIndex, to: range.lowerBound)
+        }
+        .described("Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOfRun`; an empty t " +
+                   "gives 0; refuses when absent.")
+
+    static let stringStartsWith_Behavior =
+        Behavior.operation(.stringStartsWith, reads: StringItem.self, StringItem.self,
+                           gives: BoolItem.self) { x, prefix in
+            x.hasPrefix(prefix)
+        }
+        .described("Tests whether s begins with t, leaving both: `s t .stringStartsWith`; an empty t gives true.")
+
+    static let stringEndsWith_Behavior =
+        Behavior.operation(.stringEndsWith, reads: StringItem.self, StringItem.self,
+                           gives: BoolItem.self) { x, suffix in
+            x.hasSuffix(suffix)
+        }
+        .described("Tests whether s ends with t, leaving both: `s t .stringEndsWith`; an empty t gives true.")
+
+    /// Without whitespace at either end. The characters kept keep their origins.
+    static let stringTrim_Behavior =
+        Behavior.assembling(.stringTrim, takes: StringItem.self, gives: StringItem.self) { x in
+            let characters = Array(x.value)
+            guard let first = characters.firstIndex(where: { !$0.isWhitespace }),
+                  let last = characters.lastIndex(where: { !$0.isWhitespace }) else {
+                return Built("", members: [])
+            }
+            let origins = x.origins()
+            return Built(String(characters[first...last]), members: Array(origins[first...last]))
+        }
+        .described("Removes whitespace from both ends of a string; an all-whitespace string gives the empty string.")
+
+
+    // MARK: - Chars into strings
+    //
+    // `stringReadItems` and `stringReadStack` collect chars into a string, reading
+    // them and leaving them, as `vecXReadItems` and `vecXReadStack` do for
+    // scalars.
+
+    /// The `call` of a string read from `chars` (in string order): re-push them,
+    /// read them with `stringReadItems`, and pop what was read.
+    static func charsCrux(_ chars: [CharItem]) -> [any Item] {
+        Behavior.reading(
+            [.char: chars.count],
+            producing: .string,
+            from: chars.map { $0 as any Item } + [IntItem(chars.count), InstructionItem(.stringReadItems)]
+        )
+    }
+
+    /// A string of the top `k` chars, leaving them in place; `k` is clamped to
+    /// what there is. Top-first, reversed, so the inverse of
+    /// `stringPushAll`, as `vecXReadItems` is of `vecXPushAll`.
+    static let stringReadItems_Behavior =
+        Behavior.contextRead(.stringReadItems, takes: [.int], observes: [.char], produces: .results([.string])) { collected, context in
+            let n = (collected[0] as! IntItem).value
+            let items = context.items(of: .char)
+            let k = Position.gap(n, count: items.count)
+            let chars = Array(items.prefix(k)).map { $0 as! CharItem }.reversed().map { $0 }
+            return [Router(.string, StringItem(String(chars.map(\.value)),
+                                               call: context.recording(charsCrux(chars)),
+                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
+        }
+        .described(
+            "Copies the top n chars into a string, leaving them: `n .stringReadItems`, n clamped to the stack's "
+            + "depth; the top char comes last.")
+
+    /// A string of every char on `.char`, leaving them; empty if there are none.
+    /// Its crux reads them back with `stringReadItems`, so it composes.
+    static let stringReadStack_Behavior =
+        Behavior.contextRead(.stringReadStack, observes: [.char], produces: .results([.string])) { _, context in
+            let chars = Array(context.items(of: .char)).map { $0 as! CharItem }.reversed().map { $0 }
+            return [Router(.string, StringItem(String(chars.map(\.value)),
+                                               call: context.recording(charsCrux(chars)),
+                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
+        }
+        .described(
+            "Copies the whole char stack into a string, leaving it; the bottom char comes first, and an empty "
+            + "stack gives an empty string.")
+
+
     static let stringBehaviors:[PushInstruction : Behavior] =
         [
         .stringButLast : stringButLast_Behavior,
@@ -564,5 +665,13 @@ nonisolated extension Interpreter {
         .stringTake : stringTake_Behavior,
         .stringTakeLast : stringTakeLast_Behavior,
         .stringDropLast : stringDropLast_Behavior,
+        .stringUpper: stringUpper_Behavior,
+        .stringLower: stringLower_Behavior,
+        .stringIndexOfRun: stringIndexOfRun_Behavior,
+        .stringStartsWith: stringStartsWith_Behavior,
+        .stringEndsWith: stringEndsWith_Behavior,
+        .stringTrim: stringTrim_Behavior,
+        .stringReadItems: stringReadItems_Behavior,
+        .stringReadStack: stringReadStack_Behavior,
         ]
 }

@@ -63,7 +63,7 @@ struct LiveWeightInvariantTests {
     @Test(arguments: [false, true])
     func `liveWeight equals a full recompute after every step`(recordsProvenance: Bool) {
         let all = Runner().definedInstructions
-        let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
+        let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
         var settings = InterpreterSettings()
         settings.stepLimit = 2_000
         settings.recordsProvenance = recordsProvenance

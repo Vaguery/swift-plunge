@@ -15,7 +15,7 @@ import Foundation
 @testable import PushInterpreter
 
 // `SeededRNG` and `fuzzRNG` now live in the library beside `RandomCode`
-// (Sources/PushInterpreter/Search/RandomCode.swift), which is where the draws
+// (Sources/PushInterpreter/Generation/RandomCode.swift), which is where the draws
 // they serve live. Still a shared global, so fuzz suites must still run alone.
 
 /// One window of a profiled run: how long a block of steps took, what ran, and

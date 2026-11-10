@@ -356,6 +356,12 @@ nonisolated extension Interpreter {
         declaredTags[tag] ?? []
     }
 
+    /// The instructions that re-push themselves onto `.exec` to drive a loop
+    /// (declared `.reEntrant`). Computed once: `RunawayGuard` asks on every step.
+    /// (Until 2026-11-10 this was `PushInstruction.iterators`, a name the
+    /// `iterators` tag now uses for something else.)
+    static let reEntrantInstructions: Set<PushInstruction> = instructions(declaring: .reEntrant)
+
     /// Every tag `instruction` declares: possibly none, which is the common case.
     static func declaredTags(of instruction: PushInstruction) -> Set<InstructionTag> {
         language[instruction]?.tags ?? []

@@ -67,7 +67,7 @@ struct SweptItem {
 /// `.other`, so there is no way to concentrate **loops** — and loops are where
 /// provenance has been hardest (the cycling-walker bug that closed #27 appeared
 /// once in 1,600 programs and could not be hunted deliberately). A mix keyed on
-/// `PushInstruction.iterators` is the obvious missing lever.
+/// `Interpreter.reEntrantInstructions` is the obvious missing lever.
 @MainActor
 struct CruxSweep {
     var seeds: [UInt64]

@@ -1,5 +1,5 @@
 //
-//  Interpreter tests.swift
+//  Interpreter Tests.swift
 //
 //  Created by Bill Tozier on 5/30/26.
 //

@@ -2,54 +2,39 @@
 //  Comparison Behaviors.swift
 //  PushInterpreter
 //
-//  **The 39 instructions that order or equate two values and hand back a `.bool`.**
+//  **The instructions that order or equate two values of one stack and hand back
+//  a `.bool`**: the 12 generated `…Eq` (whose factory is at the end of this file)
+//  and the 28 orderings `…GT`/`…GTE`/`…LT`/`…LTE`.
 //
-//  This file holds no behavior bodies. It is a *registration* file, and that is the
-//  whole point of it: `InstructionRole` is derived from which dictionary defines an
-//  instruction, so the dictionary an instruction is registered in **is** its role.
-//  Collecting the comparisons here is what makes the role true.
+//  The orderings are written in `Int`/`Double`/`Char`/`String`/`Vector
+//  Behaviors.swift`, beside the operations they relate to (`intGT` next to
+//  `intAdd`), and only registered here. This dictionary no longer decides
+//  anything: since 2026-11-10 the `.comparison` role is derived from the
+//  `comparison` tag, which also counts containment tests. `Roles Tests` checks
+//  that everything registered here carries that tag.
 //
-//  ## Why this exists
-//
-//  Every `…Eq` was roled `.stackFamily` — the language's furniture — because
-//  `eqCombinator_Behavior` happened to sit in the same per-stack generator loop as
-//  dup, pop, swap and rot. `Eq` was among the first families to be generated, and
-//  the rest of the furniture was added around it. Nothing about equality is
-//  furniture, but the role said so, and a category built on the role inherited the
-//  mistake and described `.intEq` as an instruction "that only shuffles a stack".
-//
-//  ## Why the bodies stay where they are
-//
-//  The 28 orderings are still written in `Int`/`Double`/`Char`/`String`/`Vector
-//  Behaviors.swift`, beside the operations they relate to — `intGT` next to
-//  `intAdd`, where a reader looking at integer arithmetic will find it. Moving the
-//  source would have bought nothing: a role is about classification, not about
-//  which file a `static let` is typed into.
-//
-//  So the registrations move and the definitions do not. Every instruction with
-//  the `.comparison` **role** carries the derived `comparison` **tag**, which is
-//  wider (it counts containment too); `Roles Tests` asserts that, which is what
-//  catches a non-comparison registered into this dictionary.
+//  `…Eq` was once generated in the same per-stack loop as dup and swap, and so
+//  was roled as stack furniture; that is why its factory lives here now.
 //
 
 import DequeModule
 
 nonisolated extension Interpreter {
 
-    /// The 39 comparisons: 11 `…Eq`, generated per stack, and 28 orderings.
+    /// The comparisons: the 12 `…Eq`, generated per stack, and the 28 orderings.
     static var comparisonBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
         // `…Eq` exists for every stack that holds comparable items, so it is
         // generated rather than typed out — the same factory as before, called from
-        // here instead of from `combinators(for:)`.
+        // here instead of from `stackFamily(for:)`.
         //
-        // `.error` is absent, as it is from the combinator loop: the error stack
+        // `.error` is absent, as it is from the stack family: the error stack
         // gets no generated family at all (see `Introspection Behaviors.swift`).
         // `.exec` is absent too: `execEq` was removed, since `( A ) ( B ) .codeEq`
         // asks the same question now that blocks land on `.code`.
         for stack in Self.generatedFamilyStacks where stack != .exec {
-            eqCombinator_Behavior(for: stack, into: &result)
+            eqComparison_Behavior(for: stack, into: &result)
         }
 
         // The orderings. Only types with a meaningful `<` have them, which is why
@@ -92,5 +77,45 @@ nonisolated extension Interpreter {
         ], uniquingKeysWith: { first, _ in first })
 
         return result
+    }
+
+    /// `xEq` for one stack: whether the top two items are equal, compared at
+    /// every level (`isEqual(to:)`), leaving both.
+    static func eqComparison_Behavior(
+        for stack: PushStack,
+        into result: inout [PushInstruction: Behavior]
+    ) {
+        let type = stack.rawValue
+        let name: PushInstruction
+        var inst: Behavior
+
+        name = PushInstruction(rawValue: "\(type)Eq")!
+        // Every Eq is a non-destructive query: it reads its two operands and
+        // leaves them. (`.execEq`, the one destructive form, was removed; see
+        // `comparisonBehaviors`.)
+        inst = Behavior(
+            name,
+            requires: [Requirement.reads(stack), Requirement.reads(stack)],
+            produces: .results([.bool]),
+            fxn: { a, recording in
+                let isSame = a[0].isEqual(to: a[1])
+                // The crux cleans up the two operands it read, so it reproduces
+                // just the bool (`Behavior.reading`).
+                return [
+                    Router(
+                        .bool,
+                        BoolItem(
+                            isSame,
+                            call: recording(Behavior.reading(
+                                [stack: 2],
+                                producing: .bool,
+                                from: [a[1], a[0], InstructionItem(name)]
+                            )))
+                    )
+                ]
+            }
+        )
+        .described("Pushes whether the top two \(stack.plural) are equal, leaving both.")
+        result[name] = inst
     }
 }

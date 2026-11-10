@@ -29,19 +29,19 @@ struct RunawayGuardTests {
     }
 
     @Test func `the iterators set names the looping instructions, not others`() {
-        #expect(PushInstruction.iterators.contains(.iteratorPlay))
-        #expect(PushInstruction.iterators.contains(.iteratorPlayDelayed))
-        #expect(PushInstruction.iterators.contains(.execY))
-        #expect(PushInstruction.iterators.contains(.vecIntIterate))
-        #expect(!PushInstruction.iterators.contains(.intAdd))
+        #expect(Interpreter.reEntrantInstructions.contains(.iteratorPlay))
+        #expect(Interpreter.reEntrantInstructions.contains(.iteratorPlayDelayed))
+        #expect(Interpreter.reEntrantInstructions.contains(.execY))
+        #expect(Interpreter.reEntrantInstructions.contains(.vecIntIterate))
+        #expect(!Interpreter.reEntrantInstructions.contains(.intAdd))
 
         // `.execDoRange` and its siblings are deliberately absent now: they fire
         // once, build an iterator and hand it to `.iteratorPlay`, so they never
         // sit on `.exec` waiting for a next pass. `.iteratorPlay` is what does,
         // and it is the signal in their place.
-        #expect(!PushInstruction.iterators.contains(.execDoRange))
-        #expect(!PushInstruction.iterators.contains(.execDoCount))
-        #expect(!PushInstruction.iterators.contains(.execDoTimes))
+        #expect(!Interpreter.reEntrantInstructions.contains(.execDoRange))
+        #expect(!Interpreter.reEntrantInstructions.contains(.execDoCount))
+        #expect(!Interpreter.reEntrantInstructions.contains(.execDoTimes))
     }
 
     @Test func `a piling stack with a live looper is stopped`() {

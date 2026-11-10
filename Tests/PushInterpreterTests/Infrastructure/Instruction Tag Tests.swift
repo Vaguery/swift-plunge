@@ -63,9 +63,9 @@ struct InstructionTagTests {
     // MARK: - reEntrant, and the set it replaced
 
     /// `.reEntrant` is exactly what `PushInstruction.iterators` used to spell out by
-    /// hand, which is the check that the retirement lost nothing. The alias now
-    /// reads the tag, so this also pins that the runaway guard still sees the same
-    /// instructions it always did.
+    /// hand, which is the check that the retirement lost nothing; this also pins
+    /// that the runaway guard (`Interpreter.reEntrantInstructions`) still sees the
+    /// same instructions it always did.
     @Test func `reEntrant is the set the hand-written list used to hold`() {
         let expected: Set<PushInstruction> = [
             .execDoWhile, .execWhile, .execY,
@@ -75,7 +75,7 @@ struct InstructionTagTests {
             .vecBoolIterate, .vecDoubleIterate, .vecIntIterate, .vecStringIterate,
         ]
         #expect(Interpreter.instructions(declaring: .reEntrant) == expected)
-        #expect(PushInstruction.iterators == expected, "the alias still agrees")
+        #expect(Interpreter.reEntrantInstructions == expected, "the runaway guard's set agrees")
     }
 
     /// Every re-entrant instruction drives a loop, so every one of them should also

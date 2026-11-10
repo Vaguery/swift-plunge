@@ -322,7 +322,7 @@ nonisolated extension PushStack {
 
     /// This stack's `PopItems` instruction — the token `crux()` emits to discard
     /// results stacked above the one it is reconstructing. Every stack has one
-    /// (`combinators(for:)` builds the family for all of them), so the lookup
+    /// (`stackFamily(for:)` builds the family for all of them), so the lookup
     /// cannot fail.
     var popItemsInstruction: PushInstruction { required(Self.popItemsByOrdinal, "PopItems") }
 

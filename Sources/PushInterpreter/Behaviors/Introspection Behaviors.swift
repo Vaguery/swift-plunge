@@ -22,7 +22,7 @@
 //  it never.
 //
 //  That asymmetry is the point rather than an oversight, and it is why this file
-//  exists separately from `Combinator Behaviors.swift`: the combinator family is
+//  exists separately from `Stack Family Behaviors.swift`: the combinator family is
 //  generated for every stack in `PushStack.allStacks`, so an `.error` exception
 //  has to live somewhere that a future "add the missing combinators" sweep will
 //  not quietly undo. `Introspection Instruction Tests.swift` asserts the absence.
@@ -39,7 +39,7 @@
 //  interpreter reports 0, because a fresh interpreter has made no mistakes yet, so
 //  a crux naming it would reconstruct to the wrong number every time. The same
 //  reasoning retired 22 unreproducible `StackDepth` records; see
-//  `stackDepthCombinator_Behavior`.
+//  `stackDepthFamily_Behavior`.
 //
 
 import DequeModule

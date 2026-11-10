@@ -274,7 +274,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
 
     // Hand-written rather than synthesized: `origin` is an existential, so
     // `IteratorItem` cannot be `Equatable` and pick up the shared default. That
-    // costs nothing — `eqCombinator_Behavior` reaches equality through
+    // costs nothing — `eqFamily_Behavior` reaches equality through
     // `isEqual(to:)`, so `.iteratorEq` works without the conformance.
     //
     // Value equality, like every other Item (see "Equality is about values" in

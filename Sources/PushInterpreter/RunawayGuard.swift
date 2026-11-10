@@ -13,7 +13,7 @@
 //    • data side    — a size-limited stack is deep and its recent top is
 //                     dominated by repeats, a short cycle, or a monotone counter
 //                     (the shape a loop leaves when it pumps items onto a stack);
-//    • control side — a looping instruction (`PushInstruction.iterators`) is
+//    • control side — a looping instruction (`Interpreter.reEntrantInstructions`) is
 //                     pending on `.exec`, i.e. a loop is genuinely in flight.
 //
 //  Requiring both keeps false positives down: a large but terminating one-shot
@@ -131,7 +131,7 @@ nonisolated extension Interpreter {
     func liveLooper() -> PushInstruction? {
         guard let exec = stacks[.exec] else { return nil }
         for item in exec.prefix(Interpreter.runawayExecScan) {
-            if let instr = item as? InstructionItem, PushInstruction.iterators.contains(instr.value) {
+            if let instr = item as? InstructionItem, Interpreter.reEntrantInstructions.contains(instr.value) {
                 return instr.value
             }
         }

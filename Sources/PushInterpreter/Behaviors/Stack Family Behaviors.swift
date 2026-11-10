@@ -1,8 +1,15 @@
 //
-//  Combinator Behaviors.swift
+//  Stack Family Behaviors.swift
 //  PushInterpreter
 //
 //  Created by Bill Tozier on 6/11/26.
+//
+//  The family generated for every stack from one template: copying (`Dup`,
+//  `DupItems`, `DupTimes`, `DeepDup`, `YankDup`), deleting (`Pop`, `PopItems`,
+//  `Flush`, `DeleteAtDepth`), reordering (`Swap`, `Rot`, `Yank`, `Shove`), and
+//  the two measurements `StackDepth` and `StackIsEmpty`. Earlier Push
+//  implementations called this whole loop "combinators"; here the word belongs
+//  to the `stackCombinator` tag, which counts only the rearrangements.
 //
 
 import DequeModule
@@ -35,12 +42,12 @@ nonisolated extension Interpreter {
         .binding,
     ]
 
-    static var combinatorBehaviors: [PushInstruction: Behavior] {
+    static var stackFamilyBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
         for s in generatedFamilyStacks {
             result.merge(
-                combinators(for: s),
+                stackFamily(for: s),
                 uniquingKeysWith: { (first, _) in first }
             )
         }
@@ -48,7 +55,7 @@ nonisolated extension Interpreter {
         return result
     }
 
-    static func deepDupCombinator_Behavior(
+    static func deepDupFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -72,7 +79,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func dupCombinator_Behavior(
+    static func dupFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -100,7 +107,7 @@ nonisolated extension Interpreter {
     /// Provenance: a dup changes no value, so law 1 applies and the copies keep
     /// their own `call` untouched. That is why this family needs no `Nth` to
     /// explain its copies.
-    static func dupItemsCombinator_Behavior(
+    static func dupItemsFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -147,7 +154,7 @@ nonisolated extension Interpreter {
     ///
     /// Provenance: a dup changes no value, so law 1 applies and every copy keeps
     /// the original's `call` untouched.
-    static func dupTimesCombinator_Behavior(
+    static func dupTimesFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -173,7 +180,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func stackIsEmptyCombinator_Behavior(
+    static func stackIsEmptyFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -201,48 +208,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    // typeEq creates a new item, and demands multilevel comparison
-    // between `Item` instances at all attribute levels (recursively)
-    //
-    static func eqCombinator_Behavior(
-        for stack: PushStack,
-        into result: inout [PushInstruction: Behavior]
-    ) {
-        let type = stack.rawValue
-        let name: PushInstruction
-        var inst: Behavior
-
-        name = PushInstruction(rawValue: "\(type)Eq")!
-        // Every Eq is a non-destructive query: it reads its two operands and
-        // leaves them. (`.execEq`, the one destructive form, was removed; see
-        // `comparisonBehaviors`.)
-        inst = Behavior(
-            name,
-            requires: [Requirement.reads(stack), Requirement.reads(stack)],
-            produces: .results([.bool]),
-            fxn: { a, recording in
-                let isSame = a[0].isEqual(to: a[1])
-                // The crux cleans up the two operands it read, so it reproduces
-                // just the bool (`Behavior.reading`).
-                return [
-                    Router(
-                        .bool,
-                        BoolItem(
-                            isSame,
-                            call: recording(Behavior.reading(
-                                [stack: 2],
-                                producing: .bool,
-                                from: [a[1], a[0], InstructionItem(name)]
-                            )))
-                    )
-                ]
-            }
-        )
-        .described("Pushes whether the top two \(stack.plural) are equal, leaving both.")
-        result[name] = inst
-    }
-
-    static func flushCombinator_Behavior(
+    static func flushFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -256,7 +222,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func popCombinator_Behavior(
+    static func popFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -276,7 +242,7 @@ nonisolated extension Interpreter {
     //  `index` is exactly the number of pops needed to surface it. See the
     //  provenance law in Items.swift.
     //
-    static func popItemsCombinator_Behavior(
+    static func popItemsFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -294,7 +260,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func rotCombinator_Behavior(
+    static func rotFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -309,7 +275,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func shoveCombinator_Behavior(
+    static func shoveFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -333,7 +299,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func stackDepthCombinator_Behavior(
+    static func stackDepthFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -363,7 +329,7 @@ nonisolated extension Interpreter {
     // swap restructures the `type` stack, but does not affect argument state
     // and therefore has no effect on `call`.
     //
-    static func swapCombinator_Behavior(
+    static func swapFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -377,7 +343,7 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func yankCombinator_Behavior(
+    static func yankFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -401,7 +367,7 @@ nonisolated extension Interpreter {
 
     /// Deletes the item at a depth, the index clamped as `Yank`'s is: weakening
     /// anywhere in the stack, where `Pop` is weakening at the top.
-    static func deleteAtDepthCombinator_Behavior(
+    static func deleteAtDepthFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -416,7 +382,7 @@ nonisolated extension Interpreter {
         )
     }
 
-    static func yankDupCombinator_Behavior(
+    static func yankDupFamily_Behavior(
         for stack: PushStack,
         into result: inout [PushInstruction: Behavior]
     ) {
@@ -436,28 +402,27 @@ nonisolated extension Interpreter {
         result[name] = inst
     }
 
-    static func combinators(for stack: PushStack) -> [PushInstruction: Behavior]
+    static func stackFamily(for stack: PushStack) -> [PushInstruction: Behavior]
     {
         var result: [PushInstruction: Behavior] = [:]
 
-        deepDupCombinator_Behavior(for: stack, into: &result)
-        dupCombinator_Behavior(for: stack, into: &result)
-        dupItemsCombinator_Behavior(for: stack, into: &result)
-        dupTimesCombinator_Behavior(for: stack, into: &result)
-        stackIsEmptyCombinator_Behavior(for: stack, into: &result)
-        // `eqCombinator_Behavior` is NOT called here. Equality is not furniture,
-        // and being generated beside dup/pop/swap is the only reason it was ever
-        // roled as such. `Comparison Behaviors.swift` calls the same factory.
-        flushCombinator_Behavior(for: stack, into: &result)
-        popCombinator_Behavior(for: stack, into: &result)
-        popItemsCombinator_Behavior(for: stack, into: &result)
-        rotCombinator_Behavior(for: stack, into: &result)
-        shoveCombinator_Behavior(for: stack, into: &result)
-        stackDepthCombinator_Behavior(for: stack, into: &result)
-        swapCombinator_Behavior(for: stack, into: &result)
-        yankCombinator_Behavior(for: stack, into: &result)
-        yankDupCombinator_Behavior(for: stack, into: &result)
-        deleteAtDepthCombinator_Behavior(for: stack, into: &result)
+        deepDupFamily_Behavior(for: stack, into: &result)
+        dupFamily_Behavior(for: stack, into: &result)
+        dupItemsFamily_Behavior(for: stack, into: &result)
+        dupTimesFamily_Behavior(for: stack, into: &result)
+        stackIsEmptyFamily_Behavior(for: stack, into: &result)
+        // `…Eq` is generated per stack too, but it is a comparison, not part of the
+        // family: `eqComparison_Behavior` in `Comparison Behaviors.swift`.
+        flushFamily_Behavior(for: stack, into: &result)
+        popFamily_Behavior(for: stack, into: &result)
+        popItemsFamily_Behavior(for: stack, into: &result)
+        rotFamily_Behavior(for: stack, into: &result)
+        shoveFamily_Behavior(for: stack, into: &result)
+        stackDepthFamily_Behavior(for: stack, into: &result)
+        swapFamily_Behavior(for: stack, into: &result)
+        yankFamily_Behavior(for: stack, into: &result)
+        yankDupFamily_Behavior(for: stack, into: &result)
+        deleteAtDepthFamily_Behavior(for: stack, into: &result)
 
         return result
     }

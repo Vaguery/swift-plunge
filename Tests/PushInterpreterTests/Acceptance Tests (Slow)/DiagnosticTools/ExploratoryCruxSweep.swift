@@ -92,7 +92,7 @@ struct ExploratoryCruxSweep {
     /// cycling-walker class that closed issue #27: an ordinary sweep produced
     /// exactly one example in 1,600 programs, and no mix here concentrates loops
     /// directly. Reaching that class reliably would want a mix keyed on
-    /// `PushInstruction.iterators` — a genuine gap in the generator, not something
+    /// `Interpreter.reEntrantInstructions` — a genuine gap in the generator, not something
     /// this file can paper over.
     @Test(.disabled(if: ExploratoryCruxSweep.disabled))
     func `work-enriched sweep`() {

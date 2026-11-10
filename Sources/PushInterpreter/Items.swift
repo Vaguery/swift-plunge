@@ -340,7 +340,7 @@ nonisolated extension Item {
 //
 // This matters in two places:
 //
-//  - `.xEq` (Combinator Behaviors) compares with `isEqual(to:)`, so the language's
+//  - `.xEq` (Stack Family Behaviors) compares with `isEqual(to:)`, so the language's
 //    equality is this equality. Comparing provenance there made `5 == 5` false
 //    whenever the fives were derived differently, which also made an `.xEq`
 //    result impossible to reconstruct — a re-run necessarily builds its operands

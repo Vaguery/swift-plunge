@@ -2,26 +2,43 @@
 //  Conversion Behaviors.swift
 //  PushInterpreter
 //
-//  Between code and vectors, between chars and strings, and between a string
-//  and its pieces.
+//  Values into code and back, and a string to and from its pieces.
 //
-//  - **`vecXQuote`** wraps a vector into a block as every other `Quote` does,
-//    so vectors are no longer the one data type that cannot become code.
+//  - **`xQuote`** wraps a value in a one-item block, for every value type: the
+//    scalars and the vectors. (`execQuote`, `iteratorQuote` and `bindingQuote`
+//    stay beside their own stacks, because each does more than wrap: one is a
+//    prefix that reads `.exec`, and the other two rebuild a structure.)
 //  - **`vecFromCode`** reads a block back into a vector. Its type is read off
 //    the contents, uniform or refuse, as `vecFromIterator` does; a block holding
 //    exactly one vector gives that vector, so `vecXQuote` then `vecFromCode` is
 //    the identity.
-//  - **`stringReadItems`** and **`stringReadStack`** collect chars into a
-//    string, reading them and leaving them, as `vecXReadItems` and
-//    `vecXReadStack` do for scalars. Chars could be taken out of a string but
-//    never put back.
 //  - **`stringSplitOn`** and **`vecStringJoin`** split on, and join with, an
 //    explicit separator; `join(split(s, sep), sep)` is `s`.
 //
 
 nonisolated extension Interpreter {
 
-    // MARK: - Vectors and code
+    // MARK: - Values into code
+
+    static let intQuote_Behavior =
+        Behavior.composing(.intQuote, takes: IntItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes an int as a one-item block: `5` becomes `( 5 )`.")
+
+    static let boolQuote_Behavior =
+        Behavior.composing(.boolQuote, takes: BoolItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a bool as a one-item block: `true` becomes `( true )`.")
+
+    static let stringQuote_Behavior =
+        Behavior.composing(.stringQuote, takes: StringItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a string as a one-item block on `.code`.")
+
+    static let charQuote_Behavior =
+        Behavior.composing(.charQuote, takes: CharItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a char as a one-item block on `.code`.")
+
+    static let doubleQuote_Behavior =
+        Behavior.composing(.doubleQuote, takes: DoubleItem.self, gives: CodeItem.self) { x in [x] }
+        .described("Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`.")
 
     static let vecBoolQuote_Behavior =
         Behavior.composing(.vecBoolQuote, takes: VecBoolItem.self, gives: CodeItem.self) { x in [x] }
@@ -82,49 +99,6 @@ nonisolated extension Interpreter {
             + "vector gives it back; refuses anything else.")
 
 
-    // MARK: - Chars into strings
-
-    /// The `call` of a string read from `chars` (in string order): re-push them,
-    /// read them with `stringReadItems`, and pop what was read.
-    static func charsCrux(_ chars: [CharItem]) -> [any Item] {
-        Behavior.reading(
-            [.char: chars.count],
-            producing: .string,
-            from: chars.map { $0 as any Item } + [IntItem(chars.count), InstructionItem(.stringReadItems)]
-        )
-    }
-
-    /// A string of the top `k` chars, leaving them in place; `k` is clamped to
-    /// what there is. Top-first, reversed, so the inverse of
-    /// `stringPushAll`, as `vecXReadItems` is of `vecXPushAll`.
-    static let stringReadItems_Behavior =
-        Behavior.contextRead(.stringReadItems, takes: [.int], observes: [.char], produces: .results([.string])) { collected, context in
-            let n = (collected[0] as! IntItem).value
-            let items = context.items(of: .char)
-            let k = Position.gap(n, count: items.count)
-            let chars = Array(items.prefix(k)).map { $0 as! CharItem }.reversed().map { $0 }
-            return [Router(.string, StringItem(String(chars.map(\.value)),
-                                               call: context.recording(charsCrux(chars)),
-                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
-        }
-        .described(
-            "Copies the top n chars into a string, leaving them: `n .stringReadItems`, n clamped to the stack's "
-            + "depth; the top char comes last.")
-
-    /// A string of every char on `.char`, leaving them; empty if there are none.
-    /// Its crux reads them back with `stringReadItems`, so it composes.
-    static let stringReadStack_Behavior =
-        Behavior.contextRead(.stringReadStack, observes: [.char], produces: .results([.string])) { _, context in
-            let chars = Array(context.items(of: .char)).map { $0 as! CharItem }.reversed().map { $0 }
-            return [Router(.string, StringItem(String(chars.map(\.value)),
-                                               call: context.recording(charsCrux(chars)),
-                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
-        }
-        .described(
-            "Copies the whole char stack into a string, leaving it; the bottom char comes first, and an empty "
-            + "stack gives an empty string.")
-
-
     // MARK: - A string and its pieces
 
     /// `s sep .stringSplitOn`: the pieces of `s` between occurrences of `sep`,
@@ -152,13 +126,16 @@ nonisolated extension Interpreter {
     // MARK: - The family
 
     static let conversionBehaviors: [PushInstruction: Behavior] = [
+        .intQuote: intQuote_Behavior,
+        .boolQuote: boolQuote_Behavior,
+        .stringQuote: stringQuote_Behavior,
+        .charQuote: charQuote_Behavior,
+        .doubleQuote: doubleQuote_Behavior,
         .vecBoolQuote: vecBoolQuote_Behavior,
         .vecIntQuote: vecIntQuote_Behavior,
         .vecDoubleQuote: vecDoubleQuote_Behavior,
         .vecStringQuote: vecStringQuote_Behavior,
         .vecFromCode: vecFromCode_Behavior,
-        .stringReadItems: stringReadItems_Behavior,
-        .stringReadStack: stringReadStack_Behavior,
         .stringSplitOn: stringSplitOn_Behavior,
         .vecStringJoin: vecStringJoin_Behavior
     ]

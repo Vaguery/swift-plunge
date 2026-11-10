@@ -1,5 +1,5 @@
 //
-//  Stacks tests.swift
+//  Stacks Tests.swift
 //  PushInterpreterTests
 //
 //  Created by Bill Tozier on 5/30/26.

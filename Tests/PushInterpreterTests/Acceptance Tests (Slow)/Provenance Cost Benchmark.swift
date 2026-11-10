@@ -139,7 +139,7 @@ struct ProvenanceCostBenchmark {
 
     @Test func `call retention on vs off — correctness, memory, and time`() {
         let all = Runner().definedInstructions
-        let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
+        let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
 
         // Fixed, reproducible program set: seeded fuzz + a few deep accumulators (whose
         // provenance grows with the loop, so on-vs-off separates cleanly).

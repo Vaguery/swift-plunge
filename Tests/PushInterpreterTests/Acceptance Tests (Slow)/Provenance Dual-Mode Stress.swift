@@ -361,7 +361,7 @@ struct ProvenanceDualModeStress {
         }
 
         let instructions = Runner().definedInstructions
-        let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
+        let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
         let batchSize: UInt64 = 120
         let cruxSampleEvery: UInt64 = 25
         let slowSeconds = 60.0

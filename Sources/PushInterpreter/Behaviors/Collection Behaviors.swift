@@ -2,8 +2,9 @@
 //  Collection Behaviors.swift
 //  PushInterpreter
 //
-//  Reductions over whole collections. Each is written once and applied to
-//  every collection it fits.
+//  Whole-collection facts (`Sum`, `Max`, `Min`) and the set operations
+//  (`Distinct`, `Intersect`, `Difference`, `IsSubset`). Each is written once and
+//  applied to every collection it fits.
 //
 //  The rules that shape them:
 //  - **Facts read and leave.** `Sum`, `Max` and `Min` report something
@@ -14,10 +15,10 @@
 //    `Nth` does. Ties go to the first occurrence.
 //  - **Orders are total**, so every result is deterministic: a NaN counts as
 //    greater than every number.
-//  - **No `Sort` and no `Mean`**: basic Push
-//    benchmarks ask for sorting and averaging (PSB1 *Vector Average*) to be
-//    evolved, and a built-in would answer them in one step. Average stays a
-//    short composition: `.vecIntSum .vecIntLength .intQuot`.
+//  - **No `Sort` and no `Mean` yet.** Basic Push benchmarks ask for sorting and
+//    averaging (PSB1 *Vector Average*) to be evolved. That is no longer a reason
+//    to leave them out (I35): a benchmark can exclude an instruction by tag. Until
+//    then, average is a short composition: `.vecIntSum .vecIntLength .intQuot`.
 //
 
 nonisolated extension Interpreter {

@@ -68,7 +68,7 @@ nonisolated extension Interpreter {
     static let roles: [InstructionRole: Set<PushInstruction>] = {
         let constants = Set(language.filter { if case .deferred = $0.value.produces { true } else { false } }.keys)
         let inputs = Set(language.filter { $0.value.produces == .input }.keys)
-        let stackFamily = Set(combinatorBehaviors.keys)
+        let stackFamily = Set(stackFamilyBehaviors.keys)
         let comparisons = InstructionTagging.standard.instructions(tagged: .comparison)
             .subtracting(constants).subtracting(inputs).subtracting(stackFamily)
         return [

@@ -1,5 +1,5 @@
 //
-//  OutputInstructionTests.swift
+//  Output Behavior Tests.swift
 //  PushInterpreterTests
 //
 //  Created by Bill Tozier on 6/14/26.

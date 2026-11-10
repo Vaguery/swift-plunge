@@ -143,6 +143,64 @@ nonisolated extension Interpreter {
         }
         .described("Converts a double, truncating toward zero; refuses one that is not finite or out of range.")
 
+    // MARK: - Sign, magnitude and power
+    //
+    // Anything that would overflow is refused. Written order is reading order:
+    // `b e .intPow` is b to the e.
+
+    static let intAbs_Behavior =
+        Behavior.operation(.intAbs, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
+            guard x != .min else { throw Refusal("Overflow in .intAbs: \(x)") }
+            return abs(x)
+        }
+        .described("Takes the absolute value; refuses the most negative int, whose absolute value overflows.")
+
+    static let intNegate_Behavior =
+        Behavior.operation(.intNegate, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
+            guard x != .min else { throw Refusal("Overflow in .intNegate: \(x)") }
+            return -x
+        }
+        .described("Negates; refuses the most negative int, whose negation overflows.")
+
+    /// −1, 0 or 1.
+    static let intSign_Behavior =
+        Behavior.operation(.intSign, takes: IntItem.self, gives: IntItem.self) { x in x.signum() }
+        .described("Gives the sign of an int: −1, 0 or 1.")
+
+    /// `b e .intPow` is b to the e, by repeated squaring. A negative exponent
+    /// has an int answer only for a base of 1 or −1; otherwise it is refused, as
+    /// is a result that overflows.
+    static let intPow_Behavior =
+        Behavior.operation(.intPow, takes: IntItem.self, IntItem.self,
+                           gives: IntItem.self) { base, exponent throws(Refusal) in
+            guard exponent >= 0 else {
+                switch base {
+                case 1: return 1
+                case -1: return exponent.isMultiple(of: 2) ? 1 : -1
+                default: throw Refusal("No int result in .intPow: \(base) ^ \(exponent)")
+                }
+            }
+            var result = 1, square = base, remaining = exponent
+            while remaining > 0 {
+                if remaining & 1 == 1 {
+                    let (product, overflowed) = result.multipliedReportingOverflow(by: square)
+                    guard !overflowed else { throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)") }
+                    result = product
+                }
+                remaining >>= 1
+                if remaining > 0 {
+                    let (product, overflowed) = square.multipliedReportingOverflow(by: square)
+                    guard !overflowed else { throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)") }
+                    square = product
+                }
+            }
+            return result
+        }
+        .described(
+            "Raises to a power: `b e .intPow` gives b to the e; refuses on overflow, or a negative e unless b is ±1."
+        )
+
+
     static let intBehaviors:[PushInstruction : Behavior] =
         [
             .intAdd : intAdd_Behavior,
@@ -160,6 +218,10 @@ nonisolated extension Interpreter {
             .intMultiply : intMultiply_Behavior,
             .intQuot : intQuot_Behavior,
             .intSubtract : intSubtract_Behavior,
+            .intAbs: intAbs_Behavior,
+            .intNegate: intNegate_Behavior,
+            .intSign: intSign_Behavior,
+            .intPow: intPow_Behavior,
         ]
 
 }

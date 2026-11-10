@@ -67,7 +67,7 @@ struct MemoryGuardFuzz {
 
     @Test func `loop-heavy fuzz stays bounded under the memory guard`() {
         let all = Runner().definedInstructions
-        let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
+        let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
         let config = settings()
 
         var normal = 0, memory = 0, runaway = 0

@@ -92,7 +92,7 @@ struct ThroughputBenchmark {
     /// The fixed, seeded program set every measurement here runs.
     func benchmarkPrograms() -> [[any Item]] {
         let all = Runner().definedInstructions
-        let loopers = Array(PushInstruction.iterators).sorted { $0.rawValue < $1.rawValue }
+        let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
         var programs: [[any Item]] = []
         for seed in 0..<200 {
             var rng = SeededRNG(state: 0x5EED_0000 &+ UInt64(seed))
