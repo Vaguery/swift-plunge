@@ -8,6 +8,7 @@
 @testable import Plunge
 import Testing
 import DequeModule
+import Foundation
 
 @Suite @MainActor
 struct DoubleBehaviorTests {
@@ -534,7 +535,9 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 1.0 0.0 ]")
 
         doThis(.doubleTan, to: inty)
-        #expect(stackString(inty, .double) == "[ 1.557407724654902 0.0 ]")
+        // The platform's own tan(1): Darwin's libm gives 1.557407724654902, glibc's
+        // 1.5574077246549023, one ulp apart.
+        #expect(stackString(inty, .double) == "[ \(tan(1.0)) 0.0 ]")
         #expect(callString(topItem(inty, .double)) == "( 1.0 .doubleTan )")
     }
 }
