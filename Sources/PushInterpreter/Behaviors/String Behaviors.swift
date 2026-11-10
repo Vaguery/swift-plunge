@@ -232,6 +232,16 @@ nonisolated extension Interpreter {
         }
         .described("Counts a char: `s c .stringOccurrencesOf` gives how many times c occurs in s, leaving both.")
 
+    /// The number of non-overlapping occurrences of a substring, as the vectors'
+    /// `…OccurrencesOfRun` count runs.
+    static let stringOccurrencesOfRun_Behavior =
+        Behavior.operation(.stringOccurrencesOfRun, reads: StringItem.self, StringItem.self,
+                           gives: IntItem.self) { x, y in
+            subCount(Array(x), Array(y))
+        }
+        .described("Counts a run: `s t .stringOccurrencesOfRun` gives how many non-overlapping times t occurs in s, "
+                   + "leaving both; an empty t counts 0.")
+
     // Written order: the string, then the char.
     static let stringRemove_Behavior =
         Behavior.assembling(.stringRemove, takes: StringItem.self, CharItem.self, gives: StringItem.self) { x, y in
@@ -537,6 +547,7 @@ nonisolated extension Interpreter {
         .stringNthWord : stringNthWord_Behavior,
         .stringPeekNthWord : stringPeekNthWord_Behavior,
         .stringOccurrencesOf : stringOccurrencesOf_Behavior,
+        .stringOccurrencesOfRun : stringOccurrencesOfRun_Behavior,
         .stringPushAllLetters : stringPushAllLetters_Behavior,
         .stringPushAll : stringPushAll_Behavior,
         .stringRemove : stringRemove_Behavior,

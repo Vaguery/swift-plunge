@@ -1054,4 +1054,17 @@ struct StringBehaviorTests {
         #expect(stackString(redo, .string) == "[ \"be\" ]", "the crux clears what it read")
         #expect(redo.stacks[.int]!.isEmpty)
     }
+
+    @Test func `stringOccurrencesOfRun counts non-overlapping runs, as the vectors do`() {
+        func count(_ s: String, _ t: String) -> String {
+            let inty = Interpreter()
+            inty.load(program: [StringItem(s), StringItem(t), InstructionItem(.stringOccurrencesOfRun)])
+            inty.run()
+            return stackString(inty, .int)
+        }
+        #expect(count("aaaa", "aa") == "[ 2 ]", "non-overlapping")
+        #expect(count("banana", "an") == "[ 2 ]")
+        #expect(count("abc", "") == "[ 0 ]", "an empty run counts 0")
+        #expect(count("ab", "abc") == "[ 0 ]")
+    }
 }

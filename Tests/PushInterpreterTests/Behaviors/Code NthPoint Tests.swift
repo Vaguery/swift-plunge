@@ -93,4 +93,17 @@ struct CodeNthPointTests {
             #expect(redo.stacks[.int]!.isEmpty)
         }
     }
+
+    @Test func `codeOccurrencesOf counts equal points, leaving both`() {
+        let hay = CodeItem([IntItem(1), CodeItem([IntItem(1), IntItem(2)]), IntItem(1)])
+        let inty = Interpreter.recordingProvenance()
+        inty.load(program: [hay, CodeItem([IntItem(1)]), InstructionItem(.codeOccurrencesOf)])
+        inty.run()
+        #expect(stackString(inty, .int) == "[ 3 ]", "a one-item needle stands for its item")
+        #expect(inty.stacks[.code]!.count == 2)
+        let block = Interpreter()
+        block.load(program: [hay, CodeItem([CodeItem([IntItem(1), IntItem(2)])]), InstructionItem(.codeOccurrencesOf)])
+        block.run()
+        #expect(stackString(block, .int) == "[ 1 ]")
+    }
 }

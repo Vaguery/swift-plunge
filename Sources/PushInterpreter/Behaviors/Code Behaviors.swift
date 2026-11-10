@@ -118,6 +118,17 @@ nonisolated extension Interpreter {
         .described("Finds the first point of h equal to n, leaving both: `h n .codeIndexOf`; a one-item n " +
                    "stands for its sole item; refuses when absent.")
 
+    /// How many points equal the target. Equal subtrees cannot nest inside one
+    /// another, so there is no question of overlap.
+    static let codeOccurrencesOf_Behavior =
+        Behavior.operation(.codeOccurrencesOf, reads: CodeItem.self, CodeItem.self,
+                           gives: IntItem.self) { hay, needle in
+            let target = CodeItem(needle).denotedItem
+            return CodeItem(hay).preorderPoints.count { $0.isEqual(to: target) }
+        }
+        .described("Counts the points of h equal to n, leaving both: `h n .codeOccurrencesOf`; a one-item n stands "
+                   + "for its sole item.")
+
     /// The block that directly contains the first point equal to the target —
     /// its parent. An error if the target is absent, or if it is the whole tree
     /// (which has no parent here). Reads both, leaves both.
@@ -688,6 +699,7 @@ nonisolated extension Interpreter {
         .codeDepth : codeDepth_Behavior,
         .codeContains : codeContains_Behavior,
         .codeIndexOf : codeIndexOf_Behavior,
+        .codeOccurrencesOf : codeOccurrencesOf_Behavior,
         .codeContainer : codeContainer_Behavior,
         .codePeekNth : codePeekNth_Behavior,
         .codeNth : codeNth_Behavior,

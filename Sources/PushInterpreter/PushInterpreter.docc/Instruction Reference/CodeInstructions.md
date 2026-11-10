@@ -33,6 +33,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeLengthRoot` | Counts the block's root items, leaving the block. | `code` (read) | `int` |
 | `codeNth` | Takes point i (clamped) as a block; a leaf comes boxed as `( x )`. | `code`, `int` | `code` |
 | `codeNthRoot` | Takes root item i (clamped) as a block; a leaf comes boxed as `( x )`; refuses an empty block. | `code`, `int` | `code`; may refuse |
+| `codeOccurrencesOf` | Counts the points of h equal to n, leaving both: `h n .codeOccurrencesOf`; a one-item n stands for its sole item. | `code` (read), `code` (read) | `int` |
 | `codePair` | Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block contributing its sole item. | `code`, `code` | `code` |
 | `codePeekNth` | Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`. | `code` (read), `int` (read) | `code` |
 | `codePeekNthRoot` | Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`; refuses an empty block. | `code` (read), `int` (read) | `code`; may refuse |

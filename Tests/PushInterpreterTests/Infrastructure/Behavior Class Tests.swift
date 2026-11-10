@@ -70,7 +70,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 436,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs
+            .operation: 438,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs
             .structural: 170,   // 13 families × 13 stacks (DeleteAtDepth the 13th; .binding the 13th stack), bindingPopKey
             .contextRead: 204,  // 80 constants, 10 inputs, 26 depth/emptiness, 5 counts, 10 readItems/readStack/fromChars,
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,

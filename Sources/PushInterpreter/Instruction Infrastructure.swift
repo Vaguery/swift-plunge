@@ -45,7 +45,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     // CODE instructions
     // wherever a tree ordering is needed, it is pre-order (a node before its children)
     //
-    case codeConcat, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenNth, codeFlattenRange, codePair, codeDoIf, codeIndexOf, codeInsertAtGap, codeItemIsEmpty, codeIterate, codeIterateEmit, codeIterateDo, codeIterateRoot, codeLength, codeLengthRoot, codeNth, codeNthRoot, codePeekNth, codePeekNthRoot, codeDoNth, codeDoNthRoot, codeEmitNth, codeEmitNthRoot, codeRemoveNth, codeReplace, codeReplaceFirst, codeWidth, codeWrap, codeWrapRange
+    case codeConcat, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenNth, codeFlattenRange, codePair, codeDoIf, codeIndexOf, codeOccurrencesOf, codeInsertAtGap, codeItemIsEmpty, codeIterate, codeIterateEmit, codeIterateDo, codeIterateRoot, codeLength, codeLengthRoot, codeNth, codeNthRoot, codePeekNth, codePeekNthRoot, codeDoNth, codeDoNthRoot, codeEmitNth, codeEmitNthRoot, codeRemoveNth, codeReplace, codeReplaceFirst, codeWidth, codeWrap, codeWrapRange
 
     /// Drive an iterator to exhaustion and box everything it emitted into a block.
     ///
@@ -213,7 +213,7 @@ public nonisolated enum PushInstruction : String, CaseIterable, Codable, Sendabl
     
     // STRING instructions
     //
-    case stringButLast, stringConcat, stringConj, stringContainsRun, stringContains, stringDrop, stringFirst, stringIndexOf, stringItemIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringNthWord, stringPeekNthWord, stringOccurrencesOf, stringRemove, stringReplaceRun, stringReplace, stringReplaceFirstRun, stringReplaceFirst, stringRest, stringReverse, stringSet, stringPushAllWords, stringSlice, stringTake, stringCut, stringDropLast, stringTakeLast, stringPeekNth
+    case stringButLast, stringConcat, stringConj, stringContainsRun, stringContains, stringDrop, stringFirst, stringIndexOf, stringItemIsEmpty, stringIterate, stringLast, stringLength, stringNth, stringNthWord, stringPeekNthWord, stringOccurrencesOf, stringOccurrencesOfRun, stringRemove, stringReplaceRun, stringReplace, stringReplaceFirstRun, stringReplaceFirst, stringRest, stringReverse, stringSet, stringPushAllWords, stringSlice, stringTake, stringCut, stringDropLast, stringTakeLast, stringPeekNth
 
     // string comparison
     case stringEq, stringGT, stringGTE, stringLT, stringLTE
