@@ -53,7 +53,9 @@ limit.
 
 ## Another way to map
 
-An iterator with a body maps too, in the same program rather than a fresh one:
-`vecFromIterator` collects what the body leaves for each element. The
+An iterator with a body maps too, **stack-fed** rather than through `input0`: for
+each element, `vecFromIterator` runs the element and then the body in a fresh
+interpreter, so the element arrives on its own stack and the body needs no input
+instruction, and it collects what the body leaves. The
 `iteratorOver…` instructions build such an iterator in one step from a collection
 and a block.
