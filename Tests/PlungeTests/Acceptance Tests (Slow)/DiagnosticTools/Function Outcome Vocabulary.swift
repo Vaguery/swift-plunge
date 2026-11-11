@@ -30,6 +30,11 @@ enum FunctionOutcome {
         case v12 = "V12 first typed block on code"
         case v13 = "V13 hybrid: stack-fed + holes"
         case v14 = "V14 hybrid + typed lookup + context"
+        case v15 = "V15 hybrid + per-family lookup"
+        case v16 = "V16 hybrid + per-family, then typed lookup"
+        case v17 = "V17 V16, transformers, type from first run"
+        case v18 = "V18 function stack from the top block"
+        case v19 = "V19 function stack from every block"
 
         func applies(to family: Family) -> Bool {
             switch self {
@@ -39,13 +44,19 @@ enum FunctionOutcome {
         }
 
         /// The element is run before the block, so it lands on its stack.
-        var isStackFed: Bool { [.v2, .v3, .v4, .v9, .v10, .v11, .v13, .v14].contains(self) }
-        /// The result is the top of the element's stack (`.bool` for filter).
-        var hasTypedResult: Bool { [.v3, .v4, .v9, .v10, .v11, .v13, .v14].contains(self) }
+        var isStackFed: Bool { [.v2, .v3, .v4, .v9, .v10, .v11, .v13, .v14, .v17].contains(self) }
+        /// The result is the top of the element's stack (`.bool` for filter);
+        /// for V17's map, of the stack the first element's run chose.
+        var hasTypedResult: Bool { [.v3, .v4, .v9, .v10, .v11, .v13, .v14, .v17].contains(self) }
         /// The element type's constants sit under the element.
-        var hasTypedContext: Bool { [.v10, .v11, .v14].contains(self) }
+        var hasTypedContext: Bool { [.v10, .v11, .v14, .v17].contains(self) }
+        /// The block's holes are bound too (accumulator, then element).
+        var bindsHoles: Bool { [.v13, .v14, .v17].contains(self) }
         /// Only the block's instructions about the element's type are run.
         var isProjected: Bool { [.v9, .v11].contains(self) }
+        /// The block is turned into crux functions, which are sieved for one
+        /// that fits (`Block Functions.swift`).
+        var usesFunctionStack: Bool { [.v18, .v19].contains(self) }
     }
 
     /// One harvested moment.
@@ -70,7 +81,10 @@ enum FunctionOutcome {
         case refused(String)
         case emptyInput, tooShort
         case identity, empty, all, first, last, reshaped, rearranged
-        case constant, dependent
+        case constant, dependent, dependentRetyped
+        /// A filter over bools that kept exactly the trues (the element was its
+        /// own verdict), or exactly the falses.
+        case keptTrues, keptFalses
 
         var label: String {
             switch self {
@@ -86,6 +100,9 @@ enum FunctionOutcome {
             case .rearranged: "rearranged"
             case .constant: "constant"
             case .dependent: "element-dependent"
+            case .dependentRetyped: "element-dependent, new type"
+            case .keptTrues: "kept the trues (identity)"
+            case .keptFalses: "element-dependent: kept the falses"
             }
         }
     }
@@ -94,6 +111,9 @@ enum FunctionOutcome {
         let why: String
         init(_ why: String) { self.why = why }
     }
+
+    /// The stacks a map's results can be collected from.
+    static let scalarStacks: Set<PushStack> = [.bool, .int, .double, .char, .string]
 
     /// The collections a function can take.
     static let collectionStacks: [PushStack] = [.vecInt, .vecDouble, .vecBool, .vecString, .string]

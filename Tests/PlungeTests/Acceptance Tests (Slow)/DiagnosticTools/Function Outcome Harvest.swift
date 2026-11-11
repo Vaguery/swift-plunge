@@ -12,50 +12,61 @@ extension FunctionOutcome {
 
     // MARK: - Programs, as the app makes them
 
+    static func small() -> Int { Int.random(in: -100...100, using: &fuzzRNG) }
+    static func real() -> Double { Double.random(in: -100...100, using: &fuzzRNG) }
+    static func letter() -> Character { Character(UnicodeScalar(UInt8.random(in: 97...122, using: &fuzzRNG))) }
+    static func word() -> String { String((0..<Int.random(in: 1...6, using: &fuzzRNG)).map { _ in letter() }) }
+    static func upTo(_ most: Int) -> Range<Int> { 0..<Int.random(in: 0...most, using: &fuzzRNG) }
+
     /// The app's constants (`Search Operators/RandomCode.swift`): small numbers,
-    /// short strings, vectors of 0–5 elements (vecString 0–3).
+    /// short strings, vectors of 0–5 elements (vecString 0–3), every slot set.
     static func appConstants() -> [PushInstruction: any Item] {
-        func small() -> Int { Int.random(in: -100...100, using: &fuzzRNG) }
-        func letter() -> Character { Character(UnicodeScalar(UInt8.random(in: 97...122, using: &fuzzRNG))) }
-        func word() -> String { String((0..<Int.random(in: 1...6, using: &fuzzRNG)).map { _ in letter() }) }
-        func count(_ most: Int) -> Range<Int> { 0..<Int.random(in: 0...most, using: &fuzzRNG) }
         var constants: [PushInstruction: any Item] = [:]
         for slot in 0..<10 {
             func token(_ type: String) -> PushInstruction { PushInstruction(rawValue: "\(type)\(slot)")! }
             constants[token("int")] = IntItem(small())
-            constants[token("double")] = DoubleItem(Double.random(in: -100...100, using: &fuzzRNG))
+            constants[token("double")] = DoubleItem(real())
             constants[token("string")] = StringItem(word())
             constants[token("char")] = CharItem(letter())
-            constants[token("vecInt")] = VecIntItem(count(5).map { _ in small() })
-            constants[token("vecDouble")] = VecDoubleItem(count(5).map { _ in
-                Double.random(in: -100...100, using: &fuzzRNG)
-            })
-            constants[token("vecString")] = VecStringItem(count(3).map { _ in word() })
-            constants[token("vecBool")] = VecBoolItem(count(5).map { _ in Bool.random(using: &fuzzRNG) })
+            constants[token("vecInt")] = VecIntItem(upTo(5).map { _ in small() })
+            constants[token("vecDouble")] = VecDoubleItem(upTo(5).map { _ in real() })
+            constants[token("vecString")] = VecStringItem(upTo(3).map { _ in word() })
+            constants[token("vecBool")] = VecBoolItem(upTo(5).map { _ in Bool.random(using: &fuzzRNG) })
         }
         return constants
     }
 
-    /// Benchmark-like inputs: a text problem binds `.input0` to a short sentence;
-    /// a numeric one binds `.input0` and `.input1` to doubles.
-    static func benchmarkInputs(text: Bool) -> [PushInstruction: any Item] {
-        if text {
-            let words = ["spin", "words", "hello", "welcome", "to", "the", "stage"]
-            let sentence = (0..<Int.random(in: 2...5, using: &fuzzRNG)).map { _ in
-                words[Int.random(in: 0..<words.count, using: &fuzzRNG)]
-            }.joined(separator: " ")
-            return [.input0: StringItem(sentence)]
+    /// A random value of a random type: any of the value types, or a short block.
+    static func randomValue() -> any Item {
+        switch Int.random(in: 0..<10, using: &fuzzRNG) {
+        case 0: IntItem(small())
+        case 1: DoubleItem(real())
+        case 2: BoolItem(Bool.random(using: &fuzzRNG))
+        case 3: CharItem(letter())
+        case 4: StringItem((0..<Int.random(in: 1...4, using: &fuzzRNG)).map { _ in word() }.joined(separator: " "))
+        case 5: VecIntItem(upTo(5).map { _ in small() })
+        case 6: VecDoubleItem(upTo(5).map { _ in real() })
+        case 7: VecBoolItem(upTo(5).map { _ in Bool.random(using: &fuzzRNG) })
+        case 8: VecStringItem(upTo(3).map { _ in word() })
+        default: CodeItem(RandomCode.randomProgram(Int.random(in: 1...4, using: &fuzzRNG), mix: .uniformOverLanguage))
         }
-        return [.input0: DoubleItem(Double.random(in: -10...10, using: &fuzzRNG)),
-                .input1: DoubleItem(Double.random(in: -10...10, using: &fuzzRNG))]
+    }
+
+    /// Inputs as a problem binds them: `.input0` up to a uniform 1…10 slots,
+    /// low to high, each a random value of a random type.
+    static func randomInputs() -> [PushInstruction: any Item] {
+        let count = Int.random(in: 1...Interpreter.inputSlots.count, using: &fuzzRNG)
+        var inputs: [PushInstruction: any Item] = [:]
+        for slot in Interpreter.inputSlots.prefix(count) { inputs[slot] = randomValue() }
+        return inputs
     }
 
     enum Regime: String, CaseIterable {
         /// The app's "Everything": uniform over the language, with only the
-        /// benchmark's own input tokens.
+        /// bound input tokens (unbound ones are disabled for search).
         case everything = "everything (app-like)"
-        /// The library fuzzers' role mix: a fifth of draws are input tokens,
-        /// all ten of them bound.
+        /// The library fuzzers' role mix: a fifth of draws are input tokens, over
+        /// all ten slots, bound or not.
         case equalShares = "equal role shares"
     }
 
@@ -67,9 +78,9 @@ extension FunctionOutcome {
     }
 
     /// One program, its inputs and its constants, drawn for `regime`.
-    static func draw(_ regime: Regime, text: Bool) -> Drawn {
+    static func draw(_ regime: Regime) -> Drawn {
         let constants = appConstants()
-        var inputs = benchmarkInputs(text: text)
+        let inputs = randomInputs()
         let tokens: [any Item]
         switch regime {
         case .everything:
@@ -77,11 +88,6 @@ extension FunctionOutcome {
             tokens = (0..<150).map { _ in InstructionItem(pool[Int.random(in: 0..<pool.count, using: &fuzzRNG)]) }
         case .equalShares:
             tokens = RandomCode.randomProgram(150, mix: .equalShares)
-            // Sorted: a dictionary's order changes from one process to the next.
-            let values = constants.sorted { $0.key.rawValue < $1.key.rawValue }.map(\.value)
-            for slot in Interpreter.inputSlots where inputs[slot] == nil {
-                inputs[slot] = values[Int.random(in: 0..<values.count, using: &fuzzRNG)]
-            }
         }
         let permutation = (0..<8).map { _ in Double.random(in: 0...1, using: &fuzzRNG) }
         return Drawn(program: FibonacciGenome.translate(tokens, permutation: permutation),
@@ -109,7 +115,7 @@ extension FunctionOutcome {
     static func harvest(_ regime: Regime, programs: Int) -> Harvest {
         var harvest = Harvest()
         for seed in 0..<programs {
-            let drawn = withFuzzSeed(UInt64(seed)) { draw(regime, text: seed.isMultiple(of: 2)) }
+            let drawn = withFuzzSeed(UInt64(seed)) { draw(regime) }
             let inty = Interpreter()
             inty.config.stepLimit = budget
             inty.config.recordsProvenance = true

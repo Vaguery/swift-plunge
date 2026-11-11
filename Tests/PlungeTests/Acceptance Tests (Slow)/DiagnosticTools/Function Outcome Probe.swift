@@ -58,11 +58,32 @@
 //        the accumulator then the element), typed result, so a block written
 //        with `.input0` still works.
 //  - V14 V13 with V12's lookup and V10's typed context: the full package.
+//  - V15 V14 with a per-family lookup instead: the first block holding an
+//        instruction that does the family's job on the element's type (takes
+//        T, gives T for map; takes T, gives a bool for filter; takes two T,
+//        gives T for reduce).
+//  - V16 V15's lookup, falling back to V12's when no block does the job.
+//  - V17 V16, but a map looks for a *transformer* (takes T, gives any value
+//        type) and its result type is fixed by the first element's run: the
+//        stack it last pushed a value to. Later elements are read from that
+//        stack, so the output is uniform and `( .doubleFromInt )` still maps
+//        ints to doubles.
+//  - V18 the top block converted to crux functions (`Block Functions.swift`):
+//        stepped with a hole supplied for every missing argument, every pushed
+//        item whose crux uses a hole kept as a function of its holes. The first
+//        that fits is applied: an element-typed hole and a collectable output
+//        (map), a bool (filter), two element-typed holes and the element's type
+//        (reduce). Other holes are filled from the situation's stacks.
+//  - V19 as V18, over the functions of every block on `.code`, top down: what
+//        a `.function` stack filled as each code item is made would hold.
+//
+//  Each family's table is followed by how often each lookup finds a block.
 //
 //  Each outcome is one of: refused (by reason); trivial (identity, empty,
 //  reshaped or rearranged for map; empty or all for filter; the first or last
 //  element for reduce); constant (unchanged when every element is perturbed);
-//  or element-dependent, the class that matters.
+//  or element-dependent, the class that matters (split out when a map's
+//  output is a different type from its input).
 //
 //  Run solo; it writes `function-outcome-probe.md` and `.tsv` to $TMPDIR:
 //
@@ -109,6 +130,7 @@ struct FunctionOutcomeProbe {
                 let relevant: [Probe.Situation] = harvest.situations.filter { $0.1.contains(family) }.map { $0.0 }
                 guard !relevant.isEmpty else { continue }
                 report += Self.table(family, over: relevant, regime: regime, counts: &counts)
+                report += Self.lookupRates(family, over: relevant)
             }
         }
 
@@ -151,6 +173,17 @@ struct FunctionOutcomeProbe {
             text += "| \(variant.rawValue) | " + cells.joined(separator: " | ") + " | \(steps) |\n"
         }
         return text
+    }
+
+    /// How often each lookup finds a block, over `situations` with a usable
+    /// (non-empty) collection.
+    static func lookupRates(_ family: Probe.Family, over situations: [Probe.Situation]) -> String {
+        let usable = situations.filter { !(Probe.elements(of: $0.collection) ?? []).isEmpty }
+        func rate(_ criterion: Probe.Criterion) -> String {
+            percent(usable.filter { Probe.lookup(family, $0, criteria: [criterion]) != nil }.count, of: usable.count)
+        }
+        return "\nOf \(usable.count) situations with a usable collection, a block on `.code` takes the element's "
+            + "type in \(rate(.takesType)); one does \(family.rawValue)'s job in \(rate(.doesFamilyJob)).\n"
     }
 
     /// How much of the language could serve as a function body over each

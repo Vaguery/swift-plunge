@@ -100,6 +100,23 @@ struct FunctionOutcomeProbePins {
         #expect(Probe.classify(.v12, .map, s) == .dependent)
     }
 
+    @Test func `the per-family lookup passes over a block that only takes the type`() {
+        // Both blocks take ints; only the second gives one back.
+        let comparing = CodeItem([InstructionItem(.intGT)])
+        let doubling = CodeItem([IntItem(2), InstructionItem(.intMultiply)])
+        let s = Self.situation([], over: [1, 2, 3], stacks: [.code: [comparing, doubling]])
+        #expect(Probe.lookup(.map, s, criteria: [.takesType])?.value.count == 1)
+        #expect(Probe.lookup(.map, s, criteria: [.doesFamilyJob])?.value.count == 2)
+        #expect(Probe.lookup(.filter, s, criteria: [.doesFamilyJob])?.value.count == 1)
+        #expect(Probe.classify(.v15, .map, s) == .dependent)
+    }
+
+    @Test func `a transformer maps ints to doubles when the first run fixes the type`() {
+        let s = Self.situation([InstructionItem(.doubleFromInt)], over: [1, 2, 3])
+        #expect(Probe.classify(.v14, .map, s) == .identity, "the typed top reads the int stack")
+        #expect(Probe.classify(.v17, .map, s) == .dependentRetyped)
+    }
+
     @Test func `the hybrid keeps blocks written with input0 working`() {
         let doubling = Self.situation([InstructionItem(.input0), IntItem(2), InstructionItem(.intMultiply)],
                                       over: [1, 2, 3])
@@ -116,6 +133,43 @@ struct FunctionOutcomeProbePins {
         #expect(Probe.classify(.v2, .reduce, s) == .dependent)
         #expect(Probe.classify(.v6, .reduce, s) == .dependent)
         #expect(Probe.classify(.v5, .reduce, s) == .dependent)
+    }
+
+    @Test func `a block yields the functions its leftovers compute`() {
+        let s = Self.situation([], over: [1, 2, 3])
+        func functions(_ block: [any Item]) -> [Probe.BlockFunction] {
+            Probe.convert(CodeItem(block), in: s).functions
+        }
+        let doubling = functions([InstructionItem(.intDup), InstructionItem(.intAdd)])
+        #expect(doubling.map(\.signature) == ["(int) → int"])
+        #expect(doubling.first?.shape == "⟨int0⟩ .intDup .intAdd")
+        #expect(functions([InstructionItem(.intPop)]).isEmpty, "a pop pushes nothing")
+        let chain = functions([InstructionItem(.intDup), InstructionItem(.intAdd), InstructionItem(.intInc),
+                               InstructionItem(.intPop)])
+        #expect(chain.map(\.shape) == ["⟨int0⟩ .intDup .intAdd", "⟨int0⟩ .intDup .intAdd .intInc"],
+                "consumed items count too, in the order they were pushed")
+        #expect(functions([InstructionItem(.intGT)]).map(\.signature) == ["(int, int) → bool"])
+        #expect(functions([InstructionItem(.doubleFromInt)]).map(\.signature) == ["(int) → double"])
+    }
+
+    @Test func `the function stack maps, filters and folds`() {
+        let transformer = Self.situation([InstructionItem(.doubleFromInt)], over: [1, 2, 3])
+        #expect(Probe.classify(.v18, .map, transformer) == .dependentRetyped)
+        let doubling = Self.situation([InstructionItem(.intDup), InstructionItem(.intAdd)], over: [1, 2, 3])
+        #expect(Probe.classify(.v18, .map, doubling) == .dependent)
+        let sum = Self.situation([InstructionItem(.intAdd)], over: [1, 2, 3])
+        #expect(Probe.classify(.v18, .reduce, sum) == .dependent)
+        let predicate = Self.situation([IntItem(2), InstructionItem(.intGT)], over: [1, 2, 3])
+        #expect(Probe.classify(.v18, .filter, predicate) == .dependent)
+    }
+
+    @Test func `a bool that is its own verdict keeps the trues`() {
+        let s = Probe.Situation(natural: true, collection: VecBoolItem([false, true, true, false]),
+                                block: CodeItem([]), inputs: [:], constants: [:], stacks: [:])
+        #expect(Probe.classify(.v3, .filter, s) == .keptTrues)
+        var negated = s
+        negated.block = CodeItem([InstructionItem(.boolNot)])
+        #expect(Probe.classify(.v3, .filter, negated) == .keptFalses)
     }
 
     @Test func `a filter predicate keeps a proper subset`() {

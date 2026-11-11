@@ -122,11 +122,22 @@ extension FunctionOutcome {
 
     // MARK: - One application
 
+    /// What one application left.
+    struct Run {
+        /// The result under the variant's rule.
+        var result: (any Item)?
+        /// The last value pushed, and the stack it went to.
+        var lastPushed: (any Item)?
+        var lastStack: PushStack?
+        var steps: Int
+    }
+
     /// One application of a per-element variant: `args` is `[element]`, or
-    /// `[accumulator, element]` for reduce. Returns the result (nil if there is
-    /// none) and the steps it took; nil if it ran out of steps.
-    static func applyOnce(_ call: Call, _ block: CodeItem, args: [any Item],
-                          budget: Int) -> (result: (any Item)?, steps: Int)? {
+    /// `[accumulator, element]` for reduce. A typed result is read from
+    /// `resultStack` when one is given, else from the element's stack (`.bool`
+    /// for filter). Nil if it ran out of steps.
+    static func applyOnce(_ call: Call, _ block: CodeItem, args: [any Item], budget: Int,
+                          resultStack: PushStack? = nil) -> Run? {
         let s = call.situation
         let elementStack = PushStack.defaultStack(for: args.last!)!
         var program = block.value
@@ -139,16 +150,15 @@ extension FunctionOutcome {
         switch call.variant {
         case .v0, .v7: bind([.input0, .input1], to: args, in: &inputs)
         case .v1: bind(holes(in: block), to: args.reversed(), in: &inputs)
-        case .v13, .v14: bind(holes(in: block), to: args, in: &inputs)
-        default: break
+        default: if call.variant.bindsHoles { bind(holes(in: block), to: args, in: &inputs) }
         }
 
         guard let sub = sandbox(program, inputs: inputs, constants: s.constants, stacks: stacks,
                                 budget: budget) else { return nil }
-        let result = call.variant.hasTypedResult
-            ? sub.stacks[call.family == .filter ? .bool : elementStack]?.first
-            : sub.lastPush.flatMap { sub.stacks[$0]?.first }
-        return (result, sub.counter)
+        let lastPushed = sub.lastPush.flatMap { sub.stacks[$0]?.first }
+        let typedStack = resultStack ?? (call.family == .filter ? .bool : elementStack)
+        let result = call.variant.hasTypedResult ? sub.stacks[typedStack]?.first : lastPushed
+        return Run(result: result, lastPushed: lastPushed, lastStack: sub.lastPush, steps: sub.counter)
     }
 
 
@@ -169,6 +179,7 @@ extension FunctionOutcome {
 
     /// The output of `call` over `elements`, or why it refused.
     static func output(_ call: Call, elements: [any Item], collection: any Item) -> Result<any Item, Refusal> {
+        if call.variant.usesFunctionStack { return functionStackOutput(call, elements: elements) }
         let elementStack = PushStack.defaultStack(for: elements[0])!
         guard let block = function(for: call, elementStack: elementStack) else {
             return .failure(Refusal("no function"))
@@ -218,11 +229,25 @@ extension FunctionOutcome {
     static func mapped(_ call: Call, _ block: CodeItem, elements: [any Item]) -> Result<any Item, Refusal> {
         var results: [any Item] = []
         var used = 0
+        // V17: the first element's run fixes the result's type, as the stack
+        // it last pushed a value to; every later run is read from that stack.
+        var pinned: PushStack?
         for element in elements {
-            guard let run = applyOnce(call, block, args: [element], budget: budget - used) else {
+            guard let run = applyOnce(call, block, args: [element], budget: budget - used,
+                                      resultStack: pinned) else {
                 return .failure(Refusal("out of steps"))
             }
             used += run.steps
+            if call.variant == .v17 && pinned == nil {
+                if let stack = run.lastStack, scalarStacks.contains(stack), let value = run.lastPushed {
+                    pinned = stack
+                    results.append(value)
+                } else {
+                    pinned = PushStack.defaultStack(for: element)
+                    results.append(run.result ?? element)
+                }
+                continue
+            }
             results.append(run.result ?? element)
         }
         guard let gathered = Interpreter.collected(results, call: []) else { return .failure(Refusal("mixed types")) }
@@ -263,8 +288,12 @@ extension FunctionOutcome {
     static func classify(_ variant: Variant, _ family: Family, _ s: Situation) -> Outcome {
         switch variant {
         case .v8: classifyByTrial(family, s)
-        case .v12: classifyAfterLookup(.v10, family, s)
-        case .v14: classifyAfterLookup(.v14, family, s)
+        case .v12: classifyAfterLookup(.v10, family, s, criteria: [.takesType])
+        case .v14: classifyAfterLookup(.v14, family, s, criteria: [.takesType])
+        case .v15: classifyAfterLookup(.v14, family, s, criteria: [.doesFamilyJob])
+        case .v16: classifyAfterLookup(.v14, family, s, criteria: [.doesFamilyJob, .takesType])
+        case .v17: classifyAfterLookup(.v17, family, s,
+                                       criteria: [family == .map ? .transforms : .doesFamilyJob, .takesType])
         default: classifyDirectly(Call(variant: variant, family: family, situation: s))
         }
     }
@@ -281,18 +310,6 @@ extension FunctionOutcome {
             if firstOutcome == nil { firstOutcome = outcome }
         }
         return firstOutcome ?? classifyDirectly(Call(variant: .v3, family: family, situation: s))
-    }
-
-    /// V12 and V14: the first block on `.code` that takes the element's type
-    /// (the situation's own block if none does), applied under `variant`.
-    static func classifyAfterLookup(_ variant: Variant, _ family: Family, _ s: Situation) -> Outcome {
-        var tried = s
-        let blocks = (s.stacks[.code] ?? []).compactMap { $0 as? CodeItem }
-        if let stack = elements(of: s.collection)?.first.flatMap({ PushStack.defaultStack(for: $0) }),
-           let typed = blocks.first(where: { $0.value.contains { takes($0, stack) } }) {
-            tried.block = typed
-        }
-        return classifyDirectly(Call(variant: variant, family: family, situation: tried))
     }
 
     static func classifyDirectly(_ call: Call) -> Outcome {
@@ -315,7 +332,9 @@ extension FunctionOutcome {
                                                 collection: rebuilt(changed, like: s.collection)!) else {
             return .dependent
         }
-        return render(other) == render(result) ? .constant : .dependent
+        if render(other) == render(result) { return .constant }
+        let retyped = call.family == .map && type(of: result) != type(of: collection)
+        return retyped ? .dependentRetyped : .dependent
     }
 
     /// The trivial outcomes a result can be recognized as without a second run.
@@ -323,8 +342,7 @@ extension FunctionOutcome {
                         collection: any Item) -> Outcome? {
         switch family {
         case .filter:
-            let kept = Self.elements(of: result)?.count ?? 0
-            return kept == 0 ? .empty : kept == elements.count ? .all : .dependent
+            return filterOutcome(kept: Self.elements(of: result) ?? [], from: elements)
         case .map:
             let mapped = Self.elements(of: result) ?? []
             if mapped.isEmpty { return .empty }
@@ -338,5 +356,19 @@ extension FunctionOutcome {
             if render(result) == render(elements[elements.count - 1]) { return .last }
         }
         return nil
+    }
+
+    /// What a filter that kept `kept` of `elements` did: nothing, everything,
+    /// exactly the trues or falses of a bool collection, or something else.
+    static func filterOutcome(kept: [any Item], from elements: [any Item]) -> Outcome {
+        if kept.isEmpty { return .empty }
+        if kept.count == elements.count { return .all }
+        let flags = elements.compactMap { ($0 as? BoolItem)?.value }
+        let keptFlags = kept.compactMap { ($0 as? BoolItem)?.value }
+        if flags.count == elements.count, Set(keptFlags).count == 1, let value = keptFlags.first,
+           keptFlags.count == flags.filter({ $0 == value }).count {
+            return value ? .keptTrues : .keptFalses
+        }
+        return .dependent
     }
 }
