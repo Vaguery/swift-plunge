@@ -156,6 +156,85 @@ struct FibonacciGenomeTests {
                 "ascending lengths push the largest last, so it is on top")
     }
 
+
+    // MARK: - the permutation: cut first, then reorder
+
+    /// The block contents of a program, in program order.
+    func blocks(_ program: [any Item]) -> [[Int]] {
+        program.compactMap { ($0 as? CodeItem)?.value.compactMap { ($0 as? IntItem)?.value } }
+    }
+
+    /// The flat remainder of a program.
+    func tail(_ program: [any Item]) -> [Int] {
+        program.compactMap { ($0 as? IntItem)?.value }
+    }
+
+    @Test func `an empty or ascending permutation is the cut order`() {
+        let source: [any Item] = (0..<40).map { IntItem($0) }
+        let plain = FibonacciGenome.translate(source)
+        #expect(blocks(FibonacciGenome.translate(source, permutation: [])) == blocks(plain))
+        #expect(blocks(FibonacciGenome.translate(source, permutation: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7]))
+                == blocks(plain))
+        #expect(tail(FibonacciGenome.translate(source, permutation: [])) == tail(plain))
+    }
+
+    /// **The point of cutting first.** Any permutation leaves every block's
+    /// contents and the flat tail exactly as cut; only the order changes.
+    @Test func `a permutation moves whole blocks and changes none of them`() {
+        let source: [any Item] = (0..<40).map { IntItem($0) }
+        let plain = FibonacciGenome.translate(source)
+        var rng = SeededRNG(seed: 11)
+        for _ in 0..<20 {
+            let permutation = (0..<8).map { _ in Double.random(in: 0...1, using: &rng) }
+            let permuted = FibonacciGenome.translate(source, permutation: permutation)
+            #expect(blocks(permuted).sorted { $0.lexicographicallyPrecedes($1) }
+                    == blocks(plain).sorted { $0.lexicographicallyPrecedes($1) })
+            #expect(tail(permuted) == tail(plain))
+        }
+    }
+
+    /// Swapping two genes swaps exactly those two blocks' places. Under a
+    /// sizes-first rule, the same swap would re-cut every block after the first.
+    @Test func `swapping two permutation values swaps exactly two blocks`() {
+        let source: [any Item] = (0..<40).map { IntItem($0) }   // blocks 1,1,2,3,5,8
+        let before = blocks(FibonacciGenome.translate(source, permutation: [0, 1, 2, 3, 4, 5]))
+        let after = blocks(FibonacciGenome.translate(source, permutation: [5, 1, 2, 3, 4, 0]))
+        #expect(after.first == before.last)
+        #expect(after.last == before.first)
+        #expect(Array(after.dropFirst().dropLast()) == Array(before.dropFirst().dropLast()))
+    }
+
+    @Test func `the highest value lands on top of code`() {
+        let inty = Interpreter()
+        // Blocks 1,1,2,3,5 (contents 0, 1, 2-3, 4-6, 7-11); the 3-block ranks highest.
+        let source: [any Item] = (0..<30).map { IntItem($0) }
+        inty.load(program: FibonacciGenome.translate(source, permutation: [0.5, 0.1, 0.2, 0.9, 0.3]))
+        for _ in 0..<5 { inty.step() }
+        let top = (inty.stacks[.code]!.first as? CodeItem)?.value.compactMap { ($0 as? IntItem)?.value }
+        #expect(top == [4, 5, 6])
+    }
+
+    @Test func `a short permutation is cycled and nudged to fit`() {
+        let fitted = FibonacciGenome.adjustedPermutation([1.1, 2.2], toCount: 5)
+        let expected = [1.1, 2.2, 1.1001, 2.2001, 1.1002]
+        #expect(zip(fitted, expected).allSatisfy { abs($0 - $1) < 1e-12 })
+        #expect(FibonacciGenome.adjustedPermutation([3, 1, 2, 9], toCount: 2) == [3, 1])
+        #expect(FibonacciGenome.adjustedPermutation([], toCount: 3) == [0, 1, 2])
+        #expect(FibonacciGenome.adjustedPermutation([1], toCount: 0).isEmpty)
+    }
+
+    @Test func `placement is ascending by value with ties broken by index`() {
+        #expect(FibonacciGenome.placementOrder([0.7, 0.2, 0.9, 0.2]) == [1, 3, 0, 2])
+        #expect(FibonacciGenome.placementOrder([.nan, 0.5, 0.1]) == [2, 1, 0], "a NaN sorts last")
+        #expect(FibonacciGenome.placementOrder([]).isEmpty)
+    }
+
+    @Test func `a block that was never cut is absent from the placement`() {
+        // Lengths 1, 0, 99 over 3 items: the zero is skipped, the 99 takes the rest.
+        let packed = BlockPacking.pack(genome(3), lengths: [1, 0, 99], order: [2, 1, 0])
+        #expect(packed.map { ($0 as? CodeItem)?.value.count } == [2, 1])
+    }
+
     /// The `[Any]` seam carries any token stream, so anything that is not an Item
     /// is not part of this encoding and is dropped rather than crashing on a bad
     /// cast.

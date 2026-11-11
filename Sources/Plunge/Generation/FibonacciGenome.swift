@@ -20,11 +20,16 @@
 /// way to get that spread out of nothing but the genome's length: no size genes,
 /// nothing to tune, deterministic.
 ///
-/// **It is a testing genome, not an evolvable one**, and the reason is worth
-/// recording: the block lengths are not genes, so a search cannot adjust them. It
-/// can only change *which* instructions fall inside a block whose size is fixed
-/// by arithmetic. `ForestGenome` is the same shape with the lengths encoded —
-/// which is why they share `BlockPacking` — and that is the one meant to evolve.
+/// **Block order can be a gene; block sizes cannot.** `translate(_:permutation:)`
+/// cuts the blocks first, always 1, 1, 2, 3, 5… from the head, and then
+/// reorders the finished blocks by a permutation, so a change to the
+/// permutation moves whole blocks without changing what is in them. (Permuting
+/// the *sizes* before cutting, which the app's first permuted genome did, moves
+/// every boundary at once.) The lengths themselves are still arithmetic, so a
+/// search can only change *which* instructions fall inside a block whose size is
+/// fixed, and inserting or deleting a gene still shifts every boundary after it.
+/// `ForestGenome` is the same shape with the lengths encoded — which is why they
+/// share `BlockPacking` — and that is the design meant to evolve sizes.
 ///
 /// **No nesting, ever.** The genes are a flat stream of instruction tokens, so
 /// every block is depth 1. Nested code can only appear at run time, built by the
@@ -96,5 +101,44 @@ nonisolated enum FibonacciGenome {
     static func translate(_ genome: [Any]) -> [any Item] {
         let items = genome.compactMap { $0 as? any Item }
         return BlockPacking.pack(items, lengths: blockLengths(forGenomeOf: items.count))
+    }
+
+    /// Translate with the blocks reordered after cutting: `permutation[i]`
+    /// belongs to the `i`-th block cut from the head, and the blocks are placed
+    /// in ascending order of their values, so the block with the highest value
+    /// is pushed last and ends up on top of `.code`.
+    ///
+    /// The permutation is fitted to the block count first
+    /// (`adjustedPermutation`), so it need not know how many blocks the genome's
+    /// length implies. An empty permutation is the cut order, the same program
+    /// as `translate(_:)`.
+    static func translate(_ genome: [Any], permutation: [Double]) -> [any Item] {
+        let items = genome.compactMap { $0 as? any Item }
+        let lengths = blockLengths(forGenomeOf: items.count)
+        let order = placementOrder(adjustedPermutation(permutation, toCount: lengths.count))
+        return BlockPacking.pack(items, lengths: lengths, order: order)
+    }
+
+    /// Fit `permutation` to exactly `count` values: truncated if longer; if
+    /// shorter, cycled, with each further cycle nudged up by `epsilon` so the
+    /// repeats break ties the same way every time. `[1.1, 2.2]` fitted to 5 is
+    /// `[1.1, 2.2, 1.1001, 2.2001, 1.1002]`. Empty fits as `0, 1, 2…`, the cut
+    /// order. The app's rule, so the two genomes read a permutation alike.
+    static func adjustedPermutation(_ permutation: [Double], toCount count: Int,
+                                    epsilon: Double = 0.0001) -> [Double] {
+        guard count > 0 else { return [] }
+        guard !permutation.isEmpty else { return (0..<count).map(Double.init) }
+        if permutation.count >= count { return Array(permutation.prefix(count)) }
+        let period = permutation.count
+        return (0..<count).map { permutation[$0 % period] + epsilon * Double($0 / period) }
+    }
+
+    /// The indices of `values` in ascending order of value, ties broken by
+    /// index: the order the blocks are placed in. `[0.7, 0.2, 0.9, 0.2]` gives
+    /// `[1, 3, 0, 2]`. A NaN sorts as the largest value, so a corrupt gene
+    /// still gives a permutation.
+    static func placementOrder(_ values: [Double]) -> [Int] {
+        let keys = values.map { $0.isNaN ? Double.infinity : $0 }
+        return keys.indices.sorted { keys[$0] != keys[$1] ? keys[$0] < keys[$1] : $0 < $1 }
     }
 }

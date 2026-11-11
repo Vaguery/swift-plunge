@@ -24,10 +24,11 @@
 /// point of the encoding, since `.code` is the language's scarcest stack and a
 /// program with nothing on it can build no loop bodies.
 ///
-/// **Order matters and is deliberate.** The blocks land in the order given, so
-/// with ascending lengths the *largest* block ends up on **top** of `.code` —
-/// it is pushed last — and is what the first `.codeDo` or iterator constructor
-/// reaches for.
+/// **Order matters and is deliberate.** By default the blocks land in the order
+/// they were cut, so with ascending lengths the *largest* block ends up on
+/// **top** of `.code` — it is pushed last — and is what the first `.codeDo` or
+/// iterator constructor reaches for. `pack(_:lengths:order:)` places them in
+/// another order after cutting.
 ///
 /// A length that runs past the end of the genome takes what remains, so the last
 /// block may be short; a length of zero or less is skipped rather than producing
@@ -35,17 +36,35 @@
 /// away anyway.
 nonisolated enum BlockPacking {
 
+    /// The blocks in the order they were cut, then the rest, flat.
     static func pack(_ genome: [any Item], lengths: [Int]) -> [any Item] {
-        var blocks: [any Item] = []
+        pack(genome, lengths: lengths, order: Array(lengths.indices))
+    }
+
+    /// **Cut first, then reorder.** The blocks are cut from the front of `genome`
+    /// in `lengths` order exactly as above, and only then placed in the program
+    /// in `order`, a permutation of `lengths.indices`: `order[k]` is the index of
+    /// the block placed `k`-th, so `order.last` ends up on top of `.code`.
+    ///
+    /// Reordering finished blocks, rather than reordering the lengths before
+    /// cutting, is what makes the order evolvable: a change to `order` moves
+    /// whole blocks and never changes what is in them. Reordering the lengths
+    /// instead would move every boundary after the first changed length.
+    ///
+    /// A length that produced no block (zero or less, or past the end of the
+    /// genome) is simply absent from the placement.
+    static func pack(_ genome: [any Item], lengths: [Int], order: [Int]) -> [any Item] {
+        assert(order.sorted() == Array(lengths.indices), "order must be a permutation of the lengths' indices")
+        var blocks: [Int: any Item] = [:]
         var cursor = 0
 
-        for length in lengths {
+        for (index, length) in lengths.enumerated() {
             guard cursor < genome.count else { break }
             guard length > 0 else { continue }
             let end = min(cursor + length, genome.count)
-            blocks.append(CodeItem(Array(genome[cursor..<end])))
+            blocks[index] = CodeItem(Array(genome[cursor..<end]))
             cursor = end
         }
-        return blocks + genome[cursor...]
+        return order.compactMap { blocks[$0] } + genome[cursor...]
     }
 }
