@@ -125,6 +125,18 @@ each over the four vector types and strings. What fits depends on the job:
 - **`functionRef`**, `functionWith` and `functionRefAs` bind functions to keys,
   as the other types' binders do (<doc:Variables>).
 
+## Functions as loop bodies
+
+A function can also run **as code**, on the program's own stacks rather than in
+a sandbox: `codeFromFunction` gives its body as a block, its holes left out, so
+each hole is simply an argument its instructions take from the stacks as they
+run. The loops do that for you: `functionDo`, `functionDoTimes`,
+`functionDoCount`, `functionDoRange`, `functionWhile` and `functionIf` each
+rewrite themselves into the code loop of the same name, over the top function's
+body (`n f .functionDoTimes` is `n f .codeFromFunction .execDoTimes`). A bare
+`.intAdd` repeated three times over `1 2 3 4` leaves `10`. As every loop's body
+does, the body returns to `.code` as a block when the loop ends.
+
 ## When there is no function
 
 - An **empty** `.function` is a missing argument: the instruction starves, takes

@@ -25,6 +25,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeFlattenNth` | Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 flattens everything. | `code`, `int` | `code` |
 | `codeFlattenOnce` | Flattens one level: each root item that is a block is replaced by its items. | `code` | `code` |
 | `codeFlattenRange` | Flattens every block whose first or last gap lies between gaps i and j (clamped, either order); blocks enclosing the range keep their shape. | `code`, `int`, `int` | `code` |
+| `codeFromFunction` | A function's body as a block, its holes left out: run, each hole is an argument its instructions take from the stacks. | `function` | `code` |
 | `codeFromIterator` | Collects everything the iterator has left to emit into one block, its body returning to `.code` beneath; refuses, keeping the iterator, when that is too many items. | `iterator` | `code` or `code`, `code`; may refuse |
 | `codeIndexOf` | Finds the first point of h equal to n, leaving both: `h n .codeIndexOf`; a one-item n stands for its sole item; refuses when absent. | `code` (read), `code` (read) | `int`; may refuse |
 | `codeInsertAtGap` | Inserts: `s x i .codeInsertAtGap` splices block x into s at gap i (clamped); a one-item x inserts its sole item. | `code`, `code`, `int` | `code` |

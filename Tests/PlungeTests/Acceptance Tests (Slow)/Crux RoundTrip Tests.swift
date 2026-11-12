@@ -384,13 +384,12 @@ struct CruxFuzzTests {
         // items under the loop-heavy and container-heavy mixes carried one.
         // Except under the shallow budget, where a history deeper than 50 that is
         // not one loop's chain is still elided (0.3% of items when added).
-        if shallow {
-            // 100 across every program when they ran as one case. Folds come
-            // from a few programs (930 across the groups, as few as 9 in one), so
-            // each group need only fold at all.
-            #expect(tally.compressed.folded > 0,
-                    "only \(tally.compressed.folded) items ran a folded loop")
-        } else {
+        // (Whether a shallow group folds at all depends on whether its random
+        // programs build a long loop chain: as few as 9 folds in a group, and
+        // none in one once the language reached 1,067 instructions, 2026-11-12.
+        // The count is in the report; folding under a shallow budget is pinned
+        // deterministically by `Loop Folding Tests`.)
+        if !shallow {
             #expect(tally.count(.elided) == 0,
                     "items carrying an elided history: \(tally.examples[.elided] ?? [])")
         }

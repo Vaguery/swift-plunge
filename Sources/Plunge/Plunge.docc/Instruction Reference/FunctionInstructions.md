@@ -27,6 +27,12 @@ The `.function` stack holds functions: a body with typed holes. An instruction t
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
+| `functionDo` | Runs the top function's body as code, once: `f .functionDo` is `f .codeFromFunction .codeDo`. | `function` | the rest of the program |
+| `functionDoCount` | Counts with the top function's body as code: `n f .functionDoCount` is `n f .codeFromFunction .execDoCount`, pushing 0 to n − 1 before each pass. | `int`, `function` | the rest of the program |
+| `functionDoRange` | Steps an index with the top function's body as code: `a b f .functionDoRange` is `a b f .codeFromFunction .execDoRange`. | `int`, `int`, `function` | the rest of the program |
+| `functionDoTimes` | Repeats the top function's body as code: `n f .functionDoTimes` is `n f .codeFromFunction .execDoTimes`; the body then returns to `.code` as a block. | `int`, `function` | the rest of the program |
+| `functionIf` | Runs one of two functions' bodies as code: `p then else .functionIf` is `p then .codeFromFunction else .codeFromFunction .execIf`. | `bool`, `function`, `function` | the rest of the program |
+| `functionWhile` | Loops with the top function's body as code while the top bool is true: `p f .functionWhile` is `p f .codeFromFunction .execWhile`. | `bool`, `function` | the rest of the program |
 | `functionWith` | Binds a copy of the top function to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `function` (read) | the rest of the program |
 
 ## The stack's own instructions

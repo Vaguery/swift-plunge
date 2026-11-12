@@ -444,6 +444,8 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 
     // Instructions on functions (2026-11-12)
     case functionApply, functionCompose, functionFill, functionArity, functionIterate, functionIterateUntil
+    // Functions as loop bodies, and a function's body as a block
+    case codeFromFunction, functionDo, functionDoTimes, functionDoCount, functionDoRange, functionWhile, functionIf
 
 }
 

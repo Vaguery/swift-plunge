@@ -244,9 +244,91 @@ nonisolated extension Interpreter {
         return [Router(resting, collected(orbit, call: recorded)!)]
     }
 
+    // MARK: - Functions as loop bodies
+    //
+    // A function's body runs as code: on the program's own stacks, no sandbox,
+    // each hole simply an argument its instructions take from the stacks as they
+    // run (a bare `.intAdd` looped n times sums the top n + 1 ints). That is the
+    // meaning a hole has in argument position, as in every bare function; a hole
+    // deep in a derived body is whatever its stack holds when that point runs.
+    //
+    // Each form rewrites itself into its code loop: the function goes back onto
+    // `.function`, `codeFromFunction` turns it into its body on `.code`, and the
+    // code loop runs that. So the step limit, the loop counters and folding are
+    // the code loops' own, and the body, a block, returns to `.code` afterward as
+    // every loop's does.
+
+    static let codeFromFunction_Behavior =
+        Behavior(.codeFromFunction, requires: [.takes(.function)], tags: [], behaviorClass: .operation,
+                 body: .values { a, recording in
+            let function = asFunction(a[0])
+            return [Router(.code, CodeItem(function.value,
+                                           call: recording([function, InstructionItem(.codeFromFunction)])))]
+        }, produces: .results([.code]))
+        .described("A function's body as a block, its holes left out: run, each hole is an argument its "
+                   + "instructions take from the stacks.")
+
+    /// `function` turned into its body on `.code`, then `loop` run over it, with
+    /// `arguments` back on their stacks first, in written order.
+    static func looped(_ loop: PushInstruction, _ function: any Item, after arguments: [any Item]) -> [Router] {
+        [Router(.exec, InstructionItem(loop)), Router(.exec, InstructionItem(.codeFromFunction)),
+         Router(.exec, function)] + arguments.reversed().map { Router(.exec, $0) }
+    }
+
+    static let functionDo_Behavior =
+        Behavior.control(.functionDo, takes: [.function]) { a, _ in looped(.codeDo, a[0], after: []) }
+        .described("Runs the top function's body as code, once: `f .functionDo` is `f .codeFromFunction .codeDo`.")
+
+    static let functionDoTimes_Behavior =
+        Behavior.control(.functionDoTimes, takes: [.int, .function], tags: [.looping]) { a, _ in
+            looped(.execDoTimes, a[1], after: [a[0]])
+        }
+        .described("Repeats the top function's body as code: `n f .functionDoTimes` is "
+                   + "`n f .codeFromFunction .execDoTimes`; the body then returns to `.code` as a block.")
+
+    static let functionDoCount_Behavior =
+        Behavior.control(.functionDoCount, takes: [.int, .function], tags: [.looping]) { a, _ in
+            looped(.execDoCount, a[1], after: [a[0]])
+        }
+        .described("Counts with the top function's body as code: `n f .functionDoCount` is "
+                   + "`n f .codeFromFunction .execDoCount`, pushing 0 to n − 1 before each pass.")
+
+    static let functionDoRange_Behavior =
+        Behavior.control(.functionDoRange, takes: [.int, .int, .function], tags: [.looping]) { a, _ in
+            // `.int` arrives top first: a[0] the end, a[1] the start; written a b.
+            looped(.execDoRange, a[2], after: [a[1], a[0]])
+        }
+        .described("Steps an index with the top function's body as code: `a b f .functionDoRange` is "
+                   + "`a b f .codeFromFunction .execDoRange`.")
+
+    static let functionWhile_Behavior =
+        Behavior.control(.functionWhile, takes: [.bool, .function], tags: [.looping]) { a, _ in
+            looped(.execWhile, a[1], after: [a[0]])
+        }
+        .described("Loops with the top function's body as code while the top bool is true: `p f .functionWhile` is "
+                   + "`p f .codeFromFunction .execWhile`.")
+
+    static let functionIf_Behavior =
+        Behavior.control(.functionIf, takes: [.bool, .function, .function]) { a, _ in
+            // Written `p then else`: the else function is on top (a[1]).
+            let (condition, elseFunction, thenFunction) = (a[0], a[1], a[2])
+            return [Router(.exec, InstructionItem(.execIf)), Router(.exec, InstructionItem(.codeFromFunction)),
+                    Router(.exec, elseFunction), Router(.exec, InstructionItem(.codeFromFunction)),
+                    Router(.exec, thenFunction), Router(.exec, condition)]
+        }
+        .described("Runs one of two functions' bodies as code: `p then else .functionIf` is `p then "
+                   + ".codeFromFunction else .codeFromFunction .execIf`.")
+
     // MARK: - The family
 
     static let functionStackBehaviors: [PushInstruction: Behavior] = [
+        .codeFromFunction: codeFromFunction_Behavior,
+        .functionDo: functionDo_Behavior,
+        .functionDoTimes: functionDoTimes_Behavior,
+        .functionDoCount: functionDoCount_Behavior,
+        .functionDoRange: functionDoRange_Behavior,
+        .functionWhile: functionWhile_Behavior,
+        .functionIf: functionIf_Behavior,
         .functionApply: functionApply_Behavior,
         .functionCompose: functionCompose_Behavior,
         .functionFill: functionFill_Behavior,

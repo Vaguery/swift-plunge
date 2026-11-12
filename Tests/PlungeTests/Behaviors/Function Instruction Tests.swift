@@ -154,6 +154,46 @@ struct FunctionInstructionTests {
         #expect(stackString(up, .vecInt) == "[ [3, 4, 5] ]")
     }
 
+    // MARK: - Loops
+
+    @Test func `a function's body as a block`() {
+        let inty = Self.run(Self.derived(IntItem(2), Self.op(.intMultiply)) + [Self.op(.codeFromFunction)])
+        #expect(stackString(inty, .code) == "[ ( 2 .intMultiply ) ]")
+        #expect(Self.replays(inty, .code))
+    }
+
+    @Test func `function loops run the body on the program's stacks`() {
+        // A bare .intAdd three times over 1 2 3 4: 10.
+        let sum = Self.run([Self.op(.intAdd), IntItem(1), IntItem(2), IntItem(3), IntItem(4), IntItem(3),
+                            Self.op(.functionDoTimes)])
+        #expect(stackString(sum, .int) == "[ 10 ]")
+        #expect(stackString(sum, .code) == "[ ( .intAdd ) ]", "the body returns to .code, as a loop's does")
+
+        let once = Self.run([Self.op(.intInc), IntItem(5), Self.op(.functionDo)])
+        #expect(stackString(once, .int) == "[ 6 ]")
+
+        // Count 0, 1, 2 with x 10 * as the body: 0 10 20 on .int.
+        let counted = Self.run(Self.derived(IntItem(10), Self.op(.intMultiply)) + [IntItem(3),
+                                                                                  Self.op(.functionDoCount)])
+        #expect(stackString(counted, .int) == "[ 20 10 0 ]")
+
+        let ranged = Self.run([Self.op(.intInc), IntItem(2), IntItem(5), Self.op(.functionDoRange)])
+        #expect(stackString(ranged, .int) == "[ 5 4 3 ]", "each index 2, 3, 4 incremented")
+    }
+
+    @Test func `function while and if`() {
+        // Run .boolNot while true: the first pass pops true and leaves false.
+        let whileLoop = Self.run([Self.op(.boolNot), BoolItem(true), BoolItem(true), Self.op(.functionWhile)])
+        #expect(stackString(whileLoop, .bool) == "[ ]")
+
+        let chosen = Self.run([Self.op(.intInc), Self.op(.intNegate), IntItem(5), BoolItem(true),
+                               Self.op(.functionIf)])
+        #expect(stackString(chosen, .int) == "[ 6 ]", "true runs the deeper (then) function")
+        let other = Self.run([Self.op(.intInc), Self.op(.intNegate), IntItem(5), BoolItem(false),
+                              Self.op(.functionIf)])
+        #expect(stackString(other, .int) == "[ -5 ]")
+    }
+
     // MARK: - Binding
 
     @Test func `a function can be bound to a key and read back`() {
