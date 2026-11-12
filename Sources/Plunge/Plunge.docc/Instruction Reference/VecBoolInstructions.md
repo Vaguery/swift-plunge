@@ -8,6 +8,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
+| `vecBoolAnd` | Ands element by element: `a b .vecBoolAnd` gives a[i] ∧ b[i], where b is the top vector and a the first one below it of the same length (a miss if there is none). | `vecBool`, the topmost fitting `vecBool` | `vecBool` |
 | `vecBoolButLast` | Drops the last element; an empty vector stays empty. | `vecBool` | `vecBool` |
 | `vecBoolConcat` | Joins two vectors: `a b .vecBoolConcat` gives the elements of a followed by those of b. | `vecBool`, `vecBool` | `vecBool` |
 | `vecBoolConj` | Appends a bool: `v x .vecBoolConj` gives v with x added at the end. | `vecBool`, `bool` | `vecBool` |
@@ -20,6 +21,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBoolDrop` | Drops the front: `v n .vecBoolDrop` removes the first n elements, n clamped to 0 through the length. | `vecBool`, `int` | `vecBool` |
 | `vecBoolDropLast` | Drops the back: `v n .vecBoolDropLast` removes the last n elements, n clamped to 0 through the length. | `vecBool`, `int` | `vecBool` |
 | `vecBoolEq` | Pushes whether the top two vectors of bools are equal, leaving both. | `vecBool` (read), `vecBool` (read) | `bool` |
+| `vecBoolEqEach` | Pushes whether each element of a is equal to the matching element of b: `a b .vecBoolEqEach`, where b is the top vector of bools and a the first one below it of the same length (a miss if there is none); leaves both. | `vecBool` (read), the topmost fitting `vecBool` (read) | `vecBool` |
 | `vecBoolFilter` | Keeps the elements of a vector of bools for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool`; may refuse |
 | `vecBoolFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecBool` | `bool`; may refuse |
 | `vecBoolIndexOf` | Finds x: `v x .vecBoolIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecBool` (read), `bool` (read) | `int`; may refuse |
@@ -31,9 +33,11 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBoolLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecBool` | `bool`; may refuse |
 | `vecBoolLength` | Counts the elements, leaving the vector. | `vecBool` (read) | `int` |
 | `vecBoolMap` | Maps the topmost function on `.function` that fits over a vector of bools, each element in its first bool hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `vecBoolNot` | Negates every element of a vector of bools. | `vecBool` | `vecBool` |
 | `vecBoolNth` | Picks an element: `v i .vecBoolNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecBool`, `int` | `bool`; may refuse |
 | `vecBoolOccurrencesOf` | Counts x: `v x .vecBoolOccurrencesOf` gives how many elements equal x, leaving both. | `vecBool` (read), `bool` (read) | `int` |
 | `vecBoolOccurrencesOfRun` | Counts a run: `v w .vecBoolOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecBool` (read), `vecBool` (read) | `int` |
+| `vecBoolOr` | Ors element by element: `a b .vecBoolOr` gives a[i] ∨ b[i], where b is the top vector and a the first one below it of the same length (a miss if there is none). | `vecBool`, the topmost fitting `vecBool` | `vecBool` |
 | `vecBoolPeekNth` | Picks an element: `v i .vecBoolPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecBool` (read), `int` (read) | `bool`; may refuse |
 | `vecBoolPushAll` | Pushes every element onto the bool stack, front to back, so the last element ends on top; consumes the vector. | `vecBool` | `bool`, one per step |
 | `vecBoolQuote` | Wraps the vector in a one-item block. | `vecBool` | `code` |

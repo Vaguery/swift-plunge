@@ -16,9 +16,7 @@ nonisolated extension Interpreter {
 
     static let doubleAdd_Behavior =
         Behavior.operation(.doubleAdd, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
-            let result = y + x
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleAdd: \(y) + \(x)") }
-            return result
+            try DoubleArithmetic.add(y, x, .doubleAdd)
         }
         .described("Adds two doubles; refuses a result that is not finite.")
 
@@ -36,17 +34,13 @@ nonisolated extension Interpreter {
 
     static let doubleDivide_Behavior =
         Behavior.operation(.doubleDivide, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
-            let result = y / x
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleDivide: \(y) / \(x)") }
-            return result
+            try DoubleArithmetic.divide(y, x, .doubleDivide)
         }
         .described("Divides: `a b .doubleDivide` gives a ÷ b; refuses when b is 0 or the result is not finite.")
 
     static let doubleMod_Behavior =
         Behavior.operation(.doubleMod, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
-            let result = y.truncatingRemainder(dividingBy: x)
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleMod: \(y) % \(x)") }
-            return result
+            try DoubleArithmetic.mod(y, x, .doubleMod)
         }
         .described("Takes the remainder: `a b .doubleMod` gives a mod b, with the sign of a; refuses when b is 0.")
 
@@ -70,17 +64,13 @@ nonisolated extension Interpreter {
 
     static let doubleSubtract_Behavior =
         Behavior.operation(.doubleSubtract, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
-            let result = y - x
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleSubtract: \(y) - \(x)") }
-            return result
+            try DoubleArithmetic.subtract(y, x, .doubleSubtract)
         }
         .described("Subtracts: `a b .doubleSubtract` gives a − b; refuses a result that is not finite.")
 
     static let doubleMultiply_Behavior =
         Behavior.operation(.doubleMultiply, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
-            let result = y * x
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleMultiply: \(y) * \(x)") }
-            return result
+            try DoubleArithmetic.multiply(y, x, .doubleMultiply)
         }
         .described("Multiplies two doubles; refuses a result that is not finite.")
 

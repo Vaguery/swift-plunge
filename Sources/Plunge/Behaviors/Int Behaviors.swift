@@ -14,25 +14,19 @@ nonisolated extension Interpreter {
 
     static let intAdd_Behavior =
         Behavior.operation(.intAdd, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
-            let (result, overflowed) = y.addingReportingOverflow(x)
-            guard !overflowed else { throw Refusal("Overflow in .intAdd: \(y) + \(x)") }
-            return result
+            try IntArithmetic.add(y, x, .intAdd)
         }
         .described("Adds two ints; refuses on overflow.")
 
     static let intSubtract_Behavior =
         Behavior.operation(.intSubtract, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
-            let (result, overflowed) = y.subtractingReportingOverflow(x)
-            guard !overflowed else { throw Refusal("Overflow in .intSubtract: \(y) - \(x)") }
-            return result
+            try IntArithmetic.subtract(y, x, .intSubtract)
         }
         .described("Subtracts: `a b .intSubtract` gives a − b; refuses on overflow.")
 
     static let intMultiply_Behavior =
         Behavior.operation(.intMultiply, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
-            let (result, overflowed) = y.multipliedReportingOverflow(by: x)
-            guard !overflowed else { throw Refusal("Overflow in .intMultiply: \(y) * \(x)") }
-            return result
+            try IntArithmetic.multiply(y, x, .intMultiply)
         }
         .described("Multiplies two ints; refuses on overflow.")
 
@@ -55,22 +49,15 @@ nonisolated extension Interpreter {
         Behavior.operation(.intPeekMin, reads: IntItem.self, IntItem.self, gives: IntItem.self) { y, x in min(y, x) }
         .described("Pushes the smaller of the top two ints, leaving both.")
 
-    // The zero divisor is checked first: dividing by zero also reports overflow.
     static let intQuot_Behavior =
         Behavior.operation(.intQuot, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
-            guard x != 0 else { throw Refusal("Divide by zero .intQuot: \(y) / \(x)") }
-            let (result, overflowed) = y.dividedReportingOverflow(by: x)
-            guard !overflowed else { throw Refusal("Overflow in .intQuot: \(y) / \(x)") }
-            return result
+            try IntArithmetic.quot(y, x, .intQuot)
         }
         .described("Divides, truncating toward zero: `a b .intQuot` gives a ÷ b; refuses when b is 0 or on overflow.")
 
     static let intMod_Behavior =
         Behavior.operation(.intMod, takes: IntItem.self, IntItem.self, gives: IntItem.self) { y, x throws(Refusal) in
-            guard x != 0 else { throw Refusal("Divide by zero .intMod: \(y) % \(x)") }
-            let (result, overflowed) = y.remainderReportingOverflow(dividingBy: x)
-            guard !overflowed else { throw Refusal("Overflow in .intMod: \(y) % \(x)") }
-            return result
+            try IntArithmetic.mod(y, x, .intMod)
         }
         .described("Takes the remainder: `a b .intMod` gives a mod b, with the sign of a; refuses when b is 0.")
 

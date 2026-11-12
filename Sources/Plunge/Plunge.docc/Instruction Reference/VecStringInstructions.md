@@ -20,6 +20,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringDrop` | Drops the front: `v n .vecStringDrop` removes the first n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
 | `vecStringDropLast` | Drops the back: `v n .vecStringDropLast` removes the last n elements, n clamped to 0 through the length. | `vecString`, `int` | `vecString` |
 | `vecStringEq` | Pushes whether the top two vectors of strings are equal, leaving both. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringEqEach` | Pushes whether each element of a is equal to the matching element of b: `a b .vecStringEqEach`, where b is the top vector of strings and a the first one below it of the same length (a miss if there is none); leaves both. | `vecString` (read), the topmost fitting `vecString` (read) | `vecBool` |
 | `vecStringFilter` | Keeps the elements of a vector of strings for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `vecString`, the topmost fitting `function` | `vecString`; may refuse |
 | `vecStringFindContaining` | Finds the first string of v that contains s, pushing its index and it, leaving both; refuses when none does. | `vecString` (read), `string` (read) | `string`, `int`; may refuse |
 | `vecStringFindContainingFrom` | Finds the first string of v at index i or later that contains s, pushing its index and it, leaving all three; refuses when none does. | `vecString` (read), `string` (read), `int` (read) | `string`, `int`; may refuse |
@@ -28,6 +29,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecString` | `string`; may refuse |
 | `vecStringGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGT` gives a > b. | `vecString` (read), `vecString` (read) | `bool` |
 | `vecStringGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringGTE` gives a ≥ b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringGTEach` | Pushes whether each element of a is greater than the matching element of b: `a b .vecStringGTEach`, where b is the top vector of strings and a the first one below it of the same length (a miss if there is none); leaves both. | `vecString` (read), the topmost fitting `vecString` (read) | `vecBool` |
 | `vecStringIndexOf` | Finds x: `v x .vecStringIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecString` (read), `string` (read) | `int`; may refuse |
 | `vecStringIndexOfFrom` | Finds an element from an index: `v x i .vecStringIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecString` (read), `string` (read), `int` (read) | `int`; may refuse |
 | `vecStringIndexOfRun` | Finds a run: `v w .vecStringIndexOfRun` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecString` (read), `vecString` (read) | `int`; may refuse |
@@ -37,6 +39,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 | `vecStringJoin` | Joins: `v p .vecStringJoin` gives the strings of v with p between each two. | `vecString`, `string` | `string` |
 | `vecStringLT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLT` gives a < b. | `vecString` (read), `vecString` (read) | `bool` |
 | `vecStringLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecStringLTE` gives a ≤ b. | `vecString` (read), `vecString` (read) | `bool` |
+| `vecStringLTEach` | Pushes whether each element of a is less than the matching element of b: `a b .vecStringLTEach`, where b is the top vector of strings and a the first one below it of the same length (a miss if there is none); leaves both. | `vecString` (read), the topmost fitting `vecString` (read) | `vecBool` |
 | `vecStringLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecString` | `string`; may refuse |
 | `vecStringLength` | Counts the elements, leaving the vector. | `vecString` (read) | `int` |
 | `vecStringMap` | Maps the topmost function on `.function` that fits over a vector of strings, each element in its first string hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecString`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |

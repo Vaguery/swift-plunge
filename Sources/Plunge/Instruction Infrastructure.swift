@@ -398,6 +398,15 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case pushStepCount, errorStackDepth, errorMissingArgCount, errorMissingInputCount, errorMissingConstantCount,
          errorPreviousStep
 
+    // Element-wise vector operations (2026-11-12): the second vector is the first
+    // below the top with the same length (`Behavior.sameLength`).
+    case vecIntAdd, vecIntSubtract, vecIntMultiply, vecIntQuot, vecIntMod,
+         vecDoubleAdd, vecDoubleSubtract, vecDoubleMultiply, vecDoubleDivide, vecDoubleMod,
+         vecIntDot, vecDoubleDot,
+         vecBoolEqEach, vecIntEqEach, vecDoubleEqEach, vecStringEqEach,
+         vecIntLTEach, vecIntGTEach, vecDoubleLTEach, vecDoubleGTEach, vecStringLTEach, vecStringGTEach,
+         vecBoolAnd, vecBoolOr, vecBoolNot
+
 }
 
 typealias PI = PushInstruction
