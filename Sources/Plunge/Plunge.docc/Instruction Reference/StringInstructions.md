@@ -9,6 +9,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `stringButLast` | Removes a string's last character; the empty string stays empty. | `string` | `string` |
+| `stringChunks` | Chunks: `s n .stringChunks` gives the substrings of n consecutive chars, the last possibly shorter (n below 1 counts as 1). | `string`, `int` | `vecString`; may refuse |
 | `stringConcat` | Joins two strings: `s t .stringConcat` gives s followed by t. | `string`, `string` | `string` |
 | `stringConj` | Appends a char to the end of a string. | `string`, `char` | `string` |
 | `stringContains` | Tests whether a char occurs: `s c .stringContains`, leaving both. | `string` (read), `char` (read) | `bool` |
@@ -24,6 +25,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringFindNearest` | Finds the char of s nearest c by code point, the first on a tie, pushing its index and it, leaving both; refuses on an empty s. | `string` (read), `char` (read) | `char`, `int`; may refuse |
 | `stringFindNearestFrom` | Finds the char of s nearest c by code point at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `string` (read), `char` (read), `int` (read) | `char`, `int`; may refuse |
 | `stringFirst` | Takes a string's first character; refuses the empty string. | `string` | `char`; may refuse |
+| `stringFrequencies` | Counts each distinct char: gives the distinct chars in Unicode order as a string, then a vector of ints with how many times each occurs. | `string` | `string`, `vecInt` |
 | `stringFromBool` | Converts a bool to the string `true` or `false`. | `bool` | `string` |
 | `stringFromChar` | Converts a char to a one-character string. | `char` | `string` |
 | `stringFromDouble` | Converts a double to text, such as `2.5`, `1e-05`, `inf` or `nan`. | `double` | `string` |
@@ -34,12 +36,14 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringIndexOfFrom` | Finds a char from an index: `s c i .stringIndexOfFrom` gives the index of the first c in s at index i or later, leaving all three; refuses on a miss. | `string` (read), `char` (read), `int` (read) | `int`; may refuse |
 | `stringIndexOfRun` | Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOfRun`; an empty t gives 0; refuses when absent. | `string` (read), `string` (read) | `int`; may refuse |
 | `stringIndexOfRunFrom` | Finds a substring from an index: `s t i .stringIndexOfRunFrom` gives the index of the first t in s at index i or later, leaving all three; an empty t is found at i; refuses on a miss. | `string` (read), `string` (read), `int` (read) | `int`; may refuse |
+| `stringInterleave` | Interleaves chars: `a b .stringInterleave` gives a[0] b[0] a[1] b[1] …, then the rest of the longer. | `string`, `string` | `string` |
 | `stringIntersect` | Filters: `a b .stringIntersect` keeps the chars of a that also occur in b, in a's order, repeats included. | `string`, `string` | `string` |
 | `stringIsSubset` | Tells whether every char of a occurs in b: `a b .stringIsSubset`, leaving both. | `string` (read), `string` (read) | `bool` |
 | `stringItemIsEmpty` | Tests whether the string is empty, leaving the string. | `string` (read) | `bool` |
 | `stringLT` | Compares in Unicode order, leaving both strings: `s t .stringLT` gives s < t. | `string` (read), `string` (read) | `bool` |
 | `stringLTE` | Compares in Unicode order, leaving both strings: `s t .stringLTE` gives s ≤ t. | `string` (read), `string` (read) | `bool` |
 | `stringLast` | Takes a string's last character; refuses the empty string. | `string` | `char`; may refuse |
+| `stringLastIndexOf` | Finds a char from the end: `s c .stringLastIndexOf` gives the index of its last occurrence, leaving both; refuses when absent. | `string` (read), `char` (read) | `int`; may refuse |
 | `stringLength` | Counts the string's characters, leaving the string. | `string` (read) | `int` |
 | `stringLower` | Lowercases a string by Unicode's default rules. | `string` | `string` |
 | `stringMap` | Maps the topmost function on `.function` that fits over a string's chars, each in its first char hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `string`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
@@ -58,20 +62,24 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringReduce` | Folds the topmost function on `.function` that fits over a string's chars from the first, the running value in its first char hole and the next char in its second; refuses an empty string, or when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `char`; may refuse |
 | `stringRefAs` | Binds the top string to key k from `.int`, taking both and shadowing any older binding of k: `x k .stringRefAs`. | `string`, `int` | `binding` |
 | `stringRemove` | Removes a char: `s c .stringRemove` gives s without its occurrences of c. | `string`, `char` | `string` |
+| `stringRepeat` | Repeats: `s n .stringRepeat` gives s n times over; n ≤ 0 gives an empty string; refuses a result over the size limit. | `string`, `int` | `string`; may refuse |
 | `stringReplace` | Replaces chars: `s a b .stringReplace` turns every a in s into b. | `string`, `char`, `char` | `string` |
 | `stringReplaceFirst` | Replaces one char: `s a b .stringReplaceFirst` turns the first a in s into b. | `string`, `char`, `char` | `string` |
 | `stringReplaceFirstRun` | Replaces a substring: `s t u .stringReplaceFirstRun` puts u for the first t in s; an empty t puts u at the front. | `string`, `string`, `string` | `string` |
 | `stringReplaceRun` | Replaces substrings: `s t u .stringReplaceRun` puts u for every t in s; an empty t puts u between all characters and at both ends. | `string`, `string`, `string` | `string` |
 | `stringRest` | Removes a string's first character; the empty string stays empty. | `string` | `string` |
 | `stringReverse` | Reverses a string's characters. | `string` | `string` |
+| `stringRotate` | Rotates left: `s n .stringRotate` moves the first n chars to the end (n of any sign, taken modulo the length). | `string`, `int` | `string` |
 | `stringSet` | Overwrites a char: `s c i .stringSet` puts c at index i, i clamped into range; refuses the empty string. | `string`, `char`, `int` | `string`; may refuse |
 | `stringSlice` | Takes characters i through j inclusive: `s i j .stringSlice`; both clamped into range, a j below i gives character i alone. | `string`, `int`, `int` | `string` |
+| `stringSort` | Sorts a string's chars in Unicode order, stably. | `string` | `string` |
 | `stringSplitOn` | Splits: `s p .stringSplitOn` gives the pieces of s between occurrences of p, empty pieces kept; an empty p splits s into chars. | `string`, `string` | `vecString` |
 | `stringStartsWith` | Tests whether s begins with t, leaving both: `s t .stringStartsWith`; an empty t gives true. | `string` (read), `string` (read) | `bool` |
 | `stringTake` | Keeps the front: `s n .stringTake` gives the first n characters; a negative n keeps none. | `string`, `int` | `string` |
 | `stringTakeLast` | Keeps the back: `s n .stringTakeLast` gives the last n characters; a negative n keeps none. | `string`, `int` | `string` |
 | `stringTrim` | Removes whitespace from both ends of a string; an all-whitespace string gives the empty string. | `string` | `string` |
 | `stringUpper` | Uppercases a string by Unicode's default rules, so ß becomes SS. | `string` | `string` |
+| `stringWindows` | Every window: `s n .stringWindows` gives the substrings of n consecutive chars, sliding by one (none when n exceeds the length; n below 1 counts as 1). | `string`, `int` | `vecString`; may refuse |
 
 ## Reading the environment
 

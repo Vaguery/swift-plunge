@@ -16,6 +16,7 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 | `intFromChar` | Converts a char to its Unicode scalar value; refuses a char made of several scalars. | `char` | `int`; may refuse |
 | `intFromDouble` | Converts a double, truncating toward zero; refuses one that is not finite or out of range. | `double` | `int`; may refuse |
 | `intFromString` | Parses a string as an integer; refuses one that is not. | `string` | `int`; may refuse |
+| `intFromVecInt` | Reads a vector of ints as decimal digits, most significant first: [3, 0, 5] gives 305 (any int counts as a digit's value); an empty vector gives 0; refuses on overflow. | `vecInt` | `int`; may refuse |
 | `intGT` | Compares, leaving both ints: `a b .intGT` gives a > b. | `int` (read), `int` (read) | `bool` |
 | `intGTE` | Compares, leaving both ints: `a b .intGTE` gives a ≥ b. | `int` (read), `int` (read) | `bool` |
 | `intInc` | Adds 1; refuses on overflow. | `int` | `int`; may refuse |

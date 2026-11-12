@@ -10,6 +10,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 |---|---|---|---|
 | `vecDoubleAdd` | Adds element by element: `a b .vecDoubleAdd` gives a[i] and b[i] combined, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); refuses a result that is not finite, naming the index. | `vecDouble`, the topmost fitting `vecDouble` | `vecDouble`; may refuse |
 | `vecDoubleButLast` | Drops the last element; an empty vector stays empty. | `vecDouble` | `vecDouble` |
+| `vecDoubleChunks` | Chunks: `v n .vecDoubleChunks` gives a block of the vectors of n consecutive elements, the last possibly shorter (n below 1 counts as 1). | `vecDouble`, `int` | `code`; may refuse |
 | `vecDoubleConcat` | Joins two vectors: `a b .vecDoubleConcat` gives the elements of a followed by those of b. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleConj` | Appends a double: `v x .vecDoubleConj` gives v with x added at the end. | `vecDouble`, `double` | `vecDouble` |
 | `vecDoubleConstruct` | Builds a vector of the top n doubles, consuming them, where n is the length of a template vector, also consumed; the top double comes last. | `vecDouble`, n × `double` | `vecDouble` |
@@ -28,12 +29,17 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleFindNearest` | Finds the element of v nearest x, the first on a tie, pushing its index and it, leaving both; refuses on an empty v. | `vecDouble` (read), `double` (read) | `double`, `int`; may refuse |
 | `vecDoubleFindNearestFrom` | Finds the element of v nearest x at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `vecDouble` (read), `double` (read), `int` (read) | `double`, `int`; may refuse |
 | `vecDoubleFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
+| `vecDoubleFrequencies` | Counts each distinct element: gives the distinct elements in ascending order, then a vector of ints with how many times each occurs. | `vecDouble` | `vecDouble`, `vecInt` |
+| `vecDoubleFromVecInt` | Converts every int to the nearest double. | `vecInt` | `vecDouble` |
 | `vecDoubleGT` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGT` gives a > b; a NaN sorts above every number. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleGTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleGTE` gives a > b or a = b; a NaN sorts above every number and equals any other NaN. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleGTEach` | Pushes whether each element of a is greater than the matching element of b: `a b .vecDoubleGTEach`, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); leaves both. | `vecDouble` (read), the topmost fitting `vecDouble` (read) | `vecBool` |
 | `vecDoubleIndexOf` | Finds x: `v x .vecDoubleIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecDouble` (read), `double` (read) | `int`; may refuse |
 | `vecDoubleIndexOfFrom` | Finds an element from an index: `v x i .vecDoubleIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecDouble` (read), `double` (read), `int` (read) | `int`; may refuse |
+| `vecDoubleIndexOfMax` | Pushes the index of the first greatest element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `int`; may refuse |
+| `vecDoubleIndexOfMin` | Pushes the index of the first least element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `int`; may refuse |
 | `vecDoubleIndexOfRun` | Finds a run: `v w .vecDoubleIndexOfRun` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecDouble` (read), `vecDouble` (read) | `int`; may refuse |
+| `vecDoubleInterleave` | Interleaves: `a b .vecDoubleInterleave` gives a[0] b[0] a[1] b[1] …, then the rest of the longer. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleIntersect` | Filters: `a b .vecDoubleIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleIsSubset` | Tells whether every element of a occurs in b: `a b .vecDoubleIsSubset`, leaving both. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecDouble` (read) | `bool` |
@@ -41,9 +47,11 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecDoubleLTE` gives a < b or a = b; a NaN sorts above every number and equals any other NaN. | `vecDouble` (read), `vecDouble` (read) | `bool` |
 | `vecDoubleLTEach` | Pushes whether each element of a is less than the matching element of b: `a b .vecDoubleLTEach`, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); leaves both. | `vecDouble` (read), the topmost fitting `vecDouble` (read) | `vecBool` |
 | `vecDoubleLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecDouble` | `double`; may refuse |
+| `vecDoubleLastIndexOf` | Finds x from the end: `v x .vecDoubleLastIndexOf` gives the index of its last occurrence, leaving both; refuses when x is absent. | `vecDouble` (read), `double` (read) | `int`; may refuse |
 | `vecDoubleLength` | Counts the elements, leaving the vector. | `vecDouble` (read) | `int` |
 | `vecDoubleMap` | Maps the topmost function on `.function` that fits over a vector of doubles, each element in its first double hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecDouble`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `vecDoubleMax` | Pushes the greatest element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `double`; may refuse |
+| `vecDoubleMean` | Pushes the mean of the elements, leaving the vector; refuses an empty vector or a result that is not finite. | `vecDouble` (read) | `double`; may refuse |
 | `vecDoubleMin` | Pushes the least element, leaving the vector; NaN counts as greater than every number; refuses an empty vector. | `vecDouble` (read) | `double`; may refuse |
 | `vecDoubleMod` | Takes remainders (a mod b) element by element: `a b .vecDoubleMod` gives a[i] and b[i] combined, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); refuses a result that is not finite, naming the index. | `vecDouble`, the topmost fitting `vecDouble` | `vecDouble`; may refuse |
 | `vecDoubleMultiply` | Multiplies element by element: `a b .vecDoubleMultiply` gives a[i] and b[i] combined, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); refuses a result that is not finite, naming the index. | `vecDouble`, the topmost fitting `vecDouble` | `vecDouble`; may refuse |
@@ -51,23 +59,29 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 | `vecDoubleOccurrencesOf` | Counts x: `v x .vecDoubleOccurrencesOf` gives how many elements equal x, leaving both. | `vecDouble` (read), `double` (read) | `int` |
 | `vecDoubleOccurrencesOfRun` | Counts a run: `v w .vecDoubleOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecDouble` (read), `vecDouble` (read) | `int` |
 | `vecDoublePeekNth` | Picks an element: `v i .vecDoublePeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecDouble` (read), `int` (read) | `double`; may refuse |
+| `vecDoublePrefixSums` | Running totals: element i is the sum of elements 0 through i; refuses a total that is not finite. | `vecDouble` | `vecDouble`; may refuse |
+| `vecDoubleProduct` | Multiplies the elements, leaving the vector; an empty vector gives 1; refuses a result that is not finite. | `vecDouble` (read) | `double`; may refuse |
 | `vecDoublePushAll` | Pushes every element onto the double stack, front to back, so the last element ends on top; consumes the vector. | `vecDouble` | `double`, one per step |
 | `vecDoubleQuote` | Wraps the vector in a one-item block. | `vecDouble` | `code` |
 | `vecDoubleReduce` | Folds the topmost function on `.function` that fits over a vector of doubles from the first element, the running value in its first double hole and the next element in its second; refuses an empty vector, or when none fits, filler runs short or steps run out. | `vecDouble`, the topmost fitting `function` | `double`; may refuse |
 | `vecDoubleRefAs` | Binds the top vector of doubles to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecDoubleRefAs`. | `vecDouble`, `int` | `binding` |
 | `vecDoubleRemove` | Removes every x: `v x .vecDoubleRemove` gives v without its elements equal to x. | `vecDouble`, `double` | `vecDouble` |
+| `vecDoubleRepeat` | Repeats: `v n .vecDoubleRepeat` gives v n times over; n ≤ 0 gives an empty vector; refuses a result over the size limit. | `vecDouble`, `int` | `vecDouble`; may refuse |
 | `vecDoubleReplace` | Substitutes: `v a b .vecDoubleReplace` replaces every element equal to a with b. | `vecDouble`, `double`, `double` | `vecDouble` |
 | `vecDoubleReplaceFirst` | Substitutes once: `v a b .vecDoubleReplaceFirst` replaces the first element equal to a with b; no match leaves v unchanged. | `vecDouble`, `double`, `double` | `vecDouble` |
 | `vecDoubleReplaceFirstRun` | Replaces a run: `v w r .vecDoubleReplaceFirstRun` puts r in place of the first w in v; an empty w changes nothing. | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleReplaceRun` | Replaces runs: `v w r .vecDoubleReplaceRun` puts r in place of every non-overlapping w in v, left to right; an empty w changes nothing. | `vecDouble`, `vecDouble`, `vecDouble` | `vecDouble` |
 | `vecDoubleRest` | Drops the first element; an empty vector stays empty. | `vecDouble` | `vecDouble` |
 | `vecDoubleReverse` | Reverses the order of the elements. | `vecDouble` | `vecDouble` |
+| `vecDoubleRotate` | Rotates left: `v n .vecDoubleRotate` moves the first n elements to the end (n of any sign, taken modulo the length). | `vecDouble`, `int` | `vecDouble` |
 | `vecDoubleSet` | Overwrites an element: `v x i .vecDoubleSet` puts x at index i, i clamped into range; refuses an empty vector. | `vecDouble`, `double`, `int` | `vecDouble`; may refuse |
 | `vecDoubleSlice` | Slices: `v i j .vecDoubleSlice` gives elements i through j inclusive, each clamped into range; j below i gives just element i. | `vecDouble`, `int`, `int` | `vecDouble` |
+| `vecDoubleSort` | Sorts ascending, stably; NaN sorts last. | `vecDouble` | `vecDouble` |
 | `vecDoubleSubtract` | Subtracts (a − b) element by element: `a b .vecDoubleSubtract` gives a[i] and b[i] combined, where b is the top vector of doubles and a the first one below it of the same length (a miss if there is none); refuses a result that is not finite, naming the index. | `vecDouble`, the topmost fitting `vecDouble` | `vecDouble`; may refuse |
 | `vecDoubleSum` | Sums the elements, leaving the vector; an empty vector gives 0; refuses a result that is not finite. | `vecDouble` (read) | `double`; may refuse |
 | `vecDoubleTake` | Keeps the front: `v n .vecDoubleTake` gives the first n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
 | `vecDoubleTakeLast` | Keeps the back: `v n .vecDoubleTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecDouble`, `int` | `vecDouble` |
+| `vecDoubleWindows` | Every window: `v n .vecDoubleWindows` gives a block of the vectors of n consecutive elements, sliding by one (none when n exceeds the length; n below 1 counts as 1); refuses a result over the size limit. | `vecDouble`, `int` | `code`; may refuse |
 
 ## Reading the environment
 

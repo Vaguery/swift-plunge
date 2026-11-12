@@ -16,9 +16,11 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeDepth` | Measures how deeply blocks nest, leaving the block: `( )` is 0, a flat block 1, each nested level one more. | `code` (read) | `int` |
 | `codeDifference` | Filters: `a b .codeDifference` keeps the items of block a that do not occur in b, compared by value, in a's order, repeats included. | `code`, `code` | `code` |
 | `codeDistinct` | Removes repeated items from a block, comparing by value and keeping each first occurrence in order. | `code` | `code` |
+| `codeDropRoot` | Drops the front: `( … ) n .codeDropRoot` removes the first n root items, n clamped to 0 through the length. | `code`, `int` | `code` |
 | `codeEq` | Pushes whether the top two blocks are equal, leaving both. | `code` (read), `code` (read) | `bool` |
 | `codeFindPrefix` | Finds a sub-block: `( … ) ( p ) .codeFindPrefix` gives the first root item that is a block beginning with p's items, and its index; refuses on a miss. | `code` (read), `code` (read) | `code`, `int`; may refuse |
 | `codeFindPrefixFrom` | Finds a sub-block from root index i on: `( … ) ( p ) i .codeFindPrefixFrom` gives the first that begins with p's items, and its index; refuses on a miss. | `code` (read), `code` (read), `int` (read) | `code`, `int`; may refuse |
+| `codeFirstRoot` | Takes a block's first root item as a block; a leaf comes boxed as `( x )`; refuses an empty block. | `code` | `code`; may refuse |
 | `codeFlatten` | Flattens a block to its leaves, in order; nested empty blocks vanish. | `code` | `code` |
 | `codeFlattenNth` | Flattens the subtree at point i (clamped) in place; a leaf point is unchanged, and point 0 flattens everything. | `code`, `int` | `code` |
 | `codeFlattenOnce` | Flattens one level: each root item that is a block is replaced by its items. | `code` | `code` |
@@ -29,6 +31,7 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeIntersect` | Filters: `a b .codeIntersect` keeps the items of block a that also occur in b, compared by value, in a's order, repeats included. | `code`, `code` | `code` |
 | `codeIsSubset` | Tells whether every item of block a occurs in block b, compared by value: `a b .codeIsSubset`, leaving both. | `code` (read), `code` (read) | `bool` |
 | `codeItemIsEmpty` | Tests whether the block has no items, leaving the block. | `code` (read) | `bool` |
+| `codeLastRoot` | Takes a block's last root item as a block; a leaf comes boxed as `( x )`; refuses an empty block. | `code` | `code`; may refuse |
 | `codeLength` | Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5. | `code` (read) | `int` |
 | `codeLengthRoot` | Counts the block's root items, leaving the block. | `code` (read) | `int` |
 | `codeNth` | Takes point i (clamped) as a block; a leaf comes boxed as `( x )`. | `code`, `int` | `code` |
@@ -42,6 +45,8 @@ The `.code` stack holds blocks: lists of any items, nested to any depth. A block
 | `codeRemoveNth` | Removes point i (clamped) with everything under it; removing point 0 gives `( )`. | `code`, `int` | `code` |
 | `codeReplace` | Replaces matching points: `s n r .codeReplace` puts r for every point of s equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
 | `codeReplaceFirst` | Replaces the first matching point: `s n r .codeReplaceFirst` puts r for s's first point equal to n; a one-item n or r stands for its item. | `code`, `code`, `code` | `code` |
+| `codeReverseRoot` | Reverses the order of a block's root items. | `code` | `code` |
+| `codeTakeRoot` | Keeps the front: `( … ) n .codeTakeRoot` gives the first n root items, n clamped to 0 through the length. | `code`, `int` | `code` |
 | `codeWidth` | Counts the block's leaves (items that are not blocks) at every depth, leaving the block. | `code` (read) | `int` |
 | `codeWrap` | Wraps a block in another: `( a b )` becomes `( ( a b ) )`. | `code` | `code` |
 | `codeWrapRange` | Wraps everything between gaps i and j (clamped, either order) in a new block; equal gaps insert `( )`, and crossed block edges are repaired. | `code`, `int`, `int` | `code` |

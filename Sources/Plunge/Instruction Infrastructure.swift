@@ -407,6 +407,24 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
          vecIntLTEach, vecIntGTEach, vecDoubleLTEach, vecDoubleGTEach, vecStringLTEach, vecStringGTEach,
          vecBoolAnd, vecBoolOr, vecBoolNot
 
+    // Collection operations without functions (2026-11-12)
+    case vecBoolSort, vecIntSort, vecDoubleSort, vecStringSort, stringSort,
+         vecIntIndexOfMax, vecIntIndexOfMin, vecDoubleIndexOfMax, vecDoubleIndexOfMin,
+         vecStringIndexOfMax, vecStringIndexOfMin,
+         vecIntProduct, vecDoubleProduct, vecIntMean, vecDoubleMean,
+         vecBoolLastIndexOf, vecIntLastIndexOf, vecDoubleLastIndexOf, vecStringLastIndexOf, stringLastIndexOf,
+         vecIntRange, vecIntRangeBy,
+         vecBoolRotate, vecIntRotate, vecDoubleRotate, vecStringRotate, stringRotate,
+         vecBoolInterleave, vecIntInterleave, vecDoubleInterleave, vecStringInterleave, stringInterleave,
+         vecBoolRepeat, vecIntRepeat, vecDoubleRepeat, vecStringRepeat, stringRepeat,
+         vecBoolFrequencies, vecIntFrequencies, vecDoubleFrequencies, vecStringFrequencies, stringFrequencies,
+         vecIntPrefixSums, vecDoublePrefixSums,
+         vecDoubleFromVecInt, vecIntFromVecDouble, vecIntFromVecBool, vecIntFromInt, intFromVecInt,
+         vecBoolLT, vecBoolLTE, vecBoolGT, vecBoolGTE, vecBoolMax, vecBoolMin,
+         vecBoolChunks, vecIntChunks, vecDoubleChunks, vecStringChunks, stringChunks,
+         vecBoolWindows, vecIntWindows, vecDoubleWindows, vecStringWindows, stringWindows,
+         codeReverseRoot, codeFirstRoot, codeLastRoot, codeTakeRoot, codeDropRoot
+
 }
 
 typealias PI = PushInstruction

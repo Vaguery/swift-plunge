@@ -343,7 +343,7 @@ nonisolated extension Behavior {
     /// Builds the Behavior: requirements from the written order, results from
     /// `produce`, a `Refusal` routed to `.error` with the `call` a result would
     /// have recorded.
-    private static func typed(
+    static func typed(
         _ label: PushInstruction,
         stacks: [PushStack],
         reading: Bool,

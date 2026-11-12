@@ -62,7 +62,9 @@ struct BackwardChainingTests {
     /// `.char`, measured at 147 of 300 once the language gained char
     /// producers that refuse more often on random arguments (`stringMax` on an
     /// empty string, `charUpper` of `ß`).
-    static let reachFloor: [PushStack: Double] = [.char: 0.45]
+    /// `.double` likewise (139 of 300, 2026-11-12) once the means joined its
+    /// producers: on a random vector of ints or doubles they refuse an empty one.
+    static let reachFloor: [PushStack: Double] = [.char: 0.45, .double: 0.45]
 
     /// Left out of the sample: the `IndexOf…From` queries. Uniform over trees
     /// weights an edge by the product of its subtree counts, so these six
