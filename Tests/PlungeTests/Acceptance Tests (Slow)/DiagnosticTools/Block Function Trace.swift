@@ -12,7 +12,7 @@
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct BlockFunctionTrace {
 
     typealias Probe = FunctionOutcome

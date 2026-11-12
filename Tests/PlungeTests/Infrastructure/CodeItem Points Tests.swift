@@ -13,7 +13,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct CodeItemPointsTests {
 
     /// ( (1 2) 3 ) — the canonical example from the plan.

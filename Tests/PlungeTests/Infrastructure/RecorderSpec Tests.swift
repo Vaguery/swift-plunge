@@ -9,7 +9,7 @@ import DequeModule
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct RecorderSpecTests {
 
     let inty = Interpreter()

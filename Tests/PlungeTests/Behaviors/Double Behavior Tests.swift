@@ -10,7 +10,7 @@ import Testing
 import DequeModule
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct DoubleBehaviorTests {
 
     let inty = Interpreter.recordingProvenance()

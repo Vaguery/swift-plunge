@@ -41,7 +41,7 @@ import Testing
 @testable import Plunge
 
 
-@Suite @MainActor
+@Suite
 struct ExploratoryCruxSweep {
 
     // nonisolated so `.disabled(if:)` can read it from the @Test macro's Sendable

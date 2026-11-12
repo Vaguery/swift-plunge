@@ -14,7 +14,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct StepLimitCensus {
 
     typealias Probe = FunctionOutcome

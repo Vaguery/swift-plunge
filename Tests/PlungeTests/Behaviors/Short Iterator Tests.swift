@@ -9,7 +9,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct ShortIteratorTests {
 
     static func run(_ program: [any Item]) -> Interpreter {

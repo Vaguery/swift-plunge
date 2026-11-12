@@ -21,7 +21,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct IteratorQuoteTests {
 
     func counting(to destination: Int = 4, cursor: Int = 0) -> IteratorItem {

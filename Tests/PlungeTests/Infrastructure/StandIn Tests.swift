@@ -11,7 +11,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@MainActor @Suite
+@Suite
 struct StandInTests {
 
     /// Runs `program` on a fresh recording interpreter.

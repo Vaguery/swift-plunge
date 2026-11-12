@@ -12,7 +12,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct PushStackTypeTests {
 
     /// One representative Item per homogeneous stack, paired with its home stack.

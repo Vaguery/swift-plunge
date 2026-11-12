@@ -11,7 +11,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct BehaviorClassTests {
 
     /// A well-typed item for each stack, so every Behavior finds its arguments.

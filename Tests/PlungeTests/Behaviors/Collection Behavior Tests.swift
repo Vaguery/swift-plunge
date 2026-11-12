@@ -9,7 +9,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct CollectionBehaviorTests {
 
     /// Runs `program` on a provenance-recording interpreter.

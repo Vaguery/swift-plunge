@@ -12,7 +12,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct CruxCompressionTests {
 
     /// Run `program` and return the end-of-run top of `.double`.

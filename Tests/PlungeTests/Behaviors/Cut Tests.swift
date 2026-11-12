@@ -24,7 +24,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CutTests {
 
     var inty = Interpreter.recordingProvenance()

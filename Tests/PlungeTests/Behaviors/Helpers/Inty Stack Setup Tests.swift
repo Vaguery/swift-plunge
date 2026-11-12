@@ -10,7 +10,6 @@
 import Testing
 import DequeModule
 
-@MainActor
 struct IntyStackSetupTests {
 
     let inty = Interpreter()

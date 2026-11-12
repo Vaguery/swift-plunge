@@ -42,6 +42,10 @@ nonisolated struct ReadContext {
     var inputs: [PushInstruction: any Item] { interpreter.inputs }
     /// Steps completed before this one (`pushStepCount`).
     var stepCount: Int { interpreter.counter }
+    /// How many sandboxes deep this run is (`Interpreter.sandboxDepth`).
+    var sandboxDepth: Int { interpreter.sandboxDepth }
+    /// Whether this run may start a sandbox of its own (`Interpreter.maxSandboxDepth`).
+    var maySandbox: Bool { interpreter.sandboxDepth < Interpreter.maxSandboxDepth }
     /// Whether provenance is being recorded.
     var recording: ProvenanceRecording { interpreter.recording }
 

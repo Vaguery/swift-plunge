@@ -13,7 +13,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeQueryTests {
 
     /// ( (1 2) 3 ) — 5 points, 3 leaves, depth 2.

@@ -11,7 +11,7 @@ import Testing
 @testable import Plunge
 
 
-@Suite @MainActor
+@Suite
 struct IntrospectionInstructionTests {
 
     // MARK: - The `.error` rule

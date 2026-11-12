@@ -13,7 +13,7 @@
 import Testing
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct LiveWeightInvariantTests {
 
     struct SeededRNG: RandomNumberGenerator {

@@ -21,7 +21,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct SandboxNestingCensus {
 
     typealias Probe = FunctionOutcome

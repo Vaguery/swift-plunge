@@ -247,6 +247,20 @@ nonisolated final class Interpreter {
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
     @exclusivity(unchecked) var lastRunawayCheck = -1
+    /// How many sandboxes deep this interpreter runs: 0 for a run, one more for
+    /// each sub-interpreter a map, an iterator body or a derivation starts inside
+    /// another. Set by whoever makes the sandbox; `load` leaves it alone.
+    var sandboxDepth = 0
+
+    /// The deepest a sandbox may start (`sandboxDepth`). **CHOSEN** (2026-11-11), for
+    /// the reason `maxCodeDepth` and `maxCallDepth` exist: every level is a chain
+    /// of stack frames, and a concurrency worker thread's stack is small (512 KB).
+    /// The step budget does not bound it safely, since a level costs about four
+    /// steps: unoptimized, a worker thread overflowed between 80 and 160 nested
+    /// filters. 50 leaves room for the frames around them. A static tunable, as
+    /// the runaway guard's are, so that it is not a configuration knob.
+    static let maxSandboxDepth = 50
+
     var inputs: [PushInstruction: any Item] = [:]
     // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
@@ -561,7 +575,9 @@ nonisolated final class Interpreter {
     func clear(_ stack: PushStack) {
         guard let count = stacks[stack]?.count, count > 0 else { return }
         liveWeight = liveWeight.subtractingReportingOverflow(stacks.weight(ofTop: count, on: stack)).0
-        stacks[stack]!.removeAll()
+        // Keeping the buffer keeps the stack off the process-wide empty deque,
+        // whose reference count parallel interpreters contend on (`StackSet.init`).
+        stacks[stack]!.removeAll(keepingCapacity: true)
     }
 
     func load(inputs: [PushInstruction: any Item] = [:],

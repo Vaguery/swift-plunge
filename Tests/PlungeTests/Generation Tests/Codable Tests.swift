@@ -11,7 +11,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct CodableTests {
 
     @Test func `a [any Item] array can be encoded and decoded`() throws {

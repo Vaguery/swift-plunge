@@ -13,7 +13,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct TagsTests {
 
     /// **The load-bearing property.** Every instruction is in exactly one tag, and

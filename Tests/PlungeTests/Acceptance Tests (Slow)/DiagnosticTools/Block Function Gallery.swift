@@ -17,7 +17,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct BlockFunctionGallery {
 
     typealias Probe = FunctionOutcome

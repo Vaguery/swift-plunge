@@ -11,7 +11,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeStage1Tests {
 
     @Test func `codePair wraps two blocks, nesting preserved`() {

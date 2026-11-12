@@ -16,7 +16,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct StarvationFunctionCensus {
 
     typealias Probe = FunctionOutcome

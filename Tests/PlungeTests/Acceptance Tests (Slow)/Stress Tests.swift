@@ -11,7 +11,7 @@ import Foundation
 import Testing
 
 
-@Suite @MainActor
+@Suite
 struct Stress_Tests {
 
     // nonisolated so the `.disabled(if:)` trait can read it from the @Test

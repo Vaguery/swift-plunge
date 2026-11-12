@@ -25,7 +25,7 @@ import Testing
 import Foundation
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct InstructionScalingProbe {
 
     nonisolated static let enabled = ProcessInfo.processInfo.environment["PUSH_SCALING"] != nil

@@ -10,7 +10,7 @@ import DequeModule
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct CruxTests {
 
     func stackString(_ interpreter: Interpreter, _ stack: PushStack) -> String {

@@ -22,7 +22,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CompositionInvariantTests {
 
     /// Every stack a fresh interpreter holds after running `program`, rendered —

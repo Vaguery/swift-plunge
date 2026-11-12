@@ -20,7 +20,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct IteratorCyclingTests {
 
     /// A bodyless walk over `[1 2 3]`, cycling `laps` times.

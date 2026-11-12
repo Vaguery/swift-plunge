@@ -9,7 +9,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct InputBehaviorTests {
 
    let inty = Interpreter.recordingProvenance()

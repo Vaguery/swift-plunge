@@ -368,7 +368,7 @@ nonisolated enum DualModeStress {
 }
 
 
-@Suite @MainActor
+@Suite
 struct ProvenanceDualModeStress {
 
     nonisolated static let budget: Double? =

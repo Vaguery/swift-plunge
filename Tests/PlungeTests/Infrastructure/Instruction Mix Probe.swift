@@ -76,7 +76,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct InstructionMixProbe {
 
     nonisolated static let disabledTests = true

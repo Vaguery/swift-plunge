@@ -11,7 +11,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct IteratorPassOrderTests {
 
     static func run(_ program: [any Item]) -> Interpreter {

@@ -13,7 +13,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct ProvenanceToggleTests {
 
     private func run(_ program: [any Item], recordsProvenance: Bool,

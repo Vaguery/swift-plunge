@@ -27,7 +27,7 @@ extension FunctionOutcome {
     }
 
     /// The holes one conversion has made, in the order it made them.
-    @MainActor struct HoleRegistry {
+    struct HoleRegistry {
         private(set) var holes: [PushInstruction: Hole] = [:]
         private var markers: [PushInstruction]
         private var counts: [PushStack: Int] = [:]

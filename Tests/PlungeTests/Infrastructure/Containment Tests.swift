@@ -10,7 +10,7 @@
 @testable import Plunge
 import Testing
 
-@MainActor @Suite
+@Suite
 struct ContainmentTests {
 
     private let bound: [PushInstruction: any Item] = [.input3: CodeItem([IntItem(5), IntItem(6)])]

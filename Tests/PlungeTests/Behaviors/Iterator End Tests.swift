@@ -10,7 +10,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct IteratorEndTests {
 
     static func run(_ program: [any Item]) -> Interpreter {

@@ -13,7 +13,7 @@ import DequeModule
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct ProvenanceTests {
 
     /// Longest chain of `call` references below an item.

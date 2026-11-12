@@ -18,7 +18,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeFromIteratorTests {
 
     func loaded(_ iterator: IteratorItem) -> Interpreter {

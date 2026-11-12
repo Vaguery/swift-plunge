@@ -13,7 +13,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeIterateEmitTests {
 
     /// ( ( 7 8 ) 9 ): points 0:root 1:(7 8) 2:7 3:8 4:9.

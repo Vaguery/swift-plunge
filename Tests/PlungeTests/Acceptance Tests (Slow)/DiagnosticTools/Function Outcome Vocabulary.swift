@@ -9,7 +9,6 @@
 
 @testable import Plunge
 
-@MainActor
 enum FunctionOutcome {
 
     enum Family: String, CaseIterable { case map, filter, reduce }
@@ -137,7 +136,8 @@ enum FunctionOutcome {
     }
 
     /// Every sandbox step taken, so the report can say what each variant costs.
-    static var sandboxSteps = 0
+    /// Unsynchronized: the probe is a diagnostic that only ever runs solo.
+    nonisolated(unsafe) static var sandboxSteps = 0
 
     /// The step budget a whole application gets: the app's default `stepLimit`.
     static let budget = 1_000

@@ -13,7 +13,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct IteratorBehaviorTests {
 
     /// `0 → 5` by 1, emitting its index, with a body that pushes one `true`.

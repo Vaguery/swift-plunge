@@ -10,7 +10,7 @@
 @testable import Plunge
 import Testing
 
-@MainActor @Suite
+@Suite
 struct LoopFoldingTests {
 
     private func run(_ program: [any Item], steps: Int = 40_000) -> Interpreter {

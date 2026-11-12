@@ -12,7 +12,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct RunawayGuardTests {
 
     /// An interpreter with `intPile` copies of one IntItem on `.int` and the

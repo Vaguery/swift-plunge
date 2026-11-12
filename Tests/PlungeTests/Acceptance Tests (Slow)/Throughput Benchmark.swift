@@ -18,7 +18,7 @@
 import Testing
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct ThroughputBenchmark {
 
     /// Same splitmix generator as the other seeded benchmarks, so runs reproduce exactly.

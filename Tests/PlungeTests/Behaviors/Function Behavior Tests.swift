@@ -10,7 +10,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct FunctionBehaviorTests {
 
     static func run(_ program: [any Item], inputs: [PushInstruction: any Item] = [:],

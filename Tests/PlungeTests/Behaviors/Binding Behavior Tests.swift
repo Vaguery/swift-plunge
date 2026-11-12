@@ -11,7 +11,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct BindingBehaviorTests {
 
     static func run(_ program: [any Item], inputs: [PushInstruction: any Item] = [:]) -> Interpreter {

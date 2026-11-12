@@ -9,7 +9,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct StringBehaviorTests {
 
     var inty = Interpreter.recordingProvenance()

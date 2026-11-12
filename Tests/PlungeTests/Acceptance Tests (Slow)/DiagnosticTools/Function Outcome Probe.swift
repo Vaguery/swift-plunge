@@ -97,7 +97,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct FunctionOutcomeProbe {
 
     typealias Probe = FunctionOutcome

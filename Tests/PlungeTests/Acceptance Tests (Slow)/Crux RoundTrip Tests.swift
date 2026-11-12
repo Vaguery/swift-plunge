@@ -42,7 +42,6 @@ import Testing
 /// arguments; `execEq` has since been removed), and bare code blocks (which
 /// scattered onto `.exec` instead of reaching `.code` — now they come to rest
 /// there intact, so a block genuinely *is* its own crux).
-@MainActor
 func blockedByCodeItemModel(_ item: any Item) -> Bool {
     let names = item.crux().compactMap { ($0 as? InstructionItem)?.value }
     return names.contains(where: CruxRoundTripTests.knownGapsPendingCodeItemChange.contains)
@@ -59,7 +58,7 @@ func blockedByCodeItemModel(_ item: any Item) -> Bool {
 /// pass/fail face — reports the second as nil.
 
 
-@Suite @MainActor
+@Suite
 struct CruxRoundTripTests {
 
 
@@ -260,7 +259,7 @@ struct CruxRoundTripTests {
 /// RNG (logged, so any run reproduces exactly), same replayable-JSON-on-failure
 /// approach. What differs is what it watches for. The fuzzer watches for
 /// overflows, errors, and blow-ups; this watches for provenance that lies.
-@Suite @MainActor
+@Suite
 struct CruxFuzzTests {
 
     /// **Always on** (since 2026-11-07). It used to be disabled
@@ -283,6 +282,13 @@ struct CruxFuzzTests {
     // 75 s alone (3 cases, before loops ran unclamped: about 250,000 in 47 s).
     // 20 per seed took about 2 minutes with two mixes.
     static let casesPerSeed = 5       // random programs per seed, per mix
+    /// The programs are split into this many groups, each its own test case, so
+    /// the sweep spreads across cores: 4 mixes × 4 groups = 16 cases. Every case
+    /// draws every seed's programs, so the random streams are exactly as before,
+    /// and runs every fourth one. Interleaving by program rather than by seed
+    /// matters: loops fold in a few seeds' programs, and a split by seed left one
+    /// group with a single folded loop and another with 646.
+    static let seedGroups = 4
     static let programItems = 150     // instruction tokens per random genome
 
     /// Replaces the old `random programs produce legible cruxes`, which printed
@@ -292,8 +298,9 @@ struct CruxFuzzTests {
         ("loop-heavy", InstructionMix.loopHeavy),
         ("container-heavy", InstructionMix.containerHeavy),
         ("loop-heavy, shallow", InstructionMix.loopHeavy)
-    ])
-    func `every item a random program leaves has a runnable crux`(name: String, mix: InstructionMix) {
+    ], 0..<seedGroups)
+    func `every item a random program leaves has a runnable crux`(_ named: (String, InstructionMix), group: Int) {
+        let (name, mix) = named
         // Failing cases are written to disk as replayable JSON, a reproduction
         // path that does not depend on the generator at all.
         var settings = InterpreterSettings.recordingProvenance   // it checks cruxes
@@ -305,14 +312,12 @@ struct CruxFuzzTests {
         let shallow = name.hasSuffix("shallow")
         if shallow { settings.maxCallDepth = 50 }
 
-        let dir = FileManager.default.temporaryDirectory.appending(path: "push-crux-fuzz")
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let encoder = JSONEncoder()
-
         func log(_ message: String) { print(message); fflush(nil) }
 
         var tally = CruxCompleteness()
         var findings: [String] = []
+        let clock = ContinuousClock()
+        let started = clock.now
 
         for (seedIndex, seed) in Self.seeds.enumerated() {
             withFuzzSeed(seed) {
@@ -329,6 +334,8 @@ struct CruxFuzzTests {
                     let constants = inty.constants
                     // Loaded again with the bindings, as the Runner loads, so the
                     // inputs are bound on `.binding` too.
+                    // Every program is drawn, this group's are run.
+                    guard (seedIndex * Self.casesPerSeed + caseIndex) % Self.seedGroups == group else { continue }
                     inty.load(inputs: inputs, constants: constants, program: program)
                     inty.run(stepLimit: settings.stepLimit)
 
@@ -339,15 +346,7 @@ struct CruxFuzzTests {
 
                     // Written to disk before reporting, so a case survives even if a
                     // later one takes the process down.
-                    let individual = Individual(id: caseId, program: program, constants: constants)
-                    let request = EvaluationRequest(
-                        individuals: [individual],
-                        trainingCases: [TrainingCase(id: caseId, inputs: inputs)],
-                        pairings: [Pairing(individual: caseId, trainingCase: caseId)],
-                        configuration: RunnerConfiguration(settings: settings)
-                    )
-                    let url = dir.appending(path: "\(caseId).json")
-                    try? encoder.encode(request).write(to: url)
+                    let url = Self.save(caseId, program, inputs, constants, settings)
                     findings.append(
                         "\(caseId): \(brokenHere.count) claims broken → \(url.path)\n  "
                         + brokenHere.prefix(5).joined(separator: "\n  ")
@@ -356,7 +355,9 @@ struct CruxFuzzTests {
             }
         }
 
-        log(tally.report("\(name), \(Self.seeds.count) seeds × \(Self.casesPerSeed) programs"))
+        let took = (clock.now - started).formatted(.units(allowed: [.seconds], width: .narrow))
+        log(tally.report("\(name), group \(group) of \(Self.seedGroups): \(Self.seeds.count) seeds × "
+                         + "\(Self.casesPerSeed) programs, \(took)"))
         for finding in findings.prefix(10) { log(finding) }
         if findings.count > 10 { log("… and \(findings.count - 10) more") }
 
@@ -383,7 +384,11 @@ struct CruxFuzzTests {
         // Except under the shallow budget, where a history deeper than 50 that is
         // not one loop's chain is still elided (0.3% of items when added).
         if shallow {
-            #expect(tally.compressed.folded > 100, "only \(tally.compressed.folded) items ran a folded loop")
+            // 100 across every program when they ran as one case. Folds come
+            // from a few programs (930 across the groups, as few as 9 in one), so
+            // each group need only fold at all.
+            #expect(tally.compressed.folded > 0,
+                    "only \(tally.compressed.folded) items ran a folded loop")
         } else {
             #expect(tally.count(.elided) == 0,
                     "items carrying an elided history: \(tally.examples[.elided] ?? [])")

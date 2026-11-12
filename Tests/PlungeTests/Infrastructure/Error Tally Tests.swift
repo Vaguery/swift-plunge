@@ -13,7 +13,7 @@
 import DequeModule
 import Testing
 
-@Suite @MainActor
+@Suite
 struct ErrorTallyTests {
 
     func recount(_ inty: Interpreter, _ kind: ErrorKind) -> Int {

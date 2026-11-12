@@ -14,7 +14,7 @@
 import Testing
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct MemoryGuardFuzz {
 
     struct SeededRNG: RandomNumberGenerator {

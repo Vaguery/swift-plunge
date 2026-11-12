@@ -10,7 +10,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@MainActor @Suite
+@Suite
 struct ItemArchiveTests {
 
     private func encoded(_ items: [any Item]) throws -> Data {

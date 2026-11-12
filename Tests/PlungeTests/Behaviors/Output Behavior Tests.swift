@@ -10,7 +10,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct OutputBehaviorTests {
 
     var inty = Interpreter()

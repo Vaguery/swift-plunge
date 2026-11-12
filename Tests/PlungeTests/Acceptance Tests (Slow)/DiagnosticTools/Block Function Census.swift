@@ -18,7 +18,7 @@ import Foundation
 import Testing
 @testable import Plunge
 
-@Suite @MainActor
+@Suite
 struct BlockFunctionCensus {
 
     typealias Probe = FunctionOutcome
@@ -27,7 +27,7 @@ struct BlockFunctionCensus {
     static let valueStacks: [PushStack] = elementStacks + [.vecInt, .vecDouble, .vecBool, .vecString]
 
     /// What the census counts over one regime.
-    @MainActor struct Tally {
+    struct Tally {
         var programs = 0, programSteps = 0, firings = 0, births = 0
         var programTime = Duration.zero, conversionTime = Duration.zero
         var distinctBlocks: Set<String> = []

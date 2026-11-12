@@ -19,7 +19,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct UnboundedCollectionTests {
 
     func errorStrings(_ inty: Interpreter) -> [String] {

@@ -16,7 +16,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct LookupMatchRates {
 
     struct Tally { var hit = 0, miss = 0, starved = 0 }

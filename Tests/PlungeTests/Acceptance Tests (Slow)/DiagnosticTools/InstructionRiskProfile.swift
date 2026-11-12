@@ -46,7 +46,7 @@ import Testing
 @testable import Plunge
 
 
-@Suite @MainActor
+@Suite
 struct InstructionRiskProfile {
 
     nonisolated static let disabled = true

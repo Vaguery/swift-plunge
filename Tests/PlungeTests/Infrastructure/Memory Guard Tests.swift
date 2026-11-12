@@ -12,7 +12,7 @@
 import DequeModule
 import Testing
 
-@Suite @MainActor
+@Suite
 struct MemoryGuardTests {
 
     @Test func `fires when total live weight exceeds the budget`() {

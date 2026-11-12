@@ -145,7 +145,6 @@ enum CruxVerdict: Sendable {
 /// replay *computes* rather than what it may hold — `maxCallWeight`, the depth
 /// caps and `stepLimit`. The reasons are on
 /// `InterpreterSettings.reconstructing`.
-@MainActor
 func inspectCrux(
     of item: any Item,
     inputs: [PushInstruction: any Item],
@@ -239,7 +238,6 @@ func loadedBaseline(inputs: [PushInstruction: any Item],
 /// unfinished reconstruction is not evidence of a bug) and misleading for an
 /// investigation (it is not evidence of correctness either). Exploratory work
 /// should call `inspectCrux` and count the inconclusives.
-@MainActor
 func brokenClaim(
     about item: any Item,
     inputs: [PushInstruction: any Item],

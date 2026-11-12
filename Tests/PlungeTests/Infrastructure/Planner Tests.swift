@@ -20,7 +20,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct PlannerTests {
 
     func errorStrings(_ inty: Interpreter) -> [String] {

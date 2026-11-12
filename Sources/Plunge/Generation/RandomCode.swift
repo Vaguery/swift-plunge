@@ -21,11 +21,12 @@
 //
 
 import Foundation
+import Synchronization
 
 
 /// A deterministic RNG (SplitMix64) so a fuzz run reproduces exactly from its
 /// seed. Every random choice here draws from `fuzzRNG`.
-nonisolated struct SeededRNG: RandomNumberGenerator {
+nonisolated struct SeededRNG: RandomNumberGenerator, Sendable {
     private var state: UInt64
     init(seed: UInt64) { state = seed }
     mutating func next() -> UInt64 {
@@ -39,9 +40,19 @@ nonisolated struct SeededRNG: RandomNumberGenerator {
 
 /// A seeded generator that one fuzz run can own. A reference, so the draws a
 /// scope makes advance the one generator that scope installed.
-nonisolated final class FuzzRNGBox: @unchecked Sendable {
-    var rng: SeededRNG
-    init(seed: UInt64) { rng = SeededRNG(seed: seed) }
+///
+/// **Locked**, because the unscoped `shared` box is reachable from every task:
+/// tests that draw without `withFuzzSeed` run in parallel, and an unguarded
+/// generator would be a data race, not merely an unreproducible stream. The lock
+/// makes each read and write atomic; it does not make concurrent drawers
+/// reproducible (two may read the same state), which is what `withFuzzSeed` is for.
+nonisolated final class FuzzRNGBox: Sendable {
+    private let state: Mutex<SeededRNG>
+    init(seed: UInt64) { state = Mutex(SeededRNG(seed: seed)) }
+    var rng: SeededRNG {
+        get { state.withLock { $0 } }
+        set { state.withLock { $0 = newValue } }
+    }
 }
 
 /// Which generator `fuzzRNG` draws from, per task.

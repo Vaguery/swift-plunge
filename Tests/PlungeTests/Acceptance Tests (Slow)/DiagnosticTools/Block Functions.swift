@@ -18,7 +18,7 @@ extension FunctionOutcome {
     // MARK: - Converting a block
 
     /// One function a block yields: the crux of one item it pushed.
-    @MainActor struct BlockFunction {
+    struct BlockFunction {
         var body: [any Item]
         /// Its arguments, in order of first appearance in the body.
         var holes: [Hole]

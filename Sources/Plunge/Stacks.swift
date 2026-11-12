@@ -157,15 +157,25 @@ nonisolated struct StackSet: Sendable {
     /// instructions. See `errorCount(of:)`.
     private var errorTally = ErrorTally()
 
+    /// Every stack starts with **storage of its own**. An empty `Deque()` shares
+    /// one global empty buffer with every other empty deque in the process, and
+    /// the per-step reads of a stack's count retain and release it: with most of
+    /// a run's stacks empty, interpreters on different threads contended on that
+    /// one reference count. Unoptimized, twelve interpreters in parallel ran 54
+    /// times slower each than one alone; with their own buffers, 1.4 times.
+    /// `Interpreter.clear` keeps a cleared stack's buffer for the same reason.
     init() {
-        slots = Array(repeating: Deque(), count: PushStack.allCases.count)
+        slots = (0..<PushStack.allCases.count).map { _ in Self.ownEmptyStack() }
     }
+
+    /// An empty stack with a buffer of its own (see `init`).
+    static func ownEmptyStack() -> Deque<any Item> { Deque(minimumCapacity: 1) }
 
     subscript(stack: PushStack) -> Deque<any Item>? {
         @inline(__always) get { slots[stack.ordinal] }
         @inline(__always) _modify { yield &slots[stack.ordinal] }
         @inline(__always) set {
-            slots[stack.ordinal] = newValue ?? Deque()
+            slots[stack.ordinal] = newValue ?? Self.ownEmptyStack()
             if stack == .error { errorTally = ErrorTally() }
         }
     }

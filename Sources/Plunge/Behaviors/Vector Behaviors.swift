@@ -1623,7 +1623,7 @@ nonisolated extension Interpreter {
                     do throws(Interpreter.ApplicationFailure) {
                         results.append(try Interpreter.apply(body, after: item, in: context) ?? item)
                     } catch {
-                        return refuse("out of steps")
+                        return refuse(error.reason)
                     }
                 }
                 guard let made = Interpreter.collected(results, call: recording(record())),

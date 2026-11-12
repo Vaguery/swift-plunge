@@ -15,7 +15,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct VectorComparisonTests {
 
     /// Push `y` (deeper) and `x` (on top), run the instruction, return the bool.

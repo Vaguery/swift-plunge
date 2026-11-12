@@ -19,7 +19,7 @@ import Testing
 import DequeModule
 
 
-@Suite @MainActor
+@Suite
 struct CodeGapTests {
 
     /// `( 1 ( 2 3 ) 4 )` — the example in the file header.

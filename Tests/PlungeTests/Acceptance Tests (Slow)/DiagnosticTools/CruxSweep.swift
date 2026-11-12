@@ -39,7 +39,6 @@ import Foundation
 /// `inputs` and `constants` are captured per program: a crux naming `.input3` or
 /// `.vecDouble8` only reproduces against the bindings it was recorded under, so
 /// they travel with the item rather than being re-derived later.
-@MainActor
 struct SweptItem {
     var item: any Item
     /// The stack it was found resting on. Usually — but not necessarily — equal to
@@ -68,7 +67,6 @@ struct SweptItem {
 /// provenance has been hardest (the cycling-walker bug that closed #27 appeared
 /// once in 1,600 programs and could not be hunted deliberately). A mix keyed on
 /// `Interpreter.reEntrantInstructions` is the obvious missing lever.
-@MainActor
 struct CruxSweep {
     var seeds: [UInt64]
     var casesPerSeed: Int
@@ -173,7 +171,6 @@ struct CruxSweep {
 }
 
 
-@MainActor
 extension SweptItem {
     /// Write this item's program out as a replayable `EvaluationRequest`, so a
     /// case survives without depending on the RNG — the reproduction path that

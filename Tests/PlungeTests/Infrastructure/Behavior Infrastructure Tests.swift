@@ -9,7 +9,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct BehaviorInfrastructureTests {
 
     @Test func `each instruction in language has matching name in behavior`() {

@@ -56,7 +56,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct CruxToFunctionDiagnostics {
 
     // The same toggle protocol the crux fuzzer uses: a single mutable global RNG

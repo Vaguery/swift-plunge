@@ -35,7 +35,19 @@ nonisolated extension Interpreter {
     // MARK: - Applying a function
 
     /// Why an application stopped short of a result for every element.
-    enum ApplicationFailure: Error { case outOfSteps }
+    enum ApplicationFailure: Error {
+        case outOfSteps
+        /// The run is already `Interpreter.maxSandboxDepth` sandboxes deep.
+        case tooDeep
+
+        /// The refusal's wording.
+        var reason: String {
+            switch self {
+            case .outOfSteps: "out of steps"
+            case .tooDeep: "sandboxes nested past \(Interpreter.maxSandboxDepth) deep"
+            }
+        }
+    }
 
     /// Runs `function` once with `bindings` over the environment in `context`,
     /// charging its steps; returns the last value it pushed, or nil if it pushed
@@ -59,8 +71,10 @@ nonisolated extension Interpreter {
     private static func run(_ program: [any Item], binding bindings: [PushInstruction: any Item],
                             in context: ReadContext) throws(ApplicationFailure) -> (any Item)? {
         let budget = context.remainingSteps
+        guard context.maySandbox else { throw .tooDeep }
         guard budget > 0 else { throw .outOfSteps }
         let sub = Interpreter()
+        sub.sandboxDepth = context.sandboxDepth + 1
         // The language's default limits, not this run's: a function's result
         // must not depend on how the run was configured, or its crux would not
         // replay under the relaxed limits a reconstruction uses
@@ -114,7 +128,7 @@ nonisolated extension Interpreter {
             do throws(ApplicationFailure) {
                 results.append(try apply(function, binding: [.input0: element], in: context) ?? element)
             } catch {
-                return refusal(instruction, "out of steps", context)
+                return refusal(instruction, error.reason, context)
             }
         }
         guard let output = collected(results, call: context.recording(call)),
@@ -150,7 +164,7 @@ nonisolated extension Interpreter {
                 accumulator = try apply(function, binding: [.input0: accumulator, .input1: element],
                                         in: context) ?? accumulator
             } catch {
-                return refusal(instruction, "out of steps", context)
+                return refusal(instruction, error.reason, context)
             }
         }
         let result = rebuilt(accumulator, call: context.recording(call))

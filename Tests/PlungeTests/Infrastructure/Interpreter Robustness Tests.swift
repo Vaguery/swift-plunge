@@ -13,7 +13,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct InterpreterRobustnessTests {
 
     /// A benign, well-typed representative Item for each stack, used to satisfy

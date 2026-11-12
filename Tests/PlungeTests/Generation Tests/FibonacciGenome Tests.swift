@@ -16,7 +16,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct FibonacciGenomeTests {
 
     /// A genome of `n` distinguishable instruction tokens.
@@ -100,11 +100,12 @@ struct FibonacciGenomeTests {
     /// Nested code can only be built at run time — which is a reason this is a
     /// testing genome rather than an evolving one.
     @Test func `no block contains a block`() {
-        fuzzRNG = SeededRNG(seed: 3)
-        let program = FibonacciGenome.translate(RandomCode.randomProgram(120))
+        withFuzzSeed(3) {
+            let program = FibonacciGenome.translate(RandomCode.randomProgram(120))
 
-        for case let block as CodeItem in program {
-            #expect(block.value.allSatisfy { !($0 is CodeItem) })
+            for case let block as CodeItem in program {
+                #expect(block.value.allSatisfy { !($0 is CodeItem) })
+            }
         }
     }
 
@@ -249,19 +250,20 @@ struct FibonacciGenomeTests {
     /// End to end: a random Fibonacci genome runs, and the blocks it left on
     /// `.code` are real enough for the program to use as loop bodies.
     @Test func `a random fibonacci program runs`() {
-        fuzzRNG = SeededRNG(seed: 20_260_717)
-        var ran = 0
-        for _ in 0..<50 {
-            let inty = Interpreter()
-            inty.load(program: FibonacciGenome.translate(RandomCode.randomProgram(120)))
-            RandomCode.setRandomConstants(in: inty)
-            RandomCode.setRandomInputs(in: inty)
-            inty.run()
-            ran += 1
-            #expect(!inty.stacks[.error]!.contains { ($0 as? ErrorItem)?.value
-                .contains(Interpreter.invariantMarker) == true },
-                "a genome must never break the interpreter's own invariant")
+        withFuzzSeed(20_260_717) {
+            var ran = 0
+            for _ in 0..<50 {
+                let inty = Interpreter()
+                inty.load(program: FibonacciGenome.translate(RandomCode.randomProgram(120)))
+                RandomCode.setRandomConstants(in: inty)
+                RandomCode.setRandomInputs(in: inty)
+                inty.run()
+                ran += 1
+                #expect(!inty.stacks[.error]!.contains { ($0 as? ErrorItem)?.value
+                    .contains(Interpreter.invariantMarker) == true },
+                    "a genome must never break the interpreter's own invariant")
+            }
+            #expect(ran == 50)
         }
-        #expect(ran == 50)
     }
 }

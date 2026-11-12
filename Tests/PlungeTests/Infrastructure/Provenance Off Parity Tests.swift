@@ -20,7 +20,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct ProvenanceOffParityTests {
 
     let harness = CruxRoundTripTests()

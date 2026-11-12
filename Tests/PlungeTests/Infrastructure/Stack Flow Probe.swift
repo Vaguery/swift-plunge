@@ -17,7 +17,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct StackFlowProbe {
 
     nonisolated static let disabledTests = true

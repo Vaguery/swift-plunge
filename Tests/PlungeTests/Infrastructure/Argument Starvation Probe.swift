@@ -51,7 +51,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct ArgumentStarvationProbe {
 
     nonisolated static let disabledTests = true

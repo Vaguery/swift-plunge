@@ -34,7 +34,6 @@
 ///
 /// **Replay**, from `inspectCrux`: `holds`, `broken`, or `unchecked` when the
 /// replay ran out of steps before finishing (a budget limit, not a verdict).
-@MainActor
 struct CruxCompleteness {
     enum Completeness: String, CaseIterable {
         case derived, observed, elided, programLiteral, boundContents, unmarked

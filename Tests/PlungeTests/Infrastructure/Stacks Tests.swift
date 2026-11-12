@@ -8,7 +8,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct StacksTests {
 
     @Test func `stacks should sort with exec first`() {

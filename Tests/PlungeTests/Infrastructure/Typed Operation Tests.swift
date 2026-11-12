@@ -9,7 +9,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct TypedOperationTests {
 
     // MARK: - Written order

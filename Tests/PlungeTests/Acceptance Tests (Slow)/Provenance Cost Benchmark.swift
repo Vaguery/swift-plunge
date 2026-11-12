@@ -22,7 +22,7 @@
 import Testing
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct ProvenanceCostBenchmark {
 
     struct SeededRNG: RandomNumberGenerator {

@@ -23,7 +23,7 @@ import Foundation
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct BehaviorIOSurvey {
 
     nonisolated static let disabled = true

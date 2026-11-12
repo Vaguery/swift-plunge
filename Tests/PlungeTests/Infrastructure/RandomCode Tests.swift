@@ -16,21 +16,22 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct RandomCodeTests {
 
     /// Realized proportions of a large sample, by tag.
     func composition(of mix: InstructionMix, draws: Int = 20_000) -> [InstructionRole: Double] {
-        fuzzRNG = SeededRNG(seed: 424_242)
-        var counts: [InstructionRole: Int] = [:]
-        for _ in 0..<draws {
-            let token = RandomCode.randomInstruction(from: mix)
-            let tag = InstructionRole.allCases.first {
-                Interpreter.instructions(role: $0).contains(token)
-            }!
-            counts[tag, default: 0] += 1
+        withFuzzSeed(424_242) {
+            var counts: [InstructionRole: Int] = [:]
+            for _ in 0..<draws {
+                let token = RandomCode.randomInstruction(from: mix)
+                let tag = InstructionRole.allCases.first {
+                    Interpreter.instructions(role: $0).contains(token)
+                }!
+                counts[tag, default: 0] += 1
+            }
+            return counts.mapValues { Double($0) / Double(draws) }
         }
-        return counts.mapValues { Double($0) / Double(draws) }
     }
 
     /// The number of roles, which every expected proportion below is a function of.
@@ -139,30 +140,32 @@ struct RandomCodeTests {
     /// And **never an IteratorItem**: an iterator is a live loop rather than a
     /// value, and the instructions construct them.
     @Test func `a gene stream is instruction tokens only`() {
-        fuzzRNG = SeededRNG(seed: 7)
-        let program = RandomCode.randomProgram(3_000)
+        withFuzzSeed(7) {
+            let program = RandomCode.randomProgram(3_000)
 
-        #expect(program.count == 3_000)
-        #expect(program.allSatisfy { $0 is InstructionItem },
-                "a literal, a block or an iterator got into the gene pool")
-        #expect(program.contains { $0 is IteratorItem } == false)
+            #expect(program.count == 3_000)
+            #expect(program.allSatisfy { $0 is InstructionItem },
+                    "a literal, a block or an iterator got into the gene pool")
+            #expect(program.contains { $0 is IteratorItem } == false)
 
-        // Every token names a real behavior — nothing is invented from parts.
-        let names = program.compactMap { ($0 as? InstructionItem)?.value }
-        #expect(names.allSatisfy { Interpreter.language[$0] != nil })
+            // Every token names a real behavior — nothing is invented from parts.
+            let names = program.compactMap { ($0 as? InstructionItem)?.value }
+            #expect(names.allSatisfy { Interpreter.language[$0] != nil })
+        }
     }
 
     /// The genome's *other* half: constant and input bindings can be any Item at
     /// all, including a code block. That asymmetry is deliberate — it is a value,
     /// not a gene in the instruction stream.
     @Test func `a bound value may be anything except an iterator`() {
-        fuzzRNG = SeededRNG(seed: 11)
-        let values = (0..<400).map { _ in RandomCode.randomPushItem() }
+        withFuzzSeed(11) {
+            let values = (0..<400).map { _ in RandomCode.randomPushItem() }
 
-        #expect(values.contains { $0 is CodeItem }, "a block is a legitimate input")
-        #expect(values.contains { $0 is IntItem })
-        #expect(values.contains { $0 is InstructionItem })
-        #expect(values.contains { $0 is IteratorItem } == false,
-                "a live loop is never a value handed in from outside")
+            #expect(values.contains { $0 is CodeItem }, "a block is a legitimate input")
+            #expect(values.contains { $0 is IntItem })
+            #expect(values.contains { $0 is InstructionItem })
+            #expect(values.contains { $0 is IteratorItem } == false,
+                    "a live loop is never a value handed in from outside")
+        }
     }
 }

@@ -9,7 +9,7 @@
 @testable import Plunge
 import Testing
 
-@MainActor @Suite
+@Suite
 struct CruxSharingTests {
 
     private let bound: [PushInstruction: any Item] = [.input1: IntItem(5), .input2: BoolItem(true)]

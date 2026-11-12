@@ -12,7 +12,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeIterateTests {
 
     /// ( (1 2) 3 ): points 0:root 1:(1 2) 2:1 3:2 4:3

@@ -10,7 +10,7 @@ import DequeModule
 import Testing
 
 
-@Suite @MainActor
+@Suite
 struct Item_tests {
 
 
@@ -33,7 +33,7 @@ struct Item_tests {
     }
 }
 
-@Suite @MainActor
+@Suite
 struct History_tests {
 
     var inty = Interpreter.recordingProvenance()
@@ -67,7 +67,6 @@ struct History_tests {
 }
 
 
-@MainActor
 struct Code_tests {
 
     @Test

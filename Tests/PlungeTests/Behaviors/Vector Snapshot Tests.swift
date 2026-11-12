@@ -18,7 +18,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct VectorSnapshotTests {
 
     /// Reproduce an item from its crux on a fresh interpreter; return the vecInt.

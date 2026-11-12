@@ -9,7 +9,7 @@ import DequeModule
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct RouterTests {
 
     let inty = Interpreter()

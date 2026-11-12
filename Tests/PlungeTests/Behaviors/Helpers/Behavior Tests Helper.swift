@@ -13,7 +13,6 @@ import Testing
 // MARK: General helper functions
 //
 
-@MainActor
     public func stackString(_ interpreter: Interpreter, _ stack: PushStack) -> String {
         var result = "["
         let s = interpreter.stacks[stack]!
@@ -24,12 +23,10 @@ import Testing
         return result
     }
 
-@MainActor
     public func topItem(_ interpreter: Interpreter, _ stack: PushStack) -> (any Item) {
         return interpreter.stacks[stack]!.first!
     }
 
-@MainActor
 public func probeItemOnStack(_ interpreter: Interpreter,
                              _ stack: PushStack,
                              index: Int ) -> (any Item)? {
@@ -45,7 +42,6 @@ public func probeItemOnStack(_ interpreter: Interpreter,
 /// checks that what it says is *true*. The two catch different things: a unit
 /// test written by reading the code will happily transcribe a wrong instruction
 /// name, which only re-running the reconstruction can expose.
-@MainActor
 public func callString(_ item: any Item) -> String {
     CodeItem(item.call).pretty()
 }
@@ -58,7 +54,6 @@ public func callString(_ item: any Item) -> String {
 /// twice: its `callString`/`crux` assertions check what is recorded with
 /// recording on, and this checks that turning recording off — the default, and
 /// what a search runs — computes exactly the same thing.
-@MainActor
     public func doThis(_ instruction: PushInstruction, to interpreter: Interpreter,
                        sourceLocation: SourceLocation = #_sourceLocation) {
         let twin = interpreter.config.recordsProvenance ? interpreter.offRecordingTwin() : nil
@@ -71,7 +66,6 @@ public func callString(_ item: any Item) -> String {
         }
     }
 
-@MainActor
     public func doThisMany(times: Int, _ instruction: PushInstruction, to interpreter: Interpreter,
                            sourceLocation: SourceLocation = #_sourceLocation) {
         for _ in 0..<times {
@@ -90,7 +84,6 @@ public func callString(_ item: any Item) -> String {
 
 // MARK: Bool stack setup
 
-@MainActor
     public func loadBools(_ inty: Interpreter,
                           bools: [Bool]) {
         let newStack = bools.map({BoolItem($0)})
@@ -100,7 +93,6 @@ public func callString(_ item: any Item) -> String {
 
 // MARK: Char stack setup
 
-@MainActor
     public func loadChars(_ inty: Interpreter,
                             chars: [String]) {
         let newStack = chars.map({ $0.first! }).map({ $0 as Character }).map({ CharItem($0) })
@@ -124,7 +116,6 @@ public func callString(_ item: any Item) -> String {
 ///  Note also that an empty array is parsed as a `VecBoolItem`. To insert an empty
 ///  `CodeItem` use the explicit `CodeItem([])`
 ///
-@MainActor
     public func loadCode(_ inty: Interpreter,
                             code: [Any]) {
 
@@ -147,7 +138,6 @@ public func callString(_ item: any Item) -> String {
 
 // MARK: Double stack setup
 
-@MainActor
     public func loadDoubles(_ inty: Interpreter,
                             doubles: [Double]) {
         let newStack = doubles.map({DoubleItem($0)})
@@ -156,7 +146,6 @@ public func callString(_ item: any Item) -> String {
 
 // MARK: Integer stack setup
 
-@MainActor
     public func loadInts(_ inty: Interpreter,
                             ints: [Int]) {
         let newStack = ints.map({IntItem($0)})
@@ -165,7 +154,6 @@ public func callString(_ item: any Item) -> String {
 
 // MARK: String stack setup
 
-@MainActor
     public func loadStrings(_ inty: Interpreter,
                             strings: [String]) {
         let newStack = strings.map({StringItem($0)})

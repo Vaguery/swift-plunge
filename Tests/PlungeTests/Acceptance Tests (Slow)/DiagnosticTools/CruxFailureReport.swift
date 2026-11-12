@@ -33,7 +33,6 @@ import Foundation
 
 
 /// Accumulated verdicts from a sweep, split by kind and by culprit.
-@MainActor
 struct CruxFailureReport {
     /// Every claim that was actually judged — `.holds` plus `.broken`. Excludes
     /// inconclusives, because nothing was learned about those.
@@ -56,7 +55,6 @@ struct CruxFailureReport {
     private(set) var examples: [CruxFailureKind: [Example]] = [:]
     var examplesPerKind = 3
 
-    @MainActor
     struct Example {
         var why: String
         var itemDescription: String

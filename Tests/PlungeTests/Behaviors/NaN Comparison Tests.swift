@@ -14,7 +14,7 @@
 @testable import Plunge
 import Testing
 
-@Suite @MainActor
+@Suite
 struct NaNComparisonTests {
 
     func compare(_ instruction: PushInstruction, _ y: Double, _ x: Double) -> Bool {

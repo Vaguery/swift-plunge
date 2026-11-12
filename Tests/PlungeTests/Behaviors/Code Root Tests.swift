@@ -12,7 +12,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct CodeRootTests {
 
     @Test func `cutRootAtGap splits the root array, prefix deeper`() {

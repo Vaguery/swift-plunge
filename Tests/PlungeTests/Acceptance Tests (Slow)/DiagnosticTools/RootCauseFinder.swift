@@ -36,7 +36,6 @@ import Foundation
 
 /// A failing node with no failing descendant — the deepest point at which
 /// something actually went wrong.
-@MainActor
 struct CruxRootCause {
     var item: any Item
     var verdict: CruxVerdict
@@ -73,7 +72,6 @@ struct CruxRootCause {
 /// **Cost warning.** This re-runs a crux per node visited, and the nodes near the
 /// root are the expensive ones. Filter to failing items before calling it — never
 /// walk a whole sweep.
-@MainActor
 func deepestFailures(
     under item: any Item,
     inputs: [PushInstruction: any Item],
@@ -115,7 +113,6 @@ func deepestFailures(
 /// Read the summary for *entries with small counts you do not recognize*, not for
 /// the biggest number. The big entries are usually one systemic cause; the
 /// singletons are where the interesting bugs were both times.
-@MainActor
 func rootCauses(in sweep: CruxSweep) -> [CruxRootCause] {
     var found: [CruxRootCause] = []
     sweep.forEachClaim { swept in
@@ -133,7 +130,6 @@ func rootCauses(in sweep: CruxSweep) -> [CruxRootCause] {
 
 /// A legible tally of root causes by producing instruction, rarest last so the
 /// singletons are easy to find.
-@MainActor
 func rootCauseSummary(_ causes: [CruxRootCause], examplesPerProducer: Int = 1) -> String {
     var grouped: [String: [CruxRootCause]] = [:]
     for cause in causes { grouped[cause.producer, default: []].append(cause) }

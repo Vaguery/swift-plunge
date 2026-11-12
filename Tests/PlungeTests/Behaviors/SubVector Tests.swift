@@ -17,7 +17,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct SubVectorTests {
 
     /// The needle on top, the haystack beneath: written `v w .op`, the vector

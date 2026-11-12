@@ -15,7 +15,7 @@
 import Testing
 import Foundation
 
-@Suite @MainActor
+@Suite
 struct MemoryGuardCostBenchmark {
 
     /// A program that grows a deep `.int` stack and keeps stepping with it live:

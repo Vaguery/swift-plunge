@@ -20,7 +20,7 @@ extension FunctionOutcome {
         /// …takes T and gives any value a map can collect: a transformer.
         case transforms
 
-        @MainActor func matches(_ item: any Item, _ family: Family, _ stack: PushStack) -> Bool {
+        func matches(_ item: any Item, _ family: Family, _ stack: PushStack) -> Bool {
             guard let token = (item as? InstructionItem)?.value,
                   let signature = runner.signature(of: token) else { return false }
             let taken = arguments(signature, from: stack)

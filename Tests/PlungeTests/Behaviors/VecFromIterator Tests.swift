@@ -23,7 +23,7 @@
 import Testing
 import DequeModule
 
-@Suite @MainActor
+@Suite
 struct VecFromIteratorTests {
 
     func loaded(_ iterator: IteratorItem) -> Interpreter {
