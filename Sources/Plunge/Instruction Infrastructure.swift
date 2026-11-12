@@ -388,7 +388,8 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 
 
     // Introspection
-    case pushStepCount, errorStackDepth, errorMissingArgCount, errorMissingInputCount, errorMissingConstantCount
+    case pushStepCount, errorStackDepth, errorMissingArgCount, errorMissingInputCount, errorMissingConstantCount,
+         errorPreviousStep
 
 }
 

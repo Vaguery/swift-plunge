@@ -13,7 +13,7 @@
 //  a key on `.int` and pops that key's binding after.
 //
 //  **Looking up.** Every lookup reads its key from `.int` and leaves it, and a
-//  miss is a refusal, as if `.binding` were empty. `bindingDeref` runs
+//  miss is a refusal of kind `notFound`: the key was there, its binding was not. `bindingDeref` runs
 //  what a key holds (a block's contents go to `.exec`; anything else lands on
 //  its stack); `bindingDerefToCode` delivers it to `.code` as data (a block as it
 //  is, anything else quoted). Their `…From` forms take a depth from `.int` and
@@ -45,9 +45,18 @@ nonisolated extension Interpreter {
     // MARK: - Helpers
 
     /// A refusal as if `stack` were empty: missing arguments, observed (law 4b).
+    /// For a stack that really is short; a key or probe that matched nothing is
+    /// `refNotFound`.
     static func refMissing(_ name: PushInstruction, on stack: PushStack,
                            _ recording: ProvenanceRecording) -> Router {
         Router(.error, ErrorItem(missingArgumentsFor: name, on: stack).observed(by: name, recording))
+    }
+
+    /// A lookup whose key (or probe) was there and matched no binding: a miss,
+    /// `notFound`, as a search's is. Observed (law 4b): it depends on what
+    /// `.binding` held.
+    static func refNotFound(_ name: PushInstruction, _ what: String, _ recording: ProvenanceRecording) -> Router {
+        Router(.error, ErrorItem("\(name): \(what)", kind: .notFound).observed(by: name, recording))
     }
 
     /// The depth of the topmost pair at or below `start` whose key is `key`.
@@ -203,7 +212,9 @@ nonisolated extension Interpreter {
                  body: .structural(.binding) { a, view in
                      let key = (a[0] as! IntItem).value
                      let depth = (0..<view.count).first { (view.item(at: $0) as? BindingItem)?.key == key }
-                     guard let depth else { return .loop([refMissing(.bindingPopKey, on: .binding, view.recording)]) }
+                     guard let depth else {
+                         return .loop([refNotFound(.bindingPopKey, "key \(key) is unbound", view.recording)])
+                     }
                      return .positions(.remove(at: depth))
                  }, produces: .positions(.binding))
         .observing(.binding)

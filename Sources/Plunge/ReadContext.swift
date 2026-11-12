@@ -42,6 +42,8 @@ nonisolated struct ReadContext {
     var inputs: [PushInstruction: any Item] { interpreter.inputs }
     /// Steps completed before this one (`pushStepCount`).
     var stepCount: Int { interpreter.counter }
+    /// Whether the step before this one placed anything on `.error`.
+    var previousStepErred: Bool { interpreter.lastErrorStep == interpreter.counter - 1 }
     /// How many sandboxes deep this run is (`Interpreter.sandboxDepth`).
     var sandboxDepth: Int { interpreter.sandboxDepth }
     /// Whether this run may start a sandbox of its own (`Interpreter.maxSandboxDepth`).

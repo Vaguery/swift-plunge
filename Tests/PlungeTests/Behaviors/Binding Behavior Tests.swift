@@ -108,7 +108,7 @@ struct BindingBehaviorTests {
     @Test func `a miss refuses and consumes nothing`() {
         let inty = Self.run([IntItem(42), Self.op(.bindingDeref)])
         #expect(stackString(inty, .int) == "[ 42 ]")
-        #expect(inty.stacks[.error]!.first!.pretty().contains("missing args: .binding"))
+        #expect((inty.stacks[.error]!.first as? ErrorItem)?.kind == .notFound, "a miss, not starvation")
 
         let below = Self.run([IntItem(7), Self.op(.intRef), Self.op(.intPop), IntItem(Self.fresh), IntItem(1),
                               Self.op(.bindingDerefFrom)])

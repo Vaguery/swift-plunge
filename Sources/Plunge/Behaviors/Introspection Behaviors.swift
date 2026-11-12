@@ -111,6 +111,16 @@ nonisolated extension Interpreter {
         errorCount_Behavior(.errorMissingConstantCount, counting: .missingConstant)
         .described("Pushes how many constant reads (`.int3` and the like) so far found no constant assigned.")
 
+    /// Whether the step just before this one placed an error on `.error`: an
+    /// ephemeral state, true for one step only. Lets a program react to a refusal,
+    /// a miss or a starvation as it happens. A sandbox's errors stay in the sandbox
+    /// for now, so a map whose runs refused does not count.
+    static let errorPreviousStep_Behavior =
+        Behavior.contextRead(.errorPreviousStep, observes: [.error], produces: .results([.bool])) { _, context in
+            [Router(.bool, BoolItem(context.previousStepErred).observed(by: .errorPreviousStep, context.recording))]
+        }
+        .described("Pushes whether the step just before this one recorded an error.")
+
 
     static let introspectionBehaviors: [PushInstruction: Behavior] =
     [
@@ -118,6 +128,7 @@ nonisolated extension Interpreter {
         .errorStackDepth: errorStackDepth_Behavior,
         .errorMissingArgCount: errorMissingArgCount_Behavior,
         .errorMissingInputCount: errorMissingInputCount_Behavior,
-        .errorMissingConstantCount: errorMissingConstantCount_Behavior
+        .errorMissingConstantCount: errorMissingConstantCount_Behavior,
+        .errorPreviousStep: errorPreviousStep_Behavior
     ]
 }

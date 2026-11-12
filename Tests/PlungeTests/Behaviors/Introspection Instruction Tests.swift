@@ -120,6 +120,17 @@ struct IntrospectionInstructionTests {
         #expect((topItem(inty, .int) as! IntItem).value == 1)
     }
 
+    /// True only on the step right after one that recorded an error: the start of
+    /// a run is not, a starvation is, and the step after that again is not.
+    @Test func `errorPreviousStep sees only the step before it`() {
+        let inty = Interpreter.recordingProvenance()
+        inty.load(program: [InstructionItem(.errorPreviousStep), InstructionItem(.intAdd),
+                            InstructionItem(.errorPreviousStep), InstructionItem(.errorPreviousStep)])
+        inty.run()
+        #expect(stackString(inty, .bool) == "[ false true false ]",
+                "top first: after a bool push, after a starvation, at the start")
+    }
+
     @Test func `an unbound input is counted as a missing input`() {
         let inty = Interpreter.recordingProvenance()
         inty.load(program: [InstructionItem(.input3)])   // never bound

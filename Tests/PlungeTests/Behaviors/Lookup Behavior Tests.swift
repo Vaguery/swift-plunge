@@ -49,7 +49,7 @@ struct LookupBehaviorTests {
         let inty = Self.run([VecIntItem([9]), VecIntItem([1, 2]), IntItem(1), Self.op(.vecIntLookupPrefixFrom)])
         #expect(stackString(inty, .vecInt) == "[ [1, 2] [9] ]")
         #expect(stackString(inty, .int) == "[ 1 ]", "the start is handed back")
-        #expect(inty.stacks[.error]!.first!.pretty().contains("missing args: .vecInt"))
+        #expect((inty.stacks[.error]!.first as? ErrorItem)?.kind == .notFound, "a miss, not starvation")
 
         let alone = Self.run([IntItem(5), Self.op(.intLookupNearest)])
         #expect(stackString(alone, .int) == "[ 5 ]", "nothing below the probe")

@@ -11,6 +11,7 @@ These instructions read the program's environment (its inputs and the interprete
 | `errorMissingArgCount` | Pushes how many instructions so far found too few arguments to run. | — | `int` |
 | `errorMissingConstantCount` | Pushes how many constant reads (`.int3` and the like) so far found no constant assigned. | — | `int` |
 | `errorMissingInputCount` | Pushes how many input reads so far found no input supplied. | — | `int` |
+| `errorPreviousStep` | Pushes whether the step just before this one recorded an error. | — | `bool` |
 | `errorStackDepth` | Pushes how many errors the run has recorded on `.error`. | — | `int` |
 | `input0` | Pushes input 0's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
 | `input1` | Pushes input 1's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |

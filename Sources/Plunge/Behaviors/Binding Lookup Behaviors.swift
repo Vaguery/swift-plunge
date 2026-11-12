@@ -29,7 +29,7 @@ nonisolated extension Interpreter {
             let pairs = context.items(of: .binding)
             let start = from ? (a[0] as! IntItem).value : 0
             guard let depth = bindingDepth(of: key.value, in: pairs, from: start) else {
-                return handBack + [refMissing(name, on: .binding, context.recording)]
+                return handBack + [refNotFound(name, "key \(key.value) is unbound", context.recording)]
             }
             return deliver((pairs[depth] as! BindingItem).bound, context)
         }
@@ -97,7 +97,7 @@ nonisolated extension Interpreter {
                 return [refMissing(.bindingKeyDepth, on: .int, context.recording)]
             }
             guard let depth = bindingDepth(of: key.value, in: context.items(of: .binding)) else {
-                return [refMissing(.bindingKeyDepth, on: .binding, context.recording)]
+                return [refNotFound(.bindingKeyDepth, "key \(key.value) is unbound", context.recording)]
             }
             return [Router(.int, IntItem(depth).observed(by: .bindingKeyDepth, context.recording))]
         }
@@ -114,7 +114,7 @@ nonisolated extension Interpreter {
             }
             let keys = context.items(of: .binding).map { ($0 as! BindingItem).key }
             guard let found = choose(key.value, keys) else {
-                return [refMissing(name, on: .binding, context.recording)]
+                return [refNotFound(name, "no key fits \(key.value)", context.recording)]
             }
             return [Router(.int, IntItem(found).observed(by: name, context.recording))]
         }
@@ -174,7 +174,7 @@ nonisolated extension Interpreter {
             let target = probe.denotedItem
             guard let pair = context.items(of: .binding).lazy.compactMap({ $0 as? BindingItem })
                 .first(where: { $0.bound.isEqual(to: probe) || $0.bound.isEqual(to: target) }) else {
-                return [refMissing(.bindingKeyOf, on: .binding, context.recording)]
+                return [refNotFound(.bindingKeyOf, "nothing bound is \(probe.pretty())", context.recording)]
             }
             return [Router(.int, IntItem(pair.key).observed(by: .bindingKeyOf, context.recording))]
         }

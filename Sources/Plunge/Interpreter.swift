@@ -31,15 +31,19 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     //
     // **A relation nothing enforces**: `stepLimit` must exceed `maxVectorLength`
     // and `maxStringLength`, or the largest collection the interpreter will ACCEPT
-    // cannot be walked to completion. At these defaults it does not — a
-    // 1,000-element walk emits 997 and dies three short, missing by the setup cost.
-    // Left alone rather than papered over, because raising `stepLimit` changes
-    // every run; but it is a genuine incoherence and worth knowing.
+    // cannot be walked to completion. At 1,000 steps it did not (a 1,000-element
+    // walk emitted 997 and died three short); at 10,000 it does.
 
+    // CHOSEN (2026-11-11), raised from the inherited 1,000. The step limit is a
+    // simple proxy for "the cruxes got too complicated". Measured on random
+    // programs: at 10,000 the share a run's limit cuts short falls from 12.7% to
+    // 7.8%, the median and 90th-percentile crux are unchanged, and only the
+    // longest grows (tenfold); the time goes to the runaways. Function derivation
+    // and application spend from it too, so 1,000 starved them.
+    public var stepLimit: Int = 1_000
     // INHERITED, loosely after propeller's limits.cljc:
     //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
-    // None of these six was chosen here on its own merits.
-    public var stepLimit: Int = 1_000
+    // None of these five was chosen here on its own merits.
     public var maxStackDepth: Int = 10_000
     public var maxStringLength: Int = 1_000
     public var maxVectorLength: Int = 1_000
@@ -261,6 +265,10 @@ nonisolated final class Interpreter {
     /// the runaway guard's are, so that it is not a configuration knob.
     static let maxSandboxDepth = 50
 
+    /// The step during which something was last placed on `.error`; -2 means
+    /// never (so that it is never the step before step 0).
+    /// `.errorPreviousStep` compares it with the step before its own.
+    @exclusivity(unchecked) var lastErrorStep = -2
     var inputs: [PushInstruction: any Item] = [:]
     // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
@@ -517,6 +525,7 @@ nonisolated final class Interpreter {
 
     private func place(_ boxed: BoxedItem, on stack: PushStack) {
         guard stacks[stack] != nil else { return }
+        if stack == .error { lastErrorStep = counter }
         liveWeight = liveWeight.addingReportingOverflow(boxed.item.weight).0
         stacks[stack]!.prepend(boxed.item)
     }
@@ -589,6 +598,7 @@ nonisolated final class Interpreter {
         self.counter = 0
         self.lastPush = nil
         self.lastRunawayCheck = -1
+        self.lastErrorStep = -2
         self.nextRefKey = Self.inputSlots.count
 
         // inputs and constants (both keyed by instruction token)

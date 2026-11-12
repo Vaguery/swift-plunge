@@ -15,8 +15,8 @@
 //    (so `xYank` or `xYankDup` reach it), and where the next search starts once
 //    the copy has been used. The position depends on the stack's arrangement,
 //    so it records a stand-in (law 4b), as `StackDepth` does;
-//  - **no match is a refusal, as if the stack were empty**: a missing-arguments
-//    error, and nothing consumed.
+//  - **no match is a refusal of kind `notFound`**, as a search's miss is, and
+//    nothing is consumed.
 //  When the stack is `.int` itself, the copy goes down first and the position
 //  on top of it, so whatever takes the position (a yank, a `…From`) pops it and
 //  finds the copy on top and the match at that depth, as on any other stack.
@@ -61,9 +61,9 @@ nonisolated extension Interpreter {
             let start = from ? max(1, (a[0] as! IntItem).value) : 1
             guard let probe = items.first, start < items.count,
                   let found = locate(probe, items, start) else {
-                // As if the stack were empty: the start index is handed back.
+                // A miss (`notFound`), as a search's is; the start index is handed back.
                 return (from ? [Router(.int, a[0])] : [])
-                    + [Router(.error, ErrorItem(missingArgumentsFor: name, on: stack)
+                    + [Router(.error, ErrorItem("\(name): no match below the top of .\(stack)", kind: .notFound)
                         .observed(by: name, context.recording))]
             }
             let position = IntItem(found + 1).observed(by: name, context.recording)
