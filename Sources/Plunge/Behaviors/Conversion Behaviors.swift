@@ -75,7 +75,7 @@ nonisolated extension Interpreter {
                 guard !items.isEmpty else { return refuse("an empty block has no element type") }
 
                 let call: [any Item] = [block, InstructionItem(.vecFromCode)]
-                let members = recording.pieces(items.map { Origin.item($0) })
+                let members = recording.pieces(items: items)
                 let vector: (any Item)? =
                     if let values = items as? [BoolItem] {
                         VecBoolItem(values.map(\.value), call: recording(call), members: members)

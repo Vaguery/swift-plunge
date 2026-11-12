@@ -139,7 +139,8 @@ nonisolated extension Interpreter {
     // returns a new vector formed by placing y's elements before x's
     static func concatBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
         Behavior.assembling(instruction, takes: V.self, V.self, gives: V.self) { y, x in
-            Built(y.value + x.value, members: y.origins(0) + x.origins(1))
+            Built(y.value + x.value,
+                  pieces: Pieces.joined([y.pieces(count: y.value.count), x.pieces(count: x.value.count)]))
         }
         .described("Joins two vectors: `a b .\(instruction)` gives the elements of a followed by those of b.")
     }
@@ -676,7 +677,7 @@ nonisolated extension Interpreter {
                             elements.map(\.value),
                             call: recording(
                                 [template] + elements.map { $0 as any Item } + [InstructionItem(instruction)]),
-                            members: recording.pieces(elements.map { Origin.item($0) }))
+                            members: recording.pieces(items: elements))
                     )
                 ]
             }
@@ -741,7 +742,7 @@ nonisolated extension Interpreter {
                         V(
                             elements.map(\.value),
                             call: context.recording(snapshotCrux(elements, readInstruction: instruction, making: V.self)),
-                            members: context.recording.pieces(elements.map { Origin.item($0) }))
+                            members: context.recording.pieces(items: elements))
                     )
                 ]
         }
@@ -761,17 +762,19 @@ nonisolated extension Interpreter {
     ) -> Behavior {
         Behavior.contextRead(instruction, observes: [V.Scalar.pushStack], produces: .results([V.pushStack])) { _, context in
                 let stack = V.Scalar.pushStack
-                let elements = Array(context.items(of: stack))
-                    .map { $0 as! V.Scalar }
-                    .reversed()
-                    .map { $0 }
+                // Bottom first, in one pass: the whole stack can be tens of
+                // thousands deep, read on every call.
+                let items = context.items(of: stack)
+                var elements: [V.Scalar] = []
+                elements.reserveCapacity(items.count)
+                for item in items.reversed() { elements.append(item as! V.Scalar) }
                 return [
                     Router(
                         V.pushStack,
                         V(
                             elements.map(\.value),
                             call: context.recording(snapshotCrux(elements, readInstruction: readItemsInstruction, making: V.self)),
-                            members: context.recording.pieces(elements.map { Origin.item($0) }))
+                            members: context.recording.pieces(items: elements))
                     )
                 ]
         }
@@ -1633,7 +1636,7 @@ nonisolated extension Interpreter {
                 return [Router(resting, made)] + Interpreter.iteratorFarewell(iterator)
             }
 
-            let members = recording.pieces(items.map { Origin.item($0) })
+            let members = recording.pieces(items: items)
             let collected: (any Item)? =
                 if let values = items as? [BoolItem] {
                     VecBoolItem(values.map(\.value), call: recording(record()), members: members)

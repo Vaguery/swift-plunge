@@ -605,7 +605,7 @@ nonisolated extension Interpreter {
             let chars = Array(items.prefix(k)).map { $0 as! CharItem }.reversed().map { $0 }
             return [Router(.string, StringItem(String(chars.map(\.value)),
                                                call: context.recording(charsCrux(chars)),
-                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
+                                               members: context.recording.pieces(items: chars)))]
         }
         .described(
             "Copies the top n chars into a string, leaving them: `n .stringReadItems`, n clamped to the stack's "
@@ -618,7 +618,7 @@ nonisolated extension Interpreter {
             let chars = Array(context.items(of: .char)).map { $0 as! CharItem }.reversed().map { $0 }
             return [Router(.string, StringItem(String(chars.map(\.value)),
                                                call: context.recording(charsCrux(chars)),
-                                               members: context.recording.pieces(chars.map { Origin.item($0) })))]
+                                               members: context.recording.pieces(items: chars)))]
         }
         .described(
             "Copies the whole char stack into a string, leaving it; the bottom char comes first, and an empty "

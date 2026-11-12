@@ -137,7 +137,11 @@ nonisolated extension PushStack {
 nonisolated enum ItemArray {
     @inline(__always)
     static func make(count: Int, _ element: (Int) -> any Item) -> [any Item] {
-        [any Item](unsafeUninitializedCapacity: count) { buffer, initialized in
+        // An empty array is the shared empty singleton, and the initializer would
+        // write its count (0) there: harmless, but the Thread Sanitizer reports
+        // every such write from parallel interpreters as a race.
+        guard count > 0 else { return [] }
+        return [any Item](unsafeUninitializedCapacity: count) { buffer, initialized in
             for index in 0..<count { (buffer.baseAddress! + index).initialize(to: element(index)) }
             initialized = count
         }

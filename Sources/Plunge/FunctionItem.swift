@@ -230,9 +230,25 @@ nonisolated extension FunctionItem {
         let output: PushStack?
     }
 
-    /// Every instruction's bare shape, read once from the language.
-    static let bareShapes: [PushInstruction: BareShape] =
-        Interpreter.language.mapValues { BareShape(holes: holes(of: $0), output: output(of: $0)) }
+    /// Every instruction's bare shape, read once from the language, indexed by
+    /// `PushInstruction.ordinal`: a sieve asks every function on a deep
+    /// `.function` stack for its holes, and a dictionary keyed by the instruction
+    /// hashed its raw string each time (the soak, seed 17538: 15 ms a compose).
+    static let bareShapes = ShapeTable(
+        Interpreter.language.mapValues { BareShape(holes: holes(of: $0), output: output(of: $0)) })
+
+    /// Bare shapes by instruction, without hashing.
+    struct ShapeTable: Sendable {
+        private let slots: [BareShape?]
+        init(_ shapes: [PushInstruction: BareShape]) {
+            var slots = [BareShape?](repeating: nil, count: PushInstruction.allCases.count)
+            for (instruction, shape) in shapes { slots[instruction.ordinal] = shape }
+            self.slots = slots
+        }
+        subscript(instruction: PushInstruction) -> BareShape? {
+            @inline(__always) get { slots[instruction.ordinal] }
+        }
+    }
 
     /// The arguments a Behavior declares, as holes before the instruction: each
     /// stack's in its requirements' order of first appearance, as many as it

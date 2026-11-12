@@ -90,6 +90,23 @@ struct FunctionInstructionTests {
         #expect(Self.replays(inty, .function))
     }
 
+    /// A hole used twice (`x x .intMultiply`) takes two copies of what is composed
+    /// into it, so composing such a function with itself grows it geometrically.
+    /// Found by the soak (seed 17538, 2.9 s for one composition): the result is
+    /// refused from the weights alone, before it is built.
+    @Test func `a composition over the size limit is refused before it is built`() {
+        let square = FunctionItem(body: [Self.op(.intMultiply)],
+                                  holes: [.init(stack: .int, positions: [0, 0])], output: .int)
+        let inty = Interpreter.recordingProvenance()
+        inty.config.maxItemWeight = 1_000
+        let rounds = Array(repeating: [Self.op(.functionDup), Self.op(.functionCompose)] as [any Item], count: 12)
+        inty.load(program: [square] + rounds.flatMap { $0 })
+        inty.run(stepLimit: 10_000)
+        #expect(Self.errorKinds(inty).contains(.sizeRefusal))
+        #expect(inty.stacks[.function]!.allSatisfy { $0.weight <= 1_000 })
+        #expect(inty.stacks[.function]!.contains { $0.weight > 100 }, "it composed until the limit")
+    }
+
     @Test func `fill binds the first hole wherever it occurs`() {
         // `.intSubtract` with 10 in its first hole: 10 − x.
         let program: [any Item] = [Self.op(.intSubtract), IntItem(10), Self.op(.functionFill)]

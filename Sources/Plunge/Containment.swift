@@ -151,6 +151,14 @@ nonisolated struct Pieces: Sendable {
         self.ends = ends
     }
 
+    /// Several containers' runs end to end, as `Pieces(_:)` would merge their
+    /// origins tagged apart (runs of different inputs never merge), without
+    /// expanding them element by element; `nil` when there are none.
+    static func joined(_ parts: [Pieces]) -> Pieces? {
+        let runs = parts.flatMap(\.runs)
+        return runs.isEmpty ? nil : Pieces(runs: runs)
+    }
+
     /// These runs, as they were: how `ItemArchive` rebuilds a decoded item's
     /// members.
     init(runs: [Run]) {
@@ -224,6 +232,14 @@ nonisolated extension VecStringItem: HoldsMembers {}
 nonisolated extension StringItem: HoldsMembers {}
 
 nonisolated extension HoldsMembers {
+    /// Every element's origin as runs: its members if it has any, else one span
+    /// of its own positions (it is a source), which is what `Pieces(_:)` makes of
+    /// `origins(_:count:)`. Called only when recording.
+    func pieces(count: Int) -> Pieces {
+        if let members { return members }
+        return Pieces(runs: count == 0 ? [] : [.span(source: self, from: 0, count: count, step: 1)])
+    }
+
     /// Every element's origin, for building a new container out of this one: its
     /// members if it has any, else its own positions (it is a source). `tag` tells
     /// two inputs apart. Called only when recording.
@@ -309,6 +325,25 @@ nonisolated extension Containment {
 nonisolated extension ProvenanceRecording {
     /// The pieces for a new vector or string, built only when recording; `nil` for
     /// an empty one.
+    /// The pieces of a container whose every element is an item that went in
+    /// (read from a stack, say): one run each, as `Pieces(_:)` would make them,
+    /// without the origins in between. Built only when recording; `nil` for none.
+    func pieces<T: Item>(items: [T]) -> Pieces? {
+        guard isOn, !items.isEmpty else { return nil }
+        return Pieces(runs: items.map { .item($0) })
+    }
+
+    func pieces(items: [any Item]) -> Pieces? {
+        guard isOn, !items.isEmpty else { return nil }
+        return Pieces(runs: items.map { .item($0) })
+    }
+
+    /// A `Built` container's pieces, made only when recording.
+    @inline(__always)
+    func pieces<Value>(_ built: Built<Value>) -> Pieces? {
+        isOn ? built.pieces() : nil
+    }
+
     @inline(__always)
     func pieces(_ build: @autoclosure () -> [Origin]) -> Pieces? {
         guard isOn else { return nil }

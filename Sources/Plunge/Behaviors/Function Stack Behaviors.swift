@@ -106,6 +106,19 @@ nonisolated extension Interpreter {
 
     // MARK: - Compose and fill
 
+    /// Why `function` with `copies` copies of `insert` in one hole would be over
+    /// the run's `maxItemWeight`, or nil. A hole can occur at several places, so
+    /// repeated composition can double a body each time; this is known from the
+    /// weights alone, so a result that would be refused is never built.
+    static func tooHeavy(_ function: FunctionItem, _ copies: Int, copiesOf insert: any Item,
+                         _ context: ReadContext) -> Refusal? {
+        let (added, overflow) = copies.multipliedReportingOverflow(by: insert.weight)
+        let total = overflow ? Int.max : function.weight.addingReportingOverflow(added).0
+        guard overflow || total < 0 || total > context.maxItemWeight else { return nil }
+        return Refusal("the result would weigh about \(overflow || total < 0 ? "more than \(Int.max)" : "\(total)"), "
+                       + "over the limit of \(context.maxItemWeight)", kind: .sizeRefusal)
+    }
+
     static let functionCompose_Behavior: Behavior = {
         let inner: Requirement = .takesFirst(.function) { candidate, _ in
             candidate.exactly(FunctionItem.self)?.output != nil
@@ -114,14 +127,19 @@ nonisolated extension Interpreter {
             guard let stack = maybeFunction(resolved[0])?.output else { return false }
             return candidate.exactly(FunctionItem.self).map { $0.holeCount(on: stack) >= 1 } == true
         }
-        return Behavior(.functionCompose, requires: [inner, outer], tags: [], behaviorClass: .operation,
-                        body: .values { a, recording in
+        return Behavior(.functionCompose, requires: [inner, outer], tags: [.fallible], behaviorClass: .operation,
+                        body: .applying { a, context in
             let (g, f) = (asFunction(a[0]), asFunction(a[1]))
-            let composed = f.composed(after: g, call: recording([f, g, InstructionItem(.functionCompose)]))!
+            let hole = f.holes.first { $0.stack == g.output }!
+            if let why = tooHeavy(f, hole.positions.count, copiesOf: g, context) {
+                return refusal(.functionCompose, why, context)
+            }
+            let composed = f.composed(after: g, call: context.recording([f, g, InstructionItem(.functionCompose)]))!
             return [Router(.function, composed)]
         }, produces: .results([.function]))
         .described("Composes: `f g .functionCompose`, g the topmost function with an output and f the next with a "
-                   + "hole of that type, gives f after g, g's program in f's first such hole.")
+                   + "hole of that type, gives f after g, g's program in f's first such hole; refuses a result "
+                   + "over the size limit, before building it.")
     }()
 
     static let functionFill_Behavior: Behavior = {
@@ -131,15 +149,19 @@ nonisolated extension Interpreter {
         let filler: [Requirement] = holeSourceStacks.map { stack in
             .takesMany(stack) { maybeFunction($0[0])?.holes.first?.stack == stack ? 1 : 0 }
         }
-        return Behavior(.functionFill, requires: [withHole] + filler, tags: [], behaviorClass: .operation,
-                        body: .values { a, recording in
+        return Behavior(.functionFill, requires: [withHole] + filler, tags: [.fallible], behaviorClass: .operation,
+                        body: .applying { a, context in
             let (function, value) = (asFunction(a[0]), a[1])
+            if let why = tooHeavy(function, function.holes[0].positions.count, copiesOf: value, context) {
+                return refusal(.functionFill, why, context)
+            }
             let filled = function.filling(firstHoleWith: value,
-                                          call: recording([value, function, InstructionItem(.functionFill)]))!
+                                          call: context.recording([value, function, InstructionItem(.functionFill)]))!
             return [Router(.function, filled)]
         }, produces: .results([.function]))
         .described("Partial application: the topmost function with a hole takes the top item of its first hole's "
-                   + "stack, which fills that hole wherever it occurs, leaving a function with one hole fewer.")
+                   + "stack, which fills that hole wherever it occurs, leaving a function with one hole fewer; "
+                   + "refuses a result over the size limit, before building it.")
     }()
 
     static let functionArity_Behavior =

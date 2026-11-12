@@ -111,7 +111,7 @@ nonisolated extension Behavior {
             let built = body(repeat each items(args, call.positions, repeat each takes))
             return [Router(R.pushStack, R(built.value,
                                           call: recording(call.recorded(producing: R.pushStack)),
-                                          members: recording.pieces(built.members())))]
+                                          members: recording.pieces(built)))]
         }
     }
 
@@ -128,7 +128,7 @@ nonisolated extension Behavior {
             let built = try body(repeat each items(args, call.positions, repeat each takes))
             return [Router(R.pushStack, R(built.value,
                                           call: recording(call.recorded(producing: R.pushStack)),
-                                          members: recording.pieces(built.members())))]
+                                          members: recording.pieces(built)))]
         }
     }
 
@@ -147,7 +147,7 @@ nonisolated extension Behavior {
             let built = try body(repeat each items(args, call.positions, repeat each reads))
             return [Router(R.pushStack, R(built.value,
                                           call: recording(call.recorded(producing: R.pushStack)),
-                                          members: recording.pieces(built.members())))]
+                                          members: recording.pieces(built)))]
         }
     }
 
@@ -276,7 +276,7 @@ nonisolated extension Behavior {
                 Router(R.pushStack, R(part.value,
                                       call: recording(Behavior.selecting(produced, of: parts.count,
                                                                          on: R.pushStack, from: call.written)),
-                                      members: recording.pieces(part.members())))
+                                      members: recording.pieces(part)))
             }
         }
     }

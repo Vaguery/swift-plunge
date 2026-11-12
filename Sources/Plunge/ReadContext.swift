@@ -28,6 +28,10 @@ nonisolated struct ReadContext {
     /// The steps left in this run's budget, less what this read has charged.
     var remainingSteps: Int { max(0, interpreter.config.stepLimit - interpreter.counter - meter.steps) }
 
+    /// The heaviest item this run allows (`InterpreterSettings.maxItemWeight`),
+    /// for a body that can tell its result is too heavy before building it.
+    var maxItemWeight: Int { interpreter.config.maxItemWeight }
+
     /// Reports `steps` of work done (see `meter`).
     func charge(_ steps: Int) { meter.steps += steps }
     /// A fresh `.binding` key: the interpreter's next, counting those this read has
