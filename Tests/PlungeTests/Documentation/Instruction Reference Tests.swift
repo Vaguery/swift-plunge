@@ -196,6 +196,7 @@ struct InstructionReferenceTests {
             case .reads(let stack): "`\(stack.rawValue)` (read)"
             case .needs(let stack, let count): count == 1 ? "a `\(stack.rawValue)` item" : "\(count) `\(stack.rawValue)` items"
             case .takesMany(let stack, _): "n × `\(stack.rawValue)`"
+            case .takesFirst(let stack, _): "the topmost fitting `\(stack.rawValue)`"
             }
         }
         return parts.isEmpty ? "—" : parts.joined(separator: ", ")
@@ -212,6 +213,7 @@ struct InstructionReferenceTests {
         case .deferred(let stack): "`\(stack.rawValue)`"
         case .input: "the input's type"
         case .delivery(let stack): "`\(stack.rawValue)`, one per step"
+        case .several(let stack): "`\(stack.rawValue)`, any number"
         case .positions(let stack): "`\(stack.rawValue)`, rearranged"
         case .continuation: "the rest of the program"
         case .printout: "the printout"

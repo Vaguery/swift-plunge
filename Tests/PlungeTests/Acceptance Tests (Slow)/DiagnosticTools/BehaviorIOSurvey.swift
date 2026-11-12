@@ -89,6 +89,11 @@ struct BehaviorIOSurvey {
             case .code: code()
             case .iterator: iterator()
             case .binding: BindingItem(key: int(), bound: chance(0.5) ? IntItem(int()) : code())
+            // Bare functions over every element type, so map, filter and reduce find one that fits.
+            case .function: FunctionItem(bare: InstructionItem(pick([
+                .intAdd, .intGT, .doubleAdd, .doubleGT, .boolAnd, .boolNot, .charUpper, .charIsLetter, .charSwap,
+                .stringConcat, .stringLength, .stringEq
+            ] as [PushInstruction])))
             case .exec: execItem()
             case .error: ErrorItem("seeded")
             default: vector(for: stack)

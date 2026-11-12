@@ -28,9 +28,11 @@ struct PlannerTests {
     }
 
     /// Every stack's contents, rendered — a cheap way to say "nothing moved".
+    /// `.function` is left out with `.error`: a starvation pushes the starved
+    /// instruction there (checked separately).
     func snapshot(_ inty: Interpreter) -> [PushStack: String] {
         var result = [PushStack: String]()
-        for stack in PushStack.allCases where stack != .error {
+        for stack in PushStack.allCases where stack != .error && stack != .function {
             result[stack] = stackString(inty, stack)
         }
         return result
@@ -85,6 +87,69 @@ struct PlannerTests {
         #expect(arguments.count == 1)
         planner.commit(claims)
         #expect(stackString(inty, .int) == "[ 2 ]", "the needed item stays where it sat")
+    }
+
+    // MARK: - the sieve
+
+    static let even: Requirement = .takesFirst(.int) { candidate, _ in
+        ((candidate as? IntItem)?.value ?? 1) % 2 == 0
+    }
+
+    /// The sieve claims the topmost item it accepts, wherever it sits; taking it
+    /// leaves the ones above and below.
+    @Test func `a sieve takes the topmost item it accepts`() {
+        let inty = Interpreter()
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(5), IntItem(8), IntItem(3)] as [any Item])
+        let planner = Planner(for: inty)
+        guard case .ready(let arguments, let claims) = planner.plan([Self.even]) else {
+            Issue.record("8 is even"); return
+        }
+        #expect((arguments[0] as? IntItem)?.value == 8)
+        #expect(claims.map(\.index) == [1])
+        planner.commit(claims)
+        #expect(stackString(inty, .int) == "[ 5 3 ]")
+    }
+
+    /// Later requirements claim around a sieved item, never over it.
+    @Test func `claims after a sieve skip what it took`() {
+        let inty = Interpreter()
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(5), IntItem(8), IntItem(3)] as [any Item])
+        guard case .ready(let arguments, let claims) = Planner(for: inty).plan([Self.even, .takes(.int), .takes(.int)])
+        else { Issue.record("three ints serve a sieve and two takes"); return }
+        #expect(arguments.compactMap { ($0 as? IntItem)?.value } == [8, 5, 3])
+        #expect(claims.map(\.index) == [1, 0, 2])
+    }
+
+    /// The test is asked with the arguments resolved before it.
+    @Test func `a sieve sees the arguments before it`() {
+        let inty = Interpreter()
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(4), IntItem(2), IntItem(9)] as [any Item])
+        let larger: Requirement = .takesFirst(.int) { candidate, resolved in
+            ((candidate as? IntItem)?.value ?? 0) > ((resolved[0] as? IntItem)?.value ?? 0)
+        }
+        guard case .ready(let arguments, _) = Planner(for: inty).plan([.takes(.int), larger]) else {
+            Issue.record("9 is larger than 4"); return
+        }
+        #expect(arguments.compactMap { ($0 as? IntItem)?.value } == [4, 9])
+    }
+
+    /// Nothing to look at is a missing argument; nothing that passes is a miss,
+    /// which still hands over the other claims; and a missing argument after a
+    /// miss outranks it.
+    @Test func `an empty stack is short, a stack with nothing accepted a miss`() {
+        let inty = Interpreter()
+        inty.stacks[.vecInt]!.prepend(VecIntItem([1]))
+        guard case .short(.int) = Planner(for: inty).plan([.takes(.vecInt), Self.even]) else {
+            Issue.record("no ints at all is short"); return
+        }
+        inty.stacks[.int]!.prepend(contentsOf: [IntItem(5), IntItem(3)] as [any Item])
+        guard case .miss(.int, let claims) = Planner(for: inty).plan([.takes(.vecInt), Self.even]) else {
+            Issue.record("odd ints only is a miss"); return
+        }
+        #expect(claims.map(\.stack) == [.vecInt], "the other argument is still claimed")
+        guard case .short(.bool) = Planner(for: inty).plan([Self.even, .takes(.bool)]) else {
+            Issue.record("a short stack after a miss is still short"); return
+        }
     }
 
     /// The counts add, and they add because the claims stack up: the index is
@@ -230,6 +295,7 @@ struct PlannerTests {
                         }
                     }
                     let before = snapshot(inty)
+                    let functionsBefore = Array(inty.stacks[.function]!)
 
                     behavior.act(on: inty)
 
@@ -239,6 +305,13 @@ struct PlannerTests {
 
                     #expect(snapshot(inty) == before,
                             "\(instruction) refused but changed a stack: \(blamed)")
+                    // A starvation also shelves the instruction, bare, on `.function`,
+                    // and takes nothing from it.
+                    let functions = Array(inty.stacks[.function]!)
+                    #expect(functions.first?.isEqual(to: FunctionItem(bare: InstructionItem(instruction))) == true
+                            && functions.count == functionsBefore.count + 1
+                            && zip(functions.dropFirst(), functionsBefore).allSatisfy { $0.isEqual(to: $1) },
+                            "\(instruction) starved without shelving itself on .function")
                     #expect(blamed.hasPrefix("\(instruction) missing args: ."))
                     // The blame must be a stack the instruction actually declared: one it
                     // needs, or, for a lookup's miss, one it observes.

@@ -89,7 +89,7 @@ public nonisolated enum ArchiveError: Error, Sendable, Equatable {
 }
 
 /// One item, with its children named by position. Exactly one of `scalar`,
-/// `code`, `iterator` and `standIn` is present.
+/// `code`, `iterator`, `standIn`, `binding` and `function` is present.
 nonisolated struct ArchiveNode: Codable, Sendable {
     /// An item that holds no other items, encoded as `AnyItem` does.
     var scalar: AnyItem?
@@ -98,6 +98,7 @@ nonisolated struct ArchiveNode: Codable, Sendable {
     var iterator: ArchivedIterator?
     var standIn: ArchivedStandIn?
     var binding: ArchivedBinding?
+    var function: ArchivedFunction?
     /// The history, when there is one.
     var call: [Int]?
     /// The weight the push boundary measured, when it is not the tree's.
@@ -127,6 +128,7 @@ nonisolated struct ArchiveNode: Codable, Sendable {
                                source: standIn.source, reason: standIn.reason)
         }
         if let binding { return BindingItem(key: binding.key, bound: try resolve(binding.bound)) }
+        if let function { return try function.item(resolve) }
         throw ArchiveError.malformed("a node with no item")
     }
 }
@@ -152,6 +154,21 @@ nonisolated struct ArchivedIterator: Codable, Sendable {
         }
         return IteratorItem(kind: kind, origin: try resolve(origin), destination: try destination.map(resolve),
                             body: block, emits: emits, cursor: cursor, laps: laps, burial: burial)
+    }
+}
+
+/// A `FunctionItem`, its body named by position; a derived one's holes and
+/// output too.
+nonisolated struct ArchivedFunction: Codable, Sendable {
+    var body: [Int]
+    var holes: [FunctionItem.Hole]?
+    var output: PushStack?
+
+    func item(_ resolve: (Int) throws -> any Item) throws -> any Item {
+        let items = try body.map(resolve)
+        if let holes, let output { return FunctionItem(body: items, holes: holes, output: output) }
+        guard items.count == 1 else { throw ArchiveError.malformed("a bare function holds one item") }
+        return FunctionItem(bare: items[0])
     }
 }
 
@@ -237,6 +254,7 @@ nonisolated struct ArchiveWriter {
         }
         if let standIn = item.exactly(StandInItem.self) { return [standIn.value] }
         if let pair = item.exactly(BindingItem.self) { return [pair.bound] }
+        if let function = item.exactly(FunctionItem.self) { return function.value }
         return []
     }
 
@@ -282,6 +300,9 @@ nonisolated struct ArchiveWriter {
             node.standIn = ArchivedStandIn(value: held[0], source: standIn.source, reason: standIn.reason)
         } else if let pair = item.exactly(BindingItem.self) {
             node.binding = ArchivedBinding(key: pair.key, bound: held[0])
+        } else if let function = item.exactly(FunctionItem.self) {
+            node.function = ArchivedFunction(body: held, holes: function.isBare ? nil : function.holes,
+                                             output: function.isBare ? nil : function.output)
         } else {
             node.scalar = AnyItem(item)
         }

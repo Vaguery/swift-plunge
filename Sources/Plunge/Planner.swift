@@ -13,7 +13,7 @@ import DequeModule
 
 /// One thing a Behavior must find before it can run.
 ///
-/// Three kinds today, and they exist because the same shape kept recurring and kept
+/// Five kinds today, and they exist because the same shape kept recurring and kept
 /// being solved separately — twice by hand and once wrongly. `takes:` alone
 /// conflated *what I consume* with *what I need*; `alsoNeeds:` split those apart;
 /// and `vecXConstruct` still could not say "N of these, where N is the length of
@@ -21,9 +21,10 @@ import DequeModule
 /// a requirement against the interpreter, given what is resolved so far** — so they
 /// are now one mechanism.
 ///
-/// A fourth kind is designed for and deliberately absent: a **sieve**, resolving to
-/// the first item matching a predicate rather than to a position. Admitting it is
-/// most of why this shape exists.
+/// The fifth, `.takesFirst`, is the **sieve** this shape was designed to admit:
+/// resolving to the first item matching a predicate rather than to a position
+/// (2026-11-11, for map, filter and reduce, which take the topmost function that
+/// fits; the user expects matrices and other constrained types to need it too).
 nonisolated enum Requirement: Sendable {
     /// Consume one item from the top of `stack` — the topmost not already claimed
     /// by an earlier requirement.
@@ -55,12 +56,20 @@ nonisolated enum Requirement: Sendable {
     /// "can this run?" cannot be answered before gathering has begun.
     case takesMany(PushStack, count: @Sendable ([any Item]) -> Int)
 
+    /// Consume the topmost unclaimed item of `stack` that `matching` accepts, asked
+    /// with the arguments resolved **so far**: a sieve. A stack with nothing
+    /// unclaimed is short, as for `.takes` (starvation); a stack whose unclaimed
+    /// items all fail is a **miss** (`GatherPlan.miss`), which the Behavior answers
+    /// by taking its other arguments and refusing with `notFound`.
+    case takesFirst(PushStack, matching: @Sendable (_ candidate: any Item, _ resolved: [any Item]) -> Bool)
+
     var stack: PushStack {
         switch self {
-        case .takes(let s):        s
-        case .needs(let s, _):     s
-        case .takesMany(let s, _): s
-        case .reads(let s):        s
+        case .takes(let s):          s
+        case .needs(let s, _):       s
+        case .takesMany(let s, _):   s
+        case .reads(let s):          s
+        case .takesFirst(let s, _):  s
         }
     }
 }
@@ -76,10 +85,14 @@ nonisolated struct Claim: Sendable {
 
 /// The outcome of planning: either every requirement found a home, or one stack
 /// could not supply — and it says **which**, which is a question the
-/// argument-starvation probe could never answer for itself.
+/// argument-starvation probe could never answer for itself — or a sieve found
+/// items but none that it accepts.
 nonisolated enum GatherPlan {
     case ready(arguments: [any Item], claims: [Claim])
     case short(PushStack)
+    /// Every other requirement was met, but `stack`'s sieve accepted nothing.
+    /// `claims` are the others', for the Behavior to take before it refuses.
+    case miss(PushStack, claims: [Claim])
 }
 
 
@@ -119,18 +132,49 @@ nonisolated struct Planner {
         var arguments: [any Item] = []
         var claims: [Claim] = []
         /// How many items each stack has had claimed so far. Every requirement kind
-        /// claims the topmost unclaimed index, so a stack's claims are always the
-        /// contiguous run 0..<n — and the next free index is simply n. (This used to
-        /// re-scan every claim for each candidate index, which made an N-element
+        /// but the sieve claims the topmost unclaimed index, so a stack's claims are
+        /// the contiguous run 0..<n — and the next free index is simply n. (This used
+        /// to re-scan every claim for each candidate index, which made an N-element
         /// `.takesMany` cost O(N³) inside a single step.)
         var claimedCount: [PushStack: Int] = [:]
+        /// The indexes a sieve claimed below the contiguous run: the only gaps.
+        var sieved: [PushStack: Set<Int>] = [:]
+        var missed: PushStack?
+
+        /// The topmost index of `stack` at or below `start` that nothing has claimed.
+        func free(_ stack: PushStack, from start: Int) -> Int {
+            var index = start
+            while sieved[stack]?.contains(index) == true { index += 1 }
+            return index
+        }
 
         func claim(_ stack: PushStack, consuming: Bool) -> (any Item)? {
-            let index = claimedCount[stack, default: 0]
+            let index = free(stack, from: claimedCount[stack, default: 0])
             guard let item = item(at: index, on: stack) else { return nil }
             claims.append(Claim(stack: stack, index: index, consumed: consuming))
             claimedCount[stack] = index + 1
             return item
+        }
+
+        /// The sieve: the topmost unclaimed item `matching` accepts. Nil, nil when
+        /// nothing is unclaimed (short); nil, true when nothing matches (a miss).
+        func sieve(_ stack: PushStack, _ matching: ([any Item]) -> (any Item) -> Bool) -> (any Item, Bool)? {
+            let accepts = matching(arguments)
+            var index = free(stack, from: claimedCount[stack, default: 0])
+            guard item(at: index, on: stack) != nil else { return nil }
+            while let candidate = item(at: index, on: stack) {
+                if accepts(candidate) {
+                    claims.append(Claim(stack: stack, index: index, consumed: true))
+                    if index == claimedCount[stack, default: 0] {
+                        claimedCount[stack] = index + 1
+                    } else {
+                        sieved[stack, default: []].insert(index)
+                    }
+                    return (candidate, true)
+                }
+                index = free(stack, from: index + 1)
+            }
+            return (IntItem(0), false)
         }
 
         for requirement in requirements {
@@ -157,8 +201,18 @@ nonisolated struct Planner {
                     guard let item = claim(stack, consuming: true) else { return .short(stack) }
                     arguments.append(item)
                 }
+
+            case .takesFirst(let stack, let matching):
+                guard let (item, found) = sieve(stack, { resolved in { matching($0, resolved) } }) else {
+                    return .short(stack)
+                }
+                // A miss still checks the requirements after it: a missing
+                // argument there is starvation, which outranks a miss.
+                if !found { missed = missed ?? stack }
+                arguments.append(item)
             }
         }
+        if let missed { return .miss(missed, claims: claims) }
         return .ready(arguments: arguments, claims: claims)
     }
 

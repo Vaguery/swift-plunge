@@ -39,7 +39,8 @@ nonisolated extension Interpreter {
         .vecDouble,
         .vecString,
         .iterator,
-        .binding
+        .binding,
+        .function
     ]
 
     static var stackFamilyBehaviors: [PushInstruction: Behavior] {

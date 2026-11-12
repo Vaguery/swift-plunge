@@ -330,7 +330,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     // Deletion at a depth, every generated family
     case boolDeleteAtDepth, intDeleteAtDepth, doubleDeleteAtDepth, charDeleteAtDepth, stringDeleteAtDepth,
          codeDeleteAtDepth, execDeleteAtDepth, vecIntDeleteAtDepth, vecBoolDeleteAtDepth, vecDoubleDeleteAtDepth,
-         vecStringDeleteAtDepth, iteratorDeleteAtDepth, bindingDeleteAtDepth
+         vecStringDeleteAtDepth, iteratorDeleteAtDepth, bindingDeleteAtDepth, functionDeleteAtDepth
 
     // The .binding stack: its generated family,
     case bindingDeepDup, bindingDup, bindingDupItems, bindingDupTimes, bindingStackIsEmpty, bindingEq, bindingFlush, bindingPop, bindingPopItems,
@@ -346,6 +346,13 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case bindingDeref, bindingDerefFrom, bindingDerefToCode, bindingDerefToCodeFrom, bindingDo, bindingNearestKey,
          bindingFloorKey, bindingCeilingKey, bindingKeyOf, bindingPopKey, bindingKeyDepth, bindingContainsKey,
          bindingOccurrencesOfKey
+
+    // The .function stack: a block's functions,
+    case codePushAllFunctions
+    // and its generated family.
+    case functionDeepDup, functionDup, functionDupItems, functionDupTimes, functionStackIsEmpty, functionEq,
+         functionFlush, functionPop, functionPopItems, functionRot, functionShove, functionStackDepth, functionSwap,
+         functionYank, functionYankDup
 
     // Short iterator constructors
     case iteratorOverString, iteratorOverVecBool, iteratorOverVecInt, iteratorOverVecDouble,

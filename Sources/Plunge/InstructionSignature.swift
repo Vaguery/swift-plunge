@@ -67,6 +67,7 @@ nonisolated extension Behavior {
             case .reads(let stack):             reads[stack, default: 0] += 1
             case .needs(let stack, let count):  needs[stack, default: 0] += count
             case .takesMany(let stack, _):      variadic.insert(stack)
+            case .takesFirst(let stack, _):     consumes[stack, default: 0] += 1
             }
         }
         return InstructionSignature(consumes: consumes, reads: reads, needs: needs, variadic: variadic,

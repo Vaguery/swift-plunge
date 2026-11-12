@@ -199,18 +199,27 @@ struct DocumentationExamplesTests {
 
     /// *Functions: Map, Filter and Reduce*: the three examples.
     @Test func `functions: map, filter, reduce`() async {
+        let derived = await Self.finalStacks([.function], after: [
+            CodeItem([IntItem(2), Self.op(.intAdd), Self.op(.intMultiply)]), Self.op(.codePushAllFunctions)
+        ])
+        #expect(derived[.function]?.prefix(2) == ["ƒ( ⟨int⟩ ⟨int⟩ 2 .intAdd .intMultiply )", "ƒ( ⟨int⟩ 2 .intAdd )"])
+        let filled = await Self.finalStacks([.vecInt, .int], after: [
+            Self.op(.intAdd), IntItem(10), VecIntItem([1, 2, 3]), Self.op(.vecIntMap)
+        ])
+        #expect(filled[.vecInt]?.first == "[11, 12, 13]")
+        #expect(filled[.int]?.first == "10")
         let mapped = await Self.finalStacks([.vecInt], after: [
-            VecIntItem([1, 2, 3]), CodeItem([Self.op(.input0), IntItem(2), Self.op(.intMultiply)]), Self.op(.vecIntMap)
+            CodeItem([IntItem(2), Self.op(.intMultiply)]), Self.op(.codePushAllFunctions),
+            VecIntItem([1, 2, 3]), Self.op(.vecIntMap)
         ])
         #expect(mapped[.vecInt]?.first == "[2, 4, 6]")
         let filtered = await Self.finalStacks([.vecInt], after: [
-            VecIntItem([1, 2, 3, 4]),
-            CodeItem([Self.op(.input0), IntItem(2), Self.op(.intMod), IntItem(0), Self.op(.intEq)]),
-            Self.op(.vecIntFilter)
+            CodeItem([IntItem(2), Self.op(.intMod), IntItem(0), Self.op(.intEq)]), Self.op(.codePushAllFunctions),
+            VecIntItem([1, 2, 3, 4]), Self.op(.vecIntFilter)
         ])
         #expect(filtered[.vecInt]?.first == "[2, 4]")
         let reduced = await Self.finalStacks([.int], after: [
-            VecIntItem([1, 2, 3, 4]), CodeItem([Self.op(.input0), Self.op(.input1), Self.op(.intAdd)]),
+            CodeItem([Self.op(.intAdd)]), Self.op(.codePushAllFunctions), VecIntItem([1, 2, 3, 4]),
             Self.op(.vecIntReduce)
         ])
         #expect(reduced[.int] == ["10", "(1 items)"])

@@ -239,8 +239,9 @@ nonisolated final class Interpreter {
     @exclusivity(unchecked) private(set) var liveWeight: Int = 0
     @exclusivity(unchecked) var counter: Int = 0
 
-    /// The stack of the most recent push of a value: any stack but `.exec` and
-    /// `.error`. A function run in a sub-interpreter returns the top of this
+    /// The stack of the most recent push of a value: any stack but `.exec`,
+    /// `.error` and `.function` (where a starvation shelves the instruction, which
+    /// is not something the program produced). A function run in a sub-interpreter returns the top of this
     /// stack, "the last thing it produced" (map, filter and reduce). One store
     /// per push.
     @exclusivity(unchecked) var lastPush: PushStack?
@@ -265,6 +266,13 @@ nonisolated final class Interpreter {
     /// the runaway guard's are, so that it is not a configuration knob.
     static let maxSandboxDepth = 50
 
+    /// Every item pushed, when non-nil: a function derivation's sandbox reads
+    /// what each step made (`codePushAllFunctions`). Nil everywhere else.
+    var pushLog: [(stack: PushStack, item: any Item)]?
+    /// The functions each block has yielded this run, by the block's contents
+    /// (nil for a block whose derivation was refused): a block's derivation costs
+    /// its steps the first time a run makes it, and later copies are free.
+    var derivations: [String: [FunctionItem]?] = [:]
     /// The step during which something was last placed on `.error`; -2 means
     /// never (so that it is never the step before step 0).
     /// `.errorPreviousStep` compares it with the step before its own.
@@ -378,7 +386,8 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        if stack != .exec && stack != .error { lastPush = stack }
+        if stack != .exec && stack != .error && stack != .function { lastPush = stack }
+        if pushLog != nil { pushLog!.append((stack, item)) }
         // No provenance stripping here: with `recordsProvenance` off, Behaviors never
         // build a `call` in the first place (every provenance expression is written
         // inside `recording(…)`; see `ProvenanceRecording`), so there is nothing to
@@ -599,6 +608,7 @@ nonisolated final class Interpreter {
         self.lastPush = nil
         self.lastRunawayCheck = -1
         self.lastErrorStep = -2
+        self.derivations = [:]
         self.nextRefKey = Self.inputSlots.count
 
         // inputs and constants (both keyed by instruction token)

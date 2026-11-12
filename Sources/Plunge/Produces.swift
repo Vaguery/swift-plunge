@@ -26,6 +26,11 @@ public nonisolated enum Produces: Hashable, Sendable {
     /// instruction that only consumes.
     case results([PushStack])
 
+    /// Any number of results, all on `stack`, how many decided by the arguments:
+    /// `codePushAllFunctions` pushes every function a block yields, which may be
+    /// none.
+    case several(PushStack)
+
     /// One of a few fixed result lists, chosen by the arguments' values: an
     /// iterator getter's result type follows the iterator's kind, a setter that
     /// finishes its loop hands the body to `.code` instead of an iterator, and
@@ -71,6 +76,7 @@ public nonisolated extension Produces {
         case .alternatives(let options):  Set(options.flatMap { $0 })
         case .deferred(let stack):        [stack]
         case .delivery(let stack):        [stack]
+        case .several(let stack):         [stack]
         case .positions, .continuation, .input, .printout: []
         }
     }

@@ -87,6 +87,7 @@ struct CruxRoundTripTests {
                             cursor: n % 3
                          )
         case .binding:       BindingItem(key: n, bound: IntItem(n + 1))
+        case .function:  FunctionItem(bare: InstructionItem([.intAdd, .intSubtract, .intMultiply][n % 3]))
         case .error:     nil   // never seeded; never checked
         }
     }

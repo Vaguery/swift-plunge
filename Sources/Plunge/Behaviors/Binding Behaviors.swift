@@ -48,8 +48,8 @@ nonisolated extension Interpreter {
     /// For a stack that really is short; a key or probe that matched nothing is
     /// `refNotFound`.
     static func refMissing(_ name: PushInstruction, on stack: PushStack,
-                           _ recording: ProvenanceRecording) -> Router {
-        Router(.error, ErrorItem(missingArgumentsFor: name, on: stack).observed(by: name, recording))
+                           _ recording: ProvenanceRecording) -> [Router] {
+        Behavior.starved(name, on: stack, recording)
     }
 
     /// A lookup whose key (or probe) was there and matched no binding: a miss,
@@ -90,7 +90,7 @@ nonisolated extension Interpreter {
                              produces: .results([.binding, .int])) { _, context in
             let recording = context.recording
             guard let top = context.items(of: stack).first else {
-                return [refMissing(name, on: stack, recording)]
+                return refMissing(name, on: stack, recording)
             }
             let fresh = context.freshKey()
             let key = IntItem(fresh).observed(by: name, recording)

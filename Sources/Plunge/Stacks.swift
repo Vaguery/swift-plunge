@@ -14,6 +14,7 @@ public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, 
     case vecBool, vecInt, vecDouble, vecString
     case iterator
     case binding
+    case function
     case error
 
 
@@ -51,6 +52,7 @@ nonisolated extension PushStack {
         case .exec: "pending item"
         case .iterator: "iterator"
         case .binding: "binding"
+        case .function: "function"
         case .error: "error"
         case .vecBool: "vector of bools"
         case .vecInt: "vector of ints"
@@ -323,6 +325,7 @@ nonisolated extension PushStack {
         if type == CharItem.self { return .char }
         if type == IteratorItem.self { return .iterator }
         if type == BindingItem.self { return .binding }
+        if type == FunctionItem.self { return .function }
         if type == VecIntItem.self { return .vecInt }
         if type == VecDoubleItem.self { return .vecDouble }
         if type == VecBoolItem.self { return .vecBool }

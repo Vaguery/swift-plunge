@@ -73,6 +73,7 @@ nonisolated struct AutomaticTagging {
             case .reads(let stack): read.append(stack)
             case .needs(let stack, _): needed.insert(stack)
             case .takesMany(let stack, _): taken.append(stack); variadic = true
+            case .takesFirst(let stack, _): taken.append(stack)
             }
         }
         self.taken = taken
@@ -83,7 +84,7 @@ nonisolated struct AutomaticTagging {
         let outputs: [PushStack] = switch behavior.produces {
         case .results(let stacks): stacks
         case .alternatives(let options): options.flatMap { $0 }
-        case .deferred(let stack), .delivery(let stack): [stack]
+        case .deferred(let stack), .delivery(let stack), .several(let stack): [stack]
         case .positions, .continuation, .input, .printout: []
         }
         self.outputs = outputs

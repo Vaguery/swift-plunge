@@ -3,7 +3,7 @@
 //  Plunge
 //
 
-/// `pretty()` for the containers — blocks, iterators and pairs — written as a loop over
+/// `pretty()` for the containers — blocks, iterators, pairs and functions — written as a loop over
 /// an explicit stack instead of recursion.
 ///
 /// Blocks hold iterators and iterators hold blocks, nested up to `maxCodeDepth`
@@ -49,6 +49,13 @@ nonisolated enum NestedRendering {
                         pieces.append(.item(body))
                     }
                     pieces.append(.text("»"))
+                    pending.append(contentsOf: pieces.reversed())
+                } else if let function = item.exactly(FunctionItem.self) {
+                    // `ƒ( ⟨int⟩ 3 .intAdd )`: each hole written as its stack.
+                    let holes = function.holes
+                    let body = function.value.map { [Piece.item($0), .text(" ")] }
+                    let laid = FunctionItem.merged(body, function.layout) { [Piece.text("⟨\(holes[$0].stack)⟩ ")] }
+                    let pieces: [Piece] = [.text("ƒ( ")] + laid.flatMap { $0 } + [.text(")")]
                     pending.append(contentsOf: pieces.reversed())
                 } else if let pair = item as? BindingItem {
                     // `⟨key ↦ value⟩`.

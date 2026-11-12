@@ -42,12 +42,17 @@ nonisolated struct ReadContext {
     var inputs: [PushInstruction: any Item] { interpreter.inputs }
     /// Steps completed before this one (`pushStepCount`).
     var stepCount: Int { interpreter.counter }
-    /// Whether the step before this one placed anything on `.error`.
-    var previousStepErred: Bool { interpreter.lastErrorStep == interpreter.counter - 1 }
     /// How many sandboxes deep this run is (`Interpreter.sandboxDepth`).
     var sandboxDepth: Int { interpreter.sandboxDepth }
     /// Whether this run may start a sandbox of its own (`Interpreter.maxSandboxDepth`).
     var maySandbox: Bool { interpreter.sandboxDepth < Interpreter.maxSandboxDepth }
+    /// The functions this run already derived from a block with these contents:
+    /// nil if none was derived, `.some(nil)` if its derivation was refused.
+    func derivation(of key: String) -> [FunctionItem]?? { interpreter.derivations[key] }
+    /// Records a block's derivation for the rest of the run.
+    func remember(_ functions: [FunctionItem]?, for key: String) { interpreter.derivations[key] = functions }
+    /// Whether the step before this one placed anything on `.error`.
+    var previousStepErred: Bool { interpreter.lastErrorStep == interpreter.counter - 1 }
     /// Whether provenance is being recorded.
     var recording: ProvenanceRecording { interpreter.recording }
 

@@ -2,32 +2,42 @@
 //  Function Behaviors.swift
 //  Plunge
 //
-//  Map, filter and reduce over vectors and strings.
+//  Map, filter and reduce over vectors and strings, applying a function from
+//  `.function`.
 //
-//  **A function is a block with `.inputN` holes.** There is no function type:
-//  `( .input0 2 .intMultiply )` doubles its argument. Applying it runs the block
-//  in a fresh sub-interpreter whose environment is this one's, with `.input0`
-//  (and, for reduce, `.input1`) rebound. A block harvested from a crux already
-//  has its holes, so it applies as it is.
+//  **The function is found, not given.** Each takes its collection, and takes
+//  the topmost function on `.function` that can do its job over the collection's
+//  elements, through the planner's sieve (`Requirement.takesFirst`, testing
+//  `fits`):
+//  - **map**: a hole of the element's type, and a value a collection can hold;
+//  - **filter**: a hole of the element's type, and a bool;
+//  - **reduce**: two holes of the element's type, and a value of that type.
+//  An empty `.function` is a missing argument, so the instruction starves (and is
+//  itself shelved on `.function`). A non-empty `.function` with nothing that fits
+//  is a miss: `notFound`, with the collection consumed.
 //
-//  The rules that shape them:
-//  - **The result is the last value the function pushed**, on whatever stack;
-//    so the result type follows the data, and `( .input0 .doubleFromInt )`
-//    maps a vecInt to a vecDouble.
+//  **Filling the holes** (the user's rulings 1–3, 2026-11-11). Holes are filled
+//  in order. The element takes the first hole of its type; for reduce the
+//  running value takes the first and the element the second, a left fold. Every
+//  other hole takes the top of its stack in the run, then the next down, **read
+//  and left**, so every element sees the same values: `.intAdd` mapped with 10 on
+//  top of `.int` adds 10. When a stack runs short of filler, the instruction
+//  refuses with `notFound` after consuming its arguments: the filler is material
+//  it acquires, not an argument.
+//
+//  **Applying** runs the filled function in a fresh sub-interpreter over this
+//  run's inputs and constants, with the language's default limits and its steps
+//  charged to this run. **The result is the top of the function's output stack**
+//  afterwards (provisional). With none there, map passes the element through,
+//  filter drops it, and reduce keeps its running value.
 //  - **Uniform or refuse.** A map's results must be one type: bools, ints,
 //    doubles or strings make that vector; chars make a string.
-//  - **No result passes the element through**: the element stands for
-//    itself. For filter, no result (or anything but a bool) counts as false.
-//  - **Reduce folds from the first element**, with `.input0` the accumulator and
-//    `.input1` the element; no seed is drawn, and an empty collection is refused.
-//  - **Sub-run steps are charged to this run's budget** (`ReadContext.charge`),
-//    and an application that would exceed what is left is refused. Every other
-//    limit is the language's default, whatever the run's, so the result never
-//    depends on configuration and the crux replays.
+//  - **Reduce folds from the first element**; an empty collection is refused.
 //
-//  Provenance: the result records `collection function .xMap`, which re-runs to
-//  the same result in the same environment (constants and inputs), the
-//  assumption every constant and input already makes.
+//  Provenance: a result records the fillers it read, deepest first, then
+//  `collection function .xMap`, then clears the fillers away as a query does
+//  (they were read and left). It re-runs to the same result and nothing else:
+//  the function lands on top of `.function`, where the sieve finds it first.
 //
 
 nonisolated extension Interpreter {
@@ -47,15 +57,6 @@ nonisolated extension Interpreter {
             case .tooDeep: "sandboxes nested past \(Interpreter.maxSandboxDepth) deep"
             }
         }
-    }
-
-    /// Runs `function` once with `bindings` over the environment in `context`,
-    /// charging its steps; returns the last value it pushed, or nil if it pushed
-    /// none that is still there. The input-fed form: the function's argument is
-    /// its `.input0` hole.
-    static func apply(_ function: CodeItem, binding bindings: [PushInstruction: any Item],
-                      in context: ReadContext) throws(ApplicationFailure) -> (any Item)? {
-        try run(function.value, binding: bindings, in: context)
     }
 
     /// The stack-fed form, as an iterator plays its body: `element` is executed
@@ -119,58 +120,85 @@ nonisolated extension Interpreter {
 
     // MARK: - The three, over any collection
 
-    /// Map `function` over `elements`; `empty` is the result for no elements.
-    static func map(_ instruction: PushInstruction, _ elements: [any Item], _ function: CodeItem,
-                    call: [any Item], empty: any Item, _ context: ReadContext) -> [Router] {
-        guard !elements.isEmpty else { return [Router(PushStack.defaultStack(for: empty)!, empty)] }
+    /// Map over `elements` of `collection`; `empty` is the result for none.
+    static func map(_ instruction: PushInstruction, _ arguments: [any Item], _ elements: [any Item],
+                    empty: (([any Item]) -> any Item), _ context: ReadContext) -> [Router] {
+        let (collection, function) = (arguments[0], arguments[1].exactly(FunctionItem.self)!)
+        let element = elementStack[PushStack.defaultStack(for: collection)!]!
+        let application: Application
+        switch prepare(function, .map, over: element, context) {
+        case .failure(let why): return refusal(instruction, why, context)
+        case .success(let ready): application = ready
+        }
+        guard !elements.isEmpty else {
+            let stack = PushStack.defaultStack(for: collection)!
+            return [Router(stack, empty(context.recording(application.recorded(instruction, collection,
+                                                                               producing: stack))))]
+        }
         var results: [any Item] = []
-        for element in elements {
+        for item in elements {
             do throws(ApplicationFailure) {
-                results.append(try apply(function, binding: [.input0: element], in: context) ?? element)
+                results.append(try Self.call(application, [item], context) ?? item)
             } catch {
                 return refusal(instruction, error.reason, context)
             }
         }
-        guard let output = collected(results, call: context.recording(call)),
-              let stack = PushStack.defaultStack(for: output) else {
+        guard let made = collected(results, call: []), let stack = PushStack.defaultStack(for: made),
+              let output = collected(results, call: context.recording(application.recorded(
+                  instruction, collection, producing: stack))) else {
             return refusal(instruction, "results are not all one collectable type", context)
         }
         return [Router(stack, output)]
     }
 
-    /// The positions of `elements` whose predicate result is `true`, or nil if
-    /// the budget ran out.
-    static func kept(_ elements: [any Item], _ function: CodeItem, _ context: ReadContext) -> [Int]? {
+    /// Filter `elements` of `collection`: `keep` builds the result from the kept
+    /// positions and its call.
+    static func filter(_ instruction: PushInstruction, _ arguments: [any Item], _ elements: [any Item],
+                       keep: ([Int], [any Item]) -> Router, _ context: ReadContext) -> [Router] {
+        let (collection, function) = (arguments[0], arguments[1].exactly(FunctionItem.self)!)
+        let element = elementStack[PushStack.defaultStack(for: collection)!]!
+        let application: Application
+        switch prepare(function, .filter, over: element, context) {
+        case .failure(let why): return refusal(instruction, why, context)
+        case .success(let ready): application = ready
+        }
         var kept: [Int] = []
-        for (index, element) in elements.enumerated() {
+        for (index, item) in elements.enumerated() {
             do throws(ApplicationFailure) {
-                let result = try apply(function, binding: [.input0: element], in: context)
-                if (result as? BoolItem)?.value == true { kept.append(index) }
-            } catch {
-                return nil
-            }
-        }
-        return kept
-    }
-
-    /// Fold `function` over `elements` from the first.
-    static func reduce(_ instruction: PushInstruction, _ elements: [any Item], _ function: CodeItem,
-                       call: [any Item], _ context: ReadContext) -> [Router] {
-        guard var accumulator = elements.first else {
-            return refusal(instruction, "an empty collection has nothing to fold", context)
-        }
-        for element in elements.dropFirst() {
-            do throws(ApplicationFailure) {
-                accumulator = try apply(function, binding: [.input0: accumulator, .input1: element],
-                                        in: context) ?? accumulator
+                if (try call(application, [item], context) as? BoolItem)?.value == true { kept.append(index) }
             } catch {
                 return refusal(instruction, error.reason, context)
             }
         }
-        let result = rebuilt(accumulator, call: context.recording(call))
-        guard let stack = PushStack.defaultStack(for: result) else {
-            return refusal(instruction, "the fold produced \(result.pretty()), which rests on no stack", context)
+        return [keep(kept, application.recorded(instruction, collection,
+                                                producing: PushStack.defaultStack(for: collection)!))]
+    }
+
+    /// Fold over `elements` of `collection` from the first.
+    static func reduce(_ instruction: PushInstruction, _ arguments: [any Item], _ elements: [any Item],
+                       _ context: ReadContext) -> [Router] {
+        let (collection, function) = (arguments[0], arguments[1].exactly(FunctionItem.self)!)
+        let element = elementStack[PushStack.defaultStack(for: collection)!]!
+        let application: Application
+        switch prepare(function, .reduce, over: element, context) {
+        case .failure(let why): return refusal(instruction, why, context)
+        case .success(let ready): application = ready
         }
+        guard var accumulator = elements.first else {
+            return refusal(instruction, "an empty collection has nothing to fold", context)
+        }
+        for item in elements.dropFirst() {
+            do throws(ApplicationFailure) {
+                accumulator = try call(application, [accumulator, item], context) ?? accumulator
+            } catch {
+                return refusal(instruction, error.reason, context)
+            }
+        }
+        guard let stack = PushStack.defaultStack(for: accumulator) else {
+            return refusal(instruction, "the fold produced \(accumulator.pretty()), which rests on no stack", context)
+        }
+        let result = rebuilt(accumulator, call: context.recording(application.recorded(instruction, collection,
+                                                                                      producing: stack)))
         return [Router(stack, result)]
     }
 
@@ -180,55 +208,79 @@ nonisolated extension Interpreter {
     static let mapResults: Produces =
         .alternatives([[.vecBool], [.vecDouble], [.vecInt], [.vecString], [.string]])
 
-    static let foldResults: Produces =
-        .alternatives(PushStack.allCases.filter { ![.exec, .error, .iterator].contains($0) }.map { [$0] })
+    /// Every stack a filler can be read from.
+    static let fillerStacks: [PushStack] = PushStack.allCases.filter { ![.exec, .error].contains($0) }
+
+    /// One of the three over `collection`'s stack: takes the collection, and
+    /// reads `.function` (an empty one is a missing argument).
+    /// One of the three over `collection`'s stack: takes the collection, and the
+    /// topmost function that fits through the sieve (`Requirement.takesFirst`): an
+    /// empty `.function` is a missing argument, one with nothing that fits a miss.
+    static func functionBehavior(_ instruction: PushInstruction, _ family: Family, over collection: PushStack,
+                                 summary: String,
+                                 _ body: @escaping @Sendable ([any Item], ReadContext) -> [Router]) -> Behavior {
+        let element = elementStack[collection]!
+        let produces: Produces = switch family {
+        case .map: mapResults
+        case .filter: .results([collection])
+        case .reduce: .results([element])
+        }
+        let fitting: Requirement = .takesFirst(.function) { candidate, _ in
+            candidate.exactly(FunctionItem.self).map { fits($0, family, over: element) } == true
+        }
+        return Behavior(instruction, requires: [.takes(collection), fitting], tags: [.fallible],
+                        behaviorClass: .operation, body: .applying(body), produces: produces,
+                        observes: fillerStacks)
+        .described(summary)
+    }
 
     static func vectorMapBehavior<V: VectorItem>(_ instruction: PushInstruction, making itemType: V.Type) -> Behavior {
-        Behavior.applying(instruction, takes: [V.pushStack, .code], tags: [.fallible],
-                          produces: mapResults) { a, context in
-            let (vector, function) = (a[0] as! V, a[1] as! CodeItem)
-            return map(instruction, vector.value.map { V.Scalar($0, call: []) }, function,
-                       call: [vector, function, InstructionItem(instruction)],
-                       empty: V([], call: context.recording([vector, function, InstructionItem(instruction)])),
-                       context)
+        functionBehavior(instruction, .map, over: V.pushStack,
+                         summary: "Maps the topmost function on `.function` that fits over a "
+                         + "\(V.pushStack.noun), each element in its first \(elementStack[V.pushStack]!) hole; "
+                         + "refuses when none fits, filler runs short, results are mixed or steps run "
+                         + "out.") { a, context in
+            let vector = a[0] as! V
+            return map(instruction, a, vector.value.map { V.Scalar($0, call: []) },
+                       empty: { V([], call: $0) }, context)
         }
-        .described(
-            "Runs the block on each element of a \(V.pushStack.noun), bound as `.input0`, collecting each run's "
-            + "last pushed value (the element if none); refuses mixed types or when steps run out.")
     }
 
     static func vectorFilterBehavior<V: VectorItem>(
         _ instruction: PushInstruction, making itemType: V.Type
     ) -> Behavior {
-        Behavior.applying(instruction, takes: [V.pushStack, .code], tags: [.fallible],
-                          produces: .results([V.pushStack])) { a, context in
-            let (vector, function) = (a[0] as! V, a[1] as! CodeItem)
-            guard let kept = kept(vector.value.map { V.Scalar($0, call: []) }, function, context) else {
-                return refusal(instruction, "out of steps", context)
-            }
+        functionBehavior(instruction, .filter, over: V.pushStack,
+                         summary: "Keeps the elements of a \(V.pushStack.noun) for which the topmost "
+                         + "bool-valued function on `.function` that fits gives true; refuses when none fits, "
+                         + "filler runs short or steps run out.") { a, context in
+            let vector = a[0] as! V
             let origins = vector.origins()
-            return [Router(V.pushStack, V(kept.map { vector.value[$0] },
-                                          call: context.recording([vector, function, InstructionItem(instruction)]),
-                                          members: context.recording.pieces(kept.map { origins[$0] })))]
+            return filter(instruction, a, vector.value.map { V.Scalar($0, call: []) },
+                          keep: { kept, call in
+                              Router(V.pushStack, V(kept.map { vector.value[$0] }, call: context.recording(call),
+                                                    members: context.recording.pieces(kept.map { origins[$0] })))
+                          }, context)
         }
-        .described(
-            "Keeps the elements of a \(V.pushStack.noun) for which the block, run with the element as `.input0`, "
-            + "last pushes true; refuses when steps run out.")
     }
 
     static func vectorReduceBehavior<V: VectorItem>(
         _ instruction: PushInstruction, making itemType: V.Type
     ) -> Behavior {
-        Behavior.applying(instruction, takes: [V.pushStack, .code], tags: [.fallible],
-                          produces: foldResults) { a, context in
-            let (vector, function) = (a[0] as! V, a[1] as! CodeItem)
-            return reduce(instruction, vector.value.map { V.Scalar($0, call: []) }, function,
-                          call: [vector, function, InstructionItem(instruction)], context)
+        let element = elementStack[V.pushStack]!
+        return functionBehavior(instruction, .reduce, over: V.pushStack,
+                                summary: "Folds the topmost function on `.function` that fits over a "
+                                + "\(V.pushStack.noun) from the first element, the running value in its first "
+                                + "\(element) hole and the next element in its second; refuses an empty vector, or "
+                                + "when none fits, filler runs short or steps run out.") { a, context in
+            let vector = a[0] as! V
+            return reduce(instruction, a, vector.value.map { V.Scalar($0, call: []) }, context)
         }
-        .described(
-            "Folds the block over a \(V.pushStack.noun) from the first element, with the running value as "
-            + "`.input0` and the next element as `.input1`; refuses an empty vector or when steps run out.")
     }
+
+    /// Each collection's element stack.
+    static let elementStack: [PushStack: PushStack] = [
+        .vecBool: .bool, .vecInt: .int, .vecDouble: .double, .vecString: .string, .string: .char
+    ]
 
     static let vecBoolMap_Behavior = vectorMapBehavior(.vecBoolMap, making: VecBoolItem.self)
     static let vecIntMap_Behavior = vectorMapBehavior(.vecIntMap, making: VecIntItem.self)
@@ -246,50 +298,46 @@ nonisolated extension Interpreter {
     // Strings: collections of chars.
 
     static let stringMap_Behavior =
-        Behavior.applying(.stringMap, takes: [.string, .code], tags: [.fallible],
-                          produces: mapResults) { a, context in
-            let (text, function) = (a[0] as! StringItem, a[1] as! CodeItem)
-            let call: [any Item] = [text, function, InstructionItem(.stringMap)]
-            return map(.stringMap, text.value.map { CharItem($0) }, function,
-                       call: call, empty: StringItem("", call: context.recording(call)), context)
+        functionBehavior(.stringMap, .map, over: .string,
+                         summary: "Maps the topmost function on `.function` that fits over a string's chars, each "
+                         + "in its first char hole; refuses when none fits, filler runs short, results are mixed or "
+                         + "steps run out.") { a, context in
+            let text = a[0] as! StringItem
+            return map(.stringMap, a, text.value.map { CharItem($0) },
+                       empty: { StringItem("", call: $0) }, context)
         }
-        .described(
-            "Runs the block on each char of a string, bound as `.input0`, collecting each run's last pushed value "
-            + "(the char if none); refuses mixed types or when steps run out.")
 
     static let stringFilter_Behavior =
-        Behavior.applying(.stringFilter, takes: [.string, .code], tags: [.fallible],
-                          produces: .results([.string])) { a, context in
-            let (text, function) = (a[0] as! StringItem, a[1] as! CodeItem)
+        functionBehavior(.stringFilter, .filter, over: .string,
+                         summary: "Keeps the chars of a string for which the topmost bool-valued function on "
+                         + "`.function` that fits gives true; refuses when none fits, filler runs short or steps run "
+                         + "out.") { a, context in
+            let text = a[0] as! StringItem
             let characters = Array(text.value)
-            guard let kept = kept(characters.map { CharItem($0) }, function, context) else {
-                return refusal(.stringFilter, "out of steps", context)
-            }
             let origins = text.origins()
-            let call: [any Item] = [text, function, InstructionItem(.stringFilter)]
-            return [Router(.string, StringItem(String(kept.map { characters[$0] }),
-                                               call: context.recording(call),
-                                               members: context.recording.pieces(kept.map { origins[$0] })))]
+            return filter(.stringFilter, a, characters.map { CharItem($0) },
+                          keep: { kept, call in
+                              Router(.string, StringItem(String(kept.map { characters[$0] }),
+                                                         call: context.recording(call),
+                                                         members: context.recording.pieces(kept.map { origins[$0] })))
+                          }, context)
         }
-        .described(
-            "Keeps the chars of a string for which the block, run with the char as `.input0`, last pushes true; "
-            + "refuses when steps run out.")
 
     static let stringReduce_Behavior =
-        Behavior.applying(.stringReduce, takes: [.string, .code], tags: [.fallible],
-                          produces: foldResults) { a, context in
-            let (text, function) = (a[0] as! StringItem, a[1] as! CodeItem)
-            return reduce(.stringReduce, text.value.map { CharItem($0) }, function,
-                          call: [text, function, InstructionItem(.stringReduce)], context)
+        functionBehavior(.stringReduce, .reduce, over: .string,
+                         summary: "Folds the topmost function on `.function` that fits over a string's chars from "
+                         + "the first, the running value in its first char hole and the next char in its second; "
+                         + "refuses an empty string, or when none fits, filler runs short or steps run "
+                         + "out.") { a, context in
+            let text = a[0] as! StringItem
+            return reduce(.stringReduce, a, text.value.map { CharItem($0) }, context)
         }
-        .described(
-            "Folds the block over a string's chars from the first, with the running value as `.input0` and the next "
-            + "char as `.input1`; refuses an empty string or when steps run out.")
 
 
     // MARK: - The family
 
     static let functionBehaviors: [PushInstruction: Behavior] = [
+        .codePushAllFunctions: codePushAllFunctions_Behavior,
         .vecBoolMap: vecBoolMap_Behavior,
         .vecIntMap: vecIntMap_Behavior,
         .vecDoubleMap: vecDoubleMap_Behavior,

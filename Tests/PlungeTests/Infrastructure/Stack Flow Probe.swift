@@ -44,6 +44,7 @@ struct StackFlowProbe {
                                       destination: IntItem(5), body: CodeItem([BoolItem(true)]),
                                       emits: true)
         case .binding:       BindingItem(key: 3, bound: IntItem(4))
+        case .function:  FunctionItem(bare: InstructionItem(.intAdd))
         case .error:     ErrorItem("x")
         }
     }

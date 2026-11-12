@@ -71,6 +71,7 @@ nonisolated final class Behavior: Sendable {
             case .needs(let s, let n): result[s, default: 0] += n
             case .takesMany(let s, _): result[s, default: 0] += 0
             case .reads(let s):        result[s, default: 0] += 1
+            case .takesFirst(let s, _): result[s, default: 0] += 1
             }
         }
         return result
@@ -91,6 +92,7 @@ nonisolated final class Behavior: Sendable {
             switch requirement {
             case .takes(let s):        result[s, default: 0] += 1
             case .takesMany(let s, _): result[s, default: 0] += 0
+            case .takesFirst(let s, _): result[s, default: 0] += 1
             case .needs, .reads:       break
             }
         }
@@ -262,12 +264,19 @@ nonisolated final class Behavior: Sendable {
     }
 
 
-    /// The refusal for an instruction that came up short on `stack`.
-    /// Recorded as observed by the instruction (a stand-in): it depends on transient
-    /// stack state, so re-running the instruction on a fresh interpreter would not
-    /// reproduce it (provenance law 4b).
-    func missingArguments(on stack: PushStack, _ recording: ProvenanceRecording) -> Router {
-        Router(.error, ErrorItem(missingArgumentsFor: self.name, on: stack).observed(by: self.name, recording))
+    /// **A starvation's two results** (the user, 2026-11-11): the missing-arguments
+    /// error naming the stack that came up short, and the starved instruction
+    /// itself onto `.function` as a bare function, with nothing it found bound or
+    /// copied (`FunctionItem`). Both depend on the moment's stacks, so re-running
+    /// the instruction on a fresh interpreter would not reproduce them: both are
+    /// observed, recorded as stand-ins (provenance law 4b).
+    func starved(on stack: PushStack, _ recording: ProvenanceRecording) -> [Router] {
+        Self.starved(name, on: stack, recording)
+    }
+
+    static func starved(_ name: PushInstruction, on stack: PushStack, _ recording: ProvenanceRecording) -> [Router] {
+        [Router(.error, ErrorItem(missingArgumentsFor: name, on: stack).observed(by: name, recording)),
+         Router(.function, FunctionItem(bare: InstructionItem(name)).observed(by: name, recording))]
     }
 
     func distribute(to interpreter: Interpreter, items: [Router]) {
@@ -352,7 +361,7 @@ nonisolated final class Behavior: Sendable {
             // every argument, then take them all (each stack's claims are its top
             // n items, so dropping n is exactly what `commit` would remove).
             for check in directChecks where check.index >= interpreter.stacks[check.stack]?.count ?? 0 {
-                self.distribute(to: interpreter, items: [missingArguments(on: check.stack, interpreter.recording)])
+                self.distribute(to: interpreter, items: starved(on: check.stack, interpreter.recording))
                 return
             }
             // The arguments' weight is taken off `liveWeight` *before* they are
@@ -373,7 +382,15 @@ nonisolated final class Behavior: Sendable {
         let planner = Planner(for: interpreter)
         switch planner.plan(requirements) {
         case .short(let stack):
-            self.distribute(to: interpreter, items: [missingArguments(on: stack, interpreter.recording)])
+            self.distribute(to: interpreter, items: starved(on: stack, interpreter.recording))
+        case .miss(let stack, let claims):
+            // A sieve found items but none it accepts: the other arguments are
+            // taken, and the refusal is a miss, as a search's is.
+            planner.commit(claims)
+            self.distribute(to: interpreter, items: [
+                Router(.error, ErrorItem("\(name): nothing on .\(stack) fits", kind: .notFound)
+                    .observed(by: name, interpreter.recording))
+            ])
         case .ready(let arguments, let claims):
             planner.commit(claims)
             self.distribute(

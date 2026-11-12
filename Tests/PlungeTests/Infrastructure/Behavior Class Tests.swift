@@ -33,6 +33,7 @@ struct BehaviorClassTests {
                                       destination: IntItem(3), body: CodeItem([IntItem(7)]), emits: true)
         case .exec:      BoolItem(flag)
         case .binding:       BindingItem(key: 2, bound: BoolItem(flag))
+        case .function:  FunctionItem(bare: InstructionItem(flag ? .intAdd : .intSubtract))
         case .error:     ErrorItem("x")
         }
     }
@@ -70,9 +71,10 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 438,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs
-            .structural: 170,   // 13 families × 13 stacks (DeleteAtDepth the 13th; .binding the 13th stack), bindingPopKey
-            .contextRead: 205,  // 80 constants, 10 inputs, 26 depth/emptiness, 5 counts, errorPreviousStep,
+            .operation: 440,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs;
+                               // functionEq, codePushAllFunctions
+            .structural: 183,   // 13 families × 14 stacks (DeleteAtDepth the 13th; .function the 14th), bindingPopKey
+            .contextRead: 207,  // 80 constants, 10 inputs, 28 depth/emptiness, 5 counts, errorPreviousStep,
                                 // 10 readItems/readStack/fromChars,
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,
                                 // bindingContainsKey, bindingOccurrencesOfKey

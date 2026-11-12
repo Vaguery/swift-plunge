@@ -52,6 +52,11 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         case elided
         /// A constant the instruction supplies itself; nothing is lost.
         case minted
+        /// A placeholder's mark inside a function derivation
+        /// (`codePushAllFunctions`): `value` is the hole's number, not the
+        /// placeholder. It never leaves the derivation's sandbox: a derived
+        /// function records its holes as positions (`FunctionItem.Hole`).
+        case hole
     }
 
     /// The literal this stands in for, without a history of its own.
@@ -100,6 +105,7 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         case .observed: "actuallyWas"
         case .elided: "elidedAs"
         case .minted: "minted"
+        case .hole: "hole"
         }
         return ".\(name)_\(verb)_\(value.pretty())"
     }

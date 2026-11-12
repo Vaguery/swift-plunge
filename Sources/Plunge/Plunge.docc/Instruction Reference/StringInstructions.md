@@ -20,7 +20,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringDropLast` | Drops the back: `s n .stringDropLast` removes the last n characters; a negative n removes none. | `string`, `int` | `string` |
 | `stringEndsWith` | Tests whether s ends with t, leaving both: `s t .stringEndsWith`; an empty t gives true. | `string` (read), `string` (read) | `bool` |
 | `stringEq` | Pushes whether the top two strings are equal, leaving both. | `string` (read), `string` (read) | `bool` |
-| `stringFilter` | Keeps the chars of a string for which the block, run with the char as `.input0`, last pushes true; refuses when steps run out. | `string`, `code` | `string`; may refuse |
+| `stringFilter` | Keeps the chars of a string for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringFindNearest` | Finds the char of s nearest c by code point, the first on a tie, pushing its index and it, leaving both; refuses on an empty s. | `string` (read), `char` (read) | `char`, `int`; may refuse |
 | `stringFindNearestFrom` | Finds the char of s nearest c by code point at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `string` (read), `char` (read), `int` (read) | `char`, `int`; may refuse |
 | `stringFirst` | Takes a string's first character; refuses the empty string. | `string` | `char`; may refuse |
@@ -42,7 +42,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringLast` | Takes a string's last character; refuses the empty string. | `string` | `char`; may refuse |
 | `stringLength` | Counts the string's characters, leaving the string. | `string` (read) | `int` |
 | `stringLower` | Lowercases a string by Unicode's default rules. | `string` | `string` |
-| `stringMap` | Runs the block on each char of a string, bound as `.input0`, collecting each run's last pushed value (the char if none); refuses mixed types or when steps run out. | `string`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `stringMap` | Maps the topmost function on `.function` that fits over a string's chars, each in its first char hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `string`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `stringMax` | Pushes the greatest char of the string, leaving the string; refuses an empty string. | `string` (read) | `char`; may refuse |
 | `stringMin` | Pushes the least char of the string, leaving the string; refuses an empty string. | `string` (read) | `char`; may refuse |
 | `stringNth` | Takes the character at index i, clamped into range; refuses the empty string. | `string`, `int` | `char`; may refuse |
@@ -55,7 +55,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringPushAllLetters` | Pushes each character as a one-character string, one per step, front to back; the empty string gives nothing. | `string` | `string`, one per step |
 | `stringPushAllWords` | Pushes each whitespace-separated word of a string, one per step, front to back; a string with no words gives nothing. | `string` | `string`, one per step |
 | `stringQuote` | Quotes a string as a one-item block on `.code`. | `string` | `code` |
-| `stringReduce` | Folds the block over a string's chars from the first, with the running value as `.input0` and the next char as `.input1`; refuses an empty string or when steps run out. | `string`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `stringReduce` | Folds the topmost function on `.function` that fits over a string's chars from the first, the running value in its first char hole and the next char in its second; refuses an empty string, or when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `char`; may refuse |
 | `stringRefAs` | Binds the top string to key k from `.int`, taking both and shadowing any older binding of k: `x k .stringRefAs`. | `string`, `int` | `binding` |
 | `stringRemove` | Removes a char: `s c .stringRemove` gives s without its occurrences of c. | `string`, `char` | `string` |
 | `stringReplace` | Replaces chars: `s a b .stringReplace` turns every a in s into b. | `string`, `char`, `char` | `string` |

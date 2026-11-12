@@ -111,6 +111,7 @@ extension FunctionOutcome {
         case .code: return [[CodeItem([IntItem(1)])], [CodeItem([StringItem("q"), IntItem(2)])], [CodeItem([])]][round]
         case .iterator: return [iteratorPlaceholders[round]]
         case .binding: return [BindingItem(key: 3 + round, bound: IntItem([3, 8, -2][round]))]
+        case .function: return [FunctionItem(bare: InstructionItem([.intAdd, .intMultiply, .intSubtract][round]))]
         default: return []
         }
     }

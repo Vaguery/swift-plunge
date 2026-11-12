@@ -20,7 +20,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntDrop` | Drops the front: `v n .vecIntDrop` removes the first n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
 | `vecIntDropLast` | Drops the back: `v n .vecIntDropLast` removes the last n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
 | `vecIntEq` | Pushes whether the top two vectors of ints are equal, leaving both. | `vecInt` (read), `vecInt` (read) | `bool` |
-| `vecIntFilter` | Keeps the elements of a vector of ints for which the block, run with the element as `.input0`, last pushes true; refuses when steps run out. | `vecInt`, `code` | `vecInt`; may refuse |
+| `vecIntFilter` | Keeps the elements of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntFindNearest` | Finds the element of v nearest x, the first on a tie, pushing its index and then it, leaving both; refuses on an empty v. | `vecInt` (read), `int` (read) | `int`, `int`; may refuse |
 | `vecIntFindNearestFrom` | Finds the element of v nearest x at index i or later (`v x i`), the first on a tie, pushing its index and then it, leaving all three; refuses when there is none. | `vecInt` (read), `int` (read), `int` (read) | `int`, `int`; may refuse |
 | `vecIntFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecInt` | `int`; may refuse |
@@ -36,7 +36,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntLTE` | Compares lexicographically (a prefix sorts first), leaving both: `a b .vecIntLTE` gives a ≤ b. | `vecInt` (read), `vecInt` (read) | `bool` |
 | `vecIntLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecInt` | `int`; may refuse |
 | `vecIntLength` | Counts the elements, leaving the vector. | `vecInt` (read) | `int` |
-| `vecIntMap` | Runs the block on each element of a vector of ints, bound as `.input0`, collecting each run's last pushed value (the element if none); refuses mixed types or when steps run out. | `vecInt`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `vecIntMap` | Maps the topmost function on `.function` that fits over a vector of ints, each element in its first int hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecInt`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `vecIntMax` | Pushes the greatest element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `vecIntMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `vecIntNth` | Picks an element: `v i .vecIntNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecInt`, `int` | `int`; may refuse |
@@ -45,7 +45,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntPeekNth` | Picks an element: `v i .vecIntPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecInt` (read), `int` (read) | `int`; may refuse |
 | `vecIntPushAll` | Pushes every element onto the int stack, front to back, so the last element ends on top; consumes the vector. | `vecInt` | `int`, one per step |
 | `vecIntQuote` | Wraps the vector in a one-item block. | `vecInt` | `code` |
-| `vecIntReduce` | Folds the block over a vector of ints from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecInt`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecIntReduce` | Folds the topmost function on `.function` that fits over a vector of ints from the first element, the running value in its first int hole and the next element in its second; refuses an empty vector, or when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `int`; may refuse |
 | `vecIntRefAs` | Binds the top vector of ints to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecIntRefAs`. | `vecInt`, `int` | `binding` |
 | `vecIntRemove` | Removes every x: `v x .vecIntRemove` gives v without its elements equal to x. | `vecInt`, `int` | `vecInt` |
 | `vecIntReplace` | Substitutes: `v a b .vecIntReplace` replaces every element equal to a with b. | `vecInt`, `int`, `int` | `vecInt` |

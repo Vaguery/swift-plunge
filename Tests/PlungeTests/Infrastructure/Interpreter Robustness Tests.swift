@@ -40,6 +40,7 @@ struct InterpreterRobustnessTests {
                          )
         case .exec:      return BoolItem(false)
         case .binding:       return BindingItem(key: 1, bound: StringItem("r"))
+        case .function:  return FunctionItem(bare: InstructionItem(.intAdd))
         case .error:     return ErrorItem("x")
         }
     }

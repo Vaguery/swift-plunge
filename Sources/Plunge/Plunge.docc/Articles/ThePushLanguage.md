@@ -32,6 +32,7 @@ every item lives on the stack for its type:
 | `.code` | blocks: lists of any items, nested |
 | `.iterator` | loops in progress |
 | `.binding` | keyed bindings: variables |
+| `.function` | functions: bodies with typed holes (see <doc:Functions>) |
 | `.exec` | the program still to run |
 | `.error` | what went wrong, one item per problem |
 

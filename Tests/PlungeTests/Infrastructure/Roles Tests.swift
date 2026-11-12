@@ -66,13 +66,14 @@ struct TagsTests {
         #expect(Interpreter.instructions(role: .input).count == 10)
         // 168 once the 12 `…Eq` moved to `.comparison`, where they always
         // belonged (`Comparison Behaviors.swift`); 195 with `.binding`'s family (14)
-        // and `xDeleteAtDepth` on the 13 family stacks (2026-11-09).
-        #expect(Interpreter.instructions(role: .stackFamily).count == 195)
+        // and `xDeleteAtDepth` on the 13 family stacks (2026-11-09); 210 with
+        // `.function`'s family (15, 2026-11-11).
+        #expect(Interpreter.instructions(role: .stackFamily).count == 210)
         // Derived from the `comparison` tag since 2026-11-10: the 12 Eq and 28
         // orderings, plus containment and the other two-of-a-stack tests.
         #expect(Interpreter.instructions(role: .comparison)
                 == InstructionTagging.standard.instructions(tagged: .comparison))
-        #expect(Interpreter.instructions(role: .comparison).count == 54)
+        #expect(Interpreter.instructions(role: .comparison).count == 55)   // functionEq the 55th
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.

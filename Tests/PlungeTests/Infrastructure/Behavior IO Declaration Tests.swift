@@ -71,6 +71,8 @@ struct BehaviorIODeclarationTests {
         case .positions:
             // A loop that copies (`DupTimes`) hands back an iterator and its play.
             return got.allSatisfy { [.exec, .iterator].contains($0) } ? nil : "gave \(got), declared positions"
+        case .several(let stack):
+            return got.allSatisfy { $0 == stack } ? nil : "gave \(got), declared any number on .\(stack)"
         case .continuation:
             return nil
         case .printout:
@@ -112,11 +114,7 @@ struct BehaviorIODeclarationTests {
             let routers = behavior.computeResults(from: arguments, on: inty)
             #endif
 
-            let free: Set<PushStack> = switch behavior.produces {
-            case .positions(let stack): [stack, .error]   // a copy refused at maxStackDepth
-            case .continuation:         Set(PushStack.allCases)   // control can bury an element anywhere
-            default:                    []
-            }
+            let free = Self.free(behavior)
             for (stack, count) in Self.counts(inty) where !free.contains(stack) {
                 #expect(count == before[stack], "changed .\(stack) in place")
             }
@@ -146,6 +144,15 @@ struct BehaviorIODeclarationTests {
 
     // MARK: - The map
 
+    /// The stacks `behavior` may change in place.
+    static func free(_ behavior: Behavior) -> Set<PushStack> {
+        switch behavior.produces {
+        case .positions(let stack): [stack, .error]   // a copy refused at maxStackDepth
+        case .continuation:         Set(PushStack.allCases)   // control can bury an element anywhere
+        default:                    []
+        }
+    }
+
     /// Which shape each instruction's output declaration has.
     static func shape(_ produces: Produces) -> String {
         switch produces {
@@ -156,6 +163,7 @@ struct BehaviorIODeclarationTests {
         case .deferred: "deferred"
         case .input: "input"
         case .delivery: "delivery"
+        case .several: "several"
         case .positions: "positions"
         case .continuation: "continuation"
         case .printout: "printout"
@@ -168,9 +176,11 @@ struct BehaviorIODeclarationTests {
         for signature in Interpreter.signatures.values { counts[Self.shape(signature.produces), default: 0] += 1 }
         #expect(Interpreter.signatures.count == Interpreter.language.count)
         #expect(counts == [
-            "one result": 441, "fixed results": 79, "alternatives": 23,   // errorPreviousStep the 441st
-            "deferred": 80, "input": 10, "delivery": 7,
-            "positions": 170, "continuation": 42, "printout": 13
+            // 2026-11-11: the `.function` family, `errorPreviousStep`, and the five
+            // reduces, whose result is now always the element's type.
+            "one result": 449, "fixed results": 79, "alternatives": 18,
+            "deferred": 80, "input": 10, "delivery": 7, "several": 1,
+            "positions": 183, "continuation": 42, "printout": 13
         ])
     }
 

@@ -24,7 +24,7 @@ nonisolated extension Interpreter {
                              produces: produces) { a, context in
             let handBack = from ? [Router(.int, a[0])] : []
             guard let key = context.items(of: .int).first as? IntItem else {
-                return handBack + [refMissing(name, on: .int, context.recording)]
+                return handBack + refMissing(name, on: .int, context.recording)
             }
             let pairs = context.items(of: .binding)
             let start = from ? (a[0] as! IntItem).value : 0
@@ -94,7 +94,7 @@ nonisolated extension Interpreter {
         Behavior.contextRead(.bindingKeyDepth, reads: [.int], observes: [.int, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
-                return [refMissing(.bindingKeyDepth, on: .int, context.recording)]
+                return refMissing(.bindingKeyDepth, on: .int, context.recording)
             }
             guard let depth = bindingDepth(of: key.value, in: context.items(of: .binding)) else {
                 return [refNotFound(.bindingKeyDepth, "key \(key.value) is unbound", context.recording)]
@@ -110,7 +110,7 @@ nonisolated extension Interpreter {
         Behavior.contextRead(name, reads: [.int], observes: [.int, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
-                return [refMissing(name, on: .int, context.recording)]
+                return refMissing(name, on: .int, context.recording)
             }
             let keys = context.items(of: .binding).map { ($0 as! BindingItem).key }
             guard let found = choose(key.value, keys) else {
@@ -145,7 +145,7 @@ nonisolated extension Interpreter {
         Behavior.contextRead(name, reads: [.int], observes: [.int, .binding],
                              produces: .results([stack])) { _, context in
             guard let key = context.items(of: .int).first as? IntItem else {
-                return [refMissing(name, on: .int, context.recording)]
+                return refMissing(name, on: .int, context.recording)
             }
             let keys = context.items(of: .binding).compactMap { ($0 as? BindingItem)?.key }
             return [Router(stack, answer(key.value, keys).observed(by: name, context.recording))]
@@ -169,7 +169,7 @@ nonisolated extension Interpreter {
         Behavior.contextRead(.bindingKeyOf, reads: [.code], observes: [.code, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
             guard let probe = context.items(of: .code).first as? CodeItem else {
-                return [refMissing(.bindingKeyOf, on: .code, context.recording)]
+                return refMissing(.bindingKeyOf, on: .code, context.recording)
             }
             let target = probe.denotedItem
             guard let pair = context.items(of: .binding).lazy.compactMap({ $0 as? BindingItem })

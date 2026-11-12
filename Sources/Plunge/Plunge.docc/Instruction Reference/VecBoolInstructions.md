@@ -20,7 +20,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBoolDrop` | Drops the front: `v n .vecBoolDrop` removes the first n elements, n clamped to 0 through the length. | `vecBool`, `int` | `vecBool` |
 | `vecBoolDropLast` | Drops the back: `v n .vecBoolDropLast` removes the last n elements, n clamped to 0 through the length. | `vecBool`, `int` | `vecBool` |
 | `vecBoolEq` | Pushes whether the top two vectors of bools are equal, leaving both. | `vecBool` (read), `vecBool` (read) | `bool` |
-| `vecBoolFilter` | Keeps the elements of a vector of bools for which the block, run with the element as `.input0`, last pushes true; refuses when steps run out. | `vecBool`, `code` | `vecBool`; may refuse |
+| `vecBoolFilter` | Keeps the elements of a vector of bools for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool`; may refuse |
 | `vecBoolFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecBool` | `bool`; may refuse |
 | `vecBoolIndexOf` | Finds x: `v x .vecBoolIndexOf` gives the index of its first occurrence, leaving both; refuses when x is absent. | `vecBool` (read), `bool` (read) | `int`; may refuse |
 | `vecBoolIndexOfFrom` | Finds an element from an index: `v x i .vecBoolIndexOfFrom` gives the index of the first x in v at index i or later, leaving all three; refuses on a miss. | `vecBool` (read), `bool` (read), `int` (read) | `int`; may refuse |
@@ -30,14 +30,14 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `vecBoolItemIsEmpty` | Tells whether the vector has no elements, leaving it. | `vecBool` (read) | `bool` |
 | `vecBoolLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecBool` | `bool`; may refuse |
 | `vecBoolLength` | Counts the elements, leaving the vector. | `vecBool` (read) | `int` |
-| `vecBoolMap` | Runs the block on each element of a vector of bools, bound as `.input0`, collecting each run's last pushed value (the element if none); refuses mixed types or when steps run out. | `vecBool`, `code` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `vecBoolMap` | Maps the topmost function on `.function` that fits over a vector of bools, each element in its first bool hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `vecBoolNth` | Picks an element: `v i .vecBoolNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecBool`, `int` | `bool`; may refuse |
 | `vecBoolOccurrencesOf` | Counts x: `v x .vecBoolOccurrencesOf` gives how many elements equal x, leaving both. | `vecBool` (read), `bool` (read) | `int` |
 | `vecBoolOccurrencesOfRun` | Counts a run: `v w .vecBoolOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecBool` (read), `vecBool` (read) | `int` |
 | `vecBoolPeekNth` | Picks an element: `v i .vecBoolPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecBool` (read), `int` (read) | `bool`; may refuse |
 | `vecBoolPushAll` | Pushes every element onto the bool stack, front to back, so the last element ends on top; consumes the vector. | `vecBool` | `bool`, one per step |
 | `vecBoolQuote` | Wraps the vector in a one-item block. | `vecBool` | `code` |
-| `vecBoolReduce` | Folds the block over a vector of bools from the first element, with the running value as `.input0` and the next element as `.input1`; refuses an empty vector or when steps run out. | `vecBool`, `code` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `binding`; may refuse |
+| `vecBoolReduce` | Folds the topmost function on `.function` that fits over a vector of bools from the first element, the running value in its first bool hole and the next element in its second; refuses an empty vector, or when none fits, filler runs short or steps run out. | `vecBool`, the topmost fitting `function` | `bool`; may refuse |
 | `vecBoolRefAs` | Binds the top vector of bools to key k from `.int`, taking both and shadowing any older binding of k: `x k .vecBoolRefAs`. | `vecBool`, `int` | `binding` |
 | `vecBoolRemove` | Removes every x: `v x .vecBoolRemove` gives v without its elements equal to x. | `vecBool`, `bool` | `vecBool` |
 | `vecBoolReplace` | Substitutes: `v a b .vecBoolReplace` replaces every element equal to a with b. | `vecBool`, `bool`, `bool` | `vecBool` |

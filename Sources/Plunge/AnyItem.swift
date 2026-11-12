@@ -8,7 +8,7 @@
 /// The concrete `Item` types, used as a Codable type tag.
 nonisolated enum ItemKind: String, Codable, Sendable {
     case bool, char, code, double, instruction, int, string
-    case vecBool, vecDouble, vecInt, vecString, iterator, error, standIn, binding
+    case vecBool, vecDouble, vecInt, vecString, iterator, error, standIn, binding, function
 }
 
 /// Everything a `StandInItem` needs to be rebuilt: the literal it stands in for,
@@ -23,6 +23,22 @@ nonisolated struct StandInState: Codable, Sendable {
     var reason: StandInItem.Reason
 }
 
+
+/// Everything a `FunctionItem` needs to be rebuilt: its body, nested as
+/// `AnyItem`s as a block's contents are, and, for a derived function, its holes
+/// and output stack.
+nonisolated struct FunctionState: Codable, Sendable {
+    var body: [AnyItem]
+    var holes: [FunctionItem.Hole]?
+    var output: PushStack?
+
+    /// The function, or nil for a bare one that does not hold exactly one item.
+    var item: FunctionItem? {
+        let items = body.map(\.item)
+        if let holes, let output { return FunctionItem(body: items, holes: holes, output: output) }
+        return items.count == 1 ? FunctionItem(bare: items[0]) : nil
+    }
+}
 
 /// Everything a `BindingItem` needs to be rebuilt: its key and the item bound to
 /// it, nested as an `AnyItem`.
@@ -142,6 +158,12 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case .binding:
             let state = try container.decode(BindingState.self, forKey: .value)
             item = BindingItem(key: state.key, bound: state.bound.item)
+        case .function:
+            guard let function = try container.decode(FunctionState.self, forKey: .value).item else {
+                throw DecodingError.dataCorruptedError(forKey: .value, in: container,
+                                                       debugDescription: "a bare function holds one item")
+            }
+            item = function
         case .standIn:
             let state = try container.decode(StandInState.self, forKey: .value)
             item = StandInItem(standingInFor: state.value.item, source: state.source, reason: state.reason)
@@ -208,6 +230,13 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case let concrete as BindingItem:
             try container.encode(ItemKind.binding, forKey: .type)
             try container.encode(BindingState(key: concrete.key, bound: AnyItem(concrete.bound)), forKey: .value)
+        case let concrete as FunctionItem:
+            try container.encode(ItemKind.function, forKey: .type)
+            try container.encode(
+                FunctionState(body: concrete.value.map(AnyItem.init),
+                              holes: concrete.isBare ? nil : concrete.holes,
+                              output: concrete.isBare ? nil : concrete.output),
+                forKey: .value)
         case let concrete as StandInItem:
             try container.encode(ItemKind.standIn, forKey: .type)
             try container.encode(
