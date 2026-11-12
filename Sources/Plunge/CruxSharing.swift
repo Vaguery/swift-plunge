@@ -43,8 +43,10 @@ nonisolated enum CruxSharing {
     }
 
     /// The crux of `root`, or nil as soon as it would run past `limit` items:
-    /// the push boundary's measure of a history (`Interpreter.push`), which costs
-    /// at most `limit` however large the flattened tree has grown.
+    /// the push boundary's measure of a history (`Interpreter.push`). Writing it
+    /// out stops at `limit` however large the flattened tree has grown, but
+    /// planning which nodes are shared (`SharingPlan`) first visits every
+    /// distinct node of the history, with no limit (PlungeGP Open directions §5).
     static func crux(of root: any Item, limit: Int) -> [any Item]? {
         guard !root.call.isEmpty else { return [root] }
         let plan = restingStack(of: root) == nil ? nil : SharingPlan(root)

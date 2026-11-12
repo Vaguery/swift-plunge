@@ -463,8 +463,9 @@ nonisolated final class Interpreter {
         guard item.callDepth <= config.maxCallDepth else { return nil }
         guard item.callWeight > config.maxCallWeight else { return item }
         // The tree is over budget, but the crux builds each shared node once
-        // (`CruxSharing`), so it can be far shorter. Measured only now, and at
-        // a cost of at most the budget.
+        // (`CruxSharing`), so it can be far shorter. Measured only now. Writing
+        // it out stops at the budget; planning its sharing visits every distinct
+        // node first.
         guard let program = CruxSharing.crux(of: item, limit: config.maxCallWeight) else { return nil }
         // Kept, and weighed as what it is: a crux this long. Its descendants
         // then sum real lengths, not the tree's, so the walk is repeated only
