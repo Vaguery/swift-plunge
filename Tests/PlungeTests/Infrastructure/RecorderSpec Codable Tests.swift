@@ -23,6 +23,7 @@ struct RecorderSpecCodableTests {
         RecorderTarget.top(.int),
         RecorderTarget.second(.vecDouble),
         RecorderTarget.second(.string),
+        RecorderTarget.nth(.int, depth: 3),
         RecorderTarget.count(.error),
         RecorderTarget.isEmpty(.exec),
         RecorderTarget.printout,

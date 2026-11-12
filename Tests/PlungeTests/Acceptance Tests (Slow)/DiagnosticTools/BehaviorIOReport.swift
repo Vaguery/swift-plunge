@@ -49,6 +49,7 @@ struct BehaviorIOReport {
             case .needs(let stack, let count): "need .\(stack)×\(count)"
             case .takesMany(let stack, _): "take n .\(stack)"
             case .takesFirst(let stack, _): "take the first fitting .\(stack)"
+            case .readsFirst(let stack, _): "read the first fitting .\(stack)"
             }
         }.joined(separator: ", ")
     }

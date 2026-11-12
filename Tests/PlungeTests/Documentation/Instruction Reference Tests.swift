@@ -82,6 +82,8 @@ struct InstructionReferenceTests {
                 intro: "The `.iterator` stack holds first-class loops: a source (a range, a collection or a block), a cursor, and optionally a body to run each pass. Iterators are how the language counts, walks collections and collects results."),
         Subject(page: "BindingInstructions", title: "Binding instructions",
                 intro: "The `.binding` stack holds keyed bindings: an int key and any item. The topmost binding with a key is that variable's current value, and older ones below it are shadowed, so each variable is a stack of its own. The inputs are bound to keys 0, 1, 2, … at load, and fresh keys follow them. The binders, `intRef`, `stringRef` and the rest, are on their source stacks' pages."),
+        Subject(page: "FunctionInstructions", title: "Function instructions",
+                intro: "The `.function` stack holds functions: a body with typed holes. An instruction that starves for arguments is shelved here, bare, and `codePushAllFunctions` converts a block into the functions its pushes compute. Map, filter, reduce and their relatives on the collection pages take the topmost function here that fits their job."),
         Subject(page: "VecBoolInstructions", title: "Vector of bool instructions",
                 intro: "The `.vecBool` stack holds vectors of bools. It shares its instruction families with the other vector types."),
         Subject(page: "VecIntInstructions", title: "Vector of int instructions",
@@ -197,6 +199,7 @@ struct InstructionReferenceTests {
             case .needs(let stack, let count): count == 1 ? "a `\(stack.rawValue)` item" : "\(count) `\(stack.rawValue)` items"
             case .takesMany(let stack, _): "n × `\(stack.rawValue)`"
             case .takesFirst(let stack, _): "the topmost fitting `\(stack.rawValue)`"
+            case .readsFirst(let stack, _): "the topmost fitting `\(stack.rawValue)` (read)"
             }
         }
         return parts.isEmpty ? "—" : parts.joined(separator: ", ")

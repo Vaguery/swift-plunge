@@ -10,10 +10,30 @@ nonisolated extension Interpreter {
 
     // MARK: - Finding and filling a function
 
+    /// What a function is asked to do with a collection's elements, which decides
+    /// what fits (`fits`) and how many holes the elements fill (`bound`).
     enum Family {
-        case map, filter, reduce
+        /// Each element to a value a collection holds.
+        case map
+        /// Each element to a bool (filter, and the predicate searches and cuts).
+        case filter
+        /// The running value and the next element to a new running value
+        /// (reduce, and scan, which keeps every running value).
+        case reduce
+        /// An element from each of two collections to a value a collection holds.
+        case zip
+        /// Each element to a value to order or compare elements by.
+        case key
+        /// A value to the next value of its own type (iterate).
+        case step
+
         /// How many holes of the element's type the elements fill.
-        var bound: Int { self == .reduce ? 2 : 1 }
+        var bound: Int {
+            switch self {
+            case .reduce, .zip: 2
+            case .map, .filter, .key, .step: 1
+            }
+        }
     }
 
     /// The stacks a map's result can be collected from.
@@ -23,9 +43,17 @@ nonisolated extension Interpreter {
     static func fits(_ function: FunctionItem, _ family: Family, over element: PushStack) -> Bool {
         guard let output = function.output, function.holeCount(on: element) >= family.bound else { return false }
         switch family {
-        case .map: return collectableStacks.contains(output)
+        case .map, .zip, .key: return collectableStacks.contains(output)
         case .filter: return output == .bool
-        case .reduce: return output == element
+        case .reduce, .step: return output == element
+        }
+    }
+
+    /// The sieve for the topmost function on `.function` that does `family`'s job
+    /// over elements on `element`.
+    static func fitting(_ family: Family, over element: PushStack) -> Requirement {
+        .takesFirst(.function) { candidate, _ in
+            candidate.exactly(FunctionItem.self).map { fits($0, family, over: element) } == true
         }
     }
 
@@ -45,8 +73,20 @@ nonisolated extension Interpreter {
         /// query's are (`Behavior.reading`): they were read and left.
         func recorded(_ instruction: PushInstruction, _ collection: any Item,
                       producing stack: PushStack) -> [any Item] {
-            Behavior.reading(sorted: counts, producing: stack,
-                             from: read + [collection, function, InstructionItem(instruction)])
+            recorded(instruction, collections: [collection], producing: stack)
+        }
+
+        /// As `recorded(_:_:producing:)`, for any number of collections in written
+        /// order; `alsoRead` counts the ones the instruction read and left (a
+        /// query's collection), which the crux clears away with the fillers.
+        func recorded(_ instruction: PushInstruction, collections: [any Item], alsoRead: [PushStack] = [],
+                      producing stack: PushStack) -> [any Item] {
+            var merged: [PushStack: Int] = [:]
+            for (key, value) in counts { merged[key, default: 0] += value }
+            for key in alsoRead { merged[key, default: 0] += 1 }
+            let sorted = merged.sorted { $0.key.rawValue < $1.key.rawValue }.map { (key: $0.key, value: $0.value) }
+            return Behavior.reading(sorted: sorted, producing: stack,
+                                    from: read + collections + [function, InstructionItem(instruction)])
         }
 
         /// The function filled, `bound` in the elements' holes.

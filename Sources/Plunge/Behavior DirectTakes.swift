@@ -45,7 +45,7 @@ nonisolated extension Behavior {
                 claimed[stack, default: 0] += count
                 checks.append(DirectTake(stack: stack, index: claimed[stack, default: 0] - 1))
                 needed.insert(stack)
-            case .reads, .takesMany, .takesFirst:
+            case .reads, .takesMany, .takesFirst, .readsFirst:
                 return (nil, [], [])
             }
         }

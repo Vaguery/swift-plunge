@@ -184,7 +184,7 @@ nonisolated extension FunctionItem {
         var counted: [PushStack: Int] = [:], needed: [PushStack: Int] = [:]
         for requirement in behavior.requirements {
             switch requirement {
-            case .takes(let stack), .reads(let stack), .takesFirst(let stack, _):
+            case .takes(let stack), .reads(let stack), .takesFirst(let stack, _), .readsFirst(let stack, _):
                 if counted[stack] == nil && needed[stack] == nil { order.append(stack) }
                 counted[stack, default: 0] += 1
             case .needs(let stack, let count):

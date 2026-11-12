@@ -72,6 +72,7 @@ nonisolated final class Behavior: Sendable {
             case .takesMany(let s, _): result[s, default: 0] += 0
             case .reads(let s):        result[s, default: 0] += 1
             case .takesFirst(let s, _): result[s, default: 0] += 1
+            case .readsFirst(let s, _): result[s, default: 0] += 1
             }
         }
         return result
@@ -93,7 +94,7 @@ nonisolated final class Behavior: Sendable {
             case .takes(let s):        result[s, default: 0] += 1
             case .takesMany(let s, _): result[s, default: 0] += 0
             case .takesFirst(let s, _): result[s, default: 0] += 1
-            case .needs, .reads:       break
+            case .needs, .reads, .readsFirst: break
             }
         }
         return result
@@ -105,7 +106,10 @@ nonisolated final class Behavior: Sendable {
     var readStacks: [PushStack: Int] {
         var result = [PushStack: Int]()
         for requirement in requirements {
-            if case .reads(let s) = requirement { result[s, default: 0] += 1 }
+            switch requirement {
+            case .reads(let s), .readsFirst(let s, _): result[s, default: 0] += 1
+            default: break
+            }
         }
         return result
     }

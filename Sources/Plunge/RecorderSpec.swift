@@ -27,6 +27,10 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case top(PushStack)
     /// The second item of a stack, or `nil` when it holds fewer than two items.
     case second(PushStack)
+    /// The item `depth` places below the top of a stack (0 is the top), or `nil`
+    /// when the stack is not that deep: for several results on one stack, such
+    /// as a problem's four int outputs.
+    case nth(PushStack, depth: Int)
     /// The number of items currently on a stack (`Int`).
     case count(PushStack)
     /// Whether a stack is currently empty (`Bool`).
@@ -47,7 +51,7 @@ nonisolated extension RecorderTarget {
 
     var valueKind: ValueKind {
         switch self {
-        case .top, .second: .item
+        case .top, .second, .nth: .item
         case .count, .counter: .int
         case .printout: .string
         case .isEmpty: .bool
@@ -104,6 +108,12 @@ nonisolated extension AnyRecorder {
                 guard let items = interpreter.stacks[stack], items.count > 1
                 else { return nil }
                 return items[1]
+            })
+        case .nth(let stack, let depth):
+            self.init(Recorder<any Item>(name, keeping: policy) { interpreter in
+                guard depth >= 0, let items = interpreter.stacks[stack], items.count > depth
+                else { return nil }
+                return items[depth]
             })
         case .count(let stack):
             self.init(Recorder<Int>(name, keeping: policy) { interpreter in

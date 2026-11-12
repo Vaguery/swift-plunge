@@ -211,8 +211,6 @@ nonisolated extension Interpreter {
     /// Every stack a filler can be read from.
     static let fillerStacks: [PushStack] = PushStack.allCases.filter { ![.exec, .error].contains($0) }
 
-    /// One of the three over `collection`'s stack: takes the collection, and
-    /// reads `.function` (an empty one is a missing argument).
     /// One of the three over `collection`'s stack: takes the collection, and the
     /// topmost function that fits through the sieve (`Requirement.takesFirst`): an
     /// empty `.function` is a missing argument, one with nothing that fits a miss.
@@ -221,14 +219,30 @@ nonisolated extension Interpreter {
                                  _ body: @escaping @Sendable ([any Item], ReadContext) -> [Router]) -> Behavior {
         let element = elementStack[collection]!
         let produces: Produces = switch family {
-        case .map: mapResults
-        case .filter: .results([collection])
-        case .reduce: .results([element])
+        case .map, .zip: mapResults
+        case .filter, .key: .results([collection])
+        case .reduce, .step: .results([element])
         }
-        let fitting: Requirement = .takesFirst(.function) { candidate, _ in
-            candidate.exactly(FunctionItem.self).map { fits($0, family, over: element) } == true
+        return functionBehavior(instruction, family, over: collection, produces: produces,
+                                summary: summary, body)
+    }
+
+    /// The general form: the collection, taken or (`reading`) read and left; with
+    /// `paired`, a second collection of the same length sieved from below it
+    /// (`Behavior.sameLength`); then the topmost function that does `family`'s job.
+    /// The arguments arrive in that order: collection(s), then the function.
+    static func functionBehavior(_ instruction: PushInstruction, _ family: Family, over collection: PushStack,
+                                 reading: Bool = false, paired: Bool = false, produces: Produces,
+                                 summary: String,
+                                 _ body: @escaping @Sendable ([any Item], ReadContext) -> [Router]) -> Behavior {
+        var requirements: [Requirement] = [reading ? .reads(collection) : .takes(collection)]
+        if paired {
+            let match: @Sendable (any Item, [any Item]) -> Bool = { Behavior.sameLength($0, $1[0]) }
+            requirements.append(reading ? .readsFirst(collection, matching: match)
+                                        : .takesFirst(collection, matching: match))
         }
-        return Behavior(instruction, requires: [.takes(collection), fitting], tags: [.fallible],
+        requirements.append(fitting(family, over: elementStack[collection]!))
+        return Behavior(instruction, requires: requirements, tags: [.fallible],
                         behaviorClass: .operation, body: .applying(body), produces: produces,
                         observes: fillerStacks)
         .described(summary)

@@ -63,6 +63,13 @@ nonisolated enum Requirement: Sendable {
     /// by taking its other arguments and refusing with `notFound`.
     case takesFirst(PushStack, matching: @Sendable (_ candidate: any Item, _ resolved: [any Item]) -> Bool)
 
+    /// The sieve's non-consuming form, as `.reads` is to `.takes`: claim the
+    /// topmost unclaimed item of `stack` that `matching` accepts and give it to the
+    /// transformer, but **leave it on its stack**. For queries over a pair (an
+    /// element-wise comparison reads its same-length partner, 2026-11-12). Short
+    /// and miss as for `.takesFirst`; a miss takes nothing it only read.
+    case readsFirst(PushStack, matching: @Sendable (_ candidate: any Item, _ resolved: [any Item]) -> Bool)
+
     var stack: PushStack {
         switch self {
         case .takes(let s):          s
@@ -70,6 +77,7 @@ nonisolated enum Requirement: Sendable {
         case .takesMany(let s, _):   s
         case .reads(let s):          s
         case .takesFirst(let s, _):  s
+        case .readsFirst(let s, _):  s
         }
     }
 }
@@ -158,13 +166,14 @@ nonisolated struct Planner {
 
         /// The sieve: the topmost unclaimed item `matching` accepts. Nil, nil when
         /// nothing is unclaimed (short); nil, true when nothing matches (a miss).
-        func sieve(_ stack: PushStack, _ matching: ([any Item]) -> (any Item) -> Bool) -> (any Item, Bool)? {
+        func sieve(_ stack: PushStack, consuming: Bool,
+                   _ matching: ([any Item]) -> (any Item) -> Bool) -> (any Item, Bool)? {
             let accepts = matching(arguments)
             var index = free(stack, from: claimedCount[stack, default: 0])
             guard item(at: index, on: stack) != nil else { return nil }
             while let candidate = item(at: index, on: stack) {
                 if accepts(candidate) {
-                    claims.append(Claim(stack: stack, index: index, consumed: true))
+                    claims.append(Claim(stack: stack, index: index, consumed: consuming))
                     if index == claimedCount[stack, default: 0] {
                         claimedCount[stack] = index + 1
                     } else {
@@ -203,11 +212,16 @@ nonisolated struct Planner {
                 }
 
             case .takesFirst(let stack, let matching):
-                guard let (item, found) = sieve(stack, { resolved in { matching($0, resolved) } }) else {
-                    return .short(stack)
-                }
+                guard let (item, found) = sieve(stack, consuming: true, { resolved in { matching($0, resolved) } })
+                else { return .short(stack) }
                 // A miss still checks the requirements after it: a missing
                 // argument there is starvation, which outranks a miss.
+                if !found { missed = missed ?? stack }
+                arguments.append(item)
+
+            case .readsFirst(let stack, let matching):
+                guard let (item, found) = sieve(stack, consuming: false, { resolved in { matching($0, resolved) } })
+                else { return .short(stack) }
                 if !found { missed = missed ?? stack }
                 arguments.append(item)
             }

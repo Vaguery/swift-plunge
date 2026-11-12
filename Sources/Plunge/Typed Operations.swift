@@ -13,6 +13,17 @@
 
 nonisolated extension Behavior {
 
+    /// How a pair's second argument is chosen when it is not simply the next item
+    /// down: `candidate` is accepted against `top`, the pair's topmost argument.
+    typealias Pairing = @Sendable (_ candidate: any Item, _ top: any Item) -> Bool
+
+    /// Two collections with the same number of elements: the partner an
+    /// element-wise operation sieves for.
+    static let sameLength: Pairing = { candidate, top in
+        guard let a = candidate as? any TracingItem, let b = top as? any TracingItem else { return false }
+        return a.elementCount == b.elementCount
+    }
+
     // MARK: - Values in, a value out
 
     /// An operation that **consumes** its arguments. `takes` lists the argument
@@ -23,9 +34,11 @@ nonisolated extension Behavior {
         takes: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
+        pairedBy pairing: Pairing? = nil,
         _ body: @escaping @Sendable (repeat (each A).Value) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags) { args, call, recording in
+        typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack, tags: tags,
+              pairing: pairing) { args, call, recording in
             let value = body(repeat each values(args, call.positions, repeat each takes))
             return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
@@ -38,10 +51,11 @@ nonisolated extension Behavior {
         takes: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
+        pairedBy pairing: Pairing? = nil,
         _ body: @escaping @Sendable (repeat (each A).Value) throws(Refusal) -> R.Value
     ) -> Behavior {
         typed(label, stacks: stacks(repeat each takes), reading: false, gives: R.pushStack,
-              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+              tags: tags.union([.fallible]), pairing: pairing) { args, call, recording throws(Refusal) in
             let value = try body(repeat each values(args, call.positions, repeat each takes))
             return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
@@ -54,9 +68,11 @@ nonisolated extension Behavior {
         reads: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
+        pairedBy pairing: Pairing? = nil,
         _ body: @escaping @Sendable (repeat (each A).Value) -> R.Value
     ) -> Behavior {
-        typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack, tags: tags) { args, call, recording in
+        typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack, tags: tags,
+              pairing: pairing) { args, call, recording in
             let value = body(repeat each values(args, call.positions, repeat each reads))
             return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
@@ -68,10 +84,11 @@ nonisolated extension Behavior {
         reads: repeat (each A).Type,
         gives: R.Type,
         tags: Set<InstructionTag> = [],
+        pairedBy pairing: Pairing? = nil,
         _ body: @escaping @Sendable (repeat (each A).Value) throws(Refusal) -> R.Value
     ) -> Behavior {
         typed(label, stacks: stacks(repeat each reads), reading: true, gives: R.pushStack,
-              tags: tags.union([.fallible])) { args, call, recording throws(Refusal) in
+              tags: tags.union([.fallible]), pairing: pairing) { args, call, recording throws(Refusal) in
             let value = try body(repeat each values(args, call.positions, repeat each reads))
             return [Router(R.pushStack, R(value, call: recording(call.recorded(producing: R.pushStack))))]
         }
@@ -334,12 +351,26 @@ nonisolated extension Behavior {
         count: Int = 1,
         produces declared: Produces? = nil,
         tags: Set<InstructionTag>,
+        pairing: Pairing? = nil,
         produce: @escaping @Sendable ([any Item], WrittenCall, ProvenanceRecording) throws(Refusal) -> [Router]
     ) -> Behavior {
         let order = WrittenOrder(stacks)
-        let requirements = order.groups.flatMap { group in
-            Array(repeating: reading ? Requirement.reads(group.stack) : Requirement.takes(group.stack),
-                  count: group.count)
+        var requirements: [Requirement] = []
+        var paired = false
+        for group in order.groups {
+            let first = requirements.count
+            for k in 0..<group.count {
+                // The pair's second argument is sieved: the first item below the top
+                // that `pairing` accepts against it (same-length vectors, 2026-11-12).
+                if let pairing, !paired, k == 1 {
+                    paired = true
+                    let match: @Sendable (any Item, [any Item]) -> Bool = { pairing($0, $1[first]) }
+                    requirements.append(reading ? .readsFirst(group.stack, matching: match)
+                                                : .takesFirst(group.stack, matching: match))
+                } else {
+                    requirements.append(reading ? .reads(group.stack) : .takes(group.stack))
+                }
+            }
         }
         let positions = order.positions
         let readCounts = reading

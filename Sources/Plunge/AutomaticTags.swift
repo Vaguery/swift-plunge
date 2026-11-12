@@ -74,6 +74,7 @@ nonisolated struct AutomaticTagging {
             case .needs(let stack, _): needed.insert(stack)
             case .takesMany(let stack, _): taken.append(stack); variadic = true
             case .takesFirst(let stack, _): taken.append(stack)
+            case .readsFirst(let stack, _): read.append(stack)
             }
         }
         self.taken = taken

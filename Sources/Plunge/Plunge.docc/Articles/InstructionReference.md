@@ -49,6 +49,7 @@ run time through the ``Runner``: ``Runner/summary(of:)``,
 - <doc:ExecInstructions>
 - <doc:IteratorInstructions>
 - <doc:BindingInstructions>
+- <doc:FunctionInstructions>
 - <doc:EnvironmentInstructions>
 
 ### Every stack

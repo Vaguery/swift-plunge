@@ -122,7 +122,7 @@ nonisolated struct BackwardChainer: Sendable {
             case .takes(let stack): inputs.append(stack)
             case .reads(let stack): inputs.append(stack); reads[stack, default: 0] += 1
             // A count or a predicate decided by the arguments: no fixed edge.
-            case .needs, .takesMany, .takesFirst: return nil
+            case .needs, .takesMany, .takesFirst, .readsFirst: return nil
             }
         }
         guard !inputs.contains(where: { [.exec, .error].contains($0) }) else { return nil }
