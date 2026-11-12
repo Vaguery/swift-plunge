@@ -40,7 +40,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // 7.8%, the median and 90th-percentile crux are unchanged, and only the
     // longest grows (tenfold); the time goes to the runaways. Function derivation
     // and application spend from it too, so 1,000 starved them.
-    public var stepLimit: Int = 1_000
+    public var stepLimit: Int = 10_000
     // INHERITED, loosely after propeller's limits.cljc:
     //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     // None of these five was chosen here on its own merits.
