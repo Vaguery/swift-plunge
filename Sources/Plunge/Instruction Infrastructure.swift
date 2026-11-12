@@ -425,6 +425,22 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
          vecBoolWindows, vecIntWindows, vecDoubleWindows, vecStringWindows, stringWindows,
          codeReverseRoot, codeFirstRoot, codeLastRoot, codeTakeRoot, codeDropRoot
 
+    // Collection operations with functions (2026-11-12): each takes the topmost
+    // function on `.function` that fits
+    case vecBoolZip, vecBoolScan, vecBoolSortBy, vecBoolMinBy, vecBoolMaxBy, vecBoolOccurrencesWhere,
+         vecBoolContainsWhere, vecBoolAllWhere, vecBoolIndexOfWhere, vecBoolLastIndexOfWhere, vecBoolFindWhere,
+         vecBoolTakeWhile, vecBoolDropWhile, vecBoolPartition, vecIntZip, vecIntScan, vecIntSortBy, vecIntMinBy,
+         vecIntMaxBy, vecIntOccurrencesWhere, vecIntContainsWhere, vecIntAllWhere, vecIntIndexOfWhere,
+         vecIntLastIndexOfWhere, vecIntFindWhere, vecIntTakeWhile, vecIntDropWhile, vecIntPartition, vecDoubleZip,
+         vecDoubleScan, vecDoubleSortBy, vecDoubleMinBy, vecDoubleMaxBy, vecDoubleOccurrencesWhere,
+         vecDoubleContainsWhere, vecDoubleAllWhere, vecDoubleIndexOfWhere, vecDoubleLastIndexOfWhere,
+         vecDoubleFindWhere, vecDoubleTakeWhile, vecDoubleDropWhile, vecDoublePartition, vecStringZip, vecStringScan,
+         vecStringSortBy, vecStringMinBy, vecStringMaxBy, vecStringOccurrencesWhere, vecStringContainsWhere,
+         vecStringAllWhere, vecStringIndexOfWhere, vecStringLastIndexOfWhere, vecStringFindWhere, vecStringTakeWhile,
+         vecStringDropWhile, vecStringPartition, stringZip, stringScan, stringSortBy, stringMinBy, stringMaxBy,
+         stringOccurrencesWhere, stringContainsWhere, stringAllWhere, stringIndexOfWhere, stringLastIndexOfWhere,
+         stringFindWhere, stringTakeWhile, stringDropWhile, stringPartition
+
 }
 
 typealias PI = PushInstruction

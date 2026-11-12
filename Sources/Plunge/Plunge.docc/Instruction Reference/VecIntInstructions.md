@@ -9,6 +9,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `vecIntAdd` | Adds element by element: `a b .vecIntAdd` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `vecIntAllWhere` | Tells whether every element of a vector of ints (true for none) is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `bool`; may refuse |
 | `vecIntButLast` | Drops the last element; an empty vector stays empty. | `vecInt` | `vecInt` |
 | `vecIntChunks` | Chunks: `v n .vecIntChunks` gives a block of the vectors of n consecutive elements, the last possibly shorter (n below 1 counts as 1). | `vecInt`, `int` | `code`; may refuse |
 | `vecIntConcat` | Joins two vectors: `a b .vecIntConcat` gives the elements of a followed by those of b. | `vecInt`, `vecInt` | `vecInt` |
@@ -16,17 +17,20 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntConstruct` | Builds a vector of the top n ints, consuming them, where n is the length of a template vector, also consumed; the top int comes last. | `vecInt`, n × `int` | `vecInt` |
 | `vecIntContains` | Tells whether x is an element: `v x .vecIntContains`, leaving both. | `vecInt` (read), `int` (read) | `bool` |
 | `vecIntContainsRun` | Tells whether a run occurs: `v w .vecIntContainsRun` asks if v holds w contiguously, leaving both; an empty w always matches. | `vecInt` (read), `vecInt` (read) | `bool` |
+| `vecIntContainsWhere` | Tells whether some element of a vector of ints is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `bool`; may refuse |
 | `vecIntCut` | Splits at a gap: `v i .vecIntCut` pushes the first i elements, then the rest on top, i clamped to 0 through the length. | `vecInt`, `int` | `vecInt`, `vecInt` |
 | `vecIntDifference` | Filters: `a b .vecIntDifference` keeps the elements of a that do not occur in b, in a's order, repeats included. | `vecInt`, `vecInt` | `vecInt` |
 | `vecIntDistinct` | Removes repeated elements, keeping each first occurrence in order. | `vecInt` | `vecInt` |
 | `vecIntDot` | Pushes the dot product of two vectors of ints, the sum of a[i] × b[i]: `a b .vecIntDot`, where b is the top vector and a the first one below it of the same length (a miss if there is none); leaves both; empty vectors give 0; refuses on overflow. | `vecInt` (read), the topmost fitting `vecInt` (read) | `int`; may refuse |
 | `vecIntDrop` | Drops the front: `v n .vecIntDrop` removes the first n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
 | `vecIntDropLast` | Drops the back: `v n .vecIntDropLast` removes the last n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
+| `vecIntDropWhile` | Drops the longest prefix of a vector of ints whose elements the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntEq` | Pushes whether the top two vectors of ints are equal, leaving both. | `vecInt` (read), `vecInt` (read) | `bool` |
 | `vecIntEqEach` | Pushes whether each element of a is equal to the matching element of b: `a b .vecIntEqEach`, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); leaves both. | `vecInt` (read), the topmost fitting `vecInt` (read) | `vecBool` |
 | `vecIntFilter` | Keeps the elements of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntFindNearest` | Finds the element of v nearest x, the first on a tie, pushing its index and then it, leaving both; refuses on an empty v. | `vecInt` (read), `int` (read) | `int`, `int`; may refuse |
 | `vecIntFindNearestFrom` | Finds the element of v nearest x at index i or later (`v x i`), the first on a tie, pushing its index and then it, leaving all three; refuses when there is none. | `vecInt` (read), `int` (read), `int` (read) | `int`, `int`; may refuse |
+| `vecIntFindWhere` | Pushes the first element of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when there is none, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `vecIntFirst` | Pushes the first element, consuming the vector; refuses an empty vector. | `vecInt` | `int`; may refuse |
 | `vecIntFrequencies` | Counts each distinct element: gives the distinct elements in ascending order, then a vector of ints with how many times each occurs, on top. | `vecInt` | `vecInt`, `vecInt` |
 | `vecIntFromInt` | The decimal digits of an int, most significant first, ignoring its sign: `-305 .vecIntFromInt` gives [3, 0, 5]. | `int` | `vecInt` |
@@ -40,6 +44,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntIndexOfMax` | Pushes the index of the first greatest element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `vecIntIndexOfMin` | Pushes the index of the first least element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `vecIntIndexOfRun` | Finds a run: `v w .vecIntIndexOfRun` gives where w first occurs contiguously in v, leaving both; an empty w gives 0; refuses when absent. | `vecInt` (read), `vecInt` (read) | `int`; may refuse |
+| `vecIntIndexOfWhere` | Pushes the index of the first element of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when there is none, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `vecIntInterleave` | Interleaves: `a b .vecIntInterleave` gives a[0] b[0] a[1] b[1] …, then the rest of the longer. | `vecInt`, `vecInt` | `vecInt` |
 | `vecIntIntersect` | Filters: `a b .vecIntIntersect` keeps the elements of a that also occur in b, in a's order, repeats included. | `vecInt`, `vecInt` | `vecInt` |
 | `vecIntIsSubset` | Tells whether every element of a occurs in b: `a b .vecIntIsSubset`, leaving both. | `vecInt` (read), `vecInt` (read) | `bool` |
@@ -49,16 +54,21 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntLTEach` | Pushes whether each element of a is less than the matching element of b: `a b .vecIntLTEach`, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); leaves both. | `vecInt` (read), the topmost fitting `vecInt` (read) | `vecBool` |
 | `vecIntLast` | Pushes the last element, consuming the vector; refuses an empty vector. | `vecInt` | `int`; may refuse |
 | `vecIntLastIndexOf` | Finds x from the end: `v x .vecIntLastIndexOf` gives the index of its last occurrence, leaving both; refuses when x is absent. | `vecInt` (read), `int` (read) | `int`; may refuse |
+| `vecIntLastIndexOfWhere` | Pushes the index of the last element of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when there is none, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `vecIntLength` | Counts the elements, leaving the vector. | `vecInt` (read) | `int` |
 | `vecIntMap` | Maps the topmost function on `.function` that fits over a vector of ints, each element in its first int hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `vecInt`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `vecIntMax` | Pushes the greatest element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
+| `vecIntMaxBy` | Pushes the first element of a vector of ints with the greatest key the topmost function on `.function` that fits gives it, leaving the vector of ints; refuses an empty one, an element with no key, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `vecIntMean` | Pushes the mean of the elements as a double, leaving the vector; refuses an empty vector. | `vecInt` (read) | `double`; may refuse |
 | `vecIntMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
+| `vecIntMinBy` | Pushes the first element of a vector of ints with the least key the topmost function on `.function` that fits gives it, leaving the vector of ints; refuses an empty one, an element with no key, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `vecIntMod` | Takes remainders (a mod b) element by element: `a b .vecIntMod` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses a zero divisor or overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
 | `vecIntMultiply` | Multiplies element by element: `a b .vecIntMultiply` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
 | `vecIntNth` | Picks an element: `v i .vecIntNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecInt`, `int` | `int`; may refuse |
 | `vecIntOccurrencesOf` | Counts x: `v x .vecIntOccurrencesOf` gives how many elements equal x, leaving both. | `vecInt` (read), `int` (read) | `int` |
 | `vecIntOccurrencesOfRun` | Counts a run: `v w .vecIntOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecInt` (read), `vecInt` (read) | `int` |
+| `vecIntOccurrencesWhere` | Counts the elements of a vector of ints for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
+| `vecIntPartition` | Splits a vector of ints into the elements that (below) and do not (on top) the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`, `vecInt`; may refuse |
 | `vecIntPeekNth` | Picks an element: `v i .vecIntPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecInt` (read), `int` (read) | `int`; may refuse |
 | `vecIntPrefixSums` | Running totals: element i is the sum of elements 0 through i; refuses on overflow. | `vecInt` | `vecInt`; may refuse |
 | `vecIntProduct` | Multiplies the elements, leaving the vector; an empty vector gives 1; refuses on overflow. | `vecInt` (read) | `int`; may refuse |
@@ -78,14 +88,18 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `vecIntRest` | Drops the first element; an empty vector stays empty. | `vecInt` | `vecInt` |
 | `vecIntReverse` | Reverses the order of the elements. | `vecInt` | `vecInt` |
 | `vecIntRotate` | Rotates left: `v n .vecIntRotate` moves the first n elements to the end (n of any sign, taken modulo the length). | `vecInt`, `int` | `vecInt` |
+| `vecIntScan` | Folds the topmost function on `.function` that fits over a vector of ints from the first element, keeping every running value: element i of the result is the fold of elements 0 through i; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntSet` | Overwrites an element: `v x i .vecIntSet` puts x at index i, i clamped into range; refuses an empty vector. | `vecInt`, `int`, `int` | `vecInt`; may refuse |
 | `vecIntSlice` | Slices: `v i j .vecIntSlice` gives elements i through j inclusive, each clamped into range; j below i gives just element i. | `vecInt`, `int`, `int` | `vecInt` |
 | `vecIntSort` | Sorts ascending, stably. | `vecInt` | `vecInt` |
+| `vecIntSortBy` | Sorts a vector of ints stably by the key the topmost function on `.function` that fits gives each element (false before true, NaN last); refuses an element with no key, or when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntSubtract` | Subtracts (a − b) element by element: `a b .vecIntSubtract` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
 | `vecIntSum` | Sums the elements, leaving the vector; an empty vector gives 0; refuses on overflow. | `vecInt` (read) | `int`; may refuse |
 | `vecIntTake` | Keeps the front: `v n .vecIntTake` gives the first n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
 | `vecIntTakeLast` | Keeps the back: `v n .vecIntTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
+| `vecIntTakeWhile` | Keeps the longest prefix of a vector of ints whose elements the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `vecIntWindows` | Every window: `v n .vecIntWindows` gives a block of the vectors of n consecutive elements, sliding by one (none when n exceeds the length; n below 1 counts as 1); refuses a result over the size limit. | `vecInt`, `int` | `code`; may refuse |
+| `vecIntZip` | Zips with the topmost function on `.function` that fits: `a b f .vecIntZip` gives f(a[i], b[i]) for each i, a[i] and b[i] in its first two int holes, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses when no function fits, filler runs short, results are mixed or steps run out. | `vecInt`, the topmost fitting `vecInt`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 
 ## Reading the environment
 

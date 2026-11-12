@@ -66,6 +66,39 @@ results must all be one type, or the map is refused.
 ( .intAdd ) .codePushAllFunctions [1 2 3 4] .vecIntReduce     →  .int holds 10
 ```
 
+## More jobs for a function
+
+The same search for the topmost function that fits serves more instructions,
+each over the four vector types and strings. What fits depends on the job:
+
+| Job | Instructions | The function needs |
+|---|---|---|
+| map | `Map` | a hole of the element's type; a bool, int, double, string or char |
+| filter, predicate | `Filter`, the searches and cuts below | a hole of the element's type; a bool |
+| fold | `Reduce`, `Scan` | two holes of the element's type; a value of that type |
+| zip | `Zip` | two holes of the element's type; a value a collection can hold |
+| key | `SortBy`, `MinBy`, `MaxBy` | a hole of the element's type; a bool, int, double, string or char |
+
+- **Zip** applies the function to matching elements of two collections of the
+  same length: `a b f .vecIntZip` puts a[i] and b[i] in its first two holes. As
+  for the element-wise operations (<doc:Collections>), `b` is the top vector and
+  `a` the first one below it with the same length.
+- **Scan** folds as reduce does, keeping every running value:
+  `.intAdd` scanned over `[1 2 3 4]` gives `[1, 3, 6, 10]`.
+- **Keys** order elements by the value the function gives each: `.stringLength`
+  as a key sorts words by length, stably. Keys order as everything else does:
+  false before true, NaN above every number. An element with no key refuses.
+- **Searches** read the collection and leave it: `OccurrencesWhere` counts the
+  elements the predicate holds for, `ContainsWhere` and `AllWhere` test them,
+  `IndexOfWhere`, `LastIndexOfWhere` and `FindWhere` locate the first or last
+  (a `notFound` refusal when none holds).
+- **Cuts** take it: `TakeWhile` and `DropWhile` keep or drop the longest prefix
+  that holds, and `Partition` gives the elements that hold below the others.
+
+```
+.charIsDigit "ab3c4" .stringFindWhere     →  .char holds '3'
+```
+
 ## When there is no function
 
 - An **empty** `.function` is a missing argument: the instruction starves, takes

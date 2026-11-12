@@ -26,7 +26,6 @@ import Foundation
 import Testing
 @testable import Plunge
 
-
 // MARK: - The shared check
 
 /// Whether an item's claim is one the language provably cannot honor yet, so
@@ -87,7 +86,8 @@ struct CruxRoundTripTests {
                             cursor: n % 3
                          )
         case .binding:       BindingItem(key: n, bound: IntItem(n + 1))
-        case .function:  FunctionItem(bare: InstructionItem([.intAdd, .intSubtract, .intMultiply][n % 3]))
+        case .function: FunctionItem(bare: InstructionItem([.intAdd, .intSubtract, .intMultiply, .intGT,
+                                                            .intInc][n % 5]))
         case .error:     nil   // never seeded; never checked
         }
     }

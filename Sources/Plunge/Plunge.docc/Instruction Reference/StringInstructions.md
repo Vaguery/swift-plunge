@@ -8,22 +8,26 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
+| `stringAllWhere` | Tells whether every element of a string (true for none) is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `bool`; may refuse |
 | `stringButLast` | Removes a string's last character; the empty string stays empty. | `string` | `string` |
 | `stringChunks` | Chunks: `s n .stringChunks` gives the substrings of n consecutive chars, the last possibly shorter (n below 1 counts as 1). | `string`, `int` | `vecString`; may refuse |
 | `stringConcat` | Joins two strings: `s t .stringConcat` gives s followed by t. | `string`, `string` | `string` |
 | `stringConj` | Appends a char to the end of a string. | `string`, `char` | `string` |
 | `stringContains` | Tests whether a char occurs: `s c .stringContains`, leaving both. | `string` (read), `char` (read) | `bool` |
 | `stringContainsRun` | Tests whether t occurs in s, leaving both: `s t .stringContainsRun`; an empty t gives true. | `string` (read), `string` (read) | `bool` |
+| `stringContainsWhere` | Tells whether some element of a string is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `bool`; may refuse |
 | `stringCut` | Splits a string at gap i, clamped to 0 through its length: the front part beneath, the back part on top. | `string`, `int` | `string`, `string` |
 | `stringDifference` | Filters: `a b .stringDifference` keeps the chars of a that do not occur in b, in a's order, repeats included. | `string`, `string` | `string` |
 | `stringDistinct` | Removes repeated chars, keeping each first occurrence in order. | `string` | `string` |
 | `stringDrop` | Drops the front: `s n .stringDrop` removes the first n characters; a negative n removes none. | `string`, `int` | `string` |
 | `stringDropLast` | Drops the back: `s n .stringDropLast` removes the last n characters; a negative n removes none. | `string`, `int` | `string` |
+| `stringDropWhile` | Drops the longest prefix of a string whose elements the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringEndsWith` | Tests whether s ends with t, leaving both: `s t .stringEndsWith`; an empty t gives true. | `string` (read), `string` (read) | `bool` |
 | `stringEq` | Pushes whether the top two strings are equal, leaving both. | `string` (read), `string` (read) | `bool` |
 | `stringFilter` | Keeps the chars of a string for which the topmost bool-valued function on `.function` that fits gives true; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringFindNearest` | Finds the char of s nearest c by code point, the first on a tie, pushing its index and it, leaving both; refuses on an empty s. | `string` (read), `char` (read) | `char`, `int`; may refuse |
 | `stringFindNearestFrom` | Finds the char of s nearest c by code point at index i or later, the first on a tie, pushing its index and it, leaving all three; refuses when there is none. | `string` (read), `char` (read), `int` (read) | `char`, `int`; may refuse |
+| `stringFindWhere` | Pushes the first element of a string for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when there is none, or when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `char`; may refuse |
 | `stringFirst` | Takes a string's first character; refuses the empty string. | `string` | `char`; may refuse |
 | `stringFrequencies` | Counts each distinct char: gives the distinct chars in Unicode order as a string, then a vector of ints with how many times each occurs. | `string` | `string`, `vecInt` |
 | `stringFromBool` | Converts a bool to the string `true` or `false`. | `bool` | `string` |
@@ -36,6 +40,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringIndexOfFrom` | Finds a char from an index: `s c i .stringIndexOfFrom` gives the index of the first c in s at index i or later, leaving all three; refuses on a miss. | `string` (read), `char` (read), `int` (read) | `int`; may refuse |
 | `stringIndexOfRun` | Finds where t first occurs in s, in characters, leaving both: `s t .stringIndexOfRun`; an empty t gives 0; refuses when absent. | `string` (read), `string` (read) | `int`; may refuse |
 | `stringIndexOfRunFrom` | Finds a substring from an index: `s t i .stringIndexOfRunFrom` gives the index of the first t in s at index i or later, leaving all three; an empty t is found at i; refuses on a miss. | `string` (read), `string` (read), `int` (read) | `int`; may refuse |
+| `stringIndexOfWhere` | Pushes the index of the first element of a string for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when there is none, or when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `int`; may refuse |
 | `stringInterleave` | Interleaves chars: `a b .stringInterleave` gives a[0] b[0] a[1] b[1] …, then the rest of the longer. | `string`, `string` | `string` |
 | `stringIntersect` | Filters: `a b .stringIntersect` keeps the chars of a that also occur in b, in a's order, repeats included. | `string`, `string` | `string` |
 | `stringIsSubset` | Tells whether every char of a occurs in b: `a b .stringIsSubset`, leaving both. | `string` (read), `string` (read) | `bool` |
@@ -44,15 +49,20 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringLTE` | Compares in Unicode order, leaving both strings: `s t .stringLTE` gives s ≤ t. | `string` (read), `string` (read) | `bool` |
 | `stringLast` | Takes a string's last character; refuses the empty string. | `string` | `char`; may refuse |
 | `stringLastIndexOf` | Finds a char from the end: `s c .stringLastIndexOf` gives the index of its last occurrence, leaving both; refuses when absent. | `string` (read), `char` (read) | `int`; may refuse |
+| `stringLastIndexOfWhere` | Pushes the index of the last element of a string for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when there is none, or when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `int`; may refuse |
 | `stringLength` | Counts the string's characters, leaving the string. | `string` (read) | `int` |
 | `stringLower` | Lowercases a string by Unicode's default rules. | `string` | `string` |
 | `stringMap` | Maps the topmost function on `.function` that fits over a string's chars, each in its first char hole; refuses when none fits, filler runs short, results are mixed or steps run out. | `string`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 | `stringMax` | Pushes the greatest char of the string, leaving the string; refuses an empty string. | `string` (read) | `char`; may refuse |
+| `stringMaxBy` | Pushes the first element of a string with the greatest key the topmost function on `.function` that fits gives it, leaving the string; refuses an empty one, an element with no key, or when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `char`; may refuse |
 | `stringMin` | Pushes the least char of the string, leaving the string; refuses an empty string. | `string` (read) | `char`; may refuse |
+| `stringMinBy` | Pushes the first element of a string with the least key the topmost function on `.function` that fits gives it, leaving the string; refuses an empty one, an element with no key, or when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `char`; may refuse |
 | `stringNth` | Takes the character at index i, clamped into range; refuses the empty string. | `string`, `int` | `char`; may refuse |
 | `stringNthWord` | Takes the whitespace-separated word at index i, clamped into range; refuses a string with no words. | `string`, `int` | `string`; may refuse |
 | `stringOccurrencesOf` | Counts a char: `s c .stringOccurrencesOf` gives how many times c occurs in s, leaving both. | `string` (read), `char` (read) | `int` |
 | `stringOccurrencesOfRun` | Counts a run: `s t .stringOccurrencesOfRun` gives how many non-overlapping times t occurs in s, leaving both; an empty t counts 0. | `string` (read), `string` (read) | `int` |
+| `stringOccurrencesWhere` | Counts the elements of a string for which the topmost bool-valued function on `.function` that fits gives true, leaving the string; refuses when none fits, filler runs short or steps run out. | `string` (read), the topmost fitting `function` | `int`; may refuse |
+| `stringPartition` | Splits a string into the elements that (below) and do not (on top) the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`, `string`; may refuse |
 | `stringPeekNth` | Copies the character at index i, clamped into range, leaving the string and index; refuses the empty string. | `string` (read), `int` (read) | `char`; may refuse |
 | `stringPeekNthWord` | Copies the whitespace-separated word at index i, clamped into range, leaving the string and index; refuses a string with no words. | `string` (read), `int` (read) | `string`; may refuse |
 | `stringPushAll` | Pushes each character of a string as a char, one per step, front to back, so the last ends on top. | `string` | `char`, one per step |
@@ -70,16 +80,20 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 | `stringRest` | Removes a string's first character; the empty string stays empty. | `string` | `string` |
 | `stringReverse` | Reverses a string's characters. | `string` | `string` |
 | `stringRotate` | Rotates left: `s n .stringRotate` moves the first n chars to the end (n of any sign, taken modulo the length). | `string`, `int` | `string` |
+| `stringScan` | Folds the topmost function on `.function` that fits over a string from the first element, keeping every running value: element i of the result is the fold of elements 0 through i; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringSet` | Overwrites a char: `s c i .stringSet` puts c at index i, i clamped into range; refuses the empty string. | `string`, `char`, `int` | `string`; may refuse |
 | `stringSlice` | Takes characters i through j inclusive: `s i j .stringSlice`; both clamped into range, a j below i gives character i alone. | `string`, `int`, `int` | `string` |
 | `stringSort` | Sorts a string's chars in Unicode order, stably. | `string` | `string` |
+| `stringSortBy` | Sorts a string stably by the key the topmost function on `.function` that fits gives each element (false before true, NaN last); refuses an element with no key, or when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringSplitOn` | Splits: `s p .stringSplitOn` gives the pieces of s between occurrences of p, empty pieces kept; an empty p splits s into chars. | `string`, `string` | `vecString` |
 | `stringStartsWith` | Tests whether s begins with t, leaving both: `s t .stringStartsWith`; an empty t gives true. | `string` (read), `string` (read) | `bool` |
 | `stringTake` | Keeps the front: `s n .stringTake` gives the first n characters; a negative n keeps none. | `string`, `int` | `string` |
 | `stringTakeLast` | Keeps the back: `s n .stringTakeLast` gives the last n characters; a negative n keeps none. | `string`, `int` | `string` |
+| `stringTakeWhile` | Keeps the longest prefix of a string whose elements the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `string`, the topmost fitting `function` | `string`; may refuse |
 | `stringTrim` | Removes whitespace from both ends of a string; an all-whitespace string gives the empty string. | `string` | `string` |
 | `stringUpper` | Uppercases a string by Unicode's default rules, so ß becomes SS. | `string` | `string` |
 | `stringWindows` | Every window: `s n .stringWindows` gives the substrings of n consecutive chars, sliding by one (none when n exceeds the length; n below 1 counts as 1). | `string`, `int` | `vecString`; may refuse |
+| `stringZip` | Zips with the topmost function on `.function` that fits: `a b f .stringZip` gives f(a[i], b[i]) for each i, a[i] and b[i] in its first two char holes, where b is the top string and a the first one below it of the same length (a miss if there is none); refuses when no function fits, filler runs short, results are mixed or steps run out. | `string`, the topmost fitting `string`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 
 ## Reading the environment
 

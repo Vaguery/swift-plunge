@@ -93,8 +93,10 @@ struct RandomCodeTests {
         #expect(abs((realized[.stackFamily] ?? 0) - fraction(.stackFamily)) < 0.02)
         #expect(abs((realized[.constant] ?? 0) - fraction(.constant)) < 0.02)
         #expect((realized[.input] ?? 0) < 0.03, "inputs are a sliver of the language")
-        // 0.20, not 0.25, since 2026-11-09: that day's additions are all `.other`.
-        #expect(fraction(.stackFamily) > 0.20, "furniture is a large minority")
+        // 0.20, not 0.25, since 2026-11-09: that day's additions are all `.other`;
+        // 0.15 since 2026-11-12, when 169 collection and function instructions
+        // (all `.other`) brought it to 20.0%.
+        #expect(fraction(.stackFamily) > 0.15, "furniture is a large minority")
     }
 
     /// A weight of zero means never.

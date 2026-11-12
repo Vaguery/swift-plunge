@@ -211,6 +211,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: vectorSharedBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: elementwiseBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: sequenceBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: functionCollectionBehaviors, intoLanguage: &starter)
         return starter
     }()
 

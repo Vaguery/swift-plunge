@@ -180,8 +180,9 @@ struct BehaviorIODeclarationTests {
             // reduces, whose result is now always the element's type.
             // 2026-11-12: 25 element-wise vector operations, one result each; 70
             // sequence operations, the five Frequencies with two results; the
-            // four scalar bool orderings.
-            "one result": 543, "fixed results": 84, "alternatives": 18,
+            // four scalar bool orderings; 70 with functions (the five Partitions
+            // two results, the five Zips collected as map's).
+            "one result": 603, "fixed results": 89, "alternatives": 23,
             "deferred": 80, "input": 10, "delivery": 7, "several": 1,
             "positions": 183, "continuation": 42, "printout": 13
         ])

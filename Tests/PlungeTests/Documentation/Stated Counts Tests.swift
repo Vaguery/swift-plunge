@@ -29,15 +29,16 @@ struct StatedCountsTests {
     @Test(arguments: documents)
     func `stated counts match the language`(document: String) throws {
         let text = try String(contentsOf: Self.packageRoot.appending(path: document), encoding: .utf8)
-        // Prose wraps, so any run of whitespace may separate the words.
-        let pattern = #/(\d+)\s+instructions\s+over\s+(\d+)\s+typed\s+stacks/#
+        // Prose wraps, so any run of whitespace may separate the words; a count
+        // over 999 is written with a thousands comma (1,051).
+        let pattern = #/(\d{1,3}(?:,\d{3})*)\s+instructions\s+over\s+(\d+)\s+typed\s+stacks/#
         let statements = text.matches(of: pattern)
         try #require(!statements.isEmpty, "\(document) no longer states the counts; update this test's list")
 
         let instructions = Runner().definedInstructions.count
         let typedStacks = PushStack.allCases.filter { $0 != .error }.count
         for statement in statements {
-            #expect(Int(statement.output.1) == instructions,
+            #expect(Int(statement.output.1.filter(\.isNumber)) == instructions,
                     "\(document) says \(statement.output.1) instructions; the language has \(instructions)")
             #expect(Int(statement.output.2) == typedStacks,
                     "\(document) says \(statement.output.2) typed stacks; the language has \(typedStacks)")

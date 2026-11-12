@@ -71,8 +71,9 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 539,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs;
-                               // functionEq, codePushAllFunctions; 25 element-wise, 70 sequence, 4 bool orderings
+            .operation: 609,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs;
+                               // functionEq, codePushAllFunctions; 25 element-wise, 70 sequence, 4 bool orderings,
+                               // 70 collection operations with functions (2026-11-12)
             .structural: 183,   // 13 families × 14 stacks (DeleteAtDepth the 13th; .function the 14th), bindingPopKey
             .contextRead: 207,  // 80 constants, 10 inputs, 28 depth/emptiness, 5 counts, errorPreviousStep,
                                 // 10 readItems/readStack/fromChars,

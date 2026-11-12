@@ -89,10 +89,12 @@ struct BehaviorIOSurvey {
             case .code: code()
             case .iterator: iterator()
             case .binding: BindingItem(key: int(), bound: chance(0.5) ? IntItem(int()) : code())
-            // Bare functions over every element type, so map, filter and reduce find one that fits.
+            // Bare functions over every element type, so map, filter, reduce and the
+            // function forms (zip, scan, keys, predicates, steps) find one that fits.
             case .function: FunctionItem(bare: InstructionItem(pick([
-                .intAdd, .intGT, .doubleAdd, .doubleGT, .boolAnd, .boolNot, .charUpper, .charIsLetter, .charSwap,
-                .stringConcat, .stringLength, .stringEq
+                .intAdd, .intGT, .intInc, .intAbs, .doubleAdd, .doubleGT, .doubleSqrt, .boolAnd, .boolNot,
+                .charUpper, .charIsLetter, .charIsDigit, .charSwap, .stringConcat, .stringLength, .stringEq, .stringLT,
+                .stringGT
             ] as [PushInstruction])))
             case .exec: execItem()
             case .error: ErrorItem("seeded")
