@@ -158,6 +158,21 @@ struct SequenceBehaviorTests {
         #expect(stackString(bools, .vecInt) == "[ [1, 0] ]")
     }
 
+    /// The user's ruling (2026-11-12): bools order false before true, scalar
+    /// and vector alike.
+    @Test(arguments: [(PushInstruction.boolLT, [false, true, false, false]),
+                      (.boolLTE, [true, true, false, true]),
+                      (.boolGT, [false, false, true, false]),
+                      (.boolGTE, [true, false, true, true])])
+    func `bools compare false before true`(_ name: PushInstruction, _ truth: [Bool]) {
+        // (p, q) over (false, false), (false, true), (true, false), (true, true).
+        let pairs = [(false, false), (false, true), (true, false), (true, true)]
+        for ((p, q), expected) in zip(pairs, truth) {
+            let inty = Self.run([BoolItem(p), BoolItem(q), Self.op(name)])
+            #expect(stackString(inty, .bool) == "[ \(expected) \(q) \(p) ]", "\(p) \(q) .\(name)")
+        }
+    }
+
     @Test func `vectors of bools are ordered false before true`() {
         let inty = Self.run([VecBoolItem([false, true]), VecBoolItem([true]), Self.op(.vecBoolLT),
                              Self.op(.vecBoolMax)])

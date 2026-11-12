@@ -73,8 +73,9 @@ struct TagsTests {
         // orderings, plus containment and the other two-of-a-stack tests.
         #expect(Interpreter.instructions(role: .comparison)
                 == InstructionTagging.standard.instructions(tagged: .comparison))
-        // functionEq the 55th; vecBoolLT/LTE/GT/GTE (2026-11-12) the 56th–59th.
-        #expect(Interpreter.instructions(role: .comparison).count == 59)
+        // functionEq the 55th; vecBoolLT/LTE/GT/GTE and boolLT/LTE/GT/GTE
+        // (2026-11-12, false before true) the 56th–63rd.
+        #expect(Interpreter.instructions(role: .comparison).count == 63)
 
         // The elephant: the furniture is a large minority of everything that is
         // not a constant or an input — which is why it is a partition of its own.

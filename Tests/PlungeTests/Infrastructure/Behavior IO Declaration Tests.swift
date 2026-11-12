@@ -179,8 +179,9 @@ struct BehaviorIODeclarationTests {
             // 2026-11-11: the `.function` family, `errorPreviousStep`, and the five
             // reduces, whose result is now always the element's type.
             // 2026-11-12: 25 element-wise vector operations, one result each; 70
-            // sequence operations, the five Frequencies with two results.
-            "one result": 539, "fixed results": 84, "alternatives": 18,
+            // sequence operations, the five Frequencies with two results; the
+            // four scalar bool orderings.
+            "one result": 543, "fixed results": 84, "alternatives": 18,
             "deferred": 80, "input": 10, "delivery": 7, "several": 1,
             "positions": 183, "continuation": 42, "printout": 13
         ])

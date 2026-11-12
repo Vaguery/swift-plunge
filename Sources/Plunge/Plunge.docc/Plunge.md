@@ -12,7 +12,7 @@ for searches that generate, vary and select programs instead of writing them.
 
 This package is the interpreter alone, independent of any search. You give it
 programs and inputs; it runs them, concurrently and within strict limits, and
-reports what you asked to observe. Its language has 977 instructions over 14
+reports what you asked to observe. Its language has 981 instructions over 14
 typed stacks: numbers, text, vectors, code, first-class loops, keyed variables
 and functions. Every item it computes can explain how it was made.
 

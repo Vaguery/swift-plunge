@@ -22,7 +22,7 @@ somewhat, and to permit some useful new features.
 
 ## Features
 
-- **A large, modern Push dialect**: 977 instructions over 14 typed stacks: bools,
+- **A large, modern Push dialect**: 981 instructions over 14 typed stacks: bools,
   ints, doubles, chars, strings, four vector types, code, exec (the program being
   run), first-class loops (iterators), keyed variables (bindings) and functions. A
   fifteenth stack collects errors.

@@ -18,8 +18,8 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     //
     case boolAnd, boolIfPThenQ, boolIfQThenP, boolNand, boolNor, boolNot, boolNotP, boolNotPandQ, boolNotQ, boolOr, boolP, boolPandNotQ, boolQ, boolXnor, boolXor
 
-    // bool comparison
-    case boolEq
+    // bool comparison (false before true, 2026-11-12)
+    case boolEq, boolLT, boolLTE, boolGT, boolGTE
 
     // bool conversion
     case boolFromDouble, boolFromInt

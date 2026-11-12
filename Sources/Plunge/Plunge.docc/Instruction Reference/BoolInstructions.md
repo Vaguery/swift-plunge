@@ -12,8 +12,12 @@ The `.bool` stack holds `true` and `false`. Comparisons on other stacks put thei
 | `boolEq` | Pushes whether the top two bools are equal, leaving both. | `bool` (read), `bool` (read) | `bool` |
 | `boolFromDouble` | Converts a double: false for 0.0, true for anything else, NaN included. | `double` | `bool` |
 | `boolFromInt` | Converts an int: false for 0, true for anything else. | `int` | `bool` |
+| `boolGT` | Compares, false before true, leaving both bools: `p q .boolGT` gives p > q. | `bool` (read), `bool` (read) | `bool` |
+| `boolGTE` | Compares, false before true, leaving both bools: `p q .boolGTE` gives p ≥ q. | `bool` (read), `bool` (read) | `bool` |
 | `boolIfPThenQ` | Implies: `p q .boolIfPThenQ` gives p → q, false only when p is true and q false. | `bool`, `bool` | `bool` |
 | `boolIfQThenP` | Implies backwards: `p q .boolIfQThenP` gives q → p, false only when q is true and p false. | `bool`, `bool` | `bool` |
+| `boolLT` | Compares, false before true, leaving both bools: `p q .boolLT` gives p < q. | `bool` (read), `bool` (read) | `bool` |
+| `boolLTE` | Compares, false before true, leaving both bools: `p q .boolLTE` gives p ≤ q. | `bool` (read), `bool` (read) | `bool` |
 | `boolNand` | Gives false only when both bools are true. | `bool`, `bool` | `bool` |
 | `boolNor` | Gives true only when both bools are false. | `bool`, `bool` | `bool` |
 | `boolNot` | Negates a bool. | `bool` | `bool` |

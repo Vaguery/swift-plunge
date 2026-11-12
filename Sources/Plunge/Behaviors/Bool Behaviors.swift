@@ -81,8 +81,31 @@ nonisolated extension Interpreter {
         Behavior.operation(.boolXor, takes: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in x != y }
         .described("Gives true when the two bools differ.")
 
+    // Orderings (the user's ruling, 2026-11-12): false before true, as the
+    // vector instructions sort, and as 0 and 1 compare. Comparisons read and
+    // leave, as every comparison does.
+    static let boolLT_Behavior =
+        Behavior.operation(.boolLT, reads: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !y && x }
+        .described("Compares, false before true, leaving both bools: `p q .boolLT` gives p < q.")
+
+    static let boolLTE_Behavior =
+        Behavior.operation(.boolLTE, reads: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in !y || x }
+        .described("Compares, false before true, leaving both bools: `p q .boolLTE` gives p ≤ q.")
+
+    static let boolGT_Behavior =
+        Behavior.operation(.boolGT, reads: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in y && !x }
+        .described("Compares, false before true, leaving both bools: `p q .boolGT` gives p > q.")
+
+    static let boolGTE_Behavior =
+        Behavior.operation(.boolGTE, reads: BoolItem.self, BoolItem.self, gives: BoolItem.self) { y, x in y || !x }
+        .described("Compares, false before true, leaving both bools: `p q .boolGTE` gives p ≥ q.")
+
     static let boolBehaviors: [PushInstruction: Behavior] =
         [
+            .boolLT: boolLT_Behavior,
+            .boolLTE: boolLTE_Behavior,
+            .boolGT: boolGT_Behavior,
+            .boolGTE: boolGTE_Behavior,
             .boolAnd: boolAnd_Behavior,
             .boolFromDouble: boolFromDouble_Behavior,
             .boolFromInt: boolFromInt_Behavior,
