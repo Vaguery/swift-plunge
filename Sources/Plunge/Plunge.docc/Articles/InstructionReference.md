@@ -12,12 +12,14 @@ instructions in a table:
   sentence shows the instruction as a program writes it: `a b .intSubtract` gives
   a − b, because `b` was pushed last and is on top.
 - **Takes**, the arguments in the order the instruction claims them, top item
-  first. An argument marked *(read)* is examined and left in place.
+  first. An argument marked *(read)* is examined and left in place; *the topmost
+  fitting* one is the first item down its stack that the instruction can use.
 - **Gives**, the stacks its results go to. *May refuse* means some arguments are
   the wrong values for it; then it pushes an error instead of a result.
 
 Every instruction can also *starve*, when a stack it needs holds too few items.
-A starved instruction changes nothing and leaves a *missing arguments* error.
+A starved instruction leaves a *missing arguments* error and puts itself on
+`.function` as a bare function; nothing else changes.
 
 The tables are generated from the language itself, so they always match the
 version of the library they ship with. A program can ask the same questions at

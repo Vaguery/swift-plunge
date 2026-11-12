@@ -20,7 +20,8 @@ nonisolated struct ReadContext {
     init(_ interpreter: Interpreter) { self.interpreter = interpreter }
 
     /// Work an `applying` body did that the step counter should see: steps run
-    /// in a sub-interpreter by map, filter and reduce. The body only reports it;
+    /// in a sub-interpreter by map, filter, reduce, an iterator's body or a
+    /// function derivation. The body only reports it;
     /// `Behavior.act` adds it to the counter, so no body mutates the interpreter.
     let meter = WorkMeter()
 

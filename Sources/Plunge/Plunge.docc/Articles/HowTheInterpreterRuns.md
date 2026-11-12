@@ -52,11 +52,18 @@ Every instruction declares what it needs, in order:
 
 - items it **takes** from a stack, which are removed;
 - items it **reads**, which are examined and left in place (the queries);
-- items it **needs** in place, which it rearranges (the stack instructions).
+- items it **needs** in place, which it rearranges (the stack instructions);
+- the **first item that fits**: the topmost item on a stack that passes a test,
+  wherever it sits (map, filter and reduce take the topmost function on
+  `.function` that can do their job).
 
-If any stack is too short, the instruction is **starved**: it changes nothing
-and pushes a *missing arguments* error naming the stack that came up short.
-Otherwise it removes what it takes and computes. The outcome is one of:
+If any stack is too short, the instruction is **starved**: it pushes a *missing
+arguments* error naming the stack that came up short, and puts itself on
+`.function` as a bare function whose holes are the arguments it wanted (see
+<doc:Functions>). Nothing else changes. If a stack has items but none fits, the
+instruction **misses**: it takes its other arguments and refuses with a
+``ErrorKind/notFound`` error. Otherwise it removes what it takes and computes. The
+outcome is one of:
 
 - **results**, each pushed onto the stack for its type;
 - **a refusal**: the arguments were the wrong values for this instruction (a
@@ -68,8 +75,9 @@ Otherwise it removes what it takes and computes. The outcome is one of:
 Every error carries an ``ErrorKind``, so a search can count starvation, refusals
 and size limits separately. A program can measure `.error` (`errorStackDepth`)
 and count some kinds of error on it (`errorMissingArgCount`,
-`errorMissingInputCount`, `errorMissingConstantCount`), but no instruction can pop
-or reorder it: a program can't hide its own failures.
+`errorMissingInputCount`, `errorMissingConstantCount`), or ask whether the step
+just before recorded one (`errorPreviousStep`), but no instruction can pop or
+reorder it: a program can't hide its own failures.
 
 ## Limits
 
@@ -87,6 +95,13 @@ push that would break one is refused with a ``ErrorKind/sizeRefusal`` error:
 
 Numbers have no size limit of their own: integer arithmetic refuses rather than
 overflowing, and no instruction leaves a NaN or an infinity on `.double`.
+
+Some instructions run code in a fresh interpreter of their own, a **sandbox**:
+map, filter and reduce for each application of a function, `vecFromIterator` for
+an iterator's body, and `codePushAllFunctions` for the block it converts. Every
+step a sandbox takes counts against the run's own step limit, and sandboxes nest
+at most 50 deep: a sandbox that would start deeper refuses with a
+``ErrorKind/sizeRefusal`` error, because each level uses the thread's stack.
 
 Two guards stop a run early, leaving an error marked `RUNAWAY:` or `MEMORY:` and
 emptying `.exec`:

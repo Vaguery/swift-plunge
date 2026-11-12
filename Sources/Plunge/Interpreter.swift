@@ -241,9 +241,9 @@ nonisolated final class Interpreter {
 
     /// The stack of the most recent push of a value: any stack but `.exec`,
     /// `.error` and `.function` (where a starvation shelves the instruction, which
-    /// is not something the program produced). A function run in a sub-interpreter returns the top of this
-    /// stack, "the last thing it produced" (map, filter and reduce). One store
-    /// per push.
+    /// is not something the program produced). An iterator's body, run in a
+    /// sub-interpreter by `vecFromIterator`, returns the top of this stack, "the
+    /// last thing it produced". One store per push.
     @exclusivity(unchecked) var lastPush: PushStack?
     /// The next fresh `.binding` key. Reset at every load to the number
     /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`

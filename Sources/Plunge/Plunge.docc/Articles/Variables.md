@@ -46,7 +46,7 @@ Lookups read a key from the top of `.int` and leave it there:
 - `bindingDerefFrom` and `bindingDerefToCodeFrom` take a depth from `.int` and
   search from there, which reaches the older, shadowed bindings of the same key.
 
-A key with no binding is a refusal, as if `.binding` were empty.
+A key with no binding is a miss: a refusal with a `notFound` error.
 
 ## Assignment
 

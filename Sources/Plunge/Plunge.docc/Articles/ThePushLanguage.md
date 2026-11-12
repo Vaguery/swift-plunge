@@ -65,8 +65,10 @@ When an argument order matters, the instruction reference writes it the same way
 
 ## Every program runs
 
-An instruction that finds too few items on a stack it needs does nothing to the
-stacks and pushes a *missing arguments* error onto `.error`. An instruction that
+An instruction that finds too few items on a stack it needs pushes a *missing
+arguments* error onto `.error` and puts itself on `.function`, a bare function
+waiting for those arguments (see <doc:Functions>); nothing else changes. A search
+or lookup that finds nothing refuses with a `notFound` error. An instruction that
 finds its arguments but can't use them (a division by zero, an index into an
 empty string, an integer that would overflow) **refuses**: it uses up the
 arguments it took (a query still leaves what it only read), pushes an error

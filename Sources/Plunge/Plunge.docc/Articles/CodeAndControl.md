@@ -72,6 +72,12 @@ it. `execK` and `execS` are the K and S combinators of combinatory logic over
 blocks: `( a ) ( b ) .execK` runs a and drops b, and `( a ) ( b ) ( c ) .execS`
 runs a, c, b, then c again.
 
+## Blocks as functions
+
+`codePushAllFunctions` turns a block into the functions its pushes compute, with
+a hole wherever the block reached for an argument it did not have, and puts them
+on `.function` for map, filter and reduce. See <doc:Functions>.
+
 ## Loops as items
 
 The loops above run to completion inside the instruction that starts them. An
@@ -82,3 +88,4 @@ and resumed. See <doc:Iterators>.
 
 - <doc:CodeInstructions>
 - <doc:ExecInstructions>
+- <doc:Functions>
