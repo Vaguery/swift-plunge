@@ -146,7 +146,9 @@ extension FunctionOutcome {
             guard present.count < count else { continue }
             let holes = (present.count..<count).compactMap { _ in registry.make(stack) }
             sub.clear(stack)
-            for item in holes.reversed() + present.reversed() { sub.push(item, to: stack) }
+            // Spelled out: Linux Foundation makes `holes.reversed() + …` ambiguous.
+            let ordered: [any Item] = Array(holes.reversed()) + Array(present.reversed())
+            for item in ordered { sub.push(item, to: stack) }
             made += holes.count
         }
         return made
