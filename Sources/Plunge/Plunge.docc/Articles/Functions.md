@@ -30,7 +30,9 @@ placeholder was:
 ```
 
 One hole can sit in several places: `( .intDup .intMultiply )` yields
-`ƒ( ⟨int⟩ .intDup .intMultiply )`, which squares its one argument. A block whose
+`ƒ( ⟨int⟩ .intDup .intMultiply )`, which squares its one argument. A derivation runs the block once, so it follows only the branch its
+placeholders take: a block that chooses with `execIf` yields the branch it ran,
+not the choice. A block whose
 derivation runs too long yields nothing and leaves one error. Errors the block
 raises inside the sandbox stay there. A run pays for deriving a block the first
 time it converts one with those contents; later copies cost nothing more.
@@ -98,6 +100,30 @@ each over the four vector types and strings. What fits depends on the job:
 ```
 .charIsDigit "ab3c4" .stringFindWhere     →  .char holds '3'
 ```
+
+## Working with functions themselves
+
+- **`functionApply`** runs the topmost function with an output on the program's
+  own values, **taking** a filler for each hole from its stack as the
+  instruction itself would: `.intSubtract` shelved, then `10 3 .functionApply`,
+  gives `7`. The result lands on the function's output stack; an application
+  that leaves nothing there refuses.
+- **`functionCompose`**, written `f g .functionCompose`, makes f after g: g's
+  program goes into f's first hole of g's output type, wherever that hole
+  occurs.
+- **`functionFill`** is partial application: the topmost function with a hole
+  takes the top item of its first hole's stack, which fills that hole wherever
+  it occurs. `.intSubtract` with `10` filled is `ƒ( 10 ⟨int⟩ .intSubtract )`,
+  ten minus its argument.
+- **`functionArity`** counts the holes of the top function, leaving it.
+- **`functionIterate`**, `x n`, applies the topmost *step* function (one with a
+  hole of its own output's type) n times from x.
+- **`functionIterateUntil`**, written `x p f`, gives the orbit x, f(x), f(f(x)),
+  … up to and including the first value the predicate p holds for, as a
+  vector: f is the topmost step function and p the topmost predicate on its
+  type below it. Halving from 16 until 1 gives `[16, 8, 4, 2, 1]`.
+- **`functionRef`**, `functionWith` and `functionRefAs` bind functions to keys,
+  as the other types' binders do (<doc:Variables>).
 
 ## When there is no function
 

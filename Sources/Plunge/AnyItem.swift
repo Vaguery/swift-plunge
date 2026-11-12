@@ -35,7 +35,8 @@ nonisolated struct FunctionState: Codable, Sendable {
     /// The function, or nil for a bare one that does not hold exactly one item.
     var item: FunctionItem? {
         let items = body.map(\.item)
-        if let holes, let output { return FunctionItem(body: items, holes: holes, output: output) }
+        // Holes mark a derived function, whose output may be unfixed (nil).
+        if let holes { return FunctionItem(derivedBody: items, holes: holes, output: output) }
         return items.count == 1 ? FunctionItem(bare: items[0]) : nil
     }
 }

@@ -212,6 +212,7 @@ nonisolated final class Interpreter {
         integrateBehaviors(fromThese: elementwiseBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: sequenceBehaviors, intoLanguage: &starter)
         integrateBehaviors(fromThese: functionCollectionBehaviors, intoLanguage: &starter)
+        integrateBehaviors(fromThese: functionStackBehaviors, intoLanguage: &starter)
         return starter
     }()
 

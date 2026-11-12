@@ -341,6 +341,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
          vecStringWith
     case boolRefAs, intRefAs, doubleRefAs, charRefAs, stringRefAs, codeRefAs, vecBoolRefAs, vecIntRefAs, vecDoubleRefAs,
          vecStringRefAs
+    case functionRef, functionWith, functionRefAs
     case bindingRekey, bindingScope, bindingQuote, bindingFromCode, bindingFreshKey, bindingUnpack
     // and the lookups.
     case bindingDeref, bindingDerefFrom, bindingDerefToCode, bindingDerefToCodeFrom, bindingDo, bindingNearestKey,
@@ -440,6 +441,9 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
          vecStringDropWhile, vecStringPartition, stringZip, stringScan, stringSortBy, stringMinBy, stringMaxBy,
          stringOccurrencesWhere, stringContainsWhere, stringAllWhere, stringIndexOfWhere, stringLastIndexOfWhere,
          stringFindWhere, stringTakeWhile, stringDropWhile, stringPartition
+
+    // Instructions on functions (2026-11-12)
+    case functionApply, functionCompose, functionFill, functionArity, functionIterate, functionIterateUntil
 
 }
 

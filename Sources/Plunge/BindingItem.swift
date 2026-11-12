@@ -77,7 +77,7 @@ nonisolated extension BindingItem {
     static let binders: [PushStack: PushInstruction] = [
         .bool: .boolRef, .int: .intRef, .double: .doubleRef, .char: .charRef, .string: .stringRef,
         .code: .codeRef, .vecBool: .vecBoolRef, .vecInt: .vecIntRef, .vecDouble: .vecDoubleRef,
-        .vecString: .vecStringRef
+        .vecString: .vecStringRef, .function: .functionRef
     ]
 
     /// **How a pair binding `bound` to `key` is made again**, for its `call`:

@@ -8,7 +8,26 @@ The `.function` stack holds functions: a body with typed holes. An instruction t
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
+| `functionApply` | Applies the topmost function on `.function` with an output to the program's values, taking a filler for each hole from its stack as the instruction itself would (`a b` and a bare `.intSubtract` give a − b), and pushes its result; refuses when it leaves none. | the topmost fitting `function`, n × `bool`, n × `int`, n × `double`, n × `code`, n × `char`, n × `string`, n × `vecBool`, n × `vecInt`, n × `vecDouble`, n × `vecString`, n × `iterator`, n × `binding`, n × `function` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `iterator` or `binding` or `function`; may refuse |
+| `functionArity` | Counts the holes of the top function, leaving it. | `function` (read) | `int` |
+| `functionCompose` | Composes: `f g .functionCompose`, g the topmost function with an output and f the next with a hole of that type, gives f after g, g's program in f's first such hole. | the topmost fitting `function`, the topmost fitting `function` | `function` |
 | `functionEq` | Pushes whether the top two functions are equal, leaving both. | `function` (read), `function` (read) | `bool` |
+| `functionFill` | Partial application: the topmost function with a hole takes the top item of its first hole's stack, which fills that hole wherever it occurs, leaving a function with one hole fewer. | the topmost fitting `function`, n × `bool`, n × `int`, n × `double`, n × `code`, n × `char`, n × `string`, n × `vecBool`, n × `vecInt`, n × `vecDouble`, n × `vecString`, n × `iterator`, n × `binding`, n × `function` | `function` |
+| `functionIterate` | Iterates: `x n .functionIterate` applies the topmost step function on `.function` (a hole of its own output's type) n times from x; its other holes are read from the run; refuses a negative n, or when filler runs short or steps run out. | the topmost fitting `function`, `int`, n × `bool`, n × `int`, n × `double`, n × `code`, n × `char`, n × `string`, n × `vecBool`, n × `vecInt`, n × `vecDouble`, n × `vecString`, n × `iterator`, n × `binding`, n × `function` | `bool` or `int` or `double` or `code` or `char` or `string` or `vecBool` or `vecInt` or `vecDouble` or `vecString` or `iterator` or `binding` or `function`; may refuse |
+| `functionIterateUntil` | The orbit: `x p f .functionIterateUntil`, f the topmost step function on `.function` and p the topmost predicate on its type below it, gives x, f(x), f(f(x)), … up to and including the first value p holds for, as a vector (a string of chars); refuses an orbit over the size limit or one that cannot be collected, or when filler runs short or steps run out. | the topmost fitting `function`, the topmost fitting `function`, n × `bool`, n × `int`, n × `double`, n × `code`, n × `char`, n × `string`, n × `vecBool`, n × `vecInt`, n × `vecDouble`, n × `vecString`, n × `iterator`, n × `binding`, n × `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
+| `functionRefAs` | Binds the top function to key k from `.int`, taking both and shadowing any older binding of k: `x k .functionRefAs`. | `function`, `int` | `binding` |
+
+## Reading the environment
+
+| Instruction | What it does | Takes | Gives |
+|---|---|---|---|
+| `functionRef` | Binds a copy of the top function, left in place, to a fresh key and pushes the key onto `.int`. | `function` (read) | `binding`, `int` |
+
+## Control
+
+| Instruction | What it does | Takes | Gives |
+|---|---|---|---|
+| `functionWith` | Binds a copy of the top function to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `function` (read) | the rest of the program |
 
 ## The stack's own instructions
 

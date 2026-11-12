@@ -75,6 +75,12 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
         self.init(body: body, holes: holes, output: output, isBare: false, call: call)
     }
 
+    /// A derived function whose output may not be fixed: composing or filling a
+    /// bare function whose instruction's result depends on its arguments.
+    init(derivedBody body: [any Item], holes: [Hole], output: PushStack?, call: [any Item] = []) {
+        self.init(body: body, holes: holes, output: output, isBare: false, call: call)
+    }
+
     private init(body: [any Item], holes: [Hole], output: PushStack?, isBare: Bool, call: [any Item]) {
         self.value = body
         self.derivedHoles = holes
@@ -149,6 +155,59 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
 
     private var bareInstruction: PushInstruction? {
         value.first?.exactly(InstructionItem.self)?.value
+    }
+}
+
+nonisolated extension FunctionItem {
+
+    /// A piece of a function being rebuilt: a body item, or a hole by identity.
+    enum Token {
+        case item(any Item)
+        case hole(id: Int, stack: PushStack)
+    }
+
+    /// The function written out as tokens, hole `k` replaced by `replace(k)`.
+    func tokens(replacing replace: (Int) -> [Token]?) -> [Token] {
+        let holes = self.holes
+        return Self.merged(value.map { [Token.item($0)] }, layout) { k in
+            replace(k) ?? [.hole(id: k, stack: holes[k].stack)]
+        }.flatMap { $0 }
+    }
+
+    /// The function `tokens` spell: the items its body, each distinct hole one
+    /// hole, numbered in order of first appearance, at every place it occurs.
+    static func spelled(_ tokens: [Token], output: PushStack?, call: [any Item] = []) -> FunctionItem {
+        var body: [any Item] = []
+        var order: [Int] = [], stacks: [Int: PushStack] = [:], positions: [Int: [Int]] = [:]
+        for token in tokens {
+            switch token {
+            case .item(let item): body.append(item)
+            case .hole(let id, let stack):
+                if positions[id] == nil { order.append(id); stacks[id] = stack }
+                positions[id, default: []].append(body.count)
+            }
+        }
+        let holes = order.map { Hole(stack: stacks[$0]!, positions: positions[$0]!) }
+        return FunctionItem(body: body, holes: holes, output: output, isBare: false, call: call)
+    }
+
+    /// **Composition**, `self` after `inner`: `inner`'s program in place of this
+    /// function's first hole of `inner`'s output type, at every place that hole
+    /// occurs. Nil when `inner` has no output or this function no such hole.
+    func composed(after inner: FunctionItem, call: [any Item] = []) -> FunctionItem? {
+        guard let stack = inner.output, let target = holes.firstIndex(where: { $0.stack == stack }) else {
+            return nil
+        }
+        let shift = holes.count
+        let innerTokens = inner.tokens { k in [.hole(id: shift + k, stack: inner.holes[k].stack)] }
+        return Self.spelled(tokens { $0 == target ? innerTokens : nil }, output: output, call: call)
+    }
+
+    /// **Partial application**: `filler` in the first hole, at every place it
+    /// occurs. Nil for a function with no holes.
+    func filling(firstHoleWith filler: any Item, call: [any Item] = []) -> FunctionItem? {
+        guard !holes.isEmpty else { return nil }
+        return Self.spelled(tokens { $0 == 0 ? [.item(filler)] : nil }, output: output, call: call)
     }
 }
 

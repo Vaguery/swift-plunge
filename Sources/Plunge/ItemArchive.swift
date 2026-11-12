@@ -166,7 +166,8 @@ nonisolated struct ArchivedFunction: Codable, Sendable {
 
     func item(_ resolve: (Int) throws -> any Item) throws -> any Item {
         let items = try body.map(resolve)
-        if let holes, let output { return FunctionItem(body: items, holes: holes, output: output) }
+        // Holes mark a derived function, whose output may be unfixed (nil).
+        if let holes { return FunctionItem(derivedBody: items, holes: holes, output: output) }
         guard items.count == 1 else { throw ArchiveError.malformed("a bare function holds one item") }
         return FunctionItem(bare: items[0])
     }

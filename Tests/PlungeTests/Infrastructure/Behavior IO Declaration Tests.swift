@@ -93,8 +93,16 @@ struct BehaviorIODeclarationTests {
         let index = Self.instructions.firstIndex(of: name)!
         var sampler = BehaviorIOSurvey.Sampler(rng: SeededRNG(seed: 41 + UInt64(index)))
         var ran = 0
+        // A sieve needs the right item somewhere on its stack (a function that
+        // fits, a partner of the same length), so its instruction gets more draws.
+        let sieves = behavior.requirements.contains {
+            switch $0 {
+            case .takesFirst, .readsFirst: true
+            default: false
+            }
+        }
 
-        for trial in 0..<Self.trials {
+        for trial in 0..<(sieves ? 3 * Self.trials : Self.trials) {
             let inty = sampler.interpreter()
             if behavior.behaviorClass == .contextRead {   // the constants and inputs; slow to bind
                 withFuzzSeed(UInt64(trial)) { RandomCode.setRandomConstants(in: inty) }
@@ -181,10 +189,11 @@ struct BehaviorIODeclarationTests {
             // 2026-11-12: 25 element-wise vector operations, one result each; 70
             // sequence operations, the five Frequencies with two results; the
             // four scalar bool orderings; 70 with functions (the five Partitions
-            // two results, the five Zips collected as map's).
-            "one result": 603, "fixed results": 89, "alternatives": 23,
+            // two results, the five Zips collected as map's); the function
+            // instructions (apply and the iterations any value) and its binders.
+            "one result": 607, "fixed results": 90, "alternatives": 26,
             "deferred": 80, "input": 10, "delivery": 7, "several": 1,
-            "positions": 183, "continuation": 42, "printout": 13
+            "positions": 183, "continuation": 43, "printout": 13
         ])
     }
 
