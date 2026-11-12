@@ -500,6 +500,8 @@ struct ProvenanceDualModeStress {
                 cruxHolds, cruxBroken, cruxInconclusive, peakResidentMB()))
         }
 
+        let slowList = slow.sorted { $0.seconds > $1.seconds }
+            .map { "\($0.seed) \($0.regime) \(Int($0.seconds)) s" }.joined(separator: ", ")
         let summary = """
         provenance dual-mode stress — \(Int(elapsed())) s, seeds \(firstSeed)..<\(next)
         programs: \(programs) (\(byRegime.sorted { $0.key < $1.key }.map { "\($0.key) \($0.value)" }.joined(separator: ", "))), each run with recording off and on
@@ -507,6 +509,7 @@ struct ProvenanceDualModeStress {
         value mismatches between modes: \(mismatches) (content hash truncated at 5M nodes for \(truncatedHashes) programs; their weights and depths are still compared in full)
         programs whose recording-off run left a call anywhere: \(offCallPrograms) (walk truncated at 2M nodes for \(truncatedWalks) programs)
         runs over \(slowSeconds) s: \(slow.count); slowest \(String(format: "%.2f", slowest.seconds)) s (seed \(slowest.seed))
+        slow seeds: \(slowList)
         sampled crux replays (every \(cruxSampleEvery)th program, top of each stack): holds \(cruxHolds), broken \(cruxBroken), inconclusive (out of budget) \(cruxInconclusive)
         peak resident memory: \(peakResidentMB()) MB
         findings: \(findingsURL.path)

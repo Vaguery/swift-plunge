@@ -100,11 +100,16 @@ nonisolated extension CruxCompression {
             seed = seed.call[0]
         }
 
+        // Decided before the body's crux is built: that costs the sides' whole
+        // histories, and an over-budget push that is no chain would pay it on
+        // every push only to be elided.
+        let earlier = Fold(seed)
+        guard passes >= minimumPasses || earlier != nil else { return nil }
         let body = sides.flatMap { $0.crux() }
         var count = passes
         // A chain that has folded before: its seed is the earlier fold, with
         // the same body. The new passes join it.
-        if let earlier = Fold(seed), sameLeaves(earlier.body, body) {
+        if let earlier, sameLeaves(earlier.body, body) {
             seed = earlier.seed
             count += earlier.count
         } else if passes < minimumPasses {
