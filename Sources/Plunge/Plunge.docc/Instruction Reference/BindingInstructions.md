@@ -44,6 +44,12 @@ The `.binding` stack holds keyed bindings: an int key and any item. The topmost 
 |---|---|---|---|
 | `.bindingPopKey` | Discards key k's topmost binding, leaving k, so an older binding of k shows through; refuses when k is unbound. | `int` (read) | `binding`, rearranged; may refuse |
 
+## Output
+
+| Instruction | What it does | Takes | Gives |
+|---|---|---|---|
+| `.bindingPrint` | Moves the top binding to `.print`. | `binding` | `print` |
+
 ## The stack's own instructions
 
 Every stack has the same family for copying, deleting, reordering and measuring its items; see <doc:StackInstructions>. On `.binding` they are `.bindingDeepDup`, `.bindingDeleteAtDepth`, `.bindingDup`, `.bindingDupItems`, `.bindingDupTimes`, `.bindingFlush`, `.bindingPop`, `.bindingPopItems`, `.bindingRot`, `.bindingShove`, `.bindingStackDepth`, `.bindingStackIsEmpty`, `.bindingSwap`, `.bindingYank`, `.bindingYankDup`.

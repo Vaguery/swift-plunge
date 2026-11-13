@@ -132,7 +132,7 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecDoublePrint` | Prints the top vector of doubles and a newline to the output. | `vecDouble` | the printout |
+| `.vecDoublePrint` | Moves the top vector of doubles to `.print`. | `vecDouble` | `print` |
 
 ## The stack's own instructions
 

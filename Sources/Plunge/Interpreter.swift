@@ -353,37 +353,6 @@ nonisolated final class Interpreter {
     /// interpreter they are handed.
     var recording: ProvenanceRecording { ProvenanceRecording(isOn: config.recordsProvenance) }
     var program: [any Item] = []
-    /// Everything the print instructions have written, as text.
-    ///
-    /// **Rendered when read.** A print instruction records the item it prints
-    /// (`printItem(_:)`), which shares the item's storage, and the text is made when
-    /// someone reads `printout`, each item once. The search never reads it, and
-    /// rendering eagerly was most of a print's cost: up to 0.4 ms for a vector at
-    /// `maxVectorLength` (Instruction Scaling Probe). The text is the same either way.
-    var printout: String {
-        get {
-            if !pendingPrints.isEmpty {
-                for item in pendingPrints { renderedPrintout.append("\(item.pretty())\n") }
-                pendingPrints.removeAll()
-            }
-            return renderedPrintout
-        }
-        set {
-            renderedPrintout = newValue
-            pendingPrints.removeAll()
-        }
-    }
-    private var renderedPrintout = ""
-    private var pendingPrints: [any Item] = []
-
-    /// Print an item: its `pretty()` text and a newline, rendered when `printout` is
-    /// read.
-    func printItem(_ item: any Item) { pendingPrints.append(item) }
-
-    /// Print raw text (`.printNewline`), after anything already printed.
-    func printText(_ text: String) {
-        if pendingPrints.isEmpty { renderedPrintout.append(text) } else { printout.append(text) }
-    }
     // Use AnyRecorder for type erasure of Recorder generic type
     var recorders: [String: AnyRecorder] = [:] {
         didSet {
@@ -449,7 +418,7 @@ nonisolated final class Interpreter {
             }
         }
         guard self.requireAccepts(item, on: stack) else { return }
-        if stack != .exec && stack != .error && stack != .function { lastPush = stack }
+        if stack != .exec && stack != .function && !stack.isChannel { lastPush = stack }
         if pushLog != nil { pushLog!.append((stack, item)) }
         // No provenance stripping here: with `recordsProvenance` off, Behaviors never
         // build a `call` in the first place (every provenance expression is written

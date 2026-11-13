@@ -75,7 +75,7 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.doublePrint` | Prints the top double and a newline to the output. | `double` | the printout |
+| `.doublePrint` | Moves the top double to `.print`. | `double` | `print` |
 
 ## The stack's own instructions
 

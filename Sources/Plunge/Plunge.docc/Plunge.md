@@ -19,9 +19,10 @@ interpreters, and why.
 
 This package is the interpreter alone, and contains no search. You give it
 programs and inputs; it runs them, concurrently and within strict limits, and
-reports what you asked it to observe. The language has 1,067 instructions over
+reports what you asked it to observe. The language has 1,068 instructions over
 14 typed stacks: bools, numbers, text, vectors, code, loops, variables and
-functions.
+functions. Two more stacks collect what a program emits: its errors, and
+whatever it prints.
 
 ### Where to start
 

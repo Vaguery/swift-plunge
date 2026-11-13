@@ -17,7 +17,7 @@
 /// | `contextRead` | the interpreter, read-only | results | context read |
 /// | `applying` | its arguments, and the environment read-only | results, and work done | operation that runs a function |
 /// | `control` | its arguments | continuation writes and results | control |
-/// | `channel` | its arguments | a printout write | channel |
+/// | `channel` | its arguments | the items to put on `.print` | channel |
 nonisolated enum BehaviorBody: Sendable {
     case values(@Sendable ([any Item], ProvenanceRecording) -> [Router])
     case structural(PushStack, @Sendable ([any Item], StackView) -> StructuralStep)
@@ -28,5 +28,5 @@ nonisolated enum BehaviorBody: Sendable {
     /// charges to the run.
     case applying(@Sendable ([any Item], ReadContext) -> [Router])
     case control(@Sendable ([any Item], ProvenanceRecording) -> [ControlEffect])
-    case channel(@Sendable ([any Item]) -> ChannelWrite)
+    case channel(@Sendable ([any Item], ProvenanceRecording) -> [any Item])
 }

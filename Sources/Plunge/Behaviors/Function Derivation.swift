@@ -77,7 +77,8 @@ nonisolated struct FunctionDerivation {
     private(set) var functions: [FunctionItem]?
 
     /// The stacks a hole can be made on, and pushes are read from.
-    static let holeStacks: Set<PushStack> = Set(PushStack.allCases).subtracting([.exec, .error, .function])
+    static let holeStacks: Set<PushStack> =
+        Set(PushStack.allCases.filter { !$0.isChannel }).subtracting([.exec, .function])
 
     init(_ block: CodeItem, inputs: [PushInstruction: any Item], constants: [PushInstruction: any Item],
          limit: Int, depth: Int) {

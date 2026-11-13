@@ -146,14 +146,25 @@ nonisolated extension Behavior {
 
     // MARK: - Channels
 
-    /// A sink: consume `takes` and say what to print.
+    /// A print: take the top item of `stack` and move it to `.print`.
+    ///
+    /// The move crosses stacks, so the printed item records its argument and the
+    /// instruction (provenance law 2): its crux rebuilds the item and prints it
+    /// again. From `.exec` the instruction is recorded first (law 3b), because the
+    /// item it prints comes after it in the program.
     static func channel(
         _ label: PushInstruction,
-        takes: [PushStack],
-        tags: Set<InstructionTag> = [],
-        write: @escaping @Sendable ([any Item]) -> ChannelWrite
+        takes stack: PushStack,
+        tags: Set<InstructionTag> = []
     ) -> Behavior {
-        Behavior(label, requires: takes.map { Requirement.takes($0) },
-                 tags: tags, behaviorClass: .channel, body: .channel(write), produces: .printout)
+        Behavior(label, requires: [.takes(stack)], tags: tags, behaviorClass: .channel,
+                 body: .channel { args, recording in
+                     var printed = args[0]
+                     printed.call = recording(stack == .exec
+                         ? [InstructionItem(label), args[0]]
+                         : [args[0], InstructionItem(label)])
+                     return [printed]
+                 },
+                 produces: .printed)
     }
 }

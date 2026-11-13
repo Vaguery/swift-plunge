@@ -98,6 +98,7 @@ struct BehaviorIOSurvey {
             ] as [PushInstruction])))
             case .exec: execItem()
             case .error: ErrorItem("seeded")
+            case .print: IntItem(int())
             default: vector(for: stack)
             }
         }

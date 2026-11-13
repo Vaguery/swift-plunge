@@ -16,13 +16,14 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    /// The thirteen stacks that get generated families — the furniture here, and the
+    /// The fourteen stacks that get generated families — the furniture here, and the
     /// `…Eq` comparisons in `Comparison Behaviors.swift`.
     ///
-    /// **`.error` is deliberately absent.** It gets no generated family at all,
-    /// because a program that could pop or reorder its own errors could hide a
-    /// failed instruction from whatever scores it; `.errorStackDepth` is the single
-    /// read-only exception. See `Introspection Behaviors.swift`.
+    /// **The channels, `.error` and `.print`, are deliberately absent.** They get no
+    /// generated family at all, because a program that could pop or reorder what it
+    /// has emitted could hide a failed instruction, or edit its answer, out of sight
+    /// of whatever scores it. `.error`'s counting instructions are the only read-only
+    /// exceptions (see `Introspection Behaviors.swift`); `.print` has none.
     ///
     /// Shared rather than written twice, so the two factories cannot drift apart
     /// about which stacks exist.

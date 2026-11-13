@@ -258,7 +258,6 @@ nonisolated enum DualModeStress {
         }
         hasher.combine(inty.liveWeight)
         hasher.combine(inty.counter)
-        hasher.combine(inty.printout)
         return (hasher.finalize(), remaining <= 0)
     }
 
@@ -269,7 +268,7 @@ nonisolated enum DualModeStress {
                 item.weight < 10_000 ? "\(item.pretty())#\(item.weight)" : "<\(type(of: item)) weight \(item.weight)>"
             }.joined(separator: " ")
         }
-        return (stacks + ["liveWeight \(inty.liveWeight)", "counter \(inty.counter)", "printout \(inty.printout)"])
+        return (stacks + ["liveWeight \(inty.liveWeight)", "counter \(inty.counter)"])
             .joined(separator: "\n")
     }
 

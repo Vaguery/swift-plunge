@@ -49,7 +49,7 @@ The `.bool` stack holds `true` and `false`. Comparisons on other stacks put thei
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.boolPrint` | Prints the top bool and a newline to the output. | `bool` | the printout |
+| `.boolPrint` | Moves the top bool to `.print`. | `bool` | `print` |
 
 ## The stack's own instructions
 

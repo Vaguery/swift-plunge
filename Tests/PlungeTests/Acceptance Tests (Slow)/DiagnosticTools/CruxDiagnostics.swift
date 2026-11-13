@@ -147,6 +147,7 @@ enum CruxVerdict: Sendable {
 /// `InterpreterSettings.reconstructing`.
 func inspectCrux(
     of item: any Item,
+    foundOn stack: PushStack? = nil,
     inputs: [PushInstruction: any Item],
     constants: [PushInstruction: any Item],
     settings: InterpreterSettings,
@@ -154,7 +155,7 @@ func inspectCrux(
     onHalt: HaltPolicy = .flushExecAndJudge
 ) -> CruxVerdict {
     guard !item.call.isEmpty else { return .holds }
-    guard let resting = PushStack.defaultStack(for: item) else { return .holds }
+    guard let resting = PushStack.restingStack(of: item, foundOn: stack) else { return .holds }
 
     let crux = item.crux()
     // A folded loop (`seed ( body ) K .execDoTimes`) is short but runs long, so
@@ -240,12 +241,13 @@ func loadedBaseline(inputs: [PushInstruction: any Item],
 /// should call `inspectCrux` and count the inconclusives.
 func brokenClaim(
     about item: any Item,
+    foundOn stack: PushStack? = nil,
     inputs: [PushInstruction: any Item],
     constants: [PushInstruction: any Item],
     settings: InterpreterSettings
 ) -> String? {
     guard case .broken(_, let why) = inspectCrux(
-        of: item, inputs: inputs, constants: constants, settings: settings
+        of: item, foundOn: stack, inputs: inputs, constants: constants, settings: settings
     ) else { return nil }
     return why
 }

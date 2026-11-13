@@ -89,6 +89,7 @@ struct CruxRoundTripTests {
         case .function: FunctionItem(bare: InstructionItem([.intAdd, .intSubtract, .intMultiply, .intGT,
                                                             .intInc][n % 5]))
         case .error:     nil   // never seeded; never checked
+        case .print:     nil   // a channel, like .error: never seeded
         }
     }
 
@@ -156,7 +157,7 @@ struct CruxRoundTripTests {
         for stack in PushStack.allStacks where stack != .error {
             for item in inty.stacks[stack]! {
                 guard !item.call.isEmpty,
-                      let resting = PushStack.defaultStack(for: item)
+                      let resting = PushStack.restingStack(of: item, foundOn: stack)
                 else { continue }
                 found.append((item, resting))
             }

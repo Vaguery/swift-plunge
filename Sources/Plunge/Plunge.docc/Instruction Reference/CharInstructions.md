@@ -55,7 +55,7 @@ The `.char` stack holds single characters (Swift `Character`s, so one may be sev
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.charPrint` | Prints the top char and a newline to the output. | `char` | the printout |
+| `.charPrint` | Moves the top char to `.print`. | `char` | `print` |
 
 ## The stack's own instructions
 

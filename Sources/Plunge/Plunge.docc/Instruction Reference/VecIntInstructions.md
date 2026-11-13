@@ -136,7 +136,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecIntPrint` | Prints the top vector of ints and a newline to the output. | `vecInt` | the printout |
+| `.vecIntPrint` | Moves the top vector of ints to `.print`. | `vecInt` | `print` |
 
 ## The stack's own instructions
 

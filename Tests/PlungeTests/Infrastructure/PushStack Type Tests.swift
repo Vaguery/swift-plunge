@@ -44,9 +44,9 @@ struct PushStackTypeTests {
 
     // MARK: isHeterogeneous
 
-    @Test func `exec is the only heterogeneous stack`() {
+    @Test func `exec and print are the only heterogeneous stacks`() {
         for stack in PushStack.allCases {
-            #expect(stack.isHeterogeneous == (stack == .exec))
+            #expect(stack.isHeterogeneous == (stack == .exec || stack == .print))
         }
     }
 
@@ -88,11 +88,12 @@ struct PushStackTypeTests {
         }
     }
 
-    // MARK: instruction items belong only on exec
+    // MARK: instruction items belong only on exec (and on .print, once printed)
 
-    @Test func `instruction items are rejected by every non-exec stack`() {
+    @Test func `instruction items are rejected by every homogeneous stack`() {
         for item in Self.execOnlySamples {
-            for stack in PushStack.allCases where stack != .exec {
+            #expect(PushStack.print.accepts(item), ".execPrint can print an instruction")
+            for stack in PushStack.allCases where !stack.isHeterogeneous {
                 #expect(!stack.accepts(item),
                         "\(stack) must reject \(type(of: item))")
             }

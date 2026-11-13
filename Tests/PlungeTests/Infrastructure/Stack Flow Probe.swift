@@ -46,6 +46,7 @@ struct StackFlowProbe {
         case .binding:       BindingItem(key: 3, bound: IntItem(4))
         case .function:  FunctionItem(bare: InstructionItem(.intAdd))
         case .error:     ErrorItem("x")
+        case .print:     IntItem(n)
         }
     }
 

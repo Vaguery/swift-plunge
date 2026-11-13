@@ -1,6 +1,6 @@
 # Stack instructions
 
-Every stack but `.error` has the same family of instructions for copying, deleting, reordering and measuring its items: `.bool`, `.int`, `.double`, `.char`, `.string`, `.code`, `.exec`, `.vecInt`, `.vecBool`, `.vecDouble`, `.vecString`, `.iterator`, `.binding`, `.function`. They are listed here once, for `.int`; on another stack, replace `int` with that stack's name (`.codeDup`, `.vecStringYank`, …).
+Every stack but the channels, `.error` and `.print`, has the same family of instructions for copying, deleting, reordering and measuring its items: `.bool`, `.int`, `.double`, `.char`, `.string`, `.code`, `.exec`, `.vecInt`, `.vecBool`, `.vecDouble`, `.vecString`, `.iterator`, `.binding`, `.function`. They are listed here once, for `.int`; on another stack, replace `int` with that stack's name (`.codeDup`, `.vecStringYank`, …).
 
 An index or a count comes from `.int`, and is clamped into the stack rather than refused. When the stack is `.int` itself, the index is popped first and the rest of the stack is counted after it.
 

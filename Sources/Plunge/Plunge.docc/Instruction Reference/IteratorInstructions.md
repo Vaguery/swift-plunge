@@ -57,7 +57,7 @@ The `.iterator` stack holds first-class loops: a source (a range, a collection o
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.iteratorPrint` | Prints the top iterator and a newline to the output, leaving the loop on `.iterator`. | `iterator` (read) | the printout |
+| `.iteratorPrint` | Puts a copy of the top iterator on `.print`, leaving the loop on `.iterator`. | `iterator` (read) | `print` |
 
 ## The stack's own instructions
 

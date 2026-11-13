@@ -213,7 +213,8 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 
     // PRINT instructions
     //
-    case boolPrint, charPrint, codePrint, doublePrint, execPrint, intPrint, iteratorPrint, printNewline, stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
+    case bindingPrint, boolPrint, charPrint, codePrint, doublePrint, execPrint, functionPrint, intPrint, iteratorPrint
+    case stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
 
 
     // STRING instructions

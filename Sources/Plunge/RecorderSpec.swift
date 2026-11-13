@@ -11,11 +11,14 @@
 /// sent to wherever the run happens. The cases name the observations that have
 /// proven useful so far.
 ///
-/// Targets that observe an item (`top`, `second`, `nth`) collect the item
-/// itself, so the reading keeps the item's history for as long as it stays in
-/// memory. Encoded, a reading keeps its value only; see ``ItemArchive`` for
-/// keeping histories. The other targets collect a plain int, bool or string.
-/// See <doc:ObservingARun>.
+/// Targets that observe items (`top`, `second`, `nth`, `stack`) collect the
+/// items themselves, so a reading keeps each item's history for as long as it
+/// stays in memory. Encoded, a reading keeps values only; see ``ItemArchive`` for
+/// keeping histories. The other targets collect a plain int or bool.
+///
+/// What a program prints is the `.print` stack: `.top(.print)` is the last item
+/// printed, `.count(.print)` how many were printed, and `.stack(.print)` all of
+/// them. See <doc:ObservingARun>.
 public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// The top item of a stack, or `nil` when the stack is empty.
     case top(PushStack)
@@ -29,8 +32,11 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case count(PushStack)
     /// Whether a stack is currently empty (`Bool`).
     case isEmpty(PushStack)
-    /// Everything the program has printed so far (`String`).
-    case printout
+    /// Every item on a stack, top first (`[AnyItem]`): for `.print`, everything
+    /// printed, the latest first. Copying a whole stack at every step is costly,
+    /// so pair this with ``RecordingPolicy/finalOnly`` unless the history is
+    /// wanted.
+    case stack(PushStack)
     /// How many steps the run has taken (`Int`).
     case counter
 }
@@ -40,14 +46,14 @@ nonisolated extension RecorderTarget {
     /// The natural value type a target collects, used to repackage a recorder's
     /// type-erased data into a typed `RecordedTrace`.
     enum ValueKind: Sendable {
-        case item, int, string, bool
+        case item, itemList, int, bool
     }
 
     var valueKind: ValueKind {
         switch self {
         case .top, .second, .nth: .item
+        case .stack: .itemList
         case .count, .counter: .int
-        case .printout: .string
         case .isEmpty: .bool
         }
     }
@@ -122,9 +128,9 @@ nonisolated extension AnyRecorder {
             self.init(Recorder<Bool>(name, keeping: policy) { interpreter in
                 interpreter.stacks[stack]?.isEmpty ?? true
             })
-        case .printout:
-            self.init(Recorder<String>(name, keeping: policy) { interpreter in
-                interpreter.printout
+        case .stack(let stack):
+            self.init(Recorder<[any Item]>(name, keeping: policy) { interpreter in
+                Array(interpreter.stacks[stack] ?? [])
             })
         case .counter:
             self.init(Recorder<Int>(name, keeping: policy) { interpreter in

@@ -209,7 +209,7 @@ nonisolated extension Interpreter {
         .alternatives([[.vecBool], [.vecDouble], [.vecInt], [.vecString], [.string]])
 
     /// Every stack a filler can be read from.
-    static let fillerStacks: [PushStack] = PushStack.allCases.filter { ![.exec, .error].contains($0) }
+    static let fillerStacks: [PushStack] = PushStack.allCases.filter { $0 != .exec && !$0.isChannel }
 
     /// One of the three over `collection`'s stack: takes the collection, and the
     /// topmost function that fits through the sieve (`Requirement.takesFirst`): an

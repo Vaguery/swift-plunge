@@ -11,9 +11,11 @@ import DequeModule
 
 /// The interpreter's stacks, one for each type of item.
 ///
-/// Each stack holds items of one type, with two exceptions: `.exec` holds the
-/// program still to run, and so can hold anything, and `.error` collects
-/// records of what went wrong. See <doc:ThePushLanguage>.
+/// Each stack holds items of one type, with three exceptions: `.exec` holds the
+/// program still to run, and so can hold anything; `.error` collects records of
+/// what went wrong; and `.print` collects whatever the program prints. The last
+/// two are *channels* (``isChannel``): a program writes to them and never reads
+/// them. See <doc:ThePushLanguage>.
 public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, Codable, Sendable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
@@ -21,6 +23,7 @@ public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, 
     case binding
     case function
     case error
+    case print
 
 
     /// Orders `.exec` first and the other stacks by name, for display.
@@ -60,6 +63,7 @@ nonisolated extension PushStack {
         case .binding: "binding"
         case .function: "function"
         case .error: "error"
+        case .print: "printed item"
         case .vecBool: "vector of bools"
         case .vecInt: "vector of ints"
         case .vecDouble: "vector of doubles"
@@ -295,30 +299,42 @@ nonisolated struct StackSet: Sendable {
 
 nonisolated extension PushStack {
 
-    /// `.exec` is (for now) the only heterogeneous stack: it interleaves
-    /// instructions, code, and literals awaiting execution, so it holds
-    /// `any Item`. Every other stack is homogeneous — including `.error`, which
-    /// holds only `ErrorItem` — which is the invariant that makes the
-    /// `a[i] as! XItem` casts scattered through the Behaviors safe.
+    /// `.exec` and `.print` are the heterogeneous stacks. `.exec` interleaves
+    /// instructions, code, and literals awaiting execution; `.print` holds
+    /// whatever was printed. Every other stack is homogeneous — including
+    /// `.error`, which holds only `ErrorItem` — which is the invariant that makes
+    /// the `a[i] as! XItem` casts scattered through the Behaviors safe. No
+    /// Behavior reads `.print`, so it needs no such cast.
     var isHeterogeneous: Bool {
-        self == .exec
+        self == .exec || self == .print
     }
 
-    /// Whether `item` is a valid element for this stack. `.exec` accepts
-    /// anything; every other stack accepts only its matching Item type.
+    /// **A channel: a stack the program writes to and never reads.** `.error`
+    /// collects what went wrong and `.print` what was printed. No instruction
+    /// takes, reads, rearranges or counts a channel's items (`.error`'s few
+    /// counting instructions are the deliberate exception, and `.print` has none),
+    /// so a program can't hide or edit what it has emitted. Channels have no size
+    /// limits, are left out of the generated stack family and out of the function
+    /// machinery, and are read only from outside, by recorders.
+    public var isChannel: Bool {
+        self == .error || self == .print
+    }
+
+    /// Whether `item` is a valid element for this stack. `.exec` and `.print`
+    /// accept anything; every other stack accepts only its matching Item type.
     ///
     /// Compares exact types rather than casting (`is`): every Item is a struct, so
     /// the two mean the same thing, and a metatype comparison is a pointer compare
     /// where `is` on an existential is a runtime cast — which profiling found on
     /// every push.
     func accepts(_ item: any Item) -> Bool {
-        if self == .exec { return true }
+        if isHeterogeneous { return true }
         return PushStack.defaultStack(for: item) == self
     }
 
     /// The stack an item comes to rest on, or `nil` for items that never rest
     /// on one — which is now only `InstructionItem`, since it executes rather
-    /// than lands.
+    /// than lands. Never `.print`: an item reaches `.print` only by being printed.
     ///
     /// Shared by `Interpreter.pushDefault`, which routes a literal popped off
     /// `.exec`, and by `crux()`, which needs an item's stack to name that

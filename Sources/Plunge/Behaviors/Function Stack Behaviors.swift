@@ -34,7 +34,7 @@
 nonisolated extension Interpreter {
 
     /// Every stack a hole can take or read from.
-    static let holeSourceStacks: [PushStack] = PushStack.allCases.filter { ![.exec, .error].contains($0) }
+    static let holeSourceStacks: [PushStack] = PushStack.allCases.filter { $0 != .exec && !$0.isChannel }
 
     /// Every stack a function's value can land on.
     static let anyValue: Produces = .alternatives(holeSourceStacks.map { [$0] })

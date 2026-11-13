@@ -159,6 +159,7 @@ struct CruxSweep {
         forEachClaim { swept in
             report.record(
                 inspectCrux(of: swept.item,
+                            foundOn: swept.foundOn,
                             inputs: swept.inputs,
                             constants: swept.constants,
                             settings: settings,

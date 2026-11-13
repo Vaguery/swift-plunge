@@ -60,8 +60,9 @@ struct StackOrdinalTests {
     }
 
     /// Looked up once at launch now; each must be the instruction named for it.
+    /// The channels, `.error` and `.print`, have none: nothing may pop them.
     @Test func `per-stack cleanup instructions are named for their stack`() {
-        for stack in PushStack.allCases where stack != .error {
+        for stack in PushStack.allCases where !stack.isChannel {
             #expect(stack.popItemsInstruction.rawValue == "\(stack.rawValue)PopItems")
             #expect(stack.swapInstruction.rawValue == "\(stack.rawValue)Swap")
             #expect(stack.popInstruction.rawValue == "\(stack.rawValue)Pop")

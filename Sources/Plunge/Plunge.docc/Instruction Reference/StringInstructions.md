@@ -130,7 +130,7 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.stringPrint` | Prints the top string and a newline to the output. | `string` | the printout |
+| `.stringPrint` | Moves the top string to `.print`. | `string` | `print` |
 
 ## The stack's own instructions
 

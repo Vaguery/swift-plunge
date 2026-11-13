@@ -336,11 +336,7 @@ nonisolated final class Behavior: Sendable {
             return results
 
         case .channel(let write):
-            switch write(arguments) {
-            case .item(let item): interpreter.printItem(item)
-            case .text(let text): interpreter.printText(text)
-            }
-            return []
+            return write(arguments, interpreter.recording).map { Router(.print, $0) }
         }
     }
 

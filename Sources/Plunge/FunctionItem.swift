@@ -106,7 +106,7 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     }
 
     /// The stack the function's value lands on, or nil when its instruction
-    /// does not say (a value-dependent result, a continuation, a printout).
+    /// does not say (a value-dependent result, a continuation, a print).
     public var output: PushStack? {
         guard isBare else { return derivedOutput }
         return bareInstruction.flatMap { Self.bareShapes[$0]?.output }
@@ -284,7 +284,7 @@ nonisolated extension FunctionItem {
         switch behavior.produces {
         case .results(let stacks): stacks.last
         case .positions(let stack), .deferred(let stack), .delivery(let stack), .several(let stack): stack
-        case .alternatives, .continuation, .input, .printout: nil
+        case .alternatives, .continuation, .input, .printed: nil
         }
     }
 }

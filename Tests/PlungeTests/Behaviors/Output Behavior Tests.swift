@@ -4,6 +4,10 @@
 //
 //  Created by Bill Tozier on 6/14/26.
 //
+//  Printing moves an item onto `.print` (since 2026-11-13; until then it appended
+//  the item's text and a newline to a printout string). These check that the item
+//  itself arrives there, unchanged, and leaves the stack it came from.
+//
 
 
 @testable import Plunge
@@ -15,131 +19,122 @@ struct OutputBehaviorTests {
 
     var inty = Interpreter()
 
-    @Test func boolPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.bool: [BoolItem(false)]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
+    /// `.print`'s items, top first, as `pretty()` shows them.
+    var printed: [String] { inty.stacks[.print]!.map { $0.pretty() } }
 
-        doThis(.boolPrint, to: inty)
-        #expect(inty.printout == "false\n")
+    /// Loads one item on `stack`, prints it with `instruction`, and checks it moved.
+    mutating func printsAndMoves(_ item: any Item, from stack: PushStack, with instruction: PushInstruction) {
+        inty.load(inputs: [:], stacks: [stack: [item]], program: [])
+        #expect(printed.isEmpty)
+
+        doThis(instruction, to: inty)
+        #expect(inty.stacks[.print]!.count == 1)
+        #expect(inty.stacks[.print]!.first?.isEqual(to: item) == true, "the item itself is printed, not its text")
+        #expect(inty.stacks[stack]!.isEmpty, "\(instruction) moves its item")
+        #expect(inty.stacks[.error]!.isEmpty)
     }
 
-    @Test func charPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.char: [CharItem(Character("x"))]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.charPrint, to: inty)
-        #expect(inty.printout == "'x'\n")
+    @Test mutating func boolPrint() {
+        printsAndMoves(BoolItem(false), from: .bool, with: .boolPrint)
+        #expect(printed == ["false"])
     }
 
-    @Test func codePrint() {
-        inty.load(inputs: [:],
-                  stacks: [.code: [CodeItem([
-                    VecStringItem(["foo", "bar"]),
-                    DoubleItem(3.14),
-                    CodeItem([
-                        BoolItem(false),
-                        IntItem(1964)
-                    ])
-                  ])
-                  ]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.codePrint, to: inty)
-        #expect(inty.printout == "( [\"foo\", \"bar\"] 3.14 ( false 1964 ) )\n")
+    @Test mutating func charPrint() {
+        printsAndMoves(CharItem(Character("x")), from: .char, with: .charPrint)
     }
 
-    @Test func doublePrint() {
-        inty.load(inputs: [:],
-                  stacks: [.double: [DoubleItem(3.14)]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.doublePrint, to: inty)
-        #expect(inty.printout == "3.14\n")
+    @Test mutating func codePrint() {
+        printsAndMoves(CodeItem([VecStringItem(["foo", "bar"]), DoubleItem(3.14),
+                                 CodeItem([BoolItem(false), IntItem(1964)])]),
+                       from: .code, with: .codePrint)
+        #expect(printed == ["( [\"foo\", \"bar\"] 3.14 ( false 1964 ) )"])
     }
 
-    @Test func execPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.exec: [CharItem(Character("x"))]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
+    @Test mutating func doublePrint() {
+        printsAndMoves(DoubleItem(3.14), from: .double, with: .doublePrint)
+    }
 
+    @Test mutating func execPrint() {
+        printsAndMoves(CharItem(Character("x")), from: .exec, with: .execPrint)
+    }
+
+    @Test mutating func `execPrint prints an instruction without running it`() {
+        inty.load(inputs: [:], stacks: [.exec: [InstructionItem(.intAdd)], .int: [IntItem(1), IntItem(2)]], program: [])
         doThis(.execPrint, to: inty)
-        #expect(inty.printout == "'x'\n")
+        #expect(printed == [".intAdd"])
+        #expect(inty.stacks[.int]!.count == 2, "the printed instruction never ran")
     }
 
-    @Test func intPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.int: [IntItem(1964)]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
+    @Test mutating func intPrint() {
+        printsAndMoves(IntItem(1964), from: .int, with: .intPrint)
+        #expect(printed == ["1964"])
+    }
 
+    @Test mutating func stringPrint() {
+        printsAndMoves(StringItem("purple"), from: .string, with: .stringPrint)
+    }
+
+    @Test mutating func vecBoolPrint() {
+        printsAndMoves(VecBoolItem([true, true]), from: .vecBool, with: .vecBoolPrint)
+    }
+
+    @Test mutating func vecDoublePrint() {
+        printsAndMoves(VecDoubleItem([98.6, 98.1]), from: .vecDouble, with: .vecDoublePrint)
+    }
+
+    @Test mutating func vecIntPrint() {
+        printsAndMoves(VecIntItem([1066, 32]), from: .vecInt, with: .vecIntPrint)
+    }
+
+    @Test mutating func vecStringPrint() {
+        printsAndMoves(VecStringItem(["foo", "bar"]), from: .vecString, with: .vecStringPrint)
+    }
+
+    @Test mutating func bindingPrint() {
+        printsAndMoves(BindingItem(key: 3, bound: StringItem("x")), from: .binding, with: .bindingPrint)
+    }
+
+    @Test mutating func functionPrint() {
+        printsAndMoves(FunctionItem(bare: InstructionItem(.intAdd)), from: .function, with: .functionPrint)
+    }
+
+    @Test mutating func `iteratorPrint prints a copy and leaves the loop`() {
+        let loop = IteratorItem(kind: .counting(stride: 1), origin: IntItem(0), destination: IntItem(3),
+                                body: CodeItem([]), emits: true)
+        inty.load(inputs: [:], stacks: [.iterator: [loop]], program: [])
+        doThis(.iteratorPrint, to: inty)
+        #expect(inty.stacks[.print]!.first?.isEqual(to: loop) == true)
+        #expect(inty.stacks[.iterator]!.count == 1, "the loop keeps running")
+    }
+
+    @Test mutating func `prints accumulate, latest on top`() {
+        inty.load(inputs: [:], stacks: [.int: [IntItem(1), IntItem(2)], .string: [StringItem("a")]], program: [])
         doThis(.intPrint, to: inty)
-        #expect(inty.printout == "1964\n")
-    }
-
-    @Test func printNewline() {
-        inty.load(inputs: [:],
-                  stacks: [:],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.printNewline, to: inty)
-        #expect(inty.printout == "\n")
-    }
-
-    @Test func stringPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.string: [StringItem("purple")]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
         doThis(.stringPrint, to: inty)
-        #expect(inty.printout == "\"purple\"\n")
+        doThis(.intPrint, to: inty)
+        #expect(printed == ["2", "\"a\"", "1"])
     }
 
-    @Test func vecBoolPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.vecBool: [VecBoolItem([true, true])]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.vecBoolPrint, to: inty)
-        #expect(inty.printout == "[true, true]\n")
+    @Test mutating func `printing from an empty stack starves, like any instruction`() {
+        inty.load(inputs: [:], stacks: [:], program: [])
+        doThis(.intPrint, to: inty)
+        #expect(printed.isEmpty)
+        #expect(inty.stacks[.error]!.first?.exactly(ErrorItem.self)?.kind == .missingArgument)
     }
 
-    @Test func vecDoublePrint() {
-        inty.load(inputs: [:],
-                  stacks: [.vecDouble: [VecDoubleItem([98.6, 98.1])]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
+    @Test func `a printed item's crux prints it again`() {
+        let inty = Interpreter()
+        inty.config = .recordingProvenance
+        inty.load(program: [IntItem(3), IntItem(4), InstructionItem(.intAdd), InstructionItem(.intPrint)])
+        inty.run()
+        let item = inty.stacks[.print]!.first
+        #expect(item?.pretty() == "7")
+        #expect(item.map { CodeItem($0.crux()).pretty() } == "( 3 4 .intAdd .intPrint )")
 
-        doThis(.vecDoublePrint, to: inty)
-        #expect(inty.printout == "[98.6, 98.1]\n")
-    }
-
-    @Test func vecIntPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.vecInt: [VecIntItem([1066, 32])]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.vecIntPrint, to: inty)
-        #expect(inty.printout == "[1066, 32]\n")
-    }
-
-    @Test func vecStringPrint() {
-        inty.load(inputs: [:],
-                  stacks: [.vecString: [VecStringItem(["foo", "bar"])]],
-                  program: [])
-        #expect(inty.printout.isEmpty)
-
-        doThis(.vecStringPrint, to: inty)
-        #expect(inty.printout == "[\"foo\", \"bar\"]\n")
+        let replay = Interpreter()
+        replay.load(program: item?.crux() ?? [])
+        replay.run()
+        #expect(replay.stacks[.print]!.map { $0.pretty() } == ["7"])
+        #expect(replay.stacks[.int]!.isEmpty)
     }
 }

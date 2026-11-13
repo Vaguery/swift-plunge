@@ -125,7 +125,7 @@ nonisolated struct BackwardChainer: Sendable {
             case .needs, .takesMany, .takesFirst, .readsFirst: return nil
             }
         }
-        guard !inputs.contains(where: { [.exec, .error].contains($0) }) else { return nil }
+        guard !inputs.contains(where: { $0 == .exec || $0.isChannel }) else { return nil }
         let readCounts = reads.sorted { $0.key.rawValue < $1.key.rawValue }.map { (key: $0.key, value: $0.value) }
         return ChainEdge(name: name, inputs: inputs, result: results[0], readCounts: readCounts)
     }

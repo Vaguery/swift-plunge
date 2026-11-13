@@ -164,10 +164,11 @@ struct SizeLimitsTests {
 
     // MARK: exemptions
 
-    @Test func `error stack is exempt from size limits`() {
+    @Test func `the channels are exempt from size limits`() {
         #expect(PushStack.error.enforcesSizeLimits == false)
+        #expect(PushStack.print.enforcesSizeLimits == false)
         // all other stacks enforce
-        for stack in PushStack.allCases where stack != .error {
+        for stack in PushStack.allCases where !stack.isChannel {
             #expect(stack.enforcesSizeLimits)
         }
     }

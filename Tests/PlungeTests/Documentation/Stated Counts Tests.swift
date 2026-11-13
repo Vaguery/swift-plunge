@@ -8,8 +8,9 @@
 //  them with the language itself, so adding an instruction or a stack fails here
 //  until the prose is updated.
 //
-//  The typed stacks are every `PushStack` but `.error`, which collects errors
-//  rather than holding values of a type.
+//  The typed stacks are every `PushStack` but the channels, `.error` and
+//  `.print`, which collect what a program emits rather than holding values of a
+//  type.
 //
 
 import Foundation
@@ -36,7 +37,7 @@ struct StatedCountsTests {
         try #require(!statements.isEmpty, "\(document) no longer states the counts; update this test's list")
 
         let instructions = Runner().definedInstructions.count
-        let typedStacks = PushStack.allCases.filter { $0 != .error }.count
+        let typedStacks = PushStack.allCases.filter { !$0.isChannel }.count
         for statement in statements {
             #expect(Int(statement.output.1.filter(\.isNumber)) == instructions,
                     "\(document) says \(statement.output.1) instructions; the language has \(instructions)")

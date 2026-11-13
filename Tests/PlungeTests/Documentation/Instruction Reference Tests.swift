@@ -92,8 +92,10 @@ struct InstructionReferenceTests {
                 intro: "The `.vecDouble` stack holds vectors of doubles. It shares its instruction families with the other vector types, and adds the numeric reductions."),
         Subject(page: "VecStringInstructions", title: "Vector of string instructions",
                 intro: "The `.vecString` stack holds vectors of strings: words, lines and lists of names. It shares its instruction families with the other vector types."),
-        Subject(page: "EnvironmentInstructions", title: "Inputs, output and the interpreter",
-                intro: "These instructions read the program's environment (its inputs and the interpreter's state) or write to its printout. The constants of each type are on that type's page.")
+        Subject(page: "EnvironmentInstructions", title: "Inputs and the interpreter",
+                intro: "These instructions read the program's environment: its inputs and the interpreter's state. "
+                    + "The constants of each type are on that type's page, and so is each type's print "
+                    + "instruction, which moves an item to `.print`.")
     ]
 
     /// The page an instruction belongs on: its stack's, by name, with the few
@@ -167,7 +169,8 @@ struct InstructionReferenceTests {
             .sorted { $0.rawValue < $1.rawValue }
         let stacks = Interpreter.generatedFamilyStacks.map { "`.\($0.rawValue)`" }.joined(separator: ", ")
         var text = "# Stack instructions\n\n"
-        text += "Every stack but `.error` has the same family of instructions for copying, deleting, "
+        text += "Every stack but the channels, `.error` and `.print`, has the same family of instructions for "
+        text += "copying, deleting, "
         text += "reordering and measuring its items: \(stacks). They are listed here once, for `.int`; "
         text += "on another stack, replace `int` with that stack's name (`.codeDup`, `.vecStringYank`, …).\n\n"
         text += "An index or a count comes from `.int`, and is clamped into the stack rather than refused. "
@@ -219,7 +222,7 @@ struct InstructionReferenceTests {
         case .several(let stack): "`\(stack.rawValue)`, any number"
         case .positions(let stack): "`\(stack.rawValue)`, rearranged"
         case .continuation: "the rest of the program"
-        case .printout: "the printout"
+        case .printed: "`print`"
         }
         if behavior.tags.contains(.fallible) { text += "; may refuse" }
         return text

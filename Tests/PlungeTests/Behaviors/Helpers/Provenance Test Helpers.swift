@@ -29,7 +29,6 @@ extension Interpreter {
         twin.inputs = inputs
         twin.constants = constants
         twin.program = program
-        twin.printout = printout
         twin.counter = counter
         twin.lastRunawayCheck = lastRunawayCheck
         twin.recomputeLiveWeight()
@@ -37,8 +36,8 @@ extension Interpreter {
     }
 
     /// Everything a run computes, as text: every stack's items (`pretty()`, which
-    /// never shows provenance, plus content weight), the step counter and the
-    /// printout. Two runs that differ only in provenance agree.
+    /// never shows provenance, plus content weight), `.print` among them, and the
+    /// step counter. Two runs that differ only in provenance agree.
     ///
     /// Not `liveWeight`: behavior tests often load stacks by writing to them
     /// directly, which skips its bookkeeping, so the tested interpreter's figure is
@@ -48,7 +47,7 @@ extension Interpreter {
         let stackLines = PushStack.allStacks.map { stack in
             "\(stack): " + stacks[stack]!.map { "\($0.pretty())#\($0.weight)" }.joined(separator: " ")
         }
-        return (stackLines + ["counter \(counter)", "printout \(printout)"]).joined(separator: "\n")
+        return (stackLines + ["counter \(counter)"]).joined(separator: "\n")
     }
 }
 
@@ -58,5 +57,14 @@ extension InterpreterSettings {
         var settings = InterpreterSettings()
         settings.recordsProvenance = true
         return settings
+    }
+}
+
+extension PushStack {
+    /// Where a crux must put `item` back, given the stack it was found on: `.print`
+    /// for a printed item, since printing is the only way onto `.print`; otherwise
+    /// the stack for its type (nil for an instruction, which runs rather than rests).
+    static func restingStack(of item: any Item, foundOn stack: PushStack?) -> PushStack? {
+        stack == .print ? .print : defaultStack(for: item)
     }
 }

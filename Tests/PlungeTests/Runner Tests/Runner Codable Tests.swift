@@ -60,7 +60,7 @@ struct RunnerCodableTests {
             traces: [
                 "topInt": .items([nil, AnyItem(IntItem(15))]),
                 "count": .ints([2, 1]),
-                "out": .strings(["", "7"])
+                "out": .itemLists([[], [AnyItem(IntItem(7))]])
             ]
         )
         let restored = try roundTrip(result)

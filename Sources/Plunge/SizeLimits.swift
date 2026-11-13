@@ -8,13 +8,11 @@
 nonisolated extension PushStack {
     /// Whether items pushed to this stack are subject to size limits.
     ///
-    /// `.error` is exempt so overflow reports can always land, and the planned
-    /// `.memory` stack is unlimited by design — add its case here when it exists.
+    /// The channels (`.error` and `.print`) are exempt: an overflow report must
+    /// always land, and a print must never be refused. Their total still counts
+    /// toward `maxLiveWeight`, so the memory guard bounds them.
     var enforcesSizeLimits: Bool {
-        switch self {
-        case .error: false
-        default: true
-        }
+        !isChannel
     }
 }
 

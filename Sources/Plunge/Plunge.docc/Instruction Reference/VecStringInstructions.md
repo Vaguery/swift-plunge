@@ -124,7 +124,7 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecStringPrint` | Prints the top vector of strings and a newline to the output. | `vecString` | the printout |
+| `.vecStringPrint` | Moves the top vector of strings to `.print`. | `vecString` | `print` |
 
 ## The stack's own instructions
 

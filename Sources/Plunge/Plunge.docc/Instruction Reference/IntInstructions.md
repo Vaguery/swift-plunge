@@ -66,7 +66,7 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.intPrint` | Prints the top int and a newline to the output. | `int` | the printout |
+| `.intPrint` | Moves the top int to `.print`. | `int` | `print` |
 
 ## The stack's own instructions
 

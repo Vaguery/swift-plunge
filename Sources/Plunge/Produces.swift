@@ -60,8 +60,10 @@ public nonisolated enum Produces: Hashable, Sendable {
     /// inside that program (the control class).
     case continuation
 
-    /// The printout (the channels).
-    case printout
+    /// One item on `.print`, the channel a program writes to and never reads
+    /// (the print instructions). Not a value edge: no instruction can use what
+    /// lands there.
+    case printed
 }
 
 
@@ -69,7 +71,8 @@ public nonisolated extension Produces {
 
     /// The stacks this declaration can put a value on, with a deferred push
     /// counted at the stack it rests on. Empty for `continuation` and `input`,
-    /// whose stacks are not fixed by the definition, and for `printout`.
+    /// whose stacks are not fixed by the definition, and for `printed`, since no
+    /// instruction can take a value from `.print`.
     var valueStacks: Set<PushStack> {
         switch self {
         case .results(let stacks):        Set(stacks)
@@ -77,7 +80,7 @@ public nonisolated extension Produces {
         case .deferred(let stack):        [stack]
         case .delivery(let stack):        [stack]
         case .several(let stack):         [stack]
-        case .positions, .continuation, .input, .printout: []
+        case .positions, .continuation, .input, .printed: []
         }
     }
 }
@@ -91,7 +94,7 @@ nonisolated extension Produces {
 
     /// Every stack a contained item can rest on (`PushStack.defaultStack(for:)`):
     /// what an iterator getter may hand back when the field's type is not fixed.
-    static let anyItem: [PushStack] = PushStack.allCases.filter { $0 != .error }
+    static let anyItem: [PushStack] = PushStack.allCases.filter { !$0.isChannel }
 
     /// Nothing, or one result on one of `stacks`: a getter whose field may be
     /// empty.

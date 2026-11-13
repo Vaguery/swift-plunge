@@ -46,7 +46,8 @@ struct IteratorEndTests {
     @Test func `printing an iterator leaves its loop running`() {
         let inty = Self.run([IntItem(0), IntItem(3), IntItem(1), IntItem(0), IntItem(0), BoolItem(true),
                              CodeItem([]), Self.op(.iteratorFromIntRange), Self.op(.iteratorPrint)])
-        #expect(inty.printout.contains("«0→3"))
+        #expect(inty.stacks[.print]!.count == 1)
+        #expect(inty.stacks[.print]!.first?.pretty().contains("«0→3") == true, "a copy of the loop is printed")
         #expect(inty.stacks[.iterator]!.count == 1, "printed, not consumed (since 2026-11-09)")
     }
 }

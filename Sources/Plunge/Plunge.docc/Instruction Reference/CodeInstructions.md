@@ -87,7 +87,7 @@ The `.code` stack holds code blocks: lists of any items, nested to any depth. A 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.codePrint` | Prints the top code block and a newline to the output. | `code` | the printout |
+| `.codePrint` | Moves the top code block to `.print`. | `code` | `print` |
 
 ## The stack's own instructions
 

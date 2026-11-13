@@ -119,7 +119,7 @@ struct CruxCompleteness {
         for stack in Self.resultStacks {
             let group: Group = stack == .error ? .errors : .values
             for item in interpreter.stacks[stack]! {
-                guard PushStack.defaultStack(for: item) != nil else { continue }
+                guard PushStack.restingStack(of: item, foundOn: stack) != nil else { continue }
                 if item.call.isEmpty {
                     let printed = item.pretty()
                     let kind: Completeness =
@@ -144,7 +144,7 @@ struct CruxCompleteness {
                     standInSources[group, default: [:]][source, default: 0] += 1
                 }
 
-                switch inspectCrux(of: item, inputs: inputs, constants: constants,
+                switch inspectCrux(of: item, foundOn: stack, inputs: inputs, constants: constants,
                                    settings: settings, onHalt: .reportInconclusive) {
                 case .holds:
                     holds += 1

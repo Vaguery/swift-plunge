@@ -75,8 +75,8 @@ struct BehaviorIODeclarationTests {
             return got.allSatisfy { $0 == stack } ? nil : "gave \(got), declared any number on .\(stack)"
         case .continuation:
             return nil
-        case .printout:
-            return got.isEmpty ? nil : "gave \(got), declared the printout"
+        case .printed:
+            return got.allSatisfy { $0 == .print } ? nil : "gave \(got), declared one item on .print"
         }
     }
 
@@ -174,7 +174,7 @@ struct BehaviorIODeclarationTests {
         case .several: "several"
         case .positions: "positions"
         case .continuation: "continuation"
-        case .printout: "printout"
+        case .printed: "printed"
         }
     }
 
@@ -192,9 +192,11 @@ struct BehaviorIODeclarationTests {
             // two results, the five Zips collected as map's); the function
             // instructions (apply and the iterations any value) and its binders.
             // codeFromFunction one result; the six function loops continuations.
+            // 2026-11-13: printing moves an item onto `.print`; printNewline gone,
+            // bindingPrint and functionPrint added.
             "one result": 608, "fixed results": 90, "alternatives": 26,
             "deferred": 80, "input": 10, "delivery": 7, "several": 1,
-            "positions": 183, "continuation": 49, "printout": 13
+            "positions": 183, "continuation": 49, "printed": 14
         ])
     }
 

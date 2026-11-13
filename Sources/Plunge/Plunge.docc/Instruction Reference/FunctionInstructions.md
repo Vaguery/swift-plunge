@@ -35,6 +35,12 @@ The `.function` stack holds functions: a body with typed holes. An instruction t
 | `.functionWhile` | Loops with the top function's body as code while the top bool is true: `p f .functionWhile` is `p f .codeFromFunction .execWhile`. | `bool`, `function` | the rest of the program |
 | `.functionWith` | Binds a copy of the top function to a fresh key, runs a body code block from `.code` with the key on `.int`, then removes the binding. | `code`, `function` (read) | the rest of the program |
 
+## Output
+
+| Instruction | What it does | Takes | Gives |
+|---|---|---|---|
+| `.functionPrint` | Moves the top function to `.print`. | `function` | `print` |
+
 ## The stack's own instructions
 
 Every stack has the same family for copying, deleting, reordering and measuring its items; see <doc:StackInstructions>. On `.function` they are `.functionDeepDup`, `.functionDeleteAtDepth`, `.functionDup`, `.functionDupItems`, `.functionDupTimes`, `.functionFlush`, `.functionPop`, `.functionPopItems`, `.functionRot`, `.functionShove`, `.functionStackDepth`, `.functionStackIsEmpty`, `.functionSwap`, `.functionYank`, `.functionYankDup`.

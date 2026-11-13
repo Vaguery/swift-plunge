@@ -61,7 +61,7 @@ nonisolated struct AutomaticTagging {
     let variadic: Bool
     /// The value stacks of the declared output, every alternative included.
     let outputs: [PushStack]
-    /// Every stack it takes, reads, observes, needs, gives or rearranges, `.error` aside.
+    /// Every stack it takes, reads, observes, needs, gives or rearranges, the channels aside.
     let touched: Set<PushStack>
 
     init(_ behavior: Behavior) {
@@ -86,13 +86,12 @@ nonisolated struct AutomaticTagging {
         case .results(let stacks): stacks
         case .alternatives(let options): options.flatMap { $0 }
         case .deferred(let stack), .delivery(let stack), .several(let stack): [stack]
-        case .positions, .continuation, .input, .printout: []
+        case .positions, .continuation, .input, .printed: []
         }
         self.outputs = outputs
         var touched = Set(taken + looked + outputs).union(needed)
         if case .positions(let stack) = behavior.produces { touched.insert(stack) }
-        touched.remove(.error)
-        self.touched = touched
+        self.touched = touched.filter { !$0.isChannel }
     }
 
     var isFixedResults: Bool { if case .results = behavior.produces { true } else { false } }

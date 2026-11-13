@@ -20,10 +20,10 @@
 public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     /// Readings from a target that observes an item: `top`, `second` or `nth`.
     case items([AnyItem?])
+    /// Readings from `stack`: each reading is a whole stack, top first.
+    case itemLists([[AnyItem]?])
     /// Readings from `count` or `counter`.
     case ints([Int?])
-    /// Readings from `printout`.
-    case strings([String?])
     /// Readings from `isEmpty`.
     case bools([Bool?])
 
@@ -31,10 +31,10 @@ public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     /// target implies.
     init(target: RecorderTarget, raw: [Any?]) {
         switch target.valueKind {
-        case .item:   self = .items(raw.map { ($0 as? any Item).map(AnyItem.init) })
-        case .int:    self = .ints(raw.map { $0 as? Int })
-        case .string: self = .strings(raw.map { $0 as? String })
-        case .bool:   self = .bools(raw.map { $0 as? Bool })
+        case .item:     self = .items(raw.map { ($0 as? any Item).map(AnyItem.init) })
+        case .itemList: self = .itemLists(raw.map { ($0 as? [any Item]).map { $0.map(AnyItem.init) } })
+        case .int:      self = .ints(raw.map { $0 as? Int })
+        case .bool:     self = .bools(raw.map { $0 as? Bool })
         }
     }
 }

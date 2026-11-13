@@ -26,7 +26,7 @@ struct RecorderSpecCodableTests {
         RecorderTarget.nth(.int, depth: 3),
         RecorderTarget.count(.error),
         RecorderTarget.isEmpty(.exec),
-        RecorderTarget.printout,
+        RecorderTarget.stack(.print),
         RecorderTarget.counter
     ])
     func `every RecorderTarget round-trips through JSON`(target: RecorderTarget) throws {
@@ -45,7 +45,7 @@ struct RecorderSpecCodableTests {
         let specs = [
             RecorderSpec("topInt", observing: .top(.int)),
             RecorderSpec("count", observing: .count(.int)),
-            RecorderSpec("out", observing: .printout)
+            RecorderSpec("out", observing: .stack(.print))
         ]
         #expect(try roundTrip(specs) == specs)
     }

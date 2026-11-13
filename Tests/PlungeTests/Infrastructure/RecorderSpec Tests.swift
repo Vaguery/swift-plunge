@@ -64,18 +64,18 @@ struct RecorderSpecTests {
         #expect(inty.recordedData("intCount") as! [Int?] == [2, 1])
     }
 
-    // The `.printout` spec observes the accumulated print side-effect string.
-    // The first step pushes a bool (no output), so the first reading is empty;
-    // the second step prints, so the last reading holds the printed value.
-    @Test func `printout spec records the printout each step`() {
-        inty.addRecorder(RecorderSpec("out", observing: .printout))
+    // The `.stack` spec observes a whole stack each step, top first; on `.print`
+    // that is everything printed so far. The first step pushes a bool (nothing
+    // printed), so the first reading is empty; the second step prints the 7.
+    @Test func `stack spec records the printed items each step`() {
+        inty.addRecorder(RecorderSpec("out", observing: .stack(.print)))
         inty.load(stacks: [.int: [IntItem(7)]],
                   program: [BoolItem(true), InstructionItem(.intPrint)])
         inty.run(stepLimit: 100)
 
-        let trace = inty.recordedData("out") as! [String?]
-        #expect(trace.first == "")
-        #expect(trace.last??.contains("7") == true)
+        let trace = inty.recordedData("out") as! [[any Item]?]
+        #expect(trace.first??.isEmpty == true)
+        #expect(trace.last??.map { $0.pretty() } == ["7"])
     }
 
     @Test func `recordedData is nil for an unknown recorder`() {

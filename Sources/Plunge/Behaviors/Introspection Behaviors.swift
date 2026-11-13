@@ -23,9 +23,13 @@
 //
 //  That asymmetry is the point rather than an oversight, and it is why this file
 //  exists separately from `Stack Family Behaviors.swift`: the combinator family is
-//  generated for every stack in `PushStack.allStacks`, so an `.error` exception
-//  has to live somewhere that a future "add the missing combinators" sweep will
-//  not quietly undo. `Introspection Instruction Tests.swift` asserts the absence.
+//  generated for every stack in `Interpreter.generatedFamilyStacks`, which leaves
+//  out both channels, and an `.error` exception has to live somewhere that a future
+//  "add the missing combinators" sweep will not quietly undo.
+//  `Introspection Instruction Tests.swift` asserts the absence.
+//
+//  `.print`, the other channel, is stricter still: nothing may look at it at all,
+//  not even to count (`Print Channel Tests.swift`).
 //
 //  ## Provenance: all of these record a stand-in
 //

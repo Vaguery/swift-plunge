@@ -199,10 +199,20 @@ struct DocumentationUsageExamplesTests {
         let empty = await Self.result(of: [], recorders: Self.errorRecorders)
         #expect(empty.traces["answer"] == .items([]))
 
-        // Printed output.
-        let printing = await Self.result(of: program { 3; PushInstruction.intPrint; PushInstruction.printNewline },
-                                         recorders: [RecorderSpec("out", observing: .printout, keeping: .finalOnly)])
-        #expect(printing.traces["out"] == .strings(["3\n\n"]))
+        // Printed output: the items on `.print`, top first, so the latest first.
+        let printing = await Self.result(of: program { 3; PushInstruction.intPrint; "a"; PushInstruction.stringPrint },
+                                         recorders: [
+                                            RecorderSpec("printed", observing: .stack(.print), keeping: .finalOnly),
+                                            RecorderSpec("how many", observing: .count(.print), keeping: .finalOnly),
+                                            RecorderSpec("ints", observing: .count(.int), keeping: .finalOnly)
+                                         ])
+        guard case .itemLists(let readings)? = printing.traces["printed"], let printed = readings.last ?? nil else {
+            Issue.record("nothing recorded from .print"); return
+        }
+        #expect(printed.map { $0.item.pretty() } == ["\"a\"", "3"])
+        #expect(printed.reversed().map { $0.item.pretty() } == ["3", "\"a\""], "in the order printed")
+        #expect(Self.lastInt("how many", in: printing) == 2)
+        #expect(Self.lastInt("ints", in: printing) == 0)
     }
 
     /// *Evaluating Programs*: a full grid, a request sent as JSON, a stream.

@@ -29,7 +29,7 @@ The `.exec` stack is the program still to run: the interpreter pops its top item
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.execPrint` | Prints the next item on `.exec` and a newline to the output, so that item never runs. | `exec` | the printout |
+| `.execPrint` | Moves the next item on `.exec` to `.print`, so that item never runs. | `exec` | `print` |
 
 ## The stack's own instructions
 

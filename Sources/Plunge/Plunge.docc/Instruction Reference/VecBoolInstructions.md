@@ -118,7 +118,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecBoolPrint` | Prints the top vector of bools and a newline to the output. | `vecBool` | the printout |
+| `.vecBoolPrint` | Moves the top vector of bools to `.print`. | `vecBool` | `print` |
 
 ## The stack's own instructions
 

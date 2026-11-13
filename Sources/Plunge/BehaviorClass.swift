@@ -9,8 +9,9 @@
 ///
 /// Treat every instruction as a function on one state with four parts besides the
 /// data stacks: the **continuation** (`.exec`, the rest of the program), the
-/// **environment** (inputs and constants), the **channels** (the printout and
-/// `.error`) and the **clock** (the step counter). Every Behavior then factors into
+/// **environment** (inputs and constants), the **channels** (`.print` and
+/// `.error`, which a program writes and never reads) and the **clock** (the step
+/// counter). Every Behavior then factors into
 /// at most four optional parts — read context, move positions, compute a pure
 /// partial function on values, write — and falls into exactly one of these five
 /// classes by which of them it is *for*.
@@ -59,8 +60,9 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     /// over quotations. An iterator is a reified continuation with a cursor.
     case control
 
-    /// **A sink**: the print instructions. (An operation's error branch is also
-    /// a channel write, but it belongs to the operation that refused.)
+    /// **A write to `.print`**: the print instructions, which move an item onto a
+    /// channel the program never reads. (An operation's error branch is also a
+    /// channel write, to `.error`, but it belongs to the operation that refused.)
     case channel
 }
 

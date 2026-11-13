@@ -35,6 +35,7 @@ struct BehaviorClassTests {
         case .binding:       BindingItem(key: 2, bound: BoolItem(flag))
         case .function:  FunctionItem(bare: InstructionItem(flag ? .intAdd : .intSubtract))
         case .error:     ErrorItem("x")
+        case .print:     IntItem(1)
         }
     }
 
@@ -81,7 +82,8 @@ struct BehaviorClassTests {
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,
                                 // bindingContainsKey, bindingOccurrencesOfKey, functionRef
             .control: 46,       // incl. 11 xWith and bindingScope; the 6 function loops
-            .channel: 13
+            .channel: 14        // one print for every stack but the channels (2026-11-13: printNewline gone,
+                                // bindingPrint and functionPrint added)
         ], "\(counts)")
     }
 
@@ -119,14 +121,19 @@ struct BehaviorClassTests {
 
     // MARK: - What each class does
 
-    /// A sink adds nothing to any stack but `.error`.
-    @Test func `a channel adds to no stack`() {
+    /// A print adds one item to `.print` and nothing to any other stack (`.error`
+    /// aside, as for every class).
+    @Test func `a channel adds only to .print`() {
         for name in members(.channel) {
             let inty = seeded()
             let before = PushStack.allCases.map { inty.stacks[$0]!.count }
             Interpreter.language[name]!.act(on: inty)
             for (stack, count) in zip(PushStack.allCases, before) where stack != .error {
-                #expect(inty.stacks[stack]!.count <= count, "\(name) added to .\(stack)")
+                if stack == .print {
+                    #expect(inty.stacks[stack]!.count == count + 1, "\(name) printed one item")
+                } else {
+                    #expect(inty.stacks[stack]!.count <= count, "\(name) added to .\(stack)")
+                }
             }
         }
     }
