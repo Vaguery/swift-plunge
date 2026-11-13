@@ -21,7 +21,7 @@
 ///
 /// Everything an item's history consists of is carried:
 ///  - its `call`;
-///  - the histories of the items it holds (a block's contents, an iterator's
+///  - the histories of the items it holds (a code block's contents, an iterator's
 ///    origin, destination and body, a stand-in's value), each its own node;
 ///  - its members (`Pieces`), the origins of a vector's or string's elements;
 ///  - its weight, when the push boundary measured it as its crux
@@ -36,6 +36,7 @@ public nonisolated struct ItemArchive: Codable, Sendable {
     /// The archived items, with their histories.
     public let items: [any Item]
 
+    /// Creates an archive of items, to be encoded with their histories.
     public init(_ items: [any Item]) {
         self.items = items
     }
@@ -93,7 +94,7 @@ public nonisolated enum ArchiveError: Error, Sendable, Equatable {
 nonisolated struct ArchiveNode: Codable, Sendable {
     /// An item that holds no other items, encoded as `AnyItem` does.
     var scalar: AnyItem?
-    /// A block: its contents.
+    /// A code block: its contents.
     var code: [Int]?
     var iterator: ArchivedIterator?
     var standIn: ArchivedStandIn?

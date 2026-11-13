@@ -1,6 +1,6 @@
 # Getting Started
 
-Add the package, write a small Push program, and run it against some inputs.
+Add the package, write a small program, and run it against some inputs.
 
 ## Add the package
 
@@ -17,14 +17,14 @@ targets: [
 ]
 ```
 
-The library needs Swift 6.2 and macOS or iOS 26, and it builds on Linux. Its one
-runtime dependency is `DequeModule` from
+The library needs Swift 6.2. On Apple platforms it needs macOS 26 or iOS 26,
+and it also builds on Linux. Its one runtime dependency is `DequeModule` from
 [swift-collections](https://github.com/apple/swift-collections).
 
 ## Run a program
 
-You hand the library *programs* and *inputs*, and it hands back what you asked to
-observe. Four types carry that conversation:
+You hand the library *programs* and *inputs*, and it hands back what you asked
+it to observe. Four types carry that conversation:
 
 - ``Individual``: a program to run, with an identifier (and, optionally, the
   values of its constants).
@@ -33,7 +33,7 @@ observe. Four types carry that conversation:
 - ``RecorderSpec``: what to observe while it runs, such as the top of a stack.
 
 A ``Runner`` holds individuals and training cases, evaluates pairings of them
-concurrently, and returns one ``CaseResult`` per pairing.
+concurrently, and returns one ``CaseResult`` for each pairing.
 
 This program squares its input: it pushes the input twice and multiplies.
 
@@ -66,14 +66,57 @@ for result in results {
 }
 ```
 
-`program { … }` is a result builder (``PushProgram``) that turns instructions and
-Swift literals into Push items. The recorder named `answer` watches the top of the
-int stack and keeps only its final value; a recorder can also keep every step,
-for tracing.
+## What just happened
+
+**The program.** `program { … }` is a result builder (``PushProgram``) that
+turns instructions and Swift literals into items. A program is nothing more
+than an array of items, and <doc:WritingPrograms> shows the other ways to make
+one.
+
+**The inputs.** Each training case binds a value to `.input0`. The same program
+ran twice, once for each case, on a new interpreter each time.
+
+**The run.** On the first case the interpreter took the program's items one at
+a time. Each `.input0` pushed 3 onto the `.int` stack, and `.intMultiply` took
+both and pushed 9. <doc:ThePushLanguage> explains the model, and
+<doc:HowTheInterpreterRuns> the machinery.
+
+**The recorder.** A run reports only what it was asked to. The recorder named
+`answer` watched the top of the `.int` stack, and `.finalOnly` kept its last
+reading. A recorder can also keep a reading for every step, for tracing. See
+<doc:ObservingARun>.
+
+**The result.** Each ``CaseResult`` holds one trace for each recorder, under
+the recorder's name. A trace of items is an array of optional readings, which
+is why the code asks for `answers.last ?? nil`: the array may be empty, and a
+reading is `nil` when the stack was.
+
+## When a program goes wrong
+
+Change the program to multiply before it has pushed anything:
+
+```swift
+program {
+    PushInstruction.intMultiply
+    PushInstruction.input0
+}
+```
+
+Nothing crashes and nothing throws. `.intMultiply` finds no ints, leaves an
+error on the `.error` stack, and the run goes on to push the input. The answer
+recorded is the input itself. This is the central idea of Push: every program
+runs. To see what went wrong, add a recorder for the errors:
+
+```swift
+RecorderSpec("errors", observing: .count(.error), keeping: .finalOnly)
+```
+
+<doc:ErrorsAndRefusals> describes everything that can land there.
 
 ## Where to go next
 
 - <doc:ThePushLanguage> explains what a Push program is and how it computes.
-- <doc:HowTheInterpreterRuns> describes the interpreter's loop, its limits, and
-  what happens when a program misbehaves.
+- <doc:InputsAndConstants>, <doc:EvaluatingPrograms> and <doc:ObservingARun>
+  cover the rest of the conversation between a search and the library.
+- <doc:LimitsAndGuards> describes what keeps every run finite.
 - <doc:InstructionReference> lists every instruction.

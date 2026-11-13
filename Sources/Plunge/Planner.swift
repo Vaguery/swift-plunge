@@ -16,7 +16,7 @@ import DequeModule
 /// Five kinds today, and they exist because the same shape kept recurring and kept
 /// being solved separately — twice by hand and once wrongly. `takes:` alone
 /// conflated *what I consume* with *what I need*; `alsoNeeds:` split those apart;
-/// and `vecXConstruct` still could not say "N of these, where N is the length of
+/// and `.vecXConstruct` still could not say "N of these, where N is the length of
 /// that one" and had to check by hand. All three are the same question — **resolve
 /// a requirement against the interpreter, given what is resolved so far** — so they
 /// are now one mechanism.

@@ -3,10 +3,10 @@
 //  Plunge
 //
 
-/// `pretty()` for the containers — blocks, iterators, pairs and functions — written as a loop over
+/// `pretty()` for the containers — code blocks, iterators, pairs and functions — written as a loop over
 /// an explicit stack instead of recursion.
 ///
-/// Blocks hold iterators and iterators hold blocks, nested up to `maxCodeDepth`
+/// Code blocks hold iterators and iterators hold code blocks, nested up to `maxCodeDepth`
 /// levels, and a recursive rendering costs several stack frames per level. On a
 /// concurrency worker thread (512 KB) a debug build overflowed rendering such a
 /// structure about 600 levels deep, and the runaway guard renders the top of a

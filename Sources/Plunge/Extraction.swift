@@ -21,7 +21,7 @@ nonisolated struct Extraction<Container: TracingItem> {
 
 /// **What a find found** (`Behavior.finding`): the element's index and value,
 /// and the container it came from when that container traces its elements'
-/// origins (nil for a block, whose items carry no origins).
+/// origins (nil for a code block, whose items carry no origins).
 nonisolated struct Found<Value> {
     let index: Int
     let value: Value

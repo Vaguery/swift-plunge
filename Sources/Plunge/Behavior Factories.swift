@@ -12,7 +12,7 @@ nonisolated extension Behavior {
     // MARK: - Control
 
     /// Control that writes the continuation by returning `Router`s onto `.exec`
-    /// (the loops, `execIf`, the code `Emit`/`Do`/`Iterate` instructions).
+    /// (the loops, `.execIf`, the code `Emit`/`Do`/`Iterate` instructions).
     static func control(
         _ label: PushInstruction,
         takes: [PushStack],
@@ -24,7 +24,7 @@ nonisolated extension Behavior {
                  tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
-    /// Control over arguments it reads and leaves (`codeEmitNth`, …).
+    /// Control over arguments it reads and leaves (`.codeEmitNth`, …).
     static func control(
         _ label: PushInstruction,
         reads: [PushStack],
@@ -45,8 +45,8 @@ nonisolated extension Behavior {
         Behavior(label, requires: requires, tags: tags, behaviorClass: .control, body: .values(fxn), produces: .continuation)
     }
 
-    /// Control that needs more than a `Router` can say: placing a block's contents
-    /// (`codeDo`) or burying a token under a payload (`iteratorPlay`).
+    /// Control that needs more than a `Router` can say: placing a code block's contents
+    /// (`.codeDo`) or burying a token under a payload (`.iteratorPlay`).
     static func control(
         _ label: PushInstruction,
         takes: [PushStack],

@@ -133,7 +133,7 @@ nonisolated extension Interpreter {
         return p.value.isEmpty || c.value.firstRange(of: p.value) != nil
     }
 
-    /// The candidate block begins with the probe's root items.
+    /// The candidate code block begins with the probe's root items.
     @Sendable static func codePrefix(_ probe: any Item, _ candidate: any Item) -> Bool {
         guard let p = probe as? CodeItem, let c = candidate as? CodeItem, p.value.count <= c.value.count else {
             return false
@@ -141,8 +141,8 @@ nonisolated extension Interpreter {
         return zip(p.value, c.value).allSatisfy { $0.isEqual(to: $1) }
     }
 
-    /// The probe (a one-item block standing for its item) is a point of the
-    /// candidate, as `codeContains` asks.
+    /// The probe (a one-item code block standing for its item) is a point of the
+    /// candidate, as `.codeContains` asks.
     @Sendable static func codeContaining(_ probe: any Item, _ candidate: any Item) -> Bool {
         guard let p = probe as? CodeItem, let c = candidate as? CodeItem else { return false }
         return c.firstPointIndex(of: p.denotedItem) != nil
@@ -240,7 +240,7 @@ nonisolated extension Interpreter {
         }
     }
 
-    /// The first root item of a block that is a block matching the probe block:
+    /// The first root item of a code block that is a code block matching the probe code block:
     /// `( ( "a" 1 ) ( "b" 2 ) ) ( "b" ) .codeFindPrefix` gives `( "b" 2 )` and 1.
     static func codeFind(
         _ name: PushInstruction, from: Bool,
@@ -410,7 +410,8 @@ nonisolated extension Interpreter {
         add(both(.codeLookupPrefix, .codeLookupPrefixFrom) {
             matching($0, on: .code, from: $1, codePrefix)
                 .described(
-                    "Reads the top block as a probe and copies the topmost one below whose items begin with its items"
+                    "Reads the top code block as a probe and copies the topmost one below whose items begin with its " +
+                    "items"
                     + ($1 ? ", searching from depth i (at least 1)" : "")
                     + ", pushing its depth + 1 onto `.int`; refuses on a miss."
                 )
@@ -418,8 +419,8 @@ nonisolated extension Interpreter {
         add(both(.codeLookupContaining, .codeLookupContainingFrom) {
             matching($0, on: .code, from: $1, codeContaining)
                 .described(
-                    "Reads the top block as a probe and copies the topmost one below containing it, or its lone item,"
-                    + " anywhere inside"
+                    "Reads the top code block as a probe and copies the topmost one below containing it, or its lone " +
+                    "item, anywhere inside"
                     + ($1 ? ", searching from depth i (at least 1)" : "")
                     + ", pushing its depth + 1 onto `.int`; refuses on a miss."
                 )
@@ -497,8 +498,8 @@ nonisolated extension Interpreter {
         add(both(.codeLookupShape, .codeLookupShapeFrom) {
             matching($0, on: .code, from: $1, sameShape)
                 .described(
-                    "Reads the top block as a probe and copies the topmost one below with its shape"
-                    + " (same nesting and instructions, atoms matching by type)"
+                    "Reads the top code block as a probe and copies the topmost one below with its shape (same " +
+                    "nesting and instructions, atoms matching by type)"
                     + ($1 ? ", searching from depth i (at least 1)" : "")
                     + ", pushing its depth + 1 onto `.int`; refuses on a miss."
                 )
@@ -565,10 +566,10 @@ nonisolated extension Interpreter {
             codeFind($0, from: $1, codePrefix)
                 .described(
                     $1
-                        ? "Finds a sub-block from root index i on: `( … ) ( p ) i .codeFindPrefixFrom` gives the first"
-                          + " that begins with p's items, and its index; refuses on a miss."
-                        : "Finds a sub-block: `( … ) ( p ) .codeFindPrefix` gives the first root item that is a block"
-                          + " beginning with p's items, and its index; refuses on a miss."
+                        ? "Finds a nested code block from root index i on: `( … ) ( p ) i .codeFindPrefixFrom` gives " +
+                            "the first that begins with p's items, and its index; refuses on a miss."
+                        : "Finds a nested code block: `( … ) ( p ) .codeFindPrefix` gives the first root item that " +
+                            "is a code block beginning with p's items, and its index; refuses on a miss."
                 )
         })
         add(indexOfFromBehaviors)

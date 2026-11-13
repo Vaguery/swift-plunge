@@ -200,7 +200,7 @@ nonisolated extension Interpreter {
         return stride(from: 0, to: count, by: size).map { ($0, min(size, count - $0)) }
     }
 
-    /// `v n .label`: the pieces of `v`, as a block of vectors.
+    /// `v n .label`: the pieces of `v`, as a code block of vectors.
     static func piecesBehavior<V: VectorItem>(_ label: PushInstruction, _ type: V.Type, sliding: Bool) -> Behavior {
         Behavior.operation(label, takes: V.self, IntItem.self, gives: CodeItem.self) { x, n throws(Refusal) in
             let parts = pieces(x.count, size: n, sliding: sliding)
@@ -208,11 +208,11 @@ nonisolated extension Interpreter {
             return parts.map { V(Array(x[$0.start ..< $0.start + $0.length]), call: []) }
         }
         .described(sliding
-                   ? "Every window: `v n .\(label)` gives a block of the vectors of n consecutive elements, sliding "
-                     + "by one (none when n exceeds the length; n below 1 counts as 1); refuses a result over the "
-                     + "size limit."
-                   : "Chunks: `v n .\(label)` gives a block of the vectors of n consecutive elements, the last "
-                     + "possibly shorter (n below 1 counts as 1).")
+                   ? "Every window: `v n .\(label)` gives a code block of the vectors of n consecutive elements, " +
+                       "sliding by one (none when n exceeds the length; n below 1 counts as 1); refuses a result " +
+                       "over the size limit."
+                   : "Chunks: `v n .\(label)` gives a code block of the vectors of n consecutive elements, the last " +
+                       "possibly shorter (n below 1 counts as 1).")
     }
 
     static let vecBoolChunks_Behavior = piecesBehavior(.vecBoolChunks, VecBoolItem.self, sliding: false)
@@ -246,7 +246,7 @@ nonisolated extension Interpreter {
 
     static let codeReverseRoot_Behavior =
         Behavior.operation(.codeReverseRoot, takes: CodeItem.self, gives: CodeItem.self) { x in Array(x.reversed()) }
-        .described("Reverses the order of a block's root items.")
+        .described("Reverses the order of a code block's root items.")
 
     static let codeFirstRoot_Behavior =
         Behavior.operation(.codeFirstRoot, takes: CodeItem.self, gives: CodeItem.self) { x throws(Refusal) in
@@ -255,8 +255,8 @@ nonisolated extension Interpreter {
             }
             return boxedPointContents(first)
         }
-        .described("Takes a block's first root item as a block; a leaf comes boxed as `( x )`; refuses an empty "
-                   + "block.")
+        .described("Takes a code block's first root item as a code block; a leaf comes boxed as `( x )`; refuses an " +
+            "empty code block.")
 
     static let codeLastRoot_Behavior =
         Behavior.operation(.codeLastRoot, takes: CodeItem.self, gives: CodeItem.self) { x throws(Refusal) in
@@ -265,8 +265,8 @@ nonisolated extension Interpreter {
             }
             return boxedPointContents(last)
         }
-        .described("Takes a block's last root item as a block; a leaf comes boxed as `( x )`; refuses an empty "
-                   + "block.")
+        .described("Takes a code block's last root item as a code block; a leaf comes boxed as `( x )`; refuses an " +
+            "empty code block.")
 
     static let codeTakeRoot_Behavior =
         Behavior.operation(.codeTakeRoot, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, n in

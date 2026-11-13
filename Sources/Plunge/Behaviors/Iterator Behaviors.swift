@@ -17,7 +17,7 @@ nonisolated extension Interpreter {
     ///
     /// **The emitted item comes first, wherever it goes.** One that rests on a data
     /// stack is there before the body runs. One that runs (an instruction walked
-    /// out of a block, a point unwrapped by `.codeDo`, anything an `…IntoExec`
+    /// out of a code block, a point unwrapped by `.codeDo`, anything an `…IntoExec`
     /// iterator sends to `.exec`) is placed *above* the body, so it runs first
     /// too: `.exec` ends up top→bottom `item…, body, .codeDo, …`. Routers land in
     /// order, so that means routing it after the body. (Until 2026-11-09 it was
@@ -28,8 +28,8 @@ nonisolated extension Interpreter {
     /// resting on `.iterator`.
     ///
     /// **A bodyless iterator emits only its element.** Those are the sequences —
-    /// `stringPushAll` and the dup families — which have no mouse to run, and
-    /// pushing an empty block for them would cost two wasted steps per element.
+    /// `.stringPushAll` and the dup families — which have no mouse to run, and
+    /// pushing an empty code block for them would cost two wasted steps per element.
     ///
     /// Provenance: the body copy is combinatory (laws 1 and 1b) and the `.codeDo`
     /// token is freshly minted (law 4), so neither records anything. The
@@ -110,7 +110,7 @@ nonisolated extension Interpreter {
     ///
     /// **Dying returns the body to `.code`.** An instruction that consumed
     /// something and then finished with it should not also destroy it —
-    /// `execDoCount` and `execDoTimes` hand their body back when their count is too
+    /// `.execDoCount` and `.execDoTimes` hand their body back when their count is too
     /// small to act on, and this is the same courtesy at the other end of the loop.
     /// It is not tidiness: `.code` is the language's tightest
     /// bottleneck, so every loop that ends is a small supply of the scarcest
@@ -126,7 +126,7 @@ nonisolated extension Interpreter {
     }
 
     /// The last pass, `payload`, and then the farewell: the body goes onto `.exec`
-    /// *under* the pass, and lands on `.code` (a block met on `.exec` rests there)
+    /// *under* the pass, and lands on `.code` (a code block met on `.exec` rests there)
     /// once the pass has run. **After, not with.** Handed straight to `.code`, it
     /// sat on top of `.code` all through the last pass, so a body that reads
     /// `.code` read its own loop's body on that pass and no other: `B` run `K`
@@ -262,7 +262,7 @@ nonisolated extension Interpreter {
     // MARK: - Getters
 
     /// The getters are queries: they read the iterator and leave it, which is
-    /// what `Peek` in their names promises, as `vecIntPeekNth` does. A getter that
+    /// what `Peek` in their names promises, as `.vecIntPeekNth` does. A getter that
     /// consumed the loop to report its stride would be unusable in the body, which
     /// is exactly where a program wants to ask. `.iteratorPop` is there for anyone
     /// who wants it gone. A getter whose field is empty pushes nothing.
@@ -324,7 +324,7 @@ nonisolated extension Interpreter {
         }
         .described("Pushes the step between passes, 1 for any but a counting iterator, leaving the iterator.")
 
-    /// The block this iterator emits each pass. Lands on `.code` as data — running
+    /// The code block this iterator emits each pass. Lands on `.code` as data — running
     /// it is `.codeDo`'s job.
     static let iteratorPeekBody_Behavior =
         iteratorGetter_Behavior(.iteratorPeekBody, produces: .optional([.code])) { iterator, _ in iterator.body }
@@ -458,7 +458,7 @@ nonisolated extension Interpreter {
         return [Router(.iterator, iterator)]
     }
 
-    /// The item a boxed setter argument carries, or nil for an empty block.
+    /// The item a boxed setter argument carries, or nil for an empty code block.
     ///
     /// `origin` and `destination` can be any type at all — an int for a counting
     /// loop, a vector or a string for a walking one — but `takes:` is declared
@@ -483,8 +483,8 @@ nonisolated extension Interpreter {
             return nil
         }
         .described(
-            "Re-aims the start: `( x ) .iteratorSetStart` makes x the start or source; refuses an empty block; a "
-            + "start leaving nothing to emit ends the loop, returning its body to `.code`.")
+            "Re-aims the start: `( x ) .iteratorSetStart` makes x the start or source; refuses an empty code block; " +
+            "a start leaving nothing to emit ends the loop, returning its body to `.code`.")
 
     /// Where the loop ends. `( 20 ) …`
     ///
@@ -504,8 +504,8 @@ nonisolated extension Interpreter {
             return nil
         }
         .described(
-            "Re-aims the end: `( x ) .iteratorSetEnd` makes x the end bound; refuses an empty block or a walking "
-            + "iterator; an end leaving nothing to emit ends the loop, returning its body to `.code`.")
+            "Re-aims the end: `( x ) .iteratorSetEnd` makes x the end bound; refuses an empty code block or a " +
+            "walking iterator; an end leaving nothing to emit ends the loop, returning its body to `.code`.")
 
     /// How far along the loop is. Carrying it past the end finishes it.
     static let iteratorSetCounter_Behavior =
@@ -718,10 +718,10 @@ nonisolated extension Interpreter {
     /// **The short constructors**: an iterator over
     /// a whole collection from the collection and a body alone, `v ( body )`,
     /// with the cursor at the start, nothing buried and every element emitted.
-    /// Two arguments, as `vecXIterate` takes, so a random program can actually
+    /// Two arguments, as `.vecXIterate` takes, so a random program can actually
     /// build one; the long forms above (`.cruxOnly`) set the rest. An empty body
-    /// makes a sequence. `iteratorPlay` then runs the body per element, and
-    /// `vecFromIterator` collects what it makes.
+    /// makes a sequence. `.iteratorPlay` then runs the body per element, and
+    /// `.vecFromIterator` collects what it makes.
     static func iteratorOver_Behavior(_ name: PushInstruction, over source: PushStack) -> Behavior {
         Behavior(
             name,
@@ -806,8 +806,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Builds an unplayed iterator over a block's top-level items: `( x ) ( body ) i d e` starts at pass i at "
-            + "depth d, emitting if e"
+            "Builds an unplayed iterator over a code block's top-level items: `( x ) ( body ) i d e` starts at pass " +
+            "i at depth d, emitting if e"
             + (into == .exec
                 ? ", each sent to `.exec` to run before the body"
                 : ", each landing on its stack (instructions run)")
@@ -820,7 +820,7 @@ nonisolated extension Interpreter {
         iteratorFromCodeRoot_Behavior(.iteratorFromCodeRootIntoExec, into: .exec)
 
     /// Construct-only: rebuild a **points** iterator by state. Same shape as
-    /// `iteratorFromCodeRoot`, but the walk is pre-order over the whole tree, not the
+    /// `.iteratorFromCodeRoot`, but the walk is pre-order over the whole tree, not the
     /// root — so `crux()` for a points iterator names this. One per `PointsEmission`
     /// mode, because the mode is part of the iterator's identity and a rebuilt copy
     /// must carry it.
@@ -851,8 +851,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Builds an unplayed iterator over every point of a block, pre-order from the whole block: "
-            + "`( x ) ( body ) i d e` starts at pass i at depth d, emitting if e, each point "
+            "Builds an unplayed iterator over every point of a code block, pre-order from the whole code block: `( x " +
+            ") ( body ) i d e` starts at pass i at depth d, emitting if e, each point "
             + (mode == .boxed ? "boxed onto `.code`" : mode == .whole ? "routed as it is" : "run, before the body")
             + "; refuses if nothing is left to emit.")
     }
@@ -916,7 +916,7 @@ nonisolated extension Interpreter {
         .described(
             "Builds an unplayed iterator that emits x n times: `( x ) n i d` starts at pass i at depth d, each copy "
             + (into == .exec ? "sent to `.exec`" : "landing on its stack")
-            + "; refuses an empty block or nothing left to emit.")
+            + "; refuses an empty code block or nothing left to emit.")
     }
 
     static let iteratorRepeating_Behavior =

@@ -17,7 +17,7 @@
 ///
 /// **Declared, not derived.** Mechanism does not decide it: a constant reaches its
 /// stack by way of `.exec`, `DupTimes` copies through an iterator loop, and
-/// `vecIntPushAll` delivers its elements through a continuation, yet the first is a
+/// `.vecIntPushAll` delivers its elements through a continuation, yet the first is a
 /// context read, the second a structural rule and the third an operation. Like an
 /// `InstructionTag`, this is judgment, written at the Behavior; unlike a tag, every
 /// instruction has exactly one. `Behavior Class Tests` check each declaration
@@ -40,7 +40,7 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     /// flush, `PopItems`), copying (dup, `DupItems`, `DupTimes`, `DeepDup`,
     /// `YankDup`) and reordering (swap, rot, `Yank`, `Shove`). It moves, copies or
     /// deletes items and never makes one. The position may be chosen by an int
-    /// argument (the deep ones) or, for `bindingPopKey`, by a key. These are the
+    /// argument (the deep ones) or, for `.bindingPopKey`, by a key. These are the
     /// structural rules of substructural logic: weakening, contraction and
     /// exchange. Provenance law 1: rearranging records nothing.
     case structural
@@ -48,14 +48,14 @@ public nonisolated enum BehaviorClass: String, Sendable, Codable, Hashable, Case
     /// **An answer that depends on more than its arguments**: constants and inputs
     /// (reproducible), and reads of the interpreter's state, which are not, and so
     /// record stand-ins (law 4b): `StackDepth`, `StackIsEmpty`, the error counts,
-    /// `pushStepCount`, `readItems`, `readStack`, the stack lookups, the binders
+    /// `.pushStepCount`, `readItems`, `readStack`, the stack lookups, the binders
     /// and the binding lookups. Only a count may be taken as an argument; a probe,
     /// a key or an item to bind is read and left.
     case contextRead
 
     /// **A write to the continuation**: its output is the rest of the program, not
-    /// a value of some type. `codeDo`, `execIf`, `execK`, the loop constructors, the code
-    /// `Emit`/`Do`/`Iterate` instructions and `iteratorPlay` — Joy-style combinators
+    /// a value of some type. `.codeDo`, `.execIf`, `.execK`, the loop constructors, the code
+    /// `Emit`/`Do`/`Iterate` instructions and `.iteratorPlay` — Joy-style combinators
     /// over quotations. An iterator is a reified continuation with a cursor.
     case control
 

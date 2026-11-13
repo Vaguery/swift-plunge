@@ -11,7 +11,7 @@
 ///   function: the instruction alone, nothing it found bound or copied. Its holes
 ///   are its arguments, read from its declared requirements only when something
 ///   asks (`holes`), so a starvation costs one push and nothing more.
-/// - **`codePushAllFunctions`.** A block is run in a sandbox with a placeholder
+/// - **`.codePushAllFunctions`.** A code block is run in a sandbox with a placeholder
 ///   for every missing argument, and every item it pushes whose history uses a
 ///   placeholder becomes a function: that history, each placeholder a hole.
 ///
@@ -22,9 +22,9 @@
 /// argument). Filling every hole gives a runnable program (`filled(with:)`).
 ///
 /// **A function is data.** Met on `.exec`, it comes to rest on `.function`, as a
-/// block comes to rest on `.code`; nothing runs it but an instruction that
+/// code block comes to rest on `.code`; nothing runs it but an instruction that
 /// applies it (map, filter and reduce). It is its own literal: a starvation
-/// depends on the moment's stacks, and a derivation makes all of a block's
+/// depends on the moment's stacks, and a derivation makes all of a code block's
 /// functions at once, so neither can be replayed for one function alone.
 public nonisolated struct FunctionItem: Item, Equatable, Pretty {
 
@@ -32,8 +32,11 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     /// each of `positions` (the body's count for the end). Fillers sharing a
     /// position go in hole order.
     public struct Hole: Hashable, Sendable, Codable {
+        /// The stack the hole's filler comes from.
         public let stack: PushStack
+        /// Where in the function's body the filler goes. One hole can sit at several positions.
         public let positions: [Int]
+        /// Creates a hole.
         public init(stack: PushStack, positions: [Int]) {
             self.stack = stack
             self.positions = positions
@@ -148,7 +151,7 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     }
 
     /// `ƒ( ⟨int⟩ 3 .intAdd )`, each hole written as its stack. Rendered by
-    /// `NestedRendering`, since the body can hold blocks that hold functions.
+    /// `NestedRendering`, since the body can hold code blocks that hold functions.
     public func pretty() -> String {
         NestedRendering.render(self)
     }
@@ -212,7 +215,7 @@ nonisolated extension FunctionItem {
 }
 
 nonisolated extension FunctionItem: HoldsCall {
-    /// A function hands over its body as well as its history, as a block does.
+    /// A function hands over its body as well as its history, as a code block does.
     @_documentation(visibility: internal)
     public mutating func detachForRelease(into work: inout [any Item]) {
         callStorage.detach(into: &work)

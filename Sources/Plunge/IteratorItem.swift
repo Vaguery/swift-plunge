@@ -9,16 +9,16 @@ import Foundation
 
 
 /// How a `.points` walk hands each point on. The three modes are the pre-order
-/// analog of the `codeNth`/`codeEmitNth`/`codeDoNth` trio, and they differ only
-/// in what becomes of a point that is itself a sub-block:
+/// analog of the `.codeNth`/`.codeEmitNth`/`.codeDoNth` trio, and they differ only
+/// in what becomes of a point that is itself a nested code block:
 ///
-/// - `boxed` — every point boxed as `.code` (via `codePeekNth`) and left resting
-///   there. A leaf becomes `( leaf )`. This is `codeIterate`.
-/// - `whole` — the point routed **as it is**: a sub-block rests whole on `.code`,
+/// - `boxed` — every point boxed as `.code` (via `.codePeekNth`) and left resting
+///   there. A leaf becomes `( leaf )`. This is `.codeIterate`.
+/// - `whole` — the point routed **as it is**: a nested code block rests whole on `.code`,
 ///   a leaf routes to its own stack, an instruction runs. This is
-///   `codeIterateEmit`.
-/// - `unwrapped` — the point sent through `.exec` via `.codeDo`, so a sub-block's
-///   contents run. Identical to `whole` for a leaf. This is `codeIterateDo`.
+///   `.codeIterateEmit`.
+/// - `unwrapped` — the point sent through `.exec` via `.codeDo`, so a nested code block's
+///   contents run. Identical to `whole` for a leaf. This is `.codeIterateDo`.
 public nonisolated enum PointsEmission: Sendable, Equatable, Codable {
     case boxed, whole, unwrapped
 }
@@ -51,11 +51,11 @@ public nonisolated enum IteratorKind: Sendable, Equatable, Codable {
     case elements(into: PushStack?)
 
     /// `origin` is a `StringItem`; pass `i` emits `String(origin[i])` — a
-    /// one-character *string* — to `.string`. This is `stringPushAllLetters`.
+    /// one-character *string* — to `.string`. This is `.stringPushAllLetters`.
     case letters
 
     /// `origin` is a `StringItem`; pass `i` emits its `i`-th whitespace-delimited
-    /// chunk to `.string`. This is `stringPushAllWords`.
+    /// chunk to `.string`. This is `.stringPushAllWords`.
     case words
 
     /// `origin` is a `CodeItem`; pass `i` emits its `i`-th **pre-order point**
@@ -90,7 +90,7 @@ nonisolated extension IteratorKind {
 
 /// One loop's state, entire.
 ///
-/// Before this type was first-class, `execDoRange` kept its bounds as loose ints
+/// Before this type was first-class, `.execDoRange` kept its bounds as loose ints
 /// on `.int` and rebuilt its own recursion as Push source every pass — the
 /// counting was done *in Push*. Now the bounds, the stride and the cursor live
 /// in here for the loop's duration, the counting is done in Swift, and the only
@@ -178,8 +178,8 @@ public nonisolated struct IteratorItem: Item, Pretty {
         1 + max(origin.nestingDepth, destination?.nestingDepth ?? 0, body?.nestingDepth ?? 0)
     }
 
-    /// Whether a pass pushes its projection at all. `execDoRange` leaves its
-    /// index on `.int` for the body to read; `execDoTimes` deliberately does not.
+    /// Whether a pass pushes its projection at all. `.execDoRange` leaves its
+    /// index on `.int` for the body to read; `.execDoTimes` deliberately does not.
     public var emits: Bool
 
     /// How many times the cursor goes round the source — **always ≥ 1**, and 1
@@ -309,7 +309,7 @@ public nonisolated struct IteratorItem: Item, Pretty {
 
     /// `«origin→destination by stride @cursor ↻laps silent ⤓burial body»`, with
     /// the optional parts present only when they say something. Rendered by
-    /// `NestedRendering`, since origin and body can hold blocks holding iterators.
+    /// `NestedRendering`, since origin and body can hold code blocks holding iterators.
     public func pretty() -> String {
         NestedRendering.render(self)
     }
@@ -468,9 +468,9 @@ nonisolated extension IteratorItem {
     /// The counting engine is **exclusive** of its destination: an iterator from 7
     /// toward 4 emits 7, 6, 5 and stops, the rule `|dest − current| > |stride|`,
     /// which extends sensibly to wider strides (0→10 by 3 emits 0, 3, 6, 9).
-    /// `execDoCount`, `execDoTimes`, `execDoRange` and `iteratorFromIntRange` all
+    /// `.execDoCount`, `.execDoTimes`, `.execDoRange` and `.iteratorFromIntRange` all
     /// use it as is, so every counted loop in the language stops short of its end
-    /// (`execDoRange` was inclusive, as in Push3, until 2026-11-09).
+    /// (`.execDoRange` was inclusive, as in Push3, until 2026-11-09).
     ///
     /// The subtraction can overflow — `Int.min` to `Int.max` — and an overflowing
     /// difference means the two are as far apart as it is possible to be, so it

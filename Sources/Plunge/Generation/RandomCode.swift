@@ -219,13 +219,18 @@ nonisolated struct InstructionMix: Sendable {
 }
 
 
-/// `public` only where a plain-import test needs it.
+// `public` only where a plain-import test needs it. Most of this is `internal`:
+// the interpreter's own `@testable` tests reach it, and nothing outside the
+// module can. The exceptions are the value helpers used by "Runner Acceptance
+// Tests", which drives the library through its public surface only
+// (deliberately, to prove a search process can) and so cannot see internals
+// even though it lives in the test target.
+
+/// Random values for the library's own tests.
 ///
-/// Most of this is `internal`: the interpreter's own `@testable` tests reach it,
-/// and nothing outside the module can. The three exceptions are the value/genome
-/// helpers used by "Runner Acceptance Tests", which drives the library through
-/// its **public surface only** — deliberately, to prove the search process can —
-/// and so cannot see internals even though it lives in the test target.
+/// This type is public only so that tests which use nothing but the public API
+/// can reach two helpers. It is not a program generator, and a search shouldn't
+/// depend on it: making programs is the search's job.
 public nonisolated enum RandomCode {
 
     // A STABLE instruction pool: `Dictionary.keys` iterates in a per-process
@@ -269,10 +274,12 @@ public nonisolated enum RandomCode {
         (0..<items).map { _ in InstructionItem(randomInstruction(from: mix)) }
     }
 
+    /// A random int between `-scale` and `scale`, from the tests' seeded generator.
     public static func randomInt(_ scale: Int) -> Int {
         Int.random(in: -scale...scale, using: &fuzzRNG)
     }
 
+    /// A random double between `-scale` and `scale`, from the tests' seeded generator.
     public static func randomDouble(_ scale: Double) -> Double {
         Double.random(in: -scale...scale, using: &fuzzRNG)
     }

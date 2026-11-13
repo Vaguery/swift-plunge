@@ -25,7 +25,7 @@ nonisolated struct StandInState: Codable, Sendable {
 
 
 /// Everything a `FunctionItem` needs to be rebuilt: its body, nested as
-/// `AnyItem`s as a block's contents are, and, for a derived function, its holes
+/// `AnyItem`s as a code block's contents are, and, for a derived function, its holes
 /// and output stack.
 nonisolated struct FunctionState: Codable, Sendable {
     var body: [AnyItem]
@@ -73,25 +73,26 @@ nonisolated struct IteratorState: Codable, Sendable {
 }
 
 
-/// A `Codable` envelope around the `any Item` existential, which cannot itself
-/// carry a synthesized conformance.
+/// A `Codable` wrapper for any item.
 ///
-/// Only an item's *type tag* and *value* are serialized. Its history (`call`,
-/// and a container's members) is deliberately omitted: items in a program (or
-/// a `crux` result) have none, and a decoded item comes back as a literal, its
-/// crux itself. To keep histories, encode an `ItemArchive` instead (opt-in).
-/// Every `Item.value` is a JSON-native type (or, for `CodeItem`, a nested array
-/// of items), so the encoding is total.
+/// `any Item` can't be `Codable` itself, so programs, inputs, constants and
+/// recorded readings are encoded through this type. Wrap an array with
+/// `items.map(AnyItem.init)` and unwrap it with `decoded.map(\.item)`. Every
+/// kind of item can be encoded.
 ///
-/// Transport `[any Item]` as `program.map(AnyItem.init)` and recover it as
-/// `decoded.map(\.item)`.
+/// Only an item's type and value are encoded. Its history is left out, so a
+/// decoded item is a literal whose crux is itself. To keep histories, encode an
+/// ``ItemArchive`` instead.
 public nonisolated struct AnyItem: Codable, Sendable, Equatable {
+    /// The wrapped item.
     public let item: any Item
 
+    /// Wraps an item.
     public init(_ item: any Item) {
         self.item = item
     }
 
+    /// Whether two wrapped items have equal values. Histories are not compared.
     public static func == (lhs: AnyItem, rhs: AnyItem) -> Bool {
         lhs.item.isEqual(to: rhs.item)
     }

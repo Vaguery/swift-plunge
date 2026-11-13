@@ -10,7 +10,10 @@ import Foundation
 
 // building up the protocol infrastructure
 
+/// Something that can print itself in the notation this documentation uses for programs.
 public nonisolated protocol Pretty {
+    /// This item as text, in the form the documentation writes programs: `3`,
+    /// `"hello"`, `[1, 2, 3]`, `( 1 .intAdd )`. See <doc:ThePushLanguage>.
     func pretty() -> String
 }
 
@@ -111,65 +114,99 @@ public nonisolated protocol Pretty {
 // Growth that survives this law is honest (a value really was accumulated), and
 // is bounded by the `callWeight` budget in `Interpreter.push`.
 
+/// Anything that can sit on a stack: a value, with a record of how it was made.
+///
+/// Every item has a ``value``, which is what the language computes with, and a
+/// history (``call``), which is kept only while provenance recording is on and
+/// never affects a result. Two items are equal when their values are equal.
+///
+/// At present every item type is defined by the library. To make items, use the
+/// concrete types (``IntItem``, ``StringItem``, ``CodeItem`` and the rest),
+/// ``pushItem(_:)``, or the `program { … }` builder. See <doc:WritingPrograms>.
 public nonisolated protocol Item: Pretty, Sendable {
     associatedtype Value
+    /// How this item was made: the arguments and the instruction that produced it.
+    /// Empty for a literal, and always empty when provenance recording is off. The
+    /// interpreter maintains it; read it through ``crux()``.
     var call: [any Item] {get set}
+    /// What the item holds.
     var value: Value {get set}
 
-    /// Declared here (not only in an extension) so it dispatches dynamically
-    /// through `any Item` — same reason as `weight` below. A
-    /// protocol-extension-only method would dispatch *statically* through the
-    /// existential and silently ignore any override.
-    ///
-    /// **Nothing overrides it today.** `IteratorItem` did, back when it was a
-    /// provenance-only node whose crux was `base.crux() + [offset, .intAdd]`;
-    /// making the iterator first-class removed the need (see IteratorItem.swift),
-    /// and every type now walks `call` the same way. The requirement stays because
-    /// the failure it prevents is silent: a future override written against an
-    /// extension-only method would compile, look right, and never run.
+    // Declared here (not only in an extension) so it dispatches dynamically
+    // through `any Item` — same reason as `weight` below. A
+    // protocol-extension-only method would dispatch *statically* through the
+    // existential and silently ignore any override.
+    //
+    // **Nothing overrides it today.** `IteratorItem` did, back when it was a
+    // provenance-only node whose crux was `base.crux() + [offset, .intAdd]`;
+    // making the iterator first-class removed the need (see IteratorItem.swift),
+    // and every type now walks `call` the same way. The requirement stays because
+    // the failure it prevents is silent: a future override written against an
+    // extension-only method would compile, look right, and never run.
+    //
+    /// A program that reproduces this item. Run on a new interpreter with the same
+    /// inputs and constants, it leaves this item's value on this item's stack and
+    /// nothing else. For a literal, or any item made without provenance recording,
+    /// the crux is the item itself. See <doc:Provenance>.
     func crux() -> [any Item]
 
-    /// A recursive memory-proxy: the total primitive content this item holds,
-    /// summed through nesting (a vector's elements, a string's characters, a
-    /// code block's leaves). Scalars weigh 1. Container types store it, computed
-    /// once at construction. Declared here (not only in an extension) so it
-    /// dispatches correctly through `any Item`.
+    // A recursive memory-proxy: the total primitive content this item holds,
+    // summed through nesting (a vector's elements, a string's characters, a
+    // code block's leaves). Scalars weigh 1. Container types store it, computed
+    // once at construction. Declared here (not only in an extension) so it
+    // dispatches correctly through `any Item`.
+    //
+    /// The size of this item's content, summed through any nesting: 1 for a bool, a
+    /// number or a char, and the total of its elements for a collection. The size
+    /// limits are stated in weight. See <doc:LimitsAndGuards>.
     var weight: Int {get}
 
-    /// The provenance counterpart of `weight`: roughly the number of items
-    /// `crux()` would emit for this item, and so a proxy for both the memory the
-    /// history occupies and the size of the reconstruction. Bounded by
-    /// `maxCallWeight` at the push boundary (`Interpreter.push`).
-    ///
-    /// Unlike `weight` this cannot be a construction-time `let`: `value` is never
-    /// mutated after construction, but `call` *is* reassigned during execution.
-    /// So each struct stores it and refreshes it from `call`'s `didSet`. It is
-    /// maintained rather than computed on demand because the case that matters —
-    /// a long accumulation chain — would otherwise cost a full walk per push, and
-    /// re-walking a chain that grows by one each step is the quadratic behavior
-    /// this whole exercise exists to remove.
+    // The provenance counterpart of `weight`: roughly the number of items
+    // `crux()` would emit for this item, and so a proxy for both the memory the
+    // history occupies and the size of the reconstruction. Bounded by
+    // `maxCallWeight` at the push boundary (`Interpreter.push`).
+    //
+    // Unlike `weight` this cannot be a construction-time `let`: `value` is never
+    // mutated after construction, but `call` *is* reassigned during execution.
+    // So each struct stores it and refreshes it from `call`'s `didSet`. It is
+    // maintained rather than computed on demand because the case that matters —
+    // a long accumulation chain — would otherwise cost a full walk per push, and
+    // re-walking a chain that grows by one each step is the quadratic behavior
+    // this whole exercise exists to remove.
+    //
+    /// The size of this item's history: roughly the number of items its crux
+    /// holds. Limited by ``InterpreterSettings/maxCallWeight``.
     var callWeight: Int {get}
 
-    /// How deeply `call` nests: 0 for a literal, one more than the deepest child
-    /// otherwise. Maintained alongside `callWeight` (packed with it in a
-    /// `CallMeasure`) for the same reason: a long chain must not cost a walk per
-    /// push. `Interpreter.push` elides provenance deeper than `maxCallDepth`,
-    /// because releasing or walking a tree costs a stack frame per level, and a
-    /// concurrency worker thread's stack is small (see `maxCallDepth`).
+    // How deeply `call` nests: 0 for a literal, one more than the deepest child
+    // otherwise. Maintained alongside `callWeight` (packed with it in a
+    // `CallMeasure`) for the same reason: a long chain must not cost a walk per
+    // push. `Interpreter.push` elides provenance deeper than `maxCallDepth`,
+    // because releasing or walking a tree costs a stack frame per level, and a
+    // concurrency worker thread's stack is small (see `maxCallDepth`).
+    //
+    /// How deeply this item's history nests: 0 for a literal. Limited by
+    /// ``InterpreterSettings/maxCallDepth``.
     var callDepth: Int {get}
 
-    /// How deeply other items nest inside this one's *value*, counting every
-    /// container: blocks inside blocks, and blocks and iterators inside each other
-    /// (an iterator's origin, destination and body; an iterator quoted into a
-    /// block). 0 for a scalar. Cached by the containers at construction, so
-    /// `maxCodeDepth` can be enforced at every push without a walk, and so no walk
-    /// or release can recurse deeper than it on a small worker-thread stack.
+    // How deeply other items nest inside this one's *value*, counting every
+    // container: blocks inside blocks, and blocks and iterators inside each other
+    // (an iterator's origin, destination and body; an iterator quoted into a
+    // block). 0 for a scalar. Cached by the containers at construction, so
+    // `maxCodeDepth` can be enforced at every push without a walk, and so no walk
+    // or release can recurse deeper than it on a small worker-thread stack.
+    //
+    /// How deeply other items nest inside this one's value, counting code blocks and
+    /// iterators: 0 for an item that holds none. Limited by
+    /// ``InterpreterSettings/maxCodeDepth``.
     var nestingDepth: Int {get}
 
+    /// Whether another item has the same type and an equal value. Histories are
+    /// not compared.
     func isEqual(to other: any Item) -> Bool
 
     /// Moves into `work` whatever this item alone holds that would otherwise be
-    /// freed recursively with it: its history, and a block's contents. Called
+    /// freed recursively with it: its history, and a code block's contents. Called
     /// only while a deep history is being freed, so that freeing it needs no
     /// recursion; an item type with no history of its own need do nothing.
     @_documentation(visibility: internal)
@@ -198,13 +235,17 @@ nonisolated extension Item {
     }
 }
 
-/// An item's `callWeight` and `callDepth`, packed into the 8 bytes `callWeight`
-/// alone used to take. That matters: a small item (`IntItem` is a value, its
-/// `call` and this) must stay within the three words an `any Item` stores inline,
-/// or every one of them is boxed on the heap. Both halves saturate at
-/// `UInt32.max`, far above any budget.
+// An item's `callWeight` and `callDepth`, packed into the 8 bytes `callWeight`
+// alone used to take. That matters: a small item (`IntItem` is a value, its
+// `call` and this) must stay within the three words an `any Item` stores inline,
+// or every one of them is boxed on the heap. Both halves saturate at
+// `UInt32.max`, far above any budget.
+//
+/// The size and depth of an item's history, stored together.
 public nonisolated struct CallMeasure: Sendable, Hashable {
+    /// The size of the history: 1 for a literal.
     public let weight: UInt32
+    /// How deeply the history nests: 0 for a literal.
     public let depth: UInt32
 
     /// A literal: an empty `call`, weight 1, depth 0.
@@ -249,8 +290,8 @@ nonisolated struct CallStorage: Sendable {
 
         /// **Freeing a deep history without recursion.** Freed the ordinary way,
         /// a history costs stack frames per level, and an item too large to sit
-        /// inline in an `any Item` (a block, a binding, an iterator) costs more:
-        /// on a concurrency worker thread a chain of blocks crashed the process at
+        /// inline in an `any Item` (a code block, a binding, an iterator) costs more:
+        /// on a concurrency worker thread a chain of code blocks crashed the process at
         /// 950 levels in release and under 800 in debug (measured 2026-11-10). So a
         /// deep one is taken apart from a work list instead: each item hands over
         /// its own history when nothing else holds it, and is then freed empty.
@@ -338,8 +379,8 @@ nonisolated extension CharItem: HoldsCall {
     public mutating func detachForRelease(into work: inout [any Item]) { callStorage.detach(into: &work) }
 }
 nonisolated extension CodeItem: HoldsCall {
-    /// A block hands over its contents as well as its history, so a history that
-    /// runs through blocks is freed without recursion too.
+    /// A code block hands over its contents as well as its history, so a history that
+    /// runs through code blocks is freed without recursion too.
     @_documentation(visibility: internal)
     public mutating func detachForRelease(into work: inout [any Item]) {
         callStorage.detach(into: &work)
@@ -469,9 +510,9 @@ nonisolated extension Item {
 // Whether the language wants one is open.
 
 nonisolated extension Item where Self: Equatable {
-    /// Value equality, reached across the `any Item` existential. This is the
-    /// language's equality — `.xEq` is built on it — so it deliberately ignores
-    /// provenance. See the note above.
+    /// Whether another item has the same type and an equal value. This is the
+    /// language's equality, the one the `Eq` instructions use, and it ignores
+    /// histories.
     public func isEqual(to other: any Item) -> Bool {
         guard let otherWithSameType = other as? Self else { return false }
         return self == otherWithSameType
@@ -480,9 +521,8 @@ nonisolated extension Item where Self: Equatable {
 
 
 nonisolated extension Item {
-    /// Runnable Push source that reproduces this item's value on this item's
-    /// stack. See "The provenance law" above — this reads back what the law
-    /// tells Behaviors to record.
+    /// A program that reproduces this item's value on this item's stack. See
+    /// <doc:Provenance>.
     public func crux() -> [any Item] {
         // An empty `call` means "I am a literal", and a literal is already a
         // runnable program producing itself. A literal that stands in for a lost
@@ -503,6 +543,8 @@ nonisolated extension Item {
 
 //  global == definition to help compare items that aren't the same exact type
 //
+/// Whether two lists of items hold equal values in the same order. Items of
+/// different types are never equal.
 public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
     // Arrays must have the same count to be equal
     guard lhs.count == rhs.count else { return false }
@@ -516,6 +558,7 @@ public nonisolated func == (lhs: [any Item], rhs: [any Item]) -> Bool {
 
 // creating structs for each PushType
 
+/// A bool: an item of the `.bool` stack.
 public nonisolated struct BoolItem: Item, Equatable, Pretty {
     public var value: Bool
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -524,11 +567,14 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: Bool, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -543,6 +589,7 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
     }
 }
 
+/// A single character: an item of the `.char` stack.
 public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     public var value: Character
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -551,11 +598,14 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: Character, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -609,6 +659,12 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
 // The cost of that generality is that `.code` is the one stack where two items of
 // the same type are not interchangeable as arguments, which `.exec` shares and
 // `.iterator` now joins.
+/// A code block: a list of any items, nested to any depth.
+///
+/// Code blocks are the items of the `.code` stack, and the language's one container
+/// for items of mixed types. A code block in a program doesn't run when the
+/// interpreter reaches it; it rests on `.code` until an instruction runs it.
+/// See <doc:CodeAndControl>.
 public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// **Anything, in any mixture, nested to any depth** — see "The universal box"
     /// above. This is the only heterogeneous container in the language.
@@ -619,6 +675,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -627,25 +684,27 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// The number of items in this code's fully flattened `.value`: every
     /// non-code item counts as one, and a nested `CodeItem` contributes its own
     /// `flatSize` (its contents), recursively — so `[1, [2, 3]]` is 3 and an
-    /// empty or empty-nested block contributes nothing. Computed once here
+    /// empty or empty-nested code block contributes nothing. Computed once here
     /// because `value` is never mutated after construction.
     public let flatSize: Int
 
-    /// Recursive content weight: the sum of the weights of everything this block
+    /// Recursive content weight: the sum of the weights of everything this code block
     /// holds, at every level. Reuses each child's already-stored weight.
     public let weight: Int
 
-    /// How deeply blocks nest inside this one, counting blocks only: 0 for an
-    /// empty block, 1 for a flat one, one more per level — `(1 (2 3))` is 2. This
+    /// How deeply code blocks nest inside this one, counting code blocks only: 0 for an
+    /// empty code block, 1 for a flat one, one more per level — `(1 (2 3))` is 2. This
     /// is what `.codeDepth` reports. Computed once from the children, like
     /// `flatSize`.
     public let blockDepth: Int
 
-    /// `Item.nestingDepth`: like `blockDepth`, but counting iterators too (a block
-    /// holding a quoted iterator whose body is a block…). The one `maxCodeDepth`
+    /// `Item.nestingDepth`: like `blockDepth`, but counting iterators too (a code block
+    /// holding a quoted iterator whose body is a code block…). The one `maxCodeDepth`
     /// enforces. Weight cannot stand in for it: wrapping adds a level and no weight.
     public let nestingDepth: Int
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: [any Item], call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -674,7 +733,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
         lhs.value == rhs.value
     }
 
-    /// `( a b c )`. Rendered by `NestedRendering`, which walks nested blocks and
+    /// `( a b c )`. Rendered by `NestedRendering`, which walks nested code blocks and
     /// iterators with an explicit stack rather than recursing.
     public func pretty() -> String {
         NestedRendering.render(self)
@@ -700,8 +759,8 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
 // block `( )` is a point (a node with no children).
 nonisolated extension CodeItem {
 
-    /// The item this block **denotes** under the singleton-unwrap convention: a
-    /// one-element block denotes its sole element, any other block denotes itself.
+    /// The item this code block **denotes** under the singleton-unwrap convention: a
+    /// one-element code block denotes its sole element, any other code block denotes itself.
     ///
     /// `(6)` denotes the leaf `6` — because `CodeItem([IntItem(6)])` *is* a
     /// quoted 6, the Lisp reading of a one-element list. This is how the code
@@ -738,11 +797,11 @@ nonisolated extension CodeItem {
         return points[Position.item(index, count: points.count)]
     }
 
-    /// The maximum nesting depth: root is 0, each nested block adds one.
-    /// `(1 (2 3))` is 2, a flat block is 1, an empty block is 0.
+    /// The maximum nesting depth: root is 0, each nested code block adds one.
+    /// `(1 (2 3))` is 2, a flat code block is 1, an empty code block is 0.
     var depth: Int { blockDepth }
 
-    /// Every leaf, left to right — the fully flattened contents. Empty blocks
+    /// Every leaf, left to right — the fully flattened contents. Empty code blocks
     /// contribute nothing. `(1 (2 3) ())` → `[1, 2, 3]`.
     func flattenedLeaves() -> [any Item] {
         value.flatMap { ($0.exactly(CodeItem.self))?.flattenedLeaves() ?? [$0] }
@@ -790,7 +849,7 @@ nonisolated extension CodeItem {
     }
 
     /// A new tree with the point at `index` (and its subtree) removed. Removing
-    /// the root gives an empty block; a removed element vanishes from its parent.
+    /// the root gives an empty code block; a removed element vanishes from its parent.
     func removingPoint(at index: Int) -> CodeItem {
         let target = Position.item(index, count: pointCount)
         if target == 0 { return CodeItem([]) }
@@ -831,6 +890,7 @@ nonisolated extension CodeItem {
 }
 
 
+/// A 64-bit floating-point number: an item of the `.double` stack.
 public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     public var value: Double
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -839,11 +899,14 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: Double, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -863,6 +926,8 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
 }
 
 
+/// An instruction as an item in a program. Met on `.exec` it runs; inside a
+/// code block it is data like anything else.
 public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public var value: PushInstruction
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -871,11 +936,14 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -896,6 +964,7 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
 }
 
 
+/// A 64-bit integer: an item of the `.int` stack.
 public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     public var value: Int
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -904,11 +973,14 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: Int, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
@@ -928,6 +1000,7 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
 }
 
 
+/// A string: an item of the `.string` stack.
 public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     public var value: String
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -936,6 +1009,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -975,6 +1049,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
 }
 
 
+/// A vector of bools: an item of the `.vecBool` stack.
 public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     public var value: [Bool]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -983,6 +1058,7 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -992,6 +1068,8 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     /// Where each element came from, when recording; see `Pieces`.
     var members: Pieces? { callStorage.members }
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: [Bool], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
@@ -1012,6 +1090,7 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
 }
 
 
+/// A vector of doubles: an item of the `.vecDouble` stack.
 public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     public var value: [Double]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -1020,6 +1099,7 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -1029,6 +1109,8 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     /// Where each element came from, when recording; see `Pieces`.
     var members: Pieces? { callStorage.members }
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: [Double], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
@@ -1051,6 +1133,7 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
 }
 
 
+/// A vector of ints: an item of the `.vecInt` stack.
 public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     public var value: [Int]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -1059,6 +1142,7 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -1068,6 +1152,8 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     /// Where each element came from, when recording; see `Pieces`.
     var members: Pieces? { callStorage.members }
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: [Int], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
@@ -1088,6 +1174,7 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
 }
 
 
+/// A vector of strings: an item of the `.vecString` stack.
 public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     public var value: [String]
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -1096,6 +1183,7 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
@@ -1108,6 +1196,8 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     /// Where each element came from, when recording; see `Pieces`.
     var members: Pieces? { callStorage.members }
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: [String], call: [any Item] = []) {
         self.init(value, call: call, members: nil)
     }
@@ -1128,50 +1218,66 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
 }
 
 
-/// Why an error was raised, as a value rather than as prose.
+// Why an error was raised, as a value rather than as prose.
+//
+// The message already says this in English, and for a long time that was the only
+// record. Counting them needed better: `.errorMissingArgCount` and its siblings
+// have to partition the `.error` stack exactly, and a filter on
+// `value.contains("missing args")` would silently under-report the first time
+// anybody reworded a message. A count that quietly drifts is worse than no count.
+//
+// The cases split by **who noticed**, which is also what a program can act on:
+// starvation it could fix by supplying arguments, an unbound name it could fix by
+// binding one, and the interpreter's own refusals, which it cannot fix at all.
+//
+/// Why an error was raised, as a value that can be counted.
 ///
-/// The message already says this in English, and for a long time that was the only
-/// record. Counting them needed better: `.errorMissingArgCount` and its siblings
-/// have to partition the `.error` stack exactly, and a filter on
-/// `value.contains("missing args")` would silently under-report the first time
-/// anybody reworded a message. A count that quietly drifts is worse than no count.
-///
-/// The cases split by **who noticed**, which is also what a program can act on:
-/// starvation it could fix by supplying arguments, an unbound name it could fix by
-/// binding one, and the interpreter's own refusals, which it cannot fix at all.
+/// An error's message says the same thing in words, but messages may be
+/// reworded from one version to the next, and kinds are stable. The kinds
+/// separate what a program might act on: starvation, which more arguments
+/// would cure; an input or a constant that was never supplied; and refusals of
+/// several sorts. See <doc:ErrorsAndRefusals>.
 public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
-    /// A Behavior refused because a stack came up short (`Behavior.act`).
+    /// An instruction starved: a stack it needed held too few items.
     case missingArgument
-    /// An `.inputN` with no binding.
+    /// An input instruction, such as `.input2`, ran with no input bound to it.
     case missingInput
-    /// A typed constant (`.int3`, `.vecDouble8`) with no binding.
+    /// A constant instruction, such as `.int3`, ran with no constant bound to it.
     case missingConstant
-    /// A push the interpreter would not accept: over a size cap, or a stack at
-    /// `maxStackDepth`.
+    /// A push the interpreter would not accept: an item over a size limit, a full
+    /// stack, or a sandbox nested too deep.
     case sizeRefusal
-    /// The `INVARIANT:` marker — a mis-tagged `Router`, which is a programming bug
-    /// in the interpreter rather than a program bug.
+    /// A bug in the interpreter itself, not in the program. Its message begins `INVARIANT:`.
     case invariant
-    /// The `RUNAWAY:` and `MEMORY:` markers: a run stopped early by a guard.
+    /// A guard stopped the run early. The message begins `RUNAWAY:` or `MEMORY:`.
     case guardStop
-    /// A read of an element from a collection that has none: `.vecIntFirst` or
-    /// `.stringNth` of an empty one, `.codePeekNthRoot` of `( )`, `.stringNthWord` of
-    /// a string with no words. An index into a non-empty collection clamps and
-    /// never errs; this is the one case where no position exists.
+    /// An element was asked of a collection that has none: the first of an empty
+    /// vector, a root item of `( )`, a word of a string with no words. An index
+    /// into a collection that has elements is clamped and never causes an error;
+    /// this is the one case where no position exists.
     case emptyCollection
-    /// A search that found nothing: `.vecIntIndexOf`, `.stringIndexOf`,
-    /// `.codeIndexOf`, `.codeContainer`. These used to answer `-1` (which
-    /// every index-taking instruction would then quietly accept) or nothing at all.
+    // A search that found nothing: `.vecIntIndexOf`, `.stringIndexOf`,
+    // `.codeIndexOf`, `.codeContainer`. These used to answer `-1` (which
+    // every index-taking instruction would then quietly accept) or nothing at all.
+    //
+    /// A miss: an instruction looked for an item and found none that fits. A
+    /// lookup or a find with no match, a key with no binding, and a missing
+    /// function of the right shape all give this kind.
     case notFound
-    /// A value with no counterpart in the target type: a string that is not a
-    /// number, an int that is not a Unicode scalar, a character made of several.
+    /// A value with no counterpart in the type asked for: a string that is not a
+    /// number, an int that is not a Unicode scalar.
     case conversion
-    /// A Behavior's own complaint about its arguments — a negative count, a type
-    /// this kind of loop does not have — and anything not otherwise classified.
+    /// Any other refusal (a division by zero, an overflow, a negative count), and
+    /// an instruction that is disabled.
     case other
 }
 
 
+/// A record of something that went wrong: an item of the `.error` stack.
+///
+/// An error has a message for people (``value``) and a ``kind`` for counting.
+/// It is a record, not an exception: the program that caused it carries on.
+/// See <doc:ErrorsAndRefusals>.
 public nonisolated struct ErrorItem: Item, Equatable {
     /// The message. Read as text everywhere, but stored as data for the one error
     /// that is raised constantly — an instruction starved of arguments, the most
@@ -1226,11 +1332,14 @@ public nonisolated struct ErrorItem: Item, Equatable {
         get { callStorage.call }
         set { callStorage = CallStorage(newValue) }
     }
+    /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
+    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
+    /// in histories as it runs.
     public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
         self.message = .text(Text(text: value, kind: kind))
         self.callStorage = CallStorage(call)

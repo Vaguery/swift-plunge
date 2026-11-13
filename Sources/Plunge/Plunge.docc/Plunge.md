@@ -1,23 +1,37 @@
 # ``Plunge``
 
 An interpreter for Plunge, a dialect of the Push programming language, built to
-run the programs a genetic-programming search produces.
+run the programs that genetic programming and other kinds of search produce.
 
 ## Overview
 
-Push is a stack-based language designed to be written by evolution. Every
-program runs, however it was assembled: an instruction that can't do its job
-leaves an error behind and the program carries on. That makes Push a good target
-for searches that generate, vary and select programs instead of writing them.
+Push is a stack-based language designed to be written by evolution instead of
+by people. Every program runs, however it was assembled: an instruction that
+can't do its job leaves an error behind and the program carries on. That makes
+Push a good target for genetic programming, and for any other search that
+generates, varies and selects programs.
 
-This package is the interpreter alone, independent of any search. You give it
+Plunge is a dialect of Push. It keeps Push's central ideas (one stack for each
+type, code that is also data, no program that fails to run) and adds
+first-class loops, keyed variables, functions, and a record of how every result
+was made. <doc:DesignOfPlunge> lists where it departs from other Push
+interpreters, and why.
+
+This package is the interpreter alone, and contains no search. You give it
 programs and inputs; it runs them, concurrently and within strict limits, and
-reports what you asked to observe. Its language has 1,067 instructions over 14
-typed stacks: numbers, text, vectors, code, first-class loops, keyed variables
-and functions. Every item it computes can explain how it was made.
+reports what you asked it to observe. The language has 1,067 instructions over
+14 typed stacks: bools, numbers, text, vectors, code, loops, variables and
+functions.
 
-Start with <doc:GettingStarted>, then read <doc:ThePushLanguage> for the ideas
-and <doc:HowTheInterpreterRuns> for the machinery.
+### Where to start
+
+- To run a first program, read <doc:GettingStarted>.
+- To learn the language, read <doc:ThePushLanguage>, then the articles under
+  *The language* below. <doc:Vocabulary> defines the terms they use.
+- To connect a search to the library, read <doc:WritingPrograms>,
+  <doc:InputsAndConstants>, <doc:EvaluatingPrograms> and <doc:ObservingARun>.
+- To understand what a run can and can't do, read <doc:HowTheInterpreterRuns>,
+  <doc:ErrorsAndRefusals> and <doc:LimitsAndGuards>.
 
 ## Topics
 
@@ -26,6 +40,17 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - <doc:GettingStarted>
 - <doc:ThePushLanguage>
 - <doc:HowTheInterpreterRuns>
+- <doc:DesignOfPlunge>
+- <doc:Vocabulary>
+
+### Using the library
+
+- <doc:WritingPrograms>
+- <doc:InputsAndConstants>
+- <doc:EvaluatingPrograms>
+- <doc:ObservingARun>
+- <doc:ErrorsAndRefusals>
+- <doc:LimitsAndGuards>
 
 ### The language
 
@@ -65,7 +90,6 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - ``pushItem(_:)``
 - ``bindings(_:)``
 - ``merged(_:)``
-- ``RandomCode``
 
 ### Items
 
@@ -83,6 +107,7 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - ``InstructionItem``
 - ``IteratorItem``
 - ``BindingItem``
+- ``FunctionItem``
 - ``ErrorItem``
 - ``ErrorKind``
 - ``Pretty``
@@ -115,3 +140,7 @@ and <doc:HowTheInterpreterRuns> for the machinery.
 - ``ItemArchive``
 - ``ArchiveError``
 - ``ItemBindingCoding``
+
+### Testing
+
+- ``RandomCode``

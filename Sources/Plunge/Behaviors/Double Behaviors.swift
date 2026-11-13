@@ -178,7 +178,7 @@ nonisolated extension Interpreter {
     // Anything that would come out NaN or infinite is refused. Written order is
     // reading order: `b e .doublePow` is b to the e.
 
-    /// `value`, unless it is NaN or infinite, which is refused as `doubleAdd`
+    /// `value`, unless it is NaN or infinite, which is refused as `.doubleAdd`
     /// refuses an overflow.
     static func finite(_ value: Double, _ instruction: PushInstruction, _ arguments: String) throws(Refusal) -> Double {
         guard value.isFinite else { throw Refusal("No finite result in .\(instruction): \(arguments)") }

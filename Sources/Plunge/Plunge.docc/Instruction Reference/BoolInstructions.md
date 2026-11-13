@@ -8,49 +8,49 @@ The `.bool` stack holds `true` and `false`. Comparisons on other stacks put thei
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `boolAnd` | Gives true when both bools are true. | `bool`, `bool` | `bool` |
-| `boolEq` | Pushes whether the top two bools are equal, leaving both. | `bool` (read), `bool` (read) | `bool` |
-| `boolFromDouble` | Converts a double: false for 0.0, true for anything else, NaN included. | `double` | `bool` |
-| `boolFromInt` | Converts an int: false for 0, true for anything else. | `int` | `bool` |
-| `boolGT` | Compares, false before true, leaving both bools: `p q .boolGT` gives p > q. | `bool` (read), `bool` (read) | `bool` |
-| `boolGTE` | Compares, false before true, leaving both bools: `p q .boolGTE` gives p ≥ q. | `bool` (read), `bool` (read) | `bool` |
-| `boolIfPThenQ` | Implies: `p q .boolIfPThenQ` gives p → q, false only when p is true and q false. | `bool`, `bool` | `bool` |
-| `boolIfQThenP` | Implies backwards: `p q .boolIfQThenP` gives q → p, false only when q is true and p false. | `bool`, `bool` | `bool` |
-| `boolLT` | Compares, false before true, leaving both bools: `p q .boolLT` gives p < q. | `bool` (read), `bool` (read) | `bool` |
-| `boolLTE` | Compares, false before true, leaving both bools: `p q .boolLTE` gives p ≤ q. | `bool` (read), `bool` (read) | `bool` |
-| `boolNand` | Gives false only when both bools are true. | `bool`, `bool` | `bool` |
-| `boolNor` | Gives true only when both bools are false. | `bool`, `bool` | `bool` |
-| `boolNot` | Negates a bool. | `bool` | `bool` |
-| `boolNotP` | Negates the deeper of two bools: `p q .boolNotP` gives ¬p, discarding q. | `bool`, `bool` | `bool` |
-| `boolNotPandQ` | Combines: `p q .boolNotPandQ` gives ¬p ∧ q. | `bool`, `bool` | `bool` |
-| `boolNotQ` | Negates the top of two bools: `p q .boolNotQ` gives ¬q, discarding p. | `bool`, `bool` | `bool` |
-| `boolOr` | Gives true when either bool is true. | `bool`, `bool` | `bool` |
-| `boolP` | Keeps the deeper of two bools: `p q .boolP` gives p, discarding q. | `bool`, `bool` | `bool` |
-| `boolPandNotQ` | Combines: `p q .boolPandNotQ` gives p ∧ ¬q. | `bool`, `bool` | `bool` |
-| `boolQ` | Keeps the top of two bools: `p q .boolQ` gives q, discarding p. | `bool`, `bool` | `bool` |
-| `boolQuote` | Quotes a bool as a one-item block: `true` becomes `( true )`. | `bool` | `code` |
-| `boolRefAs` | Binds the top bool to key k from `.int`, taking both and shadowing any older binding of k: `x k .boolRefAs`. | `bool`, `int` | `binding` |
-| `boolXnor` | Gives true when the two bools are equal. | `bool`, `bool` | `bool` |
-| `boolXor` | Gives true when the two bools differ. | `bool`, `bool` | `bool` |
+| `.boolAnd` | Gives true when both bools are true. | `bool`, `bool` | `bool` |
+| `.boolEq` | Pushes whether the top two bools are equal, leaving both. | `bool` (read), `bool` (read) | `bool` |
+| `.boolFromDouble` | Converts a double: false for 0.0, true for anything else, NaN included. | `double` | `bool` |
+| `.boolFromInt` | Converts an int: false for 0, true for anything else. | `int` | `bool` |
+| `.boolGT` | Compares, false before true, leaving both bools: `p q .boolGT` gives p > q. | `bool` (read), `bool` (read) | `bool` |
+| `.boolGTE` | Compares, false before true, leaving both bools: `p q .boolGTE` gives p ≥ q. | `bool` (read), `bool` (read) | `bool` |
+| `.boolIfPThenQ` | Implies: `p q .boolIfPThenQ` gives p → q, false only when p is true and q false. | `bool`, `bool` | `bool` |
+| `.boolIfQThenP` | Implies backwards: `p q .boolIfQThenP` gives q → p, false only when q is true and p false. | `bool`, `bool` | `bool` |
+| `.boolLT` | Compares, false before true, leaving both bools: `p q .boolLT` gives p < q. | `bool` (read), `bool` (read) | `bool` |
+| `.boolLTE` | Compares, false before true, leaving both bools: `p q .boolLTE` gives p ≤ q. | `bool` (read), `bool` (read) | `bool` |
+| `.boolNand` | Gives false only when both bools are true. | `bool`, `bool` | `bool` |
+| `.boolNor` | Gives true only when both bools are false. | `bool`, `bool` | `bool` |
+| `.boolNot` | Negates a bool. | `bool` | `bool` |
+| `.boolNotP` | Negates the deeper of two bools: `p q .boolNotP` gives ¬p, discarding q. | `bool`, `bool` | `bool` |
+| `.boolNotPandQ` | Combines: `p q .boolNotPandQ` gives ¬p ∧ q. | `bool`, `bool` | `bool` |
+| `.boolNotQ` | Negates the top of two bools: `p q .boolNotQ` gives ¬q, discarding p. | `bool`, `bool` | `bool` |
+| `.boolOr` | Gives true when either bool is true. | `bool`, `bool` | `bool` |
+| `.boolP` | Keeps the deeper of two bools: `p q .boolP` gives p, discarding q. | `bool`, `bool` | `bool` |
+| `.boolPandNotQ` | Combines: `p q .boolPandNotQ` gives p ∧ ¬q. | `bool`, `bool` | `bool` |
+| `.boolQ` | Keeps the top of two bools: `p q .boolQ` gives q, discarding p. | `bool`, `bool` | `bool` |
+| `.boolQuote` | Quotes a bool as a one-item code block: `true` becomes `( true )`. | `bool` | `code` |
+| `.boolRefAs` | Binds the top bool to key k from `.int`, taking both and shadowing any older binding of k: `x k .boolRefAs`. | `bool`, `int` | `binding` |
+| `.boolXnor` | Gives true when the two bools are equal. | `bool`, `bool` | `bool` |
+| `.boolXor` | Gives true when the two bools differ. | `bool`, `bool` | `bool` |
 
 ## Reading the environment
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `boolRef` | Binds a copy of the top bool, left in place, to a fresh key and pushes the key onto `.int`. | `bool` (read) | `binding`, `int` |
+| `.boolRef` | Binds a copy of the top bool, left in place, to a fresh key and pushes the key onto `.int`. | `bool` (read) | `binding`, `int` |
 
 ## Control
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `boolWith` | Binds a copy of the top bool to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding. | `code`, `bool` (read) | the rest of the program |
+| `.boolWith` | Binds a copy of the top bool to a fresh key, runs a body code block from `.code` with the key on `.int`, then removes the binding. | `code`, `bool` (read) | the rest of the program |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `boolPrint` | Prints the top bool and a newline to the output. | `bool` | the printout |
+| `.boolPrint` | Prints the top bool and a newline to the output. | `bool` | the printout |
 
 ## The stack's own instructions
 
-Every stack has the same family for copying, deleting, reordering and measuring its items; see <doc:StackInstructions>. On `.bool` they are `boolDeepDup`, `boolDeleteAtDepth`, `boolDup`, `boolDupItems`, `boolDupTimes`, `boolFlush`, `boolPop`, `boolPopItems`, `boolRot`, `boolShove`, `boolStackDepth`, `boolStackIsEmpty`, `boolSwap`, `boolYank`, `boolYankDup`.
+Every stack has the same family for copying, deleting, reordering and measuring its items; see <doc:StackInstructions>. On `.bool` they are `.boolDeepDup`, `.boolDeleteAtDepth`, `.boolDup`, `.boolDupItems`, `.boolDupTimes`, `.boolFlush`, `.boolPop`, `.boolPopItems`, `.boolRot`, `.boolShove`, `.boolStackDepth`, `.boolStackIsEmpty`, `.boolSwap`, `.boolYank`, `.boolYankDup`.

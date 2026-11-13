@@ -35,11 +35,11 @@ nonisolated extension Interpreter {
         }
     }
 
-    /// Runs what a key holds: a block's contents onto `.exec`, anything else to
+    /// Runs what a key holds: a code block's contents onto `.exec`, anything else to
     /// land on its stack. Its output is the rest of the program, as a control
     /// instruction's is, read out of the environment as an input's is. Not tagged
-    /// re-entrant: it does not re-push itself, and a block that looks itself up
-    /// recurses as `codeDo` of a block holding `codeDo` does.
+    /// re-entrant: it does not re-push itself, and a code block that looks itself up
+    /// recurses as `.codeDo` of a code block holding `.codeDo` does.
     static func bindingDeref(_ name: PushInstruction, from: Bool) -> Behavior {
         refLookup(name, from: from, produces: .continuation) { value, context in
             if let block = value.exactly(CodeItem.self) {
@@ -52,8 +52,8 @@ nonisolated extension Interpreter {
             from
                 ? "Runs the value bound to key k at depth i or below on `.binding`, as `.bindingDeref` does, leaving k:"
                   + " `k i .bindingDerefFrom` reaches shadowed bindings; refuses when there is none."
-                : "Runs the value bound to key k, leaving k: a block's contents go onto `.exec`, any other value"
-                  + " lands on its stack; refuses when k is unbound."
+                : "Runs the value bound to key k, leaving k: a code block's contents go onto `.exec`, any other " +
+                    "value lands on its stack; refuses when k is unbound."
         )
     }
 
@@ -67,13 +67,13 @@ nonisolated extension Interpreter {
                 ? "Pushes the value bound to key k at depth i or below on `.binding` onto `.code`, as"
                   + " `.bindingDerefToCode` does, leaving k: `k i .bindingDerefToCodeFrom`;"
                   + " refuses when there is none."
-                : "Pushes the value bound to key k onto `.code` as data, a block as it is and anything else quoted,"
-                  + " leaving k; refuses when k is unbound."
+                : "Pushes the value bound to key k onto `.code` as data, a code block as it is and anything else " +
+                    "quoted, leaving k; refuses when k is unbound."
         )
     }
 
-    /// `bindingDo`: pops a key's topmost binding and runs its value, as `codeDo`
-    /// runs the block it takes; `bindingDeref` is the reading form. The pop is
+    /// `.bindingDo`: pops a key's topmost binding and runs its value, as `.codeDo`
+    /// runs the code block it takes; `.bindingDeref` is the reading form. The pop is
     /// placed on `.exec` above the value, so it runs first, while k is still the
     /// top of `.int` (an int value landing first would be read as the key).
     static let bindingDo_Behavior =
@@ -163,8 +163,8 @@ nonisolated extension Interpreter {
         .described(
             "Pushes how many bindings key k has, the shadowed ones included, leaving k; 0 when it is unbound.")
 
-    /// Reverse lookup: the key of the topmost binding whose value is the block on
-    /// top of `.code` (read), or the one item that block holds.
+    /// Reverse lookup: the key of the topmost binding whose value is the code block on
+    /// top of `.code` (read), or the one item that code block holds.
     static let bindingKeyOf_Behavior =
         Behavior.contextRead(.bindingKeyOf, reads: [.code], observes: [.code, .binding], tags: [.fallible],
                              produces: .results([.int])) { _, context in
@@ -178,6 +178,6 @@ nonisolated extension Interpreter {
             }
             return [Router(.int, IntItem(pair.key).observed(by: .bindingKeyOf, context.recording))]
         }
-        .described("Pushes the key of the topmost binding whose value is the block on `.code`, or its lone item,"
-                   + " leaving the block; refuses on a miss.")
+        .described("Pushes the key of the topmost binding whose value is the code block on `.code`, or its lone " +
+            "item, leaving the code block; refuses on a miss.")
 }

@@ -50,8 +50,8 @@ public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, Ca
     case stackFamily
 
     /// Everything carrying the derived `comparison` tag: ordering, equality and
-    /// containment, two items of one stack to a bool (`intLT`, `stringEq`,
-    /// `stringContainsRun`).
+    /// containment, two items of one stack to a bool (`.intLT`, `.stringEq`,
+    /// `.stringContainsRun`).
     case comparison
 
     /// Everything else — the instructions that actually compute. The remainder,

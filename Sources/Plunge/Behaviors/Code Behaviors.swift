@@ -18,25 +18,25 @@ nonisolated extension Interpreter {
         Behavior.operation(.codeConcat, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
             y + x
         }
-        .described("Concatenates two blocks' root items: `( a ) ( b c ) .codeConcat` gives `( a b c )`.")
+        .described("Concatenates two code blocks' root items: `( a ) ( b c ) .codeConcat` gives `( a b c )`.")
 
-    /// Pair **two** items into one new block `( y x )` — the arity-2 sibling of
-    /// `codeWrap`, and Clojure's `list` with two arguments. Each argument is
-    /// **denoted** (singleton-unwrap): a one-element block contributes its bare
+    /// Pair **two** items into one new code block `( y x )` — the arity-2 sibling of
+    /// `.codeWrap`, and Clojure's `list` with two arguments. Each argument is
+    /// **denoted** (singleton-unwrap): a one-element code block contributes its bare
     /// element, so `( 1 ) ( 2 3 ) .codePair` → `( 1 ( 2 3 ) )`, not
-    /// `( ( 1 ) ( 2 3 ) )`. Distinct from `codeConcat`, which concatenates
+    /// `( ( 1 ) ( 2 3 ) )`. Distinct from `.codeConcat`, which concatenates
     /// contents flat.
     static let codePair_Behavior =
         Behavior.composing(.codePair, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { y, x in
             [y.denotedItem, x.denotedItem]
         }
-        .described("Pairs two blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item block " +
-                   "contributing its sole item.")
+        .described("Pairs two code blocks into one: `( a ) ( b c ) .codePair` gives `( a ( b c ) )`, a one-item code " +
+            "block contributing its sole item.")
 
-    /// **One block and a bool**: run the block if the bool is true; otherwise
+    /// **One code block and a bool**: run the code block if the bool is true; otherwise
     /// hand it back to `.code` untouched. Built from the pieces already here:
-    /// `.codeDo` when true, the block replaced when false. It differs from
-    /// `execWhen`, which discards the block on false: here a refused block is
+    /// `.codeDo` when true, the code block replaced when false. It differs from
+    /// `.execWhen`, which discards the code block on false: here a refused code block is
     /// still data the program owns, as every other ending returns its body.
     static let codeDoIf_Behavior =
         Behavior.control(
@@ -51,16 +51,16 @@ nonisolated extension Interpreter {
                 ]
             }
         )
-        .described("Runs the block as `.codeDo` would if the bool is true; otherwise does nothing, leaving the block on"
-                   + " `.code`. `.execWhen` discards it instead.")
+        .described("Runs the code block as `.codeDo` would if the bool is true; otherwise does nothing, leaving the " +
+            "code block on `.code`. `.execWhen` discards it instead.")
 
     static let codeItemIsEmpty_Behavior =
         Behavior.operation(.codeItemIsEmpty, reads: CodeItem.self, gives: BoolItem.self) { x in x.isEmpty }
-        .described("Tests whether the block has no items, leaving the block.")
+        .described("Tests whether the code block has no items, leaving the code block.")
 
     static let codeLengthRoot_Behavior =
         Behavior.operation(.codeLengthRoot, reads: CodeItem.self, gives: IntItem.self) { x in x.count }
-        .described("Counts the block's root items, leaving the block.")
+        .described("Counts the code block's root items, leaving the code block.")
 
     // MARK: - Whole-tree queries (non-destructive)
     //
@@ -70,41 +70,43 @@ nonisolated extension Interpreter {
     // value: every walk here counts and compares by value, never by `call`.
 
     /// The number of pre-order points in the whole tree, root included.
-    /// `( (1 2) 3 )` → 5. (Contrast `codeLengthRoot`, the root `.value` count.)
+    /// `( (1 2) 3 )` → 5. (Contrast `.codeLengthRoot`, the root `.value` count.)
     static let codeLength_Behavior =
         Behavior.operation(.codeLength, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).pointCount
         }
-        .described("Counts the block's points, the block itself included, leaving the block: `( ( 1 2 ) 3 )` has 5.")
+        .described("Counts the code block's points, the code block itself included, leaving the code block: `( ( 1 2 " +
+            ") 3 )` has 5.")
 
-    /// The number of leaves in the tree — everything that is not a sub-block, so
+    /// The number of leaves in the tree — everything that is not a nested code block, so
     /// scalars, instructions and whole vectors each count one. Equals `flatSize`.
     static let codeWidth_Behavior =
         Behavior.operation(.codeWidth, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).flatSize
         }
-        .described("Counts the block's leaves (items that are not blocks) at every depth, leaving the block.")
+        .described("Counts the code block's leaves (items that are not code blocks) at every depth, leaving the code " +
+            "block.")
 
-    /// The maximum nesting depth: root 0, each nested block one deeper.
+    /// The maximum nesting depth: root 0, each nested code block one deeper.
     static let codeDepth_Behavior =
         Behavior.operation(.codeDepth, reads: CodeItem.self, gives: IntItem.self) { x in
             CodeItem(x).depth
         }
-        .described("Measures how deeply blocks nest, leaving the block: `( )` is 0, a flat block 1, each nested " +
-                   "level one more.")
+        .described("Measures how deeply code blocks nest, leaving the code block: `( )` is 0, a flat code block 1, " +
+            "each nested level one more.")
 
-    /// Whether a target block occurs as a point anywhere in another's tree. Since
+    /// Whether a target code block occurs as a point anywhere in another's tree. Since
     /// the root is a point, a tree contains itself. Reads both, leaves both.
     ///
     /// Written `needle hay .codeContains`: the haystack is on top. The needle is
     /// *denoted* for the search (singleton-unwrap), but the crux re-pushes the
-    /// original block, so re-running denotes it again.
+    /// original code block, so re-running denotes it again.
     static let codeContains_Behavior =
         Behavior.operation(.codeContains, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { hay, needle in
             CodeItem(hay).firstPointIndex(of: CodeItem(needle).denotedItem) != nil
         }
-        .described("Tests whether block n occurs as a point of block h, leaving both: `h n .codeContains`; a " +
-                   "one-item n stands for its sole item.")
+        .described("Tests whether code block n occurs as a point of code block h, leaving both: `h n .codeContains`; " +
+            "a one-item n stands for its sole item.")
 
     /// The pre-order index of the first point equal to the target; an error if
     /// there is none (it used to answer −1).
@@ -129,7 +131,7 @@ nonisolated extension Interpreter {
         .described("Counts the points of h equal to n, leaving both: `h n .codeOccurrencesOf`; a one-item n stands "
                    + "for its sole item.")
 
-    /// The block that directly contains the first point equal to the target —
+    /// The code block that directly contains the first point equal to the target —
     /// its parent. An error if the target is absent, or if it is the whole tree
     /// (which has no parent here). Reads both, leaves both.
     static let codeContainer_Behavior =
@@ -139,8 +141,8 @@ nonisolated extension Interpreter {
             }
             return parent.value
         }
-        .described("Copies the block directly holding n's first occurrence in h, leaving both: `h n " +
-                   ".codeContainer`; refuses if n is absent or is h itself.")
+        .described("Copies the code block directly holding n's first occurrence in h, leaving both: `h n " +
+            ".codeContainer`; refuses if n is absent or is h itself.")
 
     // MARK: - Point access (non-destructive)
     //
@@ -151,21 +153,21 @@ nonisolated extension Interpreter {
     // point's own history, so the crux is uniform whatever the point's type and
     // cleans up both arguments. The index is clamped (`Position.item`).
 
-    /// Box a point as a `.code` result: a sub-block as-is, a leaf wrapped once.
+    /// Box a point as a `.code` result: a nested code block as-is, a leaf wrapped once.
     static func boxedPointContents(_ point: any Item) -> [any Item] {
         (point.exactly(CodeItem.self))?.value ?? [point]
     }
 
     /// The pre-order point at the `.int` index (root at 0), yielded as `.code`,
-    /// consuming the block and the index.
+    /// consuming the code block and the index.
     static let codeNth_Behavior =
         Behavior.operation(.codeNth, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             boxedPointContents(CodeItem(x).point(at: i))
         }
-        .described("Takes point i (clamped) as a block; a leaf comes boxed as `( x )`.")
+        .described("Takes point i (clamped) as a code block; a leaf comes boxed as `( x )`.")
 
     /// The root item at the `.int` index (clamped), yielded as `.code`, consuming
-    /// the block and the index. An empty block has no root items, so it refuses.
+    /// the code block and the index. An empty code block has no root items, so it refuses.
     static let codeNthRoot_Behavior =
         Behavior.operation(.codeNthRoot, takes: CodeItem.self, IntItem.self,
                            gives: CodeItem.self) { x, i throws(Refusal) in
@@ -174,17 +176,19 @@ nonisolated extension Interpreter {
             }
             return boxedPointContents(element)
         }
-        .described("Takes root item i (clamped) as a block; a leaf comes boxed as `( x )`; refuses an empty block.")
+        .described("Takes root item i (clamped) as a code block; a leaf comes boxed as `( x )`; refuses an empty " +
+            "code block.")
 
-    /// `codeNth` without consuming: the block and the index stay where they were.
+    /// `.codeNth` without consuming: the code block and the index stay where they were.
     static let codePeekNth_Behavior =
         Behavior.operation(.codePeekNth, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             boxedPointContents(CodeItem(x).point(at: i))
         }
-        .described("Copies point i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( x )`.")
+        .described("Copies point i (clamped) as a code block, leaving the code block and index; a leaf comes boxed " +
+            "as `( x )`.")
 
     /// The root `.value` element at the `.int` index (clamped), yielded as
-    /// `.code`. An empty block has no root elements, so it is an error.
+    /// `.code`. An empty code block has no root elements, so it is an error.
     static let codePeekNthRoot_Behavior =
         Behavior.operation(.codePeekNthRoot, reads: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i throws(Refusal) in
             guard let element = rootPicker(CodeItem(x), i) else {
@@ -192,8 +196,8 @@ nonisolated extension Interpreter {
             }
             return boxedPointContents(element)
         }
-        .described("Copies root item i (clamped) as a block, leaving the block and index; a leaf comes boxed as `( " +
-                   "x )`; refuses an empty block.")
+        .described("Copies root item i (clamped) as a code block, leaving the code block and index; a leaf comes " +
+            "boxed as `( x )`; refuses an empty code block.")
 
     // MARK: - Point access that emits to `.exec` (Do / Emit)
     //
@@ -245,9 +249,9 @@ nonisolated extension Interpreter {
 
     /// Emit a point to `.exec` unwrapped — box it and let `.codeDo` run it.
     ///
-    /// The box is a **new** block, and a block met on `.exec` comes to rest on
+    /// The box is a **new** code block, and a code block met on `.exec` comes to rest on
     /// `.code` before `.codeDo` takes it, so it can be left there as a result (a
-    /// run that stops between the two steps). It is exactly the block `twin`
+    /// run that stops between the two steps). It is exactly the code block `twin`
     /// (`.codePeekNth`/`.codePeekNthRoot`) produces, so it records that history.
     static func doNthBehavior(
         _ instruction: PushInstruction,
@@ -279,35 +283,35 @@ nonisolated extension Interpreter {
     }
 
     static let codeEmitNth_Behavior = emitNthBehavior(.codeEmitNth, point: pointPicker)
-        .described("Sends point i (clamped) to `.exec` as it is, leaving the block and index: a sub-block lands on " +
-                   "`.code`, an instruction runs.")
+        .described("Sends point i (clamped) to `.exec` as it is, leaving the code block and index: a nested code " +
+            "block lands on `.code`, an instruction runs.")
     static let codeDoNth_Behavior   = doNthBehavior(.codeDoNth, point: pointPicker, twin: .codePeekNth)
-        .described("Runs point i (clamped), leaving the block and index: a sub-block's contents execute, a leaf " +
-                   "goes to its stack.")
+        .described("Runs point i (clamped), leaving the code block and index: a nested code block's contents " +
+            "execute, a leaf goes to its stack.")
     static let codeEmitNthRoot_Behavior  = emitNthBehavior(.codeEmitNthRoot, point: rootPicker, tags: [.fallible])
-        .described("Sends root item i (clamped) to `.exec` as it is, leaving the block and index; refuses an empty " +
-                   "block.")
+        .described("Sends root item i (clamped) to `.exec` as it is, leaving the code block and index; refuses an " +
+            "empty code block.")
     static let codeDoNthRoot_Behavior    = doNthBehavior(.codeDoNthRoot, point: rootPicker, twin: .codePeekNthRoot, tags: [.fallible])
-        .described("Runs root item i (clamped), leaving the block and index: a sub-block's contents execute; " +
-                   "refuses an empty block.")
+        .described("Runs root item i (clamped), leaving the code block and index: a nested code block's contents " +
+            "execute; refuses an empty code block.")
 
     // MARK: - Flatten and point mutation (transforms, consume)
 
     /// Flatten the whole tree to its leaves, left to right. `(1 (2 3) ())` →
-    /// `(1 2 3)`. Empty blocks vanish.
+    /// `(1 2 3)`. Empty code blocks vanish.
     static let codeFlatten_Behavior =
         Behavior.operation(.codeFlatten, takes: CodeItem.self, gives: CodeItem.self) { x in
             CodeItem(x).flattenedLeaves()
         }
-        .described("Flattens a block to its leaves, in order; nested empty blocks vanish.")
+        .described("Flattens a code block to its leaves, in order; nested empty code blocks vanish.")
 
-    /// Flatten one level: each root element that is a block is replaced by its
+    /// Flatten one level: each root element that is a code block is replaced by its
     /// contents, no deeper. `(1 (2 (3 4)) 5)` → `(1 2 (3 4) 5)`.
     static let codeFlattenOnce_Behavior =
         Behavior.operation(.codeFlattenOnce, takes: CodeItem.self, gives: CodeItem.self) { x in
             CodeItem(x).flattenedOnce()
         }
-        .described("Flattens one level: each root item that is a block is replaced by its items.")
+        .described("Flattens one level: each root item that is a code block is replaced by its items.")
 
     /// Flatten the subtree at the indexed point in place. A leaf point is
     /// unchanged; point 0 (the root) flattens the whole thing (= codeFlatten).
@@ -324,7 +328,7 @@ nonisolated extension Interpreter {
                    "flattens everything.")
 
     /// Remove the point at the indexed location, subtree and all. Removing the
-    /// root gives an empty block.
+    /// root gives an empty code block.
     static let codeRemoveNth_Behavior =
         Behavior.operation(.codeRemoveNth, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, i in
             CodeItem(x).removingPoint(at: i).value
@@ -356,9 +360,9 @@ nonisolated extension Interpreter {
 
     // MARK: - Root-level split and iterate
 
-    /// Split the **root** `.value` array at the indexed gap into two blocks — the
-    /// `.code` analog of `vecXCut`/`stringCut`. Prefix deeper, suffix on top (so
-    /// `cut` then `codeConcat` rebuilds the original); law-5 multi-result crux.
+    /// Split the **root** `.value` array at the indexed gap into two code blocks — the
+    /// `.code` analog of `.vecXCut`/`.stringCut`. Prefix deeper, suffix on top (so
+    /// `cut` then `.codeConcat` rebuilds the original); law-5 multi-result crux.
     static let codeCutRoot_Behavior =
         Behavior.splitting(.codeCutRoot, takes: CodeItem.self, IntItem.self, gives: CodeItem.self) { x, y in
             // Gaps, not elements: a root of N items has N+1 gaps, from 0 (before
@@ -367,8 +371,8 @@ nonisolated extension Interpreter {
             let idx = Position.gap(y.value, count: x.value.count)
             return (Array(x.value[0..<idx]), Array(x.value[idx...]))
         }
-        .described("Splits a block's root items at gap i, clamped to 0 through their count: the front part beneath, " +
-                   "the back part on top.")
+        .described("Splits a code block's root items at gap i, clamped to 0 through their count: the front part " +
+            "beneath, the back part on top.")
 
     // MARK: - Tree-wide gap surgery
     //
@@ -377,13 +381,13 @@ nonisolated extension Interpreter {
     // and why rebuilding repairs rather than refuses — is in `CodeGaps.swift`.
     // Read that first; these four are thin on top of it.
 
-    /// Split the **whole tree** at the indexed gap — `codeCutRoot`'s sibling,
-    /// reaching inside nested blocks rather than only between root elements.
+    /// Split the **whole tree** at the indexed gap — `.codeCutRoot`'s sibling,
+    /// reaching inside nested code blocks rather than only between root elements.
     /// Prefix deeper, suffix on top; law-5 multi-result crux.
     ///
     /// **Leaves are preserved exactly**, in order, across the two pieces. Nesting
-    /// on the cut path is not: a block the cut passes through becomes one block in
-    /// each piece, so cut-then-`codeConcat` is the identity only when the gap
+    /// on the cut path is not: a code block the cut passes through becomes one code block in
+    /// each piece, so cut-then-`.codeConcat` is the identity only when the gap
     /// happens to fall between root elements. That is a property of cutting trees;
     /// see the note in `CodeGaps.swift`.
     static let codeCutAtGap_Behavior =
@@ -394,15 +398,15 @@ nonisolated extension Interpreter {
                     CodeItem.rebuilt(from: Array(tokens[idx...])).value)
         }
         .described("Splits the whole tree at gap i (clamped), front part beneath, back on top; leaves keep their " +
-                   "order, and blocks the cut crosses split in two.")
+            "order, and code blocks the cut crosses split in two.")
 
-    /// Splice one block into another's tree at the indexed gap.
+    /// Splice one code block into another's tree at the indexed gap.
     ///
     /// Written `subject insert n .codeInsertAtGap`, so the subject is deeper — the
-    /// argument order `codeReplaceFirst` already uses. The insertion is
+    /// argument order `.codeReplaceFirst` already uses. The insertion is
     /// **denoted** (`denotedItem`, singleton-unwrap), like every other code
     /// instruction that names a target: `( 5 )` inserts the bare leaf `5`,
-    /// `( ( 5 ) )` inserts the block `( 5 )`.
+    /// `( ( 5 ) )` inserts the code block `( 5 )`.
     static let codeInsertAtGap_Behavior =
         Behavior.operation(.codeInsertAtGap, takes: CodeItem.self, CodeItem.self, IntItem.self, gives: CodeItem.self) { subject, insert, n in
             let tree = CodeItem(subject)
@@ -417,16 +421,16 @@ nonisolated extension Interpreter {
             tokens.insert(contentsOf: spliced, at: idx)
             return CodeItem.rebuilt(from: tokens).value
         }
-        .described("Inserts: `s x i .codeInsertAtGap` splices block x into s at gap i (clamped); a one-item x " +
-                   "inserts its sole item.")
+        .described("Inserts: `s x i .codeInsertAtGap` splices code block x into s at gap i (clamped); a one-item x " +
+            "inserts its sole item.")
 
-    /// Open a new block at one gap and close it at another, then rebuild.
+    /// Open a new code block at one gap and close it at another, then rebuild.
     ///
     /// The two indices are **sorted**, so a reversed pair wraps the same span
     /// rather than producing nonsense — monotone, like every other clamp here.
-    /// Equal indices give an empty block at that gap, which needs no special case.
+    /// Equal indices give an empty code block at that gap, which needs no special case.
     ///
-    /// A wrap that crosses an existing block's boundary leaves the token stream
+    /// A wrap that crosses an existing code block's boundary leaves the token stream
     /// unbalanced; `rebuilt(from:)` repairs it, which is the whole reason that
     /// function is total.
     static let codeWrapRange_Behavior =
@@ -445,15 +449,15 @@ nonisolated extension Interpreter {
             tokens.insert(.open, at: lo)
             return CodeItem.rebuilt(from: tokens).value
         }
-        .described("Wraps everything between gaps i and j (clamped, either order) in a new block; equal gaps insert " +
-                   "`( )`, and crossed block edges are repaired.")
+        .described("Wraps everything between gaps i and j (clamped, either order) in a new code block; equal gaps " +
+            "insert `( )`, and crossed code block edges are repaired.")
 
-    /// Flatten every block the gap range reaches into, and only those.
+    /// Flatten every code block the gap range reaches into, and only those.
     ///
-    /// A block goes iff its head or tail gap falls inside the range. One that
+    /// A code block goes iff its head or tail gap falls inside the range. One that
     /// merely *encloses* the range keeps its shape, and so does one entirely
     /// outside it — so the effect stays where the program pointed. Indices are
-    /// sorted, as in `codeWrapRange`.
+    /// sorted, as in `.codeWrapRange`.
     static let codeFlattenRange_Behavior =
         Behavior.operation(.codeFlattenRange, takes: CodeItem.self, IntItem.self, IntItem.self, gives: CodeItem.self) { x, deep, top in
             // `deep top`, not `top deep` — see the note on `codeWrapRange`.
@@ -462,13 +466,13 @@ nonisolated extension Interpreter {
                              return (p[0], p[1]) }()
             return tree.flatteningBlocks(inGapRange: lo, through: hi).value
         }
-        .described("Flattens every block whose first or last gap lies between gaps i and j (clamped, either order); " +
-                   "blocks enclosing the range keep their shape.")
+        .described("Flattens every code block whose first or last gap lies between gaps i and j (clamped, either " +
+            "order); code blocks enclosing the range keep their shape.")
 
-    /// Iterate a block's **root** elements, running the mouse once per element —
-    /// the `.code` sibling of `stringIterate`/`vecXIterate`, over the existing
+    /// Iterate a code block's **root** elements, running the mouse once per element —
+    /// the `.code` sibling of `.stringIterate`/`.vecXIterate`, over the existing
     /// `.elements`-over-CodeItem walk. `code MOUSE .codeIterateRoot`: the mouse is
-    /// on top (a[0]), the iterated code beneath (a[1]). An empty block makes no
+    /// on top (a[0]), the iterated code beneath (a[1]). An empty code block makes no
     /// passes, and the mouse goes back to `.code`, as a finished loop's body does.
     static let codeIterateRoot_Behavior =
         Behavior.control(
@@ -486,14 +490,14 @@ nonisolated extension Interpreter {
                 )
             }
         )
-        .described("Loops: `x b .codeIterateRoot` runs block b once per root item of block x, pushing each item to " +
-                   "its stack (an instruction runs); b ends on `.code`.")
+        .described("Loops: `x b .codeIterateRoot` runs code block b once per root item of code block x, pushing each " +
+            "item to its stack (an instruction runs); b ends on `.code`.")
 
     /// Iterate every **pre-order point** of the tree, running the mouse once per
     /// point. The three variants differ only in how each point is handed on (see
-    /// `PointsEmission`): `codeIterate` boxes it as `.code`,
-    /// `codeIterateEmit` hands it on whole, and `codeIterateDo` runs a
-    /// sub-block's contents. The `.points` siblings of `codeIterateRoot`. A tree
+    /// `PointsEmission`): `.codeIterate` boxes it as `.code`,
+    /// `.codeIterateEmit` hands it on whole, and `.codeIterateDo` runs a
+    /// nested code block's contents. The `.points` siblings of `.codeIterateRoot`. A tree
     /// always has at least its root, so none of them ever does nothing.
     static func iteratePointsBehavior(_ instruction: PushInstruction, _ mode: PointsEmission) -> Behavior {
         Behavior.control(
@@ -515,18 +519,18 @@ nonisolated extension Interpreter {
     }
 
     static let codeIterate_Behavior     = iteratePointsBehavior(.codeIterate, .boxed)
-        .described("Loops: `x b .codeIterate` runs block b once per point of block x, root first, pushing " +
-                   "each point as a block; b ends on `.code`.")
+        .described("Loops: `x b .codeIterate` runs code block b once per point of code block x, root first, pushing " +
+            "each point as a code block; b ends on `.code`.")
     static let codeIterateEmit_Behavior = iteratePointsBehavior(.codeIterateEmit, .whole)
-        .described("Loops: `x b .codeIterateEmit` runs block b once per point of block x, root first, pushing " +
-                   "each point as it is (an instruction runs); b ends on `.code`.")
+        .described("Loops: `x b .codeIterateEmit` runs code block b once per point of code block x, root first, " +
+            "pushing each point as it is (an instruction runs); b ends on `.code`.")
     static let codeIterateDo_Behavior   = iteratePointsBehavior(.codeIterateDo, .unwrapped)
-        .described("Loops: `x b .codeIterateDo` runs block b once per point of block x, root first, also " +
-                   "running each point; b ends on `.code`.")
+        .described("Loops: `x b .codeIterateDo` runs code block b once per point of code block x, root first, also " +
+            "running each point; b ends on `.code`.")
 
     static let codeWrap_Behavior =
         Behavior.composing(.codeWrap, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Wraps a block in another: `( a b )` becomes `( ( a b ) )`.")
+        .described("Wraps a code block in another: `( a b )` becomes `( ( a b ) )`.")
 
     static let execQuote_Behavior =
     Behavior(
@@ -540,58 +544,59 @@ nonisolated extension Interpreter {
             return [ Router(.code, result) ]
         }
     )
-    .described("Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item block.")
+    .described("Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item code " +
+        "block.")
 
-    /// Unwraps the top `.code` block onto `.exec`, so its contents run.
+    /// Unwraps the top code block on `.code` onto `.exec`, so its contents run.
     ///
-    /// This is the only way a block executes: the Interpreter pushes any
+    /// This is the only way a code block executes: the Interpreter pushes any
     /// `CodeItem` it meets on `.exec` to `.code` intact, so code is data until a
     /// program asks for it. It is `unwrapCodeItem` — which used to happen
     /// implicitly, on sight — promoted to an instruction.
     ///
-    /// Note it cannot work the Push3 way. `CODE.DO` there pushes the block onto
+    /// Note it cannot work the Push3 way. `CODE.DO` there pushes the code block onto
     /// `EXEC`, where lists unwrap; here that would send it straight back to
     /// `.code`, forever. So it spreads the contents directly.
     ///
-    /// Provenance: combinatory, law 1b. The block's own `call` is erased with the
-    /// block, and each content keeps the `call` it already had — exposed as
+    /// Provenance: combinatory, law 1b. The code block's own `call` is erased with the
+    /// code block, and each content keeps the `call` it already had — exposed as
     /// though it had been sitting there all along, unchanged from the time it
-    /// went in. Being inside a block leaves no mark.
+    /// went in. Being inside a code block leaves no mark.
     ///
     /// **Except on what was born there**. A content with no history
-    /// of its own, out of a block that has one (a block bound to `.input3`, or one
+    /// of its own, out of a code block that has one (a code block bound to `.input3`, or one
     /// a structural edit rebuilt), records its address, `block k .codeEmitNthRoot`
-    /// and the clean-up, so its crux keeps the link to the block. See
+    /// and the clean-up, so its crux keeps the link to the code block. See
     /// `Containment`.
     static let codeDo_Behavior =
     Behavior.control(.codeDo, takes: [.code]) { collectedItems, recording in
         let block = collectedItems[0] as! CodeItem
         return [.place(Containment.contents(of: block, recording))]
     }
-    .described("Runs a block: its items go onto `.exec`, the first to run first.")
+    .described("Runs a code block: its items go onto `.exec`, the first to run first.")
 
-    /// Drive an iterator to exhaustion and box what it emitted into one block.
+    /// Drive an iterator to exhaustion and box what it emitted into one code block.
     ///
     /// **This is the general form of collecting, and it never refuses.** A
     /// CodeItem is the vector-of-anything (see "The universal box" in Items.swift),
     /// so every iterator that emits anything at all has an answer here — including
     /// the ones `.vecFromIterator` must turn away: a tree walk emitting subtrees,
-    /// a `.repeating` iterator carrying a block, an `.elements` walk over a mixed
-    /// block, a string's chars. Read the pair the right way round and the
+    /// a `.repeating` iterator carrying a code block, an `.elements` walk over a mixed
+    /// code block, a string's chars. Read the pair the right way round and the
     /// asymmetry disappears: **a vector is the special case where the emissions
     /// are uniform scalars**, and this is the case that always applies.
     ///
-    /// Provenance is law 3, exactly as `.vecFromIterator`: the block records its
+    /// Provenance is law 3, exactly as `.vecFromIterator`: the code block records its
     /// iterator and this instruction, and the iterator's own record rebuilds it at
     /// its cursor, so re-running collects the same sequence from the same place.
-    /// The elements keep their own `call`s, which is what makes the block's crux
+    /// The elements keep their own `call`s, which is what makes the code block's crux
     /// say where each of its contents came from.
     ///
     /// An empty collect needs no special case here, and that is the difference
     /// from the vector form: `( )` is a perfectly good value, where an empty
     /// vector of *no particular type* is a question with no answer.
     ///
-    /// **Order**: the body is handed back first so the collected block lands on
+    /// **Order**: the body is handed back first so the collected code block lands on
     /// top of it. Both go to `.code`, and the result is what the next instruction
     /// should find — a crux fragment has to leave its value on top or nothing
     /// composes.
@@ -629,19 +634,19 @@ nonisolated extension Interpreter {
             return Interpreter.iteratorFarewell(iterator) + [Router(.code, collected)]
         }
     )
-    .described("Collects everything the iterator has left to emit into one block, its body returning to `.code` " +
-               "beneath; refuses, keeping the iterator, when that is too many items.")
+    .described("Collects everything the iterator has left to emit into one code block, its body returning to `.code` " +
+        "beneath; refuses, keeping the iterator, when that is too many items.")
 
     /// Box a live iterator and park it on `.code`, where no continuation can
     /// reach it.
     ///
     /// Provenance is law 2 — relocation across stacks is not free — and it records
     /// exactly as the other quotes do: `«iter» .iteratorQuote`. The iterator's own
-    /// `call` rebuilds it by state, so the block reproduces a loop at the cursor it
+    /// `call` rebuilds it by state, so the code block reproduces a loop at the cursor it
     /// was parked at, which is the whole point of shelving one.
     ///
     /// **A spent iterator cannot arrive here**, because a spent iterator cannot
-    /// rest on `.iterator` to be quoted. So the block always holds a live loop, and
+    /// rest on `.iterator` to be quoted. So the code block always holds a live loop, and
     /// `.codeDo` hands back something that still has something to emit.
     static let iteratorQuote_Behavior =
     Behavior(
@@ -655,7 +660,7 @@ nonisolated extension Interpreter {
             return [ Router(.code, result) ]
         }
     )
-    .described("Quotes an iterator as a one-item block on `.code`, parking it where no loop continues it.")
+    .described("Quotes an iterator as a one-item code block on `.code`, parking it where no loop continues it.")
 
     static let codeBehaviors: [PushInstruction: Behavior] =
     [

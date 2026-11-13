@@ -22,36 +22,36 @@ nonisolated extension Interpreter {
 
     static let intQuote_Behavior =
         Behavior.composing(.intQuote, takes: IntItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes an int as a one-item block: `5` becomes `( 5 )`.")
+        .described("Quotes an int as a one-item code block: `5` becomes `( 5 )`.")
 
     static let boolQuote_Behavior =
         Behavior.composing(.boolQuote, takes: BoolItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a bool as a one-item block: `true` becomes `( true )`.")
+        .described("Quotes a bool as a one-item code block: `true` becomes `( true )`.")
 
     static let stringQuote_Behavior =
         Behavior.composing(.stringQuote, takes: StringItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a string as a one-item block on `.code`.")
+        .described("Quotes a string as a one-item code block on `.code`.")
 
     static let charQuote_Behavior =
         Behavior.composing(.charQuote, takes: CharItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a char as a one-item block on `.code`.")
+        .described("Quotes a char as a one-item code block on `.code`.")
 
     static let doubleQuote_Behavior =
         Behavior.composing(.doubleQuote, takes: DoubleItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Quotes a double as a one-item block: `2.5` becomes `( 2.5 )`.")
+        .described("Quotes a double as a one-item code block: `2.5` becomes `( 2.5 )`.")
 
     static let vecBoolQuote_Behavior =
         Behavior.composing(.vecBoolQuote, takes: VecBoolItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Wraps the vector in a one-item block.")
+        .described("Wraps the vector in a one-item code block.")
     static let vecIntQuote_Behavior =
         Behavior.composing(.vecIntQuote, takes: VecIntItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Wraps the vector in a one-item block.")
+        .described("Wraps the vector in a one-item code block.")
     static let vecDoubleQuote_Behavior =
         Behavior.composing(.vecDoubleQuote, takes: VecDoubleItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Wraps the vector in a one-item block.")
+        .described("Wraps the vector in a one-item code block.")
     static let vecStringQuote_Behavior =
         Behavior.composing(.vecStringQuote, takes: VecStringItem.self, gives: CodeItem.self) { x in [x] }
-        .described("Wraps the vector in a one-item block.")
+        .described("Wraps the vector in a one-item code block.")
 
     static let vecFromCode_Behavior =
         Behavior(
@@ -95,8 +95,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Turns a block of bools, ints, doubles or strings, all one type, into a vector; a block holding one "
-            + "vector gives it back; refuses anything else.")
+            "Turns a code block of bools, ints, doubles or strings, all one type, into a vector; a code block " +
+            "holding one vector gives it back; refuses anything else.")
 
 
     // MARK: - A string and its pieces

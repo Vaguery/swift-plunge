@@ -12,8 +12,8 @@
 /// container, the position, and the instruction that takes it out from there.
 ///
 /// Items are born inside containers more often than it might seem: the contents of
-/// a block bound to `.input3`, a block a structural edit rebuilt along its path
-/// (`.codeWrapRange` makes a new inner block), the leaf a `.codePeekNthRoot` box
+/// a code block bound to `.input3`, a code block a structural edit rebuilt along its path
+/// (`.codeWrapRange` makes a new inner code block), the leaf a `.codePeekNthRoot` box
 /// holds. Taken out bare, such an item looks like a literal of the program, and a
 /// crux built on it has lost its link to the container: an input-blind crux for a
 /// result that did depend on the input. The address keeps the link, and it is
@@ -29,7 +29,7 @@
 /// containers needs it.
 nonisolated enum Containment {
 
-    /// `element`, taken out of the block `container` at `index` by `instruction`
+    /// `element`, taken out of the code block `container` at `index` by `instruction`
     /// (`.codeEmitNthRoot` for a root position, `.codeEmitNth` for a
     /// pre-order point): unchanged if it has a history of its own, if it does not
     /// rest on a stack (an instruction runs, a stand-in marks itself), or if the
@@ -60,8 +60,8 @@ nonisolated enum Containment {
         return addressed
     }
 
-    /// A block's root contents as `.codeDo` spreads them: each addressed as
-    /// `.codeEmitNthRoot` would take it out (see `takenOut`). The block itself
+    /// A code block's root contents as `.codeDo` spreads them: each addressed as
+    /// `.codeEmitNthRoot` would take it out (see `takenOut`). The code block itself
     /// unchanged when recording is off or it is a literal, so the search pays
     /// nothing.
     static func contents(of block: CodeItem, _ recording: ProvenanceRecording) -> [any Item] {
@@ -77,12 +77,12 @@ nonisolated enum Containment {
 /// Where each element of a vector or string came from, kept only when recording,
 /// in the container's `CallStorage`.
 ///
-/// A block's contents are items, so they keep their histories without help. A
+/// A code block's contents are items, so they keep their histories without help. A
 /// vector's or string's elements are raw values, so the container records, for
 /// each element, its **origin**: either the item that went in (`.vecIntConj` of a
 /// computed 5), or position `j` of the container the element was born in (a
 /// constant, a literal, a computed vector). The extraction instructions then hand
-/// back the item that went in, exactly as `.codeEmitNthRoot` hands back a block's
+/// back the item that went in, exactly as `.codeEmitNthRoot` hands back a code block's
 /// content, or the element's address in its **source**: `.vecInt3 2 .vecIntNth`,
 /// not the address in whatever concatenation it ended up in.
 ///

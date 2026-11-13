@@ -153,13 +153,13 @@ nonisolated final class Behavior: Sendable {
     /// without consuming — `alsoNeeds` more. An operation.
     ///
     /// `alsoNeeds` exists because `takes:` alone conflated *what I consume* with
-    /// *what I need*. `doubleYank` takes an `.int` index and *reorders* `.double`;
+    /// *what I need*. `.doubleYank` takes an `.int` index and *reorders* `.double`;
     /// declaring `.double` in `takes:` would pop the very item it means to move. So
     /// it declared only the int — and then **60 behaviors across five families
     /// popped their index, found an empty stack, and errored having already eaten
     /// the argument**.
     ///
-    /// A stack may appear in both and the counts add: `intYank` takes one `.int` as
+    /// A stack may appear in both and the counts add: `.intYank` takes one `.int` as
     /// its index **and** needs two more to work on, so it wants three.
     convenience init(
         _ label: PushInstruction,
@@ -230,7 +230,7 @@ nonisolated final class Behavior: Sendable {
     }
 
     /// `takes` first: an index is popped before the stack it indexes into is
-    /// measured, so `intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
+    /// measured, so `.intYank`'s index is `.int[0]` and its targets are `[1]`,`[2]`.
     /// Sorted so the ordering does not depend on Dictionary's iteration order.
     static func requirements(takes: [PushStack], alsoNeeds: [PushStack: Int]) -> [Requirement] {
         takes.map { Requirement.takes($0) }
@@ -477,7 +477,7 @@ nonisolated extension Behavior {
     ///
     /// **The `producing` stack is why this is not just `selecting` twice.** When a
     /// read stack is *also* the result's stack (a comparison of two bools lands its
-    /// bool back on `.bool`; `vecIntOccurrencesOf` reads an `.int` needle and
+    /// bool back on `.bool`; `.vecIntOccurrencesOf` reads an `.int` needle and
     /// returns an `.int`), the result sits on **top** of the arguments it read, so
     /// a plain `PopItems` would discard the result. There the crux instead swaps
     /// each argument up past the single result and pops it — `swap` moves items

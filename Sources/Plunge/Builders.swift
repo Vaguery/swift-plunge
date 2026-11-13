@@ -70,8 +70,8 @@ public nonisolated func merged(
 }
 
 
-/// A result builder for programs, so a `[any Item]` can be written as a block of
-/// bare literals and instructions rather than wrapped `Item` values.
+/// The result builder behind `program { … }`, which lets a program be written
+/// as a list of Swift literals and instructions.
 ///
 /// ```swift
 /// let p = program {
@@ -80,6 +80,12 @@ public nonisolated func merged(
 ///     PushInstruction.intAdd
 /// }
 /// ```
+///
+/// Ints, doubles, strings and bools are wrapped as items, an instruction
+/// becomes an ``InstructionItem``, and any item may stand on a line of its own
+/// (`CharItem("x")`, `VecIntItem([1, 2, 3])`, a ``CodeItem`` for a nested
+/// code block). `if`, `if`-`else` and `for` are supported. See
+/// <doc:WritingPrograms>.
 @resultBuilder
 public nonisolated enum PushProgram {
     public static func buildBlock(_ parts: [any Item]...) -> [any Item] {
@@ -99,13 +105,14 @@ public nonisolated enum PushProgram {
     public static func buildEither(second part: [any Item]) -> [any Item] { part }
 }
 
-/// Builds a program from a `PushProgram` block. See `PushProgram`.
+/// Builds a program from a ``PushProgram`` code block of literals and instructions.
 public nonisolated func program(@PushProgram _ build: () -> [any Item]) -> [any Item] {
     build()
 }
 
 /// Builds a program from a flat list of raw values, each converted with
-/// `pushItem`. For nested code, use `CodeItem` directly.
+/// ``pushItem(_:)``. A value that can't be converted is left out. For a nested
+/// code block, include a ``CodeItem``.
 public nonisolated func program(_ tokens: [Any]) -> [any Item] {
     tokens.compactMap { pushItem($0) }
 }

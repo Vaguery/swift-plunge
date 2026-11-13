@@ -262,8 +262,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding "
-            + "the other block.")
+            "Branches: `( then ) ( else ) .execIf` runs then when the bool is true and else otherwise, discarding " +
+            "the other code block.")
 
     static let execK_Behavior =
         Behavior.control(
@@ -284,7 +284,7 @@ nonisolated extension Interpreter {
                 ]
             }
         )
-        .described("Keeps the first block: `( a ) ( b ) .execK` runs a and discards b.")
+        .described("Keeps the first code block: `( a ) ( b ) .execK` runs a and discards b.")
 
     static let execY_Behavior =
         Behavior.control(
@@ -362,8 +362,8 @@ nonisolated extension Interpreter {
                 return results
             }
         )
-        .described("Runs the block when the bool is true and discards it otherwise: `.execIf` with an empty else."
-                   + " `.codeDoIf` leaves it on `.code` instead.")
+        .described("Runs the code block when the bool is true and discards it otherwise: `.execIf` with an empty " +
+            "else. `.codeDoIf` leaves it on `.code` instead.")
 
     static let execWhile_Behavior =
         Behavior.control(

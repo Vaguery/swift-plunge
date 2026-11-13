@@ -65,12 +65,12 @@ nonisolated extension Interpreter {
             return functions.map { Router(.function, $0.observed(by: .codePushAllFunctions, context.recording)) }
         }
         .described(
-            "Takes a block and pushes every function its pushes compute: the block runs with a placeholder for each "
-            + "missing argument, and each item it makes from a placeholder becomes a function with a hole there; "
-            + "refuses a block that runs too long.")
+            "Takes a code block and pushes every function its pushes compute: the code block runs with a placeholder " +
+            "for each missing argument, and each item it makes from a placeholder becomes a function with a hole " +
+            "there; refuses a code block that runs too long.")
 }
 
-/// One block's derivation: the functions it yields, or nil if it ran past its
+/// One code block's derivation: the functions it yields, or nil if it ran past its
 /// limit, and the steps it took.
 nonisolated struct FunctionDerivation {
     private(set) var steps = 0

@@ -70,8 +70,8 @@ nonisolated extension Interpreter {
         .vecBool: .vecBoolQuote, .vecInt: .vecIntQuote, .vecDouble: .vecDoubleQuote, .vecString: .vecStringQuote
     ]
 
-    /// `item` as data on `.code`: a block as it is (a copy, law 1), anything else
-    /// in a block of its own, recorded as its type's quote.
+    /// `item` as data on `.code`: a code block as it is (a copy, law 1), anything else
+    /// in a code block of its own, recorded as its type's quote.
     static func asCode(_ item: any Item, by name: PushInstruction, _ recording: ProvenanceRecording) -> any Item {
         if let block = item.exactly(CodeItem.self) { return block }
         if let stack = PushStack.defaultStack(for: item), let quote = quoters[stack] {
@@ -112,8 +112,8 @@ nonisolated extension Interpreter {
         }
         .described(
             "Binds a copy of the "
-            + (stack == .code ? "block under the body" : "top \(stack.noun)")
-            + " to a fresh key, runs a body block from `.code` with the key on `.int`, then removes the binding."
+            + (stack == .code ? "code block under the body" : "top \(stack.noun)")
+            + " to a fresh key, runs a body code block from `.code` with the key on `.int`, then removes the binding."
         )
     }
 
@@ -148,7 +148,7 @@ nonisolated extension Interpreter {
     /// `k .bindingRekey` gives the top pair the key k.
     ///
     /// Only the last key matters, so a pair that was itself re-keyed is recorded
-    /// as re-keyed once: its history up to that `bindingRekey`, then k. That is also
+    /// as re-keyed once: its history up to that `.bindingRekey`, then k. That is also
     /// what keeps a bound pair's crux a fixed point, since replaying it binds
     /// afresh and re-keys the fresh key away.
     static let bindingRekey_Behavior =
@@ -174,7 +174,7 @@ nonisolated extension Interpreter {
 
     // MARK: - Pairs as data
 
-    /// A pair as the block `( k value )`.
+    /// A pair as the code block `( k value )`.
     static let bindingQuote_Behavior =
         Behavior(.bindingQuote, requires: [.takes(.binding)], tags: [], behaviorClass: .operation,
                  body: .values { a, recording in
@@ -182,9 +182,9 @@ nonisolated extension Interpreter {
                      return [Router(.code, CodeItem([IntItem(pair.key), pair.bound],
                                                     call: recording([pair, InstructionItem(.bindingQuote)])))]
                  }, produces: .results([.code]))
-        .described("Turns the top binding into the block `( k value )` on `.code`.")
+        .described("Turns the top binding into the code block `( k value )` on `.code`.")
 
-    /// The block `( k value )` as a pair; refused for any other shape, and for a
+    /// The code block `( k value )` as a pair; refused for any other shape, and for a
     /// value that cannot be bound (an iterator or a pair).
     static let bindingFromCode_Behavior =
         Behavior(.bindingFromCode, requires: [.takes(.code)], tags: [.fallible], behaviorClass: .operation,
@@ -200,8 +200,8 @@ nonisolated extension Interpreter {
                      let bound = Containment.contents(of: block, recording)[1]
                      return [Router(.binding, BindingItem(key: key.value, bound: bound, call: call))]
                  }, produces: .results([.binding]))
-        .described("Turns a block `( k value )` into a binding; refuses any other shape, or a value that is an iterator"
-                   + " or a binding.")
+        .described("Turns a code block `( k value )` into a binding; refuses any other shape, or a value that is an " +
+            "iterator or a binding.")
 
 
     /// Removes the topmost binding of the key on `.int` (read): weakening at the
@@ -224,8 +224,8 @@ nonisolated extension Interpreter {
     /// The stacks a bound value can come from, in a fixed order.
     static let boundStacks: [PushStack] = BindingItem.binders.keys.sorted { $0.rawValue < $1.rawValue }
 
-    /// `bindingUnpack`: the top pair taken apart, its value to its own stack (a
-    /// block as data) and its key onto `.int` above it; `xRefAs` is its inverse.
+    /// `.bindingUnpack`: the top pair taken apart, its value to its own stack (a
+    /// code block as data) and its key onto `.int` above it; `xRefAs` is its inverse.
     /// The value is the item that was bound (law 1b); the key is made here, and
     /// its crux clears the value away beneath it, as a query's clears what it read.
     static let bindingUnpack_Behavior =
@@ -237,8 +237,8 @@ nonisolated extension Interpreter {
                         [resting: 1], producing: .int, from: [pair, InstructionItem(.bindingUnpack)])))
                      return [Router(resting, pair.bound), Router(.int, key)]
                  }, produces: .alternatives(boundStacks.map { [$0, .int] }))
-        .described("Takes the top binding apart: its value onto its own stack (a block as data), then its key onto"
-                   + " `.int`.")
+        .described("Takes the top binding apart: its value onto its own stack (a code block as data), then its key " +
+            "onto `.int`.")
 
 
     // MARK: - The family

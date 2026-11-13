@@ -155,7 +155,7 @@ nonisolated extension Behavior {
     // MARK: - Items in, a value out
 
     /// Builds a value **from the argument items themselves**, not just their
-    /// values: for a result that contains an argument, history and all (a block
+    /// values: for a result that contains an argument, history and all (a code block
     /// quoting or pairing its arguments). A values body would rebuild such an
     /// argument without its `call`, and change its provenance.
     static func composing<each A: ValueItem, R: ValueItem>(
@@ -283,7 +283,7 @@ nonisolated extension Behavior {
 
 
     /// Two results on one stack, for a type **without element origins** (a
-    /// block's pieces: `codeCutAtGap`). As `splitting` above, but the body returns
+    /// code block's pieces: `.codeCutAtGap`). As `splitting` above, but the body returns
     /// the pieces' values.
     static func splitting<each A: ValueItem, R: ValueItem>(
         _ label: PushInstruction,

@@ -21,7 +21,7 @@ nonisolated extension Interpreter {
     ///
     /// **`.error` is deliberately absent.** It gets no generated family at all,
     /// because a program that could pop or reorder its own errors could hide a
-    /// failed instruction from whatever scores it; `errorStackDepth` is the single
+    /// failed instruction from whatever scores it; `.errorStackDepth` is the single
     /// read-only exception. See `Introspection Behaviors.swift`.
     ///
     /// Shared rather than written twice, so the two factories cannot drift apart
@@ -97,8 +97,8 @@ nonisolated extension Interpreter {
     /// Copies the top `n` items of a stack back onto it, **one per pass**.
     ///
     /// It used to push them all at once. Now it takes a copy of the slice, boxes
-    /// it in a CodeItem, and walks that — which is to say `execDupItems` is, in
-    /// essence, a first `.codeIterate`: the machinery for iterating a block's
+    /// it in a CodeItem, and walks that — which is to say `.execDupItems` is, in
+    /// essence, a first `.codeIterate`: the machinery for iterating a code block's
     /// contents is exactly the machinery for handing back a stack's top few.
     ///
     /// The box holds the slice **bottom-to-top**, i.e. the order a program would

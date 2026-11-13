@@ -10,6 +10,6 @@
 nonisolated enum ChannelWrite: Sendable {
     /// An item, printed as its `pretty()` text and a newline.
     case item(any Item)
-    /// Raw text (`printNewline`).
+    /// Raw text (`.printNewline`).
     case text(String)
 }

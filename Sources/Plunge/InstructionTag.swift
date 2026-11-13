@@ -71,14 +71,25 @@ public nonisolated enum TagFacet: String, Sendable, Codable, Hashable, CaseItera
     case custom
 }
 
-/// A label for a set of instructions. Open: any string is a tag, and the ones this
-/// library ships are static members. See the file note and `InstructionTagging`.
+// A label for a set of instructions. Open: any string is a tag, and the ones this
+// library ships are static members. See the file note and `InstructionTagging`.
+//
+/// A label for a set of instructions.
+///
+/// The vocabulary is open: any string is a tag, and the ones this library
+/// ships are static members. Tags overlap freely. See
+/// <doc:TaggingInstructions> and ``InstructionTagging``.
 public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, Sendable,
                                           ExpressibleByStringLiteral, CustomStringConvertible {
+    /// The tag's text.
     public let rawValue: String
+    /// Creates a tag from its text.
     public init(rawValue: String) { self.rawValue = rawValue }
+    /// Creates a tag from its text.
     public init(_ rawValue: String) { self.rawValue = rawValue }
+    /// Creates a tag from a string literal, so a tag can be written as `"myProject"`.
     public init(stringLiteral value: String) { self.rawValue = value }
+    /// The tag's text.
     public var description: String { rawValue }
 
     // MARK: - Types
@@ -89,7 +100,7 @@ public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, S
     public static let numeric = InstructionTag("numeric")
     /// Touches chars, strings or vectors of strings.
     public static let textual = InstructionTag("textual")
-    /// Touches a string, a vector or a block.
+    /// Touches a string, a vector or a code block.
     public static let collection = InstructionTag("collection")
     /// Touches a vector.
     public static let vector = InstructionTag("vector")
@@ -125,17 +136,17 @@ public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, S
     public static let search = InstructionTag("search")
     /// Copies, deletes or reorders items on a stack, the family every stack has.
     public static let stackCombinator = InstructionTag("stackCombinator")
-    /// Runs one block or another, or a block or nothing.
+    /// Runs one code block or another, or a code block or nothing.
     public static let branching = InstructionTag("branching")
     /// Runs a body more than once.
     public static let looping = InstructionTag("looping")
-    /// Applies a block to values: map, filter, reduce, and running a block with a value bound.
+    /// Applies a code block to values: map, filter, reduce, and running a code block with a value bound.
     public static let higherOrder = InstructionTag("higherOrder")
-    /// Runs or places code without choosing or repeating: the combinators over blocks, and deref.
+    /// Runs or places code without choosing or repeating: the combinators over code blocks, and deref.
     public static let execution = InstructionTag("execution")
     /// Consumes values and makes a new one, other than a calculation.
     public static let transformation = InstructionTag("transformation")
-    /// Changes a value's type, or quotes it as a block.
+    /// Changes a value's type, or quotes it as a code block.
     public static let conversion = InstructionTag("conversion")
     /// Puts collections or elements together into one.
     public static let assembly = InstructionTag("assembly")
@@ -160,7 +171,7 @@ public nonisolated struct InstructionTag: RawRepresentable, Hashable, Codable, S
     public static let addsSteps = InstructionTag("addsSteps")
     /// Repeats with nothing in its arguments to bound it; only the step limit or the body stops it.
     public static let mayRunUnbounded = InstructionTag("mayRunUnbounded")
-    /// Runs blocks in sub-interpreters, whose steps are charged to the run.
+    /// Runs code blocks in sub-interpreters, whose steps are charged to the run.
     public static let runsSubprograms = InstructionTag("runsSubprograms")
 
     // MARK: - Use

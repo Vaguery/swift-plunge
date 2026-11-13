@@ -7,7 +7,10 @@ those are finished.
 ## Working on the code
 
 How to build, test and document changes to the interpreter. Read
-[ARCHITECTURE.md](ARCHITECTURE.md) first for how the pieces fit.
+[ARCHITECTURE.md](ARCHITECTURE.md) first for how the pieces fit, and
+[STYLE.md](STYLE.md) for how to write about the language: the names for
+values, items and stacks, how instructions and programs are written, and the
+vocabulary the documentation shares.
 
 ## Build and test
 
@@ -52,16 +55,18 @@ they match the language.
 
 The language's conventions:
 
-- **Name an instruction for the stack it works on**: `intAdd`, `codeDo`,
-  `bindingDeref`. A verb follows its source stack when it makes something from
-  it (`intQuote`, `intRef`).
-- **Write arguments in written order**: the order a program pushes them. A search
-  takes the container first, then what is sought: `v x .vecIntIndexOf`.
+- **Name an instruction for the stack it works on**: `.intAdd`, `.codeDo`,
+  `.bindingDeref`. A verb follows its source stack when it makes something from
+  it (`.intQuote`, `.intRef`).
+- **Write arguments in written order**: the order a program pushes them. An
+  instruction that looks for something takes the container first, then what is
+  sought: `v x .vecIntIndexOf`.
 - **Return a result or an error, never nothing**: arguments of the wrong value are
-  a `Refusal`, never a silent no-op. A search that finds nothing refuses too.
+  a `Refusal`, never a silent no-op. An instruction that looks for something and
+  finds nothing refuses too (a *miss*, with the `notFound` kind).
 - **Queries read and leave their arguments**; transforms consume them. A
   non-destructive form of a consuming instruction is a `Peek` form.
-- **Block arguments come from `.code`**, never from `.exec`.
+- **Code block arguments come from `.code`**, never from `.exec`.
 - **Clamp indices** into range rather than refusing them.
 - **Nothing random**: an instruction's result depends only on its arguments and
   the run's state.
@@ -72,17 +77,8 @@ The language's conventions:
 
 ## Summaries and the instruction reference
 
-Every instruction has a one-sentence summary, declared with `.described(…)`. The
-style:
-
-- start with a verb, and keep to one sentence (semicolons allowed);
-- when the order of arguments matters, show the written form:
-  "Subtracts: `` `a b .intSubtract` `` gives a − b.";
-- say what a query leaves ("…, leaving both") and when an instruction refuses
-  ("refuses when b is 0");
-- don't mention starvation, provenance or implementation details.
-
-The DocC instruction reference is generated from these summaries and the
+Every instruction has a one-sentence summary, declared with `.described(…)`,
+written as [STYLE.md](STYLE.md) describes. The DocC instruction reference is generated from these summaries and the
 Behaviors' declarations. After changing the language, regenerate it:
 
 ```sh
@@ -101,15 +97,17 @@ swift package --disable-sandbox preview-documentation --target Plunge
 swift package --disable-sandbox generate-documentation --target Plunge
 ```
 
-Code in the articles is compiled and run by
-`Tests/PlungeTests/Documentation/Documentation Examples Tests.swift`, which
-imports the module without `@testable`, so examples can use only the public API.
-Change an example in both places.
+Code in the articles is compiled and run by the two example suites in
+`Tests/PlungeTests/Documentation/` (`Documentation Examples Tests.swift` for
+the language articles, `Documentation Usage Examples Tests.swift` for the
+articles on using the library). They import the module without `@testable`, so
+examples can use only the public API. Change an example in both places.
 
-Public API needs a documentation comment. Explain behavior and intent; don't cite
-issue numbers or documents outside this repository.
+Public API needs a documentation comment, and the articles share one
+vocabulary and one notation. [STYLE.md](STYLE.md) sets out both; the DocC
+*Vocabulary* article defines the terms for readers.
 
-## Style
+## Code style
 
 - Swift 6 with strict concurrency; the package is `nonisolated` throughout.
 - Run [SwiftLint](https://github.com/realm/SwiftLint) on the files you change,

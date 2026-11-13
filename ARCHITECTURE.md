@@ -78,9 +78,11 @@ immutable, shared object holding
 
 `Behavior.act` is the only place an instruction changes the interpreter. It
 checks the requirements (directly for the common static case, through the
-`Planner` otherwise), refuses with a *missing arguments* error if a stack is
-short, removes what it takes, computes, and routes the results (`Router`). A
-`Refusal` thrown by a body becomes an `ErrorItem`.
+`Planner` otherwise). If a stack is short the instruction *starves*: it leaves a
+*missing arguments* error, takes nothing, and is put on `.function` as a bare
+function. Otherwise `act` removes what the instruction takes, computes, and
+routes the results (`Router`). A `Refusal` thrown by a body becomes an
+`ErrorItem`.
 
 Most Behaviors are written with the typed constructors in `Typed Operations.swift`:
 
@@ -155,8 +157,8 @@ Behaviors at launch:
 
 `Generation/` holds ways of making programs that aren't the language itself:
 random programs for fuzz and diagnostic tests, drawn by role (`RandomCode`); a
-genome encoding that implies blocks (`FibonacciGenome`, `BlockPacking`); and a
-backward chainer that builds programs producing a wanted stack
+genome encoding that implies code blocks (`FibonacciGenome`, `BlockPacking`);
+and a backward chainer that builds programs producing a wanted stack
 (`BackwardChaining`). Search itself lives in the app. Genome definitions may
 later be shared between search, fuzz testing and instructions that edit genomes,
 each with its own translation and manipulation functions.

@@ -84,7 +84,7 @@ nonisolated func behaviorTable(for configuration: RunnerConfiguration) -> Behavi
 }
 
 /// Whether an item's provenance references any of `tokens` — walking its `crux()`
-/// leaves and into any `CodeItem` leaves, since an input-bound block carries its
+/// leaves and into any `CodeItem` leaves, since an input-bound code block carries its
 /// instructions inside. The end-of-run summary behind `CaseResult.cruxMentionsInput`.
 nonisolated func cruxMentions(_ item: any Item, anyOf tokens: Set<PushInstruction>) -> Bool {
     func walk(_ items: [any Item]) -> Bool {
@@ -98,42 +98,58 @@ nonisolated func cruxMentions(_ item: any Item, anyOf tokens: Set<PushInstructio
 }
 
 
-/// A stateful evaluation coordinator.
+/// Holds programs and training cases, and evaluates pairings of them.
 ///
-/// It holds shared configuration and pools of individuals and training cases
-/// (addressed by id), and evaluates the exact pairings it is asked to — fanning
-/// them out concurrently over fresh interpreters. It is transport-agnostic: a
-/// local app awaits it directly, while a REST or FaaS front end wraps it.
+/// A runner keeps a configuration, a pool of individuals and a pool of training
+/// cases, each addressed by its identifier. Asked to evaluate a list of
+/// pairings, it runs each one on a new interpreter, many at a time, and returns
+/// one ``CaseResult`` for each. See <doc:EvaluatingPrograms>.
 ///
-/// Concurrency: the actor's own state is the only thing serialized. The CPU work
-/// runs *off* the actor, in child tasks that each build and discard their own
-/// `Interpreter`; nothing mutable crosses a task boundary, so the fan-out is
-/// data-race-free by construction.
+/// A runner does no input or output of its own, so an app can await it directly
+/// and a server can wrap it. To evaluate without keeping anything between
+/// calls, use ``evaluate(request:)`` instead.
+///
+/// The runner's questions about the language (``definedInstructions``,
+/// ``summary(of:)``, ``signature(of:)`` and the rest) are `nonisolated`, and
+/// need no `await`.
+///
+/// Concurrency: only the actor's own state is serialized. The runs happen off
+/// the actor, in child tasks that each build and discard their own interpreter,
+/// and nothing that can change crosses a task boundary.
 public actor Runner {
     private var configuration: RunnerConfiguration
     private var individuals: [String: Individual] = [:]
     private var trainingCases: [String: TrainingCase] = [:]
 
+    /// Creates a runner with empty pools.
+    ///
+    /// - Parameter configuration: The settings, recorders and disabled instructions
+    ///   for every evaluation. The default observes nothing, so pass at least one
+    ///   recorder to get results back.
     public init(configuration: RunnerConfiguration = RunnerConfiguration()) {
         self.configuration = configuration
     }
 
     // MARK: Configuration (interaction modes 3 & 4)
 
+    /// Replaces the configuration that later evaluations use.
     public func configure(_ configuration: RunnerConfiguration) {
         self.configuration = configuration
     }
 
+    /// The configuration that evaluations use now.
     public var currentConfiguration: RunnerConfiguration { configuration }
 
     // MARK: Language introspection (interaction modes 1 & 2)
 
-    /// Every instruction the language defines. Static, so `nonisolated`.
+    /// The name of every instruction the language defines, sorted. For the
+    /// instructions themselves, see ``definedInstructions``.
     public nonisolated var instructionNames: [String] {
         Interpreter.language.keys.map(\.rawValue).sorted()
     }
 
-    /// Instructions currently active: defined and not disabled by the config.
+    /// The names of the instructions that are defined and not disabled by the
+    /// current configuration, sorted.
     public var activeInstructionNames: [String] {
         let disabled = configuration.disabledBehaviors
         return Interpreter.language.keys
@@ -144,22 +160,31 @@ public actor Runner {
 
     // MARK: Pools (interaction modes 5 & 6)
 
+    /// Adds individuals to the pool. One whose identifier is already registered
+    /// replaces the earlier one.
     public func register(individuals newOnes: [Individual]) {
         for individual in newOnes { individuals[individual.id] = individual }
     }
 
+    /// Adds training cases to the pool. One whose identifier is already registered
+    /// replaces the earlier one.
     public func register(trainingCases newOnes: [TrainingCase]) {
         for trainingCase in newOnes { trainingCases[trainingCase.id] = trainingCase }
     }
 
+    /// How many individuals are registered.
     public var individualCount: Int { individuals.count }
+    /// How many training cases are registered.
     public var trainingCaseCount: Int { trainingCases.count }
 
     // MARK: Evaluation
 
-    /// Evaluates the requested pairings against this Runner's pools, concurrently
-    /// and in request order. Unknown ids yield an `unresolved` result rather than
-    /// an error, so one bad reference never fails the batch.
+    /// Evaluates pairings against this runner's pools, concurrently, and returns
+    /// one result for each in the order given.
+    ///
+    /// A pairing that names an identifier the runner doesn't have gives a result
+    /// with ``CaseResult/unresolved`` set, so one bad reference never fails the
+    /// batch.
     public func evaluate(pairings: [Pairing]) async -> [CaseResult] {
         await evaluatePairings(
             pairings,

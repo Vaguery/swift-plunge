@@ -28,6 +28,7 @@ public nonisolated struct ProvenanceRecording: Sendable {
     /// Whether provenance expressions are evaluated.
     public let isOn: Bool
 
+    /// Creates a recording switch. Use ``on`` and ``off``.
     public init(isOn: Bool) {
         self.isOn = isOn
     }

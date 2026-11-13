@@ -65,7 +65,7 @@ nonisolated extension Interpreter {
     // MARK: - Sums
 
     /// The sum of a vecInt's elements; 0 for an empty one. Refuses on overflow,
-    /// as `intAdd` does.
+    /// as `.intAdd` does.
     static let vecIntSum_Behavior =
         Behavior.operation(.vecIntSum, reads: VecIntItem.self, gives: IntItem.self) { x throws(Refusal) in
             var total = 0
@@ -79,7 +79,7 @@ nonisolated extension Interpreter {
         .described("Sums the elements, leaving the vector; an empty vector gives 0; refuses on overflow.")
 
     /// The sum of a vecDouble's elements; 0 for an empty one. Refuses a result
-    /// that is not finite, as `doubleAdd` does.
+    /// that is not finite, as `.doubleAdd` does.
     static let vecDoubleSum_Behavior =
         Behavior.operation(.vecDoubleSum, reads: VecDoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let total = x.reduce(0.0, +)
@@ -240,31 +240,31 @@ nonisolated extension Interpreter {
             return kept
         }
         .described(
-            "Removes repeated items from a block, comparing by value and keeping each first occurrence in order.")
+            "Removes repeated items from a code block, comparing by value and keeping each first occurrence in order.")
 
     static let codeIntersect_Behavior =
         Behavior.composing(.codeIntersect, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
             x.value.filter { contains(y.value, $0) }
         }
         .described(
-            "Filters: `a b .codeIntersect` keeps the items of block a that also occur in b, compared by value, in "
-            + "a's order, repeats included.")
+            "Filters: `a b .codeIntersect` keeps the items of code block a that also occur in b, compared by value, " +
+            "in a's order, repeats included.")
 
     static let codeDifference_Behavior =
         Behavior.composing(.codeDifference, takes: CodeItem.self, CodeItem.self, gives: CodeItem.self) { x, y in
             x.value.filter { !contains(y.value, $0) }
         }
         .described(
-            "Filters: `a b .codeDifference` keeps the items of block a that do not occur in b, compared by value, "
-            + "in a's order, repeats included.")
+            "Filters: `a b .codeDifference` keeps the items of code block a that do not occur in b, compared by " +
+            "value, in a's order, repeats included.")
 
     static let codeIsSubset_Behavior =
         Behavior.operation(.codeIsSubset, reads: CodeItem.self, CodeItem.self, gives: BoolItem.self) { x, y in
             x.allSatisfy { contains(y, $0) }
         }
         .described(
-            "Tells whether every item of block a occurs in block b, compared by value: `a b .codeIsSubset`, "
-            + "leaving both.")
+            "Tells whether every item of code block a occurs in code block b, compared by value: `a b " +
+            ".codeIsSubset`, leaving both.")
 
 
     // MARK: - The family

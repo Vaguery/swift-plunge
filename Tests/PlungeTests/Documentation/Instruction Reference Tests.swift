@@ -75,15 +75,15 @@ struct InstructionReferenceTests {
         Subject(page: "StringInstructions", title: "String instructions",
                 intro: "The `.string` stack holds text. Indices count characters, not bytes, and an index outside a string is clamped into it rather than refused."),
         Subject(page: "CodeInstructions", title: "Code instructions",
-                intro: "The `.code` stack holds blocks: lists of any items, nested to any depth. A block met on `.exec` comes to rest here as data; `codeDo` and the other control instructions are what run one. Blocks are also the language's general-purpose container."),
+                intro: "The `.code` stack holds code blocks: lists of any items, nested to any depth. A code block met on `.exec` comes to rest here as data; `.codeDo` and the other control instructions are what run one. Code blocks are also the language's general-purpose container."),
         Subject(page: "ExecInstructions", title: "Exec instructions",
                 intro: "The `.exec` stack is the program still to run: the interpreter pops its top item each step and executes it. These instructions loop, branch and rearrange what is pending. Their bodies come from `.code`."),
         Subject(page: "IteratorInstructions", title: "Iterator instructions",
-                intro: "The `.iterator` stack holds first-class loops: a source (a range, a collection or a block), a cursor, and optionally a body to run each pass. Iterators are how the language counts, walks collections and collects results."),
+                intro: "The `.iterator` stack holds first-class loops: a source (a range, a collection or a code block), a cursor, and optionally a body to run each pass. Iterators are how the language counts, walks collections and collects results."),
         Subject(page: "BindingInstructions", title: "Binding instructions",
-                intro: "The `.binding` stack holds keyed bindings: an int key and any item. The topmost binding with a key is that variable's current value, and older ones below it are shadowed, so each variable is a stack of its own. The inputs are bound to keys 0, 1, 2, … at load, and fresh keys follow them. The binders, `intRef`, `stringRef` and the rest, are on their source stacks' pages."),
+                intro: "The `.binding` stack holds keyed bindings: an int key and any item. The topmost binding with a key is that variable's current value, and older ones below it are shadowed, so each variable is a stack of its own. The inputs are bound to keys 0, 1, 2, … at load, and fresh keys follow them. The binders, `.intRef`, `.stringRef` and the rest, are on their source stacks' pages."),
         Subject(page: "FunctionInstructions", title: "Function instructions",
-                intro: "The `.function` stack holds functions: a body with typed holes. An instruction that starves for arguments is shelved here, bare, and `codePushAllFunctions` converts a block into the functions its pushes compute. Map, filter, reduce and their relatives on the collection pages take the topmost function here that fits their job."),
+                intro: "The `.function` stack holds functions: a body with typed holes. An instruction that starves for arguments is shelved here, bare, and `.codePushAllFunctions` converts a code block into the functions its pushes compute. Map, filter, reduce and their relatives on the collection pages take the topmost function here that fits their job."),
         Subject(page: "VecBoolInstructions", title: "Vector of bool instructions",
                 intro: "The `.vecBool` stack holds vectors of bools. It shares its instruction families with the other vector types."),
         Subject(page: "VecIntInstructions", title: "Vector of int instructions",
@@ -147,7 +147,7 @@ struct InstructionReferenceTests {
                     text += "\n## The stack's own instructions\n\n"
                     text += "Every stack has the same family for copying, deleting, reordering and measuring "
                     text += "its items; see <doc:StackInstructions>. On `.\(stack)` they are "
-                    text += family.map { "`\($0.rawValue)`" }.joined(separator: ", ") + ".\n"
+                    text += family.map { "`.\($0.rawValue)`" }.joined(separator: ", ") + ".\n"
                 }
             }
             pages["\(subject.page).md"] = text
@@ -169,7 +169,7 @@ struct InstructionReferenceTests {
         var text = "# Stack instructions\n\n"
         text += "Every stack but `.error` has the same family of instructions for copying, deleting, "
         text += "reordering and measuring its items: \(stacks). They are listed here once, for `.int`; "
-        text += "on another stack, replace `int` with that stack's name (`codeDup`, `vecStringYank`, …).\n\n"
+        text += "on another stack, replace `int` with that stack's name (`.codeDup`, `.vecStringYank`, …).\n\n"
         text += "An index or a count comes from `.int`, and is clamped into the stack rather than refused. "
         text += "When the stack is `.int` itself, the index is popped first and the rest of the stack is "
         text += "counted after it.\n\n"
@@ -185,7 +185,7 @@ struct InstructionReferenceTests {
         for name in names {
             let behavior = Interpreter.language[name]!
             let summary = behavior.summary.replacing("|", with: "\\|")
-            text += "| `\(name.rawValue)` | \(summary) | \(takes(behavior)) | \(gives(behavior)) |\n"
+            text += "| `.\(name.rawValue)` | \(summary) | \(takes(behavior)) | \(gives(behavior)) |\n"
         }
         return text
     }

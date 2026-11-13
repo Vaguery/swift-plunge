@@ -307,7 +307,7 @@ nonisolated extension Interpreter {
     }
 
     /// A lexicographic ordering comparison of two vectors — the vector analog of
-    /// `stringLT`/`stringGT`/etc. **Non-destructive**, like every comparison: it
+    /// `.stringLT`/`.stringGT`/etc. **Non-destructive**, like every comparison: it
     /// reads both operands and leaves them, and the crux pops the two it read
     /// (`Behavior.reading`). `V.Element: Comparable`, so `[9, 2] > [1, 1, 1]`
     /// (element-by-element, length only breaks ties) — Swift's built-in array
@@ -606,7 +606,7 @@ nonisolated extension Interpreter {
     ///
     /// **The order changed here, deliberately.** This used to reverse before
     /// pushing, so element 0 landed on top, while its sibling
-    /// `stringPushAll` left the *last* character on top. Two instructions
+    /// `.stringPushAll` left the *last* character on top. Two instructions
     /// doing the same job and disagreeing about a basic question, for years —
     /// each internally consistent, neither wrong on its own. Walking front to back
     /// settles it: collections are walked front-to-back.
@@ -807,7 +807,7 @@ nonisolated extension Interpreter {
     /// Runs the mouse once per element of the vector, leaving each element on the
     /// matching scalar stack for it to read.
     ///
-    /// Like `stringIterate`, this used to carry its own state in Push: every pass
+    /// Like `.stringIterate`, this used to carry its own state in Push: every pass
     /// re-pushed the *remaining* vector and a fresh token, so the shrinking
     /// remainder recorded `[previous, .vecXRest]` — one level deeper per element,
     /// O(n), and bounded only by the `maxCallWeight` backstop, which meant a long
@@ -837,8 +837,8 @@ nonisolated extension Interpreter {
             }
         )
         .described(
-            "Loops over the vector: for each element, pushes it to the \(V.Scalar.pushStack.noun) stack and runs "
-            + "the block taken from `.code`, which returns there afterward.")
+            "Loops over the vector: for each element, pushes it to the \(V.Scalar.pushStack.noun) stack and runs the " +
+            "code block taken from `.code`, which returns there afterward.")
     }
 
     /// Language assignments
@@ -1556,14 +1556,14 @@ nonisolated extension Interpreter {
     /// than being silently truncated.
     ///
     /// **Uniform or refuse.** The type is read off what actually came out, not off
-    /// the kind, so a `.code` walk over a uniform block collects fine and a mixed
+    /// the kind, so a `.code` walk over a uniform code block collects fine and a mixed
     /// one is refused. Two refusals are worth knowing: an iterator over a
     /// *string's elements* emits `.char`s, and there is no vector of chars — that
     /// is what `.iteratorFromStringLetters` is for, which emits one-character
-    /// strings. And a block of instructions is pending work rather than values —
+    /// strings. And a code block of instructions is pending work rather than values —
     /// note it is the *contents* that decide that, not the iterator's `into:` aim:
     /// `into:` says where a played pass sends its element, and collecting never
-    /// plays, so a block of ints aimed at `.exec` collects like any other.
+    /// plays, so a code block of ints aimed at `.exec` collects like any other.
     ///
     /// **A refusal hands the iterator back**, as the setters do: an instruction
     /// that cannot use a loop should not also destroy it. A *success* consumes it
@@ -1572,10 +1572,10 @@ nonisolated extension Interpreter {
     ///
     /// **With a body, it collects what the body makes** (since
     /// 2026-11-09): each element is executed and then the body runs, in a fresh
-    /// sub-interpreter, as `iteratorPlay` would run them, and the last value
+    /// sub-interpreter, as `.iteratorPlay` would run them, and the last value
     /// pushed is that element's result (a body that pushes nothing leaves the
     /// element). This is the stack-fed map: `( .intDup .intMultiply )` squares,
-    /// with no `.inputN` hole, beside the input-fed `vecXMap`. The results are
+    /// with no `.inputN` hole, beside the input-fed `.vecXMap`. The results are
     /// uniform or refused, and chars collect into a string, as map's do. Steps
     /// are charged to the run.
     static let vecFromIterator_Behavior =
@@ -1660,8 +1660,8 @@ nonisolated extension Interpreter {
         }
     )
     .described(
-        "Drains an iterator into a vector of what it emits, or of what its block makes of each (chars then make a "
-        + "string); refuses plain chars or mixed types, handing the iterator back.")
+        "Drains an iterator into a vector of what it emits, or of what its code block makes of each (chars then make " +
+        "a string); refuses plain chars or mixed types, handing the iterator back.")
 
 
     static let vectorSharedBehaviors: [PushInstruction: Behavior] =

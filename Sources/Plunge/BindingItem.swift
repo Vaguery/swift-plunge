@@ -20,7 +20,7 @@
 /// - **The key is `value`**, as an iterator's cursor is: the part a pair is
 ///   addressed by.
 ///
-/// A literal pair in a program lands on `.binding`, as a block lands on `.code`.
+/// A literal pair in a program lands on `.binding`, as a code block lands on `.code`.
 /// One made by a binder records how to make it again (`BindingItem.rebuilt`).
 public nonisolated struct BindingItem: Item, Pretty {
     /// The key.
@@ -38,6 +38,7 @@ public nonisolated struct BindingItem: Item, Pretty {
     public var callWeight: Int { Int(callStorage.measure.weight) }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
+    /// Creates a binding of `key` to `bound`.
     public init(key: Int, bound: any Item, call: [any Item] = []) {
         self.value = key
         self.bound = bound
@@ -62,7 +63,7 @@ public nonisolated struct BindingItem: Item, Pretty {
     }
 
     /// `⟨3 ↦ 'a'⟩`. Rendered by `NestedRendering`, since the value can be a
-    /// block holding pairs.
+    /// code block holding pairs.
     public func pretty() -> String {
         NestedRendering.render(self)
     }
@@ -88,7 +89,7 @@ nonisolated extension BindingItem {
     ///     5 .intRef .intPop .intPop .intRef_actuallyWas_12 .bindingRekey
     ///
     /// `key` carries its own history (a stand-in for a fresh key, or the
-    /// argument a `bindingRekey` was given). Nil for an item with no binder.
+    /// argument a `.bindingRekey` was given). Nil for an item with no binder.
     static func rebuilt(binding bound: any Item, to key: any Item) -> [any Item]? {
         guard let stack = PushStack.defaultStack(for: bound), let binder = binders[stack] else { return nil }
         return [bound, InstructionItem(binder), InstructionItem(.intPop), InstructionItem(stack.popInstruction),

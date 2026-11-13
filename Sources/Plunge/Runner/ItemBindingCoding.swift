@@ -5,15 +5,16 @@
 //  Created by Bill Tozier on 7/13/26.
 //
 
-/// Shared Codable bridging for instruction-keyed item maps (`inputs`,
-/// `constants`), which hold the non-Codable `any Item` existential.
+/// Encodes and decodes maps from instructions to items, such as a training
+/// case's inputs or an individual's constants.
 ///
-/// A binding map serializes as a `[String: AnyItem]` keyed by the instruction's
-/// raw name. On decode, a key that is not a valid instruction token is skipped
-/// (it cannot name a real input or constant), consistent with the Runner's
-/// degrade-don't-crash handling of malformed input.
+/// A map is encoded as a dictionary from each instruction's name to an
+/// ``AnyItem``. When decoding, a key that names no instruction is skipped.
+/// ``Individual`` and ``TrainingCase`` use this for their own `Codable`
+/// conformances; you need it only to encode such a map on its own.
 public nonisolated enum ItemBindingCoding {
 
+    /// The map as a dictionary from instruction names to wrapped items.
     public static func encode(_ bindings: [PushInstruction: any Item]) -> [String: AnyItem] {
         var encoded: [String: AnyItem] = [:]
         for (instruction, item) in bindings {
@@ -22,6 +23,7 @@ public nonisolated enum ItemBindingCoding {
         return encoded
     }
 
+    /// The map a dictionary of names and wrapped items stands for, leaving out any key that names no instruction.
     public static func decode(_ encoded: [String: AnyItem]) -> [PushInstruction: any Item] {
         var bindings: [PushInstruction: any Item] = [:]
         for (name, wrapper) in encoded {

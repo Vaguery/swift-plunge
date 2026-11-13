@@ -21,24 +21,24 @@
 public nonisolated enum Produces: Hashable, Sendable {
 
     /// One result on each listed stack (a stack may repeat), in the order
-    /// returned: `[.int]` for `intAdd`, `[.iterator, .int]` for
-    /// `iteratorPeekStride`, `[.vecInt, .vecInt]` for a cut. Empty for an
+    /// returned: `[.int]` for `.intAdd`, `[.iterator, .int]` for
+    /// `.iteratorPeekStride`, `[.vecInt, .vecInt]` for a cut. Empty for an
     /// instruction that only consumes.
     case results([PushStack])
 
     /// Any number of results, all on `stack`, how many decided by the arguments:
-    /// `codePushAllFunctions` pushes every function a block yields, which may be
+    /// `.codePushAllFunctions` pushes every function a code block yields, which may be
     /// none.
     case several(PushStack)
 
     /// One of a few fixed result lists, chosen by the arguments' values: an
     /// iterator getter's result type follows the iterator's kind, a setter that
     /// finishes its loop hands the body to `.code` instead of an iterator, and
-    /// `bindingUnpack` puts a value on whichever stack it belongs to.
+    /// `.bindingUnpack` puts a value on whichever stack it belongs to.
     case alternatives([[PushStack]])
 
     /// One literal on `.exec`, which rests on `stack` one step later: a deferred
-    /// push (the constants, `int0`…`vecString9`).
+    /// push (the constants, `.int0`…`.vecString9`).
     case deferred(PushStack)
 
     /// The value bound to the instruction, deferred like a constant. Its stack is
@@ -48,7 +48,7 @@ public nonisolated enum Produces: Hashable, Sendable {
 
     /// An iterator loop delivering elements to `stack` over the following steps:
     /// a promise, returned as an iterator and `.iteratorPlay`, not the elements
-    /// (`vecIntPushAll`, `stringPushAllWords`).
+    /// (`.vecIntPushAll`, `.stringPushAllWords`).
     case delivery(PushStack)
 
     /// Value-blind changes to `stack`'s positions — deleting, copying, moving —

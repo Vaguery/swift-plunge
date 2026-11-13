@@ -183,8 +183,8 @@ nonisolated extension Interpreter {
         }
         .described("Takes the character at index i, clamped into range; refuses the empty string.")
 
-    /// `stringNth` without consuming: the string and the index stay where they
-    /// were. `stringNth` itself still consumes, so an element's
+    /// `.stringNth` without consuming: the string and the index stay where they
+    /// were. `.stringNth` itself still consumes, so an element's
     /// address crux stays `s 2 .stringNth`.
     static let stringPeekNth_Behavior =
         Behavior.extracting(.stringPeekNth, reads: StringItem.self, IntItem.self) { x, y throws(Refusal) in
@@ -198,7 +198,7 @@ nonisolated extension Interpreter {
 
     /// Pushes every character of a string to `.string` as a one-character
     /// *string* — not a char, which is the whole of the difference from
-    /// `stringPushAll` — one per pass, front to back.
+    /// `.stringPushAll` — one per pass, front to back.
     ///
     /// One element per Character (grapheme), which the `.letters` projection gets
     /// by indexing rather than by `split(separator: "")`, whose empty-separator
@@ -348,10 +348,10 @@ nonisolated extension Interpreter {
                    "no words gives nothing.")
 
     /// The `n`th whitespace-delimited word of a string, the index clamped to the
-    /// word count like its `stringNth` sibling. A string with no words is an
+    /// word count like its `.stringNth` sibling. A string with no words is an
     /// error: there is no word to return.
     ///
-    /// Added for `stringPushAllWords`'s iterator to have something honest to record, but
+    /// Added for `.stringPushAllWords`'s iterator to have something honest to record, but
     /// useful in its own right.
     static let stringNthWord_Behavior =
         // Written order `[string, index]`, matching `stringNth` and the four
@@ -368,7 +368,7 @@ nonisolated extension Interpreter {
         .described("Takes the whitespace-separated word at index i, clamped into range; refuses a string with no " +
                    "words.")
 
-    /// `stringNthWord` without consuming: the string and the index stay.
+    /// `.stringNthWord` without consuming: the string and the index stay.
     static let stringPeekNthWord_Behavior =
         Behavior.assembling(.stringPeekNthWord, reads: StringItem.self, IntItem.self,
                             gives: StringItem.self) { x, y throws(Refusal) in
@@ -383,8 +383,8 @@ nonisolated extension Interpreter {
                    + "index; refuses a string with no words.")
 
     /// Snips a string into two pieces at the indexed position, pushing **both** to
-    /// `.string`: the prefix deeper, the suffix on top — so `stringCut` then
-    /// `stringConcat` is the identity (concat consumes the deeper piece first).
+    /// `.string`: the prefix deeper, the suffix on top — so `.stringCut` then
+    /// `.stringConcat` is the identity (concat consumes the deeper piece first).
     ///
     /// The index names a **gap** and is clamped to `0…count` (`Position.gap`): a
     /// cut at 0 gives an empty prefix, a cut at the count an empty suffix, and
@@ -432,7 +432,7 @@ nonisolated extension Interpreter {
     /// Runs the mouse once per character of the string, leaving each character on
     /// `.char` for it to read.
     ///
-    /// **The mouse** is the loop body — the block re-supplied to `.code` on every
+    /// **The mouse** is the loop body — the code block re-supplied to `.code` on every
     /// pass, which is why it survives being consumed. The name is inherited; the
     /// iterator holds it now, and the re-supply is gone with everything else the
     /// loop used to rebuild.
@@ -462,8 +462,8 @@ nonisolated extension Interpreter {
                 )
             }
         )
-        .described("Runs the block once per character, pushing that char before each pass; the empty string makes " +
-                   "no passes, and the block ends on `.code`.")
+        .described("Runs the code block once per character, pushing that char before each pass; the empty string " +
+            "makes no passes, and the code block ends on `.code`.")
 
     /// Pushes every character of a string to `.char`, **one per pass**, front to
     /// back — so the last character ends up on top.
@@ -585,7 +585,7 @@ nonisolated extension Interpreter {
     // scalars.
 
     /// The `call` of a string read from `chars` (in string order): re-push them,
-    /// read them with `stringReadItems`, and pop what was read.
+    /// read them with `.stringReadItems`, and pop what was read.
     static func charsCrux(_ chars: [CharItem]) -> [any Item] {
         Behavior.reading(
             [.char: chars.count],
@@ -596,7 +596,7 @@ nonisolated extension Interpreter {
 
     /// A string of the top `k` chars, leaving them in place; `k` is clamped to
     /// what there is. Top-first, reversed, so the inverse of
-    /// `stringPushAll`, as `vecXReadItems` is of `vecXPushAll`.
+    /// `.stringPushAll`, as `.vecXReadItems` is of `.vecXPushAll`.
     static let stringReadItems_Behavior =
         Behavior.contextRead(.stringReadItems, takes: [.int], observes: [.char], produces: .results([.string])) { collected, context in
             let n = (collected[0] as! IntItem).value
@@ -612,7 +612,7 @@ nonisolated extension Interpreter {
             + "depth; the top char comes last.")
 
     /// A string of every char on `.char`, leaving them; empty if there are none.
-    /// Its crux reads them back with `stringReadItems`, so it composes.
+    /// Its crux reads them back with `.stringReadItems`, so it composes.
     static let stringReadStack_Behavior =
         Behavior.contextRead(.stringReadStack, observes: [.char], produces: .results([.string])) { _, context in
             let chars = Array(context.items(of: .char)).map { $0 as! CharItem }.reversed().map { $0 }

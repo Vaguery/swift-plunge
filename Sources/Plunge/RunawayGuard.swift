@@ -6,7 +6,7 @@
 //  SizeLimits) bound how large a single item or stack may get, but a tight
 //  loop that piles items still burns time and memory right up to the cap on
 //  every run. This guard catches that pattern *early* and stops the run with a
-//  diagnosable `RUNAWAY:` marker, so a genetic-programming search gets an error
+//  diagnosable `RUNAWAY:` marker, so a genetic programming search gets an error
 //  result instead of a slow near-OOM crawl.
 //
 //  It fires only on two signals together:

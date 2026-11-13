@@ -17,9 +17,16 @@
 //  (`.execDoTimes`, no per-pass index); varying-index loops (`.execDoRange`) and
 //  recursion are the deferred harder cases.
 //
+/// Shortens a crux by folding its repeats into loops.
+///
+/// A counted loop that builds up one value leaves a crux with the loop's body
+/// written out once for each pass. ``compressed(_:)`` rewrites such a run as
+/// the body, a count and `.execDoTimes`, which runs to the same value. The
+/// interpreter does this for the histories it records; these functions do it
+/// for a crux you already hold. See <doc:Provenance>.
 public nonisolated enum CruxCompression {
 
-    /// Collapse the longest repeated trailing block in a flat crux into a counted
+    /// Collapse the longest repeated trailing code block in a flat crux into a counted
     /// loop. Returns the input unchanged when no worthwhile repeat is found.
     ///
     /// Compose it at the boundary where a crux is rendered or stored — e.g.

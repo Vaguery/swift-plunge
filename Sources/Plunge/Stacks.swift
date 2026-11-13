@@ -9,6 +9,11 @@ import Foundation
 import DequeModule
 
 
+/// The interpreter's stacks, one for each type of item.
+///
+/// Each stack holds items of one type, with two exceptions: `.exec` holds the
+/// program still to run, and so can hold anything, and `.error` collects
+/// records of what went wrong. See <doc:ThePushLanguage>.
 public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, Codable, Sendable {
     case bool, int, double, code, exec, char, string
     case vecBool, vecInt, vecDouble, vecString
@@ -18,6 +23,7 @@ public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, 
     case error
 
 
+    /// Orders `.exec` first and the other stacks by name, for display.
     public static func < (lhs: PushStack, rhs: PushStack) -> Bool {
         if lhs == .exec {
             return true
@@ -39,7 +45,7 @@ public nonisolated enum PushStack: String, CaseIterable, Comparable & Hashable, 
 }
 
 nonisolated extension PushStack {
-    /// What one item of this stack is called in prose: "an int", "a block", "a
+    /// What one item of this stack is called in prose: "an int", "a code block", "a
     /// vector of strings". For the instruction summaries of generated families.
     var noun: String {
         switch self {
@@ -48,7 +54,7 @@ nonisolated extension PushStack {
         case .double: "double"
         case .char: "char"
         case .string: "string"
-        case .code: "block"
+        case .code: "code block"
         case .exec: "pending item"
         case .iterator: "iterator"
         case .binding: "binding"
@@ -61,12 +67,12 @@ nonisolated extension PushStack {
         }
     }
 
-    /// `noun` with its article: "an int", "a block".
+    /// `noun` with its article: "an int", "a code block".
     var aNoun: String {
         ("aeiou".contains(noun.first!) ? "an " : "a ") + noun
     }
 
-    /// `noun` for several items: "ints", "blocks", "vectors of strings".
+    /// `noun` for several items: "ints", "code blocks", "vectors of strings".
     var plural: String {
         switch self {
         case .vecBool, .vecInt, .vecDouble, .vecString: "vectors" + noun.dropFirst("vector".count)
@@ -76,9 +82,11 @@ nonisolated extension PushStack {
 }
 
 nonisolated extension PushStack: CustomStringConvertible {
-    /// The case name. Without this, interpolating a stack (`"missing args: .\(stack)"`)
-    /// falls back to runtime reflection, which profiling caught allocating in the
-    /// step loop. Raw values are the case names, so the text is unchanged.
+    // The case name. Without this, interpolating a stack (`"missing args: .\(stack)"`)
+    // falls back to runtime reflection, which profiling caught allocating in the
+    // step loop. Raw values are the case names, so the text is unchanged.
+    //
+    /// The stack's name.
     public var description: String { rawValue }
 }
 
@@ -129,7 +137,7 @@ nonisolated extension PushStack {
 /// `map` and `append` store each element through the standard library's
 /// `_appendElementAssumeUniqueAndCapacity`, which the optimizer specializes from
 /// taking an `any Item` to a generic over the opened type (the `Tf4…e` symbols).
-/// For an item held in a heap box (a block, an iterator) that means making the box
+/// For an item held in a heap box (a code block, an iterator) that means making the box
 /// unique, which copies the item when an argument shares it, then copying the
 /// value out and boxing it afresh in the array: two allocations and a full copy
 /// per argument, on every step (Phase 4 profile). `initialize(to:)` is inlined,
@@ -189,7 +197,7 @@ nonisolated struct StackSet: Sendable {
     /// The item at `index` on `stack` (0 is the top), or nil past the bottom.
     ///
     /// A plain read. `stacks[stack]![index]` goes through the subscript's mutating
-    /// accessor, and a mutable access to an item held in a heap box (a block, an
+    /// accessor, and a mutable access to an item held in a heap box (a code block, an
     /// iterator) copies the whole item if anything else shares the box, as an
     /// argument array does. The Phase 4 profile found that copy in every
     /// `Behavior.act`.
@@ -203,7 +211,7 @@ nonisolated struct StackSet: Sendable {
     ///
     /// A read, on purpose. Summing through `stacks[stack]![i].weight` in the
     /// interpreter went through the subscript's mutating accessor, and a mutable
-    /// access to an item held in a heap box (a block, an iterator) makes the box
+    /// access to an item held in a heap box (a code block, an iterator) makes the box
     /// unique first: with a Behavior's argument array still holding the same box,
     /// that copied the whole item just to read one integer of it (Phase 4 profile).
     func weight(ofTop count: Int, on stack: PushStack) -> Int {

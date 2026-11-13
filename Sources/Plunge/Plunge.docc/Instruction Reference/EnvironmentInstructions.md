@@ -8,25 +8,25 @@ These instructions read the program's environment (its inputs and the interprete
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `errorMissingArgCount` | Pushes how many instructions so far found too few arguments to run. | — | `int` |
-| `errorMissingConstantCount` | Pushes how many constant reads (`.int3` and the like) so far found no constant assigned. | — | `int` |
-| `errorMissingInputCount` | Pushes how many input reads so far found no input supplied. | — | `int` |
-| `errorPreviousStep` | Pushes whether the step just before this one recorded an error. | — | `bool` |
-| `errorStackDepth` | Pushes how many errors the run has recorded on `.error`. | — | `int` |
-| `input0` | Pushes input 0's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input1` | Pushes input 1's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input2` | Pushes input 2's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input3` | Pushes input 3's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input4` | Pushes input 4's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input5` | Pushes input 5's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input6` | Pushes input 6's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input7` | Pushes input 7's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input8` | Pushes input 8's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `input9` | Pushes input 9's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
-| `pushStepCount` | Pushes how many steps the run has completed, not counting this one. | — | `int` |
+| `.errorMissingArgCount` | Pushes how many instructions so far found too few arguments to run. | — | `int` |
+| `.errorMissingConstantCount` | Pushes how many constant reads (`.int3` and the like) so far found no constant assigned. | — | `int` |
+| `.errorMissingInputCount` | Pushes how many input reads so far found no input supplied. | — | `int` |
+| `.errorPreviousStep` | Pushes whether the step just before this one recorded an error. | — | `bool` |
+| `.errorStackDepth` | Pushes how many errors the run has recorded on `.error`. | — | `int` |
+| `.input0` | Pushes input 0's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input1` | Pushes input 1's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input2` | Pushes input 2's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input3` | Pushes input 3's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input4` | Pushes input 4's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input5` | Pushes input 5's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input6` | Pushes input 6's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input7` | Pushes input 7's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input8` | Pushes input 8's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.input9` | Pushes input 9's value onto its own stack, by way of `.exec`; refuses when that input is unbound. | — | the input's type |
+| `.pushStepCount` | Pushes how many steps the run has completed, not counting this one. | — | `int` |
 
 ## Output
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `printNewline` | Prints a newline to the output. | — | the printout |
+| `.printNewline` | Prints a newline to the output. | — | the printout |

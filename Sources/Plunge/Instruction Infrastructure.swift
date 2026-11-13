@@ -11,6 +11,13 @@ import Foundation
 
 // Propeller replica language
 
+/// Every instruction in the language.
+///
+/// An instruction's raw value is its name, the one the
+/// <doc:InstructionReference> lists it under. In a program an instruction is
+/// wrapped in an ``InstructionItem``; inside `program { … }` it can be written
+/// bare. To ask what an instruction does, use ``Runner/summary(of:)`` and
+/// ``Runner/signature(of:)``.
 public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable {
 
 
@@ -47,7 +54,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     //
     case codeConcat, codeContainer, codeContains, codeCutAtGap, codeCutRoot, codeDepth, codeDo, codeFlatten, codeFlattenOnce, codeFlattenNth, codeFlattenRange, codePair, codeDoIf, codeIndexOf, codeOccurrencesOf, codeInsertAtGap, codeItemIsEmpty, codeIterate, codeIterateEmit, codeIterateDo, codeIterateRoot, codeLength, codeLengthRoot, codeNth, codeNthRoot, codePeekNth, codePeekNthRoot, codeDoNth, codeDoNthRoot, codeEmitNth, codeEmitNthRoot, codeRemoveNth, codeReplace, codeReplaceFirst, codeWidth, codeWrap, codeWrapRange
 
-    /// Drive an iterator to exhaustion and box everything it emitted into a block.
+    /// Drive an iterator to exhaustion and box everything it emitted into a code block.
     ///
     /// **The general case of collecting**, and the reason it never refuses: a
     /// CodeItem is this language's vector-of-anything, so *every* iterator has an
@@ -75,7 +82,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     /// loop to displace it with. A lone iterator could be re-aimed or killed, never
     /// shelved.
     ///
-    /// `( «iter» ) .codeDo` gives it back: the block unwraps onto `.exec`, and an
+    /// `( «iter» ) .codeDo` gives it back: the code block unwraps onto `.exec`, and an
     /// iterator is not an instruction, so `pushDefault` routes it home to
     /// `.iterator`. Nothing new was needed for the return trip.
     case iteratorQuote
@@ -452,9 +459,11 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 typealias PI = PushInstruction
 
 nonisolated extension PushInstruction: CustomStringConvertible {
-    /// The case name, so interpolating an instruction never falls back to runtime
-    /// reflection (profiling caught it in the step loop). Raw values are the case
-    /// names, so the text is unchanged.
+    // The case name, so interpolating an instruction never falls back to runtime
+    // reflection (profiling caught it in the step loop). Raw values are the case
+    // names, so the text is unchanged.
+    //
+    /// The instruction's name.
     public var description: String { rawValue }
 }
 

@@ -1,7 +1,8 @@
 # The Plunge Push Interpreter
 
 A Swift package containing the infrastructure to build and run an interpreter for
-a new dialect (called Plunge) of the [Push](https://faculty.hampshire.edu/lspector/push.html) programming language for genetic programming (GP).
+Plunge, a new dialect of the [Push](https://faculty.hampshire.edu/lspector/push.html)
+programming language for genetic programming.
 
 Push is a stack-based language designed to be written by evolution and related
 metaheuristics. Any arbitrary sequence of Push tokens can be run,
@@ -78,16 +79,23 @@ It needs Swift 6.2 and, on Apple platforms, macOS or iOS 26.
 ## Documentation
 
 The documentation is a DocC catalog in `Sources/Plunge/Plunge.docc/`:
-getting started, an introduction to the language, how the interpreter runs,
-articles on its features, the full API, and a reference page for every
-instruction. To read it locally:
+
+- getting started, and a vocabulary of the terms the rest uses;
+- an introduction to the language, how the interpreter runs, and why Plunge
+  differs from other Push interpreters where it does;
+- how to use the library from a search: writing programs, inputs and
+  constants, evaluating, observing a run, errors, and limits;
+- articles on the language's features;
+- the full API, and a reference page for every instruction.
+
+To read it locally:
 
 ```sh
 swift package --disable-sandbox preview-documentation --target Plunge
 ```
 
 To work on the code, see [ARCHITECTURE.md](ARCHITECTURE.md) and
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md). To write about it, see [STYLE.md](STYLE.md).
 
 ## Testing
 

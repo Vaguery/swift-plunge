@@ -5,22 +5,28 @@
 //  Created by Bill Tozier on 6/3/26.
 //
 
-/// The execution-relevant payload for one candidate: a ready-to-run `program`
-/// plus the constant bindings that parameterize it.
+/// A program to evaluate, with an identifier and the values of its constants.
 ///
-/// This is deliberately *not* the whole individual the Searcher works with. The
-/// Searcher's individual also carries a source genome (in a `GenomeEncoding`
-/// scheme) and other bookkeeping; only the parts that affect execution and
-/// evaluation are sent here. The `program` is already translated — the Runner
-/// slots it straight into an `Interpreter` and never translates a genome.
+/// This is only the part of a candidate that affects how it runs. Whatever else
+/// a search keeps about it (a genome it was translated from, its ancestry, its
+/// scores) stays with the search. The library is given a program that is ready
+/// to run, and never translates one.
 ///
-/// Constants are keyed by their instruction token (e.g. `.int3`), so they can be
-/// optimized independently of the program's structure.
+/// Constants are keyed by their instruction, such as `.int3`, so that a search
+/// can tune them without changing the program's structure. See
+/// <doc:InputsAndConstants>.
 public nonisolated struct Individual: Identifiable, Sendable {
+    /// An identifier, unique among the individuals evaluated together. Pairings and
+    /// results refer to the individual by it.
     public let id: String
+    /// The items to run, first to last.
     public let program: [any Item]
+    /// The value of each constant the program may use, keyed by its instruction. A
+    /// value of the wrong type for its instruction is ignored when the run is
+    /// loaded.
     public let constants: [PushInstruction: any Item]
 
+    /// Creates an individual. Without constants, every constant instruction in the program leaves an error.
     public init(id: String,
          program: [any Item],
          constants: [PushInstruction: any Item] = [:]) {

@@ -9,7 +9,23 @@ import DequeModule
 import Foundation
 
 
+/// The limits that keep a run finite, and the switches for the guards and for
+/// provenance recording.
+///
+/// Every property has a default, so `InterpreterSettings()` is a complete,
+/// usable value. Change the ones you need and pass the result in a
+/// ``RunnerConfiguration``:
+///
+/// ```swift
+/// var settings = InterpreterSettings()
+/// settings.stepLimit = 2_000
+/// let configuration = RunnerConfiguration(settings: settings)
+/// ```
+///
+/// <doc:LimitsAndGuards> explains what each limit bounds, where its default
+/// came from, and what a program meets when it reaches one.
 public nonisolated struct InterpreterSettings: Sendable, Codable {
+    /// Creates settings with every default.
     public init() {}
 
     // Numeric magnitude caps are intentionally omitted: Int behaviors use
@@ -40,14 +56,26 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // 7.8%, the median and 90th-percentile crux are unchanged, and only the
     // longest grows (tenfold); the time goes to the runaways. Function derivation
     // and application spend from it too, so 1,000 starved them.
+    /// The most steps one run may take, counting the steps of every sandbox it
+    /// starts. A run that reaches the limit stops where it is, without an error.
+    ///
+    /// Keep it larger than ``maxVectorLength`` and ``maxStringLength``, or a
+    /// program can hold a collection too long to walk to the end.
     public var stepLimit: Int = 10_000
     // INHERITED, loosely after propeller's limits.cljc:
     //   https://github.com/lspector/propeller/blob/master/src/propeller/push/limits.cljc
     // None of these five was chosen here on its own merits.
+    /// The most items any one stack may hold. A push onto a full stack is refused.
     public var maxStackDepth: Int = 10_000
+    /// The most characters a string may have. A longer result is refused.
     public var maxStringLength: Int = 1_000
+    /// The most elements a vector may have. A longer result is refused.
     public var maxVectorLength: Int = 1_000
+    /// The most items a code block may hold, counted at every level of nesting. A larger result is refused.
     public var maxCodePoints: Int = 1_000
+    /// How deeply code blocks and iterators may nest inside one item. A deeper result is
+    /// refused. This protects the thread's stack as well as memory, so raise it
+    /// with care.
     public var maxCodeDepth: Int = 1_000
     // CHOSEN. Total recursive content (Item.weight) allowed in a single pushed
     // item. Supplements the per-dimension caps above to bound nested content — a
@@ -55,6 +83,11 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // count-only caps cannot see. The number is a policy: large enough not to
     // refuse anything the per-dimension caps already allow, small enough to catch
     // their product. Nothing else depends on it.
+    /// The most content one item may hold in total, summed through its nesting.
+    ///
+    /// The limits on length each count one dimension. This one bounds what they
+    /// can't see separately, such as a vector of long strings or a code block whose
+    /// items are all large.
     public var maxItemWeight: Int = 100_000
     // CHOSEN, and the most forgiving number here: over-budget provenance is
     // ELIDED rather than refused, and eliding costs the explanation but never the
@@ -70,6 +103,12 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // as the crux, which builds each shared node once (`CruxSharing`), and kept
     // if that fits. That used to be
     // the last unbounded dimension in the system.
+    /// The most history one item may keep, measured as the length of its crux.
+    ///
+    /// A history over this limit is not refused. It is *elided*: the item keeps its
+    /// value, and its history is replaced by a stand-in that says so
+    /// (``StandInItem``). Only the explanation is lost, never the value, so this
+    /// limit can be strict. It matters only when ``recordsProvenance`` is on.
     public var maxCallWeight: Int = 10_000
     // DERIVED from the stack a concurrency worker thread gets (512 KB), and NOT a
     // preference. The deepest provenance a pushed item may keep, elided like
@@ -79,6 +118,12 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // releasing a 2,463-deep tree on a worker thread, and dropping a 5,000-deep
     // chain there crashes outright (2,000 does not). 1,000 leaves room for frames
     // larger than that measurement's. Raise it only for runs on big-stack threads.
+    /// How deeply one item's history may nest. A deeper history is elided, as for
+    /// ``maxCallWeight``.
+    ///
+    /// This number follows from the size of the stack a concurrency thread gets,
+    /// because walking or freeing a history costs stack frames for every level.
+    /// Raise it only for runs on threads with larger stacks.
     public var maxCallDepth: Int = 1_000
     // (`maxIterations`, which clamped a counted loop's promised passes to 100 so
     // that it finished and its crux could be read back, was deleted 2026-11-08:
@@ -90,6 +135,9 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // period, *and* a looping instruction pending on `.exec`) and stop the run
     // early with a `RUNAWAY:` marker. Diagnoses the cause rather than blindly
     // truncating; see `Interpreter.enforceRunawayGuard`.
+    /// Whether to stop a run that shows the signature of a runaway loop: a stack
+    /// piling up repeats while a looping instruction is still pending on `.exec`.
+    /// The guard leaves an error that begins `RUNAWAY:` and empties `.exec`.
     public var runawayGuardEnabled = true
 
     // The one GLOBAL memory bound. Every other cap is local — a single item's
@@ -101,6 +149,12 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // stopped with a `MEMORY:` marker, exactly as the runaway guard stops a piling
     // loop — so `stepLimit` can rise freely for real algorithms without memory
     // following it. `Int.max` disables the guard.
+    /// The most content all the stacks together may hold. A run that passes it is
+    /// stopped, with an error that begins `MEMORY:`.
+    ///
+    /// Every other limit bounds one item or one stack, and nothing bounds their
+    /// sum; this is the one limit on a run's total memory. `Int.max` turns the
+    /// guard off.
     public var maxLiveWeight = 50_000_000
 
     // Whether Behaviors record `call` provenance (the source of `crux()`).
@@ -118,6 +172,11 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     // itself. `Provenance Off Parity Tests` holds the whole language to that. A
     // behavior that *reads* a crux to do its work must guard with
     // `Interpreter.requiresProvenance(_:)`.
+    /// Whether items record how they were made, so that ``Item/crux()`` can write
+    /// a program that reproduces them. Off by default.
+    ///
+    /// Recording costs time and memory, and never changes what a program computes.
+    /// Turn it on for the runs you want explained. See <doc:Provenance>.
     public var recordsProvenance = false
 
 
@@ -130,7 +189,7 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     /// for that budget and can afford far more.
     ///
     /// Without this the interpreter can refuse its own reconstruction. A walking
-    /// `IteratorItem` may hold a 2,432-point origin block and rest on `.iterator`
+    /// `IteratorItem` may hold a 2,432-point origin code block and rest on `.iterator`
     /// quite legally — `SizeLimits.overflow(of:)` only measures `flatSize` when
     /// the item *is* a `CodeItem`, and an iterator is not. But
     /// `IteratorItem.reconstruction()` re-pushes that origin **through `.code`**,
@@ -246,7 +305,7 @@ nonisolated final class Interpreter {
     /// The stack of the most recent push of a value: any stack but `.exec`,
     /// `.error` and `.function` (where a starvation shelves the instruction, which
     /// is not something the program produced). An iterator's body, run in a
-    /// sub-interpreter by `vecFromIterator`, returns the top of this stack, "the
+    /// sub-interpreter by `.vecFromIterator`, returns the top of this stack, "the
     /// last thing it produced". One store per push.
     @exclusivity(unchecked) var lastPush: PushStack?
     /// The next fresh `.binding` key. Reset at every load to the number
@@ -271,10 +330,10 @@ nonisolated final class Interpreter {
     static let maxSandboxDepth = 50
 
     /// Every item pushed, when non-nil: a function derivation's sandbox reads
-    /// what each step made (`codePushAllFunctions`). Nil everywhere else.
+    /// what each step made (`.codePushAllFunctions`). Nil everywhere else.
     var pushLog: [(stack: PushStack, item: any Item)]?
-    /// The functions each block has yielded this run, by the block's contents
-    /// (nil for a block whose derivation was refused): a block's derivation costs
+    /// The functions each code block has yielded this run, by the code block's contents
+    /// (nil for a code block whose derivation was refused): a code block's derivation costs
     /// its steps the first time a run makes it, and later copies are free.
     var derivations: [String: [FunctionItem]?] = [:]
     /// The step during which something was last placed on `.error`; -2 means
@@ -366,7 +425,7 @@ nonisolated final class Interpreter {
     /// to: .error)`; the `Tf4e` symbols). The specialized body then has to make a
     /// fresh `any Item` for every helper it hands the item to (`requireAccepts`,
     /// `overflow`, `place`, …), and an item too big for an existential's three inline
-    /// words (a block, an error, an iterator) gets a new heap box each time: several
+    /// words (a code block, an error, an iterator) gets a new heap box each time: several
     /// allocations per push, which the Phase 4 profile found. Through the struct, a
     /// concrete caller boxes the item once, at the call, and the box is passed along.
     struct BoxedItem { let item: any Item }

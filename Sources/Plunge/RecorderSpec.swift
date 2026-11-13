@@ -5,23 +5,17 @@
 //  Created by Bill Tozier on 7/13/26.
 //
 
-/// A declarative, `Sendable` description of *what* an observer should read from
-/// an `Interpreter` on each step, without hand-writing a closure.
+/// What a recorder looks at after each step of a run.
 ///
-/// A `RecorderSpec` carries no closure, so it can be constructed by a search
-/// process (potentially across a process or network boundary) and resolved into
-/// a concrete `Recorder` locally by the `Runner`/`Interpreter` that owns the
-/// run. The closure it resolves into can read any interpreter state; these cases
-/// name the observations that have proven useful so far, and the set is meant to
-/// grow.
+/// A target is a plain value with no closure in it, so it can be encoded and
+/// sent to wherever the run happens. The cases name the observations that have
+/// proven useful so far.
 ///
-/// Item-valued targets (`top`, `second`, `constant`) collect the `any Item`
-/// itself rather than an unwrapped scalar, so the observation retains the item's
-/// `call` provenance (`crux`) for downstream analysis: in memory, and across a
-/// process boundary when encoded as an `ItemArchive` (`AnyItem`, the default
-/// encoding, keeps values only). Scalar targets that have
-/// no underlying item (`count`, `isEmpty`, `printout`, `counter`) collect their
-/// natural value type.
+/// Targets that observe an item (`top`, `second`, `nth`) collect the item
+/// itself, so the reading keeps the item's history for as long as it stays in
+/// memory. Encoded, a reading keeps its value only; see ``ItemArchive`` for
+/// keeping histories. The other targets collect a plain int, bool or string.
+/// See <doc:ObservingARun>.
 public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// The top item of a stack, or `nil` when the stack is empty.
     case top(PushStack)
@@ -35,9 +29,9 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case count(PushStack)
     /// Whether a stack is currently empty (`Bool`).
     case isEmpty(PushStack)
-    /// The accumulated `printout` string of the interpreter (`String`).
+    /// Everything the program has printed so far (`String`).
     case printout
-    /// The interpreter's step counter (`Int`).
+    /// How many steps the run has taken (`Int`).
     case counter
 }
 
@@ -60,15 +54,14 @@ nonisolated extension RecorderTarget {
 }
 
 
-/// How much of the per-step observation stream a recorder keeps.
+/// How many of a recorder's readings to keep.
 ///
-/// The default `.everyStep` retains one reading per step — the longitudinal trace
-/// needed to reconstruct behavior over time. `.finalOnly` keeps just the most
-/// recent reading, overwriting each step, so the recorder holds a *single* value
-/// no matter how long the run: when only the end-of-run result is wanted (error
-/// scoring reads the final top-of-stack), this avoids retaining a full trace of
-/// provenance-carrying items per run — the dominant cost when a whole population
-/// is evaluated at once.
+/// `.everyStep`, the default, keeps one reading for each step: the whole
+/// history of the target, for tracing. `.finalOnly` keeps only the latest, so
+/// the recorder holds a single reading however long the run. When only the
+/// state at the end is wanted, as it is for scoring, `.finalOnly` avoids
+/// keeping a full trace of items and their histories for every run, which is
+/// the dominant cost of evaluating a whole population.
 public nonisolated enum RecordingPolicy: Sendable, Hashable, Codable {
     /// Keep one reading for every step (the full longitudinal trace).
     case everyStep
@@ -77,13 +70,19 @@ public nonisolated enum RecordingPolicy: Sendable, Hashable, Codable {
 }
 
 
-/// A named `RecorderTarget`. The name identifies the collected data in an
-/// `Interpreter`'s `recorders` dictionary and in the reported results.
+/// A named request to observe one thing during a run.
+///
+/// The name is the key under which the readings come back, in
+/// ``CaseResult/traces``. See <doc:ObservingARun>.
 public nonisolated struct RecorderSpec: Sendable, Hashable, Codable {
+    /// The key for this recorder's trace in ``CaseResult/traces``. Give each recorder in a configuration its own name.
     public let name: String
+    /// What to observe.
     public let target: RecorderTarget
+    /// How many readings to keep.
     public let policy: RecordingPolicy
 
+    /// Creates a recorder that keeps a reading for every step unless told otherwise.
     public init(_ name: String, observing target: RecorderTarget, keeping policy: RecordingPolicy = .everyStep) {
         self.name = name
         self.target = target
@@ -148,7 +147,7 @@ nonisolated extension Interpreter {
     }
 
     /// The data a named recorder has collected, type-erased. `nil` when no
-    /// recorder is installed under `name`.
+    /// recorder is installed under `.name`.
     func recordedData(_ name: String) -> [Any?]? {
         recorders[name]?.dataAsAnyArray
     }

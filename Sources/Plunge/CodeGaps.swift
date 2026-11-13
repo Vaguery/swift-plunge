@@ -83,7 +83,7 @@ nonisolated extension CodeItem {
     var gapCount: Int { gapTokens.count + 1 }
 
     /// Any int, landed on a real gap by clamping (`Position.gap`), so the four gap
-    /// instructions cannot drift from each other or from `codeCutRoot`.
+    /// instructions cannot drift from each other or from `.codeCutRoot`.
     func gapIndex(_ n: Int) -> Int {
         Position.gap(n, count: gapCount - 1)
     }
@@ -114,19 +114,19 @@ nonisolated extension CodeItem {
         return CodeItem(frames[0])
     }
 
-    /// A new tree with every nested block **whose head or tail gap falls in
+    /// A new tree with every nested code block **whose head or tail gap falls in
     /// `lo...hi`** replaced by its leaves.
     ///
-    /// A block's head gap is the one just inside its `open`, and its tail gap the
+    /// A code block's head gap is the one just inside its `open`, and its tail gap the
     /// one just inside its `close` — the two positions a program would name to
-    /// reach into it. Testing those rather than the block's outer edges is what
-    /// makes the operation local: a block that merely *encloses* the range has its
+    /// reach into it. Testing those rather than the code block's outer edges is what
+    /// makes the operation local: a code block that merely *encloses* the range has its
     /// head before `lo` and its tail after `hi`, so it survives, and since the
-    /// root has no tokens at all it is never flattened. Only blocks the range
+    /// root has no tokens at all it is never flattened. Only code blocks the range
     /// actually reaches into collapse.
     ///
     /// The walk is bottom-up, which reads like it might be wrong and is not: when
-    /// an outer block qualifies, `flattenedLeaves()` discards whatever its
+    /// an outer code block qualifies, `flattenedLeaves()` discards whatever its
     /// children decided anyway, so the result is the same as deciding top-down.
     /// The cursor advances over the **original** contents regardless of what is
     /// emitted, so gap positions stay those of the tree that was asked about.

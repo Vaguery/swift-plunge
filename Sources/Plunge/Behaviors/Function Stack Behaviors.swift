@@ -228,7 +228,7 @@ nonisolated extension Interpreter {
                    + "or one that cannot be collected, or when filler runs short or steps run out.")
     }()
 
-    /// `functionIterateUntil`'s orbit, or its refusal.
+    /// `.functionIterateUntil`'s orbit, or its refusal.
     static func iteratedUntil(_ step: FunctionItem, _ predicate: FunctionItem, from start: any Item,
                               _ context: ReadContext) -> [Router] {
         let instruction = PushInstruction.functionIterateUntil
@@ -287,8 +287,8 @@ nonisolated extension Interpreter {
             return [Router(.code, CodeItem(function.value,
                                            call: recording([function, InstructionItem(.codeFromFunction)])))]
         }, produces: .results([.code]))
-        .described("A function's body as a block, its holes left out: run, each hole is an argument its "
-                   + "instructions take from the stacks.")
+        .described("A function's body as a code block, its holes left out: run, each hole is an argument its " +
+            "instructions take from the stacks.")
 
     /// `function` turned into its body on `.code`, then `loop` run over it, with
     /// `arguments` back on their stacks first, in written order.
@@ -305,8 +305,8 @@ nonisolated extension Interpreter {
         Behavior.control(.functionDoTimes, takes: [.int, .function], tags: [.looping]) { a, _ in
             looped(.execDoTimes, a[1], after: [a[0]])
         }
-        .described("Repeats the top function's body as code: `n f .functionDoTimes` is "
-                   + "`n f .codeFromFunction .execDoTimes`; the body then returns to `.code` as a block.")
+        .described("Repeats the top function's body as code: `n f .functionDoTimes` is `n f .codeFromFunction " +
+            ".execDoTimes`; the body then returns to `.code` as a code block.")
 
     static let functionDoCount_Behavior =
         Behavior.control(.functionDoCount, takes: [.int, .function], tags: [.looping]) { a, _ in

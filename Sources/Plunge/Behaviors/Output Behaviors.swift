@@ -63,7 +63,7 @@ nonisolated extension Interpreter {
 
     static let codePrint_Behavior =
         Behavior.channel(.codePrint, takes: [.code]) { args in .item(args[0]) }
-        .described("Prints the top block and a newline to the output.")
+        .described("Prints the top code block and a newline to the output.")
 
 
     static var outputBehaviors: [PushInstruction: Behavior] {

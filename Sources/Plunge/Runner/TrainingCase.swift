@@ -5,16 +5,21 @@
 //  Created by Bill Tozier on 7/13/26.
 //
 
-/// One fitness case: the input bindings a program is run against, keyed by input
-/// token (e.g. `.input0`).
+/// One set of inputs to run a program on, with an identifier.
 ///
-/// Expected outputs and the reduction of observations to an error are the search
-/// process's concern, not the Runner's — the Runner returns raw observations and
-/// lets the caller score them.
+/// A training case holds inputs only. What the right answer is, and how far an
+/// observed answer is from it, are the search's concern: the library returns
+/// what it observed and leaves the scoring to the caller. See
+/// <doc:InputsAndConstants>.
 public nonisolated struct TrainingCase: Identifiable, Sendable {
+    /// An identifier, unique among the training cases evaluated together. Pairings
+    /// and results refer to the training case by it.
     public let id: String
+    /// The value of each input, keyed by its instruction, such as `.input0`. An
+    /// input can be an item of any type.
     public let inputs: [PushInstruction: any Item]
 
+    /// Creates a training case. Without inputs, every input instruction in a program leaves an error.
     public init(id: String, inputs: [PushInstruction: any Item] = [:]) {
         self.id = id
         self.inputs = inputs
