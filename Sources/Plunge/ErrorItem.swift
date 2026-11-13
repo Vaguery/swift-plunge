@@ -146,6 +146,6 @@ public nonisolated struct ErrorItem: Item, Equatable {
     }
 
     public func pretty() -> String {
-        "« ‼️ \(value) »"
+        "«error: \(value)»"
     }
 }

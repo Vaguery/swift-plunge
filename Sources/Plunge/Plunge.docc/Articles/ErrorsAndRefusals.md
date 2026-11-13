@@ -25,7 +25,7 @@ particular kind. The interpreter can also step in on its own account.
 An instruction **starves** when a stack it needs holds too few items.
 
 ```
-1 .intAdd     →  .int holds 1; .error holds « ‼️ intAdd missing args: .int »;
+1 .intAdd     →  .int holds 1; .error holds «error: intAdd missing args: .int»;
                  .function holds ƒ( ⟨int⟩ ⟨int⟩ .intAdd )
 ```
 
@@ -50,7 +50,7 @@ instructions that measure or clear a stack) can't starve.
 An instruction **refuses** when it has its arguments and can't use them:
 
 ```
-1 0 .intQuot     →  .int is empty; .error holds « ‼️ Divide by zero .intQuot: 1 / 0 »
+1 0 .intQuot     →  .int is empty; .error holds «error: Divide by zero .intQuot: 1 / 0»
 ```
 
 A refusal uses up the arguments the instruction takes (a query still leaves the
@@ -86,7 +86,7 @@ leaves the ones it only reads. Its error is of kind ``ErrorKind/notFound``:
 
 ```
 [7] [1, 2] .vecIntAdd     →  .vecInt holds [7]; .error holds
-                             « ‼️ vecIntAdd: nothing on .vecInt fits »
+                             «error: vecIntAdd: nothing on .vecInt fits»
 ```
 
 Here `.vecIntAdd` took `[1, 2]`, looked for a vector of two ints below it, and

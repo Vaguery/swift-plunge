@@ -77,6 +77,8 @@ Programs are written as the library's `pretty()` function prints them:
 | `( 1 .intAdd )` | a code block |
 | `⟨3 ↦ "x"⟩` | a binding |
 | `ƒ( ⟨int⟩ 2 .intAdd )` | a function with one `int` hole |
+| `«0→3 by 1 @2»` | an iterator |
+| `«error: intAdd missing args: .int»` | an error |
 
 - A program reads left to right in the order it runs, and an arrow shows what
   it leaves: `3 4 .intAdd  →  .int holds 7`.

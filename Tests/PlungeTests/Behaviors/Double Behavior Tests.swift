@@ -57,7 +57,7 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .error).contains("doubleAdd missing args"))
         // Transient stack state (law 4b), so a stand-in naming the instruction.
         #expect(callString(topItem(inty, .error))
-                == "( .doubleAdd_actuallyWas_« ‼️ doubleAdd missing args: .double » )")
+                == "( .doubleAdd_actuallyWas_«error: doubleAdd missing args: .double» )")
 
     }
 

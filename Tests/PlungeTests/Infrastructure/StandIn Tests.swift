@@ -66,7 +66,7 @@ struct StandInTests {
     @Test func `a missing-args error names the starved instruction and replays`() {
         let inty = run([InstructionItem(.intAdd)])
         let error = topItem(inty, .error)
-        #expect(CodeItem(error.crux()).pretty() == "( .intAdd_actuallyWas_« ‼️ intAdd missing args: .int » )")
+        #expect(CodeItem(error.crux()).pretty() == "( .intAdd_actuallyWas_«error: intAdd missing args: .int» )")
         let replay = run(error.crux())
         #expect(topItem(replay, .error).pretty() == error.pretty())
     }

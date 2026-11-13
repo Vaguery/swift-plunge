@@ -80,7 +80,7 @@ the form that ``Pretty/pretty()`` prints:
 | `⟨3 ↦ "x"⟩` | a binding of key 3 to `"x"` |
 | `ƒ( ⟨int⟩ 2 .intAdd )` | a function with one int hole |
 | `«0→5 by 1 @2»` | an iterator counting from 0 toward 5, two passes in |
-| `« ‼️ intAdd missing args: .int »` | an error |
+| `«error: intAdd missing args: .int»` | an error |
 
 A program is written left to right in the order it runs, and an arrow shows
 what it leaves:
