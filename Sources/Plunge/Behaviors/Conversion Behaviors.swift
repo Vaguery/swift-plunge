@@ -63,8 +63,9 @@ nonisolated extension Interpreter {
                 let block = a[0] as! CodeItem
                 let items = block.value
 
-                func refuse(_ why: String) -> [Router] {
-                    [Router(.error, ErrorItem("vecFromCode: \(why)").observed(by: .vecFromCode, recording))]
+                func refuse(_ why: String, _ kind: ErrorKind) -> [Router] {
+                    [Router(.error, ErrorItem("vecFromCode: \(why)", kind: kind, source: .vecFromCode)
+                        .observed(by: .vecFromCode, recording))]
                 }
 
                 // `( [1, 2, 3] )` denotes its one vector: the inverse of `vecXQuote`.
@@ -72,7 +73,7 @@ nonisolated extension Interpreter {
                 if items.count == 1, let vector = items[0] as? any VectorItem {
                     return [Router(type(of: vector).pushStack, vector)]
                 }
-                guard !items.isEmpty else { return refuse("an empty block has no element type") }
+                guard !items.isEmpty else { return refuse("an empty block has no element type", .emptyCollection) }
 
                 let call: [any Item] = [block, InstructionItem(.vecFromCode)]
                 let members = recording.pieces(items: items)
@@ -89,7 +90,7 @@ nonisolated extension Interpreter {
                         nil
                     }
                 guard let vector, let stack = PushStack.defaultStack(for: vector) else {
-                    return refuse("\(block.pretty()) is not a block of one scalar type")
+                    return refuse("\(block.pretty()) is not a block of one scalar type", .mixedTypes)
                 }
                 return [Router(stack, vector)]
             }

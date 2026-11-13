@@ -46,7 +46,7 @@ struct VectorSnapshotTests {
     @Test func `readStack on an empty stack gives an empty vector`() {
         let inty = Interpreter.recordingProvenance()
         doThis(.vecIntReadStack, to: inty)
-        #expect(stackString(inty, .vecInt) == "[ [] ]")
+        #expect(stackString(inty, .vecInt) == "[ «vecInt []» ]")
     }
 
     @Test func `a readStack vector reproduces via readItems, debris-free`() {
@@ -116,7 +116,7 @@ struct VectorSnapshotTests {
         zero.stacks[.int]!.prepend(IntItem(5))
         loadInts(zero, ints: [0])
         doThis(.vecIntReadItems, to: zero)
-        #expect(stackString(zero, .vecInt) == "[ [] ]")
+        #expect(stackString(zero, .vecInt) == "[ «vecInt []» ]")
     }
 
     @Test func `readItems is a fixed point`() {

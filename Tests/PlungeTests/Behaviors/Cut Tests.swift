@@ -101,7 +101,7 @@ struct CutTests {
         // And the crux records the *given* index, not the clamped one — it re-runs
         // through the same clamp, so it reproduces without pre-reducing.
         #expect(callString(top) == "( [1, 2, 3, 4, 5] 7 .vecIntCut .vecIntSwap .vecIntPop )")
-        #expect(reproduced(top, on: .vecInt)?.pretty() == "[]")
+        #expect(reproduced(top, on: .vecInt)?.pretty() == "«vecInt []»")
     }
 
     /// A negative index is the first gap, and `Int.min` cannot trap.
@@ -128,8 +128,8 @@ struct CutTests {
         #expect((deep as? VecIntItem)?.value == [])
         #expect((top as? VecIntItem)?.value == [])
         // Both still reproduce: an empty vector has one gap, and the cut is there.
-        #expect(reproduced(deep, on: .vecInt)?.pretty() == "[]")
-        #expect(reproduced(top, on: .vecInt)?.pretty() == "[]")
+        #expect(reproduced(deep, on: .vecInt)?.pretty() == "«vecInt []»")
+        #expect(reproduced(top, on: .vecInt)?.pretty() == "«vecInt []»")
     }
 
     @Test mutating func `a singleton has two cuts`() {

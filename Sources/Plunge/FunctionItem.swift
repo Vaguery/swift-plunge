@@ -150,10 +150,22 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
             && lhs.derivedOutput == rhs.derivedOutput && lhs.value == rhs.value
     }
 
-    /// `ƒ( ⟨int⟩ 3 .intAdd )`, each hole written as its stack. Rendered by
+    /// `«fn (int) -> int: $0 3 .intAdd»`: a signature of the holes' stacks and the
+    /// output, then the body with each hole as `$n`. Rendered by
     /// `NestedRendering`, since the body can hold code blocks that hold functions.
     public func pretty() -> String {
         NestedRendering.render(self)
+    }
+
+    /// The signature `pretty()` shows: the holes' stacks in order, then the output
+    /// stack if it is fixed, as `(int, int) -> int`, each written as its short tag
+    /// (`PushStack.tag`: `str`, `dbl`, `fn`). A bare function is marked
+    /// `bare`, because a bare function and a derived one with the same body are
+    /// different values and must not print alike.
+    var prettySignature: String {
+        let takes = "(" + holes.map(\.stack.tag).joined(separator: ", ") + ")"
+        let gives = output.map { " -> \($0.tag)" } ?? ""
+        return (isBare ? "bare " : "") + takes + gives
     }
 
     private var bareInstruction: PushInstruction? {

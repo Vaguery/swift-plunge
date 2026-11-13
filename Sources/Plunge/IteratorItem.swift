@@ -307,23 +307,22 @@ public nonisolated struct IteratorItem: Item, Pretty {
         }
     }
 
-    /// `«origin→destination by stride @cursor ↻laps silent ⤓burial body»`, with
-    /// the optional parts present only when they say something. Rendered by
-    /// `NestedRendering`, since origin and body can hold code blocks holding iterators.
+    /// `«iter 0 to 5 by 1 at 2: ( body )»`: the source in words that name the
+    /// kind (`0 to 5 by 1`, `over [1, 2, 3]`, `letters of "abc"`, `words of "a b"`,
+    /// `boxed points of ( … )`, `7 repeated 3 times`), then `at` the cursor, then
+    /// `laps n`, `silent` and `depth n` only when they say something, then the
+    /// body after a colon. Rendered by `NestedRendering`, since origin and body can
+    /// hold code blocks holding iterators.
     public func pretty() -> String {
         NestedRendering.render(self)
     }
 
-    /// The fixed text between the destination and the body: stride, cursor, laps,
-    /// the silent flag and the burial.
-    var prettyMiddle: String {
-        let by = switch kind {
-            case .counting(let stride): " by \(stride)"
-            default:                    ""
-        }
-        let deep = burial > 0 ? " ⤓\(burial)" : ""
-        let round = laps > 1 ? " ↻\(laps)" : ""
-        return "\(by) @\(value)\(round)\(emits ? "" : " silent")\(deep)"
+    /// The text after the source: the cursor, then laps, the silent flag and the
+    /// depth in `.exec`, each only when it says something.
+    var prettyState: String {
+        let round = laps > 1 ? " laps \(laps)" : ""
+        let deep = burial > 0 ? " depth \(burial)" : ""
+        return " at \(value)\(round)\(emits ? "" : " silent")\(deep)"
     }
 }
 

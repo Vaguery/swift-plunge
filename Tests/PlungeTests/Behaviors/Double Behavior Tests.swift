@@ -41,12 +41,12 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ 55.0 inf ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleAdd:"))
+        #expect(errorText(inty).contains("Overflow in .doubleAdd:"))
         #expect(callString(topItem(inty, .error)) == "( 1.7976931348623157e+308 1.7976931348623157e+308 .doubleAdd )")
 
         doThis(.doubleAdd, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleAdd:"))
+        #expect(errorText(inty).contains("Overflow in .doubleAdd:"))
         #expect(callString(topItem(inty, .error)) == "( inf 55.0 .doubleAdd )")
 
         doThis(.doubleAdd, to: inty)
@@ -54,10 +54,10 @@ struct DoubleBehaviorTests {
         // args exhausted on the third add → a missing-args error. (Was
         // `.contains("")`, a trivially-true placeholder whose overload
         // resolved differently once tests moved to the Swift 6 package.)
-        #expect(stackString(inty, .error).contains("doubleAdd missing args"))
+        #expect(errorText(inty).contains("doubleAdd missing args"))
         // Transient stack state (law 4b), so a stand-in naming the instruction.
         #expect(callString(topItem(inty, .error))
-                == "( .doubleAdd_actuallyWas_«error: doubleAdd missing args: .double» )")
+                == "( «observed .doubleAdd: «err missingArgument: .doubleAdd»» )")
 
     }
 
@@ -105,7 +105,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleDec, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains( "Overflow in .doubleDec") )
+        #expect(errorText(inty).contains( "Overflow in .doubleDec") )
         #expect(callString(topItem(inty, .error)) == "( nan .doubleDec )")
     }
 
@@ -124,12 +124,12 @@ struct DoubleBehaviorTests {
         #expect(callString(topItem(inty, .double)) == "( -6.0 3.0 .doubleDivide )")
     }
 
-    @Test func `doubleDivide records overflows`() {
+    @Test func `doubleDivide refuses a zero divisor`() {
         loadDoubles(inty, doubles: [0.0, 33])
 
         doThis(.doubleDivide, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleDivide:"))
+        #expect(errorText(inty).contains("Divide by zero .doubleDivide:"))
         #expect(callString(topItem(inty, .error)) == "( 33.0 0.0 .doubleDivide )")
 
     }
@@ -149,7 +149,7 @@ struct DoubleBehaviorTests {
 
     @Test func doubleFromChar() {
         loadChars(inty, chars: ["g", "😉", "\n"])
-        #expect(stackString(inty, .char) == "[ 'g' '😉' '\("\n")' ]")
+        #expect(stackString(inty, .char) == "[ 'g' '😉' '\\n' ]")
 
         doThis(.doubleFromChar, to: inty)
         #expect(stackString(inty, .double) == "[ 103.0 ]")
@@ -163,7 +163,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleFromChar, to: inty)
         #expect(stackString(inty, .double) == "[ 10.0 128521.0 103.0 ]")
-        #expect(callString(topItem(inty, .double)) == "( '\n' .doubleFromChar )")
+        #expect(callString(topItem(inty, .double)) == "( '\\n' .doubleFromChar )")
     }
 
     @Test func doubleFromInt() {
@@ -217,7 +217,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleFromString, to: inty)   // "inf"
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleFromString"))
+        #expect(errorText(inty).contains("Overflow in .doubleFromString"))
         #expect(callString(topItem(inty, .error)) == "( \"inf\" .doubleFromString )")
 
         doThis(.doubleFromString, to: inty)   // "nan"
@@ -225,7 +225,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleFromString, to: inty)   // "1e400"
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleFromString"))
+        #expect(errorText(inty).contains("Overflow in .doubleFromString"))
         #expect(callString(topItem(inty, .error)) == "( \"1e400\" .doubleFromString )")
     }
 
@@ -235,13 +235,13 @@ struct DoubleBehaviorTests {
         loadDoubles(inty, doubles: [Double.infinity])
         doThis(.doubleTan, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleTan"))
+        #expect(errorText(inty).contains("Overflow in .doubleTan"))
         #expect(callString(topItem(inty, .error)) == "( inf .doubleTan )")
 
         loadDoubles(inty, doubles: [Double.infinity])
         doThis(.doubleCos, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleCos"))
+        #expect(errorText(inty).contains("Overflow in .doubleCos"))
         #expect(callString(topItem(inty, .error)) == "( inf .doubleCos )")
     }
 
@@ -314,7 +314,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleInc, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains( "Overflow in .doubleInc") )
+        #expect(errorText(inty).contains( "Overflow in .doubleInc") )
         #expect(callString(topItem(inty, .error)) == "( inf .doubleInc )")
 
     }
@@ -410,13 +410,13 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 17.0 ]")
     }
 
-    @Test func `doubleMod records overflows`() {
+    @Test func `doubleMod refuses a zero divisor`() {
         loadDoubles(inty, doubles: [0.0, 33])
         #expect(stackString(inty, .double) == "[ 0.0 33.0 ]")
 
         doThis(.doubleMod, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleMod:"))
+        #expect(errorText(inty).contains("Divide by zero .doubleMod:"))
         #expect(callString(topItem(inty, .error)) == "( 33.0 0.0 .doubleMod )")
     }
 
@@ -439,7 +439,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleMultiply, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleMultiply"))
+        #expect(errorText(inty).contains("Overflow in .doubleMultiply"))
         #expect(callString(topItem(inty, .error)) == "( 1.7976931348623157e+308 1.7976931348623157e+308 .doubleMultiply )")
     }
 
@@ -467,13 +467,13 @@ struct DoubleBehaviorTests {
         #expect(stackString(inty, .double) == "[ 0.0 -8.0 ]")
     }
 
-    @Test func `doubleQuot records overflows`() {
+    @Test func `doubleQuot refuses a zero divisor`() {
         loadDoubles(inty, doubles: [0.0, 33])
         #expect(stackString(inty, .double) == "[ 0.0 33.0 ]")
 
         doThis(.doubleQuot, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleQuot:"))
+        #expect(errorText(inty).contains("Divide by zero .doubleQuot:"))
         #expect(callString(topItem(inty, .error)) == "( 33.0 0.0 .doubleQuot )")
     }
 
@@ -518,7 +518,7 @@ struct DoubleBehaviorTests {
 
         doThis(.doubleSubtract, to: inty)
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .doubleSubtract:"))
+        #expect(errorText(inty).contains("Overflow in .doubleSubtract:"))
         #expect(callString(topItem(inty, .error)) == "( -1.7976931348623157e+308 1.7976931348623157e+308 .doubleSubtract )")
     }
 

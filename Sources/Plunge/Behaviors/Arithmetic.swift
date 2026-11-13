@@ -12,43 +12,46 @@
 nonisolated enum IntArithmetic {
     static func add(_ y: Int, _ x: Int, _ label: PushInstruction) throws(Refusal) -> Int {
         let (result, overflowed) = y.addingReportingOverflow(x)
-        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) + \(x)") }
+        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) + \(x)", kind: .overflow) }
         return result
     }
 
     static func subtract(_ y: Int, _ x: Int, _ label: PushInstruction) throws(Refusal) -> Int {
         let (result, overflowed) = y.subtractingReportingOverflow(x)
-        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) - \(x)") }
+        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) - \(x)", kind: .overflow) }
         return result
     }
 
     static func multiply(_ y: Int, _ x: Int, _ label: PushInstruction) throws(Refusal) -> Int {
         let (result, overflowed) = y.multipliedReportingOverflow(by: x)
-        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) * \(x)") }
+        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) * \(x)", kind: .overflow) }
         return result
     }
 
     /// The zero divisor is checked first: dividing by zero also reports overflow.
     static func quot(_ y: Int, _ x: Int, _ label: PushInstruction) throws(Refusal) -> Int {
-        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) / \(x)") }
+        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) / \(x)", kind: .divideByZero) }
         let (result, overflowed) = y.dividedReportingOverflow(by: x)
-        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) / \(x)") }
+        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) / \(x)", kind: .overflow) }
         return result
     }
 
     static func mod(_ y: Int, _ x: Int, _ label: PushInstruction) throws(Refusal) -> Int {
-        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) % \(x)") }
+        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) % \(x)", kind: .divideByZero) }
         let (result, overflowed) = y.remainderReportingOverflow(dividingBy: x)
-        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) % \(x)") }
+        guard !overflowed else { throw Refusal("Overflow in .\(label): \(y) % \(x)", kind: .overflow) }
         return result
     }
 }
 
-/// An infinite or NaN result is refused as overflow.
+/// An infinite or NaN result is refused as overflow; a zero divisor, as for ints,
+/// as a division by zero.
 nonisolated enum DoubleArithmetic {
     static func finite(_ result: Double, _ label: PushInstruction, _ text: @autoclosure () -> String)
         throws(Refusal) -> Double {
-        guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .\(label): \(text())") }
+        guard !(result.isInfinite || result.isNaN) else {
+            throw Refusal("Overflow in .\(label): \(text())", kind: .overflow)
+        }
         return result
     }
 
@@ -65,10 +68,12 @@ nonisolated enum DoubleArithmetic {
     }
 
     static func divide(_ y: Double, _ x: Double, _ label: PushInstruction) throws(Refusal) -> Double {
-        try finite(y / x, label, "\(y) / \(x)")
+        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) / \(x)", kind: .divideByZero) }
+        return try finite(y / x, label, "\(y) / \(x)")
     }
 
     static func mod(_ y: Double, _ x: Double, _ label: PushInstruction) throws(Refusal) -> Double {
-        try finite(y.truncatingRemainder(dividingBy: x), label, "\(y) % \(x)")
+        guard x != 0 else { throw Refusal("Divide by zero .\(label): \(y) % \(x)", kind: .divideByZero) }
+        return try finite(y.truncatingRemainder(dividingBy: x), label, "\(y) % \(x)")
     }
 }

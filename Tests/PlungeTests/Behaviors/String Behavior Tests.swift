@@ -348,7 +348,7 @@ struct StringBehaviorTests {
         #expect(stackString(inty, .string) == "[ ]")
         #expect(stackString(inty, .char) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
-        #expect(stackString(inty, .iterator) == "[ «\"boo\" @0 ( .intInc )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter over \"boo\" at 0: ( .intInc )» ]")
         #expect(stackString(inty, .int) == "[ 1 ]")
 
         inty.step()   // first pass: 'b', then the mouse
@@ -892,7 +892,7 @@ struct StringBehaviorTests {
         doThis(.stringFlush, to: inty)
 
         loadStrings(inty, strings: ["ab    cd \ne\tf"])
-        #expect(stackString(inty, .string) == "[ \"ab    cd \ne\tf\" ]")
+        #expect(stackString(inty, .string) == "[ \"ab    cd \\ne\\tf\" ]")
 
         doThis(.stringPushAllWords, to: inty)
         inty.run(stepLimit: 10_000)
@@ -901,9 +901,9 @@ struct StringBehaviorTests {
         // which is why `.stringNthWord` had to be added for these to have a record
         // at all. "f" is the 4th word; "ab" is the 1st, and says so without
         // reference to the other three.
-        #expect(callString(topItem(inty, .string)) == "( \"ab    cd \ne\tf\" 3 .stringNthWord )")
+        #expect(callString(topItem(inty, .string)) == "( \"ab    cd \\ne\\tf\" 3 .stringNthWord )")
         #expect(CodeItem(inty.stacks[.string]![3].crux()).pretty()
-            == "( \"ab    cd \ne\tf\" 0 .stringNthWord )")
+            == "( \"ab    cd \\ne\\tf\" 0 .stringNthWord )")
     }
 
     @Test func stringNthWord() {

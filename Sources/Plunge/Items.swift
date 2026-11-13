@@ -82,7 +82,7 @@ public nonisolated protocol Pretty {
 //     naming the instruction (`StandInItem`). `.boolStackDepth` reported 4
 //     because `.bool` happened to be 4 deep; re-running `.boolStackDepth` says
 //     nothing about that, but the literal reproduces it exactly, and the stand-in
-//     (`.boolStackDepth_actuallyWas_4`) says it is a literal standing in for a
+//     (`«observed .boolStackDepth: 4»`) says it is a literal standing in for a
 //     history, not one the program contained. The same goes for errors that
 //     depend on transient stack state ("missing args", "on empty stack") and for
 //     the interpreter's own diagnostics. (Contrast `.input3` and `.int7`, which read the
@@ -311,6 +311,25 @@ nonisolated extension Item {
         CruxSharing.crux(of: self)
     }
 }
+
+nonisolated extension Item {
+    /// This item with its type spelled out: `«int 88»`, `«str "foo"»`,
+    /// `«vecInt [1, 2, 3]»`, `«code ( 1 .intAdd )»`, `«inst .intAdd»`.
+    ///
+    /// `pretty()` prints the short form (`88`, `"foo"`, `[1, 2, 3]`) wherever
+    /// that already says what the item is, and this explicit form where it
+    /// doesn't, as for an empty vector. Use this one when the reader can't be
+    /// assumed to know the short forms, or when the type is the point. An item
+    /// whose `pretty()` is already of this form (a binding, a function, an
+    /// iterator, an error, a stand-in) is returned as it is.
+    public func explicitPretty() -> String {
+        let short = pretty()
+        if short.hasPrefix("«") { return short }
+        let label = PushStack.defaultStack(for: self)?.tag ?? "inst"
+        return "«\(label) \(short)»"
+    }
+}
+
 
 //  global == definition to help compare items that aren't the same exact type
 //

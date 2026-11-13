@@ -16,8 +16,11 @@ needs. Its holes are typed, so an instruction looking for something to apply can
 tell which functions on the stack would do the job, and take the first that
 fits.
 
-A function prints as `ƒ( … )`, with each hole shown as its type in angle
-brackets: `ƒ( ⟨int⟩ 2 .intAdd )` adds 2 to one int.
+A function prints as a signature and a body: `«fn (int) -> int: $0 2 .intAdd»`
+takes one `int` and gives one. The signature lists the holes' stacks, then the
+stack the result lands on, each by its short tag (`str` for `.string`, `dbl` for
+`.double`, `fn` for `.function`). In the body each hole is written `$0`, `$1`
+and so on, in the signature's order, so this function adds 2 to its argument.
 
 ## Where functions come from
 
@@ -27,7 +30,9 @@ Functions come from two places.
 missing-arguments error, as always, and is also put on `.function` as a *bare*
 function: the instruction alone, whose holes are the arguments it wanted.
 Nothing it found is bound into it or taken. `.intAdd` on an empty `.int` leaves
-`ƒ( ⟨int⟩ ⟨int⟩ .intAdd )`. Every instruction does this, the ones that copy and
+`«fn bare (int, int) -> int: $0 $1 .intAdd»`. The word `bare` marks a
+function made this way, which is a different value from a derived function
+with the same body. Every instruction does this, the ones that copy and
 reorder a stack included, so `.intDup` and `.intSwap` reach `.function` too.
 
 **`.codePushAllFunctions`.** It takes a code block from `.code` and runs it in a
@@ -37,7 +42,8 @@ hole where the placeholder was:
 
 ```
 ( 2 .intAdd .intMultiply ) .codePushAllFunctions
-    →  .function holds ƒ( ⟨int⟩ ⟨int⟩ 2 .intAdd .intMultiply ) ƒ( ⟨int⟩ 2 .intAdd )
+    →  .function holds «fn (int, int) -> int: $0 $1 2 .intAdd .intMultiply»
+                       «fn (int) -> int: $0 2 .intAdd»
 ```
 
 The code block made two items from placeholders, a sum and then a product, so it
@@ -46,7 +52,8 @@ yields two functions, and the one made last is on top.
 Three things are worth knowing about a derivation:
 
 - **One hole can sit in several places.** `( .intDup .intMultiply )` yields
-  `ƒ( ⟨int⟩ .intDup .intMultiply )`, which squares its one argument.
+  `«fn (int) -> int: $0 .intDup .intMultiply»`, which squares its one
+  argument.
 - **It runs the code block once**, so it follows only the branch its
   placeholders take. A code block that chooses with `.execIf` yields the branch
   it ran, not the choice.
@@ -138,7 +145,8 @@ each over the four vector types and strings. What fits depends on the job:
   occurs.
 - **`.functionFill`** is partial application: the topmost function with a hole
   takes the top item of its first hole's stack, which fills that hole wherever
-  it occurs. `.intSubtract` with 10 filled is `ƒ( 10 ⟨int⟩ .intSubtract )`,
+  it occurs. `.intSubtract` with 10 filled is
+  `«fn (int) -> int: 10 $0 .intSubtract»`,
   ten minus its argument.
 - **`.functionArity`** counts the holes of the top function, leaving it.
 - **`.functionIterate`**, written `x n .functionIterate`, applies the topmost

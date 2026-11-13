@@ -44,8 +44,10 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
         lhs.value == rhs.value
     }
 
+    /// `[…]` with its elements, or `«vecBool []»` when empty: an empty vector is
+    /// the one case where the brackets alone don't say which type it is.
     public func pretty() -> String {
-        "\(value)"
+        value.isEmpty ? "«\(PushStack.vecBool.tag) []»" : "\(value)"
     }
 }
 
@@ -86,8 +88,10 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
         lhs.value.elementsEqual(rhs.value) { DoubleKey(value: $0) == DoubleKey(value: $1) }
     }
 
+    /// `[…]` with its elements, or `«vecDbl []»` when empty: an empty vector is
+    /// the one case where the brackets alone don't say which type it is.
     public func pretty() -> String {
-        "\(value)"
+        value.isEmpty ? "«\(PushStack.vecDouble.tag) []»" : "\(value)"
     }
 }
 
@@ -126,8 +130,10 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
         lhs.value == rhs.value
     }
 
+    /// `[…]` with its elements, or `«vecInt []»` when empty: an empty vector is
+    /// the one case where the brackets alone don't say which type it is.
     public func pretty() -> String {
-        "\(value)"
+        value.isEmpty ? "«\(PushStack.vecInt.tag) []»" : "\(value)"
     }
 }
 
@@ -169,7 +175,11 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
         lhs.value == rhs.value
     }
 
+    /// `[…]` with its elements, or `«vecStr []»` when empty: an empty vector is
+    /// the one case where the brackets alone don't say which type it is.
     public func pretty() -> String {
-        "\(value)"
+        value.isEmpty
+            ? "«\(PushStack.vecString.tag) []»"
+            : "[" + value.map { "\"\($0.escaped(for: "\""))\"" }.joined(separator: ", ") + "]"
     }
 }

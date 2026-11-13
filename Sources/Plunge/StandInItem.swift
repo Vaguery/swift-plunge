@@ -26,14 +26,14 @@
 /// - `.observed`: the value was read from transient execution state, such as a
 ///   stack's depth or the step count, so re-running the instruction on a fresh
 ///   interpreter would find a different world (provenance law 4b). Prints as
-///   `.boolStackDepth_actuallyWas_4`.
+///   `«observed .boolStackDepth: 4»`.
 /// - `.elided`: the history existed but was over the `maxCallWeight` or
 ///   `maxCallDepth` budget, so it was dropped at the push boundary. Prints as
-///   `.intAdd_elidedAs_4537`.
+///   `«elided .intAdd: 4537»`.
 /// - `.minted`: a constant the instruction supplies itself, such as the 0 a
 ///   `.execDoTimes` counts from. No history is lost (the instruction *is* the
 ///   cause), but without the mark it would be indistinguishable from a
-///   substitution. Prints as `.execDoTimes_minted_0`.
+///   substitution. Prints as `«minted .execDoTimes: 0»`.
 ///
 /// **It is a literal leaf.** Its own `call` is always empty, so `crux()` emits it
 /// unchanged and every downstream crux carries it, which is what lets a probe
@@ -99,15 +99,12 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         lhs.value.isEqual(to: rhs.value) && lhs.source == rhs.source && lhs.reason == rhs.reason
     }
 
+    /// `«observed .intStackDepth: 4»`: the reason, the instruction that observed
+    /// or produced the value (`interpreter` for the interpreter's own diagnostics),
+    /// and the literal it stands in for.
     public func pretty() -> String {
-        let name = source.map(\.rawValue) ?? "interpreter"
-        let verb = switch reason {
-        case .observed: "actuallyWas"
-        case .elided: "elidedAs"
-        case .minted: "minted"
-        case .hole: "hole"
-        }
-        return ".\(name)_\(verb)_\(value.pretty())"
+        let name = source.map { ".\($0.rawValue)" } ?? "interpreter"
+        return "«\(reason.rawValue) \(name): \(value.pretty())»"
     }
 }
 

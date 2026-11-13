@@ -22,8 +22,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolButLast, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [false, true, false] [true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolButLast )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false, true, false] [true] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» .vecBoolButLast )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -34,7 +34,7 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolPop, to: inty)
 
         doThis(.vecBoolButLast, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] ]")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true] .vecBoolButLast )")
     }
 
@@ -47,7 +47,7 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [false, false] [true, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [false, false] [] .vecBoolConcat )")
+        #expect(callString(topItem(inty, .vecBool)) == "( [false, false] «vecBool []» .vecBoolConcat )")
 
         doThis(.vecBoolConcat, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, false] ]")
@@ -63,7 +63,7 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolConj, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true] [false, false] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] true .vecBoolConj )")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» true .vecBoolConj )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -103,8 +103,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolDrop, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] -3 .vecBoolDrop )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [true, false, false] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» -3 .vecBoolDrop )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -162,8 +162,8 @@ struct VecBoolBehaviorTests {
 
         doThis(.vecBoolItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(stackString(inty, .vecBool) == "[ [] [false] ]", "the vector survives")
-        #expect(callString(topItem(inty, .bool)) == "( [] .vecBoolItemIsEmpty 1 .vecBoolPopItems )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false] ]", "the vector survives")
+        #expect(callString(topItem(inty, .bool)) == "( «vecBool []» .vecBoolItemIsEmpty 1 .vecBoolPopItems )")
 
         doThis(.vecBoolPop, to: inty)   // discard the empty to reach the next vector
 
@@ -191,7 +191,7 @@ struct VecBoolBehaviorTests {
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .vecBool) == "[ ]")
         #expect(stackString(inty, .exec) == "[ .iteratorPlay ]")
-        #expect(stackString(inty, .iterator) == "[ «[false, true] @0 ( .intInc )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter over [false, true] at 0: ( .intInc )» ]")
 
         // The whole vector goes INTO the iterator and stays there. It used to
         // re-push a *shrunken* copy every pass, which was the one derived value
@@ -272,7 +272,7 @@ struct VecBoolBehaviorTests {
         inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .bool) == "[ ]")
-        #expect(stackString(inty, .vecBool) == "[ [] ]")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» ]")
         #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecBoolIterate, to: inty)
@@ -330,8 +330,8 @@ struct VecBoolBehaviorTests {
         // and the crux pops what it read so it reproduces only the count.
         doThis(.vecBoolLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(stackString(inty, .vecBool) == "[ [] [false, false, false] ]")   // both survive
-        #expect(callString(topItem(inty, .int)) == "( [] .vecBoolLength 1 .vecBoolPopItems )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false, false, false] ]")   // both survive
+        #expect(callString(topItem(inty, .int)) == "( «vecBool []» .vecBoolLength 1 .vecBoolPopItems )")
 
         doThis(.vecBoolPop, to: inty)   // discard the empty to reach the next vector
 
@@ -349,7 +349,7 @@ struct VecBoolBehaviorTests {
                          VecBoolItem([false, false, true])
                         ])
 
-        #expect(stackString(inty, .vecBool) == "[ [] [true, false, true] [false, false, true] ]")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [true, false, true] [false, false, true] ]")
         #expect(stackString(inty, .int) == "[ -3 1 7777 ]")
 
         doThis(.vecBoolNth, to: inty)
@@ -425,8 +425,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolRemove, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [false, true, false] [true, true, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] false .vecBoolRemove )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false, true, false] [true, true, true] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» false .vecBoolRemove )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -450,8 +450,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolReplace, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [false, false, true] [true, false, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] true false .vecBoolReplace )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false, false, true] [true, false, true] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» true false .vecBoolReplace )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -475,8 +475,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolReplaceFirst, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [false, false] [true, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] true false .vecBoolReplaceFirst )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [false, false] [true, true] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» true false .vecBoolReplaceFirst )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -498,8 +498,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolRest, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolRest )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [true, false, false] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» .vecBoolRest )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -515,8 +515,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolReverse, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, true, false] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] .vecBoolReverse )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [true, true, false] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» .vecBoolReverse )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -539,7 +539,7 @@ struct VecBoolBehaviorTests {
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, true, true] [true, true, true, true] [true, true, true, true] ]")
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
-        #expect(callString(topItem(inty, .error)) == "( [] false 1 .vecBoolSet )")
+        #expect(callString(topItem(inty, .error)) == "( «vecBool []» false 1 .vecBoolSet )")
 
         doThis(.vecBoolSet, to: inty)
         #expect(stackString(inty, .vecBool) == "[ [true, true, false, true] [true, true, true, true] [true, true, true, true] ]")
@@ -568,8 +568,10 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolSlice, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, true, false, false, true] [true, true, false, false, true] [true, true, false, false, true] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] 9 1 .vecBoolSlice )")
+        #expect(stackString(inty, .vecBool)
+                == "[ «vecBool []» [true, true, false, false, true] [true, true, false, false, true] "
+                + "[true, true, false, false, true] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» 9 1 .vecBoolSlice )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -598,8 +600,8 @@ struct VecBoolBehaviorTests {
                         ])
 
         doThis(.vecBoolTake, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] [true, false, false] ]")
-        #expect(callString(topItem(inty, .vecBool)) == "( [] -3 .vecBoolTake )")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» [true, false, false] ]")
+        #expect(callString(topItem(inty, .vecBool)) == "( «vecBool []» -3 .vecBoolTake )")
 
         doThis(.vecBoolPop, to: inty)
 
@@ -612,7 +614,7 @@ struct VecBoolBehaviorTests {
         #expect(callString(topItem(inty, .vecBool)) == "( [true, false, false] 1 .vecBoolTake )")
 
         doThis(.vecBoolTake, to: inty)
-        #expect(stackString(inty, .vecBool) == "[ [] ]")
+        #expect(stackString(inty, .vecBool) == "[ «vecBool []» ]")
         #expect(callString(topItem(inty, .vecBool)) == "( [true] -1 .vecBoolTake )")
     }
 

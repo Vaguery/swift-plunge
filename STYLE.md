@@ -75,10 +75,11 @@ Programs are written as the library's `pretty()` function prints them:
 | `[1, 2, 3]` | a vector, with commas |
 | `.intAdd` | an instruction |
 | `( 1 .intAdd )` | a code block |
-| `⟨3 ↦ "x"⟩` | a binding |
-| `ƒ( ⟨int⟩ 2 .intAdd )` | a function with one `int` hole |
-| `«0→3 by 1 @2»` | an iterator |
-| `«error: intAdd missing args: .int»` | an error |
+| `«bind: 3 -> "x"»` | a binding |
+| `«fn (int) -> int: $0 2 .intAdd»` | a function with one `int` hole |
+| `«iter 0 to 3 by 1 at 2»` | an iterator |
+| `«err missingArgument: .intAdd»` | an error: its kind, then the instruction that raised it |
+| `«observed .intStackDepth: 4»` | a stand-in (also `elided`, `minted`) |
 
 - A program reads left to right in the order it runs, and an arrow shows what
   it leaves: `3 4 .intAdd  →  .int holds 7`.
@@ -88,6 +89,60 @@ Programs are written as the library's `pretty()` function prints them:
   `a b .intSubtract` gives a − b.
 - A program is a code block. For now, examples show a program without its outer
   parentheses; see *Not yet settled*.
+
+## Printed forms
+
+The rule for `pretty()`, and for anything written by hand in its notation:
+**from an item's printed text alone, a reader can tell its type and its value.**
+Two items that are not equal never print alike. `Printed Form Tests` holds
+every item type to this; add a new type's confusable cases there.
+
+- **Short forms** are for the types whose punctuation already says what they
+  are: numbers and bools bare, strings in `"…"`, chars in `'…'`, vectors in
+  `[ ]`, code blocks in `( )`, instructions with a leading dot.
+- **Everything else is labeled**: guillemets, a short tag for the type first,
+  then its contents. `«bind: 3 -> "x"»`, `«fn (int) -> int: $0 2 .intAdd»`,
+  `«iter 0 to 5 by 1 at 2: ( true )»`, `«err overflow: .intAdd»`. A new structured type
+  (a matrix, a point) prints this way too, with named fields where position
+  alone wouldn't be clear: `«point x: 1.5, y: 2.0»`.
+- **Every item also has an explicit form**, `«type …»` around its short form:
+  `«int 88»`, `«str "foo"»`, `«char '\n'»`, `«vecInt [1, 2, 3]»`,
+  `«code ( 1 .intAdd )»`, `«inst .intAdd»` (`explicitPretty()`). Use it
+  where the short form could be misread or the type is the point. `pretty()`
+  itself uses it where the short form is ambiguous: an empty vector prints as
+  `«vecInt []»`, since `[]` alone doesn't say which of four types it is.
+- **The tags are short**: the stack's name, abbreviated where it is long.
+  `int`, `bool`, `char` and `code` are unchanged; the rest are `dbl`, `str`,
+  `vecDbl`, `vecStr` (with `vecInt` and `vecBool`), `fn`, `bind`, `iter`, `err`
+  and `inst` for an instruction. These tags belong to the printed form only: in
+  prose a type is still named by its stack (`string`, `function`). A function's
+  signature uses them too: `«fn (str) -> dbl: …»`.
+  `PushStack.tag` is the one table of them. Stand-ins are labeled by their
+  reason instead: `observed`, `elided`, `minted`.
+- **Strings and chars are escaped**: their own quote mark, `\\`, and every
+  character that might not show on a page (`\n`, `\t`, `\r`, `\0`, `\u{…}`).
+  That covers the ASCII controls and the invisible Unicode ones: every space
+  but the plain one, the line and paragraph separators, zero-width and
+  direction marks, the byte-order mark. Printed text can then be read back
+  exactly. A string may hold `'` unescaped, and a char may be `"`.
+- **Plain characters only.** Words, not symbols: `to`, `by`, `at`, `over`,
+  `repeated`. Arrows are `->`, two characters. No emoji, and no brackets beyond
+  `( )`, `[ ]` and `« »`. Inside a function, a hole is `$0`, `$1`, … in the
+  order of its signature.
+- **Arrows outside printed forms.** In prose, examples and messages the
+  typographic right arrow is fine: `3 4 .intAdd  →  .int holds 7`. Use only
+  that plain one, never the barred "maps to" arrow or other variants.
+- **No free text.** Everything inside a printed form is a tag, a keyword or
+  another printed item, so a simple grammar can read it back. An error prints
+  its kind and the instruction that raised it, `«err overflow: .intAdd»`, or
+  its kind alone when the interpreter raised it, `«err sizeRefusal»`. Its
+  sentence (`Overflow in .intAdd: …`) stays on the item as `value`, for logs.
+  Equality follows the printed form: errors are equal when kind and
+  instruction match. A new kind of refusal gets a one-word `ErrorKind`, not a
+  new sentence shape.
+- A function made by starvation is marked `bare`
+  (`«fn bare (int, int) -> int: $0 $1 .intAdd»`), because it is a
+  different value from a derived function with the same body.
 
 ## What can go wrong
 
@@ -125,7 +180,7 @@ from which the instruction reference is generated:
 
 ## Not yet settled
 
-Raise these before relying on either reading:
+Raise this before relying on either reading:
 
 - **Outer parentheses around a program.** A program is a code block, and the
   preferred way to show one is inside its own parentheses:
@@ -133,9 +188,3 @@ Raise these before relying on either reading:
   programs without them. The change waits until there is a norm for how
   `pretty()` shows the other composite things, such as a crux and a function, so
   that one choice of punctuation covers all of them.
-- **How a function is written.** The preferred form gives a signature of stack
-  names, then the body with its holes written `$0`, `$1`, …:
-  `f(int, double) -> vecDouble { $0 $1 … }`. Until `pretty()` prints that, and
-  it is settled whether a program holding such a function can still be read
-  (by people, and by a parser), write functions as `pretty()` prints them today:
-  `ƒ( ⟨int⟩ 2 .intAdd )`. Issue #32 tracks the change.

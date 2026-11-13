@@ -75,7 +75,7 @@ struct InterpreterRobustnessTests {
 
         inty.step()
 
-        #expect(stackString(inty, .error).contains("intAdd is an unknown instruction"))
+        #expect(errorText(inty).contains("intAdd is an unknown instruction"))
     }
 
     /// When a behavior's argument needs aren't met, its plan is `.short` and
@@ -89,7 +89,7 @@ struct InterpreterRobustnessTests {
 
         Interpreter.language[.intAdd]!.act(on: inty)
 
-        #expect(stackString(inty, .error).contains("intAdd missing args"))
+        #expect(errorText(inty).contains("intAdd missing args"))
         // the lone argument is left untouched (a plan that fails commits nothing)
         #expect(inty.stacks[.int]!.count == 1)
         #expect((inty.stacks[.int]!.first as? IntItem)?.value == 7)

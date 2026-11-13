@@ -74,6 +74,6 @@ struct StackOrdinalTests {
         let error = ErrorItem(missingArgumentsFor: .intAdd, on: .int)
         #expect(error.value == "intAdd missing args: .int")
         #expect(error.kind == .missingArgument)
-        #expect(error == ErrorItem("intAdd missing args: .int"))
+        #expect(error == ErrorItem("intAdd missing args: .int", kind: .missingArgument, source: .intAdd))
     }
 }

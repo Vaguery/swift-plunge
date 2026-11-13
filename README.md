@@ -66,7 +66,7 @@ Add the package to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/Vaguery/swift-plunge.git", from: "0.8.0"),
+    .package(url: "https://github.com/Vaguery/swift-plunge.git", from: "0.9.0"),
 ],
 targets: [
     .target(name: "MySearch", dependencies: [

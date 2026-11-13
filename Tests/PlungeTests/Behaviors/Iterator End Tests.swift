@@ -40,14 +40,15 @@ struct IteratorEndTests {
         let inty = Self.run(Self.range(0, 3, cursor: 3))
         #expect(stackString(inty, .int) == "[ ]", "until 2026-11-09 this emitted 3")
         #expect(inty.stacks[.iterator]!.isEmpty)
-        #expect(inty.stacks[.error]!.contains { $0.pretty().contains("has nothing to emit") }, "the constructor refuses")
+        #expect(inty.stacks[.error]!.contains { $0.errorMessage.contains("has nothing to emit") }, "the constructor refuses")
     }
 
     @Test func `printing an iterator leaves its loop running`() {
         let inty = Self.run([IntItem(0), IntItem(3), IntItem(1), IntItem(0), IntItem(0), BoolItem(true),
                              CodeItem([]), Self.op(.iteratorFromIntRange), Self.op(.iteratorPrint)])
         #expect(inty.stacks[.print]!.count == 1)
-        #expect(inty.stacks[.print]!.first?.pretty().contains("«0→3") == true, "a copy of the loop is printed")
+        #expect(inty.stacks[.print]!.first?.pretty().contains("«iter 0 to 3") == true,
+                "a copy of the loop is printed")
         #expect(inty.stacks[.iterator]!.count == 1, "printed, not consumed (since 2026-11-09)")
     }
 }

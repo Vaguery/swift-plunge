@@ -109,11 +109,11 @@ struct SequenceBehaviorTests {
         let repeated = Self.run([VecStringItem(["a", "b"]), IntItem(2), Self.op(.vecStringRepeat)])
         #expect(stackString(repeated, .vecString) == "[ [\"a\", \"b\", \"a\", \"b\"] ]")
         let none = Self.run([VecIntItem([1]), IntItem(-3), Self.op(.vecIntRepeat)])
-        #expect(stackString(none, .vecInt) == "[ [] ]")
+        #expect(stackString(none, .vecInt) == "[ «vecInt []» ]")
         // Nothing repeated any number of times is nothing, built at once.
         let empty = Self.run([VecBoolItem([]), IntItem(Int.max), Self.op(.vecBoolRepeat),
                               StringItem(""), IntItem(Int.max), Self.op(.stringRepeat)])
-        #expect(stackString(empty, .vecBool) == "[ [] ]" && stackString(empty, .string) == "[ \"\" ]")
+        #expect(stackString(empty, .vecBool) == "[ «vecBool []» ]" && stackString(empty, .string) == "[ \"\" ]")
     }
 
     @Test func `frequencies give sorted distinct values, then counts`() {

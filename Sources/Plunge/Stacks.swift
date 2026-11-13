@@ -71,6 +71,24 @@ nonisolated extension PushStack {
         }
     }
 
+    /// The short word that labels this stack's items in their printed form:
+    /// `«fn …»`, `«iter …»`, `«str "foo"»`, `«vecDbl []»`. The stack's name, or an
+    /// abbreviation of it where the name is long. One table, so the renderers, the
+    /// explicit form and the documentation can't disagree.
+    var tag: String {
+        switch self {
+        case .string: "str"
+        case .double: "dbl"
+        case .vecString: "vecStr"
+        case .vecDouble: "vecDbl"
+        case .function: "fn"
+        case .binding: "bind"
+        case .iterator: "iter"
+        case .error: "err"
+        default: rawValue
+        }
+    }
+
     /// `noun` with its article: "an int", "a code block".
     var aNoun: String {
         ("aeiou".contains(noun.first!) ? "an " : "a ") + noun

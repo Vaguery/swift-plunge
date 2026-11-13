@@ -61,7 +61,7 @@ struct ElementwiseBehaviorTests {
         let inty = Self.run([VecIntItem([1, 2]), Self.op(.vecIntAdd)])
         #expect(stackString(inty, .vecInt) == "[ [1, 2] ]")
         #expect(Self.errorKinds(inty) == [.missingArgument])
-        #expect(stackString(inty, .function) == "[ ƒ( ⟨vecInt⟩ ⟨vecInt⟩ .vecIntAdd ) ]")
+        #expect(stackString(inty, .function) == "[ «fn bare (vecInt, vecInt) -> vecInt: $0 $1 .vecIntAdd» ]")
     }
 
     @Test func `arithmetic refuses as its scalar does, naming the index`() {

@@ -198,7 +198,7 @@ nonisolated extension Interpreter {
                         .bool,
                         // Provenance law 4b (Items.swift): this reads transient
                         // execution state, not arguments, so it records a
-                        // stand-in (`.boolStackIsEmpty_actuallyWas_true`): the
+                        // stand-in (`«observed .boolStackIsEmpty: true»`): the
                         // literal, marked as observed. Naming the instruction
                         // would reconstruct to whatever a *fresh* interpreter's
                         // stack held.
@@ -317,7 +317,7 @@ nonisolated extension Interpreter {
                         .int,
                         // Provenance law 4b (Items.swift): a reading of
                         // transient execution state records a stand-in
-                        // (`.intStackDepth_actuallyWas_4`), the literal count
+                        // (`«observed .intStackDepth: 4»`), the literal count
                         // marked as observed. The instruction name would
                         // reconstruct to whatever a fresh interpreter held.
                         IntItem(c).observed(by: name, context.recording)

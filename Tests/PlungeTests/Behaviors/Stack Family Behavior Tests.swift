@@ -244,11 +244,11 @@ struct StackFamilyBehaviorTests {
         doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
         // Law 4b: a stand-in, the observed literal marked as such.
-        #expect(callString(topItem(inty, .bool)) == "( .boolStackIsEmpty_actuallyWas_true )")
+        #expect(callString(topItem(inty, .bool)) == "( «observed .boolStackIsEmpty: true» )")
 
         doThis(.boolStackIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ false true ]")
-        #expect(callString(topItem(inty, .bool)) == "( .boolStackIsEmpty_actuallyWas_false )")
+        #expect(callString(topItem(inty, .bool)) == "( «observed .boolStackIsEmpty: false» )")
     }
 
     @Test func `combinator Eq works`() {
@@ -368,11 +368,11 @@ struct StackFamilyBehaviorTests {
         doThis(.intStackDepth, to: inty)
         #expect(stackString(inty, .int) == "[ 2 11 22 ]")
         // Law 4b: a stand-in, the observed literal marked as such.
-        #expect(callString(topItem(inty, .int)) == "( .intStackDepth_actuallyWas_2 )")
+        #expect(callString(topItem(inty, .int)) == "( «observed .intStackDepth: 2» )")
 
         doThis(.intStackDepth, to: inty)
         #expect(stackString(inty, .int) == "[ 3 2 11 22 ]")
-        #expect(callString(topItem(inty, .int)) == "( .intStackDepth_actuallyWas_3 )")
+        #expect(callString(topItem(inty, .int)) == "( «observed .intStackDepth: 3» )")
     }
 
     @Test func `combinator Swap works`() {

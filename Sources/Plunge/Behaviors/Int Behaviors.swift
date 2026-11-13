@@ -82,7 +82,7 @@ nonisolated extension Interpreter {
     static let intInc_Behavior =
         Behavior.operation(.intInc, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
             let (result, overflowed) = x.addingReportingOverflow(1)
-            guard !overflowed else { throw Refusal("Overflow in .intInc: \(x) + 1»") }
+            guard !overflowed else { throw Refusal("Overflow in .intInc: \(x) + 1", kind: .overflow) }
             return result
         }
         .described("Adds 1; refuses on overflow.")
@@ -90,7 +90,7 @@ nonisolated extension Interpreter {
     static let intDec_Behavior =
         Behavior.operation(.intDec, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
             let (result, overflowed) = x.subtractingReportingOverflow(1)
-            guard !overflowed else { throw Refusal("Overflow in .intDec: \(x) - 1»") }
+            guard !overflowed else { throw Refusal("Overflow in .intDec: \(x) - 1", kind: .overflow) }
             return result
         }
         .described("Subtracts 1; refuses on overflow.")
@@ -124,7 +124,7 @@ nonisolated extension Interpreter {
     static let intFromDouble_Behavior =
         Behavior.operation(.intFromDouble, takes: DoubleItem.self, gives: IntItem.self) { x throws(Refusal) in
             guard x.isFinite, x >= Double(Int.min), x < Double(Int.max) else {
-                throw Refusal("Overflow in .intFromDouble: \(x) → Int")
+                throw Refusal("Overflow in .intFromDouble: \(x) → Int", kind: .overflow)
             }
             return Int(x)
         }
@@ -137,14 +137,14 @@ nonisolated extension Interpreter {
 
     static let intAbs_Behavior =
         Behavior.operation(.intAbs, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
-            guard x != .min else { throw Refusal("Overflow in .intAbs: \(x)") }
+            guard x != .min else { throw Refusal("Overflow in .intAbs: \(x)", kind: .overflow) }
             return abs(x)
         }
         .described("Takes the absolute value; refuses the most negative int, whose absolute value overflows.")
 
     static let intNegate_Behavior =
         Behavior.operation(.intNegate, takes: IntItem.self, gives: IntItem.self) { x throws(Refusal) in
-            guard x != .min else { throw Refusal("Overflow in .intNegate: \(x)") }
+            guard x != .min else { throw Refusal("Overflow in .intNegate: \(x)", kind: .overflow) }
             return -x
         }
         .described("Negates; refuses the most negative int, whose negation overflows.")
@@ -164,20 +164,24 @@ nonisolated extension Interpreter {
                 switch base {
                 case 1: return 1
                 case -1: return exponent.isMultiple(of: 2) ? 1 : -1
-                default: throw Refusal("No int result in .intPow: \(base) ^ \(exponent)")
+                default: throw Refusal("No int result in .intPow: \(base) ^ \(exponent)", kind: .undefined)
                 }
             }
             var result = 1, square = base, remaining = exponent
             while remaining > 0 {
                 if remaining & 1 == 1 {
                     let (product, overflowed) = result.multipliedReportingOverflow(by: square)
-                    guard !overflowed else { throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)") }
+                    guard !overflowed else {
+                        throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)", kind: .overflow)
+                    }
                     result = product
                 }
                 remaining >>= 1
                 if remaining > 0 {
                     let (product, overflowed) = square.multipliedReportingOverflow(by: square)
-                    guard !overflowed else { throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)") }
+                    guard !overflowed else {
+                        throw Refusal("Overflow in .intPow: \(base) ^ \(exponent)", kind: .overflow)
+                    }
                     square = product
                 }
             }

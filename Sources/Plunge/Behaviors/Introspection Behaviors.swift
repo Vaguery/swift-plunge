@@ -35,7 +35,7 @@
 //
 //  Every result here reads **transient execution state** — a step count, a stack's
 //  depth, a tally of failures — so provenance law 4b applies: each records a
-//  stand-in, the literal number marked as observed (`.pushStepCount_actuallyWas_12`).
+//  stand-in, the literal number marked as observed (`«observed .pushStepCount: 12»`).
 //  It replays as the literal, and says where it came from. See `StandInItem`.
 //
 //  Recording the instruction name instead would be a lie of exactly the kind the

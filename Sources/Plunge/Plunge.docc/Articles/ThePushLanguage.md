@@ -77,10 +77,10 @@ the form that ``Pretty/pretty()`` prints:
 | `[1, 2, 3]` | a vector |
 | `.intAdd` | an instruction, with a leading dot |
 | `( 1 .intAdd )` | a code block |
-| `⟨3 ↦ "x"⟩` | a binding of key 3 to `"x"` |
-| `ƒ( ⟨int⟩ 2 .intAdd )` | a function with one int hole |
-| `«0→5 by 1 @2»` | an iterator counting from 0 toward 5, two passes in |
-| `«error: intAdd missing args: .int»` | an error |
+| `«bind: 3 -> "x"»` | a binding of key 3 to `"x"` |
+| `«fn (int) -> int: $0 2 .intAdd»` | a function that takes an `int` and gives one; `$0` is its hole |
+| `«iter 0 to 5 by 1 at 2»` | an iterator counting from 0 toward 5, two passes in |
+| `«err missingArgument: .intAdd»` | an error: its kind, then the instruction that raised it |
 
 A program is written left to right in the order it runs, and an arrow shows
 what it leaves:

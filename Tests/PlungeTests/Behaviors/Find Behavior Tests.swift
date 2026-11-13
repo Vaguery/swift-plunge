@@ -88,7 +88,7 @@ struct FindBehaviorTests {
     @Test func `a miss is a refusal that leaves everything`() {
         let empty = Self.run([VecIntItem([]), IntItem(4), Self.op(.vecIntFindNearest)])
         #expect(stackString(empty, .int) == "[ 4 ]")
-        #expect(empty.stacks[.error]!.first!.pretty().contains("Not found"))
+        #expect(empty.stacks[.error]!.first!.errorMessage.contains("Not found"))
 
         let past = Self.run([VecStringItem(["ab"]), StringItem("a"), IntItem(1), Self.op(.vecStringFindPrefixFrom)])
         #expect(stackString(past, .string) == "[ \"a\" ]")

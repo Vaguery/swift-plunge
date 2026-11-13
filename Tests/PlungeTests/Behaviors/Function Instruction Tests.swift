@@ -111,14 +111,14 @@ struct FunctionInstructionTests {
         // `.intSubtract` with 10 in its first hole: 10 − x.
         let program: [any Item] = [Self.op(.intSubtract), IntItem(10), Self.op(.functionFill)]
         let inty = Self.run(program)
-        #expect(stackString(inty, .function) == "[ ƒ( 10 ⟨int⟩ .intSubtract ) ]")
+        #expect(stackString(inty, .function) == "[ «fn (int) -> int: 10 $0 .intSubtract» ]")
         #expect(Self.replays(inty, .function))
         let applied = Self.run(program + [IntItem(3), Self.op(.functionApply)])
         #expect(stackString(applied, .int) == "[ 7 ]")
 
         let squareOf = Self.run(Self.derived(Self.op(.intDup), Self.op(.intMultiply))
                                 + [IntItem(5), Self.op(.functionFill)])
-        #expect(stackString(squareOf, .function) == "[ ƒ( 5 .intDup .intMultiply ) ]")
+        #expect(stackString(squareOf, .function) == "[ «fn () -> int: 5 .intDup .intMultiply» ]")
     }
 
     /// Filling a bare map (whose result type is not fixed) makes a derived
@@ -150,7 +150,7 @@ struct FunctionInstructionTests {
                                + [IntItem(1), IntItem(10), Self.op(.functionIterate)])
         #expect(stackString(doubled, .int) == "[ 1024 ]")
         let negative = Self.run([Self.op(.intInc), IntItem(5), IntItem(-1), Self.op(.functionIterate)])
-        #expect(Self.errorKinds(negative).first == .other)
+        #expect(Self.errorKinds(negative).first == .badCount)
     }
 
     @Test func `iterate until gives the orbit up to the first value that holds`() {
@@ -216,7 +216,9 @@ struct FunctionInstructionTests {
     @Test func `a function can be bound to a key and read back`() {
         // A binder leaves what it binds; the deref is a second copy.
         let inty = Self.run([Self.op(.intAdd), Self.op(.functionRef), Self.op(.bindingDeref)])
-        #expect(stackString(inty, .function) == "[ ƒ( ⟨int⟩ ⟨int⟩ .intAdd ) ƒ( ⟨int⟩ ⟨int⟩ .intAdd ) ]")
+        #expect(stackString(inty, .function)
+                == "[ «fn bare (int, int) -> int: $0 $1 .intAdd» "
+                + "«fn bare (int, int) -> int: $0 $1 .intAdd» ]")
     }
 
     @Test func `values do not depend on recording`() {

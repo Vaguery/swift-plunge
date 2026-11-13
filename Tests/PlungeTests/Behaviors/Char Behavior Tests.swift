@@ -49,14 +49,14 @@ struct CharBehaviorTests {
         loadDoubles(inty, doubles: [Double.infinity])
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+        #expect(errorText(inty).contains("Overflow in .charFromDouble"))
         #expect(callString(topItem(inty, .error)) == "( inf .charFromDouble )")
 
         // a finite double beyond Int's range would also trap
         loadDoubles(inty, doubles: [1e40])
         doThis(.charFromDouble, to: inty)
         #expect(stackString(inty, .char) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .charFromDouble"))
+        #expect(errorText(inty).contains("Overflow in .charFromDouble"))
         #expect(callString(topItem(inty, .error)) == "( 1e+40 .charFromDouble )")
     }
 
@@ -195,7 +195,7 @@ struct CharBehaviorTests {
 
     @Test func charIsWhitespace() {
         loadChars(inty, chars: ["g", " ", "\n", "\t"])
-        #expect(stackString(inty, .char) == "[ 'g' ' ' '\n' '\t' ]")
+        #expect(stackString(inty, .char) == "[ 'g' ' ' '\\n' '\\t' ]")
 
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ false ]")
@@ -209,12 +209,12 @@ struct CharBehaviorTests {
         doThis(.charPop, to: inty)
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ true true false ]")
-        #expect(callString(topItem(inty, .bool)) == "( '\n' .charIsWhitespace 1 .charPopItems )")
+        #expect(callString(topItem(inty, .bool)) == "( '\\n' .charIsWhitespace 1 .charPopItems )")
 
         doThis(.charPop, to: inty)
         doThis(.charIsWhitespace, to: inty)
         #expect(stackString(inty, .bool) == "[ true true true false ]")
-        #expect(callString(topItem(inty, .bool)) == "( '\t' .charIsWhitespace 1 .charPopItems )")
+        #expect(callString(topItem(inty, .bool)) == "( '\\t' .charIsWhitespace 1 .charPopItems )")
     }
 
     @Test func charLT() {

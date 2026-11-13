@@ -69,7 +69,7 @@ struct PredicateBehaviorTests {
         let leaders = Self.run([Self.op(.intMax), VecIntItem([2, 1, 5, 3]), Self.op(.vecIntScan)])
         #expect(stackString(leaders, .vecInt) == "[ [2, 2, 5, 5] ]")
         let empty = Self.run([Self.op(.intAdd), VecIntItem([]), Self.op(.vecIntScan)])
-        #expect(stackString(empty, .vecInt) == "[ [] ]")
+        #expect(stackString(empty, .vecInt) == "[ «vecInt []» ]")
     }
 
     @Test func `sort by a key is stable`() {

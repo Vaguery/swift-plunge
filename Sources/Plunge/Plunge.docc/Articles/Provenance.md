@@ -88,7 +88,7 @@ Some values can't be rebuilt by running again what made them. A stack's depth,
 the step count and a fresh binding key depend on the state of the run, not on
 any argument. For these the crux holds a **stand-in** (``StandInItem``): a
 literal that runs as the value it replaces and says why it is there. It prints
-as, for example, `.intStackDepth_actuallyWas_4`. A stand-in records one of three
+as, for example, `«observed .intStackDepth: 4»`. A stand-in records one of three
 reasons:
 
 - **observed**: read from the state of the run;

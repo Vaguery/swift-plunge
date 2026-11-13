@@ -63,7 +63,8 @@ nonisolated extension Interpreter {
                   let found = locate(probe, items, start) else {
                 // A miss (`notFound`), as a search's is; the start index is handed back.
                 return (from ? [Router(.int, a[0])] : [])
-                    + [Router(.error, ErrorItem("\(name): no match below the top of .\(stack)", kind: .notFound)
+                    + [Router(.error, ErrorItem("\(name): no match below the top of .\(stack)",
+                                                kind: .notFound, source: name)
                         .observed(by: name, context.recording))]
             }
             let position = IntItem(found + 1).observed(by: name, context.recording)

@@ -35,7 +35,7 @@ struct IntBehaviorTests {
         doThis(.intAdd, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
 
-        #expect(stackString(inty, .error).contains("Overflow in .intAdd") )
+        #expect(errorText(inty).contains("Overflow in .intAdd") )
         #expect(callString(topItem(inty, .error)) == "( 9223372036854775807 1000 .intAdd )")
     }
 
@@ -62,7 +62,7 @@ struct IntBehaviorTests {
 
         doThis(.intDec, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intDec")  )
+        #expect(errorText(inty).contains("Overflow in .intDec")  )
         #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 .intDec )")
     }
 
@@ -133,14 +133,14 @@ struct IntBehaviorTests {
         loadDoubles(inty, doubles: [Double.infinity])
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+        #expect(errorText(inty).contains("Overflow in .intFromDouble"))
         #expect(callString(topItem(inty, .error)) == "( inf .intFromDouble )")
 
         // a finite double beyond Int's range would also trap
         loadDoubles(inty, doubles: [-1e40])
         doThis(.intFromDouble, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intFromDouble"))
+        #expect(errorText(inty).contains("Overflow in .intFromDouble"))
         #expect(callString(topItem(inty, .error)) == "( -1e+40 .intFromDouble )")
 
         // NaN as well
@@ -242,7 +242,7 @@ struct IntBehaviorTests {
 
         doThis(.intInc, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intInc")  )
+        #expect(errorText(inty).contains("Overflow in .intInc")  )
         #expect(callString(topItem(inty, .error)) == "( 9223372036854775807 .intInc )")
     }
 
@@ -338,7 +338,7 @@ struct IntBehaviorTests {
 
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Divide by zero .intMod") )
+        #expect(errorText(inty).contains("Divide by zero .intMod") )
         #expect(callString(topItem(inty, .error)) == "( 999 0 .intMod )")
     }
 
@@ -348,7 +348,7 @@ struct IntBehaviorTests {
 
         doThis(.intMod, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intMod") )
+        #expect(errorText(inty).contains("Overflow in .intMod") )
         #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 -1 .intMod )")
     }
 
@@ -371,7 +371,7 @@ struct IntBehaviorTests {
 
         doThis(.intMultiply, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intMultiply")  )
+        #expect(errorText(inty).contains("Overflow in .intMultiply")  )
         #expect(callString(topItem(inty, .error)) == "( -9223372036854775807 1000 .intMultiply )")
     }
 
@@ -402,7 +402,7 @@ struct IntBehaviorTests {
 
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Divide by zero .intQuot") )
+        #expect(errorText(inty).contains("Divide by zero .intQuot") )
         #expect(callString(topItem(inty, .error)) == "( 999 0 .intQuot )")
     }
 
@@ -412,7 +412,7 @@ struct IntBehaviorTests {
 
         doThis(.intQuot, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intQuot")  )
+        #expect(errorText(inty).contains("Overflow in .intQuot")  )
         #expect(callString(topItem(inty, .error)) == "( -9223372036854775808 -1 .intQuot )")
     }
 
@@ -435,7 +435,7 @@ struct IntBehaviorTests {
 
         doThis(.intSubtract, to: inty)
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .error).contains("Overflow in .intSubtract") )
+        #expect(errorText(inty).contains("Overflow in .intSubtract") )
         #expect(callString(topItem(inty, .error)) == "( -9223372036854775807 1000 .intSubtract )")
     }
 }

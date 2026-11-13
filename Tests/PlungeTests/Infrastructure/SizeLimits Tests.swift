@@ -72,7 +72,7 @@ struct SizeLimitsTests {
 
         #expect(inty.stacks[.vecInt]!.isEmpty)
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error).contains("maxVectorLength"))
+        #expect(errorText(inty).contains("maxVectorLength"))
     }
 
     @Test func `a vector within the limit pushes normally`() {
@@ -89,7 +89,7 @@ struct SizeLimitsTests {
 
         #expect(inty.stacks[.string]!.isEmpty)
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error).contains("maxStringLength"))
+        #expect(errorText(inty).contains("maxStringLength"))
     }
 
     @Test func `an oversized code item is refused and reported to error`() {
@@ -98,7 +98,7 @@ struct SizeLimitsTests {
 
         #expect(inty.stacks[.code]!.isEmpty)
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error).contains("maxCodePoints"))
+        #expect(errorText(inty).contains("maxCodePoints"))
     }
 
     // The key guarantee: only the overflowing item disappears, not the rest.
@@ -126,7 +126,7 @@ struct SizeLimitsTests {
         #expect(inty.overflow(of: bomb) != nil) // flagged despite small count
         inty.push(bomb, to: .vecString)
         #expect(inty.stacks[.vecString]!.isEmpty)
-        #expect(stackString(inty, .error).contains("maxItemWeight"))
+        #expect(errorText(inty).contains("maxItemWeight"))
     }
 
     @Test func `code whose leaves are large is caught by weight, not flatSize`() {
@@ -136,7 +136,7 @@ struct SizeLimitsTests {
 
         inty.push(code, to: .code)
         #expect(inty.stacks[.code]!.isEmpty)
-        #expect(stackString(inty, .error).contains("maxItemWeight"))
+        #expect(errorText(inty).contains("maxItemWeight"))
     }
 
     // MARK: stack-depth cap
@@ -148,7 +148,7 @@ struct SizeLimitsTests {
 
         inty.push(IntItem(99), to: .int) // over depth
         #expect(inty.stacks[.int]!.count == 3)
-        #expect(stackString(inty, .error).contains("maxStackDepth"))
+        #expect(errorText(inty).contains("maxStackDepth"))
     }
 
     // MARK: invariant violations (a mis-typed push, formerly a fatalError)
@@ -157,7 +157,7 @@ struct SizeLimitsTests {
         inty.push(StringItem("x"), to: .int) // .int accepts only IntItem
 
         #expect(inty.stacks[.int]!.isEmpty)
-        #expect(stackString(inty, .error).contains(Interpreter.invariantMarker))
+        #expect(errorText(inty).contains(Interpreter.invariantMarker))
         // the invariant is preserved: nothing wrong-typed reached .int
         #expect(inty.stacks[.error]!.count == 1)
     }
@@ -187,6 +187,6 @@ struct SizeLimitsTests {
         // the length-4 concatenation is refused; the two operands were consumed
         #expect(inty.stacks[.vecInt]!.isEmpty)
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error).contains("maxVectorLength"))
+        #expect(errorText(inty).contains("maxVectorLength"))
     }
 }

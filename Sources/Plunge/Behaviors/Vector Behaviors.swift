@@ -1603,22 +1603,23 @@ nonisolated extension Interpreter {
                     : produced + [IntItem(1), InstructionItem(PushStack.code.popItemsInstruction)]
             }
 
-            func refuse(_ why: String) -> [Router] {
+            func refuse(_ why: String, _ kind: ErrorKind) -> [Router] {
                 [
                     Router(.iterator, iterator),
-                    Router(.error, ErrorItem("vecFromIterator: \(why)").observed(by: .vecFromIterator, recording))
+                    Router(.error, ErrorItem("vecFromIterator: \(why)", kind: kind, source: .vecFromIterator)
+                        .observed(by: .vecFromIterator, recording))
                 ]
             }
 
             // The items are collected with their histories when recording, so each
             // element's origin is the item it was (`Pieces`).
             guard let items = iterator.collected(recording: recording) else {
-                return refuse("iterator emits more than \(IteratorItem.collectionLimit) items")
+                return refuse("iterator emits more than \(IteratorItem.collectionLimit) items", .sizeRefusal)
             }
             // Unreachable while a spent iterator cannot rest on a stack, but the
             // type of an empty collection is a question with no answer, and
             // guessing it is worse than saying so.
-            guard !items.isEmpty else { return refuse("\(iterator.pretty()) emitted nothing") }
+            guard !items.isEmpty else { return refuse("\(iterator.pretty()) emitted nothing", .emptyCollection) }
 
             if let body = iterator.body {
                 var results: [any Item] = []
@@ -1626,12 +1627,12 @@ nonisolated extension Interpreter {
                     do throws(Interpreter.ApplicationFailure) {
                         results.append(try Interpreter.apply(body, after: item, in: context) ?? item)
                     } catch {
-                        return refuse(error.reason)
+                        return refuse(error.reason, error.refusal.kind)
                     }
                 }
                 guard let made = Interpreter.collected(results, call: recording(record())),
                       let resting = PushStack.defaultStack(for: made) else {
-                    return refuse("the body's results are not all one collectable type")
+                    return refuse("the body's results are not all one collectable type", .mixedTypes)
                 }
                 return [Router(resting, made)] + Interpreter.iteratorFarewell(iterator)
             }
@@ -1653,7 +1654,8 @@ nonisolated extension Interpreter {
             guard let collected, let resting = PushStack.defaultStack(for: collected) else {
                 return refuse(
                     "\(iterator.pretty()) emits \(items[0].pretty()), which no vector holds"
-                    + " — .codeFromIterator takes anything"
+                    + " — .codeFromIterator takes anything",
+                    .mixedTypes
                 )
             }
             return [Router(resting, collected)] + Interpreter.iteratorFarewell(iterator)

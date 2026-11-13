@@ -96,7 +96,7 @@ nonisolated extension Interpreter {
                 return try Searching(search: search, instruction: instruction, app: app, view: view,
                                      element: element, call: call).result(context)
             } catch {
-                return refusal(instruction, error.reason, context)
+                return refusal(instruction, error.refusal, context)
             }
         }
     }
@@ -182,7 +182,7 @@ nonisolated extension Interpreter {
                     if !passes && cut != .partition { break }
                 }
             } catch {
-                return refusal(instruction, error.reason, context)
+                return refusal(instruction, error.refusal, context)
             }
             let all = Array(view.items.indices)
             switch cut {

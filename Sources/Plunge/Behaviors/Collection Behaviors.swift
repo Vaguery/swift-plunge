@@ -71,7 +71,7 @@ nonisolated extension Interpreter {
             var total = 0
             for value in x {
                 let (sum, overflowed) = total.addingReportingOverflow(value)
-                guard !overflowed else { throw Refusal("Overflow in .vecIntSum") }
+                guard !overflowed else { throw Refusal("Overflow in .vecIntSum", kind: .overflow) }
                 total = sum
             }
             return total
@@ -83,7 +83,7 @@ nonisolated extension Interpreter {
     static let vecDoubleSum_Behavior =
         Behavior.operation(.vecDoubleSum, reads: VecDoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let total = x.reduce(0.0, +)
-            guard total.isFinite else { throw Refusal("Overflow in .vecDoubleSum") }
+            guard total.isFinite else { throw Refusal("Overflow in .vecDoubleSum", kind: .overflow) }
             return total
         }
         .described(

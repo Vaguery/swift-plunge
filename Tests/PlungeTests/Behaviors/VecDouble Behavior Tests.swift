@@ -22,8 +22,8 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleButLast, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleButLast )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» .vecDoubleButLast )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -47,7 +47,7 @@ struct VecDoubleBehaviorTests {
 
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [1.0, 2.0, 3.0] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] [] .vecDoubleConcat )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( [1.0, 2.0, 3.0] «vecDbl []» .vecDoubleConcat )")
 
         doThis(.vecDoubleConcat, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 99.0, 999.0, 1.0, 2.0, 3.0] ]")
@@ -63,7 +63,7 @@ struct VecDoubleBehaviorTests {
 
         doThis(.vecDoubleConj, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [-3.0] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3.0 .vecDoubleConj )")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» -3.0 .vecDoubleConj )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -102,8 +102,8 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleDrop, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3 .vecDoubleDrop )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» -3 .vecDoubleDrop )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -157,8 +157,8 @@ struct VecDoubleBehaviorTests {
 
         doThis(.vecDoubleItemIsEmpty, to: inty)
         #expect(stackString(inty, .bool) == "[ true ]")
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]", "the vector survives")
-        #expect(callString(topItem(inty, .bool)) == "( [] .vecDoubleItemIsEmpty 1 .vecDoublePopItems )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]", "the vector survives")
+        #expect(callString(topItem(inty, .bool)) == "( «vecDbl []» .vecDoubleItemIsEmpty 1 .vecDoublePopItems )")
 
         doThis(.vecDoublePop, to: inty)   // discard the empty to reach the next vector
 
@@ -255,7 +255,7 @@ struct VecDoubleBehaviorTests {
         inty.stacks[.code]!.prepend(CodeItem([InstructionItem(.boolNot)]))
 
         #expect(stackString(inty, .double) == "[ ]")
-        #expect(stackString(inty, .vecDouble) == "[ [] ]")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» ]")
         #expect(stackString(inty, .exec) == "[ ]")
 
         doThis(.vecDoubleIterate, to: inty)
@@ -313,8 +313,8 @@ struct VecDoubleBehaviorTests {
         // .vecDouble, and the crux pops what it read so it reproduces only the count.
         doThis(.vecDoubleLength, to: inty)
         #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")   // both survive
-        #expect(callString(topItem(inty, .int)) == "( [] .vecDoubleLength 1 .vecDoublePopItems )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]")   // both survive
+        #expect(callString(topItem(inty, .int)) == "( «vecDbl []» .vecDoubleLength 1 .vecDoublePopItems )")
 
         doThis(.vecDoublePop, to: inty)   // discard the empty to reach the next vector
 
@@ -332,7 +332,7 @@ struct VecDoubleBehaviorTests {
                          VecDoubleItem([9, 99, 999])
                         ])
 
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] [9.0, 99.0, 999.0] ]")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] [9.0, 99.0, 999.0] ]")
         #expect(stackString(inty, .int) == "[ -3 1 7776 ]")
 
         doThis(.vecDoubleNth, to: inty)
@@ -401,8 +401,9 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleRemove, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 .vecDoubleRemove )")
+        #expect(stackString(inty, .vecDouble)
+                == "[ «vecDbl []» [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» 9.0 .vecDoubleRemove )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -426,8 +427,9 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleReplace, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1.0 .vecDoubleReplace )")
+        #expect(stackString(inty, .vecDouble)
+                == "[ «vecDbl []» [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» 9.0 1.0 .vecDoubleReplace )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -456,8 +458,9 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleReplaceFirst, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9.0 1.0 .vecDoubleReplaceFirst )")
+        #expect(stackString(inty, .vecDouble)
+                == "[ «vecDbl []» [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» 9.0 1.0 .vecDoubleReplaceFirst )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -479,8 +482,8 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleRest, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleRest )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» .vecDoubleRest )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -496,8 +499,8 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleReverse, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] .vecDoubleReverse )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» .vecDoubleReverse )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -520,7 +523,7 @@ struct VecDoubleBehaviorTests {
         doThis(.vecDoubleSet, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]")
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
-        #expect(callString(topItem(inty, .error)) == "( [] 9.0 1 .vecDoubleSet )")
+        #expect(callString(topItem(inty, .error)) == "( «vecDbl []» 9.0 1 .vecDoubleSet )")
 
         doThis(.vecDoubleSet, to: inty)
         #expect(stackString(inty, .vecDouble) == "[ [9.0, 8.0, 7.0, 6.0, 3.0] [9.0, 9.0, 9.0, 9.0, 9.0] ]", "2222 clamps to the last")
@@ -543,8 +546,9 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleSlice, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] 9 1 .vecDoubleSlice )")
+        #expect(stackString(inty, .vecDouble)
+                == "[ «vecDbl []» [9.0, 8.0, 7.0, 6.0, 9.0] [9.0, 9.0, 9.0, 9.0, 9.0] [1.0, 11.0, 111.0, 1111.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» 9 1 .vecDoubleSlice )")
 
         doThis(.vecDoublePop, to: inty)
 
@@ -573,8 +577,8 @@ struct VecDoubleBehaviorTests {
                         ])
 
         doThis(.vecDoubleTake, to: inty)
-        #expect(stackString(inty, .vecDouble) == "[ [] [9.0, 99.0, 999.0] ]")
-        #expect(callString(topItem(inty, .vecDouble)) == "( [] -3 .vecDoubleTake )")
+        #expect(stackString(inty, .vecDouble) == "[ «vecDbl []» [9.0, 99.0, 999.0] ]")
+        #expect(callString(topItem(inty, .vecDouble)) == "( «vecDbl []» -3 .vecDoubleTake )")
 
         doThis(.vecDoublePop, to: inty)
 

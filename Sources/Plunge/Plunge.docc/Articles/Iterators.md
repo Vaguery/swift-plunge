@@ -23,9 +23,12 @@ An item on `.iterator` describes a loop:
 - whether it **emits**: pushes each element (a number of the range, an element
   of the vector, a char of the string) onto its stack before the body runs.
 
-An iterator prints as its source, its cursor and its body between angle quotes:
-`«3→40 by 1 @3 ( true )»` counts from 3 toward 40 by ones, has taken three
-passes, and runs `( true )` on each.
+An iterator prints in words: `«iter 3 to 40 by 1 at 3: ( true )»` counts
+from 3 toward 40 by ones, has taken three passes, and runs `( true )` on each.
+The source names the kind of loop, so two iterators never print alike:
+`over [1, 2, 3]` walks a collection's elements, `letters of "ab"` and
+`words of "a b"` walk a string two other ways, and `7 repeated 4 times` repeats
+one item.
 
 ## Building and playing one
 

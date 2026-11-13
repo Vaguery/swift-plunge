@@ -98,7 +98,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case type, value, errorKind
+        case type, value, errorKind, errorSource
     }
 
     public init(from decoder: any Decoder) throws {
@@ -174,7 +174,8 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             // decode it leniently and fall back to the same default `init` uses.
             item = ErrorItem(
                 try container.decode(String.self, forKey: .value),
-                kind: try container.decodeIfPresent(ErrorKind.self, forKey: .errorKind) ?? .other)
+                kind: try container.decodeIfPresent(ErrorKind.self, forKey: .errorKind) ?? .other,
+                source: try container.decodeIfPresent(PushInstruction.self, forKey: .errorSource))
         }
     }
 
@@ -253,6 +254,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             // instructions that count by kind would silently under-report on
             // anything that had crossed this boundary.
             try container.encode(concrete.kind, forKey: .errorKind)
+            try container.encodeIfPresent(concrete.source, forKey: .errorSource)
         default:
             throw EncodingError.invalidValue(
                 item,

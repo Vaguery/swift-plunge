@@ -185,9 +185,9 @@ nonisolated extension Interpreter {
     static let vecIntRangeBy_Behavior =
         Behavior.operation(.vecIntRangeBy, takes: IntItem.self, IntItem.self, IntItem.self,
                            gives: VecIntItem.self) { a, b, step throws(Refusal) in
-            guard step != 0 else { throw Refusal("vecIntRangeBy: a step of 0") }
+            guard step != 0 else { throw Refusal("vecIntRangeBy: a step of 0", kind: .badCount) }
             guard a == b || (b > a) == (step > 0) else {
-                throw Refusal("vecIntRangeBy: a step of \(step) never reaches \(b) from \(a)")
+                throw Refusal("vecIntRangeBy: a step of \(step) never reaches \(b) from \(a)", kind: .badCount)
             }
             let (span, overflowed) = b.subtractingReportingOverflow(a)
             guard !overflowed else { throw Refusal("vecIntRangeBy: \(a) to \(b) is too long", kind: .sizeRefusal) }

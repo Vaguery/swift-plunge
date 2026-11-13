@@ -30,13 +30,14 @@ struct FunctionStackTests {
     @Test func `a starved instruction is shelved bare, beside its error`() {
         let inty = Self.run([IntItem(4), Self.op(.intAdd)])
         #expect(stackString(inty, .int) == "[ 4 ]", "the argument it found is not taken")
-        #expect(stackString(inty, .function) == "[ ƒ( ⟨int⟩ ⟨int⟩ .intAdd ) ]", "nor bound into the function")
+        #expect(stackString(inty, .function)
+                == "[ «fn bare (int, int) -> int: $0 $1 .intAdd» ]", "nor bound into the function")
         #expect((inty.stacks[.error]!.first as? ErrorItem)?.kind == .missingArgument)
     }
 
     @Test func `combinators are shelved too`() {
         let inty = Self.run([Self.op(.intDup)])
-        #expect(stackString(inty, .function) == "[ ƒ( ⟨int⟩ .intDup ) ]")
+        #expect(stackString(inty, .function) == "[ «fn bare (int) -> int: $0 .intDup» ]")
         let bare = inty.stacks[.function]!.first?.exactly(FunctionItem.self)
         #expect(bare?.isBare == true && bare?.output == .int)
     }
@@ -54,7 +55,8 @@ struct FunctionStackTests {
         let inty = Self.run([CodeItem([IntItem(2), Self.op(.intAdd), Self.op(.intMultiply)]),
                              Self.op(.codePushAllFunctions)])
         #expect(stackString(inty, .function)
-                == "[ ƒ( ⟨int⟩ ⟨int⟩ 2 .intAdd .intMultiply ) ƒ( ⟨int⟩ 2 .intAdd ) ]")
+                == "[ «fn (int, int) -> int: $0 $1 2 .intAdd .intMultiply» "
+                + "«fn (int) -> int: $0 2 .intAdd» ]")
         #expect(inty.stacks[.code]!.isEmpty, "the block is consumed")
         #expect(inty.stacks[.error]!.isEmpty)
     }
@@ -104,7 +106,7 @@ struct FunctionStackTests {
     @Test func `a function on exec comes to rest on the function stack`() {
         let function = FunctionItem(bare: Self.op(.intAdd))
         let inty = Self.run([function])
-        #expect(stackString(inty, .function) == "[ ƒ( ⟨int⟩ ⟨int⟩ .intAdd ) ]")
+        #expect(stackString(inty, .function) == "[ «fn bare (int, int) -> int: $0 $1 .intAdd» ]")
     }
 
     @Test func `functions encode and decode as themselves`() throws {

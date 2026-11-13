@@ -79,8 +79,9 @@ struct TypedOperationTests {
         loadInts(inty, ints: [0, 5])   // `5 0 .intQuot`
         doThis(.intQuot, to: inty)
         let error = topItem(inty, .error)
-        #expect(error.pretty().contains("Divide by zero .intQuot: 5 / 0"))
-        #expect((error as? ErrorItem)?.kind == .other)
+        #expect(error.errorMessage.contains("Divide by zero .intQuot: 5 / 0"))
+        #expect((error as? ErrorItem)?.kind == .divideByZero)
+        #expect(error.pretty() == "«err divideByZero: .intQuot»")
         #expect(callString(error) == "( 5 0 .intQuot )")
 
         let redo = Interpreter.recordingProvenance()
@@ -142,7 +143,7 @@ struct TypedOperationTests {
 
         first.act(on: inty)
         #expect((topItem(inty, .error) as? ErrorItem)?.kind == .emptyCollection)
-        #expect(callString(topItem(inty, .error)) == "( [] .vecIntFirst )")
+        #expect(callString(topItem(inty, .error)) == "( «vecInt []» .vecIntFirst )")
     }
 
     /// `splitting`: two results, the first deepest, each recording the selecting

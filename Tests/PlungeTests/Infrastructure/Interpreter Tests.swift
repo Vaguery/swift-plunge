@@ -139,7 +139,7 @@ struct InterpreterTests {
 
         inty.step()
         #expect(inty.stacks[.error]!.count == 1)
-        #expect(stackString(inty, .error).contains("I haz no stick") )
+        #expect(errorText(inty).contains("I haz no stick") )
         #expect(inty.stacks[.exec]!.count == 0)
 
     }

@@ -156,13 +156,13 @@ struct DocumentationExamplesTests {
         let bound = await Self.finalStacks([.binding, .int], after: program {
             7; PushInstruction.intRef
         })
-        #expect(bound[.binding] == ["⟨10 ↦ 7⟩", "(1 items)"])
+        #expect(bound[.binding] == ["«bind: 10 -> 7»", "(1 items)"])
         #expect(bound[.int] == ["10", "7", "(2 items)"])
 
         let assigned = await Self.finalStacks([.binding], after: program {
             7; 3; PushInstruction.intRefAs; "x"; 3; PushInstruction.stringRefAs
         })
-        #expect(assigned[.binding] == ["⟨3 ↦ \"x\"⟩", "⟨3 ↦ 7⟩", "(2 items)"])
+        #expect(assigned[.binding] == ["«bind: 3 -> \"x\"»", "«bind: 3 -> 7»", "(2 items)"])
 
         let unpacked = await Self.finalStacks([.binding, .int], after: program {
             7; 3; PushInstruction.intRefAs; PushInstruction.bindingUnpack
@@ -202,7 +202,8 @@ struct DocumentationExamplesTests {
         let derived = await Self.finalStacks([.function], after: [
             CodeItem([IntItem(2), Self.op(.intAdd), Self.op(.intMultiply)]), Self.op(.codePushAllFunctions)
         ])
-        #expect(derived[.function]?.prefix(2) == ["ƒ( ⟨int⟩ ⟨int⟩ 2 .intAdd .intMultiply )", "ƒ( ⟨int⟩ 2 .intAdd )"])
+        #expect(derived[.function]?.prefix(2) == ["«fn (int, int) -> int: $0 $1 2 .intAdd .intMultiply»",
+                                                  "«fn (int) -> int: $0 2 .intAdd»"])
         let filled = await Self.finalStacks([.vecInt, .int], after: [
             Self.op(.intAdd), IntItem(10), VecIntItem([1, 2, 3]), Self.op(.vecIntMap)
         ])

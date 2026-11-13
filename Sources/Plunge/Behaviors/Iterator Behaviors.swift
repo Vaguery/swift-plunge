@@ -376,7 +376,7 @@ nonisolated extension Interpreter {
     static func iteratorSetter_Behavior(
         _ name: PushInstruction,
         takes source: PushStack,
-        setting: @escaping @Sendable (inout IteratorItem, any Item) -> String?
+        setting: @escaping @Sendable (inout IteratorItem, any Item) -> Refusal?
     ) -> Behavior {
         Behavior(
             name,
@@ -394,7 +394,8 @@ nonisolated extension Interpreter {
                 if let complaint = setting(&iterator, a[0]) {
                     return [
                         Router(.iterator, iterator),
-                        Router(.error, ErrorItem(complaint).observed(by: name, recording))
+                        Router(.error, ErrorItem(complaint.message, kind: complaint.kind, source: name)
+                            .observed(by: name, recording))
                     ]
                 }
                 // Nothing left to emit, so the loop is over — and hands its body
@@ -453,7 +454,8 @@ nonisolated extension Interpreter {
         _ iterator: IteratorItem, by name: PushInstruction, _ recording: ProvenanceRecording
     ) -> [Router] {
         guard !iterator.isSpent else {
-            return [Router(.error, ErrorItem("\(iterator.pretty()) has nothing to emit").observed(by: name, recording))]
+            return [Router(.error, ErrorItem("\(iterator.pretty()) has nothing to emit",
+                                             kind: .emptyCollection, source: name).observed(by: name, recording))]
         }
         return [Router(.iterator, iterator)]
     }
@@ -477,7 +479,7 @@ nonisolated extension Interpreter {
     static let iteratorSetStart_Behavior =
         iteratorSetter_Behavior(.iteratorSetStart, takes: .code) { iterator, boxed in
             guard let item = unboxed(boxed) else {
-                return "iteratorSetStart needs an item in its block"
+                return Refusal("iteratorSetStart needs an item in its block", kind: .emptyCollection)
             }
             iterator.origin = item
             return nil
@@ -495,10 +497,10 @@ nonisolated extension Interpreter {
             switch iterator.kind {
             case .counting, .repeating: break
             default:
-                return "iteratorSetEnd: a walking iterator's end is its source's length"
+                return Refusal("iteratorSetEnd: a walking iterator's end is its source's length", kind: .undefined)
             }
             guard let item = unboxed(boxed) else {
-                return "iteratorSetEnd needs an item in its block"
+                return Refusal("iteratorSetEnd needs an item in its block", kind: .emptyCollection)
             }
             iterator.destination = item
             return nil
@@ -546,7 +548,8 @@ nonisolated extension Interpreter {
     static let iteratorSetLaps_Behavior =
         iteratorSetter_Behavior(.iteratorSetLaps, takes: .int) { iterator, n in
             guard iterator.kind.cycles else {
-                return "iteratorSetLaps: a counting or repeating loop's length is its destination"
+                return Refusal("iteratorSetLaps: a counting or repeating loop's length is its destination",
+                               kind: .undefined)
             }
             iterator.laps = (n as! IntItem).value
             return nil
@@ -603,6 +606,7 @@ nonisolated extension Interpreter {
                             .error,
                             ErrorItem(
                                 "Zero stride .iteratorFromIntRange: \(origin.value) to \(destination.value) by 0",
+                                kind: .badCount, source: .iteratorFromIntRange,
                                 call: recording([
                                     origin, destination, stride, body, cursor, burial, emits,
                                     InstructionItem(.iteratorFromIntRange)
@@ -894,7 +898,8 @@ nonisolated extension Interpreter {
                     a[1] as! IntItem, a[2] as! IntItem, a[3] as! IntItem
                 )
                 guard let origin = box.value.first else {
-                    return [Router(.error, ErrorItem("\(name) needs an item in its block")
+                    return [Router(.error, ErrorItem("\(name) needs an item in its block",
+                                                     kind: .emptyCollection, source: name)
                         .observed(by: name, recording))]
                 }
 

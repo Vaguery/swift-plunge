@@ -104,7 +104,7 @@ struct IntyStackSetupTests {
     @Test func `loadCode works on empty CodeItems, but you have to use the right syntax`() {
         loadCode(inty, code: [ [], CodeItem([]) ] )
         #expect(stackString(inty, .code) ==
-                "[ ( [] ) ( ) ]")
+                "[ ( «vecInt []» ) ( ) ]")
         #expect(probeItemOnStack(inty, .code, index: 0)! is CodeItem)
         let top = probeItemOnStack(inty, .code, index: 0)! as! CodeItem
         #expect(top.value[0] is VecIntItem)

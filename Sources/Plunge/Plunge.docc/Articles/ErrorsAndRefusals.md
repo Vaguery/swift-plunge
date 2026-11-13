@@ -25,14 +25,15 @@ particular kind. The interpreter can also step in on its own account.
 An instruction **starves** when a stack it needs holds too few items.
 
 ```
-1 .intAdd     →  .int holds 1; .error holds «error: intAdd missing args: .int»;
-                 .function holds ƒ( ⟨int⟩ ⟨int⟩ .intAdd )
+1 .intAdd     →  .int holds 1; .error holds «err missingArgument: .intAdd»;
+                 .function holds «fn bare (int, int) -> int: $0 $1 .intAdd»
 ```
 
 A starved instruction:
 
 - takes nothing: whatever arguments it did find stay where they were;
-- pushes a *missing arguments* error that names the stack that came up short;
+- pushes a *missing arguments* error, whose message names the stack that came
+  up short;
 - puts itself on `.function` as a *bare function*, whose holes are the arguments
   it wanted.
 
@@ -50,7 +51,7 @@ instructions that measure or clear a stack) can't starve.
 An instruction **refuses** when it has its arguments and can't use them:
 
 ```
-1 0 .intQuot     →  .int is empty; .error holds «error: Divide by zero .intQuot: 1 / 0»
+1 0 .intQuot     →  .int is empty; .error holds «err divideByZero: .intQuot»
 ```
 
 A refusal uses up the arguments the instruction takes (a query still leaves the
@@ -86,7 +87,7 @@ leaves the ones it only reads. Its error is of kind ``ErrorKind/notFound``:
 
 ```
 [7] [1, 2] .vecIntAdd     →  .vecInt holds [7]; .error holds
-                             «error: vecIntAdd: nothing on .vecInt fits»
+                             «err notFound: .vecIntAdd»
 ```
 
 Here `.vecIntAdd` took `[1, 2]`, looked for a vector of two ints below it, and
@@ -119,9 +120,20 @@ happened.
 
 ## Kinds of error
 
-Every ``ErrorItem`` has a message for people (``ErrorItem/value``) and an
-``ErrorKind`` for counting (``ErrorItem/kind``). Messages may be reworded
-between versions of the library; kinds are stable.
+Every ``ErrorItem`` has three parts:
+
+- an ``ErrorKind`` (``ErrorItem/kind``): its class, as one word;
+- the instruction that raised it (``ErrorItem/source``), or `nil` when the
+  interpreter raised it on its own account;
+- a message for people (``ErrorItem/value``), a sentence with the details:
+  `Divide by zero .intQuot: 1 / 0`.
+
+An error prints as its kind and its instruction, `«err divideByZero: .intQuot»`,
+or as its kind alone when it has no instruction, `«err sizeRefusal»`. The
+message is not printed, so the printed form holds no free text. Two errors are
+equal when their kind and instruction match: two overflows in `.intAdd` are the
+same error, whatever the numbers were. Messages may be reworded between
+versions of the library; kinds are stable.
 
 | Kind | Means |
 |---|---|
@@ -129,7 +141,15 @@ between versions of the library; kinds are stable.
 | ``ErrorKind/notFound`` | a miss: a lookup, a find or a first-fit argument found nothing |
 | ``ErrorKind/emptyCollection`` | an element was asked of a collection that has none |
 | ``ErrorKind/conversion`` | a value has no counterpart in the type asked for |
-| ``ErrorKind/other`` | any other refusal (division by zero, overflow, a negative count), and unknown instructions |
+| ``ErrorKind/overflow`` | a result that can't be held: an int out of range, a double that isn't finite |
+| ``ErrorKind/divideByZero`` | a division or a remainder by zero |
+| ``ErrorKind/undefined`` | no answer for these values: the square root of a negative number |
+| ``ErrorKind/badCount`` | a count, a step or a stride the instruction can't use |
+| ``ErrorKind/mixedTypes`` | items that can't be collected into one vector |
+| ``ErrorKind/outOfSteps`` | a function run inside an instruction used up its steps |
+| ``ErrorKind/unknownInstruction`` | a disabled instruction |
+| ``ErrorKind/needsProvenance`` | an instruction that reads a crux, in a run that isn't recording provenance |
+| ``ErrorKind/other`` | any other refusal |
 | ``ErrorKind/missingInput`` | an input instruction with no input bound |
 | ``ErrorKind/missingConstant`` | a constant instruction with no constant bound |
 | ``ErrorKind/sizeRefusal`` | a push over a size limit, or a sandbox nested too deep |
@@ -172,6 +192,7 @@ cast to read its kind:
 ```swift
 if case .items(let readings)? = result.traces["last error"],
    let error = (readings.last ?? nil)?.item as? ErrorItem {
+    print(error.pretty())            // «err missingArgument: .intAdd»
     print(error.kind, error.value)   // missingArgument intAdd missing args: .int
 }
 ```

@@ -87,7 +87,7 @@ struct DeepStructureSafetyTests {
         // the drop and names the instruction that produced the value.
         let call = inty.stacks[.int]!.first!.call
         #expect(call.count == 1)
-        #expect(call.first?.pretty() == ".intInc_elidedAs_5")
+        #expect(call.first?.pretty() == "«elided .intInc: 5»")
         #expect((inty.stacks[.int]!.first as? IntItem)?.value == 5, "the value is kept")
     }
 
@@ -119,7 +119,7 @@ struct DeepStructureSafetyTests {
                                 IntItem(5_000), InstructionItem(.execDoTimes)])
             inty.run()
             let deepest = inty.stacks[.code]!.compactMap { ($0 as? CodeItem)?.nestingDepth }.max() ?? 0
-            let refusals = inty.stacks[.error]!.filter { $0.pretty().contains("maxCodeDepth") }.count
+            let refusals = inty.stacks[.error]!.filter { $0.errorMessage.contains("maxCodeDepth") }.count
             return (deepest, refusals, inty.config.maxCodeDepth)
         }.value
         #expect(deepest <= bound)
@@ -147,7 +147,7 @@ struct DeepStructureSafetyTests {
         let inty = Interpreter()
         inty.push(block, to: .code)
         #expect(inty.stacks[.code]!.isEmpty, "over-deep alternation is refused")
-        #expect(inty.stacks[.error]!.contains { $0.pretty().contains("maxCodeDepth") })
+        #expect(inty.stacks[.error]!.contains { $0.errorMessage.contains("maxCodeDepth") })
         inty.push(alternating(rounds: 400), to: .code)
         #expect(inty.stacks[.code]!.count == 1, "within the limit it is accepted")
     }

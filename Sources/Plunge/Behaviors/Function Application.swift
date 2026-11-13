@@ -155,7 +155,7 @@ nonisolated extension Interpreter {
 
     /// A refusal from `prepare`, as the instruction's error.
     static func refusal(_ instruction: PushInstruction, _ refusal: Refusal, _ context: ReadContext) -> [Router] {
-        [Router(.error, ErrorItem("\(instruction): \(refusal.message)", kind: refusal.kind)
+        [Router(.error, ErrorItem("\(instruction): \(refusal.message)", kind: refusal.kind, source: instruction)
             .observed(by: instruction, context.recording))]
     }
 }

@@ -33,7 +33,7 @@ nonisolated extension Interpreter {
                             // supplies again.
                             return [Router(.error,
                                            ErrorItem("No constant assigned for \(instructionName)",
-                                                     kind: .missingConstant,
+                                                     kind: .missingConstant, source: instructionName,
                                                      call: context.recording([InstructionItem(instructionName)])))]
                         }
                     }

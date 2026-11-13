@@ -384,7 +384,7 @@ nonisolated extension Behavior {
             do throws(Refusal) {
                 return try produce(args, call, recording)
             } catch {
-                return [Behavior.refusal(error.message, kind: error.kind,
+                return [Behavior.refusal(error.message, kind: error.kind, source: label,
                                          call: recording(call.recorded(producing: .error)))]
             }
         }

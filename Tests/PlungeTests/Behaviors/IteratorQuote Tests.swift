@@ -49,7 +49,7 @@ struct IteratorQuoteTests {
         inty.stacks[.iterator]!.prepend(counting())
         doThis(.iteratorQuote, to: inty)
 
-        #expect(stackString(inty, .code) == "[ ( «0→4 by 1 @0» ) ]")
+        #expect(stackString(inty, .code) == "[ ( «iter 0 to 4 by 1 at 0» ) ]")
         #expect(inty.stacks[.iterator]!.isEmpty, "and off .iterator, which is the point")
     }
 
@@ -130,7 +130,7 @@ struct IteratorQuoteTests {
         redo.load(program: block.crux())
         redo.run()
 
-        #expect(stackString(redo, .code) == "[ ( «0→4 by 1 @2» ) ]")
+        #expect(stackString(redo, .code) == "[ ( «iter 0 to 4 by 1 at 2» ) ]")
         #expect(CodeItem(redo.stacks[.code]!.first!.crux()).pretty()
                 == CodeItem(block.crux()).pretty(), "and is a fixed point")
     }

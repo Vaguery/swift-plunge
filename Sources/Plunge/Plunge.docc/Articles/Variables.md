@@ -10,7 +10,7 @@ a program put a value aside under a name and get it back from anywhere, however
 the stacks have changed in between.
 
 The `.binding` stack holds **bindings**: pairs of an int key and any item,
-written `⟨3 ↦ "x"⟩`. A variable is every binding with one key. The topmost is
+written `«bind: 3 -> "x"»`. A variable is every binding with one key. The topmost is
 its current value; older ones below it are shadowed, not lost, so each variable
 is a stack of its own values.
 
@@ -41,7 +41,7 @@ binds a copy of the top item of its stack to a fresh key, leaves the item where
 it was, and pushes the key onto `.int`:
 
 ```
-7 .intRef                        →  .binding holds ⟨10 ↦ 7⟩; .int holds 10 7
+7 .intRef                        →  .binding holds «bind: 10 -> 7»; .int holds 10 7
 ```
 
 Lookups read a key from the top of `.int` and leave it there:

@@ -37,29 +37,30 @@ nonisolated enum NestedRendering {
                     pieces.append(.text(")"))
                     pending.append(contentsOf: pieces.reversed())
                 } else if let iterator = item as? IteratorItem {
-                    // `«origin→destination<middle> body»`.
-                    var pieces: [Piece] = [.text("«"), .item(iterator.origin)]
-                    if let destination = iterator.destination {
-                        pieces.append(.text("→"))
-                        pieces.append(.item(destination))
-                    }
-                    pieces.append(.text(iterator.prettyMiddle))
+                    // `«iter 0 to 5 by 1 at 2: ( body )»`: the source, named by
+                    // its kind, then the cursor and whatever else says something.
+                    var pieces: [Piece] = [.text("«\(PushStack.iterator.tag) ")]
+                    pieces.append(contentsOf: Self.source(of: iterator))
+                    pieces.append(.text(iterator.prettyState))
                     if let body = iterator.body {
-                        pieces.append(.text(" "))
+                        pieces.append(.text(": "))
                         pieces.append(.item(body))
                     }
                     pieces.append(.text("»"))
                     pending.append(contentsOf: pieces.reversed())
                 } else if let function = item.exactly(FunctionItem.self) {
-                    // `ƒ( ⟨int⟩ 3 .intAdd )`: each hole written as its stack.
-                    let holes = function.holes
-                    let body = function.value.map { [Piece.item($0), .text(" ")] }
-                    let laid = FunctionItem.merged(body, function.layout) { [Piece.text("⟨\(holes[$0].stack)⟩ ")] }
-                    let pieces: [Piece] = [.text("ƒ( ")] + laid.flatMap { $0 } + [.text(")")]
+                    // `«fn (int) -> int: $0 3 .intAdd»`: the holes' stacks and
+                    // the output as a signature, each hole in the body as `$n`.
+                    let body = function.value.map { [Piece.item($0)] }
+                    let laid = FunctionItem.merged(body, function.layout) { [Piece.text("$\($0)")] }
+                    var pieces: [Piece] = [.text("«\(PushStack.function.tag) \(function.prettySignature):")]
+                    for part in laid { pieces.append(.text(" ")); pieces.append(contentsOf: part) }
+                    pieces.append(.text("»"))
                     pending.append(contentsOf: pieces.reversed())
                 } else if let pair = item as? BindingItem {
-                    // `⟨key ↦ value⟩`.
-                    let pieces: [Piece] = [.text("⟨\(pair.key) ↦ "), .item(pair.bound), .text("⟩")]
+                    // `«bind: key -> value»`.
+                    let pieces: [Piece] = [.text("«\(PushStack.binding.tag): \(pair.key) -> "),
+                                           .item(pair.bound), .text("»")]
                     pending.append(contentsOf: pieces.reversed())
                 } else {
                     output += item.pretty()
@@ -67,5 +68,28 @@ nonisolated enum NestedRendering {
             }
         }
         return output
+    }
+
+    /// An iterator's source, in words that name its kind, so two iterators of
+    /// different kinds over the same origin never print alike.
+    private static func source(of iterator: IteratorItem) -> [Piece] {
+        func into(_ stack: PushStack?) -> [Piece] { stack.map { [.text(" into \($0)")] } ?? [] }
+        let origin = Piece.item(iterator.origin)
+        let destination = iterator.destination.map { [Piece.text(" to "), .item($0)] } ?? []
+        switch iterator.kind {
+        case .counting(let stride):
+            return [origin] + destination + [.text(" by \(stride)")]
+        case .repeating(let stack):
+            let times = iterator.destination.map { [Piece.text(" "), .item($0), .text(" times")] } ?? []
+            return [origin, .text(" repeated")] + times + into(stack)
+        case .elements(let stack):
+            return [.text("over "), origin] + destination + into(stack)
+        case .letters:
+            return [.text("letters of "), origin] + destination
+        case .words:
+            return [.text("words of "), origin] + destination
+        case .points(let emission):
+            return [.text("\(emission) points of "), origin] + destination
+        }
     }
 }

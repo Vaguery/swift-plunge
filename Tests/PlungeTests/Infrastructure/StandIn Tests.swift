@@ -27,7 +27,7 @@ struct StandInTests {
         let inty = run([BoolItem(true), BoolItem(false), BoolItem(true), InstructionItem(.boolStackDepth)])
         let depth = topItem(inty, .int)
         #expect(depth.pretty() == "3")
-        #expect(CodeItem(depth.crux()).pretty() == "( .boolStackDepth_actuallyWas_3 )")
+        #expect(CodeItem(depth.crux()).pretty() == "( «observed .boolStackDepth: 3» )")
 
         // The crux alone, on a fresh interpreter: the value, its history, and
         // nothing else on any stack (the composition invariant).
@@ -41,7 +41,7 @@ struct StandInTests {
         let inty = run([IntItem(7), IntItem(8), InstructionItem(.intStackDepth), InstructionItem(.intAdd)])
         let sum = topItem(inty, .int)
         #expect(sum.pretty() == "10")
-        #expect(CodeItem(sum.crux()).pretty() == "( 8 .intStackDepth_actuallyWas_2 .intAdd )")
+        #expect(CodeItem(sum.crux()).pretty() == "( 8 «observed .intStackDepth: 2» .intAdd )")
     }
 
     @Test func `elision leaves a stand-in that replays to the same item`() {
@@ -66,7 +66,7 @@ struct StandInTests {
     @Test func `a missing-args error names the starved instruction and replays`() {
         let inty = run([InstructionItem(.intAdd)])
         let error = topItem(inty, .error)
-        #expect(CodeItem(error.crux()).pretty() == "( .intAdd_actuallyWas_«error: intAdd missing args: .int» )")
+        #expect(CodeItem(error.crux()).pretty() == "( «observed .intAdd: «err missingArgument: .intAdd»» )")
         let replay = run(error.crux())
         #expect(topItem(replay, .error).pretty() == error.pretty())
     }
@@ -76,7 +76,7 @@ struct StandInTests {
         settings.maxStringLength = 3
         let inty = run([StringItem("abcdef")], settings: settings)
         let refusal = topItem(inty, .error)
-        #expect(callString(refusal).hasPrefix("( .interpreter_actuallyWas_"))
+        #expect(callString(refusal).hasPrefix("( «observed interpreter: "))
     }
 
     @Test func `with recording off nothing is built`() {
@@ -92,7 +92,7 @@ struct StandInTests {
         let three = StandInItem(standingInFor: IntItem(3), source: nil, reason: .elided)
         let inty = run([five, three, InstructionItem(.intAdd)])
         #expect(stackString(inty, .int) == "[ 8 ]")
-        #expect(three.pretty() == ".interpreter_elidedAs_3")
+        #expect(three.pretty() == "«elided interpreter: 3»")
         // It has no stack of its own, and is a literal leaf.
         #expect(PushStack.defaultStack(for: five) == nil)
         #expect(five.call.isEmpty && five.crux().count == 1)

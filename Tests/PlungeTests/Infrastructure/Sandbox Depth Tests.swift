@@ -36,7 +36,7 @@ struct SandboxDepthTests {
         inty.sandboxDepth = Interpreter.maxSandboxDepth
         inty.load(program: Self.nestedIteratorMaps(1))
         inty.run()
-        #expect(inty.stacks[.error]!.contains { $0.pretty().contains("nested past") })
+        #expect(inty.stacks[.error]!.contains { $0.errorMessage.contains("nested past") })
         let shallow = Interpreter()
         shallow.load(program: Self.nestedIteratorMaps(1))
         shallow.run()

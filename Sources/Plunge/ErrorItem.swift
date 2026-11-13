@@ -58,8 +58,29 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     /// A value with no counterpart in the type asked for: a string that is not a
     /// number, an int that is not a Unicode scalar.
     case conversion
-    /// Any other refusal (a division by zero, an overflow, a negative count), and
-    /// an instruction that is disabled.
+    /// A result that can't be held: an integer past `Int`'s range or a double
+    /// that isn't finite, in a scalar or in one element of a vector.
+    case overflow
+    /// A division or a remainder by zero.
+    case divideByZero
+    /// An operation with no answer for these values: the root or logarithm of a
+    /// negative number, a negative power of an int, a setting this kind of
+    /// iterator doesn't have.
+    case undefined
+    /// A count, a step or a stride the instruction can't use: negative, zero, or
+    /// pointing the wrong way.
+    case badCount
+    /// Items that can't be collected into one vector: of several types, or of a
+    /// type no vector holds.
+    case mixedTypes
+    /// An instruction the run doesn't have: one that is disabled.
+    case unknownInstruction
+    /// An instruction that reads a crux, in a run that isn't recording provenance.
+    case needsProvenance
+    /// A function or a derivation run inside an instruction used up the steps
+    /// it was allowed.
+    case outOfSteps
+    /// Any other refusal.
     case other
 }
 
@@ -69,11 +90,14 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
 /// It is a record, not an exception: the program that caused it carries on.
 /// See <doc:ErrorsAndRefusals>.
 public nonisolated struct ErrorItem: Item, Equatable {
-    /// The message. Read as text everywhere, but stored as data for the one error
-    /// that is raised constantly — an instruction starved of arguments, the most
-    /// common event in a random program — whose text is only built when someone
-    /// reads it. Profiling found that formatting it eagerly cost ~4% of all
-    /// interpreter time, nearly always for a message nobody reads.
+    /// The message, a sentence for people. Read as text everywhere, but stored as
+    /// data for the one error that is raised constantly — an instruction starved of
+    /// arguments, the most common event in a random program — whose text is only
+    /// built when someone reads it. Profiling found that formatting it eagerly cost
+    /// ~4% of all interpreter time, nearly always for a message nobody reads.
+    ///
+    /// The message is kept for logs and debugging. It is not printed by `pretty()`
+    /// and not compared by `==`, which use ``kind`` and ``source``.
     public var value: String {
         get {
             switch message {
@@ -81,14 +105,15 @@ public nonisolated struct ErrorItem: Item, Equatable {
             case .missingArguments(let instruction, let stack): "\(instruction) missing args: .\(stack)"
             }
         }
-        set { message = .text(Text(text: newValue, kind: kind)) }
+        set { message = .text(Text(text: newValue, kind: kind, source: source)) }
     }
 
-    /// The message, and with it the kind, in one word plus a tag. A free-text
-    /// message and its kind sit behind a reference (`Text`) so that an `ErrorItem`
-    /// fits the three words an `any Item` holds inline (see `CallStorage`): the
-    /// common error, a starved instruction's, then costs no allocation at all. A
-    /// free-text one costs one, as its `String` usually did anyway.
+    /// The message, and with it the kind and the source, in one word plus a tag. A
+    /// free-text message, its kind and its source sit behind a reference (`Text`) so
+    /// that an `ErrorItem` fits the three words an `any Item` holds inline (see
+    /// `CallStorage`): the common error, a starved instruction's, then costs no
+    /// allocation at all. A free-text one costs one, as its `String` usually did
+    /// anyway.
     enum Message: Sendable {
         case text(Text)
         case missingArguments(PushInstruction, PushStack)
@@ -97,15 +122,14 @@ public nonisolated struct ErrorItem: Item, Equatable {
     final class Text: Sendable {
         let text: String
         let kind: ErrorKind
-        init(text: String, kind: ErrorKind) { self.text = text; self.kind = kind }
+        let source: PushInstruction?
+        init(text: String, kind: ErrorKind, source: PushInstruction?) {
+            self.text = text; self.kind = kind; self.source = source
+        }
     }
     private var message: Message
 
-    /// Why this error was raised. See `ErrorKind`.
-    ///
-    /// Deliberately **not** part of `==`, which compares `value` alone like every
-    /// other Item: two errors with the same message are the same error, and the
-    /// kind is a classification of it rather than part of its identity.
+    /// Why this error was raised: its class, as one word. See `ErrorKind`.
     public var kind: ErrorKind {
         get {
             switch message {
@@ -113,7 +137,16 @@ public nonisolated struct ErrorItem: Item, Equatable {
             case .missingArguments: .missingArgument
             }
         }
-        set { message = .text(Text(text: value, kind: newValue)) }
+        set { message = .text(Text(text: value, kind: newValue, source: source)) }
+    }
+
+    /// The instruction that raised this error, or `nil` when the interpreter
+    /// itself did (a size refusal at a push, a guard stopping the run).
+    public var source: PushInstruction? {
+        switch message {
+        case .text(let text): text.source
+        case .missingArguments(let instruction, _): instruction
+        }
     }
 
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -128,10 +161,10 @@ public nonisolated struct ErrorItem: Item, Equatable {
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
-    /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
-    /// in histories as it runs.
-    public init(_ value: String, kind: ErrorKind = .other, call: [any Item] = []) {
-        self.message = .text(Text(text: value, kind: kind))
+    /// Creates an error with a message, its kind and the instruction that raised
+    /// it. Leave `call` empty: the interpreter fills in histories as it runs.
+    public init(_ value: String, kind: ErrorKind = .other, source: PushInstruction? = nil, call: [any Item] = []) {
+        self.message = .text(Text(text: value, kind: kind, source: source))
         self.callStorage = CallStorage(call)
     }
 
@@ -141,11 +174,20 @@ public nonisolated struct ErrorItem: Item, Equatable {
         self.callStorage = .literal
     }
 
+    /// Two errors are equal when they have the same kind and the same source:
+    /// what `pretty()` prints. The message is a description for people, not part
+    /// of the error's identity, so two overflows in `.intAdd` are the same error
+    /// whatever numbers were involved.
     public static func == (lhs: ErrorItem, rhs: ErrorItem) -> Bool {
-        lhs.value == rhs.value
+        lhs.kind == rhs.kind && lhs.source == rhs.source
     }
 
+    /// `«err overflow: .intAdd»`: the kind, then the instruction that raised it.
+    /// An error the interpreter raised itself has no instruction:
+    /// `«err sizeRefusal»`. Everything after the colon is ordinary code, so the
+    /// form reads back without any free text; the sentence is in ``value``.
     public func pretty() -> String {
-        "«error: \(value)»"
+        let tag = PushStack.error.tag
+        return source.map { "«\(tag) \(kind.rawValue): .\($0.rawValue)»" } ?? "«\(tag) \(kind.rawValue)»"
     }
 }

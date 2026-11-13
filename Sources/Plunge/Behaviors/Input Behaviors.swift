@@ -33,7 +33,7 @@ nonisolated extension Interpreter {
                                     .error,
                                     ErrorItem(
                                         "No input for \(instructionName)",
-                                        kind: .missingInput,
+                                        kind: .missingInput, source: instructionName,
                                         call: context.recording([InstructionItem(instructionName)]))
                                 )
                             ]

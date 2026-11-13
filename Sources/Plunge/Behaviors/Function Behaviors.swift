@@ -57,6 +57,14 @@ nonisolated extension Interpreter {
             case .tooDeep: "sandboxes nested past \(Interpreter.maxSandboxDepth) deep"
             }
         }
+
+        /// The failure as an instruction's refusal.
+        var refusal: Refusal {
+            switch self {
+            case .outOfSteps: Refusal(reason, kind: .outOfSteps)
+            case .tooDeep: Refusal(reason, kind: .sizeRefusal)
+            }
+        }
     }
 
     /// The stack-fed form, as an iterator plays its body: `element` is executed
@@ -113,10 +121,6 @@ nonisolated extension Interpreter {
         return item
     }
 
-    static func refusal(_ instruction: PushInstruction, _ why: String, _ context: ReadContext) -> [Router] {
-        [Router(.error, ErrorItem("\(instruction): \(why)").observed(by: instruction, context.recording))]
-    }
-
 
     // MARK: - The three, over any collection
 
@@ -140,13 +144,13 @@ nonisolated extension Interpreter {
             do throws(ApplicationFailure) {
                 results.append(try Self.call(application, [item], context) ?? item)
             } catch {
-                return refusal(instruction, error.reason, context)
+                return refusal(instruction, error.refusal, context)
             }
         }
         guard let made = collected(results, call: []), let stack = PushStack.defaultStack(for: made),
               let output = collected(results, call: context.recording(application.recorded(
                   instruction, collection, producing: stack))) else {
-            return refusal(instruction, "results are not all one collectable type", context)
+            return refusal(instruction, Refusal("results are not all one collectable type", kind: .mixedTypes), context)
         }
         return [Router(stack, output)]
     }
@@ -167,7 +171,7 @@ nonisolated extension Interpreter {
             do throws(ApplicationFailure) {
                 if (try call(application, [item], context) as? BoolItem)?.value == true { kept.append(index) }
             } catch {
-                return refusal(instruction, error.reason, context)
+                return refusal(instruction, error.refusal, context)
             }
         }
         return [keep(kept, application.recorded(instruction, collection,
@@ -185,17 +189,19 @@ nonisolated extension Interpreter {
         case .success(let ready): application = ready
         }
         guard var accumulator = elements.first else {
-            return refusal(instruction, "an empty collection has nothing to fold", context)
+            return refusal(instruction, Refusal("an empty collection has nothing to fold", kind: .emptyCollection),
+                           context)
         }
         for item in elements.dropFirst() {
             do throws(ApplicationFailure) {
                 accumulator = try call(application, [accumulator, item], context) ?? accumulator
             } catch {
-                return refusal(instruction, error.reason, context)
+                return refusal(instruction, error.refusal, context)
             }
         }
         guard let stack = PushStack.defaultStack(for: accumulator) else {
-            return refusal(instruction, "the fold produced \(accumulator.pretty()), which rests on no stack", context)
+            return refusal(instruction, Refusal("the fold produced \(accumulator.pretty()), which rests on no stack"),
+                           context)
         }
         let result = rebuilt(accumulator, call: context.recording(application.recorded(instruction, collection,
                                                                                       producing: stack)))

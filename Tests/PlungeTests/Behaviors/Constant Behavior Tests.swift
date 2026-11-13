@@ -38,7 +38,7 @@ struct ConstantBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ]")
         Interpreter.language[.vecBool8]!.act(on: inty)
         #expect(stackString(inty, .exec) == "[ ]")
-        #expect(stackString(inty, .error).contains("No constant assigned") )
+        #expect(errorText(inty).contains("No constant assigned") )
         // As with an unbound input: the error records the instruction that
         // would reproduce it against the same environment.
         #expect(callString(topItem(inty, .error)) == "( .vecBool8 )")

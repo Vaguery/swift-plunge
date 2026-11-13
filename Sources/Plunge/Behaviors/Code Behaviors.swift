@@ -224,6 +224,7 @@ nonisolated extension Interpreter {
         Behavior.refusal(
             "Empty block in .\(instruction)",
             kind: .emptyCollection,
+            source: instruction,
             call: recording(Behavior.reading([.code: 1, .int: 1], producing: .error, from: [x, i, InstructionItem(instruction)])))
     }
 
@@ -619,7 +620,8 @@ nonisolated extension Interpreter {
                 return [
                     Router(.iterator, iterator),
                     Router(.error, ErrorItem(
-                        "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items")
+                        "codeFromIterator: iterator emits more than \(IteratorItem.collectionLimit) items",
+                        kind: .sizeRefusal, source: .codeFromIterator)
                         .observed(by: .codeFromIterator, recording))
                 ]
             }

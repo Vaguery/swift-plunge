@@ -388,7 +388,7 @@ nonisolated final class Behavior: Sendable {
             // taken, and the refusal is a miss, as a search's is.
             planner.commit(claims)
             self.distribute(to: interpreter, items: [
-                Router(.error, ErrorItem("\(name): nothing on .\(stack) fits", kind: .notFound)
+                Router(.error, ErrorItem("\(name): nothing on .\(stack) fits", kind: .notFound, source: name)
                     .observed(by: name, interpreter.recording))
             ])
         case .ready(let arguments, let claims):
@@ -408,8 +408,8 @@ nonisolated extension Behavior {
     /// an error). `call` is recorded like a result's: the arguments and the
     /// instruction (law 3), or for a query the `reading(_:producing: .error, …)`
     /// form, so re-running it reproduces the error.
-    static func refusal(_ message: String, kind: ErrorKind, call: [any Item]) -> Router {
-        Router(.error, ErrorItem(message, kind: kind, call: call))
+    static func refusal(_ message: String, kind: ErrorKind, source: PushInstruction, call: [any Item]) -> Router {
+        Router(.error, ErrorItem(message, kind: kind, source: source, call: call))
     }
 
     /// The `call` for one of several results a Behavior puts on a single stack —

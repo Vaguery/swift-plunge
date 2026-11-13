@@ -127,7 +127,8 @@ nonisolated extension Interpreter {
             var result: [Int] = []
             for (index, value) in x.enumerated() {
                 guard value.isFinite, value >= Double(Int.min), value < Double(Int.max) else {
-                    throw Refusal("at index \(index): Overflow in .vecIntFromVecDouble: \(value) → Int")
+                    throw Refusal("at index \(index): Overflow in .vecIntFromVecDouble: \(value) → Int",
+                                  kind: .overflow)
                 }
                 result.append(Int(value))
             }

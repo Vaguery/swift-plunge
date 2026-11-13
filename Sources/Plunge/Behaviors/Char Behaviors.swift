@@ -29,7 +29,7 @@ nonisolated extension Interpreter {
             // Int(x) traps on non-finite or out-of-Int-range doubles,
             // so guard the conversion first.
             guard x.isFinite, x >= Double(Int.min), x < Double(Int.max) else {
-                throw Refusal("Overflow in .charFromDouble: \(x) → Int")
+                throw Refusal("Overflow in .charFromDouble: \(x) → Int", kind: .overflow)
             }
             guard let c = character(scalar: Int(x)) else {
                 throw Refusal("Not a Unicode scalar in .charFromDouble: \(x)", kind: .conversion)
@@ -92,7 +92,7 @@ nonisolated extension Interpreter {
                                 _ instruction: PushInstruction) throws(Refusal) -> Character {
         let mapped = transform(character)
         guard mapped.count == 1, let result = mapped.first else {
-            throw Refusal("No single-character result in .\(instruction): \(character) → \(mapped)")
+            throw Refusal("No single-character result in .\(instruction): \(character) → \(mapped)", kind: .conversion)
         }
         return result
     }

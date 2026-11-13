@@ -442,7 +442,8 @@ nonisolated final class Interpreter {
     func requiresProvenance(_ name: PushInstruction) -> Bool {
         guard !config.recordsProvenance else { return true }
         stacks[.error]?.prepend(ErrorItem(
-            "\(Interpreter.provenanceMarker) \(name.rawValue) needs call-tree provenance, which is disabled (recordsProvenance = false)"))
+            "\(Interpreter.provenanceMarker) \(name.rawValue) needs call-tree provenance, which is disabled (recordsProvenance = false)",
+            kind: .needsProvenance, source: name))
         return false
     }
 
@@ -462,7 +463,7 @@ nonisolated final class Interpreter {
     /// Deliberately not an error, and deliberately not a refusal — unlike
     /// `overflow(of:)`, which rejects the push. The item is still perfectly
     /// good; only its history is too expensive to keep. The history is replaced by
-    /// a single **elided stand-in** (`StandInItem`, `.intAdd_elidedAs_4537`): a
+    /// a single **elided stand-in** (`StandInItem`, `«elided .intAdd: 4537»`): a
     /// literal that reproduces the value, names the instruction that produced it,
     /// and says the history was dropped, so the loss is visible and countable
     /// rather than indistinguishable from a literal in the program. Weight 2 and
@@ -745,7 +746,8 @@ nonisolated final class Interpreter {
                     // an enumerated instruction with no registered behavior
                     // (e.g. planned-but-unimplemented) must not crash the loop
                     self.push(
-                        ErrorItem("\(action) is an unknown instruction").observed(by: action, recording),
+                        ErrorItem("\(action) is an unknown instruction", kind: .unknownInstruction, source: action)
+                            .observed(by: action, recording),
                         to: .error
                     )
                 }

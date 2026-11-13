@@ -23,8 +23,11 @@ nonisolated extension Interpreter {
     /// Whole-number quotient: `y` less its remainder, divided by `x`.
     static let doubleQuot_Behavior =
         Behavior.operation(.doubleQuot, takes: DoubleItem.self, DoubleItem.self, gives: DoubleItem.self) { y, x throws(Refusal) in
+            guard x != 0 else { throw Refusal("Divide by zero .doubleQuot: \(y) // \(x)", kind: .divideByZero) }
             let result = (y - y.truncatingRemainder(dividingBy: x)) / x
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleQuot: \(y) // \(x)") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleQuot: \(y) // \(x)", kind: .overflow)
+            }
             return result
         }
         .described(
@@ -103,7 +106,9 @@ nonisolated extension Interpreter {
     static let doubleCos_Behavior =
         Behavior.operation(.doubleCos, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let result = cos(x)
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleCos: cos(\(x))") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleCos: cos(\(x))", kind: .overflow)
+            }
             return result
         }
         .described("Takes the cosine of an angle in radians; refuses a non-finite input.")
@@ -111,7 +116,9 @@ nonisolated extension Interpreter {
     static let doubleSin_Behavior =
         Behavior.operation(.doubleSin, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let result = sin(x)
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleSin: sin(\(x))") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleSin: sin(\(x))", kind: .overflow)
+            }
             return result
         }
         .described("Takes the sine of an angle in radians; refuses a non-finite input.")
@@ -119,7 +126,9 @@ nonisolated extension Interpreter {
     static let doubleTan_Behavior =
         Behavior.operation(.doubleTan, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let result = tan(x)
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleTan: tan(\(x))") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleTan: tan(\(x))", kind: .overflow)
+            }
             return result
         }
         .described("Takes the tangent of an angle in radians; refuses a non-finite input.")
@@ -127,7 +136,9 @@ nonisolated extension Interpreter {
     static let doubleInc_Behavior =
         Behavior.operation(.doubleInc, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let result = x + 1.0
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleInc: \(x) + 1.0") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleInc: \(x) + 1.0", kind: .overflow)
+            }
             return result
         }
         .described("Adds 1.0; refuses a non-finite input.")
@@ -135,7 +146,9 @@ nonisolated extension Interpreter {
     static let doubleDec_Behavior =
         Behavior.operation(.doubleDec, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
             let result = x - 1.0
-            guard !(result.isInfinite || result.isNaN) else { throw Refusal("Overflow in .doubleDec: \(x) - 1.0") }
+            guard !(result.isInfinite || result.isNaN) else {
+                throw Refusal("Overflow in .doubleDec: \(x) - 1.0", kind: .overflow)
+            }
             return result
         }
         .described("Subtracts 1.0; refuses a non-finite input.")
@@ -168,7 +181,9 @@ nonisolated extension Interpreter {
             }
             // "inf"/"infinity"/"nan"/"1e400" parse to non-finite values;
             // reject them here so they cannot poison later numeric behaviors
-            guard !(num.isInfinite || num.isNaN) else { throw Refusal("Overflow in .doubleFromString: \"\(x)\"") }
+            guard !(num.isInfinite || num.isNaN) else {
+                throw Refusal("Overflow in .doubleFromString: \"\(x)\"", kind: .overflow)
+            }
             return num
         }
         .described("Parses a string as a double; refuses one that is not a number or that reads as infinite or NaN.")
@@ -181,7 +196,9 @@ nonisolated extension Interpreter {
     /// `value`, unless it is NaN or infinite, which is refused as `.doubleAdd`
     /// refuses an overflow.
     static func finite(_ value: Double, _ instruction: PushInstruction, _ arguments: String) throws(Refusal) -> Double {
-        guard value.isFinite else { throw Refusal("No finite result in .\(instruction): \(arguments)") }
+        guard value.isFinite else {
+            throw Refusal("No finite result in .\(instruction): \(arguments)", kind: .undefined)
+        }
         return value
     }
 
@@ -200,7 +217,7 @@ nonisolated extension Interpreter {
     /// −1.0, 0.0 or 1.0; a NaN has no sign and is refused.
     static let doubleSign_Behavior =
         Behavior.operation(.doubleSign, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
-            guard !x.isNaN else { throw Refusal("No sign in .doubleSign: \(x)") }
+            guard !x.isNaN else { throw Refusal("No sign in .doubleSign: \(x)", kind: .undefined) }
             return x > 0 ? 1 : (x < 0 ? -1 : 0)
         }
         .described("Gives the sign of a double: −1.0, 0.0 or 1.0; refuses NaN.")
@@ -219,7 +236,7 @@ nonisolated extension Interpreter {
 
     static let doubleSqrt_Behavior =
         Behavior.operation(.doubleSqrt, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
-            guard x >= 0 else { throw Refusal("No real root in .doubleSqrt: \(x)") }
+            guard x >= 0 else { throw Refusal("No real root in .doubleSqrt: \(x)", kind: .undefined) }
             return try finite(x.squareRoot(), .doubleSqrt, "\(x)")
         }
         .described("Takes the square root; refuses a negative or non-finite input.")
@@ -233,7 +250,7 @@ nonisolated extension Interpreter {
     /// The natural logarithm; refused for zero and below.
     static let doubleLog_Behavior =
         Behavior.operation(.doubleLog, takes: DoubleItem.self, gives: DoubleItem.self) { x throws(Refusal) in
-            guard x > 0 else { throw Refusal("No logarithm in .doubleLog: \(x)") }
+            guard x > 0 else { throw Refusal("No logarithm in .doubleLog: \(x)", kind: .undefined) }
             return try finite(Foundation.log(x), .doubleLog, "\(x)")
         }
         .described("Takes the natural logarithm; refuses zero, negatives and non-finite inputs.")

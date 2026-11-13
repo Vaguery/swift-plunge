@@ -56,7 +56,7 @@ nonisolated extension Interpreter {
     /// `notFound`, as a search's is. Observed (law 4b): it depends on what
     /// `.binding` held.
     static func refNotFound(_ name: PushInstruction, _ what: String, _ recording: ProvenanceRecording) -> Router {
-        Router(.error, ErrorItem("\(name): \(what)", kind: .notFound).observed(by: name, recording))
+        Router(.error, ErrorItem("\(name): \(what)", kind: .notFound, source: name).observed(by: name, recording))
     }
 
     /// The depth of the topmost pair at or below `start` whose key is `key`.
@@ -194,6 +194,7 @@ nonisolated extension Interpreter {
                      guard block.value.count == 2, let key = block.value[0] as? IntItem,
                            !(block.value[1] is IteratorItem), !(block.value[1] is BindingItem) else {
                          return [Behavior.refusal("Not a ( key value ) pair in .bindingFromCode", kind: .conversion,
+                                                  source: .bindingFromCode,
                                                   call: call)]
                      }
                      // The value as it is addressed in its block, so it keeps a history.

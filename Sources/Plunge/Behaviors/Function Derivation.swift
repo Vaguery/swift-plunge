@@ -42,7 +42,8 @@ nonisolated extension Interpreter {
             let block = a[0].exactly(CodeItem.self)!
             guard context.maySandbox else {
                 return [Router(.error, ErrorItem("codePushAllFunctions: sandboxes nested past "
-                                                 + "\(Interpreter.maxSandboxDepth) deep", kind: .sizeRefusal)
+                                                 + "\(Interpreter.maxSandboxDepth) deep", kind: .sizeRefusal,
+                                                 source: .codePushAllFunctions)
                     .observed(by: .codePushAllFunctions, context.recording))]
             }
             let key = block.pretty()
@@ -60,7 +61,8 @@ nonisolated extension Interpreter {
             }
             guard let functions else {
                 return [Router(.error, ErrorItem("codePushAllFunctions: the block ran past its derivation limit",
-                                                 kind: .other).observed(by: .codePushAllFunctions, context.recording))]
+                                                 kind: .outOfSteps, source: .codePushAllFunctions)
+                    .observed(by: .codePushAllFunctions, context.recording))]
             }
             return functions.map { Router(.function, $0.observed(by: .codePushAllFunctions, context.recording)) }
         }

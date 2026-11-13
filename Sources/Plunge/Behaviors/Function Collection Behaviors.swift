@@ -101,11 +101,11 @@ nonisolated extension Interpreter {
         for (index, item) in items.enumerated() {
             do throws(ApplicationFailure) {
                 guard let key = try call(application, [item], context) else {
-                    return .failure(Refusal("no key for element \(index)"))
+                    return .failure(Refusal("no key for element \(index)", kind: .notFound))
                 }
                 keys.append(key)
             } catch {
-                return .failure(Refusal(error.reason))
+                return .failure(error.refusal)
             }
         }
         return .success(keys)
@@ -137,12 +137,13 @@ nonisolated extension Interpreter {
                     results.append(try Self.call(app, [left.items[index], right.items[index]], context)
                                    ?? left.items[index])
                 } catch {
-                    return refusal(instruction, error.reason, context)
+                    return refusal(instruction, error.refusal, context)
                 }
             }
             guard let made = collected(results, call: []), let stack = PushStack.defaultStack(for: made),
                   let output = collected(results, call: call(stack)) else {
-                return refusal(instruction, "results are not all one collectable type", context)
+                return refusal(instruction, Refusal("results are not all one collectable type", kind: .mixedTypes),
+                               context)
             }
             return [Router(stack, output)]
         }
@@ -169,12 +170,13 @@ nonisolated extension Interpreter {
                 do throws(ApplicationFailure) {
                     running = try Self.call(app, [running, item], context) ?? running
                 } catch {
-                    return refusal(instruction, error.reason, context)
+                    return refusal(instruction, error.refusal, context)
                 }
                 results.append(running)
             }
             guard let output = collected(results, call: call), PushStack.defaultStack(for: output) == collection else {
-                return refusal(instruction, "the running values are not all \(view.element) items", context)
+                return refusal(instruction, Refusal("the running values are not all \(view.element) items",
+                                                    kind: .mixedTypes), context)
             }
             return [Router(collection, output)]
         }

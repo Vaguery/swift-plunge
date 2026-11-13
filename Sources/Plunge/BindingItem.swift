@@ -62,7 +62,7 @@ public nonisolated struct BindingItem: Item, Pretty {
         return value == other.value && bound.isEqual(to: other.bound)
     }
 
-    /// `⟨3 ↦ 'a'⟩`. Rendered by `NestedRendering`, since the value can be a
+    /// `«bind: 3 -> 'a'»`. Rendered by `NestedRendering`, since the value can be a
     /// code block holding pairs.
     public func pretty() -> String {
         NestedRendering.render(self)
@@ -86,7 +86,7 @@ nonisolated extension BindingItem {
     /// (the fresh key on `.int`, and `bound` itself, which it read), then re-key
     /// the new pair to `key`:
     ///
-    ///     5 .intRef .intPop .intPop .intRef_actuallyWas_12 .bindingRekey
+    ///     5 .intRef .intPop .intPop «observed .intRef: 12» .bindingRekey
     ///
     /// `key` carries its own history (a stand-in for a fresh key, or the
     /// argument a `.bindingRekey` was given). Nil for an item with no binder.

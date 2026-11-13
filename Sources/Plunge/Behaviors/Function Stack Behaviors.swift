@@ -96,7 +96,7 @@ nonisolated extension Interpreter {
                 return [Router(output, stamped(result, context.recording(
                     written + [function, InstructionItem(.functionApply)])))]
             } catch {
-                return refusal(.functionApply, error.reason, context)
+                return refusal(.functionApply, error.refusal, context)
             }
         }, produces: anyValue)
         .described("Applies the topmost function on `.function` with an output to the program's values, taking a "
@@ -190,14 +190,14 @@ nonisolated extension Interpreter {
             case .success(let ready): application = ready
             }
             guard count >= 0 else {
-                return refusal(.functionIterate, Refusal("a negative count, \(count)"), context)
+                return refusal(.functionIterate, Refusal("a negative count, \(count)", kind: .badCount), context)
             }
             var value = start
             for _ in 0..<count {
                 do throws(ApplicationFailure) {
                     value = try call(application, [value], context) ?? value
                 } catch {
-                    return refusal(.functionIterate, error.reason, context)
+                    return refusal(.functionIterate, error.refusal, context)
                 }
             }
             return [Router(stack, stamped(value, context.recording(application.recorded(
@@ -249,7 +249,7 @@ nonisolated extension Interpreter {
                 orbit.append(value)
             }
         } catch {
-            return refusal(instruction, error.reason, context)
+            return refusal(instruction, error.refusal, context)
         }
         // Both functions read their fillers from the tops of the same stacks, so
         // the crux pushes the deeper of the two reads on each stack, once.
@@ -258,7 +258,8 @@ nonisolated extension Interpreter {
         let sorted = counts.sorted { $0.key.rawValue < $1.key.rawValue }.map { (key: $0.key, value: $0.value) }
         let read = sorted.flatMap { Array(context.items(of: $0.key).prefix($0.value).reversed()) }
         guard let made = collected(orbit, call: []), let resting = PushStack.defaultStack(for: made) else {
-            return refusal(instruction, "an orbit of .\(stack) values is not a collection", context)
+            return refusal(instruction, Refusal("an orbit of .\(stack) values is not a collection",
+                                                kind: .mixedTypes), context)
         }
         let recorded = context.recording(Behavior.reading(sorted: sorted, producing: resting,
                                                           from: read + [start, predicate, step,

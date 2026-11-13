@@ -56,7 +56,7 @@ struct IteratorBehaviorTests {
         #expect(stackString(inty, .exec) == "[ ( true ) .codeDo ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
         // The iterator advanced and is waiting to be stepped again by hand.
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @1 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 1: ( true )» ]")
     }
 
     @Test func `iteratorStep on the last pass consumes the iterator`() {
@@ -82,7 +82,7 @@ struct IteratorBehaviorTests {
 
         #expect(stackString(inty, .exec) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @1 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 1: ( true )» ]")
     }
 
     @Test func `iteratorPlay puts its next copy under the payload`() {
@@ -93,7 +93,7 @@ struct IteratorBehaviorTests {
         // lets it see the iterator resting on `.iterator`.
         #expect(stackString(inty, .exec) == "[ ( true ) .codeDo .iteratorPlay ]")
         #expect(stackString(inty, .int) == "[ 0 ]")
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @1 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 1: ( true )» ]")
     }
 
     @Test func `a played loop runs to exhaustion and cleans up after itself`() {
@@ -141,7 +141,7 @@ struct IteratorBehaviorTests {
         // iterator now, so nothing needs to re-read it.
         #expect(stackString(delayed, .exec) == "[ ( true ) .codeDo .iteratorPlay ]")
         #expect(stackString(delayed, .int) == "[ 0 ]")
-        #expect(stackString(delayed, .iterator) == "[ «0→5 by 1 @1 ( true )» ]")
+        #expect(stackString(delayed, .iterator) == "[ «iter 0 to 5 by 1 at 1: ( true )» ]")
     }
 
     @Test func `iteratorPlayDelayed shoves its next copy that far down exec`() {
@@ -159,7 +159,7 @@ struct IteratorBehaviorTests {
                 == "[ ( true ) .codeDo 91 92 .iteratorPlay 93 ]"
         )
         // …and the depth is now the iterator's own, shown by `⤓`.
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @1 ⤓2 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 1 depth 2: ( true )» ]")
     }
 
     @Test func `iteratorPlayDelayed clamps a delay past the bottom of exec`() {
@@ -190,7 +190,7 @@ struct IteratorBehaviorTests {
         let inty = loaded(counting())
         doThis(.iteratorPlayDelayed, to: inty)
 
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @0 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 0: ( true )» ]")
         #expect(errorStrings(inty).contains { $0.contains("missing args") })
     }
 
@@ -263,7 +263,7 @@ struct IteratorBehaviorTests {
 
         // Four reads, and the loop is exactly where it was: same cursor, still
         // one iterator. Reading is not stepping.
-        #expect(stackString(inty, .iterator) == "[ «2→8 by 3 @1 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 2 to 8 by 3 at 1: ( true )» ]")
     }
 
     /// Law 1b, extended from CodeItems to iterators: the bounds and body come back
@@ -311,7 +311,7 @@ struct IteratorBehaviorTests {
         ])
         inty.run(stepLimit: 10_000)
 
-        #expect(stackString(inty, .iterator) == "[ «2→8 by 3 @1 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 2 to 8 by 3 at 1: ( true )» ]")
         // Emphatically not a loop: nothing ran, nothing was emitted.
         #expect(stackString(inty, .bool) == "[ ]")
         #expect(stackString(inty, .int) == "[ ]")
@@ -359,7 +359,7 @@ struct IteratorBehaviorTests {
         for _ in 0..<12 { inty.step() }
 
         let live = inty.stacks[.iterator]!.first!
-        #expect(live.pretty() == "«3→40 by 1 @3 ( true )»")
+        #expect(live.pretty() == "«iter 3 to 40 by 1 at 3: ( true )»")
 
         let rebuilt = rerunTop(live.crux(), on: .iterator)
         #expect(rebuilt?.pretty() == live.pretty())
@@ -426,7 +426,7 @@ struct IteratorBehaviorTests {
             InstructionItem(.iteratorRepeating)
         ])
         inty.run(stepLimit: 10_000)
-        #expect(stackString(inty, .iterator) == "[ «7→4 @0» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 7 repeated 4 times at 0» ]")
 
         // Construct only: nothing was emitted until it is played.
         #expect(stackString(inty, .int) == "[ ]")
@@ -492,7 +492,7 @@ struct IteratorBehaviorTests {
         inty.stacks[.int]!.prepend(IntItem(2))
 
         inty.step()   // execDupItems: copies the top 2 pending items into a box
-        #expect(stackString(inty, .iterator) == "[ «( .intInc 7 ) @0» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter over ( .intInc 7 ) into exec at 0» ]")
 
         inty.run(stepLimit: 10_000)
         // The copied `.intInc` ran first and found nothing — an instruction with
@@ -511,19 +511,19 @@ struct IteratorBehaviorTests {
         let inty = loaded(counting(from: 0, to: 20, emits: false))
         inty.stacks[.code]!.prepend(CodeItem([IntItem(9)]))
         doThis(.iteratorSetStart, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «9→20 by 1 @0 silent ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 9 to 20 by 1 at 0 silent: ( true )» ]")
 
         inty.stacks[.code]!.prepend(CodeItem([IntItem(12)]))
         doThis(.iteratorSetEnd, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @0 silent ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 9 to 12 by 1 at 0 silent: ( true )» ]")
 
         inty.stacks[.int]!.prepend(IntItem(2))
         doThis(.iteratorSetCounter, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @2 silent ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 9 to 12 by 1 at 2 silent: ( true )» ]")
 
         inty.stacks[.int]!.prepend(IntItem(3))
         doThis(.iteratorSetDepth, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «9→12 by 1 @2 silent ⤓3 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 9 to 12 by 1 at 2 silent depth 3: ( true )» ]")
 
         // Re-aimed and still runnable: 11 and 12 are within a stride of the end,
         // so from cursor 2 (value 11) exactly one pass remains.
@@ -592,7 +592,7 @@ struct IteratorBehaviorTests {
         doThis(.iteratorSetEnd, to: inty)
 
         // Handed back untouched, and told why.
-        #expect(stackString(inty, .iterator) == "[ «[1, 2, 3] @0» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter over [1, 2, 3] at 0» ]")
         #expect(errorStrings(inty).contains { $0.contains("source's length") })
     }
 
@@ -600,7 +600,7 @@ struct IteratorBehaviorTests {
         let inty = loaded(counting())
         inty.stacks[.code]!.prepend(CodeItem([]))
         doThis(.iteratorSetStart, to: inty)
-        #expect(stackString(inty, .iterator) == "[ «0→5 by 1 @0 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 0 to 5 by 1 at 0: ( true )» ]")
         #expect(errorStrings(inty).contains { $0.contains("needs an item") })
     }
 
@@ -616,7 +616,7 @@ struct IteratorBehaviorTests {
 
         doThis(.iteratorRestart, to: inty)
         // Cursor to 0; start, end, stride and body untouched.
-        #expect(stackString(inty, .iterator) == "[ «3→40 by 2 @0 ( true )» ]")
+        #expect(stackString(inty, .iterator) == "[ «iter 3 to 40 by 2 at 0: ( true )» ]")
         #expect(errorStrings(inty).isEmpty)
     }
 
@@ -824,7 +824,7 @@ struct IteratorBehaviorTests {
 
         #expect(inty.stacks[.iterator]!.count == 2)
         #expect(stackString(inty, .iterator)
-            == "[ «7→9 by 1 @0 ( true )» «0→3 by 1 @0 ( true )» ]")
+            == "[ «iter 7 to 9 by 1 at 0: ( true )» «iter 0 to 3 by 1 at 0: ( true )» ]")
         #expect(inty.stacks[.error]!.isEmpty)
     }
 

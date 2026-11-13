@@ -71,8 +71,10 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
         lhs.value < rhs.value
     }
 
+    /// The character in single quotes, with `'`, `\\` and non-printing characters
+    /// escaped: `'x'`, `'\''`, `'\n'`.
     public func pretty() -> String {
-        "'\(value)'"
+        "'\(String(value).escaped(for: "'"))'"
     }
 
 }
@@ -227,7 +229,56 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
         lhs.value < rhs.value
     }
 
+    /// The string in double quotes, with `"`, `\\` and non-printing characters
+    /// (`\n`, `\t`, `\r` and the rest) escaped as Swift writes them, so the text
+    /// between the quotes can never be mistaken for the end of the string.
     public func pretty() -> String {
-        "\"\(value)\""
+        "\"\(value.escaped(for: "\""))\""
+    }
+}
+
+
+nonisolated extension String {
+    /// This text as it prints between `quote` marks: the quote mark itself and
+    /// `\\` escaped, and every character that might not show on a page written
+    /// as an escape (`\n`, `\t`, `\r`, `\0`, `\u{…}`). The other kind of quote
+    /// mark is left alone, so a string may hold `'` and a char may be `"`. One
+    /// routine for strings, chars and the strings inside a vector, so the three
+    /// agree.
+    ///
+    /// **Nothing invisible is left raw**, so the printed text can be read back
+    /// exactly: besides the ASCII controls, that means every space but the plain
+    /// one (no-break space, ideographic space), the line and paragraph separators,
+    /// and the format characters (zero-width space and joiner, direction marks,
+    /// the byte-order mark), along with unassigned, private-use and surrogate
+    /// code points.
+    func escaped(for quote: Character) -> String {
+        var text = ""
+        for scalar in unicodeScalars {
+            if scalar == "\"" || scalar == "'" {
+                text += Character(scalar) == quote ? "\\\(scalar)" : String(scalar)
+            } else if scalar.isASCII {
+                text += scalar.escaped(asASCII: false)
+            } else if scalar.mightNotShow {
+                let hex = String(scalar.value, radix: 16, uppercase: true)
+                text += "\\u{" + String(repeating: "0", count: max(0, 4 - hex.count)) + hex + "}"
+            } else {
+                text.unicodeScalars.append(scalar)
+            }
+        }
+        return text
+    }
+}
+
+nonisolated extension Unicode.Scalar {
+    /// Whether this non-ASCII character can be invisible, or change the layout,
+    /// when printed: a space, a line or paragraph separator, a control or format
+    /// character, or a code point with no assigned glyph.
+    var mightNotShow: Bool {
+        switch properties.generalCategory {
+        case .spaceSeparator, .lineSeparator, .paragraphSeparator, .control, .format,
+             .unassigned, .privateUse, .surrogate: true
+        default: false
+        }
     }
 }
