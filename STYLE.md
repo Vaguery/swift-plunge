@@ -57,6 +57,8 @@ code block is `( )`.
 - An instruction's name starts with the stack it works on, and a verb that makes
   something from another stack's item follows that stack (`.intQuote`,
   `.intRef`). See CONTRIBUTING for naming new instructions.
+- Another interpreter's instruction keeps its own spelling and gets no dot, and
+  names its source: `exec_if` (in Clojush and Propeller).
 
 ## Writing programs
 

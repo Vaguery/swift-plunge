@@ -50,7 +50,7 @@ In Plunge, a lookup that finds nothing pushes no answer. See
 An instruction without enough arguments is the most common event in a randomly
 assembled program, both in older and this new Push dialect. In earlier versions,
 the instruction is simply discarded, without consuming arguments. In Plunge,
-instead of being discarded it's put on the `.function` stack as a first-order function,
+instead of being discarded it's put on the `.function` stack as a first-class function,
 where map, filter, reduce and other functional programming instructions can apply
 it later. Thus, most programs get their first functions without having to construct any.
 See <doc:Functions>.
@@ -58,11 +58,12 @@ See <doc:Functions>.
 ## Code is data until an instruction runs it
 
 In earlier interpreters, a code block processed from the `.exec` stack is
-unpacked and run, and instructions such as `.exec_if` take their branches from
-the unfiltered code that remains below them on the `.exec` stack. In Plunge, a
-code block met on `.exec` is immediately moved to the `.code` stack, untouched,
-and every instruction that consumes a code block as an argument takes it from
-`.code`.
+unpacked and run, and instructions such as `exec_if` (in Clojush and Propeller)
+take their branches from the unfiltered code that remains below them on the
+`.exec` stack. In Plunge, a code block met on `.exec` is immediately moved to
+the `.code` stack, untouched, and every instruction that consumes a code block
+as an argument takes it from `.code`. Plunge's `.execIf` takes both its branches
+from `.code`.
 
 Two things follow from this. A code block that is about to be run is an ordinary
 item first, which the program can build, copy, measure, edit, or bind to a
@@ -124,10 +125,11 @@ on or off can't change a result.
 
 ## One order for everything
 
-Wherever items are compared or sorted, the order is the same: false comes
-before true (despite that having no meaning in logical settings), and in vectors,
-every not-a-number counts as one value, greater than every number. Sorting is therefore
-stable across all cases, including edge cases.
+Wherever items are compared or sorted, the order is the same: false comes before
+true (despite that having no meaning in logical settings), and in vectors, every
+not-a-number counts as one value, greater than every number. So every sort has
+one well-defined result, even at the edges, and sorts are also stable: items
+that compare equal keep their order.
 
 ## Loops, variables and functions are items
 

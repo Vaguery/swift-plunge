@@ -34,7 +34,9 @@ public nonisolated func pushItem(_ value: Any) -> (any Item)? {
 
 /// Builds an instruction-keyed item map — for a `TrainingCase`'s inputs or an
 /// `Individual`'s constants — from raw values, wrapping each with `pushItem`.
-/// A value that cannot be converted is skipped.
+/// A value that cannot be converted is skipped without an error, so its input or
+/// constant is missing when the program runs. Where every value must arrive,
+/// make the items directly.
 ///
 /// ```swift
 /// let inputs = bindings([.input0: 5, .input1: [1, 2, 3]])
@@ -105,14 +107,19 @@ public nonisolated enum PushProgram {
     public static func buildEither(second part: [any Item]) -> [any Item] { part }
 }
 
-/// Builds a program from a ``PushProgram`` code block of literals and instructions.
+/// Builds a program from a ``PushProgram`` builder closure of literals and instructions.
 public nonisolated func program(@PushProgram _ build: () -> [any Item]) -> [any Item] {
     build()
 }
 
 /// Builds a program from a flat list of raw values, each converted with
-/// ``pushItem(_:)``. A value that can't be converted is left out. For a nested
-/// code block, include a ``CodeItem``.
+/// ``pushItem(_:)``. For a nested code block, include a ``CodeItem``.
+///
+/// A value that can't be converted is left out without an error, which changes
+/// the program: a `Float`, an `Int32`, a `Substring` or a nested array is
+/// dropped. A convenience for tests and examples; where every item must arrive,
+/// use the `program { … }` builder, which rejects such values when it compiles,
+/// or make the items directly.
 public nonisolated func program(_ tokens: [Any]) -> [any Item] {
     tokens.compactMap { pushItem($0) }
 }
