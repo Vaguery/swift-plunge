@@ -49,7 +49,9 @@ following the compiler. `StackSet` stores one `Deque` per stack in an array
 indexed by the case's ordinal; profiling found that hashing a string-backed enum
 on every access was a fifth of all run time.
 
-Every value is an `Item` (`Items.swift`). An item has a `value` and a `call`, its
+Every value is an `Item` (`Items.swift`, with the item types in `ScalarItems.swift`,
+`VectorItems.swift`, `CodeItem.swift` and `ErrorItem.swift`, and history storage in
+`CallStorage.swift`). An item has a `value` and a `call`, its
 history, and knows its `weight` (content, for size limits) and `nestingDepth`.
 Most item types are value types with a `ValueItem` conformance. Containers whose
 elements can carry their own history (strings, vectors) are `MemberItem`s, and

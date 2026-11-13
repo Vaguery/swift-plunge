@@ -66,7 +66,7 @@ nonisolated extension Interpreter {
     //
     // All read their code argument(s) and leave them; the crux pops what it read
     // (`Behavior.reading`), like the vector queries. They use the pre-order point
-    // walker on `CodeItem` (Items.swift), on a block rebuilt from the argument's
+    // walker on `CodeItem` (CodeItem.swift), on a block rebuilt from the argument's
     // value: every walk here counts and compares by value, never by `call`.
 
     /// The number of pre-order points in the whole tree, root included.
@@ -578,7 +578,7 @@ nonisolated extension Interpreter {
     /// Drive an iterator to exhaustion and box what it emitted into one code block.
     ///
     /// **This is the general form of collecting, and it never refuses.** A
-    /// CodeItem is the vector-of-anything (see "The universal box" in Items.swift),
+    /// CodeItem is the vector-of-anything (see "The universal box" in CodeItem.swift),
     /// so every iterator that emits anything at all has an answer here — including
     /// the ones `.vecFromIterator` must turn away: a tree walk emitting subtrees,
     /// a `.repeating` iterator carrying a code block, an `.elements` walk over a mixed
