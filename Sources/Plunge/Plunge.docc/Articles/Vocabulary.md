@@ -36,8 +36,8 @@ defined here.
   recorded, a *history*. Items have types of their own, such as ``IntItem`` and
   ``CodeItem``.
 - term Value: What an item holds, named by its Swift type: the value of the item
-  `17` is an `Int`. Two items are equal when their values are equal, however they
-  were made.
+  `17` is an `Int`. Two items are equal when their values are equal, however
+  they were made.
 - term Literal: An item written into a program as itself, such as `3` or
   `"hello"`, as opposed to a result that an instruction computed.
 - term Instruction: A named operation, such as `.intAdd`. In a program it is an

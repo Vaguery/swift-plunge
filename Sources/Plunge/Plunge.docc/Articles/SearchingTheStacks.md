@@ -19,7 +19,8 @@ A lookup's probe is the top item of the stack it searches. The probe is read and
 left in place, and the lookup runs down from the item below it. When an item
 matches:
 
-- a **copy** of it goes on top of the stack, and the original stays where it was;
+- a **copy** of it goes on top of the stack, and the original stays where it
+  was;
 - its **position** goes onto `.int`: its depth plus one, which is where the
   original sits once the copy is on top. So `.stringYank` reaches it, and a
   `…From` lookup starting there carries on past it.
@@ -39,9 +40,10 @@ at depth 2.
 On `.int` itself the position goes on top of the copy, so whatever takes it, a
 yank or a `…From` lookup, finds the copy on top and the match at that depth.
 
-When nothing matches, the lookup misses: it refuses with a ``ErrorKind/notFound``
-error and changes nothing. A lookup never answers with a made-up position such
-as −1, which the next instruction would take for a real one.
+When nothing matches, the lookup misses: it refuses with a
+``ErrorKind/notFound`` error and changes nothing. A lookup never answers with a
+made-up position such as −1, which the next instruction would take for a real
+one.
 
 Each lookup has a `…From` form that takes a starting depth from `.int`, so a
 program can walk every match: look up, use the copy, then look up again from

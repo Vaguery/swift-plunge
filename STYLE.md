@@ -35,6 +35,10 @@ Four different things are easy to blur. Each has its own spelling:
 
 The instruction reference's *Takes* and *Gives* columns follow the third row.
 
+In plain sentences, plurals of these words are ordinary English and need no
+backticks: "the top two ints", "several strings are moved". This reads better
+than "two `int` items" and means the same.
+
 ## Code blocks
 
 The parenthesized, nested thing on the `.code` stack is a *code block*, a
@@ -121,8 +125,6 @@ from which the instruction reference is generated:
 
 Raise these before relying on either reading:
 
-- **Plain English plurals** for items in passing ("the top two ints") alongside
-  the backticked form ("the top two `int` items").
 - **Outer parentheses around a program.** A program is a code block, and the
   preferred way to show one is inside its own parentheses:
   `( 3 4 .intAdd )`. Much of the documentation (and possibly some tests) shows

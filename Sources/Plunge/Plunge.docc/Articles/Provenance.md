@@ -68,14 +68,13 @@ whose answer ignores its inputs is a cheap thing to detect and discard.
 
 ## What a crux records
 
-- **Computed values** record their arguments and their instruction, so their crux
-  rebuilds them from the cruxes of their arguments.
+- **Computed values** record their arguments and their instruction, so their
+  crux rebuilds them from the cruxes of their arguments.
 - **Copies and moves** record nothing: `.intDup` pushes the same item again, so
   both copies have the original's crux. A crux that uses a value twice builds it
   once and duplicates it.
-- **Elements** taken out of a collection record where they were, as
-  `v 2 .vecIntNth`, unless they kept a history of their own from before they went
-  in.
+- **Elements** taken out of a collection record where they were, as `v 2
+  .vecIntNth`, unless they kept a history of their own from before they went in.
 - **Queries** leave their arguments in place, so their crux cleans up after
   itself: the crux of the bool from `a b .intGT` removes `a` and `b` again,
   leaving only the answer.
@@ -96,8 +95,8 @@ reasons:
 - **minted**: a value the instruction supplies itself, such as the 0 a counted
   loop starts from;
 - **elided**: a history too large to keep (over
-  ``InterpreterSettings/maxCallWeight`` or ``InterpreterSettings/maxCallDepth``),
-  replaced by the value it produced.
+  ``InterpreterSettings/maxCallWeight`` or
+  ``InterpreterSettings/maxCallDepth``), replaced by the value it produced.
 
 A crux therefore always runs, and every literal in it that the program didn't
 contain is marked. The marks matter: without them, a number the run happened to
@@ -106,10 +105,10 @@ nobody could tell how much of a result was really derived.
 
 ## Long histories
 
-A loop that adds 1 a thousand times would leave a crux a thousand steps long. The
-interpreter keeps such histories compact: shared parts are built once, and
-repeated steps fold into a counted loop. ``CruxCompression`` does the same to any
-crux you hand it.
+A loop that adds 1 a thousand times would leave a crux a thousand steps long.
+The interpreter keeps such histories compact: shared parts are built once, and
+repeated steps fold into a counted loop. ``CruxCompression`` does the same to
+any crux you hand it.
 
 ## Running a crux
 
@@ -122,9 +121,9 @@ estimates how many a crux needs. See <doc:LimitsAndGuards>.
 
 ## Keeping histories
 
-``AnyItem``, the `Codable` wrapper the ``Runner`` uses for results, keeps an item's
-value and drops its history. To send or save items with their histories intact,
-encode them as an ``ItemArchive``:
+``AnyItem``, the `Codable` wrapper the ``Runner`` uses for results, keeps an
+item's value and drops its history. To send or save items with their histories
+intact, encode them as an ``ItemArchive``:
 
 ```swift
 let data = try JSONEncoder().encode(ItemArchive([answer.item]))

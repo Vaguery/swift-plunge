@@ -56,8 +56,8 @@ number. Bools order false before true, here and everywhere else (`.boolLT`,
   element, leaving the vector.
 - **The last occurrence:** `.vecXLastIndexOf` and `.stringLastIndexOf`, beside
   the first-occurrence `IndexOf`.
-- **Rearrange:** `Rotate` (left by n, any sign), `Interleave` (a[0] b[0] a[1] …),
-  and `Repeat` (the whole vector n times).
+- **Rearrange:** `Rotate` (left by n, any sign), `Interleave` (a[0] b[0] a[1]
+  …), and `Repeat` (the whole vector n times).
 
 Rearranging keeps each element's history, so an element taken out of a sorted
 vector replays as the element that went in.

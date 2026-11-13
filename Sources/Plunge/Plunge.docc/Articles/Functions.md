@@ -166,9 +166,9 @@ does, the body returns to `.code` as a code block when the loop ends.
 
 - An **empty** `.function` starves the instruction: it takes nothing, and is
   itself put on `.function`.
-- A `.function` with **nothing that fits**, or a function whose other holes can't
-  be filled from the program's stacks, is a miss: the instruction takes its
-  arguments and refuses with a ``ErrorKind/notFound`` error.
+- A `.function` with **nothing that fits**, or a function whose other holes
+  can't be filled from the program's stacks, is a miss: the instruction takes
+  its arguments and refuses with a ``ErrorKind/notFound`` error.
 
 ## Cost
 

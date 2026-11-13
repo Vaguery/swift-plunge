@@ -9,8 +9,8 @@ An instruction is named for the stack it belongs to and what it does:
 instructions in a table:
 
 - **What it does**, in a sentence. Where the order of arguments matters, the
-  sentence shows the instruction as a program writes it: `a b .intSubtract` gives
-  a − b, because `b` was pushed last and is on top.
+  sentence shows the instruction as a program writes it: `a b .intSubtract`
+  gives a − b, because `b` was pushed last and is on top.
 - **Takes**, the arguments in the order the instruction claims them, top item
   first. An argument marked *(read)* is examined and left in place; *the topmost
   fitting* one is the first item down its stack that the instruction can use.
