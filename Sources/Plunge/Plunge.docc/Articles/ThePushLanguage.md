@@ -37,6 +37,12 @@ and every item lives on the stack for its type:
 | `.function` | functions: bodies with typed holes (see <doc:Functions>) |
 | `.exec` | the program still to run |
 | `.error` | what went wrong, one item for each problem |
+| `.print` | whatever the program printed, as items (see <doc:ObservingARun>) |
+
+The last two are *channels*: the program writes to them and never reads them. No
+instruction can pop, reorder or count what is on `.print`, and only a few can
+count `.error`, so a program can't edit what it has printed or hide what went
+wrong. A caller reads both with recorders.
 
 Instructions take their arguments from the tops of the stacks they need, and
 push their results onto the stacks of the results' types. Because each type has

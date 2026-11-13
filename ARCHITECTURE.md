@@ -58,9 +58,16 @@ elements can carry their own history (strings, vectors) are `MemberItem`s, and
 `TracingItem`s can hand an element back with its history. `CodeItem` is the one
 heterogeneous container; `IteratorItem` and `BindingItem` hold items too.
 
-Each stack holds exactly one Swift type, and `.exec` alone holds anything. That
-invariant is what makes the `as!` casts in Behaviors safe; `requireAccepts`
-enforces it at every push.
+Each stack holds exactly one Swift type, except `.exec` and `.print`, which hold
+anything. That invariant is what makes the `as!` casts in Behaviors safe;
+`requireAccepts` enforces it at every push. No Behavior reads `.print`, so it
+needs no cast.
+
+`.error` and `.print` are *channels* (`PushStack.isChannel`): written to and never
+read by a program. Everything that must not reach a channel asks `isChannel`
+instead of naming the stacks: the size limits, the generated stack family, the
+function machinery's filler, hole and result stacks, a sandbox's `lastPush`, the
+derived tags and backward chaining. A new channel needs only a case there.
 
 ## Behaviors
 
@@ -75,7 +82,7 @@ immutable, shared object holding
   body sees only its arguments; a `structural` body sees one stack and returns a
   `PositionEffect`; a `contextRead` body gets a read-only `ReadContext`; a
   `control` body returns `ControlEffect`s for `.exec`; a `channel` body returns
-  what to print;
+  the items to move to `.print`;
 - what it **produces** (`Produces`), its **tags**, and its one-line **summary**.
 
 `Behavior.act` is the only place an instruction changes the interpreter. It

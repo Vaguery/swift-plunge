@@ -15,7 +15,9 @@ instructions in a table:
   first. An argument marked *(read)* is examined and left in place; *the topmost
   fitting* one is the first item down its stack that the instruction can use.
 - **Gives**, the stacks its results go to. *May refuse* means some arguments are
-  the wrong values for it; then it pushes an error instead of a result.
+  the wrong values for it; then it pushes an error instead of a result. A print
+  instruction gives `print`: its item moves to the `.print` stack, which no
+  instruction reads.
 
 Some entries under **Gives** are not stacks:
 
@@ -23,7 +25,6 @@ Some entries under **Gives** are not stacks:
   items on `.exec` to run next;
 - *rearranged*: an instruction that copies, deletes or reorders the items of a
   stack and makes no new value;
-- *the printout*: text appended to the run's printed output;
 - *the input's type*: an input goes to whichever stack suits the value bound
   to it;
 - alternatives joined by *or*: which results there are depends on the

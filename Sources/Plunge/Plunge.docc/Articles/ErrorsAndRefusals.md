@@ -150,6 +150,10 @@ No instruction pops, reorders or clears `.error`, so a program can't hide its
 own failures from whoever is scoring it. The `.error` stack is also exempt from
 the limit on stack depth, so an error always has somewhere to land.
 
+`.print` follows the same rule, more strictly: no instruction reads it at all,
+not even to count. Both are *channels*, stacks a program writes to and only a
+caller reads.
+
 ## What a search can see
 
 Ask for the errors with recorders (<doc:ObservingARun>):

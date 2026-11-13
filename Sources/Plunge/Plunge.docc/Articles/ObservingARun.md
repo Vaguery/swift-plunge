@@ -38,8 +38,11 @@ The **target** (``RecorderTarget``) says what to look at:
 | `.nth(stack, depth:)` | the item at a depth, where 0 is the top | items |
 | `.count(stack)` | how many items a stack holds | ints |
 | `.isEmpty(stack)` | whether a stack is empty | bools |
-| `.printout` | everything the program has printed | strings |
+| `.stack(stack)` | every item on a stack, top first | item lists |
 | `.counter` | how many steps the run has taken | ints |
+
+Copying a whole stack after every step is costly, so use `.stack` with
+`.finalOnly` unless you want its history.
 
 The **policy** (``RecordingPolicy``) says how much to keep:
 
@@ -97,10 +100,13 @@ Two details are worth knowing:
 - **The answer.** Usually the top of one stack at the end. A problem with
   several outputs can use `.top` on several stacks, or `.nth` for several
   outputs on one stack.
-- **Printed output.** For problems whose answer is printed, record `.printout`.
-  The `Print` instructions (`.intPrint`, `.stringPrint` and the rest) each
-  append an item in its printed form and a newline, and `.printNewline` appends
-  a newline alone.
+- **Printed output.** Printing moves an item onto the `.print` stack, so what
+  a program printed is a sequence of items, not text. `.stack(.print)` records
+  all of them, top first, which is the latest first; reverse the list for the
+  order they were printed. `.top(.print)` is the last item printed and
+  `.count(.print)` how many there were. Each type has a print instruction
+  (`.intPrint`, `.stringPrint`, `.codePrint` and the rest). No instruction can
+  read `.print`, so a program can't change what it has printed.
 - **Errors.** `.count(.error)` for how many, `.top(.error)` for the last one.
   See <doc:ErrorsAndRefusals>.
 - **Whether the run finished.** A run stopped by the step limit leaves items

@@ -89,6 +89,10 @@ These are defined fully in <doc:ErrorsAndRefusals>.
   memory guard. See <doc:LimitsAndGuards>.
 - term Error: An item on the `.error` stack, an ``ErrorItem``. An error is a
   record, not an exception: the program continues.
+- term Print: Move an item onto the `.print` stack. What a program prints is a
+  sequence of items, not text, read by a caller with a recorder.
+- term Channel: A stack the program writes to and never reads: `.error` and
+  `.print`. Channels have no size limits and no stack instructions of their own.
 
 ## Running programs
 

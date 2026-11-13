@@ -29,7 +29,7 @@ let configuration = RunnerConfiguration(settings: settings)
 | Setting | Default | Bounds | The number is |
 |---|---|---|---|
 | ``InterpreterSettings/stepLimit`` | 10,000 | steps in one run | chosen |
-| ``InterpreterSettings/maxStackDepth`` | 10,000 | items on any one stack | inherited |
+| ``InterpreterSettings/maxStackDepth`` | 10,000 | items on any one stack but `.error` and `.print` | inherited |
 | ``InterpreterSettings/maxStringLength`` | 1,000 | characters in a string | inherited |
 | ``InterpreterSettings/maxVectorLength`` | 1,000 | elements in a vector | inherited |
 | ``InterpreterSettings/maxCodePoints`` | 1,000 | items in a code block, at every level | inherited |
@@ -67,6 +67,11 @@ strings of a thousand characters each.
 Numbers have no size limit of their own, and need none: integer arithmetic
 refuses instead of overflowing, and no instruction leaves an infinity or a
 not-a-number on `.double`.
+
+The two channels, `.error` and `.print`, have no size limits at all, so an error
+always has somewhere to land and a print is never refused. What they hold still
+counts toward ``InterpreterSettings/maxLiveWeight``, so the memory guard bounds
+them.
 
 ## Reaching a size limit
 
@@ -110,7 +115,9 @@ code block it converts. A sandbox is not a way around the limits:
 - every step a sandbox takes counts against the run's own step limit;
 - sandboxes nest at most 50 deep, and one that would start deeper is refused
   with a ``ErrorKind/sizeRefusal`` error, because each level uses the thread's
-  stack.
+  stack;
+- what a sandbox prints, and the errors it raises, stay in the sandbox and are
+  discarded with it.
 
 ## The guards
 
