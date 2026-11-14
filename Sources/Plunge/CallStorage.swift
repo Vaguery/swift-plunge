@@ -231,7 +231,57 @@ nonisolated extension CallMeasure {
             weight = overflowed ? .max : sum
             deepest = max(deepest, UInt32(clamping: child.callDepth))
         }
+        if weight > reuseThreshold { weight = Swift.min(weight, withReuse(call)) }
         let depth: UInt32 = call.isEmpty ? 0 : (deepest == .max ? .max : deepest + 1)
         return CallMeasure(weight: weight, depth: depth)
+    }
+
+    /// Above this weight, `of` also looks for reuse among the arguments
+    /// (`withReuse`). Below it, the plain sum is cheap and already within budget.
+    static let reuseThreshold: UInt32 = 1_024
+
+    /// What one reuse can add to a crux: a copy where the node is used again
+    /// (`.xDup`, or `n .xYankDup`, at most two items), and as much again where it
+    /// was first written, now that it is built once and copied.
+    static let reuseCost: UInt32 = 4
+
+    /// The weight with reuse counted as reuse. An argument that is the same node
+    /// as an earlier argument, or that is itself an argument of another argument,
+    /// is built once by the crux (`CruxSharing`), so it costs `reuseCost` here, not
+    /// its weight again.
+    ///
+    /// **Why it matters.** A query leaves its arguments, so a run of queries
+    /// builds each value from the ones before it, and the plain sum counts the
+    /// shared part once per use. Over budget, every push then measured its crux
+    /// by walking the whole history (`Interpreter.withinBudget`): a chain of 1,500
+    /// `.boolLTE` results, each read from the two before it, took 130 times as
+    /// long to replay with provenance as without (found 2026-11-14, crux fuzz).
+    ///
+    /// **Why decisions don't change.** This weight is still at least the crux's
+    /// length, so an item kept without measuring would also have been kept after
+    /// measuring, and an item over it is still measured exactly. Only how often
+    /// the crux is measured changes.
+    static func withReuse(_ call: [any Item]) -> UInt32 {
+        let arguments = CruxSharing.argumentCount(call)
+        let keys = call.prefix(arguments).map(CruxSharing.shareableKey)
+        // Nodes that are arguments of some argument.
+        var inner = Set<CruxSharing.Key>()
+        for (child, key) in zip(call, keys) where key != nil {
+            let grandchildren = child.call
+            for grandchild in grandchildren.prefix(CruxSharing.argumentCount(grandchildren)) {
+                if let innerKey = CruxSharing.shareableKey(grandchild) { inner.insert(innerKey) }
+            }
+        }
+        var seen = Set<CruxSharing.Key>()
+        var weight: UInt32 = 1
+        for (index, child) in call.enumerated() {
+            var cost = UInt32(clamping: child.callWeight)
+            if index < arguments, let key = keys[index], !seen.insert(key).inserted || inner.contains(key) {
+                cost = reuseCost
+            }
+            let (sum, overflowed) = weight.addingReportingOverflow(cost)
+            weight = overflowed ? .max : sum
+        }
+        return weight
     }
 }

@@ -57,14 +57,16 @@ struct ItemArchiveTests {
         #expect(plain.call.isEmpty)
     }
 
-    /// Each value built from the two before it: a tree of weight 2^30, a table of
+    /// Each value built from the two before it: a tree of 2^30 leaves, a table of
     /// a few dozen nodes.
     @Test func `a shared history is written once per node`() throws {
         var item = IntItem(1)
         for _ in 1...30 {
             item = IntItem(item.value * 2, call: [item, item, InstructionItem(.intAdd)])
         }
-        #expect(item.callWeight > 1_000_000_000)
+        // Weighed with each reuse counted once (`CallMeasure.withReuse`), not as
+        // the tree's 2^30 leaves.
+        #expect(item.callWeight < 1_000)
 
         let nodes = try table([item]).nodes
         #expect(nodes.count == 32, "30 levels, the leaf 1, and one .intAdd")

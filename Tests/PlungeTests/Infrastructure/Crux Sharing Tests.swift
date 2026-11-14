@@ -50,7 +50,10 @@ struct CruxSharingTests {
         #expect(CruxSharing.flattened(last).count > 100_000)
         let crux = last.crux()
         #expect(crux.count < 500)
-        #expect(last.callWeight == crux.count)        // weighed as its crux at push
+        // Weighed with reuse counted once (`CallMeasure.withReuse`): at least the
+        // crux's length, and nowhere near the tree's.
+        #expect(last.callWeight >= crux.count)
+        #expect(last.callWeight < 1_000)
         #expect(!crux.contains { $0.exactly(StandInItem.self) != nil })
         #expect(holds(last))
     }
