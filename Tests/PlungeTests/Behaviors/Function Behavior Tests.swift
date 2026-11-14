@@ -72,7 +72,7 @@ struct FunctionBehaviorTests {
                              Self.op(.vecIntMap)])
         #expect(stackString(inty, .vecInt) == "[ [11, 12] ]")
         #expect(stackString(inty, .function)
-                == "[ «fn bare (bool) -> bool: $0 .boolNot» ]", "the one that did not fit stays")
+                == "[ «fn (bool) -> bool: $0 .boolNot» ]", "the one that did not fit stays")
     }
 
     @Test func `an element with no result passes through`() {
@@ -93,14 +93,14 @@ struct FunctionBehaviorTests {
         let inty = Self.run([VecIntItem([1, 2]), Self.op(.vecIntMap)])
         #expect(stackString(inty, .vecInt) == "[ [1, 2] ]", "nothing taken")
         #expect((inty.stacks[.error]!.first as? ErrorItem)?.kind == .missingArgument)
-        #expect(stackString(inty, .function) == "[ «fn bare (vecInt, fn): $0 $1 .vecIntMap» ]",
+        #expect(stackString(inty, .function) == "[ «fn (vecInt, fn): $0 $1 .vecIntMap» ]",
                 "the starved map is shelved like any instruction")
     }
 
     @Test func `nothing that fits is a miss`() {
         let inty = Self.run([Self.op(.boolNot), VecIntItem([1, 2]), Self.op(.vecIntMap)])
         #expect(inty.stacks[.vecInt]!.isEmpty, "the collection is consumed")
-        #expect(stackString(inty, .function) == "[ «fn bare (bool) -> bool: $0 .boolNot» ]")
+        #expect(stackString(inty, .function) == "[ «fn (bool) -> bool: $0 .boolNot» ]")
         #expect((inty.stacks[.error]!.first as? ErrorItem)?.kind == .notFound)
     }
 

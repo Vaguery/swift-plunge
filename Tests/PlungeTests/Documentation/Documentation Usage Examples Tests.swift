@@ -280,7 +280,7 @@ extension DocumentationUsageExamplesTests {
         #expect(Self.lastError(in: starved)?.kind == .missingArgument)
         #expect(Self.lastError(in: starved)?.value == "intAdd missing args: .int")
         #expect(Self.last("answer", in: starved) == "1")
-        #expect(Self.last("function", in: starved) == "«fn bare (int, int) -> int: $0 $1 .intAdd»")
+        #expect(Self.last("function", in: starved) == "«fn (int, int) -> int: $0 $1 .intAdd»")
 
         let refused = await Self.result(of: program { 1; 0; PushInstruction.intQuot }, recorders: recorders)
         #expect(Self.lastError(in: refused)?.kind == .divideByZero)

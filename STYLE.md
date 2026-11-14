@@ -140,9 +140,11 @@ every item type to this; add a new type's confusable cases there.
   Equality follows the printed form: errors are equal when kind and
   instruction match. A new kind of refusal gets a one-word `ErrorKind`, not a
   new sentence shape.
-- A function made by starvation is marked `bare`
-  (`«fn bare (int, int) -> int: $0 $1 .intAdd»`), because it is a
-  different value from a derived function with the same body.
+- **How an item was made is not printed.** A function made by starvation
+  (a *bare* function) prints like any other,
+  `«fn (int, int) -> int: $0 $1 .intAdd»`, and equals a derived function
+  with the same body, holes and output. An item's history never affects its
+  printed form or its equality.
 
 ## What can go wrong
 

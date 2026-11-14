@@ -65,6 +65,23 @@ struct PrintedFormTests {
         }
     }
 
+    /// How a function was made is not part of its value: a starved instruction
+    /// equals a derived function with its body and shape, and prints the same.
+    @Test func `a bare function equals a derived one with the same shape`() {
+        let bare = FunctionItem(bare: InstructionItem(.intAdd))
+        let two = [FunctionItem.Hole(stack: .int, positions: [0]), .init(stack: .int, positions: [0])]
+        let derived = FunctionItem(body: [InstructionItem(.intAdd)], holes: two, output: .int)
+        #expect(bare == derived && derived == bare)
+        #expect(bare.pretty() == derived.pretty())
+        #expect(bare.pretty() == "«fn (int, int) -> int: $0 $1 .intAdd»")
+        #expect(bare == FunctionItem(bare: InstructionItem(.intAdd)))
+        #expect(bare != FunctionItem(bare: InstructionItem(.intSubtract)))
+        #expect(bare != FunctionItem(body: [InstructionItem(.intAdd)], holes: [two[0]], output: .int),
+                "one hole is a different function")
+        #expect(bare != FunctionItem(derivedBody: [InstructionItem(.intAdd)], holes: two, output: nil),
+                "no output is a different function")
+    }
+
     @Test func `the short forms`() {
         #expect(IntItem(88).pretty() == "88")
         #expect(DoubleItem(2.5).pretty() == "2.5")
@@ -110,15 +127,15 @@ struct PrintedFormTests {
 
     @Test func `a signature uses the short tags`() {
         #expect(FunctionItem(bare: InstructionItem(.stringLength)).pretty()
-                == "«fn bare (str) -> int: $0 .stringLength»")
+                == "«fn (str) -> int: $0 .stringLength»")
         #expect(FunctionItem(bare: InstructionItem(.doubleAdd)).pretty()
-                == "«fn bare (dbl, dbl) -> dbl: $0 $1 .doubleAdd»")
+                == "«fn (dbl, dbl) -> dbl: $0 $1 .doubleAdd»")
     }
 
     @Test func `the labeled forms`() {
         #expect(BindingItem(key: 3, bound: StringItem("x")).pretty() == "«bind: 3 -> \"x\"»")
         #expect(FunctionItem(bare: InstructionItem(.intAdd)).pretty()
-                == "«fn bare (int, int) -> int: $0 $1 .intAdd»")
+                == "«fn (int, int) -> int: $0 $1 .intAdd»")
         #expect(FunctionItem(body: [IntItem(2), InstructionItem(.intAdd)],
                              holes: [.init(stack: .int, positions: [0])], output: .int).pretty()
                 == "«fn (int) -> int: $0 2 .intAdd»")

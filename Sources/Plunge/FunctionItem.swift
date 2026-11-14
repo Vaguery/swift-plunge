@@ -50,7 +50,9 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     let derivedHoles: [Hole]
     /// A derived function's output stack: where the item it was read from went.
     let derivedOutput: PushStack?
-    /// Whether this is a starved instruction, its holes its arguments.
+    /// Whether this is a starved instruction, its holes its arguments. This is
+    /// how the function is stored, not part of its value: it affects neither
+    /// `==` nor `pretty()`.
     public let isBare: Bool
 
     /// This item's provenance, behind one optional reference; see `CallStorage`.
@@ -145,9 +147,15 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
         return result
     }
 
+    /// Two functions are equal when they have the same body, the same holes and
+    /// the same output: what `pretty()` prints. How a function was made is not
+    /// part of its value, so a starved `.intAdd` equals a derived function with
+    /// that body and shape. (A history never affects equality either.)
     public static func == (lhs: FunctionItem, rhs: FunctionItem) -> Bool {
-        lhs.isBare == rhs.isBare && lhs.derivedHoles == rhs.derivedHoles
-            && lhs.derivedOutput == rhs.derivedOutput && lhs.value == rhs.value
+        guard lhs.value == rhs.value else { return false }
+        // Two bare functions with one body have one instruction, so one shape.
+        if lhs.isBare && rhs.isBare { return true }
+        return lhs.holes == rhs.holes && lhs.output == rhs.output
     }
 
     /// `«fn (int) -> int: $0 3 .intAdd»`: a signature of the holes' stacks and the
@@ -159,13 +167,12 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
 
     /// The signature `pretty()` shows: the holes' stacks in order, then the output
     /// stack if it is fixed, as `(int, int) -> int`, each written as its short tag
-    /// (`PushStack.tag`: `str`, `dbl`, `fn`). A bare function is marked
-    /// `bare`, because a bare function and a derived one with the same body are
-    /// different values and must not print alike.
+    /// (`PushStack.tag`: `str`, `dbl`, `fn`). A bare function prints like any
+    /// other: it equals a derived function with the same body and shape.
     var prettySignature: String {
         let takes = "(" + holes.map(\.stack.tag).joined(separator: ", ") + ")"
         let gives = output.map { " -> \($0.tag)" } ?? ""
-        return (isBare ? "bare " : "") + takes + gives
+        return takes + gives
     }
 
     private var bareInstruction: PushInstruction? {

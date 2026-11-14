@@ -217,8 +217,8 @@ struct FunctionInstructionTests {
         // A binder leaves what it binds; the deref is a second copy.
         let inty = Self.run([Self.op(.intAdd), Self.op(.functionRef), Self.op(.bindingDeref)])
         #expect(stackString(inty, .function)
-                == "[ «fn bare (int, int) -> int: $0 $1 .intAdd» "
-                + "«fn bare (int, int) -> int: $0 $1 .intAdd» ]")
+                == "[ «fn (int, int) -> int: $0 $1 .intAdd» "
+                + "«fn (int, int) -> int: $0 $1 .intAdd» ]")
     }
 
     @Test func `values do not depend on recording`() {

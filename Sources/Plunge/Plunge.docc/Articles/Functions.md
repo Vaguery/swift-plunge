@@ -30,10 +30,11 @@ Functions come from two places.
 missing-arguments error, as always, and is also put on `.function` as a *bare*
 function: the instruction alone, whose holes are the arguments it wanted.
 Nothing it found is bound into it or taken. `.intAdd` on an empty `.int` leaves
-`«fn bare (int, int) -> int: $0 $1 .intAdd»`. The word `bare` marks a
-function made this way, which is a different value from a derived function
-with the same body. Every instruction does this, the ones that copy and
-reorder a stack included, so `.intDup` and `.intSwap` reach `.function` too.
+`«fn (int, int) -> int: $0 $1 .intAdd»`. How a function was made is not part
+of its value: a bare function equals a derived one with the same body, holes
+and output, and prints the same. Every instruction does this, the ones that
+copy and reorder a stack included, so `.intDup` and `.intSwap` reach
+`.function` too.
 
 **`.codePushAllFunctions`.** It takes a code block from `.code` and runs it in a
 sandbox, supplying a placeholder for every argument an instruction is missing.

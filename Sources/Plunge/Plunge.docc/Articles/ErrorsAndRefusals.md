@@ -26,7 +26,7 @@ An instruction **starves** when a stack it needs holds too few items.
 
 ```
 1 .intAdd     →  .int holds 1; .error holds «err missingArgument: .intAdd»;
-                 .function holds «fn bare (int, int) -> int: $0 $1 .intAdd»
+                 .function holds «fn (int, int) -> int: $0 $1 .intAdd»
 ```
 
 A starved instruction:
