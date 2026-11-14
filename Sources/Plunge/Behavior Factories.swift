@@ -150,8 +150,7 @@ nonisolated extension Behavior {
     ///
     /// The move crosses stacks, so the printed item records its argument and the
     /// instruction (provenance law 2): its crux rebuilds the item and prints it
-    /// again. From `.exec` the instruction is recorded first (law 3b), because the
-    /// item it prints comes after it in the program.
+    /// again.
     static func channel(
         _ label: PushInstruction,
         takes stack: PushStack,
@@ -160,9 +159,7 @@ nonisolated extension Behavior {
         Behavior(label, requires: [.takes(stack)], tags: tags, behaviorClass: .channel,
                  body: .channel { args, recording in
                      var printed = args[0]
-                     printed.call = recording(stack == .exec
-                         ? [InstructionItem(label), args[0]]
-                         : [args[0], InstructionItem(label)])
+                     printed.call = recording([args[0], InstructionItem(label)])
                      return [printed]
                  },
                  produces: .printed)

@@ -533,21 +533,6 @@ nonisolated extension Interpreter {
         Behavior.composing(.codeWrap, takes: CodeItem.self, gives: CodeItem.self) { x in [x] }
         .described("Wraps a code block in another: `( a b )` becomes `( ( a b ) )`.")
 
-    static let execQuote_Behavior =
-    Behavior(
-        .execQuote,
-        takes: [.exec],
-        produces: .results([.code]),
-        fxn: {a, recording in
-            let (x) = (a[0])
-            var result = CodeItem([x])
-            result.call = recording([InstructionItem(.execQuote), x])
-            return [ Router(.code, result) ]
-        }
-    )
-    .described("Quotes the next item on `.exec` instead of running it, pushing it to `.code` inside a one-item code " +
-        "block.")
-
     /// Unwraps the top code block on `.code` onto `.exec`, so its contents run.
     ///
     /// This is the only way a code block executes: the Interpreter pushes any
@@ -704,8 +689,6 @@ nonisolated extension Interpreter {
         .codeIterate: codeIterate_Behavior,
         .codeIterateEmit: codeIterateEmit_Behavior,
         .codeIterateDo: codeIterateDo_Behavior,
-        .codeWrap: codeWrap_Behavior,
-        .execQuote: execQuote_Behavior
-
+        .codeWrap: codeWrap_Behavior
     ]
 }

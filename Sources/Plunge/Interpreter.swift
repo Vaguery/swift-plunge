@@ -507,11 +507,10 @@ nonisolated final class Interpreter {
     }
 
     /// The instruction that produced an item, read off its `call`: the last
-    /// element when it is an instruction (postfix, provenance law 3), else the
-    /// first (prefix, law 3b), else `nil`. Names the cause on an elided stand-in.
+    /// element when it is an instruction (postfix, provenance law 3), else `nil`.
+    /// Names the cause on an elided stand-in.
     static func producer(in call: [any Item]) -> PushInstruction? {
-        if let last = call.last?.exactly(InstructionItem.self) { return last.value }
-        return call.first?.exactly(InstructionItem.self)?.value
+        call.last?.exactly(InstructionItem.self)?.value
     }
 
     /// Enforces the homogeneity invariant for any stack write. Every stack

@@ -5,9 +5,9 @@
 //  Values into code and back, and a string to and from its pieces.
 //
 //  - **`xQuote`** wraps a value in a one-item block, for every value type: the
-//    scalars and the vectors. (`execQuote`, `iteratorQuote` and `bindingQuote`
-//    stay beside their own stacks, because each does more than wrap: one is a
-//    prefix that reads `.exec`, and the other two rebuild a structure.)
+//    scalars and the vectors. (`iteratorQuote` and `bindingQuote` stay beside
+//    their own stacks, because each does more than wrap: they rebuild a
+//    structure.)
 //  - **`vecFromCode`** reads a block back into a vector. Its type is read off
 //    the contents, uniform or refuse, as `vecFromIterator` does; a block holding
 //    exactly one vector gives that vector, so `vecXQuote` then `vecFromCode` is

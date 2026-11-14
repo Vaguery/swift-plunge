@@ -54,17 +54,6 @@ struct OutputBehaviorTests {
         printsAndMoves(DoubleItem(3.14), from: .double, with: .doublePrint)
     }
 
-    @Test mutating func execPrint() {
-        printsAndMoves(CharItem(Character("x")), from: .exec, with: .execPrint)
-    }
-
-    @Test mutating func `execPrint prints an instruction without running it`() {
-        inty.load(inputs: [:], stacks: [.exec: [InstructionItem(.intAdd)], .int: [IntItem(1), IntItem(2)]], program: [])
-        doThis(.execPrint, to: inty)
-        #expect(printed == [".intAdd"])
-        #expect(inty.stacks[.int]!.count == 2, "the printed instruction never ran")
-    }
-
     @Test mutating func intPrint() {
         printsAndMoves(IntItem(1964), from: .int, with: .intPrint)
         #expect(printed == ["1964"])

@@ -32,10 +32,6 @@ nonisolated extension Interpreter {
                  produces: .printed)
         .described("Puts a copy of the top iterator on `.print`, leaving the loop on `.iterator`.")
 
-    static let execPrint_Behavior =
-        Behavior.channel(.execPrint, takes: .exec)
-        .described("Moves the next item on `.exec` to `.print`, so that item never runs.")
-
     static let doublePrint_Behavior =
         Behavior.channel(.doublePrint, takes: .double)
         .described("Moves the top double to `.print`.")
@@ -89,7 +85,6 @@ nonisolated extension Interpreter {
             .charPrint: charPrint_Behavior,
             .codePrint: codePrint_Behavior,
             .doublePrint: doublePrint_Behavior,
-            .execPrint: execPrint_Behavior,
             .functionPrint: functionPrint_Behavior,
             .intPrint: intPrint_Behavior,
             .iteratorPrint: iteratorPrint_Behavior,

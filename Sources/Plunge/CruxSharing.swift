@@ -31,7 +31,7 @@
 /// first instruction in its parent's `call`, where every element pushes exactly
 /// one item (a node's crux nets its item on its stack, a literal pushes itself),
 /// so the depth of every item on every stack is known. After an instruction
-/// (a clean-up, a prefix argument read from `.exec`), elements are written out as
+/// (a clean-up), elements are written out as
 /// before. A history with no shared node comes out exactly as the flattened tree.
 nonisolated enum CruxSharing {
 

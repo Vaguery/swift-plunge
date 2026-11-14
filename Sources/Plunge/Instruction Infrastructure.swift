@@ -70,7 +70,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case codeEq
 
     // code conversion
-    case execQuote, intQuote, boolQuote, charQuote, stringQuote, doubleQuote
+    case intQuote, boolQuote, charQuote, stringQuote, doubleQuote
 
     /// Box a live iterator and park it on `.code`.
     ///
@@ -109,9 +109,13 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     //
     case execDoCount, execDoRange, execDoTimes, execDoWhile, execIf, execK, execS, execWhen, execWhile, execY
 
-    // exec comparison: none. `execEq` was removed: with blocks landing
-    // on `.code` intact, `( A ) ( B ) .codeEq` asks the same question, and its
-    // prefix crux could not reproduce derived operands.
+    // No instruction takes an argument from `.exec` but the rearrangements of
+    // its stack family. `.exec` holds what is about to run, not arguments: it is
+    // special in the way the channels are. `execEq` (removed 2026-11-07),
+    // `execQuote` and `execPrint` (removed 2026-11-13) did: with blocks landing
+    // on `.code` intact, `( A ) ( B ) .codeEq`, a literal `( x )` and
+    // `( x ) .codePrint` do the same jobs, and a crux written prefix, as theirs
+    // were, cannot reproduce an operand that was derived rather than written.
 
     // exec conversion
 
@@ -213,7 +217,7 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 
     // PRINT instructions
     //
-    case bindingPrint, boolPrint, charPrint, codePrint, doublePrint, execPrint, functionPrint, intPrint, iteratorPrint
+    case bindingPrint, boolPrint, charPrint, codePrint, doublePrint, functionPrint, intPrint, iteratorPrint
     case stringPrint, vecBoolPrint, vecDoublePrint, vecIntPrint, vecStringPrint
 
 

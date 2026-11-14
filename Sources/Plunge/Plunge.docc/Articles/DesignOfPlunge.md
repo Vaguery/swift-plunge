@@ -70,7 +70,8 @@ the body of a loop is written before the loop instruction, exactly as the
 operands of an addition are written before `.intAdd`. The `.exec` stack holds
 what is about to run, and is not also a place to keep arguments. The only
 instructions that reach ahead into the program are the few whose subject is
-`.exec` itself, such as `.execQuote` and `.execDup`. See <doc:CodeAndControl>.
+`.exec` itself, the rearrangements such as `.execDup` and `.execSwap`. See
+<doc:CodeAndControl>.
 
 ## Questions leave their arguments
 

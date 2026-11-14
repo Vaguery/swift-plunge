@@ -65,15 +65,15 @@ public nonisolated protocol Pretty {
 //  3. A genuinely new value records `call = [args…, InstructionItem(name)]` —
 //     args in the order that re-runs postfix, instruction last.
 //
-//  3b. UNLESS the arguments come from `.exec`, in which case the instruction is
-//     recorded FIRST: `call = [InstructionItem(name), args…]`. Push is not
-//     uniformly postfix, and this is the important quirk. An `.exec` argument is
-//     not waiting on a stack behind the instruction — it is the next thing ahead
-//     of it in the program, so the source that re-runs it must read
-//     `.execQuote 3`, not `3 .execQuote`. Reconstructed source is executed from
-//     `.exec` like any other program, so it has to be written the way `.exec`
-//     reads it. `execQuote` is the one that records this way (`execEq` did too,
-//     and was removed because a prefix crux cannot reproduce a derived operand).
+//  3b. (Retired 2026-11-13.) An argument taken from `.exec` is the next item of
+//     the program, not a value waiting on a stack, so its crux had to be written
+//     prefix, `[InstructionItem(name), args…]`. A prefix crux cannot reproduce an
+//     operand that was derived rather than written: `.execQuote` quoted the next
+//     item, so an operand built by code (an item taken out of a block and emitted
+//     onto `.exec`) was replayed as the code that built it. `execEq`, then
+//     `execQuote` and `execPrint`, were removed for it. Only the rearrangements
+//     of `.exec`'s family still take from `.exec`, and they record nothing
+//     (law 1).
 //
 //  4. A freshly minted instruction token records nothing. Its crux is itself.
 //

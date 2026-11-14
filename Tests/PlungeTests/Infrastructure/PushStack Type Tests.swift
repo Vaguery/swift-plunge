@@ -92,7 +92,7 @@ struct PushStackTypeTests {
 
     @Test func `instruction items are rejected by every homogeneous stack`() {
         for item in Self.execOnlySamples {
-            #expect(PushStack.print.accepts(item), ".execPrint can print an instruction")
+            #expect(PushStack.print.accepts(item), ".print accepts any item")
             for stack in PushStack.allCases where !stack.isHeterogeneous {
                 #expect(!stack.accepts(item),
                         "\(stack) must reject \(type(of: item))")

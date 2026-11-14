@@ -193,10 +193,11 @@ struct BehaviorIODeclarationTests {
             // instructions (apply and the iterations any value) and its binders.
             // codeFromFunction one result; the six function loops continuations.
             // 2026-11-13: printing moves an item onto `.print`; printNewline gone,
-            // bindingPrint and functionPrint added.
-            "one result": 608, "fixed results": 90, "alternatives": 26,
+            // bindingPrint and functionPrint added. Later the same day: execQuote
+            // (one result) and execPrint (printed) gone.
+            "one result": 607, "fixed results": 90, "alternatives": 26,
             "deferred": 80, "input": 10, "delivery": 7, "several": 1,
-            "positions": 183, "continuation": 49, "printed": 14
+            "positions": 183, "continuation": 49, "printed": 13
         ])
     }
 

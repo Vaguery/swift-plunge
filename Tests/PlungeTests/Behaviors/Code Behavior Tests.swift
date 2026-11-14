@@ -96,27 +96,6 @@ struct CodeBehaviorTests {
         #expect(stackString(inty, .code) == "[ ( ( 1 ( 2.2 [3] ) ) ) ]")
     }
 
-    @Test func execQuote() {
-        inty.stacks[.exec]!.prepend(IntItem(44))
-        inty.stacks[.exec]!.prepend(BoolItem(true))
-        inty.stacks[.exec]!.prepend(CodeItem([]))
-
-        #expect(stackString(inty, .exec) == "[ ( ) true 44 ]")
-
-        doThis(.execQuote, to: inty)
-        #expect(stackString(inty, .code) == "[ ( ( ) ) ]")
-        #expect(callString(topItem(inty, .code)) == "( .execQuote ( ) )")
-
-        doThis(.execQuote, to: inty)
-        #expect(stackString(inty, .code) == "[ ( true ) ( ( ) ) ]")
-        #expect(callString(topItem(inty, .code)) == "( .execQuote true )")
-
-        doThis(.execQuote, to: inty)
-        #expect(stackString(inty, .code) == "[ ( 44 ) ( true ) ( ( ) ) ]")
-        #expect(callString(topItem(inty, .code)) == "( .execQuote 44 )")
-    }
-
-
     @Test func intQuote() {
         loadInts(inty, ints: [55, 44])
 

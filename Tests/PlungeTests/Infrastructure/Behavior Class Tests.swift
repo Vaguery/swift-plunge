@@ -72,7 +72,7 @@ struct BehaviorClassTests {
             ($0, Interpreter.instructions(in: $0).count)
         })
         #expect(counts == [
-            .operation: 617,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs;
+            .operation: 616,   // incl. 18 finds and IndexOf…From; bindingEq/Rekey/Quote/FromCode/Unpack, 10 xRefAs;
                                // functionEq, codePushAllFunctions; 25 element-wise, 70 sequence, 4 bool orderings,
                                // 70 collection operations with functions, 6 on functions, functionRefAs,
                                // codeFromFunction
@@ -82,8 +82,9 @@ struct BehaviorClassTests {
                                 // 50 lookups, 10 xRef, bindingFreshKey, 4 derefs, bindingDo, 5 key/depth finders,
                                 // bindingContainsKey, bindingOccurrencesOfKey, functionRef
             .control: 46,       // incl. 11 xWith and bindingScope; the 6 function loops
-            .channel: 14        // one print for every stack but the channels (2026-11-13: printNewline gone,
-                                // bindingPrint and functionPrint added)
+            .channel: 13        // one print for every stack but the channels and `.exec` (2026-11-13:
+                                // printNewline gone, bindingPrint and functionPrint added, execPrint gone)
+                                // (2026-11-13: execQuote, an operation, gone)
         ], "\(counts)")
     }
 

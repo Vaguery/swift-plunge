@@ -110,7 +110,7 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     /// Whether a function instruction can apply this function: every hole takes
     /// its filler from a stack the program's values rest on, and so does the
     /// output, if there is one. A function made by starving an instruction that
-    /// reads `.exec` (`.execQuote`, `.execDup`) has a hole on `.exec`, which no
+    /// rearranges `.exec` (`.execDup`, `.execSwap`) has a hole on `.exec`, which no
     /// filler can fill: the next item of the program is not an argument. The
     /// function instructions' sieves pass over such a function.
     var isApplicable: Bool {
