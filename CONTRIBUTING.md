@@ -35,6 +35,7 @@ The tests are grouped by what they cover:
 | `Generation Tests/` | random code, genomes, backward chaining |
 | `Documentation/` | the instruction reference, the article and README examples, and the stated counts |
 | `Acceptance Tests (Slow)/` | fuzzing, crux replay, stress and measurements |
+| `Analysis Tools/` | tools for studying runs, off unless asked for: which program tokens each result comes from, a program combed into its results' cruxes, a stream of code harvested for cruxes |
 
 Several tests pin counts that describe the whole language: how many
 instructions are in each Behavior class and role, and the shape of the
