@@ -41,7 +41,8 @@ nonisolated extension Interpreter {
 
     /// Whether `function` can do `family`'s job over elements on `element`.
     static func fits(_ function: FunctionItem, _ family: Family, over element: PushStack) -> Bool {
-        guard let output = function.output, function.holeCount(on: element) >= family.bound else { return false }
+        guard function.isApplicable, let output = function.output, function.holeCount(on: element) >= family.bound
+        else { return false }
         switch family {
         case .map, .zip, .key: return collectableStacks.contains(output)
         case .filter: return output == .bool

@@ -45,9 +45,15 @@ nonisolated extension Interpreter {
     /// still asks the requirements that follow, with a stand-in in the miss's place.
     static func maybeFunction(_ item: any Item) -> FunctionItem? { item.exactly(FunctionItem.self) }
 
+    /// `item` as a function a sieve may choose: one whose holes can all be filled
+    /// (`FunctionItem.isApplicable`).
+    static func applicable(_ item: any Item) -> FunctionItem? {
+        item.exactly(FunctionItem.self).flatMap { $0.isApplicable ? $0 : nil }
+    }
+
     /// Whether `item` is a step function: a hole of its own output's type.
     static func isStep(_ item: any Item) -> Bool {
-        guard let function = item.exactly(FunctionItem.self), let output = function.output else { return false }
+        guard let function = applicable(item), let output = function.output else { return false }
         return function.holeCount(on: output) >= 1
     }
 
@@ -63,7 +69,7 @@ nonisolated extension Interpreter {
 
     static let functionApply_Behavior: Behavior = {
         let withOutput: Requirement = .takesFirst(.function) { candidate, _ in
-            candidate.exactly(FunctionItem.self)?.output != nil
+            applicable(candidate)?.output != nil
         }
         let fillers: [Requirement] = holeSourceStacks.map { stack in
             .takesMany(stack) { maybeFunction($0[0])?.holeCount(on: stack) ?? 0 }
@@ -121,11 +127,11 @@ nonisolated extension Interpreter {
 
     static let functionCompose_Behavior: Behavior = {
         let inner: Requirement = .takesFirst(.function) { candidate, _ in
-            candidate.exactly(FunctionItem.self)?.output != nil
+            applicable(candidate)?.output != nil
         }
         let outer: Requirement = .takesFirst(.function) { candidate, resolved in
             guard let stack = maybeFunction(resolved[0])?.output else { return false }
-            return candidate.exactly(FunctionItem.self).map { $0.holeCount(on: stack) >= 1 } == true
+            return applicable(candidate).map { $0.holeCount(on: stack) >= 1 } == true
         }
         return Behavior(.functionCompose, requires: [inner, outer], tags: [.fallible], behaviorClass: .operation,
                         body: .applying { a, context in
@@ -144,7 +150,7 @@ nonisolated extension Interpreter {
 
     static let functionFill_Behavior: Behavior = {
         let withHole: Requirement = .takesFirst(.function) { candidate, _ in
-            candidate.exactly(FunctionItem.self)?.holes.isEmpty == false
+            applicable(candidate)?.holes.isEmpty == false
         }
         let filler: [Requirement] = holeSourceStacks.map { stack in
             .takesMany(stack) { maybeFunction($0[0])?.holes.first?.stack == stack ? 1 : 0 }

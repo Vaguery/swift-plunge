@@ -107,6 +107,17 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
         return bareInstruction.flatMap { Self.bareShapes[$0]?.holes } ?? []
     }
 
+    /// Whether a function instruction can apply this function: every hole takes
+    /// its filler from a stack the program's values rest on, and so does the
+    /// output, if there is one. A function made by starving an instruction that
+    /// reads `.exec` (`.execQuote`, `.execDup`) has a hole on `.exec`, which no
+    /// filler can fill: the next item of the program is not an argument. The
+    /// function instructions' sieves pass over such a function.
+    var isApplicable: Bool {
+        !holes.contains { $0.stack == .exec || $0.stack.isChannel }
+            && !(output.map { $0 == .exec || $0.isChannel } ?? false)
+    }
+
     /// The stack the function's value lands on, or nil when its instruction
     /// does not say (a value-dependent result, a continuation, a print).
     public var output: PushStack? {
