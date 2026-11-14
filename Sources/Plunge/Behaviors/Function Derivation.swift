@@ -53,6 +53,7 @@ nonisolated extension Interpreter {
             } else {
                 let allowance = max(derivationStepFloor, derivationStepsPerPoint * block.flatSize)
                 let derivation = FunctionDerivation(block, inputs: context.inputs, constants: context.constants,
+                                                    behaviors: context.behaviors,
                                                     limit: min(context.remainingSteps, allowance),
                                                     depth: context.sandboxDepth + 1)
                 context.charge(derivation.steps)
@@ -83,9 +84,10 @@ nonisolated struct FunctionDerivation {
         Set(PushStack.allCases.filter { !$0.isChannel }).subtracting([.exec, .function])
 
     init(_ block: CodeItem, inputs: [PushInstruction: any Item], constants: [PushInstruction: any Item],
-         limit: Int, depth: Int) {
+         behaviors: BehaviorTable = Interpreter.languageTable, limit: Int, depth: Int) {
         let sandbox = Interpreter()
         sandbox.sandboxDepth = depth
+        sandbox.behaviors = behaviors
         sandbox.config = Interpreter.defaultSettings
         sandbox.config.recordsProvenance = true
         sandbox.config.stepLimit = limit
@@ -94,7 +96,7 @@ nonisolated struct FunctionDerivation {
         var found: [FunctionItem] = []
         while sandbox.counter < limit, let next = sandbox.stacks[.exec]!.first {
             var rearranges = false
-            if let token = next.exactly(InstructionItem.self)?.value, let behavior = Interpreter.language[token] {
+            if let token = next.exactly(InstructionItem.self)?.value, let behavior = sandbox.behaviors[token] {
                 Self.supplyHoles(for: token, in: sandbox, holes: &holes)
                 if case .positions = behavior.produces { rearranges = true }
             }

@@ -143,6 +143,7 @@ nonisolated extension Interpreter {
         guard budget > 0 else { throw .outOfSteps }
         let sub = Interpreter()
         sub.sandboxDepth = context.sandboxDepth + 1
+        sub.behaviors = context.behaviors
         // The language's default limits, not this run's, as for `run`.
         sub.config = Interpreter.defaultSettings
         sub.config.recordsProvenance = false

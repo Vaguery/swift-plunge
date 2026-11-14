@@ -84,6 +84,7 @@ nonisolated extension Interpreter {
         guard budget > 0 else { throw .outOfSteps }
         let sub = Interpreter()
         sub.sandboxDepth = context.sandboxDepth + 1
+        sub.behaviors = context.behaviors
         // The language's default limits, not this run's: a function's result
         // must not depend on how the run was configured, or its crux would not
         // replay under the relaxed limits a reconstruction uses

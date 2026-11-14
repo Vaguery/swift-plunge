@@ -45,6 +45,10 @@ nonisolated struct ReadContext {
     var constants: [PushInstruction: any Item] { interpreter.constants }
     /// The input bindings (`.input0` …).
     var inputs: [PushInstruction: any Item] { interpreter.inputs }
+    /// This run's instructions: the language, less any the run disabled
+    /// (`RunnerConfiguration.disabledBehaviors`). A sandbox runs with the same
+    /// table, so a disabled instruction stays disabled inside a function.
+    var behaviors: BehaviorTable { interpreter.behaviors }
     /// Steps completed before this one (`.pushStepCount`).
     var stepCount: Int { interpreter.counter }
     /// How many sandboxes deep this run is (`Interpreter.sandboxDepth`).
