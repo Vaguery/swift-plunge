@@ -296,13 +296,15 @@ nonisolated enum DualModeStress {
         return found
     }
 
-    /// Replays the crux of each stack's top item from a recording run.
+    /// Replays the crux of each stack's top item from a recording run, and looks
+    /// for the item where it was found: a printed item's crux ends in its print,
+    /// which moves it to `.print`, not to the stack of its type.
     static func checkCruxes(_ c: Case, _ on: Interpreter, into outcome: inout Outcome,
                             stage: @Sendable (String) -> Void = { _ in }) {
         for stack in PushStack.allStacks where stack != .error && stack != .exec {
             // Items too big to render cheaply are skipped: comparing a replay renders both.
-            guard let item = on.stacks[stack]!.first, !item.call.isEmpty, item.weight < 100_000,
-                  let resting = PushStack.defaultStack(for: item) else { continue }
+            guard let item = on.stacks[stack]!.first, !item.call.isEmpty, item.weight < 100_000 else { continue }
+            let resting = stack
             stage("    crux of .\(stack) top (callWeight \(item.callWeight), call depth \(item.callDepth))")
             let crux = item.crux()
             stage("    crux has \(crux.count) items; replaying")
