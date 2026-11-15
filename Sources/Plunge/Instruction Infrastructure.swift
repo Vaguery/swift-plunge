@@ -418,7 +418,13 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
          vecIntDot, vecDoubleDot,
          vecBoolEqEach, vecIntEqEach, vecDoubleEqEach, vecStringEqEach,
          vecIntLTEach, vecIntGTEach, vecDoubleLTEach, vecDoubleGTEach, vecStringLTEach, vecStringGTEach,
-         vecBoolAnd, vecBoolOr, vecBoolNot
+         vecBoolAnd, vecBoolOr, vecBoolNot, vecBoolXor
+
+    // Broadcast vector operations (2026-11-15): every element with one scalar.
+    case vecIntAddInt, vecIntSubtractInt, vecIntMultiplyInt, vecIntQuotInt, vecIntModInt,
+         vecDoubleAddDouble, vecDoubleSubtractDouble, vecDoubleMultiplyDouble, vecDoubleDivideDouble,
+         vecDoubleModDouble,
+         vecBoolAndBool, vecBoolOrBool, vecBoolXorBool
 
     // Collection operations without functions (2026-11-12)
     case vecBoolSort, vecIntSort, vecDoubleSort, vecStringSort, stringSort,

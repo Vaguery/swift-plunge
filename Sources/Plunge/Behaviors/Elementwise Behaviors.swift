@@ -3,7 +3,10 @@
 //  Plunge
 //
 //  Element-wise operations on two vectors (2026-11-12): arithmetic, the dot
-//  product, comparisons and logic, element by element.
+//  product, comparisons and logic, element by element. And their broadcast
+//  twins (2026-11-15): every element of one vector with one scalar, so that a
+//  vector can be scaled, shifted or masked without a vector of constants as long
+//  as itself.
 //
 //  **The pair is found by the sieve.** Written `a b .vecIntAdd`, `b` is the top
 //  vector and `a` is the first vector below it **with the same length**
@@ -151,6 +154,86 @@ nonisolated extension Interpreter {
         Behavior.operation(.vecBoolNot, takes: VecBoolItem.self, gives: VecBoolItem.self) { a in a.map { !$0 } }
         .described("Negates every element of a vector of bools.")
 
+    static let vecBoolXor_Behavior =
+        Behavior.operation(.vecBoolXor, takes: VecBoolItem.self, VecBoolItem.self, gives: VecBoolItem.self,
+                           pairedBy: Behavior.sameLength) { a, b in zip(a, b).map { $0 != $1 } }
+        .described("Exclusive-ors element by element: `a b .vecBoolXor` gives a[i] ⊕ b[i], where b is the top vector "
+                   + "and a the first one below it of the same length (a miss if there is none).")
+
+    // MARK: - Broadcast
+
+    /// `v k .label`: the vector of `v[i] op k`, for the top vector and the top
+    /// scalar of its element type.
+    static func broadcast<V: VectorItem>(
+        _ label: PushInstruction, _ type: V.Type, _ wording: (verb: String, formula: String), refuses: String,
+        _ op: @escaping @Sendable (V.Element, V.Element, PushInstruction) throws(Refusal) -> V.Element
+    ) -> Behavior {
+        let (verb, formula) = wording
+        return Behavior.operation(label, takes: V.self, V.Scalar.self, gives: V.self) { v, k throws(Refusal) in
+            var result: [V.Element] = []
+            result.reserveCapacity(v.count)
+            for index in v.indices {
+                do throws(Refusal) {
+                    result.append(try op(v[index], k, label))
+                } catch {
+                    throw Refusal("at index \(index): \(error.message)", kind: error.kind)
+                }
+            }
+            return result
+        }
+        .described("\(verb) every element and one \(V.Scalar.pushStack.noun): `v k .\(label)` gives \(formula) for "
+                   + "each element, where v is the top \(V.pushStack.noun) and k the top \(V.Scalar.pushStack.noun); "
+                   + "refuses \(refuses), naming the index.")
+    }
+
+    /// `v k .label` for vectors of bools: the vector of `v[i] op k`.
+    static func broadcastLogic(_ label: PushInstruction, _ verb: String, formula: String,
+                               _ op: @escaping @Sendable (Bool, Bool) -> Bool) -> Behavior {
+        Behavior.operation(label, takes: VecBoolItem.self, BoolItem.self, gives: VecBoolItem.self) { v, k in
+            v.map { op($0, k) }
+        }
+        .described("\(verb) every element with one bool: `v k .\(label)` gives \(formula) for each element, where v "
+                   + "is the top vector of bools and k the top bool.")
+    }
+
+    static let vecIntAddInt_Behavior = broadcast(.vecIntAddInt, VecIntItem.self, ("Adds", "v[i] + k"),
+                                                 refuses: "on overflow", IntArithmetic.add)
+    static let vecIntSubtractInt_Behavior = broadcast(.vecIntSubtractInt, VecIntItem.self, ("Subtracts",
+                                                      "v[i] − k"), refuses: "on overflow",
+                                                      IntArithmetic.subtract)
+    static let vecIntMultiplyInt_Behavior = broadcast(.vecIntMultiplyInt, VecIntItem.self, ("Multiplies",
+                                                      "v[i] × k"), refuses: "on overflow",
+                                                      IntArithmetic.multiply)
+    static let vecIntQuotInt_Behavior = broadcast(.vecIntQuotInt, VecIntItem.self, ("Divides (toward zero)",
+                                                  "v[i] ÷ k"), refuses: "a zero divisor or overflow",
+                                                  IntArithmetic.quot)
+    static let vecIntModInt_Behavior = broadcast(.vecIntModInt, VecIntItem.self, ("Takes remainders of",
+                                                 "v[i] mod k"), refuses: "a zero divisor or overflow",
+                                                 IntArithmetic.mod)
+
+    static let vecDoubleAddDouble_Behavior = broadcast(.vecDoubleAddDouble, VecDoubleItem.self, ("Adds",
+                                                       "v[i] + k"), refuses: "a result that is not finite",
+                                                       DoubleArithmetic.add)
+    static let vecDoubleSubtractDouble_Behavior = broadcast(.vecDoubleSubtractDouble, VecDoubleItem.self,
+                                                            ("Subtracts", "v[i] − k"),
+                                                            refuses: "a result that is not finite",
+                                                            DoubleArithmetic.subtract)
+    static let vecDoubleMultiplyDouble_Behavior = broadcast(.vecDoubleMultiplyDouble, VecDoubleItem.self,
+                                                            ("Multiplies", "v[i] × k"),
+                                                            refuses: "a result that is not finite",
+                                                            DoubleArithmetic.multiply)
+    static let vecDoubleDivideDouble_Behavior = broadcast(.vecDoubleDivideDouble, VecDoubleItem.self, ("Divides",
+                                                          "v[i] ÷ k"), refuses: "a result that is not finite",
+                                                          DoubleArithmetic.divide)
+    static let vecDoubleModDouble_Behavior = broadcast(.vecDoubleModDouble, VecDoubleItem.self,
+                                                       ("Takes remainders of", "v[i] mod k"),
+                                                       refuses: "a result that is not finite", DoubleArithmetic.mod)
+
+    static let vecBoolAndBool_Behavior = broadcastLogic(.vecBoolAndBool, "Ands", formula: "v[i] ∧ k") { $0 && $1 }
+    static let vecBoolOrBool_Behavior = broadcastLogic(.vecBoolOrBool, "Ors", formula: "v[i] ∨ k") { $0 || $1 }
+    static let vecBoolXorBool_Behavior = broadcastLogic(.vecBoolXorBool, "Exclusive-ors",
+                                                        formula: "v[i] ⊕ k") { $0 != $1 }
+
     // MARK: - The family
 
     static let elementwiseBehaviors: [PushInstruction: Behavior] = [
@@ -178,6 +261,20 @@ nonisolated extension Interpreter {
         .vecStringGTEach: vecStringGTEach_Behavior,
         .vecBoolAnd: vecBoolAnd_Behavior,
         .vecBoolOr: vecBoolOr_Behavior,
-        .vecBoolNot: vecBoolNot_Behavior
+        .vecBoolNot: vecBoolNot_Behavior,
+        .vecBoolXor: vecBoolXor_Behavior,
+        .vecIntAddInt: vecIntAddInt_Behavior,
+        .vecIntSubtractInt: vecIntSubtractInt_Behavior,
+        .vecIntMultiplyInt: vecIntMultiplyInt_Behavior,
+        .vecIntQuotInt: vecIntQuotInt_Behavior,
+        .vecIntModInt: vecIntModInt_Behavior,
+        .vecDoubleAddDouble: vecDoubleAddDouble_Behavior,
+        .vecDoubleSubtractDouble: vecDoubleSubtractDouble_Behavior,
+        .vecDoubleMultiplyDouble: vecDoubleMultiplyDouble_Behavior,
+        .vecDoubleDivideDouble: vecDoubleDivideDouble_Behavior,
+        .vecDoubleModDouble: vecDoubleModDouble_Behavior,
+        .vecBoolAndBool: vecBoolAndBool_Behavior,
+        .vecBoolOrBool: vecBoolOrBool_Behavior,
+        .vecBoolXorBool: vecBoolXorBool_Behavior
     ]
 }

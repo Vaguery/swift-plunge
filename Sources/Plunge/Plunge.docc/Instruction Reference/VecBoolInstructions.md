@@ -10,6 +10,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 |---|---|---|---|
 | `.vecBoolAllWhere` | Tells whether every element of a vector of bools (true for none) is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of bools; refuses when none fits, filler runs short or steps run out. | `vecBool` (read), the topmost fitting `function` | `bool`; may refuse |
 | `.vecBoolAnd` | Ands element by element: `a b .vecBoolAnd` gives a[i] ∧ b[i], where b is the top vector and a the first one below it of the same length (a miss if there is none). | `vecBool`, the topmost fitting `vecBool` | `vecBool` |
+| `.vecBoolAndBool` | Ands every element with one bool: `v k .vecBoolAndBool` gives v[i] ∧ k for each element, where v is the top vector of bools and k the top bool. | `vecBool`, `bool` | `vecBool` |
 | `.vecBoolButLast` | Drops the last element; an empty vector stays empty. | `vecBool` | `vecBool` |
 | `.vecBoolChunks` | Chunks: `v n .vecBoolChunks` gives a code block of the vectors of n consecutive elements, the last possibly shorter (n below 1 counts as 1). | `vecBool`, `int` | `code`; may refuse |
 | `.vecBoolConcat` | Joins two vectors: `a b .vecBoolConcat` gives the elements of a followed by those of b. | `vecBool`, `vecBool` | `vecBool` |
@@ -57,6 +58,7 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `.vecBoolOccurrencesOfRun` | Counts a run: `v w .vecBoolOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecBool` (read), `vecBool` (read) | `int` |
 | `.vecBoolOccurrencesWhere` | Counts the elements of a vector of bools for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of bools; refuses when none fits, filler runs short or steps run out. | `vecBool` (read), the topmost fitting `function` | `int`; may refuse |
 | `.vecBoolOr` | Ors element by element: `a b .vecBoolOr` gives a[i] ∨ b[i], where b is the top vector and a the first one below it of the same length (a miss if there is none). | `vecBool`, the topmost fitting `vecBool` | `vecBool` |
+| `.vecBoolOrBool` | Ors every element with one bool: `v k .vecBoolOrBool` gives v[i] ∨ k for each element, where v is the top vector of bools and k the top bool. | `vecBool`, `bool` | `vecBool` |
 | `.vecBoolPartition` | Splits a vector of bools into the elements that (below) and do not (on top) the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool`, `vecBool`; may refuse |
 | `.vecBoolPeekNth` | Picks an element: `v i .vecBoolPeekNth` gives element i, i clamped into range, leaving both; refuses an empty vector. | `vecBool` (read), `int` (read) | `bool`; may refuse |
 | `.vecBoolPushAll` | Pushes every element onto the bool stack, front to back, so the last element ends on top; consumes the vector. | `vecBool` | `bool`, one per step |
@@ -81,6 +83,8 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 | `.vecBoolTakeLast` | Keeps the back: `v n .vecBoolTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecBool`, `int` | `vecBool` |
 | `.vecBoolTakeWhile` | Keeps the longest prefix of a vector of bools whose elements the topmost bool-valued function on `.function` that fits holds for, in order; refuses when none fits, filler runs short or steps run out. | `vecBool`, the topmost fitting `function` | `vecBool`; may refuse |
 | `.vecBoolWindows` | Every window: `v n .vecBoolWindows` gives a code block of the vectors of n consecutive elements, sliding by one (none when n exceeds the length; n below 1 counts as 1); refuses a result over the size limit. | `vecBool`, `int` | `code`; may refuse |
+| `.vecBoolXor` | Exclusive-ors element by element: `a b .vecBoolXor` gives a[i] ⊕ b[i], where b is the top vector and a the first one below it of the same length (a miss if there is none). | `vecBool`, the topmost fitting `vecBool` | `vecBool` |
+| `.vecBoolXorBool` | Exclusive-ors every element with one bool: `v k .vecBoolXorBool` gives v[i] ⊕ k for each element, where v is the top vector of bools and k the top bool. | `vecBool`, `bool` | `vecBool` |
 | `.vecBoolZip` | Zips with the topmost function on `.function` that fits: `a b f .vecBoolZip` gives f(a[i], b[i]) for each i, a[i] and b[i] in its first two bool holes, where b is the top vector of bools and a the first one below it of the same length (a miss if there is none); refuses when no function fits, filler runs short, results are mixed or steps run out. | `vecBool`, the topmost fitting `vecBool`, the topmost fitting `function` | `vecBool` or `vecDouble` or `vecInt` or `vecString` or `string`; may refuse |
 
 ## Reading the environment

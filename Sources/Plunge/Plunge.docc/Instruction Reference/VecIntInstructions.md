@@ -9,6 +9,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
 | `.vecIntAdd` | Adds element by element: `a b .vecIntAdd` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `.vecIntAddInt` | Adds every element and one int: `v k .vecIntAddInt` gives v[i] + k for each element, where v is the top vector of ints and k the top int; refuses on overflow, naming the index. | `vecInt`, `int` | `vecInt`; may refuse |
 | `.vecIntAllWhere` | Tells whether every element of a vector of ints (true for none) is one for which the topmost bool-valued function on `.function` that fits gives true, leaving the vector of ints; refuses when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `bool`; may refuse |
 | `.vecIntButLast` | Drops the last element; an empty vector stays empty. | `vecInt` | `vecInt` |
 | `.vecIntChunks` | Chunks: `v n .vecIntChunks` gives a code block of the vectors of n consecutive elements, the last possibly shorter (n below 1 counts as 1). | `vecInt`, `int` | `code`; may refuse |
@@ -63,7 +64,9 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `.vecIntMin` | Pushes the least element, leaving the vector; refuses an empty vector. | `vecInt` (read) | `int`; may refuse |
 | `.vecIntMinBy` | Pushes the first element of a vector of ints with the least key the topmost function on `.function` that fits gives it, leaving the vector of ints; refuses an empty one, an element with no key, or when none fits, filler runs short or steps run out. | `vecInt` (read), the topmost fitting `function` | `int`; may refuse |
 | `.vecIntMod` | Takes remainders (a mod b) element by element: `a b .vecIntMod` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses a zero divisor or overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `.vecIntModInt` | Takes remainders of every element and one int: `v k .vecIntModInt` gives v[i] mod k for each element, where v is the top vector of ints and k the top int; refuses a zero divisor or overflow, naming the index. | `vecInt`, `int` | `vecInt`; may refuse |
 | `.vecIntMultiply` | Multiplies element by element: `a b .vecIntMultiply` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `.vecIntMultiplyInt` | Multiplies every element and one int: `v k .vecIntMultiplyInt` gives v[i] × k for each element, where v is the top vector of ints and k the top int; refuses on overflow, naming the index. | `vecInt`, `int` | `vecInt`; may refuse |
 | `.vecIntNth` | Picks an element: `v i .vecIntNth` gives element i, i clamped into range, consuming v; refuses an empty vector. | `vecInt`, `int` | `int`; may refuse |
 | `.vecIntOccurrencesOf` | Counts x: `v x .vecIntOccurrencesOf` gives how many elements equal x, leaving both. | `vecInt` (read), `int` (read) | `int` |
 | `.vecIntOccurrencesOfRun` | Counts a run: `v w .vecIntOccurrencesOfRun` gives how many non-overlapping times w occurs in v, leaving both; an empty w counts 0. | `vecInt` (read), `vecInt` (read) | `int` |
@@ -74,6 +77,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `.vecIntProduct` | Multiplies the elements, leaving the vector; an empty vector gives 1; refuses on overflow. | `vecInt` (read) | `int`; may refuse |
 | `.vecIntPushAll` | Pushes every element onto the int stack, front to back, so the last element ends on top; consumes the vector. | `vecInt` | `int`, one per step |
 | `.vecIntQuot` | Divides (a ÷ b, toward zero) element by element: `a b .vecIntQuot` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses a zero divisor or overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `.vecIntQuotInt` | Divides (toward zero) every element and one int: `v k .vecIntQuotInt` gives v[i] ÷ k for each element, where v is the top vector of ints and k the top int; refuses a zero divisor or overflow, naming the index. | `vecInt`, `int` | `vecInt`; may refuse |
 | `.vecIntQuote` | Wraps the vector in a one-item code block. | `vecInt` | `code` |
 | `.vecIntRange` | Counts from a toward b, b excluded: `a b .vecIntRange` gives [a, a+1, …, b−1], or counts down when b < a; refuses a range over the size limit. | `int`, `int` | `vecInt`; may refuse |
 | `.vecIntRangeBy` | Counts from a toward b by s, b excluded: `a b s .vecIntRangeBy`; refuses a step of 0, a step that goes the wrong way, or a range over the size limit. | `int`, `int`, `int` | `vecInt`; may refuse |
@@ -94,6 +98,7 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 | `.vecIntSort` | Sorts ascending, stably. | `vecInt` | `vecInt` |
 | `.vecIntSortBy` | Sorts a vector of ints stably by the key the topmost function on `.function` that fits gives each element (false before true, NaN last); refuses an element with no key, or when none fits, filler runs short or steps run out. | `vecInt`, the topmost fitting `function` | `vecInt`; may refuse |
 | `.vecIntSubtract` | Subtracts (a − b) element by element: `a b .vecIntSubtract` gives a[i] and b[i] combined, where b is the top vector of ints and a the first one below it of the same length (a miss if there is none); refuses on overflow, naming the index. | `vecInt`, the topmost fitting `vecInt` | `vecInt`; may refuse |
+| `.vecIntSubtractInt` | Subtracts every element and one int: `v k .vecIntSubtractInt` gives v[i] − k for each element, where v is the top vector of ints and k the top int; refuses on overflow, naming the index. | `vecInt`, `int` | `vecInt`; may refuse |
 | `.vecIntSum` | Sums the elements, leaving the vector; an empty vector gives 0; refuses on overflow. | `vecInt` (read) | `int`; may refuse |
 | `.vecIntTake` | Keeps the front: `v n .vecIntTake` gives the first n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
 | `.vecIntTakeLast` | Keeps the back: `v n .vecIntTakeLast` gives the last n elements, n clamped to 0 through the length. | `vecInt`, `int` | `vecInt` |
