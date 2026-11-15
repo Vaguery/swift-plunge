@@ -21,8 +21,16 @@ public nonisolated struct CallMeasure: Sendable, Hashable {
     public let weight: UInt32
     /// How deeply the history nests: 0 for a literal.
     public let depth: UInt32
+    /// What the history reads beyond its literals; see ``CruxDependence``.
+    public let dependence: CruxDependence
 
-    /// A literal: an empty `call`, weight 1, depth 0.
+    public init(weight: UInt32, depth: UInt32, dependence: CruxDependence = []) {
+        self.weight = weight
+        self.depth = depth
+        self.dependence = dependence
+    }
+
+    /// A literal: an empty `call`, weight 1, depth 0, depending on nothing.
     public static let literal = CallMeasure(weight: 1, depth: 0)
 }
 
@@ -132,7 +140,8 @@ nonisolated struct CallStorage: Sendable {
         guard let box else { return self }
         return CallStorage(box: Box(
             call: box.call,
-            measure: CallMeasure(weight: UInt32(clamping: weight), depth: box.measure.depth),
+            measure: CallMeasure(weight: UInt32(clamping: weight), depth: box.measure.depth,
+                                 dependence: box.measure.dependence),
             members: box.members))
     }
 }
@@ -233,7 +242,7 @@ nonisolated extension CallMeasure {
         }
         if weight > reuseThreshold { weight = Swift.min(weight, withReuse(call)) }
         let depth: UInt32 = call.isEmpty ? 0 : (deepest == .max ? .max : deepest + 1)
-        return CallMeasure(weight: weight, depth: depth)
+        return CallMeasure(weight: weight, depth: depth, dependence: CruxDependence.of(call))
     }
 
     /// Above this weight, `of` also looks for reuse among the arguments

@@ -21,6 +21,7 @@ public nonisolated struct VecBoolItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
@@ -63,6 +64,7 @@ public nonisolated struct VecDoubleItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
@@ -107,6 +109,7 @@ public nonisolated struct VecIntItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     public let weight: Int
@@ -149,6 +152,7 @@ public nonisolated struct VecStringItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 

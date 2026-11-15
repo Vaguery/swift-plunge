@@ -62,6 +62,7 @@ public nonisolated struct CodeItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 

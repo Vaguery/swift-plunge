@@ -22,6 +22,7 @@ public nonisolated struct BoolItem: Item, Equatable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
@@ -53,6 +54,7 @@ public nonisolated struct CharItem: Item, Equatable, Comparable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
@@ -91,6 +93,7 @@ public nonisolated struct DoubleItem: Item, Equatable, Comparable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
@@ -127,6 +130,12 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    /// What the history reads, and, as an element of another item's history, what
+    /// the instruction itself reads: an input token reads an input, a constant
+    /// token a constant slot. See ``CruxDependence``.
+    public var cruxDependence: CruxDependence {
+        callStorage.measure.dependence.union(CruxDependence.token(value))
+    }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
@@ -163,6 +172,7 @@ public nonisolated struct IntItem: Item, Equatable, Comparable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
 
@@ -198,6 +208,7 @@ public nonisolated struct StringItem: Item, Equatable, Comparable, Pretty {
     /// The size and depth of this item's history.
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     /// The string's UTF-8 length, which a native `String` stores, so this is O(1).

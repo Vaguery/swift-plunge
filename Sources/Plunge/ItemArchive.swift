@@ -126,7 +126,7 @@ nonisolated struct ArchiveNode: Codable, Sendable {
         if let iterator { return try iterator.item(resolve) }
         if let standIn {
             return StandInItem(standingInFor: try resolve(standIn.value),
-                               source: standIn.source, reason: standIn.reason)
+                               source: standIn.source, reason: standIn.reason, dependence: standIn.dependence ?? .all)
         }
         if let binding { return BindingItem(key: binding.key, bound: try resolve(binding.bound)) }
         if let function { return try function.item(resolve) }
@@ -185,6 +185,9 @@ nonisolated struct ArchivedStandIn: Codable, Sendable {
     var value: Int
     var source: PushInstruction?
     var reason: StandInItem.Reason
+    /// What an elided or distilled stand-in's dropped history read; absent in older archives,
+    /// when it is taken to read everything.
+    var dependence: CruxDependence?
 }
 
 /// One run of `Pieces`: an item that went in, or `[source, from, count, step]`.
@@ -299,7 +302,8 @@ nonisolated struct ArchiveWriter {
                 body: iterator.body == nil ? nil : rest.popFirst(),
                 emits: iterator.emits, laps: iterator.laps, burial: iterator.burial)
         } else if let standIn = item.exactly(StandInItem.self) {
-            node.standIn = ArchivedStandIn(value: held[0], source: standIn.source, reason: standIn.reason)
+            node.standIn = ArchivedStandIn(value: held[0], source: standIn.source, reason: standIn.reason,
+                                           dependence: standIn.keepsDependence ? standIn.cruxDependence : nil)
         } else if let pair = item.exactly(BindingItem.self) {
             node.binding = ArchivedBinding(key: pair.key, bound: held[0])
         } else if let function = item.exactly(FunctionItem.self) {

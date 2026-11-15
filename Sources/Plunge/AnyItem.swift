@@ -21,6 +21,9 @@ nonisolated struct StandInState: Codable, Sendable {
     var value: AnyItem
     var source: PushInstruction?
     var reason: StandInItem.Reason
+    /// What an elided or distilled stand-in's dropped history read. Absent before 2026-11-15,
+    /// when an elided stand-in is taken to read everything.
+    var dependence: CruxDependence?
 }
 
 
@@ -168,7 +171,8 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             item = function
         case .standIn:
             let state = try container.decode(StandInState.self, forKey: .value)
-            item = StandInItem(standingInFor: state.value.item, source: state.source, reason: state.reason)
+            item = StandInItem(standingInFor: state.value.item, source: state.source, reason: state.reason,
+                               dependence: state.dependence ?? .all)
         case .error:
             // `errorKind` is absent from anything encoded before it existed, so
             // decode it leniently and fall back to the same default `init` uses.
@@ -243,7 +247,8 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case let concrete as StandInItem:
             try container.encode(ItemKind.standIn, forKey: .type)
             try container.encode(
-                StandInState(value: AnyItem(concrete.value), source: concrete.source, reason: concrete.reason),
+                StandInState(value: AnyItem(concrete.value), source: concrete.source, reason: concrete.reason,
+                             dependence: concrete.keepsDependence ? concrete.cruxDependence : nil),
                 forKey: .value
             )
         case let concrete as ErrorItem:

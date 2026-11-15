@@ -57,6 +57,10 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
         /// placeholder. It never leaves the derivation's sandbox: a derived
         /// function records its holes as positions (`FunctionItem.Hole`).
         case hole
+        /// The value of work that read nothing but constants, put in place of that
+        /// work by a distilled crux (`Item.distilledCrux()`). `source` is the
+        /// instruction that finished the work. Programs never make one.
+        case distilled
     }
 
     /// The literal this stands in for, without a history of its own.
@@ -66,6 +70,10 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
     public let source: PushInstruction?
     /// Why the history is missing.
     public let reason: Reason
+    /// What the missing history read, for an elided or distilled stand-in: kept
+    /// so a value whose history was dropped is still known to read an input (or
+    /// not), and a distilled value to read constant slots (or not).
+    let keptDependence: CruxDependence
 
     /// Always empty: a stand-in is a literal. Assignment is ignored.
     public var call: [any Item] {
@@ -75,17 +83,39 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
     }
     public var callWeight: Int { Int(CallMeasure.literal.weight) }
     public var callDepth: Int { Int(CallMeasure.literal.depth) }
+    /// What the value depends on: for an observed stand-in, the run's state; for
+    /// an elided one, whatever its dropped history read; for a minted one,
+    /// nothing, since the instruction supplies it. A hole's mark depends on the
+    /// derivation's state.
+    public var cruxDependence: CruxDependence {
+        switch reason {
+        case .observed, .hole: .context
+        case .elided, .distilled: keptDependence
+        case .minted: []
+        }
+    }
     public var weight: Int { value.weight }
     public var nestingDepth: Int { value.nestingDepth }
 
     /// A stand-in for `value`, which is stored without its history.
     public init(standingInFor value: any Item, source: PushInstruction?, reason: Reason) {
+        self.init(standingInFor: value, source: source, reason: reason, dependence: value.cruxDependence)
+    }
+
+    /// A stand-in whose dropped history read `dependence`: for rebuilding an
+    /// elided or distilled stand-in, whose value no longer carries its history.
+    init(standingInFor value: any Item, source: PushInstruction?, reason: Reason, dependence: CruxDependence) {
         var bare = value
         bare.call = []
         self.value = bare
         self.source = source
         self.reason = reason
+        self.keptDependence = reason == .elided || reason == .distilled ? dependence : []
     }
+
+    /// Whether this stand-in keeps what its missing history read (elided and
+    /// distilled ones do), so an archive must keep it too.
+    var keepsDependence: Bool { reason == .elided || reason == .distilled }
 
     /// The item this stand-in releases when it runs: `value`, whose `call` is
     /// this stand-in when recording, so a replay reproduces the original exactly.

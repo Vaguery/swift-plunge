@@ -63,6 +63,7 @@ public nonisolated struct FunctionItem: Item, Equatable, Pretty {
     }
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     /// The body's content and one for each hole.

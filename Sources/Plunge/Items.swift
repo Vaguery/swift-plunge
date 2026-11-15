@@ -189,6 +189,15 @@ public nonisolated protocol Item: Pretty, Sendable {
     /// ``InterpreterSettings/maxCallDepth``.
     var callDepth: Int {get}
 
+    // What `call` reads beyond its literals: inputs, constant slots, the run's
+    // transient state. Maintained with `callWeight` and `callDepth`, from the
+    // children, so a tool can tell constant work from input-dependent work
+    // without a walk. Never read by an instruction.
+    //
+    /// What this item's history reads beyond its literals: inputs, constants, or
+    /// the run's transient state. Empty for a literal. See ``CruxDependence``.
+    var cruxDependence: CruxDependence {get}
+
     // How deeply other items nest inside this one's *value*, counting every
     // container: blocks inside blocks, and blocks and iterators inside each other
     // (an iterator's origin, destination and body; an iterator quoted into a

@@ -36,6 +36,7 @@ public nonisolated struct BindingItem: Item, Pretty {
     }
     public var callMeasure: CallMeasure { callStorage.measure }
     public var callWeight: Int { Int(callStorage.measure.weight) }
+    public var cruxDependence: CruxDependence { callStorage.measure.dependence }
     public var callDepth: Int { Int(callStorage.measure.depth) }
 
     /// Creates a binding of `key` to `bound`.
