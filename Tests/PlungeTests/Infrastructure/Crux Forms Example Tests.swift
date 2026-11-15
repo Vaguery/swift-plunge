@@ -3,8 +3,8 @@
 //  PlungeTests
 //
 //  One small double-arithmetic program carried through every form of its crux:
-//  the crux, the distilled crux, the abstract crux and the tunable crux
-//  (2026-11-15). The printed forms are pinned, so this is also the worked
+//  the crux, the distilled crux, the abstract crux, the tunable crux and the
+//  skeleton crux (2026-11-15). The printed forms are pinned, so this is also the worked
 //  example for the documentation.
 //
 //  The program computes x·(c0·c1) + (2 + 3)·y, with some unrelated work mixed in:
@@ -57,20 +57,26 @@ struct CruxFormsExampleTests {
         #expect(distilled.derived.map(\.slotsRead) == [[.double0, .double1], []])
         #expect(distilled.derived.map { CodeItem($0.origin).pretty() }
                 == ["( .double0 .double1 .doubleMultiply )", "( 2.0 3.0 .doubleAdd )"])
-        // Abstract: inputs and derived constants are holes.
+        // Abstract: the derived constants are holes; the inputs stay in place.
         let abstract = distilled.abstracted()!
         #expect(abstract.key
-                == "«fn (dbl, dbl, dbl, dbl) -> dbl: $0 $1 .doubleMultiply $2 $3 .doubleMultiply .doubleAdd»")
+                == "«fn (dbl, dbl) -> dbl: .input0 $0 .doubleMultiply $1 .input1 .doubleMultiply .doubleAdd»")
         #expect(Self.replay(abstract.program(filling: abstract.originalFillers!)) == "56.0")
-        // Tunable: each input is scaled and shifted by control holes, neutral at 1 and 0.
+        #expect(Self.replay(abstract.program(filling: [DoubleItem(2), DoubleItem(1)])) == "18.0")
+        // Tunable: each input, still in place, is scaled and shifted by control holes, neutral at 1 and 0.
         let tunable = distilled.tunable()!
-        #expect(tunable.key == "«fn (dbl, dbl, dbl, dbl, dbl, dbl, dbl, dbl) -> dbl: "
-                + "$0 $1 .doubleMultiply $2 .doubleAdd $3 .doubleMultiply "
-                + "$4 $5 $6 .doubleMultiply $7 .doubleAdd .doubleMultiply .doubleAdd»")
+        #expect(tunable.key == "«fn (dbl, dbl, dbl, dbl, dbl, dbl) -> dbl: "
+                + ".input0 $0 .doubleMultiply $1 .doubleAdd $2 .doubleMultiply "
+                + "$3 .input1 $4 .doubleMultiply $5 .doubleAdd .doubleMultiply .doubleAdd»")
         #expect(Self.replay(tunable.program(filling: tunable.originalFillers!)) == "56.0")
         // Tuned: x scaled by 2 and y shifted by 1 gives (2·4)·1.5 + 5·(10 + 1).
-        let tuned: [any Item] = [InstructionItem(.input0), DoubleItem(2), DoubleItem(0), DoubleItem(1.5),
-                                 DoubleItem(5), InstructionItem(.input1), DoubleItem(1), DoubleItem(1)]
+        let tuned: [any Item] = [DoubleItem(2), DoubleItem(0), DoubleItem(1.5), DoubleItem(5), DoubleItem(1),
+                                 DoubleItem(1)]
         #expect(Self.replay(tunable.program(filling: tuned)) == "67.0")
+        // Skeleton: the inputs are holes too.
+        let skeleton = distilled.skeleton()!
+        #expect(skeleton.key
+                == "«fn (dbl, dbl, dbl, dbl) -> dbl: $0 $1 .doubleMultiply $2 $3 .doubleMultiply .doubleAdd»")
+        #expect(Self.replay(skeleton.program(filling: skeleton.originalFillers!)) == "56.0")
     }
 }

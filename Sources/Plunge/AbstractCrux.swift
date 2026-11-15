@@ -2,40 +2,70 @@
 //  AbstractCrux.swift
 //  Plunge
 //
-//  A distilled crux with its inputs, constants and literals made into typed
-//  holes: a function, open for composition and for other assignments.
-//  Added 2026-11-15.
+//  A distilled crux, its repeats rolled into loops, with its constants made
+//  into typed holes (the abstract crux), or its constants and inputs both (the
+//  skeleton crux): the crux's structure, open to other assignments and to
+//  composition. Added 2026-11-15; the skeleton split out, and rolling added,
+//  the same day.
 //
 
-/// **A crux with typed holes where its inputs and constants were.** It is a
-/// ``FunctionItem``, so it can sit on `.function` and work with `.functionApply`,
-/// `.functionCompose` and the maps unchanged, and a role for each hole says what
-/// was there.
+/// **A crux's structure, with typed holes where its constants were.**
 ///
-/// Built from a ``DistilledCrux``: the work that read only constants is already
-/// one value (a derived constant), so the holes are the crux's real points of
-/// contact with its data. Inputs and constant slots of one type are
-/// interchangeable in the shape: `.input0 .input1 .intAdd` and
-/// `.input2 .input0 .intAdd` abstract to the same function, `$0 $1 .intAdd`.
+/// Built from a ``DistilledCrux``. The work that read only constants is already
+/// one value (a derived constant). There are three levels:
 ///
-/// **Two readings** (``Reading``): one hole per distinct input or constant keeps
-/// "the same input, used twice"; one hole per use keeps only the shape.
+/// - **The abstract crux** (``DistilledCrux/abstracted(_:literals:limit:)``):
+///   every constant is a hole (each constant slot, derived constant and
+///   literal), and **the inputs stay where they are**, as instructions. It is
+///   still a model of the data it came from, with its constants free:
+///   `.input0 .int3 .intAdd` abstracts to `.input0 $0 .intAdd`. Constant slots
+///   of one type are interchangeable: reading `.int5` instead gives the same
+///   abstract crux.
+/// - **The tunable crux** (``DistilledCrux/tunable(_:sites:literals:limit:)``):
+///   the abstract crux with a parametric transform on each input, whose
+///   parameters are further holes. The inputs still stay in place, so it is the
+///   form for search and curve fitting. See ``TunableCrux``.
+/// - **The skeleton crux** (``DistilledCrux/skeleton(_:literals:limit:)``):
+///   every input is a hole too, so nothing is left but typed holes and the
+///   work between them: `.input0 .int3 .intAdd` and `.input2 .int0 .intAdd`
+///   are both `$0 $1 .intAdd`. It is the form for building new structures
+///   combinatorially and for telling shapes apart, not for fitting.
 ///
-/// **Where holes go.** Only on the crux's data: leaves in argument positions,
-/// where each pushes exactly one item. Bookkeeping literals (the counts of
-/// clean-up pops, the copies a shared node makes) stay in the body, and so does
-/// the inside of a code block, such as a folded loop's body. Observed stand-ins
-/// stay too: they are the run's state, frozen.
+/// **Structure, not replay.** Beyond the distilled crux, these forms describe and
+/// modify the crux's structure; they don't have to replay its value. So they are
+/// built on its **rolled** form: a run of identical passes, written out once per
+/// pass in the history, is rolled back into a counted loop,
+/// `seed ( body ) count .execDoTimes .codePop`, keeping its count. A constant in
+/// the body is then one hole shared by every pass, and the loop's seed and count
+/// are holes of their own. `0 ( .input0 .intAdd 12 .intMin ) 50 .execDoTimes`
+/// abstracts to `$0 ( .input0 .intAdd $1 .intMin ) $2 .execDoTimes .codePop`:
+/// three holes, not one per pass. Repeats are rolled wherever they are, written
+/// as a loop or not.
+///
+/// **Holes are marked in place.** ``template`` is the structure with a marker at
+/// each hole, and a marker may sit inside a loop's body. ``program(filling:)``
+/// puts fillers in place of the markers; ``key`` prints the structure with `$0`,
+/// `$1`, …; ``function`` makes a ``FunctionItem`` the language can apply and
+/// compose, building a loop body that has holes from quoted pieces.
+///
+/// **Two readings** (``Reading``): one hole per distinct constant slot (and, in a
+/// skeleton, input) keeps "the same one, used twice"; one hole per use keeps only
+/// the shape.
+///
+/// **Where holes go.** On the crux's data: leaves in argument positions, where
+/// each pushes exactly one item, including those in a rolled loop's body.
+/// Bookkeeping literals (the counts of clean-up pops) stay in the structure.
+/// Observed stand-ins stay too: they are the run's state, frozen.
 public nonisolated struct AbstractCrux: Sendable {
     /// What a hole stood for.
     public enum Role: Sendable {
-        /// An input slot.
+        /// An input slot: in a skeleton crux only.
         case input(PushInstruction)
         /// A constant slot.
         case constant(PushInstruction)
         /// A value a distilled crux put in place of constant work.
         case derived(any Item)
-        /// A literal from the program.
+        /// A literal from the program, or a rolled loop's count.
         case literal(any Item)
         /// A subtree of this type, cut out (``opening(_:)``).
         case open(PushStack)
@@ -44,31 +74,45 @@ public nonisolated struct AbstractCrux: Sendable {
         case control(neutral: any Item)
     }
 
-    /// How many holes an input or constant gets.
+    /// How many holes a constant slot (or, in a skeleton, an input) gets.
     public enum Reading: Sendable {
-        /// One per distinct input or constant slot, at every place it is used.
+        /// One per distinct slot, at every place it is used.
         case perDistinct
         /// One per use.
         case perUse
     }
 
-    /// The crux as a function: its body, and a hole for each input, constant and
-    /// value.
-    public let function: FunctionItem
-    /// What each hole stood for, in the order of `function.holes`.
+    /// The structure, with a marker at each hole: a `StandInItem` of reason
+    /// `hole` whose value is the hole's number. Markers may sit inside code
+    /// blocks (a rolled loop's body).
+    public let template: [any Item]
+    /// The stack each hole takes its filler from, by hole number.
+    public let holeStacks: [PushStack]
+    /// What each hole stood for, by hole number.
     public let roles: [Role]
-    /// The subtrees of the body, each a contiguous span, for ``opening(_:)``.
+    /// The stack the result rests on.
+    public let output: PushStack
+    /// The subtrees of the structure, each a contiguous span of ``template``, for
+    /// ``opening(_:)``.
     public let subtrees: [Subtree]
 
-    /// A subtree of the body: the span `start..<end` nets one item on `stack`.
+    /// A subtree of the structure: the span `start..<end` of ``template`` nets one
+    /// item on `stack`.
     public struct Subtree: Sendable, Hashable {
         public let start: Int, end: Int
         public let stack: PushStack
     }
 
-    /// The key under which abstract cruxes that differ only in which inputs and
-    /// constants they read are the same: the function's printed form.
-    public var key: String { function.pretty() }
+    /// How many holes there are.
+    public var holeCount: Int { roles.count }
+
+    /// The structure's printed form, `«fn (int, int) -> int: .input0 $0 .intAdd $1 .intMultiply»`:
+    /// the key under which cruxes that differ only in their constants (and, for
+    /// skeletons, their inputs) are the same.
+    public var key: String {
+        let signature = holeStacks.map(\.tag).joined(separator: ", ")
+        return "«fn (\(signature)) -> \(output.tag): \(Self.printed(template))»"
+    }
 
     /// The fillers that put back what each hole stood for: the input and constant
     /// tokens, the derived values and literals, and the neutral settings of
@@ -85,199 +129,180 @@ public nonisolated struct AbstractCrux: Sendable {
         return fillers
     }
 
-    /// The program with `fillers` in the holes, one per hole.
+    /// The program with `fillers` in the holes, one per hole, including those in
+    /// a loop's body.
     public func program(filling fillers: [any Item]) -> [any Item] {
-        function.filled(with: fillers)
+        precondition(fillers.count == holeCount, "one filler per hole")
+        return Self.filled(template, fillers)
     }
 
-    /// The same crux with `subtree` cut out and a hole of its type in its place.
-    /// The holes inside the subtree go with it.
+    /// The same structure with `subtree` cut out and a hole of its type in its
+    /// place. The holes inside the subtree go with it, and the rest are
+    /// renumbered in order of first appearance.
     public func opening(_ subtree: Subtree) -> AbstractCrux? {
         guard subtrees.contains(subtree) else { return nil }
         let width = subtree.end - subtree.start
-        var body = function.value
-        body.removeSubrange(subtree.start..<subtree.end)
-        var holes: [FunctionItem.Hole] = []
-        var roles: [Role] = []
-        var opened = false
-        func addOpen() {
-            holes.append(FunctionItem.Hole(stack: subtree.stack, positions: [subtree.start]))
-            roles.append(.open(subtree.stack))
-            opened = true
-        }
-        for (hole, role) in zip(function.holes, self.roles) {
-            let kept = hole.positions.compactMap { position -> Int? in
-                if position < subtree.start { return position }
-                if position >= subtree.end { return position - width }
-                return nil
-            }
-            if !opened, let first = hole.positions.first, first >= subtree.start { addOpen() }
-            if !kept.isEmpty {
-                holes.append(FunctionItem.Hole(stack: hole.stack, positions: kept))
-                roles.append(role)
-            }
-        }
-        if !opened { addOpen() }
+        let opened = holeCount
+        var template = Array(self.template[..<subtree.start]) + [Self.marker(opened)]
+            + Array(self.template[subtree.end...])
+        var stacks = holeStacks + [subtree.stack]
+        var roles = self.roles + [.open(subtree.stack)]
+        // Renumber the holes still used, in order of first appearance.
+        var order: [Int] = []
+        Self.visitMarkers(template) { if !order.contains($0) { order.append($0) } }
+        let renumber = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
+        template = Self.mapMarkers(template) { Self.marker(renumber[$0]!) }
+        stacks = order.map { stacks[$0] }
+        roles = order.map { roles[$0] }
         let spans = subtrees.compactMap { span -> Subtree? in
             if span.end <= subtree.start { return span }
             if span.start >= subtree.end {
-                return Subtree(start: span.start - width, end: span.end - width, stack: span.stack)
+                return Subtree(start: span.start - width + 1, end: span.end - width + 1, stack: span.stack)
             }
             if span.start <= subtree.start && span.end >= subtree.end && span != subtree {
-                return Subtree(start: span.start, end: span.end - width, stack: span.stack)
+                return Subtree(start: span.start, end: span.end - width + 1, stack: span.stack)
             }
             return nil
         }
-        let function = FunctionItem(body: body, holes: holes, output: self.function.output ?? subtree.stack)
-        return AbstractCrux(function: function, roles: roles, subtrees: spans)
+        return AbstractCrux(template: template, holeStacks: stacks, roles: roles, output: output, subtrees: spans)
     }
 }
 
-nonisolated extension DistilledCrux {
-    /// This crux with typed holes for its inputs, constants, derived values and,
-    /// if `literals`, its literals. `nil` when the history is over `limit` leaves
-    /// written out as a tree.
-    public func abstracted(_ reading: AbstractCrux.Reading = .perDistinct, literals: Bool = true,
-                           limit: Int = 2_000) -> AbstractCrux? {
-        var builder = AbstractCrux.Builder(reading: reading, literals: literals, sites: [], limit: limit)
-        return builder.build(item)
-    }
-}
+// MARK: - Markers
 
 nonisolated extension AbstractCrux {
-    /// One step of writing a history out: a node to write, or the end of a
-    /// subtree begun at `start`.
-    enum BuildStep { case node(any Item, argument: Bool), close(start: Int, stack: PushStack) }
+    /// The marker for hole `number`.
+    static func marker(_ number: Int) -> any Item {
+        StandInItem(standingInFor: IntItem(number), source: nil, reason: .hole)
+    }
 
-    /// Writes a history out as a tree, leaf by leaf, putting holes on its data.
-    struct Builder {
-        let reading: Reading
-        let literals: Bool
-        let sites: Set<TuningSite>
-        let limit: Int
+    /// The hole number `item` marks, if it is a marker.
+    static func holeNumber(_ item: any Item) -> Int? {
+        guard let standIn = item.exactly(StandInItem.self), standIn.reason == .hole else { return nil }
+        return standIn.value.exactly(IntItem.self)?.value
+    }
 
-        private var body: [any Item] = []
-        private var holePositions: [[Int]] = []
-        private var holeStacks: [PushStack] = []
-        private var roles: [Role] = []
-        /// The hole each shared thing has: an input or constant slot, or one of
-        /// the controls decorating an input.
-        private var distinct: [String: Int] = [:]
-        /// The highest hole already placed at each position. Holes at one
-        /// position are filled in hole order, so a hole can be placed there
-        /// again only after them; otherwise that use gets a hole of its own.
-        private var lastHoleAt: [Int: Int] = [:]
-        private var subtrees: [Subtree] = []
-
-        init(reading: Reading, literals: Bool, sites: Set<TuningSite>, limit: Int) {
-            self.reading = reading
-            self.literals = literals
-            self.sites = sites
-            self.limit = limit
+    /// Calls `visit` with each marker's number, in order, through code blocks.
+    static func visitMarkers(_ items: [any Item], _ visit: (Int) -> Void) {
+        for item in items {
+            if let number = holeNumber(item) {
+                visit(number)
+            } else if let block = item.exactly(CodeItem.self) {
+                visitMarkers(block.value, visit)
+            }
         }
+    }
 
-        mutating func build(_ root: any Item) -> AbstractCrux? {
-            guard let output = PushStack.defaultStack(for: root) else { return nil }
-            guard emit(root, asArgument: true) else { return nil }
-            if sites.contains(.output) { decorate(output, sharing: nil) }
-            let holes = zip(holeStacks, holePositions).map { FunctionItem.Hole(stack: $0, positions: $1) }
-            let function = FunctionItem(body: body, holes: holes, output: output)
-            return AbstractCrux(function: function, roles: roles, subtrees: subtrees)
+    /// `items` with each marker replaced by `replace(number)`, through code blocks.
+    static func mapMarkers(_ items: [any Item], _ replace: (Int) -> any Item) -> [any Item] {
+        items.map { item in
+            if let number = holeNumber(item) { return replace(number) }
+            if let block = item.exactly(CodeItem.self), block.value.contains(where: { containsMarker($0) }) {
+                return CodeItem(mapMarkers(block.value, replace))
+            }
+            return item
         }
+    }
 
-        /// The role of `node` if it is a leaf of data that gets a hole.
-        func role(of node: any Item) -> Role? {
-            let call = node.call
-            if call.count == 1, let token = call[0].exactly(InstructionItem.self)?.value {
-                let dependence = CruxDependence.token(token)
-                if dependence.contains(.input) { return .input(token) }
-                if dependence.contains(.constant) { return .constant(token) }
+    static func containsMarker(_ item: any Item) -> Bool {
+        if holeNumber(item) != nil { return true }
+        guard let block = item.exactly(CodeItem.self) else { return false }
+        return block.value.contains(where: containsMarker)
+    }
+
+    static func filled(_ items: [any Item], _ fillers: [any Item]) -> [any Item] {
+        mapMarkers(items) { fillers[$0] }
+    }
+
+    /// `items` printed as a program's body, `$n` for each marker.
+    static func printed(_ items: [any Item]) -> String {
+        items.map { item -> String in
+            if let number = holeNumber(item) { return "$\(number)" }
+            if let block = item.exactly(CodeItem.self), block.value.contains(where: { containsMarker($0) }) {
+                return "( \(printed(block.value)) )"
+            }
+            return item.pretty()
+        }.joined(separator: " ")
+    }
+}
+
+// MARK: - As a function the language can use
+
+nonisolated extension AbstractCrux {
+    /// The structure as a ``FunctionItem``, so it can sit on `.function` and work
+    /// with `.functionApply`, `.functionCompose` and the maps. A code block that
+    /// has holes in it (a rolled loop's body) is built from quoted pieces:
+    /// `( .input0 .intAdd ) $1 .intQuote .codeConcat ( .intMin ) .codeConcat`.
+    /// `nil` when that isn't possible: a hole two code blocks deep, a hole whose
+    /// type has no quoting instruction, or holes the language would fill in
+    /// another order.
+    public var function: FunctionItem? {
+        var body: [any Item] = []
+        var positions = [[Int]](repeating: [], count: holeCount)
+        var lastAt: [Int: Int] = [:]
+        var parts: [QuotePart] = []
+        for item in template {
+            if let number = Self.holeNumber(item) {
+                parts.append(.hole(number))
+            } else if let block = item.exactly(CodeItem.self),
+                      block.value.contains(where: { Self.containsMarker($0) }) {
+                guard let quoted = Self.quoted(block.value, holeStacks: holeStacks) else { return nil }
+                parts += quoted
+            } else {
+                parts.append(.item(item))
+            }
+        }
+        for part in parts {
+            switch part {
+            case .item(let item):
+                body.append(item)
+            case .hole(let number):
+                // Holes at one position are filled in hole order.
+                let position = body.count
+                guard number >= (lastAt[position] ?? -1) else { return nil }
+                lastAt[position] = number
+                positions[number].append(position)
+            }
+        }
+        let holes = zip(holeStacks, positions).map { FunctionItem.Hole(stack: $0, positions: $1) }
+        return FunctionItem(body: body, holes: holes, output: output)
+    }
+
+    /// A piece of a function's body: an item, or a hole.
+    private enum QuotePart { case item(any Item), hole(Int) }
+
+    /// Code that leaves `( contents )` on `.code`, with each marker's filler
+    /// quoted in: runs of plain items as literal code blocks, each hole as its
+    /// filler and the quoting instruction of its type, joined by `.codeConcat`.
+    private static func quoted(_ contents: [any Item], holeStacks: [PushStack]) -> [QuotePart]? {
+        var parts: [QuotePart] = []
+        var pieces = 0
+        var run: [any Item] = []
+        func joined() {
+            pieces += 1
+            if pieces > 1 { parts.append(.item(InstructionItem(.codeConcat))) }
+        }
+        func flush() {
+            guard !run.isEmpty else { return }
+            parts.append(.item(CodeItem(run)))
+            run = []
+            joined()
+        }
+        for item in contents {
+            if let number = holeNumber(item) {
+                flush()
+                guard let quoting = PushInstruction(rawValue: "\(holeStacks[number].rawValue)Quote"),
+                      Interpreter.language[quoting] != nil else { return nil }
+                parts += [.hole(number), .item(InstructionItem(quoting))]
+                joined()
+            } else if containsMarker(item) {
                 return nil
-            }
-            if call.count == 1, let standIn = call[0].exactly(StandInItem.self), standIn.reason == .distilled {
-                return .derived(standIn.value)
-            }
-            guard call.isEmpty, literals else { return nil }
-            if node is CodeItem || node is InstructionItem || node is StandInItem || node is FunctionItem {
-                return nil
-            }
-            return .literal(node)
-        }
-
-        /// Places a hole for `role` at the end of the body: the hole `shared` names
-        /// if there is one and it may go here, otherwise a new one.
-        private mutating func place(_ role: Role, stack: PushStack, shared: String?) {
-            let position = body.count
-            if reading == .perDistinct, let shared, let index = distinct[shared],
-               index >= (lastHoleAt[position] ?? -1) {
-                holePositions[index].append(position)
-                lastHoleAt[position] = index
-                return
-            }
-            let index = roles.count
-            if let shared, distinct[shared] == nil { distinct[shared] = index }
-            holePositions.append([position])
-            holeStacks.append(stack)
-            roles.append(role)
-            lastHoleAt[position] = index
-        }
-
-        private mutating func addHole(_ role: Role, stack: PushStack) {
-            switch role {
-            case .input(let slot):
-                place(role, stack: stack, shared: slot.rawValue)
-                if sites.contains(.inputs) { decorate(stack, sharing: slot.rawValue) }
-            case .constant(let slot):
-                place(role, stack: stack, shared: slot.rawValue)
-            default:
-                place(role, stack: stack, shared: nil)
+            } else {
+                run.append(item)
             }
         }
-
-        /// Appends the tunable template for a value on `stack`: its instructions,
-        /// and a control hole for each parameter, shared by every use of the
-        /// input `sharing` names when holes are per distinct input.
-        private mutating func decorate(_ stack: PushStack, sharing: String?) {
-            guard let template = TunableCrux.template(for: stack) else { return }
-            for (index, part) in template.enumerated() {
-                switch part {
-                case .instruction(let instruction):
-                    body.append(InstructionItem(instruction))
-                case .control(let neutral):
-                    let controlStack = PushStack.defaultStack(for: neutral) ?? stack
-                    place(.control(neutral: neutral), stack: controlStack, shared: sharing.map { "\($0)#\(index)" })
-                }
-            }
-        }
-
-        /// Writes `node` out; false once the body passes `limit`. Iterative: an
-        /// explicit stack of work, since a history can nest deeply.
-        private mutating func emit(_ root: any Item, asArgument: Bool) -> Bool {
-            var work: [BuildStep] = [.node(root, argument: asArgument)]
-            while let next = work.popLast() {
-                switch next {
-                case .close(let start, let stack):
-                    subtrees.append(Subtree(start: start, end: body.count, stack: stack))
-                case .node(let node, let argument):
-                    let stack = argument ? PushStack.defaultStack(for: node) : nil
-                    if argument, let stack, let role = role(of: node) {
-                        addHole(role, stack: stack)
-                        continue
-                    }
-                    let call = node.call
-                    if call.isEmpty {
-                        body.append(node)
-                        if body.count > limit { return false }
-                        continue
-                    }
-                    if let stack, argument { work.append(.close(start: body.count, stack: stack)) }
-                    let arguments = CruxSharing.argumentCount(call)
-                    for (index, child) in call.enumerated().reversed() {
-                        work.append(.node(child, argument: index < arguments))
-                    }
-                }
-            }
-            return true
-        }
+        flush()
+        if pieces == 0 { parts.append(.item(CodeItem([]))) }
+        return parts
     }
 }

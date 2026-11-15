@@ -3,7 +3,8 @@
 //  PlungeTests
 //
 //  A crux with each input wrapped in a parametric transform, whose neutral
-//  setting leaves it as it was (`TunableCrux`, 2026-11-15).
+//  setting leaves it as it was; the inputs stay in place (`TunableCrux`,
+//  2026-11-15).
 //
 
 @testable import Plunge
@@ -30,15 +31,14 @@ struct TunableCruxTests {
         Distilled.replay(program, on: stack, inputs: inputs)?.pretty()
     }
 
-    @Test func `two ints are each scaled and shifted`() {
+    @Test func `an int input is scaled and shifted in place`() {
         let item = Self.top(Distilled.ins(.input0, .int0, .intAdd), on: .int)
         let tunable = item.distilledCrux().tunable()!
-        #expect(tunable.key
-                == "«fn (int, int, int, int) -> int: $0 $1 .intMultiply $2 .intAdd $3 .intAdd»")
+        #expect(tunable.key == "«fn (int, int, int) -> int: .input0 $0 .intMultiply $1 .intAdd $2 .intAdd»")
         // Neutral: 5 + 7.
         #expect(Self.replay(tunable.program(filling: tunable.originalFillers!), on: .int) == "12")
         // 5·3 − 1 + 7.
-        let fillers: [any Item] = [InstructionItem(.input0), IntItem(3), IntItem(-1), InstructionItem(.int0)]
+        let fillers: [any Item] = [IntItem(3), IntItem(-1), InstructionItem(.int0)]
         #expect(Self.replay(tunable.program(filling: fillers), on: .int) == "21")
     }
 
@@ -57,7 +57,7 @@ struct TunableCruxTests {
         let item = Self.top(Distilled.ins(.input2), on: .bool)
         let tunable = item.distilledCrux().tunable()!
         func with(_ m: Bool, _ c: Bool) -> String? {
-            Self.replay(tunable.program(filling: [InstructionItem(.input2), BoolItem(m), BoolItem(c)]), on: .bool)
+            Self.replay(tunable.program(filling: [BoolItem(m), BoolItem(c)]), on: .bool)
         }
         #expect(with(true, false) == "true")    // identity
         #expect(with(true, true) == "false")    // not
@@ -68,7 +68,7 @@ struct TunableCruxTests {
     @Test func `a string can be framed and trimmed`() {
         let item = Self.top(Distilled.ins(.input1), on: .string)
         let tunable = item.distilledCrux().tunable()!
-        let fillers: [any Item] = [InstructionItem(.input1), StringItem("<"), StringItem(">"), IntItem(2), IntItem(1)]
+        let fillers: [any Item] = [StringItem("<"), StringItem(">"), IntItem(2), IntItem(1)]
         // "<hello>", 2 dropped from the front and 1 from the back.
         #expect(Self.replay(tunable.program(filling: fillers), on: .string) == "\"ello\"")
     }
@@ -77,8 +77,7 @@ struct TunableCruxTests {
         let item = Self.top(Distilled.ins(.input5), on: .vecInt)
         let tunable = item.distilledCrux().tunable()!
         // [1, 2, 3]·2 + 1, then nothing joined on and one element dropped from the front.
-        let fillers: [any Item] = [InstructionItem(.input5), IntItem(2), IntItem(1), VecIntItem([]), VecIntItem([]),
-                                   IntItem(1), IntItem(0)]
+        let fillers: [any Item] = [IntItem(2), IntItem(1), VecIntItem([]), VecIntItem([]), IntItem(1), IntItem(0)]
         #expect(Self.replay(tunable.program(filling: fillers), on: .vecInt) == "[5, 7]")
     }
 
@@ -86,8 +85,9 @@ struct TunableCruxTests {
         let item = Self.top(Distilled.ins(.input0, .input0, .intMultiply), on: .int)
         let shared = item.distilledCrux().tunable(.perDistinct)!
         let own = item.distilledCrux().tunable(.perUse)!
-        #expect(shared.function.holes.count == 3)
-        #expect(own.function.holes.count == 6)
+        #expect(shared.key == "«fn (int, int) -> int: .input0 $0 .intMultiply $1 .intAdd .input0 $0 .intMultiply $1 "
+                + ".intAdd .intMultiply»")
+        #expect(own.holeCount == 4)
         #expect(Self.replay(shared.program(filling: shared.originalFillers!), on: .int) == "25")
         #expect(Self.replay(own.program(filling: own.originalFillers!), on: .int) == "25")
     }
@@ -97,8 +97,8 @@ struct TunableCruxTests {
         // the second use of `.input0` must not jump ahead of it.
         let program = Distilled.ins(.input0, .input1, .stringLength, .intSubtract, .input0, .intSubtract)
         let item = Self.top(program, on: .int)
-        let abstract = item.distilledCrux().abstracted()!
-        #expect(Self.replay(abstract.program(filling: abstract.originalFillers!), on: .int) == item.pretty())
+        let skeleton = item.distilledCrux().skeleton()!
+        #expect(Self.replay(skeleton.program(filling: skeleton.originalFillers!), on: .int) == item.pretty())
         let tunable = item.distilledCrux().tunable()!
         #expect(Self.replay(tunable.program(filling: tunable.originalFillers!), on: .int) == item.pretty())
     }

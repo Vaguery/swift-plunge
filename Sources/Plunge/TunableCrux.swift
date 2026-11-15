@@ -3,8 +3,8 @@
 //  Plunge
 //
 //  An abstract crux with every input wrapped in a parametric transform whose
-//  parameters are holes, and whose neutral setting changes nothing.
-//  Added 2026-11-15.
+//  parameters are holes, and whose neutral setting changes nothing. The inputs
+//  stay in place. Added 2026-11-15.
 //
 
 /// Where a tunable crux puts its transforms.
@@ -17,20 +17,23 @@ public nonisolated enum TuningSite: Sendable, Hashable {
 
 /// **A crux whose inputs can be scaled, shifted and trimmed.** The distilled
 /// crux `.input0 .input1 .intAdd` says "add the two inputs", but leaves nothing
-/// to fit it to data with. The tunable crux wraps each input in a transform
-/// whose parameters are control holes:
+/// to fit it to data with. The tunable crux is its abstract crux (constants as
+/// holes, inputs in place) with each input wrapped in a transform whose
+/// parameters are control holes:
 ///
-///     $0 $1 .intMultiply $2 .intAdd   $3 $4 .intMultiply $5 .intAdd   .intAdd
+///     .input0 $0 .intMultiply $1 .intAdd   .input1 $2 .intMultiply $3 .intAdd   .intAdd
 ///
-/// (holes 0 and 3 are the inputs; 1, 2, 4 and 5 are controls). Filled with each
-/// control's neutral value (1 and 0 here) it gives exactly the crux it came
-/// from, so fitting starts where the crux was and can only improve on it.
+/// Filled with each control's neutral value (1 and 0 here) it gives exactly the
+/// crux it came from, so fitting starts where the crux was and can only improve
+/// on it. The inputs keep their assignments, which is what makes it the form for
+/// search and curve fitting; the skeleton crux, with inputs as holes too, is for
+/// building new structures.
 ///
 /// **The transforms, by type.** Each keeps the type and has a neutral setting.
 ///
 /// | Type | Transform | Neutral |
 /// |---|---|---|
-/// | int, double | `x·a + b` | a = 1, b = 0 |
+/// | int, double | `x·a + b` | a = 1, b = 0 (−0.0 for a double, which keeps a negative zero) |
 /// | bool | `(x and m) xor c`, which covers all four one-argument functions | m = true, c = false |
 /// | char | its code point shifted by s | s = 0 |
 /// | vecInt, vecDouble | every element scaled and shifted, `v[i]·a + b`; then framed and trimmed | a = 1, b = 0 |
@@ -59,7 +62,9 @@ public nonisolated enum TunableCrux {
         case .int:
             [.control(IntItem(1)), .instruction(.intMultiply), .control(IntItem(0)), .instruction(.intAdd)]
         case .double:
-            [.control(DoubleItem(1)), .instruction(.doubleMultiply), .control(DoubleItem(0)), .instruction(.doubleAdd)]
+            // −0.0, not 0.0: x + (−0.0) is x for every x, but −0.0 + 0.0 is 0.0.
+            [.control(DoubleItem(1)), .instruction(.doubleMultiply), .control(DoubleItem(-0.0)),
+             .instruction(.doubleAdd)]
         case .bool:
             [.control(BoolItem(true)), .instruction(.boolAnd), .control(BoolItem(false)), .instruction(.boolXor)]
         case .char:
@@ -72,7 +77,7 @@ public nonisolated enum TunableCrux {
                 + trimmed(empty: VecIntItem([]), swap: .vecIntSwap, concat: .vecIntConcat, drop: .vecIntDrop,
                           dropLast: .vecIntDropLast)
         case .vecDouble:
-            [.control(DoubleItem(1)), .instruction(.vecDoubleMultiplyDouble), .control(DoubleItem(0)),
+            [.control(DoubleItem(1)), .instruction(.vecDoubleMultiplyDouble), .control(DoubleItem(-0.0)),
              .instruction(.vecDoubleAddDouble)]
                 + trimmed(empty: VecDoubleItem([]), swap: .vecDoubleSwap, concat: .vecDoubleConcat,
                           drop: .vecDoubleDrop, dropLast: .vecDoubleDropLast)
@@ -101,13 +106,14 @@ public nonisolated enum TunableCrux {
 }
 
 nonisolated extension DistilledCrux {
-    /// This crux as a tunable crux: abstracted as ``abstracted(_:literals:limit:)``
-    /// does, with a transform on each input (and, if `sites` says so, on the
-    /// result) whose parameters are control holes. With `.perDistinct`, every use
-    /// of an input shares one transform. See ``TunableCrux``.
+    /// The tunable crux: the abstract crux (``abstracted(_:literals:limit:)``),
+    /// inputs in place, with a transform on each input (and, if `sites` says so,
+    /// on the result) whose parameters are control holes. With `.perDistinct`,
+    /// every use of an input shares one transform. See ``TunableCrux``.
     public func tunable(_ reading: AbstractCrux.Reading = .perDistinct, sites: Set<TuningSite> = [.inputs],
                         literals: Bool = true, limit: Int = 2_000) -> AbstractCrux? {
-        var builder = AbstractCrux.Builder(reading: reading, literals: literals, sites: sites, limit: limit)
+        var builder = AbstractCrux.Builder(reading: reading, literals: literals, inputHoles: false, sites: sites,
+                                           limit: limit)
         return builder.build(item)
     }
 }

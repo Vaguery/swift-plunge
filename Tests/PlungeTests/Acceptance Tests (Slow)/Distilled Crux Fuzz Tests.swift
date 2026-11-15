@@ -10,8 +10,10 @@
 //  2. on other inputs, the distilled crux and the crux give the same value;
 //  3. the distilled crux is never longer than the crux;
 //  4. distilling the replayed item gives the same distilled crux;
-//  5. its abstract crux, in either reading, filled with what was there, gives
-//     the value too.
+//  5. its abstract, skeleton and tunable cruxes, in either reading, filled with
+//     what was there (controls neutral), give the value too;
+//  6. its crux with its loops minimized on this case and another gives the
+//     value.
 //
 //  `PUSH_DISTILL_FUZZ` sets the number of programs (default 150).
 //
@@ -29,6 +31,7 @@ struct DistilledCruxFuzzTests {
     struct Tally {
         var items = 0, changed = 0, cruxLeaves = 0, distilledLeaves = 0
         var sameValue = 0, otherInputs = 0, fixedPoints = 0, inconclusive = 0, abstracted = 0, overLimit = 0
+        var withLoops = 0, loopsShortened = 0, passesSaved = 0
         var failures: [String] = []
     }
 
@@ -70,8 +73,9 @@ struct DistilledCruxFuzzTests {
             Distilled cruxes over \(Self.programs) programs: \(tally.items) items, \(tally.changed) changed; \
             leaves \(tally.cruxLeaves) → \(tally.distilledLeaves) (\(String(format: "%.1f%%", 100 * ratio))); \
             same value \(tally.sameValue), on other inputs \(tally.otherInputs), fixed points \(tally.fixedPoints), \
-            inconclusive \(tally.inconclusive); abstract cruxes refilled \(tally.abstracted), \
-            over the size limit \(tally.overLimit)
+            inconclusive \(tally.inconclusive); abstract, skeleton and tunable cruxes refilled \(tally.abstracted), \
+            over the size limit \(tally.overLimit); items with loops \(tally.withLoops), loops shortened \
+            \(tally.loopsShortened), passes saved \(tally.passesSaved)
             """)
         #expect(tally.failures.isEmpty, "\(tally.failures.prefix(10).joined(separator: "\n"))")
         #expect(tally.changed > 0)
@@ -119,20 +123,8 @@ struct DistilledCruxFuzzTests {
         } else {
             tally.failures.append("\(label): distilling the replay changed the distilled crux")
         }
-        // 5. The abstract crux, refilled.
-        for reading in [AbstractCrux.Reading.perDistinct, .perUse] {
-            guard let abstract = distilled.abstracted(reading), let fillers = abstract.originalFillers else {
-                tally.overLimit += 1
-                continue
-            }
-            let refilled = run(abstract.program(filling: fillers), made.inputs)
-            if refilled?.pretty() == item.pretty() {
-                tally.abstracted += 1
-            } else {
-                tally.failures.append("\(label) \(reading): refilled abstract crux gave "
-                                      + "\(refilled.map { String($0.pretty().prefix(50)) } ?? "nothing")")
-            }
-        }
+        checkForms(of: distilled, value: item.pretty(), label: label, run: { run($0, made.inputs) }, into: &tally)
+        checkLoops(of: (item, stack), setting, label: label, run: { run($0, made.inputs) }, into: &tally)
         // 2. Other inputs.
         if let theirs = run(crux, other), let ours = run(distilled.program, other) {
             if theirs.pretty() == ours.pretty() {
@@ -140,6 +132,46 @@ struct DistilledCruxFuzzTests {
             } else {
                 tally.failures.append("\(label) other inputs: crux \(theirs.pretty().prefix(50)) ≠ "
                                       + "distilled \(ours.pretty().prefix(50))")
+            }
+        }
+    }
+
+    /// 5. The abstract, skeleton and tunable cruxes, refilled, give the value.
+    static func checkForms(of distilled: DistilledCrux, value: String, label: String,
+                           run: ([any Item]) -> (any Item)?, into tally: inout Tally) {
+        let forms: [(String, (AbstractCrux.Reading) -> AbstractCrux?)] = [
+            ("abstract", { distilled.abstracted($0) }), ("skeleton", { distilled.skeleton($0) }),
+            ("tunable", { distilled.tunable($0, sites: [.inputs, .output]) })
+        ]
+        for (form, make) in forms {
+          for reading in [AbstractCrux.Reading.perDistinct, .perUse] {
+            guard let abstract = make(reading), let fillers = abstract.originalFillers else {
+                tally.overLimit += 1
+                continue
+            }
+            let refilled = run(abstract.program(filling: fillers))
+            if refilled?.pretty() == value {
+                tally.abstracted += 1
+            } else {
+                tally.failures.append("\(label) \(form) \(reading): refilled gave "
+                                      + "\(refilled.map { String($0.pretty().prefix(50)) } ?? "nothing")")
+            }
+          }
+        }
+    }
+
+    /// 6. The crux with its loops minimized on this case and another gives the value.
+    static func checkLoops(of found: (item: any Item, stack: PushStack), _ setting: Setting, label: String,
+                           run: ([any Item]) -> (any Item)?, into tally: inout Tally) {
+        let (made, other, settings) = (setting.made, setting.other, setting.settings)
+        let (item, stack) = found
+        if let minimized = item.minimizingLoops(on: [(made.inputs, made.constants), (other, made.constants)],
+                                                settings: settings, stack: stack) {
+            if minimized.loops > 0 { tally.withLoops += 1 }
+            tally.loopsShortened += minimized.changes.count
+            tally.passesSaved += minimized.changes.reduce(0) { $0 + $1.from - $1.to }
+            if run(minimized.program)?.pretty() != item.pretty() {
+                tally.failures.append("\(label): the loop-minimized crux lost the value")
             }
         }
     }
