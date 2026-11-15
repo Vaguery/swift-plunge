@@ -62,6 +62,7 @@ whatever it prints.
 - <doc:Collections>
 - <doc:Functions>
 - <doc:Provenance>
+- <doc:CruxForms>
 - <doc:TaggingInstructions>
 - <doc:InstructionReference>
 

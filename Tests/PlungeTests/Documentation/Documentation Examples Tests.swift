@@ -246,6 +246,41 @@ struct DocumentationExamplesTests {
         #expect(CodeItem(answer.item.crux()).pretty() == "( 99 .input0 .intMultiply )")
     }
 
+    /// *Forms of a Crux*: "Getting the forms", on the running example.
+    @Test func `crux forms: distilled, abstract and refitted`() async {
+        var settings = InterpreterSettings()
+        settings.recordsProvenance = true
+        let runner = Runner(configuration: RunnerConfiguration(settings: settings, recorders: [
+            RecorderSpec("answer", observing: .top(.double), keeping: .finalOnly)
+        ]))
+        let constants: [PushInstruction: any Item] = [.double0: DoubleItem(0.5), .double1: DoubleItem(3)]
+        await runner.register(individuals: [Individual(id: "p", program: program {
+            PushInstruction.input0; PushInstruction.double0; PushInstruction.double1
+            PushInstruction.doubleMultiply; PushInstruction.doubleMultiply
+            true; PushInstruction.boolNot
+            2.0; 3.0; PushInstruction.doubleAdd
+            7; PushInstruction.intDup; PushInstruction.intAdd
+            PushInstruction.input1; PushInstruction.doubleMultiply; PushInstruction.doubleAdd
+        }, constants: constants)])
+        await runner.register(trainingCases: [
+            TrainingCase(id: "c", inputs: [.input0: DoubleItem(4), .input1: DoubleItem(10)])
+        ])
+        let result = await runner.evaluate(pairings: [Pairing(individual: "p", trainingCase: "c")])[0]
+        guard case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil else {
+            Issue.record("no answer"); return
+        }
+        let distilled = answer.item.distilledCrux()
+        #expect(CodeItem(distilled.program).pretty() == "( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply "
+                + "«distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )")
+        guard let abstract = distilled.abstracted() else { Issue.record("no abstract crux"); return }
+        #expect(abstract.key
+                == "«fn (dbl, dbl) -> dbl: .input0 $0 .doubleMultiply $1 .input1 .doubleMultiply .doubleAdd»")
+        let refitted = abstract.program(filling: [DoubleItem(3), DoubleItem(2)])
+        #expect(CodeItem(refitted).pretty() == "( .input0 3.0 .doubleMultiply 2.0 .input1 .doubleMultiply .doubleAdd )")
+        #expect(distilled.skeleton()?.key
+                == "«fn (dbl, dbl, dbl, dbl) -> dbl: $0 $1 .doubleMultiply $2 $3 .doubleMultiply .doubleAdd»")
+    }
+
     /// *Code and Control* and *Iterators and Loops*: the examples.
     @Test func `code, control and iterators`() async {
         let chosen = await Self.finalStacks([.int, .code], after: [

@@ -33,6 +33,9 @@ program.
   mentions an input, the answer can't depend on one.
 - **Reusing what worked.** A crux is working code for one value, which a search
   can keep and build on.
+- **Going further.** A crux can be distilled, abstracted, made tunable or
+  reduced to its skeleton, for fitting constants and comparing shapes. See
+  <doc:CruxForms>.
 
 ## Turning it on
 
@@ -88,7 +91,7 @@ Some values can't be rebuilt by running again what made them. A stack's depth,
 the step count and a fresh binding key depend on the state of the run, not on
 any argument. For these the crux holds a **stand-in** (``StandInItem``): a
 literal that runs as the value it replaces and says why it is there. It prints
-as, for example, `«observed .intStackDepth: 4»`. A stand-in records one of three
+as, for example, `«observed .intStackDepth: 4»`. A stand-in records one of these
 reasons:
 
 - **observed**: read from the state of the run;
@@ -96,7 +99,9 @@ reasons:
   loop starts from;
 - **elided**: a history too large to keep (over
   ``InterpreterSettings/maxCallWeight`` or
-  ``InterpreterSettings/maxCallDepth``), replaced by the value it produced.
+  ``InterpreterSettings/maxCallDepth``), replaced by the value it produced;
+- **distilled**: work that read only constants, replaced by its value in a
+  distilled crux (<doc:CruxForms>). A program never makes one.
 
 A crux therefore always runs, and every literal in it that the program didn't
 contain is marked. The marks matter: without them, a number the run happened to
@@ -133,6 +138,7 @@ let restored = try JSONDecoder().decode(ItemArchive.self, from: data).items
 
 ## See Also
 
+- <doc:CruxForms>
 - <doc:ObservingARun>
 - <doc:LimitsAndGuards>
 - ``StandInItem``

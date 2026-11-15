@@ -118,7 +118,7 @@ every item type to this; add a new type's confusable cases there.
   prose a type is still named by its stack (`string`, `function`). A function's
   signature uses them too: `«fn (str) -> dbl: …»`.
   `PushStack.tag` is the one table of them. Stand-ins are labeled by their
-  reason instead: `observed`, `elided`, `minted`.
+  reason instead: `observed`, `elided`, `minted`, `distilled`.
 - **Strings and chars are escaped**: their own quote mark, `\\`, and every
   character that might not show on a page (`\n`, `\t`, `\r`, `\0`, `\u{…}`).
   That covers the ASCII controls and the invisible Unicode ones: every space

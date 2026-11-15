@@ -148,6 +148,15 @@ These are defined fully in <doc:ErrorsAndRefusals>.
   nothing else. See <doc:Provenance>.
 - term Stand-in: A marked literal in a crux, in place of a value whose history
   can't be replayed or was too large to keep.
+- term Distilled crux: A crux with its constant-only work replaced by the
+  values it made. See <doc:CruxForms>.
+- term Abstract crux: A distilled crux with its constants as typed holes and its
+  inputs in place: a model whose constants can be fitted.
+- term Tunable crux: An abstract crux with a parametric transform on each
+  input, neutral by default.
+- term Skeleton crux: An abstract crux with its inputs as holes too: a shape.
+- term Derived constant: The value of a branch of constant work in a distilled
+  crux, with the constant slots it read.
 - term Weight: The size of an item's content: 1 for a number, the number of
   elements for a vector, and so on. Size limits are stated in weight.
 
