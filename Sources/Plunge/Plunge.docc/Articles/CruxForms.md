@@ -178,6 +178,23 @@ Rolling keeps a loop's count. To lower it, use
 one only while replays on the cases given still produce the item's value: the
 loop above needs 3 passes, not 50.
 
+## Constructing structures
+
+New structures can be built from known ones as well-typed expressions. Each step
+returns a new ``AbstractCrux``, or `nil` when the operator's signature doesn't fit:
+
+| Step | Builds | From `$0` |
+|---|---|---|
+| ``AbstractCrux/wrapped(by:)`` | op(S) | `$0 .doubleAbs` |
+| ``AbstractCrux/extended(by:with:leafFirst:)`` | op(S, a new hole) | `$0 $1 .doubleMultiply` |
+| ``AbstractCrux/reused(by:)`` | op(S, S), shared | `$0 .doubleDup .doubleMultiply` |
+| ``AbstractCrux/combined(with:by:)`` | op(S, T) | `$0 $1 .doubleDup .doubleMultiply .doubleSubtract` |
+| ``AbstractCrux/grafted(_:into:)`` | a hole of S replaced by T | `$0 $1 $2 .doubleAdd .doubleMultiply` |
+
+They compose, since every template nets one value on its output stack. A new hole
+added by construction has the role `anyInput` or `anyConstant`: which input or
+constant fills it is for the filler to say.
+
 ## Getting the forms
 
 Record provenance, take the item, and ask for each form:

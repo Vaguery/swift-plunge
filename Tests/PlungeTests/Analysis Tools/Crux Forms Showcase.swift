@@ -49,6 +49,8 @@ struct CruxFormsShowcase {
             case .literal(let value): "literal \(value.pretty())"
             case .open(let stack): "open \(stack.rawValue)"
             case .control(let neutral): "control (neutral \(neutral.pretty()))"
+            case .anyInput(let stack): "any \(stack.rawValue) input"
+            case .anyConstant(let stack): "any \(stack.rawValue) constant"
             }
             return "$\(index) = \(what)"
         }.joined(separator: "; ")

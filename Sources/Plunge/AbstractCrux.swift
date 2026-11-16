@@ -72,6 +72,12 @@ public nonisolated struct AbstractCrux: Sendable {
         /// A parameter of a tunable crux, and the value that leaves the crux as it
         /// was (``TunableCrux``).
         case control(neutral: any Item)
+        /// A hole for some input of this type, added by construction
+        /// (``extended(by:with:leafFirst:)``): which input is for the filler to
+        /// say.
+        case anyInput(PushStack)
+        /// A hole for some constant of this type, added by construction.
+        case anyConstant(PushStack)
     }
 
     /// How many holes a constant slot (or, in a skeleton, an input) gets.
@@ -123,7 +129,7 @@ public nonisolated struct AbstractCrux: Sendable {
             switch role {
             case .input(let slot), .constant(let slot): fillers.append(InstructionItem(slot))
             case .derived(let value), .literal(let value), .control(neutral: let value): fillers.append(value)
-            case .open: return nil
+            case .open, .anyInput, .anyConstant: return nil
             }
         }
         return fillers
