@@ -33,7 +33,7 @@ struct DistilledCruxTests {
 
     /// The value `program` leaves on `stack`, replayed as a crux.
     static func replay(_ program: [any Item], on stack: PushStack,
-                       inputs: [PushInstruction: any Item] = inputs) -> any Item? {
+                       inputs: [PushInstruction: any Item] = inputs) -> (any Item)? {
         let redo = Interpreter.recordingProvenance()
         redo.config = redo.config.reconstructing
         redo.load(inputs: inputs, constants: constants, program: program)
