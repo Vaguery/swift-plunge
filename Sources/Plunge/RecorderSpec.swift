@@ -39,6 +39,19 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     case stack(PushStack)
     /// How many steps the run has taken (`Int`).
     case counter
+    /// Every distinct item pushed onto a stack during the run, in the order each
+    /// was first pushed (`[AnyItem]`): the intermediate results as well as the
+    /// final ones, such as each partial sum of a loop. An item is counted once
+    /// per history node (copies made by dup or yank share one), and a literal
+    /// once per value. It is read once, at the end of the run, whatever the
+    /// policy.
+    ///
+    /// What it can't see: the passes inside a map, a function application or an
+    /// iterator run in sandboxes with provenance off, so only their collected
+    /// results are pushed here; and a move within a stack is not a push. Without
+    /// provenance, items have no history nodes, so each distinct value is kept
+    /// once.
+    case pushes(PushStack)
 }
 
 
@@ -52,7 +65,7 @@ nonisolated extension RecorderTarget {
     var valueKind: ValueKind {
         switch self {
         case .top, .second, .nth: .item
-        case .stack: .itemList
+        case .stack, .pushes: .itemList
         case .count, .counter: .int
         case .isEmpty: .bool
         }
@@ -136,6 +149,12 @@ nonisolated extension AnyRecorder {
             self.init(Recorder<Int>(name, keeping: policy) { interpreter in
                 interpreter.counter
             })
+        case .pushes(let stack):
+            // The collector gathers during the run; one reading, at the end, is all
+            // there is to take.
+            self.init(Recorder<[any Item]>(name, keeping: .finalOnly) { interpreter in
+                interpreter.pushCollectors[stack]?.items ?? []
+            }, watching: stack)
         }
     }
 }

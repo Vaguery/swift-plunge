@@ -40,9 +40,17 @@ The **target** (``RecorderTarget``) says what to look at:
 | `.isEmpty(stack)` | whether a stack is empty | bools |
 | `.stack(stack)` | every item on a stack, top first | item lists |
 | `.counter` | how many steps the run has taken | ints |
+| `.pushes(stack)` | every distinct item pushed onto a stack during the run, in the order made | one item list |
 
 Copying a whole stack after every step is costly, so use `.stack` with
 `.finalOnly` unless you want its history.
+
+`.pushes` sees what `.stack` can't: the intermediate results a run makes and
+then consumes, such as each partial result of a loop. An item counts once per
+history node (dup and yank copies share one), and a literal once per value. It
+is read once, at the end, whatever the policy. It can't see inside a map, a
+function application or an iterator, whose passes run in sandboxes, so only
+their collected results appear.
 
 The **policy** (``RecordingPolicy``) says how much to keep:
 

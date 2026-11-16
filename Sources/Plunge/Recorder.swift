@@ -88,6 +88,9 @@ nonisolated protocol AnyRecorderProtocol {
 // churn. Non-mutating, the dictionary is only read, so no copy is made.
 nonisolated struct AnyRecorder: AnyRecorderProtocol {
     private let _box: AnyRecorderBox
+    /// The stack whose pushes this recorder needs collected, for a `.pushes`
+    /// target; the interpreter keeps a ``PushCollector`` for each such stack.
+    let watchedPushes: PushStack?
 
     var name: String { _box.name }
     var policy: RecordingPolicy { _box.policy }
@@ -99,8 +102,9 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
         _box.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }
 
-    init<T>(_ concrete: Recorder<T>) {
+    init<T>(_ concrete: Recorder<T>, watching stack: PushStack? = nil) {
         self._box = RecorderBox(concrete)
+        self.watchedPushes = stack
     }
 }
 

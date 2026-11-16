@@ -358,8 +358,16 @@ nonisolated final class Interpreter {
         didSet {
             everyStepRecorders = recorders.values.filter { $0.policy == .everyStep }
             finalOnlyRecorders = recorders.values.filter { $0.policy == .finalOnly }
+            // A collector for each stack a `.pushes` recorder watches, keeping the
+            // ones already gathering.
+            let watched = Set(recorders.values.compactMap(\.watchedPushes))
+            pushCollectors = pushCollectors.filter { watched.contains($0.key) }
+            for stack in watched where pushCollectors[stack] == nil { pushCollectors[stack] = PushCollector() }
         }
     }
+    /// The items pushed onto each stack a `.pushes` recorder watches, gathered as
+    /// they are placed. Empty unless such a recorder is installed.
+    private(set) var pushCollectors: [PushStack: PushCollector] = [:]
     /// `recorders` split by policy, as arrays, for the step loop. A `.finalOnly`
     /// recorder keeps only its last reading, and nothing changes between a run's
     /// last step and its end, so `run` takes that reading once, at the end, rather
@@ -425,7 +433,10 @@ nonisolated final class Interpreter {
         // inside `recording(…)`; see `ProvenanceRecording`), so there is nothing to
         // strip. `Provenance Off Parity Tests` holds the whole language to that.
         // An item loaded from outside keeps whatever `call` it was handed.
-        self.place(self.elidingOverBudgetProvenance(item), on: stack)
+        let placed = self.elidingOverBudgetProvenance(item)
+        // As placed, so its history is the one the stack holds.
+        if !pushCollectors.isEmpty, let collector = pushCollectors[stack] { collector.note(placed) }
+        self.place(placed, on: stack)
     }
 
 
@@ -643,6 +654,7 @@ nonisolated final class Interpreter {
         self.lastErrorStep = -2
         self.derivations = [:]
         self.nextRefKey = Self.inputSlots.count
+        for collector in pushCollectors.values { collector.reset() }
 
         // inputs and constants (both keyed by instruction token)
         for (key, value) in inputs {
@@ -819,6 +831,7 @@ nonisolated final class Interpreter {
         for recorder in self.recorders.values {
             recorder.reset()
         }
+        for collector in pushCollectors.values { collector.reset() }
     }
 
 }
