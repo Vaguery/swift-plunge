@@ -45,6 +45,31 @@ struct DistilledCruxTests {
 
     static func ins(_ names: PushInstruction...) -> [any Item] { names.map { InstructionItem($0) } }
 
+    // MARK: - Rolled, with sharing kept
+
+    @Test func `the rolled program writes a loop once and replays to the same value`() {
+        // input0, then six passes of `2 .intMultiply`.
+        let program: [any Item] = Self.ins(.input0) + [IntItem(6), CodeItem([IntItem(2)] + Self.ins(.intMultiply))]
+            + Self.ins(.execDoTimes)
+        let item = Self.top(program, on: .int)
+        let distilled = item.distilledCrux()
+        let rolled = distilled.rolledProgram
+        #expect(rolled.count < distilled.program.count, "\(Self.printed(rolled))")
+        #expect(Self.printed(rolled).contains(".execDoTimes"))
+        #expect(Self.replay(rolled, on: .int)?.pretty() == item.pretty())
+    }
+
+    @Test func `the rolled program keeps a reused value shared, as the distilled crux does`() {
+        // x·x·x·x by dup: written out as a tree, each dup doubles the crux.
+        let program = Self.ins(.input0, .intDup, .intMultiply, .intDup, .intMultiply)
+        let item = Self.top(program, on: .int)
+        let distilled = item.distilledCrux()
+        #expect(Self.printed(distilled.rolledProgram) == Self.printed(distilled.program))
+        #expect(Self.replay(distilled.rolledProgram, on: .int)?.pretty() == item.pretty())
+        let abstract = try? #require(distilled.abstracted())
+        #expect((abstract?.template.count ?? 0) > distilled.rolledProgram.count, "the tree form writes x twice")
+    }
+
     // MARK: - Dependence
 
     @Test func `a literal and plain arithmetic on literals depend on nothing`() {

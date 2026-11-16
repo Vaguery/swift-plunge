@@ -79,6 +79,21 @@ public nonisolated struct DerivedConstant: Sendable {
     public var origin: [any Item] { original.crux() }
 }
 
+nonisolated extension DistilledCrux {
+    /// The distilled crux with each run of identical passes rolled into a counted
+    /// loop (`seed ( body ) K .execDoTimes`), by the same rule as the abstract
+    /// crux's rolling (two passes are enough when the body has at least three
+    /// items), but with shared values still built once, by dup and yank, as in
+    /// ``program``. It replays to the same value.
+    ///
+    /// Its size counts a loop once and a reused value once: the abstract and
+    /// skeleton forms also roll loops, but are written as trees, so a value used
+    /// twice is written twice (swift-plunge, 2026-11-16).
+    public var rolledProgram: [any Item] {
+        HistoryRewrite.rewrite(item) { HistoryRewrite.foldedPass($0, twoPassBody: 3)?.fold }.crux()
+    }
+}
+
 nonisolated extension Item {
     /// This item's crux with every branch of constant-only work replaced by its
     /// value. See ``DistilledCrux``.

@@ -167,6 +167,12 @@ on every pass. A hole inside a loop's body is marked in
 language can run, by building that body from quoted pieces:
 `( .input0 .intAdd ) $1 .intQuote .codeConcat ( .intMin ) .codeConcat`.
 
+The abstract, tunable and skeleton cruxes are written as trees, so a value the
+history reuses (by dup or yank) is written out once per use. To roll loops but
+keep reuse shared, as the distilled crux does, use
+``DistilledCrux/rolledProgram``: its size counts a loop once and a reused value
+once, and it replays to the same value.
+
 Rolling keeps a loop's count. To lower it, use
 ``Item/minimizingLoops(on:settings:stack:)``, which tries smaller counts and keeps
 one only while replays on the cases given still produce the item's value: the
