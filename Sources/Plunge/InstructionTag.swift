@@ -63,6 +63,8 @@ public nonisolated enum TagFacet: String, Sendable, Codable, Hashable, CaseItera
     case kind
     /// What running it costs.
     case cost
+    /// What it does to the number of items on the stacks.
+    case flow
     /// How a search might use it.
     case use
     /// A judgment declared at its definition.
@@ -331,6 +333,13 @@ nonisolated extension InstructionTag {
         Entry(tag: .runsSubprograms, facet: .cost, provenance: .derived, summary: "Runs blocks in sub-interpreters.",
               rationale: "An applying body, whose sub-interpreters' steps are charged to the run. These are the "
                   + "slowest instructions per step: about 20 to 430 times the median, measured 2026-11-10."),
+
+        Entry(tag: .consumer, facet: .flow, provenance: .derived, summary: "Leaves fewer items than it takes.",
+              rationale: "Its declared results, counted across stacks (the longest alternative, or one for a deferred push or an input), are fewer than the arguments it takes. Reads are left, so they don't count. Rearrangers, control, prints, deliveries and variadic takers declare no count and carry no flow tag."),
+        Entry(tag: .neutral, facet: .flow, provenance: .derived, summary: "Leaves as many items as it takes.",
+              rationale: "Its declared results, counted as for consumer, are as many as the arguments it takes."),
+        Entry(tag: .producer, facet: .flow, provenance: .derived, summary: "Leaves more items than it takes.",
+              rationale: "Its declared results, counted as for consumer, outnumber the arguments it takes: literals, inputs, and queries that read their arguments and leave them."),
 
         Entry(tag: .bridge, facet: .use, provenance: .derived, summary: "Gives a kind of data it did not take.",
               rationale: "An operation giving a stack, other than int or bool, that it neither took, read nor observed."),

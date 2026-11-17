@@ -104,11 +104,26 @@ nonisolated struct AutomaticTagging {
     var tags: Set<InstructionTag> {
         var tags = typeTags.union(kindTags).union(costTags)
         tags.insert(classTag)
+        if let flowTag { tags.insert(flowTag) }
         if isBridge { tags.insert(.bridge) }
         if !tags.contains(where: { $0.facet == .kind }) && behavior.behaviorClass != .channel {
             tags.insert(.complicated)
         }
         return tags
+    }
+
+    /// Consumer, neutral or producer, by its declared results against the
+    /// arguments it takes; `nil` when the declarations give no count.
+    var flowTag: InstructionTag? {
+        guard !variadic else { return nil }
+        let results: Int
+        switch behavior.produces {
+        case .results(let stacks): results = stacks.count
+        case .alternatives(let options): results = options.map(\.count).max() ?? 0
+        case .deferred, .input: results = 1
+        case .positions, .continuation, .printed, .delivery, .several: return nil
+        }
+        return results < taken.count ? .consumer : results == taken.count ? .neutral : .producer
     }
 
     var classTag: InstructionTag {

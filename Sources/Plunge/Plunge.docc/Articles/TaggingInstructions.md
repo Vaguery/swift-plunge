@@ -29,6 +29,7 @@ what it describes:
 | Mechanics | `operation`, `structural`, `contextRead`, `control`, `channel` (the ``BehaviorClass``) |
 | Kind | `calculation`, `inspection`, `detection`, `comparison`, `measurement`, `search`, `stackCombinator`, `branching`, `looping`, `higherOrder`, `execution`, `transformation`, `conversion`, `assembly`, `disassembly`, `reshaping`, `source`, `introspection`, `naming`, `iterators`, `complicated` |
 | Cost | `addsSteps`, `mayRunUnbounded`, `runsSubprograms` |
+| Flow | `consumer`, `neutral`, `producer` |
 | Use | `bridge` |
 | Judgment | `fallible`, `reEntrant`, `risky`, `cruxOnly` |
 
@@ -45,6 +46,17 @@ defined. ``InstructionTag/provenance`` says which kind a tag is, and
 conversions, quotes, iterator constructors. They change a program's
 representation, which is how an unexpected solution often works, so a search
 that narrows its instructions should keep them in play.
+
+The **flow** tags say what an instruction does to the number of items on the
+stacks, whatever their types: a `consumer` leaves fewer than it takes (`.intAdd`),
+a `neutral` instruction as many (`.stringReverse`), and a `producer` more
+(literals, inputs, and queries that read their arguments and leave them). They
+are counted from the declared results against the arguments taken. Rearrangers
+such as dup and pop declare that they change positions but not by how many, so
+they carry no flow tag, and neither do control, prints, deliveries or variadic
+takers. Random code is short of arguments far more often than of items to
+combine: in a brief test, drawing consumers more often gave fewer and smaller
+cruxes, and producers somewhat more.
 
 To ask which instructions touch a particular stack, use
 ``Runner/instructions(touching:)`` instead of a tag.
