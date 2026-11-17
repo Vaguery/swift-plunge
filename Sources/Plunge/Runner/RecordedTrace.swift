@@ -26,6 +26,8 @@ public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
     case ints([Int?])
     /// Readings from `isEmpty`.
     case bools([Bool?])
+    /// The decision log, from `decisions`: every conditional's choice, in order.
+    case decisions([Decision])
 
     /// Repackages a recorder's type-erased `[Any?]` data into the typed case its
     /// target implies.
@@ -35,6 +37,7 @@ public nonisolated enum RecordedTrace: Sendable, Equatable, Codable {
         case .itemList: self = .itemLists(raw.map { ($0 as? [any Item]).map { $0.map(AnyItem.init) } })
         case .int:      self = .ints(raw.map { $0 as? Int })
         case .bool:     self = .bools(raw.map { $0 as? Bool })
+        case .decisions: self = .decisions(raw.compactMap { $0 as? [Decision] }.last ?? [])
         }
     }
 }

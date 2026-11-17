@@ -91,6 +91,9 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
     /// The stack whose pushes this recorder needs collected, for a `.pushes`
     /// target; the interpreter keeps a ``PushCollector`` for each such stack.
     let watchedPushes: PushStack?
+    /// Whether this recorder reads the decision log, which the interpreter keeps
+    /// only while such a recorder is installed.
+    let watchesDecisions: Bool
 
     var name: String { _box.name }
     var policy: RecordingPolicy { _box.policy }
@@ -102,9 +105,10 @@ nonisolated struct AnyRecorder: AnyRecorderProtocol {
         _box.reportAll(steps: steps, fillWithLast: fillWithLast, trim: trim)
     }
 
-    init<T>(_ concrete: Recorder<T>, watching stack: PushStack? = nil) {
+    init<T>(_ concrete: Recorder<T>, watching stack: PushStack? = nil, watchingDecisions: Bool = false) {
         self._box = RecorderBox(concrete)
         self.watchedPushes = stack
+        self.watchesDecisions = watchingDecisions
     }
 }
 

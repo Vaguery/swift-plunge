@@ -41,6 +41,7 @@ The **target** (``RecorderTarget``) says what to look at:
 | `.stack(stack)` | every item on a stack, top first | item lists |
 | `.counter` | how many steps the run has taken | ints |
 | `.pushes(stack)` | every distinct item pushed onto a stack during the run, in the order made | one item list |
+| `.decisions` | every choice a conditional made during the run, in order | decisions |
 
 Copying a whole stack after every step is costly, so use `.stack` with
 `.finalOnly` unless you want its history.
@@ -51,6 +52,15 @@ history node (dup and yank copies share one), and a literal once per value. It
 is read once, at the end, whatever the policy. It can't see inside a map, a
 function application or an iterator, whose passes run in sandboxes, so only
 their collected results appear.
+
+`.decisions` keeps what a crux leaves out. A crux follows data, not control:
+`.execIf`, `.execWhen` and `.codeDoIf` record nothing in any item's history, so
+the Boolean that chose a branch is in no result's crux. Each ``Decision`` holds
+that Boolean, history and all (the condition), the code block each way would
+run, and the step. The same conditional reached on different cases gives the
+same blocks, each case's condition, and which way it went. Like `.pushes`, it is
+read once, at the end, and doesn't see inside sandboxes. Loops and other
+choices aren't logged yet.
 
 The **policy** (``RecordingPolicy``) says how much to keep:
 

@@ -363,8 +363,13 @@ nonisolated final class Interpreter {
             let watched = Set(recorders.values.compactMap(\.watchedPushes))
             pushCollectors = pushCollectors.filter { watched.contains($0.key) }
             for stack in watched where pushCollectors[stack] == nil { pushCollectors[stack] = PushCollector() }
+            let logsDecisions = recorders.values.contains(where: \.watchesDecisions)
+            if logsDecisions != (decisionLog != nil) { decisionLog = logsDecisions ? [] : nil }
         }
     }
+    /// Every choice a conditional made this run (`Decision`), in order; `nil`
+    /// unless a `.decisions` recorder is installed.
+    private(set) var decisionLog: [Decision]?
     /// The items pushed onto each stack a `.pushes` recorder watches, gathered as
     /// they are placed. Empty unless such a recorder is installed.
     private(set) var pushCollectors: [PushStack: PushCollector] = [:]
@@ -655,6 +660,7 @@ nonisolated final class Interpreter {
         self.derivations = [:]
         self.nextRefKey = Self.inputSlots.count
         for collector in pushCollectors.values { collector.reset() }
+        if decisionLog != nil { decisionLog = [] }
 
         // inputs and constants (both keyed by instruction token)
         for (key, value) in inputs {
@@ -752,7 +758,11 @@ nonisolated final class Interpreter {
                 self.push(nextItem!, to: .code)
             } else if let action = nextItem?.exactly(InstructionItem.self)?.value {
                 if let behavior = self.behaviors[action] {
-                    behavior.act(on: self)
+                    if decisionLog != nil, Decision.conditionals.contains(action) {
+                        logDecision(action, behavior)
+                    } else {
+                        behavior.act(on: self)
+                    }
                 } else {
                     // an enumerated instruction with no registered behavior
                     // (e.g. planned-but-unimplemented) must not crash the loop
@@ -832,6 +842,7 @@ nonisolated final class Interpreter {
             recorder.reset()
         }
         for collector in pushCollectors.values { collector.reset() }
+        if decisionLog != nil { decisionLog = [] }
     }
 
 }
@@ -859,5 +870,17 @@ nonisolated extension Interpreter {
         let missing = needed.subtracting(done)
         result += "Missing:\n\(missing)\n"
         return result
+    }
+}
+
+
+nonisolated extension Interpreter {
+    /// Runs a conditional and logs its choice, if it took its arguments: the
+    /// Boolean consumed is the sign it decided rather than refused.
+    func logDecision(_ action: PushInstruction, _ behavior: Behavior) {
+        let pending = Decision.pending(action, step: counter, stacks: stacks)
+        let bools = stacks[.bool]?.count ?? 0
+        behavior.act(on: self)
+        if let pending, (stacks[.bool]?.count ?? 0) == bools - 1 { decisionLog?.append(pending) }
     }
 }

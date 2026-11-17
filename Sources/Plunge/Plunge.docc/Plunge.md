@@ -85,6 +85,7 @@ whatever it prints.
 - ``RecorderTarget``
 - ``RecordingPolicy``
 - ``RecordedTrace``
+- ``Decision``
 
 ### Writing programs
 

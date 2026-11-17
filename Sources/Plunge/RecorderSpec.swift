@@ -52,6 +52,14 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// provenance, items have no history nodes, so each distinct value is kept
     /// once.
     case pushes(PushStack)
+    /// Every choice a conditional made during the run, in order (`[Decision]`):
+    /// each `.execIf`, `.execWhen` and `.codeDoIf` reached with its arguments,
+    /// with the Boolean that decided (its history the condition) and the code
+    /// each way would run. A crux follows data, not control, so no result's
+    /// history shows these. It is read once, at the end of the run, whatever
+    /// the policy. Decisions inside a map, function application or iterator
+    /// sandbox aren't seen.
+    case decisions
 }
 
 
@@ -59,7 +67,7 @@ nonisolated extension RecorderTarget {
     /// The natural value type a target collects, used to repackage a recorder's
     /// type-erased data into a typed `RecordedTrace`.
     enum ValueKind: Sendable {
-        case item, itemList, int, bool
+        case item, itemList, int, bool, decisions
     }
 
     var valueKind: ValueKind {
@@ -68,6 +76,7 @@ nonisolated extension RecorderTarget {
         case .stack, .pushes: .itemList
         case .count, .counter: .int
         case .isEmpty: .bool
+        case .decisions: .decisions
         }
     }
 }
@@ -149,12 +158,22 @@ nonisolated extension AnyRecorder {
             self.init(Recorder<Int>(name, keeping: policy) { interpreter in
                 interpreter.counter
             })
-        case .pushes(let stack):
-            // The collector gathers during the run; one reading, at the end, is all
-            // there is to take.
-            self.init(Recorder<[any Item]>(name, keeping: .finalOnly) { interpreter in
+        case .pushes, .decisions:
+            self.init(collecting: spec)
+        }
+    }
+
+    /// A recorder of what the interpreter gathers during the run (the pushes to a
+    /// stack, the decision log): one reading, at the end, is all there is to take.
+    private init(collecting spec: RecorderSpec) {
+        if case .pushes(let stack) = spec.target {
+            self.init(Recorder<[any Item]>(spec.name, keeping: .finalOnly) { interpreter in
                 interpreter.pushCollectors[stack]?.items ?? []
             }, watching: stack)
+        } else {
+            self.init(Recorder<[Decision]>(spec.name, keeping: .finalOnly) { interpreter in
+                interpreter.decisionLog ?? []
+            }, watchingDecisions: true)
         }
     }
 }
