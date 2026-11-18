@@ -66,6 +66,9 @@ nonisolated struct CallStorage: Sendable {
         var call: [any Item]
         let measure: CallMeasure
         var members: Pieces?
+        /// The program position this item was loaded from, for a source trace
+        /// (`SourceTrace`); -1 when untagged. Set only in a literal's empty box.
+        var origin: Int32 = -1
         init(call: [any Item], measure: CallMeasure, members: Pieces?) {
             self.call = call; self.measure = measure; self.members = members
         }
@@ -131,6 +134,22 @@ nonisolated struct CallStorage: Sendable {
     var call: [any Item] { box?.call ?? [] }
     var measure: CallMeasure { box?.measure ?? .literal }
     var members: Pieces? { box?.members }
+
+    /// A literal tagged with the program position it was loaded from, for a source
+    /// trace (`SourceTrace`). Its history is still empty, so it is a literal to
+    /// everything else; the box only carries the tag, and copies of the item share
+    /// it. Giving the item a history replaces the box, and the tag with it.
+    static func tagged(origin: Int) -> CallStorage {
+        let box = Box(call: [], measure: .literal, members: nil)
+        box.origin = Int32(clamping: origin)
+        return CallStorage(box: box)
+    }
+
+    /// The program position a source trace tagged this literal with, if any.
+    var origin: Int? {
+        guard let box, box.origin >= 0 else { return nil }
+        return Int(box.origin)
+    }
 
     /// The same history, members and depth, with `weight` as its measured weight
     /// (the length of its crux, which can be far below its tree's). The `call`
