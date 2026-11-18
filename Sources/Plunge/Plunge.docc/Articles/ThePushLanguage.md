@@ -178,6 +178,10 @@ most likely to surprise you. <doc:DesignOfPlunge> gives the reasons for each.
 - **Failures are recorded.** Where other interpreters quietly do nothing, this
   one leaves an ``ErrorItem`` that says what went wrong, and a starved
   instruction becomes a function.
+- **Printing makes items, not text.** A print instruction moves its item onto
+  `.print`, a channel no instruction can read, in place of appending text to
+  an output string. There is no newline instruction. Whether and how the items
+  become text is the caller's choice.
 - **Loops, variables and functions are items.** Each has a stack of its own,
   and a program can inspect, change and store them.
 - **Nothing is random.** An instruction's result depends only on its arguments

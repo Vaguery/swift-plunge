@@ -43,6 +43,33 @@ lookup that answered −1 for "not found" would hand the next instruction that
 very "message" number, and it might accept it as an index. In Plunge, a lookup
 that finds nothing pushes no answer. See <doc:ErrorsAndRefusals>.
 
+## Printing makes items, not text
+
+In Clojush and Propeller, a print instruction pops its argument and appends that
+argument's text to one output string, and `print_newline` appends a line break.
+A problem that prints is scored by comparing the whole string with the expected
+text.
+
+In Plunge, a print instruction (`.intPrint`, `.stringPrint`, `.codePrint` and
+the rest) moves the item itself onto `.print`. That stack is a *channel*, like
+`.error`: the program writes to it, and no instruction can read, reorder, count
+or pop it. What a program printed is therefore a sequence of typed items, each
+with its type, its value and, with provenance recording on, its crux. There is
+no newline instruction, because there is no text to break into lines.
+
+The reason is the one behind recording every failure: text throws away
+information that a search can use. Printed one after another, 12 and 3 make the
+same text as 123. How a number is formatted, or which separator falls between
+two items, can decide whether an answer counts as right while saying nothing
+about whether the program computed it. Keeping items leaves that choice to the
+caller. A caller can render the items as text to compare with a published
+benchmark, or score them as items: the right item was printed, and nothing else
+was. See <doc:ObservingARun>.
+
+A program can still leave its answer on an ordinary stack, as it does for every
+other result, and a caller is free to read answers there and not use `.print`
+at all.
+
 ## A starved instruction becomes a function
 
 An instruction without enough arguments is the most common event in a randomly
