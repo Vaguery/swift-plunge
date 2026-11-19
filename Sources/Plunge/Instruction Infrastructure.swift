@@ -11,14 +11,14 @@ import Foundation
 
 // Propeller replica language
 
-/// Every instruction in the language.
+/// The name of every named instruction: every instruction except the input and
+/// constant families (see ``PushInstruction``).
 ///
-/// An instruction's raw value is its name, the one the
-/// <doc:InstructionReference> lists it under. In a program an instruction is
-/// wrapped in an ``InstructionItem``; inside `program { … }` it can be written
-/// bare. To ask what an instruction does, use ``Runner/summary(of:)`` and
-/// ``Runner/signature(of:)``.
-public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable {
+/// A name's raw value is the instruction's name, the one the
+/// <doc:InstructionReference> lists it under. Code rarely needs this type: a
+/// ``PushInstruction`` has a shorthand for every name, so `.intAdd` can be written
+/// wherever an instruction is expected.
+public nonisolated enum InstructionName: String, CaseIterable, Codable, Sendable {
 
 
     // BOOL instructions
@@ -123,9 +123,6 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case execDeepDup, execDup, execDupItems, execDupTimes, execStackIsEmpty, execFlush, execPop, execPopItems, execRot, execShove, execStackDepth, execSwap, execYank, execYankDup
 
 
-    // INPUT instructions
-    //
-    case input0, input1, input2, input3, input4, input5, input6, input7, input8, input9
 
 
     // INT instructions
@@ -305,18 +302,9 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case vecStringDeepDup, vecStringDup, vecStringDupItems, vecStringDupTimes, vecStringStackIsEmpty, vecStringFlush, vecStringPop, vecStringPopItems, vecStringRot, vecStringShove, vecStringStackDepth, vecStringSwap, vecStringYank, vecStringYankDup
 
 
-    // CONSTANTS
-    //
-    // char constants
-    case char0, char1, char2, char3, char4, char5, char6, char7, char8, char9
 
-    // double constants
-    case double0, double1, double2, double3, double4, double5, double6, double7, double8, double9
 
-    // int constants
-    case int0, int1, int2, int3, int4, int5, int6, int7, int8, int9
 
-    // string constants
     // Collection reductions
     case vecIntSum, vecDoubleSum, vecIntMax, vecIntMin, vecDoubleMax, vecDoubleMin,
          vecStringMax, vecStringMin, stringMax, stringMin
@@ -392,19 +380,9 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
     case vecBoolDistinct, vecIntDistinct, vecDoubleDistinct, vecStringDistinct, stringDistinct, codeDistinct, vecBoolIntersect, vecIntIntersect, vecDoubleIntersect, vecStringIntersect, stringIntersect, codeIntersect,
          vecBoolDifference, vecIntDifference, vecDoubleDifference, vecStringDifference, stringDifference, codeDifference, vecBoolIsSubset, vecIntIsSubset, vecDoubleIsSubset, vecStringIsSubset, stringIsSubset, codeIsSubset
 
-    case string0, string1, string2, string3, string4, string5, string6, string7, string8, string9
 
-    // vecBool constants
-    case vecBool0, vecBool1, vecBool2, vecBool3, vecBool4, vecBool5, vecBool6, vecBool7, vecBool8, vecBool9
 
-    // vecDouble constants
-    case vecDouble0, vecDouble1, vecDouble2, vecDouble3, vecDouble4, vecDouble5, vecDouble6, vecDouble7, vecDouble8, vecDouble9
 
-    // vecInt constants
-    case vecInt0, vecInt1, vecInt2, vecInt3, vecInt4, vecInt5, vecInt6, vecInt7, vecInt8, vecInt9
-
-    // vecString constants
-    case vecString0, vecString1, vecString2, vecString3, vecString4, vecString5, vecString6, vecString7, vecString8, vecString9
 
 
     // Introspection
@@ -467,19 +445,8 @@ public nonisolated enum PushInstruction: String, CaseIterable, Codable, Sendable
 
 }
 
-typealias PI = PushInstruction
-
-nonisolated extension PushInstruction: CustomStringConvertible {
-    // The case name, so interpolating an instruction never falls back to runtime
-    // reflection (profiling caught it in the step loop). Raw values are the case
-    // names, so the text is unchanged.
-    //
-    /// The instruction's name.
-    public var description: String { rawValue }
-}
-
-nonisolated extension PushInstruction {
-    /// This instruction's position in `allCases` — its slot in a `BehaviorTable`.
+nonisolated extension InstructionName {
+    /// This name's position in `allCases`: its slot in a `BehaviorTable`.
     ///
     /// Read straight from the enum's storage, which for a payload-free enum is the
     /// case's declaration index: `allCases` order, with nothing to maintain when a
@@ -490,26 +457,61 @@ nonisolated extension PushInstruction {
     var ordinal: Int { Int(unsafeBitCast(self, to: UInt16.self)) }
 }
 
-/// Which `Behavior` runs for each instruction: an array in `PushInstruction.allCases`
-/// order, addressed by `ordinal`. It reads like the dictionary it replaced —
-/// `behaviors[.intAdd]`, `behaviors[.intAdd] = nil` to disable one — but a lookup
-/// is an index, not a String hash.
+/// Which `Behavior` runs for each instruction. Named instructions are an array
+/// in `InstructionName.allCases` order, addressed by `ordinal`; the input and
+/// constant families keep their listed members (`PushInstruction.allCases`) in
+/// arrays by slot, and build a member past those when it is first asked for. It
+/// reads like the dictionary it replaced — `behaviors[.intAdd]`,
+/// `behaviors[.intAdd] = nil` to disable one — but a lookup is an index, not a
+/// String hash.
 ///
 /// Built from `Interpreter.language` once; copies share storage until one is
 /// edited, so handing the same table to every interpreter in a batch is free.
 nonisolated struct BehaviorTable: Sendable {
-    private var slots: [Behavior?]
+    private var named: [Behavior?]
+    private var inputs: [Behavior?]
+    private var constants: [Behavior?]
+    /// Family members past the listed ones that are disabled.
+    private var disabledBeyond: Set<PushInstruction> = []
 
     init(_ language: [PushInstruction: Behavior], disabling disabled: Set<PushInstruction> = []) {
-        var slots = [Behavior?](repeating: nil, count: PushInstruction.allCases.count)
+        named = [Behavior?](repeating: nil, count: InstructionName.allCases.count)
+        inputs = [Behavior?](repeating: nil, count: PushInstruction.listedInputCount)
+        constants = [Behavior?](repeating: nil, count: PushInstruction.listedConstantCount)
         for (instruction, behavior) in language where !disabled.contains(instruction) {
-            slots[instruction.ordinal] = behavior
+            self[instruction] = behavior
         }
-        self.slots = slots
+        for instruction in disabled { self[instruction] = nil }
     }
 
     subscript(instruction: PushInstruction) -> Behavior? {
-        @inline(__always) get { slots[instruction.ordinal] }
-        set { slots[instruction.ordinal] = newValue }
+        @inline(__always) get {
+            switch instruction {
+            case .named(let name):
+                return named[name.ordinal]
+            case .input(let slot):
+                if slot >= 0, slot < inputs.count { return inputs[slot] }
+                guard slot >= 0, !disabledBeyond.contains(instruction) else { return nil }
+                return Interpreter.inputBehavior(slot)
+            case .constant(let slot):
+                if slot >= 0, slot < constants.count { return constants[slot] }
+                guard slot >= 0, !disabledBeyond.contains(instruction) else { return nil }
+                return Interpreter.constantBehavior(slot)
+            }
+        }
+        set {
+            switch instruction {
+            case .named(let name):
+                named[name.ordinal] = newValue
+            case .input(let slot) where slot >= 0 && slot < inputs.count:
+                inputs[slot] = newValue
+            case .constant(let slot) where slot >= 0 && slot < constants.count:
+                constants[slot] = newValue
+            default:
+                // Past the listed members a family's behavior is always the
+                // standard one, so the table only remembers which are disabled.
+                if newValue == nil { disabledBeyond.insert(instruction) } else { disabledBeyond.remove(instruction) }
+            }
+        }
     }
 }

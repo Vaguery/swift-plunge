@@ -28,12 +28,12 @@ struct RunnerCodableTests {
         let individual = Individual(
             id: "add",
             program: [
-                InstructionItem(.input0),
-                InstructionItem(.int0),
+                InstructionItem(.input(0)),
+                InstructionItem(.constant(0)),
                 InstructionItem(.intAdd),
                 CodeItem([IntItem(1), StringItem("x")])
             ],
-            constants: [.int0: IntItem(10), .string3: StringItem("hi")]
+            constants: [.constant(0): IntItem(10), .constant(23): StringItem("hi")]
         )
         let restored = try roundTrip(individual)
 
@@ -45,7 +45,7 @@ struct RunnerCodableTests {
     @Test func `TrainingCase round-trips through JSON`() throws {
         let trainingCase = TrainingCase(
             id: "c1",
-            inputs: [.input0: IntItem(5), .input1: VecIntItem([1, 2, 3])]
+            inputs: [.input(0): IntItem(5), .input(1): VecIntItem([1, 2, 3])]
         )
         let restored = try roundTrip(trainingCase)
 
@@ -91,10 +91,10 @@ struct RunnerCodableTests {
     @Test func `a decoded individual and case evaluate correctly`() async throws {
         let individual = Individual(
             id: "add",
-            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-            constants: [.int0: IntItem(10)]
+            program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+            constants: [.constant(0): IntItem(10)]
         )
-        let trainingCase = TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])
+        let trainingCase = TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])
 
         let decodedIndividual = try roundTrip(individual)
         let decodedCase = try roundTrip(trainingCase)

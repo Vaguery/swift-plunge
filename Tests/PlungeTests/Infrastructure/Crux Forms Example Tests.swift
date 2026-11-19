@@ -9,7 +9,7 @@
 //
 //  The program computes x·(c0·c1) + (2 + 3)·y, with some unrelated work mixed in:
 //  x and y are `.input0` and `.input1`, and c0 and c1 the constant slots
-//  `.double0` and `.double1`.
+//  `.constant10` and `.constant11`.
 //
 
 @testable import Plunge
@@ -19,16 +19,16 @@ import Testing
 struct CruxFormsExampleTests {
 
     static let program: [any Item] = [
-        InstructionItem(.input0), InstructionItem(.double0), InstructionItem(.double1),
+        InstructionItem(.input(0)), InstructionItem(.constant(10)), InstructionItem(.constant(11)),
         InstructionItem(.doubleMultiply), InstructionItem(.doubleMultiply),
         BoolItem(true), InstructionItem(.boolNot),                        // unrelated
         DoubleItem(2), DoubleItem(3), InstructionItem(.doubleAdd),
         IntItem(7), InstructionItem(.intDup), InstructionItem(.intAdd),   // unrelated
-        InstructionItem(.input1), InstructionItem(.doubleMultiply),
+        InstructionItem(.input(1)), InstructionItem(.doubleMultiply),
         InstructionItem(.doubleAdd)
     ]
-    static let inputs: [PushInstruction: any Item] = [.input0: DoubleItem(4), .input1: DoubleItem(10)]
-    static let constants: [PushInstruction: any Item] = [.double0: DoubleItem(0.5), .double1: DoubleItem(3)]
+    static let inputs: [PushInstruction: any Item] = [.input(0): DoubleItem(4), .input(1): DoubleItem(10)]
+    static let constants: [PushInstruction: any Item] = [.constant(10): DoubleItem(0.5), .constant(11): DoubleItem(3)]
 
     static func result() -> any Item {
         let inty = Interpreter.recordingProvenance()
@@ -48,15 +48,15 @@ struct CruxFormsExampleTests {
         let item = Self.result()
         #expect(item.pretty() == "56.0")
         // The crux: only what the value depends on; the bool and int work is gone.
-        #expect(CodeItem(item.crux()).pretty() == "( .input0 .double0 .double1 .doubleMultiply .doubleMultiply "
+        #expect(CodeItem(item.crux()).pretty() == "( .input0 .constant10 .constant11 .doubleMultiply .doubleMultiply "
                 + "2.0 3.0 .doubleAdd .input1 .doubleMultiply .doubleAdd )")
         // Distilled: the work on constants alone is its value.
         let distilled = item.distilledCrux()
         #expect(CodeItem(distilled.program).pretty() == "( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply "
                 + "«distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )")
-        #expect(distilled.derived.map(\.slotsRead) == [[.double0, .double1], []])
+        #expect(distilled.derived.map(\.slotsRead) == [[.constant(10), .constant(11)], []])
         #expect(distilled.derived.map { CodeItem($0.origin).pretty() }
-                == ["( .double0 .double1 .doubleMultiply )", "( 2.0 3.0 .doubleAdd )"])
+                == ["( .constant10 .constant11 .doubleMultiply )", "( 2.0 3.0 .doubleAdd )"])
         // Abstract: the derived constants are holes; the inputs stay in place.
         let abstract = distilled.abstracted()!
         #expect(abstract.key

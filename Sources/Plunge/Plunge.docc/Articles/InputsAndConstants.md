@@ -10,21 +10,25 @@ instructions that take no arguments:
 
 | | Instructions | Supplied by | Changes |
 |---|---|---|---|
-| **Inputs** | `.input0`, `.input1`, … | a ``TrainingCase`` | with every training case |
-| **Constants** | `.int0`, `.string3`, `.vecDouble7`, … | an ``Individual`` | with every individual |
+| **Inputs** | `.input(0)`, `.input(1)`, … | a ``TrainingCase`` | with every training case |
+| **Constants** | `.constant(0)`, `.constant(1)`, … | an ``Individual`` | with every individual |
+
+Each is a numbered family with no last member: `.input(k)` and `.constant(k)`
+exist for every `k` of 0 or more. A program prints them as `.input0` and
+`.constant12`, and those are also their names when encoded.
 
 Both are maps from an instruction to an item. The `bindings(_:)` function
 builds such a map from plain Swift values:
 
 ```swift
 let trainingCase = TrainingCase(id: "case 1", inputs: bindings([
-    .input0: 5,
-    .input1: [1, 2, 3],
+    .input(0): 5,
+    .input(1): [1, 2, 3],
 ]))
 let individual = Individual(
     id: "candidate 1",
-    program: program { PushInstruction.input0; PushInstruction.int0; PushInstruction.intAdd },
-    constants: bindings([.int0: 10]))
+    program: program { PushInstruction.input(0); PushInstruction.constant(0); PushInstruction.intAdd },
+    constants: bindings([.constant(0): 10]))
 ```
 
 ## Inputs
@@ -76,34 +80,37 @@ type, whatever the pair holds.
 named input shown by its name:
 
 ```swift
-configuration.labeled(program { PushInstruction.input1; PushInstruction.input0 })
+configuration.labeled(program { PushInstruction.input(1); PushInstruction.input(0) })
 // ".input-x1 .input-b"
 ```
 
 The name never changes what a program means. The program, its crux, its
 encoding and `pretty()` all keep `.input0`, so the same program means the same
 thing whatever problem it runs on. `inputSlotIssues` describes names that are
-empty, contain white space or repeat, and declarations beyond the slots the
-language has.
+empty, contain white space or repeat.
 
 ## Constants
 
-A constant instruction pushes a value that belongs to the individual. There are
-constants for eight types: ints, doubles, chars, strings and the four kinds of
-vector. Bools have none.
+A constant instruction pushes a value that belongs to the individual.
 
 Constants exist so that a program's *structure* and its *numbers* can vary
-separately. A program that mentions `.int3` instead of a literal 42 can be given
-a different value for `.int3` without changing a single item of the program, so
-a search can adjust a program's constants by one method while it rearranges
-programs by another. Two individuals with the same program and different
-constants are different individuals, and need different identifiers.
+separately. A program that mentions `.constant(3)` instead of a literal 42 can be
+given a different value for `.constant(3)` without changing a single item of the
+program, so a search can adjust a program's constants by one method while it
+rearranges programs by another. Two individuals with the same program and
+different constants are different individuals, and need different identifiers.
 
-A constant has a type, fixed by its name. A value of the wrong type for its slot
-(a string bound to `.int3`) is ignored when the run is loaded, and the slot
-stays empty. A constant instruction whose slot is empty pushes nothing and
-leaves an error of kind ``ErrorKind/missingConstant``;
-`.errorMissingConstantCount` counts them.
+**A constant has no type.** Its slot holds an item of any type, including a
+Boolean, a code block or a function, and the item goes to its own stack when the
+instruction runs. So changing a constant means changing the value an individual
+binds to it: its instruction only says which slot to read, and naming a
+different slot reads a different value, not another of the same type. (Until
+2026-11-19 constants had typed names, ten of each type: `.int3` became
+`.constant(3)`, `.double3` became `.constant(13)`, and `.vecBool9` became
+`.constant(79)`.)
+
+A constant instruction whose slot is empty pushes nothing and leaves an error of
+kind ``ErrorKind/missingConstant``; `.errorMissingConstantCount` counts them.
 
 Like an input, a constant reaches its stack by way of `.exec`, one step after
 its instruction runs.
@@ -114,27 +121,35 @@ its instruction runs.
 laying an individual's own values over a shared set:
 
 ```swift
-let shared = bindings([.int0: 10, .int1: 100, .string0: "seed"])
-let constants = merged(shared, bindings([.int0: 42]))   // int0 is 42
+let shared = bindings([.constant(0): 10, .constant(1): 100, .constant(2): "seed"])
+let constants = merged(shared, bindings([.constant(0): 42]))   // constant0 is 42
 ```
 
 ## How many slots
 
-Today there are ten input slots and ten constant slots for each type, numbered
-0 to 9. Don't build that number into your code: the instructions that exist are
-the authority, and the count may grow. Ask the language instead:
+As many as a problem and an individual need: the families have no last member.
+The language *lists* the first few of each wherever it lists its instructions:
+ten inputs (`.input(0)` to `.input(9)`, ``PushInstruction/listedInputCount``)
+and eighty constants (`.constant(0)` to `.constant(79)`,
+``PushInstruction/listedConstantCount``). Those are the ones random code draws
+from; any other member behaves the same way.
 
 ```swift
 let runner = Runner()
-runner.instructions(role: .input)       // every input instruction
-runner.instructions(role: .constant)    // every constant instruction
+runner.instructions(role: .input)       // the listed inputs
+runner.instructions(role: .constant)    // the listed constants
+runner.signature(of: .input(25))        // the same as .input(0)'s
 ```
+
+Random code fills the listed constants by a convention of its own, ten of each
+type (``PushInstruction/conventionalConstantStacks``). The language does not
+check it.
 
 ## Inputs, constants and provenance
 
 Inputs and constants belong to the *environment* of a run: they are supplied
 from outside and are the same every time the same pairing is evaluated. So when
-an item's crux mentions `.input0` or `.int3`, it mentions them by name, and the
+an item's crux mentions `.input0` or `.constant3`, it mentions them by name, and the
 crux reproduces the item when it is run with the same inputs and constants.
 That is also how the library can tell you whether an answer depends on its
 inputs at all (``RunnerConfiguration/cruxInputTokens``). See <doc:Provenance>.

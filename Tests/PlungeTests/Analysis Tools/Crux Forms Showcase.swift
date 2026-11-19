@@ -35,7 +35,7 @@ struct CruxFormsShowcase {
 
     static func value(_ program: [any Item], x: Double, y: Double) -> Double? {
         let redo = Interpreter()
-        redo.load(inputs: [.input0: DoubleItem(x), .input1: DoubleItem(y)], program: program)
+        redo.load(inputs: [.input(0): DoubleItem(x), .input(1): DoubleItem(y)], program: program)
         redo.run()
         return redo.stacks[.double]!.first.flatMap { $0.exactly(DoubleItem.self)?.value }
     }
@@ -80,11 +80,11 @@ struct CruxFormsShowcase {
         lines += Self.fitLines(abstract)
 
         // 3. A fragment with parameters in place, and one without.
-        let inputs: [PushInstruction: any Item] = [.input0: DoubleItem(4)]
-        let withParameters = Self.top(Self.ins(.input0) + [DoubleItem(2)] + Self.ins(.doubleMultiply)
+        let inputs: [PushInstruction: any Item] = [.input(0): DoubleItem(4)]
+        let withParameters = Self.top(Self.ins(.input(0)) + [DoubleItem(2)] + Self.ins(.doubleMultiply)
                                  + [DoubleItem(1)] + Self.ins(.doubleAdd), inputs: inputs).distilledCrux()
-        let bare = Self.top(Self.ins(.input0, .doubleSin), inputs: inputs).distilledCrux()
-        let bareWithout = Self.top(Self.ins(.input0), inputs: inputs).distilledCrux()
+        let bare = Self.top(Self.ins(.input(0), .doubleSin), inputs: inputs).distilledCrux()
+        let bareWithout = Self.top(Self.ins(.input(0)), inputs: inputs).distilledCrux()
         lines += ["== parameters in place or not",
                   "A crux:     \(CodeItem(withParameters.program).pretty())",
                   "A abstract: \(withParameters.abstracted()!.key)",
@@ -96,15 +96,15 @@ struct CruxFormsShowcase {
                   "C tunable:  \(bare.tunable()!.key)"]
 
         // 4. Different programs, one skeleton.
-        let both: [PushInstruction: any Item] = [.input0: DoubleItem(4), .input1: DoubleItem(10)]
-        let constants: [PushInstruction: any Item] = [.double0: DoubleItem(0.5), .double3: DoubleItem(9)]
+        let both: [PushInstruction: any Item] = [.input(0): DoubleItem(4), .input(1): DoubleItem(10)]
+        let constants: [PushInstruction: any Item] = [.constant(10): DoubleItem(0.5), .constant(13): DoubleItem(9)]
         let programs: [[any Item]] = [
-            Self.ins(.input0, .double0, .doubleMultiply),
-            Self.ins(.input1, .double3, .doubleMultiply),
-            Self.ins(.input0, .double3, .doubleSubtract, .double0, .doubleSubtract, .double3, .doubleAdd) // differs
+            Self.ins(.input(0), .constant(10), .doubleMultiply),
+            Self.ins(.input(1), .constant(13), .doubleMultiply),
+            Self.ins(.input(0), .constant(13), .doubleSubtract, .constant(10), .doubleSubtract, .constant(13), .doubleAdd) // differs
                 + [],
-            [DoubleItem(2)] + Self.ins(.input1, .doubleMultiply),
-            Self.ins(.double0, .double3, .doubleAdd, .input0, .doubleMultiply)
+            [DoubleItem(2)] + Self.ins(.input(1), .doubleMultiply),
+            Self.ins(.constant(10), .constant(13), .doubleAdd, .input(0), .doubleMultiply)
         ]
         lines.append("== skeletons")
         for program in programs {
@@ -151,14 +151,14 @@ struct CruxFormsShowcase {
     // MARK: - A dozen examples across the language, as JSON for the documentation
 
     static let allInputs: [PushInstruction: any Item] = [
-        .input0: IntItem(5), .input1: StringItem("hello world"), .input2: BoolItem(true), .input3: CharItem("m"),
-        .input4: DoubleItem(2.5), .input5: VecIntItem([1, 2, 3]), .input6: VecDoubleItem([0.5, 1.5, 4]),
-        .input7: VecBoolItem([true, false, true]), .input8: VecStringItem(["apple", "pear", "fig"])
+        .input(0): IntItem(5), .input(1): StringItem("hello world"), .input(2): BoolItem(true), .input(3): CharItem("m"),
+        .input(4): DoubleItem(2.5), .input(5): VecIntItem([1, 2, 3]), .input(6): VecDoubleItem([0.5, 1.5, 4]),
+        .input(7): VecBoolItem([true, false, true]), .input(8): VecStringItem(["apple", "pear", "fig"])
     ]
     static let allConstants: [PushInstruction: any Item] = [
-        .int0: IntItem(7), .int1: IntItem(-2), .double0: DoubleItem(0.5), .double1: DoubleItem(3),
-        .string0: StringItem("abc"), .vecInt0: VecIntItem([10, 20, 30]),
-        .vecString0: VecStringItem(["fig", "cba", "plum"])
+        .constant(0): IntItem(7), .constant(1): IntItem(-2), .constant(10): DoubleItem(0.5), .constant(11): DoubleItem(3),
+        .constant(20): StringItem("abc"), .constant(40): VecIntItem([10, 20, 30]),
+        .constant(60): VecStringItem(["fig", "cba", "plum"])
     ]
 
     struct Showcased: Encodable {
@@ -228,43 +228,43 @@ struct CruxFormsShowcase {
             Self.showcase("double arithmetic", Example.program, on: .double,
                           note: "the running example, with unrelated bool and int work mixed in",
                           (Example.inputs, Example.constants)),
-            Self.showcase("int arithmetic", ins(.input0, .int0, .intMultiply) + [IntItem(3), IntItem(4)]
+            Self.showcase("int arithmetic", ins(.input(0), .constant(0), .intMultiply) + [IntItem(3), IntItem(4)]
                      + ins(.intAdd, .intAdd), on: .int, note: "a slot read times an input, plus literal work"),
-            Self.showcase("bool", ins(.input2) + [IntItem(3), IntItem(4)] + ins(.intLT, .boolAnd), on: .bool,
+            Self.showcase("bool", ins(.input(2)) + [IntItem(3), IntItem(4)] + ins(.intLT, .boolAnd), on: .bool,
                      note: "a comparison of two literals feeds a logical operation on an input"),
-            Self.showcase("char", ins(.input3, .intFromChar, .int0, .intAdd, .charFromInt), on: .char,
+            Self.showcase("char", ins(.input(3), .intFromChar, .constant(0), .intAdd, .charFromInt), on: .char,
                      note: "a code-point shift by a constant slot"),
-            Self.showcase("string", ins(.string0, .stringReverse, .string0, .int1, .stringNth, .stringRemove, .input1,
+            Self.showcase("string", ins(.constant(20), .stringReverse, .constant(20), .constant(1), .stringNth, .stringRemove, .input(1),
                                    .stringConcat), on: .string,
                      note: "a constant string reversed, a character picked by a constant index removed from it, "
                          + "then the input joined on"),
-            Self.showcase("vector of strings", ins(.vecString0, .string0, .stringReverse, .vecStringRemove, .input8,
+            Self.showcase("vector of strings", ins(.constant(60), .constant(20), .stringReverse, .vecStringRemove, .input(8),
                                               .vecStringConcat), on: .vecString,
                      note: "a constant vector filtered by a reversed constant string, then the input appended"),
-            Self.showcase("vector of ints", ins(.input5, .vecInt0, .vecIntAdd) + [IntItem(2)] + ins(.vecIntMultiplyInt),
+            Self.showcase("vector of ints", ins(.input(5), .constant(40), .vecIntAdd) + [IntItem(2)] + ins(.vecIntMultiplyInt),
                      on: .vecInt, note: "an input added element-wise to a constant vector, then every element doubled"),
-            Self.showcase("vector of doubles", ins(.input6, .vecDoubleMean, .double0, .double1, .doubleAdd,
+            Self.showcase("vector of doubles", ins(.input(6), .vecDoubleMean, .constant(10), .constant(11), .doubleAdd,
                                               .doubleMultiply), on: .double,
                      note: "the mean of an input vector, scaled by work on two constant slots"),
-            Self.showcase("vector of bools", ins(.input7, .vecBoolNot) + [IntItem(3), IntItem(4)]
+            Self.showcase("vector of bools", ins(.input(7), .vecBoolNot) + [IntItem(3), IntItem(4)]
                      + ins(.intLT, .vecBoolAndBool), on: .vecBool,
                      note: "an input negated element-wise, then masked by a constant comparison"),
-            Self.showcase("a loop", [IntItem(0), CodeItem(ins(.input0, .intAdd) + [IntItem(12)] + ins(.intMin)),
+            Self.showcase("a loop", [IntItem(0), CodeItem(ins(.input(0), .intAdd) + [IntItem(12)] + ins(.intMin)),
                                      IntItem(50)]
                      + ins(.execDoTimes), on: .int,
                      note: "a counted loop that adds the input fifty times but never passes 12"),
-            Self.showcase("the loop, minimized first", [IntItem(0), CodeItem(ins(.input0, .intAdd) + [IntItem(12)]
+            Self.showcase("the loop, minimized first", [IntItem(0), CodeItem(ins(.input(0), .intAdd) + [IntItem(12)]
                           + ins(.intMin)), IntItem(3)] + ins(.execDoTimes), on: .int,
                           note: "the same loop at the three passes loop minimization found"),
             Self.showcase("code built, then run", [CodeItem([IntItem(2)]), CodeItem([IntItem(3)] + ins(.intMultiply))]
-                     + ins(.codeConcat, .codeDo, .input0, .intAdd), on: .int,
+                     + ins(.codeConcat, .codeDo, .input(0), .intAdd), on: .int,
                      note: "two code blocks joined and run: the crux keeps what ran, not how the code was built"),
             Self.showcase("a function mapped", [CodeItem([IntItem(3)] + ins(.intMultiply))]
-                     + ins(.codePushAllFunctions, .input5, .vecIntMap), on: .vecInt,
+                     + ins(.codePushAllFunctions, .input(5), .vecIntMap), on: .vecInt,
                      note: "a function derived from a code block and mapped over the input vector"),
-            Self.showcase("a stack depth", ins(.input0) + [IntItem(10)] + ins(.intStackDepth, .intAdd, .intMultiply),
+            Self.showcase("a stack depth", ins(.input(0)) + [IntItem(10)] + ins(.intStackDepth, .intAdd, .intMultiply),
                      on: .int, note: "the depth of the int stack, read mid-program, is the run's state"),
-            Self.showcase("a print", ins(.input0) + [IntItem(2), IntItem(3)] + ins(.intAdd, .intMultiply, .intPrint),
+            Self.showcase("a print", ins(.input(0)) + [IntItem(2), IntItem(3)] + ins(.intAdd, .intMultiply, .intPrint),
                      on: .print, note: "a printed result rests on .print")
         ]
         let encoder = JSONEncoder()

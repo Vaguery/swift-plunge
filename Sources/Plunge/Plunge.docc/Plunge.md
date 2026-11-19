@@ -120,6 +120,7 @@ whatever it prints.
 ### The language's vocabulary
 
 - ``PushInstruction``
+- ``InstructionName``
 - ``PushStack``
 - ``InstructionSignature``
 - ``Produces``

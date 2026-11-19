@@ -59,9 +59,12 @@ public nonisolated struct InstructionTagging: Sendable, Hashable, Codable {
         tags.reduce(into: []) { $0.formUnion(members[$1] ?? []) }
     }
 
-    /// Every tag `instruction` carries.
+    /// Every tag `instruction` carries. An input or a constant also carries every
+    /// tag of its family (the tags of `.input(0)` or `.constant(0)`), so a member
+    /// past the listed ones is tagged like them.
     public func tags(of instruction: PushInstruction) -> Set<InstructionTag> {
-        Set(members.filter { $0.value.contains(instruction) }.keys)
+        let family = instruction.representative
+        return Set(members.filter { $0.value.contains(instruction) || $0.value.contains(family) }.keys)
     }
 
     /// This tagging with `tag` also on `instructions`.

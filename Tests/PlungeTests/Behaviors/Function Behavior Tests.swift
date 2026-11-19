@@ -145,8 +145,8 @@ struct FunctionBehaviorTests {
     }
 
     @Test func `the function sees the program's inputs`() {
-        let addInput = Self.derived(Self.op(.input1), Self.op(.intAdd))
-        let inty = Self.run(addInput + [VecIntItem([1, 2]), Self.op(.vecIntMap)], inputs: [.input1: IntItem(100)])
+        let addInput = Self.derived(Self.op(.input(1)), Self.op(.intAdd))
+        let inty = Self.run(addInput + [VecIntItem([1, 2]), Self.op(.vecIntMap)], inputs: [.input(1): IntItem(100)])
         #expect(stackString(inty, .vecInt) == "[ [101, 102] ]")
     }
 

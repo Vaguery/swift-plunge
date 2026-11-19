@@ -14,11 +14,11 @@ struct StreamingEvaluateTests {
 
     private func request(count: Int) -> EvaluationRequest {
         let individuals = (0..<count).map { n in
-            Individual(id: "i\(n)", program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-                       constants: [.int0: IntItem(n)])
+            Individual(id: "i\(n)", program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+                       constants: [.constant(0): IntItem(n)])
         }
-        let cases = [TrainingCase(id: "c0", inputs: [.input0: IntItem(5)]),
-                     TrainingCase(id: "c1", inputs: [.input0: IntItem(9)])]
+        let cases = [TrainingCase(id: "c0", inputs: [.input(0): IntItem(5)]),
+                     TrainingCase(id: "c1", inputs: [.input(0): IntItem(9)])]
         let pairings = individuals.flatMap { ind in cases.map { Pairing(individual: ind.id, trainingCase: $0.id) } }
         let config = RunnerConfiguration(recorders: [RecorderSpec("result", observing: .top(.int), keeping: .finalOnly)])
         return EvaluationRequest(individuals: individuals, trainingCases: cases, pairings: pairings, configuration: config)

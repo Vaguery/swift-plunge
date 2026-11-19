@@ -94,7 +94,7 @@ extension FunctionOutcome {
         var result = Conversion()
         while sub.counter < sub.config.stepLimit, let next = sub.stacks[.exec]!.first {
             if let token = (next as? InstructionItem)?.value {
-                if Interpreter.inputSlots.contains(token), s.inputs[token] == nil { result.unboundInputs += 1 }
+                if token.isInput, s.inputs[token] == nil { result.unboundInputs += 1 }
                 result.holesMade += supplyHoles(for: token, in: sub, registry: &registry)
             }
             let before = Dictionary(uniqueKeysWithValues: holeStacks.map { ($0, sub.stacks[$0]!.map(fingerprint)) })

@@ -40,7 +40,7 @@ public nonisolated func pushItem(_ value: Any) -> (any Item)? {
 ///
 /// ```swift
 /// let inputs = bindings([.input0: 5, .input1: [1, 2, 3]])
-/// let constants = bindings([.int0: 10, .string0: "seed"])
+/// let constants = bindings([.constant0: 10, .constant20: "seed"])
 /// ```
 public nonisolated func bindings(
     _ pairs: KeyValuePairs<PushInstruction, Any>
@@ -59,7 +59,7 @@ public nonisolated func bindings(
 /// overrides — without caring which slots each piece fills.
 ///
 /// ```swift
-/// let constants = merged(sharedConstants, bindings([.int0: 42]))  // .int0 overrides
+/// let constants = merged(sharedConstants, bindings([.constant0: 42]))  // .constant0 overrides
 /// ```
 public nonisolated func merged(
     _ maps: [PushInstruction: any Item]...

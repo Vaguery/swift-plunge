@@ -103,12 +103,12 @@ These are defined fully in <doc:ErrorsAndRefusals>.
 - term Runner: The object that holds individuals and training cases and
   evaluates pairings. See <doc:EvaluatingPrograms>.
 - term Input: A value a training case supplies, pushed by an instruction such
-  as `.input0`.
-- term Constant: A value an individual supplies, pushed by an instruction such
-  as `.int3`.
-- term Slot: One numbered place for an input or a constant: `.input3` is input
-  slot 3, and `.int3` is int constant slot 3. A configuration can declare an
-  input slot's name and type (``InputSlot``).
+  as `.input(0)` (printed `.input0`).
+- term Constant: A value an individual supplies, of any type, pushed by an
+  instruction such as `.constant(3)` (printed `.constant3`).
+- term Slot: One numbered place for an input or a constant: `.input(3)` is input
+  slot 3, and `.constant(3)` is constant slot 3. Each family has no last slot. A
+  configuration can declare an input slot's name and type (``InputSlot``).
 - term Recorder: A named request to observe one thing during a run, such as the
   top of a stack. See <doc:ObservingARun>.
 - term Trace: What one recorder collected in one run.

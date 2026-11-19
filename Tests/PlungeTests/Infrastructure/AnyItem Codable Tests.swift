@@ -125,7 +125,7 @@ struct AnyItemCodableTests {
     // A whole program ([any Item]) transports as [AnyItem].
     @Test func `a program array transports as [AnyItem]`() throws {
         let program: [any Item] = [
-            InstructionItem(.input0),
+            InstructionItem(.input(0)),
             IntItem(7),
             InstructionItem(.intAdd)
         ]

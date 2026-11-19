@@ -91,16 +91,6 @@ The `.vecBool` stack holds vectors of bools. It shares its instruction families 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecBool0` | Pushes the run's constant 0 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool1` | Pushes the run's constant 1 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool2` | Pushes the run's constant 2 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool3` | Pushes the run's constant 3 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool4` | Pushes the run's constant 4 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool5` | Pushes the run's constant 5 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool6` | Pushes the run's constant 6 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool7` | Pushes the run's constant 7 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool8` | Pushes the run's constant 8 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
-| `.vecBool9` | Pushes the run's constant 9 for vectors of bools, by way of `.exec`; refuses when the run assigns none. | — | `vecBool` |
 | `.vecBoolLookupContaining` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecBool` (read) | `vecBool`, `int`; may refuse |
 | `.vecBoolLookupContainingFrom` | Reads the top vector of bools as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecBool` (read) | `vecBool`, `int`; may refuse |
 | `.vecBoolLookupEqual` | Reads the top vector of bools as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecBool` (read) | `vecBool`, `int`; may refuse |

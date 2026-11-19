@@ -11,12 +11,12 @@ import Testing
 
 @Suite
 struct CruxConstructionTests {
-    static let inputs: [PushInstruction: any Item] = [.input0: DoubleItem(3), .input1: DoubleItem(-2)]
+    static let inputs: [PushInstruction: any Item] = [.input(0): DoubleItem(3), .input(1): DoubleItem(-2)]
 
     /// The skeleton of a lone input read: `$0`.
     static var input: AbstractCrux {
         let inty = Interpreter.recordingProvenance()
-        inty.load(inputs: inputs, program: [InstructionItem(.input0)])
+        inty.load(inputs: inputs, program: [InstructionItem(.input(0))])
         inty.run(stepLimit: 100)
         return inty.stacks[.double]!.first!.distilledCrux().skeleton()!
     }
@@ -40,13 +40,13 @@ struct CruxConstructionTests {
         let extended = try #require(start.extended(by: .doubleMultiply, with: .input(.double)))
         #expect(Self.body(extended) == "$0 $1 .doubleMultiply" && extended.holeCount == 2)
         if case .anyInput(let stack) = extended.roles[1] { #expect(stack == .double) } else { Issue.record("role") }
-        #expect(Self.value(extended, .input0, .input1) == -6)
+        #expect(Self.value(extended, .input(0), .input(1)) == -6)
         let leafFirst = try #require(start.extended(by: .doubleSubtract, with: .input(.double), leafFirst: true))
         #expect(Self.body(leafFirst) == "$0 $1 .doubleSubtract")
-        #expect(Self.value(leafFirst, .input1, .input0) == -5)    // −2 − 3
+        #expect(Self.value(leafFirst, .input(1), .input(0)) == -5)    // −2 − 3
         let squared = try #require(start.reused(by: .doubleMultiply))
         #expect(Self.body(squared) == "$0 .doubleDup .doubleMultiply")
-        #expect(Self.value(squared, .input0) == 9)
+        #expect(Self.value(squared, .input(0)) == 9)
     }
 
     @Test func `combine keeps the holes distinct, and graft splices a structure into a hole`() throws {
@@ -54,13 +54,13 @@ struct CruxConstructionTests {
         let squared = try #require(start.reused(by: .doubleMultiply))
         let difference = try #require(start.combined(with: squared, by: .doubleSubtract))
         #expect(Self.body(difference) == "$0 $1 .doubleDup .doubleMultiply .doubleSubtract")
-        #expect(Self.value(difference, .input0, .input1) == -1)  // 3 − (−2)²
+        #expect(Self.value(difference, .input(0), .input(1)) == -1)  // 3 − (−2)²
         // x1·(x1 + x2): graft a sum into the second hole of a product.
         let product = try #require(start.extended(by: .doubleMultiply, with: .input(.double)))
         let sum = try #require(start.extended(by: .doubleAdd, with: .input(.double)))
         let grafted = try #require(product.grafted(sum, into: 1))
         #expect(Self.body(grafted) == "$0 $1 $2 .doubleAdd .doubleMultiply" && grafted.holeCount == 3)
-        #expect(Self.value(grafted, .input0, .input0, .input1) == 3)  // 3·(3 + (−2))
+        #expect(Self.value(grafted, .input(0), .input(0), .input(1)) == 3)  // 3·(3 + (−2))
         // Steps compose: wrap the graft.
         let negated = grafted.wrapped(by: .doubleNegate).map(Self.body)
         #expect(negated == "$0 $1 $2 .doubleAdd .doubleMultiply .doubleNegate")

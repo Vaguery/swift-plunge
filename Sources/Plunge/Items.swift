@@ -85,7 +85,7 @@ public nonisolated protocol Pretty {
 //     (`«observed .boolStackDepth: 4»`) says it is a literal standing in for a
 //     history, not one the program contained. The same goes for errors that
 //     depend on transient stack state ("missing args", "on empty stack") and for
-//     the interpreter's own diagnostics. (Contrast `.input3` and `.int7`, which read the
+//     the interpreter's own diagnostics. (Contrast `.input3` and `.constant7`, which read the
 //     *environment*: those bindings outlive the run and are re-supplied when a
 //     crux is re-run, so naming them reproduces the value and they do record.)
 //     The test is whether re-running the name would find the same world.

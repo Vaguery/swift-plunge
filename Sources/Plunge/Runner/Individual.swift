@@ -12,7 +12,7 @@
 /// scores) stays with the search. The library is given a program that is ready
 /// to run, and never translates one.
 ///
-/// Constants are keyed by their instruction, such as `.int3`, so that a search
+/// Constants are keyed by their instruction, such as `.constant3`, so that a search
 /// can tune them without changing the program's structure. See
 /// <doc:InputsAndConstants>.
 public nonisolated struct Individual: Identifiable, Sendable {

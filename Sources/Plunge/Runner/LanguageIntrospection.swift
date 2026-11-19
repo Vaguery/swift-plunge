@@ -63,7 +63,7 @@ public extension Runner {
 
     /// Every tag `instruction` declares — usually none.
     nonisolated func declaredTags(of instruction: PushInstruction) -> Set<InstructionTag> {
-        Interpreter.declaredTags(of: instruction)
+        Interpreter.declaredTags(of: instruction.representative)
     }
 
     /// The instructions that **consume** `stack` — pop items from it — sorted.
@@ -82,14 +82,18 @@ public extension Runner {
     /// declares, as the instruction reference shows it. Nil if the language has
     /// no such instruction.
     nonisolated func summary(of instruction: PushInstruction) -> String? {
-        Interpreter.language[instruction]?.summary
+        if case .named = instruction { return Interpreter.language[instruction]?.summary }
+        // A family member past the listed ones is made when used; its summary is
+        // the one its own behavior declares.
+        return Interpreter.languageTable[instruction]?.summary
     }
 
     /// What `instruction` takes and gives, read off its declarations — its edge
     /// in the language's input-output map. Nil if the language has
     /// no such instruction.
     nonisolated func signature(of instruction: PushInstruction) -> InstructionSignature? {
-        Interpreter.signatures[instruction]
+        guard instruction.slot.map({ $0 >= 0 }) ?? true else { return nil }
+        return Interpreter.signatures[instruction.representative]
     }
 
     /// The instructions that can put a value on `stack`, sorted: where chaining

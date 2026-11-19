@@ -41,7 +41,7 @@ nonisolated struct ReadContext {
         return interpreter.nextRefKey + meter.keysDrawn
     }
 
-    /// The typed constant bindings (`.int3`, `.vecDouble8`).
+    /// The constant bindings (`.constant(3)`, `.constant(58)`), each of any type.
     var constants: [PushInstruction: any Item] { interpreter.constants }
     /// The input bindings (`.input0` …).
     var inputs: [PushInstruction: any Item] { interpreter.inputs }

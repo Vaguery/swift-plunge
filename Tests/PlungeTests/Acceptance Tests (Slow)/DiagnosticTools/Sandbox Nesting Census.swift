@@ -61,9 +61,9 @@ struct SandboxNestingCensus {
               let collection = inty.stacks[stack]!.first, let elements = Probe.elements(of: collection),
               !elements.isEmpty else { return nil }
         if family == .reduce {
-            return zip(elements, elements.dropFirst()).map { (block.value, [.input0: $0, .input1: $1]) }
+            return zip(elements, elements.dropFirst()).map { (block.value, [.input(0): $0, .input(1): $1]) }
         }
-        return elements.map { (block.value, [.input0: $0]) }
+        return elements.map { (block.value, [.input(0): $0]) }
     }
 
     /// A sub-interpreter as `Interpreter.run(_:binding:in:)` makes one.

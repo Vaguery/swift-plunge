@@ -146,7 +146,7 @@ nonisolated func referencedInstructions(_ items: [any Item]) -> Set<PushInstruct
 /// The transitive set of instruction tokens a program depends on: those it
 /// mentions directly, plus (recursively) those mentioned by any code-valued
 /// binding it reaches. This is what surfaces a payload hidden in an input — the
-/// program names `.input2`, whose bound code names `.char5`, and so on.
+/// program names `.input2`, whose bound code names `.constant35`, and so on.
 nonisolated func referencedClosure(program: [any Item], bindings: [PushInstruction: any Item]) -> Set<PushInstruction> {
     var seen = referencedInstructions(program)
     var frontier = seen

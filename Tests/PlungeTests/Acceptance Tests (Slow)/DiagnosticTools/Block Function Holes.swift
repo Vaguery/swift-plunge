@@ -68,7 +68,7 @@ extension FunctionOutcome {
     /// different slot each round), else a fixed stand-in value.
     static func placeholder(_ stack: PushStack, _ ordinal: Int, round: Int,
                             constants: [PushInstruction: any Item]) -> any Item {
-        if let slot = PushInstruction(rawValue: "\(stack)\((ordinal + 3 * round) % 10)"),
+        if let slot = PushInstruction.conventionalConstant(stack, (ordinal + 3 * round) % 10),
            var value = constants[slot] {
             value.call = []
             return value

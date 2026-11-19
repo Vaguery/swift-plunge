@@ -189,8 +189,8 @@ struct WorldAccessExperiment {
     static func run(_ program: [any Item], constants: [PushInstruction: any Item], puzzle: Puzzle,
                     condition: Condition, into tally: inout Tally) {
         var world = JugWorld(capacities: puzzle.capacities, goal: puzzle.goal)
-        var inputs: [PushInstruction: any Item] = [.input3: IntItem(puzzle.goal)]
-        for (slot, capacity) in zip([PushInstruction.input0, .input1, .input2], puzzle.capacities) {
+        var inputs: [PushInstruction: any Item] = [.input(3): IntItem(puzzle.goal)]
+        for (slot, capacity) in zip([PushInstruction.input(0), .input(1), .input(2)], puzzle.capacities) {
             inputs[slot] = IntItem(capacity)
         }
         let inty = Interpreter()

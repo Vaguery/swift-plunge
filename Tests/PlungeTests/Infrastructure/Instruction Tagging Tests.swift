@@ -26,8 +26,8 @@ struct InstructionTaggingTests {
         }
         #expect(flowTags(.intAdd) == [.consumer])
         #expect(flowTags(.stringReverse) == [.neutral])
-        #expect(flowTags(.input0) == [.producer])
-        #expect(flowTags(.int0) == [.producer])
+        #expect(flowTags(.input(0)) == [.producer])
+        #expect(flowTags(.constant(0)) == [.producer])
         // Rearrangers and control declare no count.
         #expect(flowTags(.intDup).isEmpty && flowTags(.intPop).isEmpty && flowTags(.execIf).isEmpty)
         // At most one flow tag each, and the three are the flow facet.

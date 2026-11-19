@@ -25,19 +25,19 @@ struct BuildersTests {
     }
 
     @Test func `bindings builds an instruction-keyed map from raw values`() {
-        let inputs = bindings([.input0: 5, .input1: [1, 2, 3]])
-        #expect((inputs[.input0] as? IntItem)?.value == 5)
-        #expect((inputs[.input1] as? VecIntItem)?.value == [1, 2, 3])
+        let inputs = bindings([.input(0): 5, .input(1): [1, 2, 3]])
+        #expect((inputs[.input(0)] as? IntItem)?.value == 5)
+        #expect((inputs[.input(1)] as? VecIntItem)?.value == [1, 2, 3])
     }
 
     @Test func `program result builder mixes literals and instructions`() {
         let p = program {
-            PushInstruction.input0
+            PushInstruction.input(0)
             10
             PushInstruction.intAdd
         }
         #expect(p.count == 3)
-        #expect((p[0] as? InstructionItem)?.value == .input0)
+        #expect((p[0] as? InstructionItem)?.value == .input(0))
         #expect((p[1] as? IntItem)?.value == 10)
         #expect((p[2] as? InstructionItem)?.value == .intAdd)
     }
@@ -54,13 +54,13 @@ struct BuildersTests {
         let individual = Individual(
             id: "add",
             program: program {
-                PushInstruction.input0
-                PushInstruction.int0
+                PushInstruction.input(0)
+                PushInstruction.constant(0)
                 PushInstruction.intAdd
             },
-            constants: bindings([.int0: 10])
+            constants: bindings([.constant(0): 10])
         )
-        let trainingCase = TrainingCase(id: "c1", inputs: bindings([.input0: 5]))
+        let trainingCase = TrainingCase(id: "c1", inputs: bindings([.input(0): 5]))
 
         let runner = Runner(
             configuration: RunnerConfiguration(recorders: [RecorderSpec("topInt", observing: .top(.int))])

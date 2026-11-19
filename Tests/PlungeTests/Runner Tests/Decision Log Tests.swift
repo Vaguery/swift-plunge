@@ -18,7 +18,7 @@ struct DecisionLogTests {
         var settings = InterpreterSettings()
         settings.recordsProvenance = true
         return evaluateOne(individual: Individual(id: "p", program: program, constants: [:]),
-                           trainingCase: TrainingCase(id: "c", inputs: [.input0: IntItem(input)]),
+                           trainingCase: TrainingCase(id: "c", inputs: [.input(0): IntItem(input)]),
                            configuration: RunnerConfiguration(settings: settings, recorders: recorders))
     }
 
@@ -32,7 +32,7 @@ struct DecisionLogTests {
     static func text(_ item: AnyItem?) -> String? { item.map { ($0.item as? CodeItem)?.pretty() ?? "" } }
 
     /// `input0 > 5`, then "big" or "small".
-    static let sizing: [any Item] = [InstructionItem(.input0), IntItem(5), InstructionItem(.intGT),
+    static let sizing: [any Item] = [InstructionItem(.input(0)), IntItem(5), InstructionItem(.intGT),
                                      CodeItem([StringItem("big")]), CodeItem([StringItem("small")]),
                                      InstructionItem(.execIf)]
 
@@ -52,7 +52,7 @@ struct DecisionLogTests {
 
     @Test func `execWhen and codeDoIf log one block, and nothing for false`() throws {
         for conditional in [PushInstruction.execWhen, .codeDoIf] {
-            let program: [any Item] = [i(.input0), IntItem(5), i(.intGT), CodeItem([IntItem(1)]),
+            let program: [any Item] = [i(.input(0)), IntItem(5), i(.intGT), CodeItem([IntItem(1)]),
                                        i(conditional)]
             let decision = try #require(Self.decisions(Self.run(program, input: 3)).first)
             #expect(decision.instruction == conditional && !decision.tookTrue)
@@ -71,7 +71,7 @@ struct DecisionLogTests {
         // Three passes, each deciding on the loop's growing int.
         let body = CodeItem([i(.intDup), IntItem(10), i(.intGT), CodeItem([IntItem(1)]),
                              CodeItem([IntItem(2)]), i(.execIf), i(.intAdd)])
-        let log = Self.decisions(Self.run([i(.input0), IntItem(3), body, i(.execDoTimes)], input: 9))
+        let log = Self.decisions(Self.run([i(.input(0)), IntItem(3), body, i(.execDoTimes)], input: 9))
         #expect(log.count == 3)
         #expect(log.map(\.tookTrue) == [false, true, true])
         #expect(log.map(\.step) == log.map(\.step).sorted() && Set(log.map(\.step)).count == 3)

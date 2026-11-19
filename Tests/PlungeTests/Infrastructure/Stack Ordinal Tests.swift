@@ -21,8 +21,8 @@ struct StackOrdinalTests {
         }
     }
 
-    @Test func `every instruction's ordinal is its position in allCases`() {
-        let mismatches = PushInstruction.allCases.enumerated().filter { $1.ordinal != $0 }
+    @Test func `every instruction name's ordinal is its position in allCases`() {
+        let mismatches = InstructionName.allCases.enumerated().filter { $1.ordinal != $0 }
         #expect(mismatches.isEmpty, "\(mismatches.prefix(5).map(\.element))")
     }
 

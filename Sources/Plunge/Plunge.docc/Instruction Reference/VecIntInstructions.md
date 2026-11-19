@@ -110,16 +110,6 @@ The `.vecInt` stack holds vectors of ints. It shares its instruction families wi
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecInt0` | Pushes the run's constant 0 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt1` | Pushes the run's constant 1 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt2` | Pushes the run's constant 2 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt3` | Pushes the run's constant 3 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt4` | Pushes the run's constant 4 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt5` | Pushes the run's constant 5 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt6` | Pushes the run's constant 6 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt7` | Pushes the run's constant 7 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt8` | Pushes the run's constant 8 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
-| `.vecInt9` | Pushes the run's constant 9 for vectors of ints, by way of `.exec`; refuses when the run assigns none. | — | `vecInt` |
 | `.vecIntLookupContaining` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecInt` (read) | `vecInt`, `int`; may refuse |
 | `.vecIntLookupContainingFrom` | Reads the top vector of ints as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecInt` (read) | `vecInt`, `int`; may refuse |
 | `.vecIntLookupEqual` | Reads the top vector of ints as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecInt` (read) | `vecInt`, `int`; may refuse |

@@ -16,8 +16,8 @@ struct TunableCruxTests {
     typealias Distilled = DistilledCruxTests
 
     static let inputs: [PushInstruction: any Item] = [
-        .input0: IntItem(5), .input1: StringItem("hello"), .input2: BoolItem(true), .input3: CharItem("m"),
-        .input4: DoubleItem(2.5), .input5: VecIntItem([1, 2, 3])
+        .input(0): IntItem(5), .input(1): StringItem("hello"), .input(2): BoolItem(true), .input(3): CharItem("m"),
+        .input(4): DoubleItem(2.5), .input(5): VecIntItem([1, 2, 3])
     ]
 
     static func top(_ program: [any Item], on stack: PushStack) -> any Item {
@@ -32,19 +32,19 @@ struct TunableCruxTests {
     }
 
     @Test func `an int input is scaled and shifted in place`() {
-        let item = Self.top(Distilled.ins(.input0, .int0, .intAdd), on: .int)
+        let item = Self.top(Distilled.ins(.input(0), .constant(0), .intAdd), on: .int)
         let tunable = item.distilledCrux().tunable()!
         #expect(tunable.key == "«fn (int, int, int) -> int: .input0 $0 .intMultiply $1 .intAdd $2 .intAdd»")
         // Neutral: 5 + 7.
         #expect(Self.replay(tunable.program(filling: tunable.originalFillers!), on: .int) == "12")
         // 5·3 − 1 + 7.
-        let fillers: [any Item] = [IntItem(3), IntItem(-1), InstructionItem(.int0)]
+        let fillers: [any Item] = [IntItem(3), IntItem(-1), InstructionItem(.constant(0))]
         #expect(Self.replay(tunable.program(filling: fillers), on: .int) == "21")
     }
 
     @Test(arguments: [
-        (PushInstruction.input0, PushStack.int), (.input1, .string), (.input2, .bool), (.input3, .char),
-        (.input4, .double), (.input5, .vecInt)
+        (PushInstruction.input(0), PushStack.int), (.input(1), .string), (.input(2), .bool), (.input(3), .char),
+        (.input(4), .double), (.input(5), .vecInt)
     ])
     func `the neutral setting leaves every type as it was`(_ input: PushInstruction, _ stack: PushStack) {
         let item = Self.top(Distilled.ins(input), on: stack)
@@ -54,7 +54,7 @@ struct TunableCruxTests {
     }
 
     @Test func `a bool's transform reaches every one-argument function`() {
-        let item = Self.top(Distilled.ins(.input2), on: .bool)
+        let item = Self.top(Distilled.ins(.input(2)), on: .bool)
         let tunable = item.distilledCrux().tunable()!
         func with(_ m: Bool, _ c: Bool) -> String? {
             Self.replay(tunable.program(filling: [BoolItem(m), BoolItem(c)]), on: .bool)
@@ -66,7 +66,7 @@ struct TunableCruxTests {
     }
 
     @Test func `a string can be framed and trimmed`() {
-        let item = Self.top(Distilled.ins(.input1), on: .string)
+        let item = Self.top(Distilled.ins(.input(1)), on: .string)
         let tunable = item.distilledCrux().tunable()!
         let fillers: [any Item] = [StringItem("<"), StringItem(">"), IntItem(2), IntItem(1)]
         // "<hello>", 2 dropped from the front and 1 from the back.
@@ -74,7 +74,7 @@ struct TunableCruxTests {
     }
 
     @Test func `a vector's elements are scaled and shifted, then trimmed`() {
-        let item = Self.top(Distilled.ins(.input5), on: .vecInt)
+        let item = Self.top(Distilled.ins(.input(5)), on: .vecInt)
         let tunable = item.distilledCrux().tunable()!
         // [1, 2, 3]·2 + 1, then nothing joined on and one element dropped from the front.
         let fillers: [any Item] = [IntItem(2), IntItem(1), VecIntItem([]), VecIntItem([]), IntItem(1), IntItem(0)]
@@ -82,7 +82,7 @@ struct TunableCruxTests {
     }
 
     @Test func `every use of an input shares its transform, or has its own`() {
-        let item = Self.top(Distilled.ins(.input0, .input0, .intMultiply), on: .int)
+        let item = Self.top(Distilled.ins(.input(0), .input(0), .intMultiply), on: .int)
         let shared = item.distilledCrux().tunable(.perDistinct)!
         let own = item.distilledCrux().tunable(.perUse)!
         #expect(shared.key == "«fn (int, int) -> int: .input0 $0 .intMultiply $1 .intAdd .input0 $0 .intMultiply $1 "
@@ -95,7 +95,7 @@ struct TunableCruxTests {
     @Test func `a shared hole is never filled out of order`() {
         // .input1's length, then .input0, then .input0 again beside a newer hole:
         // the second use of `.input0` must not jump ahead of it.
-        let program = Distilled.ins(.input0, .input1, .stringLength, .intSubtract, .input0, .intSubtract)
+        let program = Distilled.ins(.input(0), .input(1), .stringLength, .intSubtract, .input(0), .intSubtract)
         let item = Self.top(program, on: .int)
         let skeleton = item.distilledCrux().skeleton()!
         #expect(Self.replay(skeleton.program(filling: skeleton.originalFillers!), on: .int) == item.pretty())

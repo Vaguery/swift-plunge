@@ -93,7 +93,7 @@ struct IntrospectionInstructionTests {
             ErrorItem("intAdd missing args: .int", kind: .missingArgument),
             ErrorItem("intSubtract missing args: .int", kind: .missingArgument),
             ErrorItem("No input for input3", kind: .missingInput),
-            ErrorItem("No constant assigned for int2", kind: .missingConstant),
+            ErrorItem("No constant assigned for constant2", kind: .missingConstant),
             ErrorItem("something else entirely", kind: .other)
         ] as [any Item])
 
@@ -133,7 +133,7 @@ struct IntrospectionInstructionTests {
 
     @Test func `an unbound input is counted as a missing input`() {
         let inty = Interpreter.recordingProvenance()
-        inty.load(program: [InstructionItem(.input3)])   // never bound
+        inty.load(program: [InstructionItem(.input(3))])   // never bound
         inty.run()
 
         Interpreter.language[.errorMissingInputCount]!.act(on: inty)
@@ -142,7 +142,7 @@ struct IntrospectionInstructionTests {
 
     @Test func `an unbound constant is counted as a missing constant`() {
         let inty = Interpreter.recordingProvenance()
-        inty.load(program: [InstructionItem(.int2)])     // never bound
+        inty.load(program: [InstructionItem(.constant(2))])     // never bound
         inty.run()
 
         Interpreter.language[.errorMissingConstantCount]!.act(on: inty)

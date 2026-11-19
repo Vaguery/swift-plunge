@@ -37,15 +37,15 @@ struct SourceTraceTests {
     @Test("An instruction's node is placed at its program position; input reads are slots")
     func inputs() {
         // 0: .input0   1: 2   2: .intMultiply
-        let result = trace([InstructionItem(.input0), IntItem(2), InstructionItem(.intMultiply)],
-                           inputs: [.input0: IntItem(5)])
+        let result = trace([InstructionItem(.input(0)), IntItem(2), InstructionItem(.intMultiply)],
+                           inputs: [.input(0): IntItem(5)])
         let top = result.tops.first { $0.stack == .int }
         #expect(top?.item.value as? Int == 10)
         #expect(top?.reach.literals == [1])
         #expect(top?.reach.instructions == [0, 2])
-        #expect(top?.reach.slots == [.input0])
+        #expect(top?.reach.slots == [.input(0)])
         #expect(top?.reach.untraced == 0)
-        #expect(result.steps[0].slots == [.input0])
+        #expect(result.steps[0].slots == [.input(0)])
         // `.input0` puts the input on `.exec`, and the next step moves it to `.int`.
         #expect(result.steps.map(\.position) == [0, nil, 1, 2])
         #expect(result.steps[1].sources == [0])
@@ -71,11 +71,11 @@ struct SourceTraceTests {
     @Test("Tagging leaves the run's values unchanged")
     func parity() async {
         let program: [any Item] = [CodeItem([IntItem(4), InstructionItem(.intDup), InstructionItem(.intAdd)]),
-                                   InstructionItem(.codeDo), InstructionItem(.input0), InstructionItem(.intMultiply)]
-        let traced = trace(program, inputs: [.input0: IntItem(3)])
+                                   InstructionItem(.codeDo), InstructionItem(.input(0)), InstructionItem(.intMultiply)]
+        let traced = trace(program, inputs: [.input(0): IntItem(3)])
         let results = await evaluate(request: EvaluationRequest(
             individuals: [Individual(id: "p", program: program)],
-            trainingCases: [TrainingCase(id: "c", inputs: [.input0: IntItem(3)])],
+            trainingCases: [TrainingCase(id: "c", inputs: [.input(0): IntItem(3)])],
             pairings: [Pairing(individual: "p", trainingCase: "c")],
             configuration: RunnerConfiguration(recorders: [RecorderSpec("int", observing: .top(.int))])))
         let plain = results.first.flatMap { trace in

@@ -15,11 +15,12 @@ import Testing
 struct BackwardChainingTests {
 
     /// A problem binding an int and a string.
-    static let problem: [PushInstruction: PushStack] = [.input0: .int, .input1: .string]
+    static let problem: [PushInstruction: PushStack] = [.input(0): .int, .input(1): .string]
 
     @Test func `leaves are the problem's inputs and the constants`() {
         let chainer = BackwardChainer(inputs: Self.problem)
-        #expect(chainer.count(.int, height: 0) == 11, "input0 and int0…int9")
+        #expect(chainer.count(.int, height: 0) == 11,
+                "input0, and constant0…constant9, the constants random code fills with ints")
         #expect(chainer.count(.bool, height: 0) == 0, "no bool input, no bool constants")
         #expect(chainer.count(.bool, height: 1) > 0)
         #expect(BackwardChainer(inputs: Self.problem, constants: false).count(.int, height: 0) == 1)
@@ -38,23 +39,23 @@ struct BackwardChainingTests {
     /// pops them so a sibling int is not displaced.
     @Test func `only a fragment cleans up what it read`() {
         let greater = BackwardChainer.edge(.intGT, Interpreter.language[.intGT]!)!
-        let tree = Derivation.apply(greater, [.leaf(.int1), .leaf(.int2)])
-        #expect(CodeItem(tree.program).pretty() == "( .int2 .int1 .intGT )")
-        #expect(CodeItem(tree.fragment).pretty() == "( .int2 .int1 .intGT 2 .intPopItems )")
+        let tree = Derivation.apply(greater, [.leaf(.constant(1)), .leaf(.constant(2))])
+        #expect(CodeItem(tree.program).pretty() == "( .constant2 .constant1 .intGT )")
+        #expect(CodeItem(tree.fragment).pretty() == "( .constant2 .constant1 .intGT 2 .intPopItems )")
         #expect(tree.size == 1)
 
         let not = BackwardChainer.edge(.boolNot, Interpreter.language[.boolNot]!)!
         #expect(CodeItem(Derivation.apply(not, [tree]).program).pretty()
-                == "( .int2 .int1 .intGT 2 .intPopItems .boolNot )")
+                == "( .constant2 .constant1 .intGT 2 .intPopItems .boolNot )")
     }
 
     /// Where most programs **reach the same result by different routes**. A char
     /// or a double is mostly taken out of a string or vector, and an extracted
-    /// element's crux is its address in its source (`.string1 0 .stringNth`,
+    /// element's crux is its address in its source (`.constant21 0 .stringNth`,
     /// Containment law 1b), not how its index was computed; random index trees
     /// mostly clamp to 0. So hundreds of programs are a few dozen results.
     /// With constants as parameters (`cruxShape`), measured at height 3: 22
-    /// shapes from 167 programs for `.char` (103 of them `( .string0 0 .stringNth )`,
+    /// shapes from 167 programs for `.char` (103 of them `( .constant20 0 .stringNth )`,
     /// the first letter of some constant), 20 from 173 for `.double`.
     static let distinctFloor: [PushStack: Double] = [.char: 0.08, .double: 0.08]
 
@@ -96,7 +97,7 @@ struct BackwardChainingTests {
             }
             let inty = Interpreter.recordingProvenance()
             withFuzzSeed(UInt64(trial)) { RandomCode.setRandomConstants(in: inty) }
-            inty.load(inputs: [.input0: IntItem(sampler.int()), .input1: StringItem(sampler.string())],
+            inty.load(inputs: [.input(0): IntItem(sampler.int()), .input(1): StringItem(sampler.string())],
                       program: tree.program)
             inty.run(stepLimit: 10_000)
             guard let top = inty.stacks[goal]!.first else { continue }
@@ -111,22 +112,23 @@ struct BackwardChainingTests {
                 "\(cruxes.count) distinct cruxes from \(reached) programs reaching .\(goal)")
     }
 
-    /// Constants are parameters: renamed in order of first appearance, per type,
-    /// at any depth; a repeated constant stays one parameter; inputs stay as they are.
+    /// Constants are parameters: renamed in order of first appearance, at any
+    /// depth; a repeated constant stays one parameter; inputs stay as they are.
+    /// (Since 2026-11-19 constants have no type, so the numbering is not per type.)
     @Test func `crux shapes are equal up to the choice of constants`() {
         func shape(_ items: [any Item]) -> String { CodeItem(Interpreter.cruxShape(items)).pretty() }
-        let add3: [any Item] = [InstructionItem(.int3), InstructionItem(.input0), InstructionItem(.intAdd)]
-        let add8: [any Item] = [InstructionItem(.int8), InstructionItem(.input0), InstructionItem(.intAdd)]
+        let add3: [any Item] = [InstructionItem(.constant(3)), InstructionItem(.input(0)), InstructionItem(.intAdd)]
+        let add8: [any Item] = [InstructionItem(.constant(8)), InstructionItem(.input(0)), InstructionItem(.intAdd)]
         #expect(shape(add3) == shape(add8))
-        #expect(shape(add3) == "( .int0 .input0 .intAdd )")
+        #expect(shape(add3) == "( .constant0 .input0 .intAdd )")
 
-        let once: [any Item] = [InstructionItem(.int3), InstructionItem(.int3), InstructionItem(.intAdd)]
-        let twice: [any Item] = [InstructionItem(.int3), InstructionItem(.int8), InstructionItem(.intAdd)]
-        #expect(shape(once) == "( .int0 .int0 .intAdd )")
-        #expect(shape(twice) == "( .int0 .int1 .intAdd )")
+        let once: [any Item] = [InstructionItem(.constant(3)), InstructionItem(.constant(3)), InstructionItem(.intAdd)]
+        let twice: [any Item] = [InstructionItem(.constant(3)), InstructionItem(.constant(8)), InstructionItem(.intAdd)]
+        #expect(shape(once) == "( .constant0 .constant0 .intAdd )")
+        #expect(shape(twice) == "( .constant0 .constant1 .intAdd )")
 
-        let inner = CodeItem([InstructionItem(.int5), InstructionItem(.string7)])
-        let nested: [any Item] = [InstructionItem(.string7), inner, InstructionItem(.input1)]
-        #expect(shape(nested) == "( .string0 ( .int0 .string0 ) .input1 )")
+        let inner = CodeItem([InstructionItem(.constant(5)), InstructionItem(.constant(27))])
+        let nested: [any Item] = [InstructionItem(.constant(27)), inner, InstructionItem(.input(1))]
+        #expect(shape(nested) == "( .constant0 ( .constant1 .constant0 ) .input1 )")
     }
 }

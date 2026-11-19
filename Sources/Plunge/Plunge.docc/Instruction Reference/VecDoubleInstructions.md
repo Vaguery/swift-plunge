@@ -106,16 +106,6 @@ The `.vecDouble` stack holds vectors of doubles. It shares its instruction famil
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecDouble0` | Pushes the run's constant 0 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble1` | Pushes the run's constant 1 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble2` | Pushes the run's constant 2 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble3` | Pushes the run's constant 3 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble4` | Pushes the run's constant 4 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble5` | Pushes the run's constant 5 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble6` | Pushes the run's constant 6 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble7` | Pushes the run's constant 7 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble8` | Pushes the run's constant 8 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
-| `.vecDouble9` | Pushes the run's constant 9 for vectors of doubles, by way of `.exec`; refuses when the run assigns none. | — | `vecDouble` |
 | `.vecDoubleLookupContaining` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecDouble` (read) | `vecDouble`, `int`; may refuse |
 | `.vecDoubleLookupContainingFrom` | Reads the top vector of doubles as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecDouble` (read) | `vecDouble`, `int`; may refuse |
 | `.vecDoubleLookupEqual` | Reads the top vector of doubles as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecDouble` (read) | `vecDouble`, `int`; may refuse |

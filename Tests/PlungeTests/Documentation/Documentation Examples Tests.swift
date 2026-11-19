@@ -19,13 +19,13 @@ struct DocumentationExamplesTests {
     /// *Getting Started*, "Run a program".
     @Test func `getting started: square an input`() async throws {
         let square = Individual(id: "square", program: program {
-            PushInstruction.input0
-            PushInstruction.input0
+            PushInstruction.input(0)
+            PushInstruction.input(0)
             PushInstruction.intMultiply
         })
         let cases = [
-            TrainingCase(id: "three", inputs: [.input0: IntItem(3)]),
-            TrainingCase(id: "minus five", inputs: [.input0: IntItem(-5)])
+            TrainingCase(id: "three", inputs: [.input(0): IntItem(3)]),
+            TrainingCase(id: "minus five", inputs: [.input(0): IntItem(-5)])
         ]
 
         let runner = Runner(configuration: RunnerConfiguration(recorders: [
@@ -54,11 +54,11 @@ struct DocumentationExamplesTests {
     /// `README.md`, "Quick start".
     @Test func `readme: quick start`() async {
         let square = Individual(id: "square", program: program {
-            PushInstruction.input0
-            PushInstruction.input0
+            PushInstruction.input(0)
+            PushInstruction.input(0)
             PushInstruction.intMultiply
         })
-        let cases = [TrainingCase(id: "three", inputs: [.input0: IntItem(3)])]
+        let cases = [TrainingCase(id: "three", inputs: [.input(0): IntItem(3)])]
 
         let runner = Runner(configuration: RunnerConfiguration(recorders: [
             RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
@@ -234,9 +234,9 @@ struct DocumentationExamplesTests {
             RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
         ]))
         await runner.register(individuals: [Individual(id: "p", program: program {
-            PushInstruction.input0; 10; PushInstruction.intAdd; 99; PushInstruction.input0; PushInstruction.intMultiply
+            PushInstruction.input(0); 10; PushInstruction.intAdd; 99; PushInstruction.input(0); PushInstruction.intMultiply
         })])
-        await runner.register(trainingCases: [TrainingCase(id: "c", inputs: [.input0: IntItem(4)])])
+        await runner.register(trainingCases: [TrainingCase(id: "c", inputs: [.input(0): IntItem(4)])])
         let result = await runner.evaluate(pairings: [Pairing(individual: "p", trainingCase: "c")])[0]
         guard case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil else {
             Issue.record("no answer"); return
@@ -253,17 +253,17 @@ struct DocumentationExamplesTests {
         let runner = Runner(configuration: RunnerConfiguration(settings: settings, recorders: [
             RecorderSpec("answer", observing: .top(.double), keeping: .finalOnly)
         ]))
-        let constants: [PushInstruction: any Item] = [.double0: DoubleItem(0.5), .double1: DoubleItem(3)]
+        let constants: [PushInstruction: any Item] = [.constant(0): DoubleItem(0.5), .constant(1): DoubleItem(3)]
         await runner.register(individuals: [Individual(id: "p", program: program {
-            PushInstruction.input0; PushInstruction.double0; PushInstruction.double1
+            PushInstruction.input(0); PushInstruction.constant(0); PushInstruction.constant(1)
             PushInstruction.doubleMultiply; PushInstruction.doubleMultiply
             true; PushInstruction.boolNot
             2.0; 3.0; PushInstruction.doubleAdd
             7; PushInstruction.intDup; PushInstruction.intAdd
-            PushInstruction.input1; PushInstruction.doubleMultiply; PushInstruction.doubleAdd
+            PushInstruction.input(1); PushInstruction.doubleMultiply; PushInstruction.doubleAdd
         }, constants: constants)])
         await runner.register(trainingCases: [
-            TrainingCase(id: "c", inputs: [.input0: DoubleItem(4), .input1: DoubleItem(10)])
+            TrainingCase(id: "c", inputs: [.input(0): DoubleItem(4), .input(1): DoubleItem(10)])
         ])
         let result = await runner.evaluate(pairings: [Pairing(individual: "p", trainingCase: "c")])[0]
         guard case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil else {

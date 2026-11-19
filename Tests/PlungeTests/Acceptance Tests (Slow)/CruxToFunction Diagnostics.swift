@@ -12,8 +12,8 @@
 //  the loose asserts only say "the mechanism works at all."
 //
 //  WHY THE HOLES ARE TOKENS, NOT LITERALS.  `RandomCode.randomProgram` emits
-//  instruction tokens only; values arrive through constants (`.int3`) and inputs
-//  (`.input7`), each of which stamps its pushed value with `call = [.int3]` /
+//  instruction tokens only; values arrive through constants (`.constant3`) and inputs
+//  (`.input7`), each of which stamps its pushed value with `call = [.constant3]` /
 //  `[.input7]` (Constant/Input Behaviors). So a resting int's crux is a flat list
 //  of *instruction* tokens, with no bare IntItem literals. The deletable "int
 //  leaf" is therefore an int-SOURCE token — a `.intN` constant (D1/D2) or a
@@ -67,10 +67,10 @@ struct CruxToFunctionDiagnostics {
 
     /// The ten int-constant tokens — the int-source holes for D1/D2.
     static let intConstantTokens: Set<PushInstruction> =
-        Set((0..<10).map { PushInstruction(rawValue: "int\($0)")! })
+        Set((0..<10).map { PushInstruction.constant($0) })
 
-    static let input0 = PushInstruction.input0
-    static let input1 = PushInstruction.input1
+    static let input0 = PushInstruction.input(0)
+    static let input1 = PushInstruction.input(1)
 
     func isInstruction(_ item: any Item, _ instruction: PushInstruction) -> Bool {
         (item as? InstructionItem)?.value == instruction
@@ -134,7 +134,7 @@ struct CruxToFunctionDiagnostics {
     static let propagatingOps: [PushInstruction] = [.intAdd, .intSubtract, .intMultiply]
 
     func randomIntConstantToken() -> PushInstruction {
-        PushInstruction(rawValue: "int\(Int.random(in: 0..<10, using: &fuzzRNG))")!
+        PushInstruction.constant(Int.random(in: 0..<10, using: &fuzzRNG))
     }
 
     func randomArithmeticProgram(leaves: Int) -> [any Item] {
@@ -146,12 +146,12 @@ struct CruxToFunctionDiagnostics {
         return program
     }
 
-    /// int0…int9 bound to distinct small non-zero values, so leaves differ and
+    /// constant0…constant9 bound to distinct small non-zero values, so leaves differ and
     /// arithmetic neither overflows nor collapses to a constant.
     func distinctIntConstants() -> [PushInstruction: any Item] {
         var c = [PushInstruction: any Item]()
         for i in 0..<10 {
-            c[PushInstruction(rawValue: "int\(i)")!] = IntItem(1 + RandomCode.randomInt(20))
+            c[PushInstruction.constant(i)] = IntItem(1 + RandomCode.randomInt(20))
         }
         return c
     }

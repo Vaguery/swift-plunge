@@ -23,7 +23,7 @@ struct RunnerAcceptanceTests {
         return trace + Array(repeating: last, count: length - trace.count)
     }
 
-    // 1. creates a collection of 20 random individuals of ~40 instructions each (built directly from the public language introspection, no genome layer). The programs should all contain at least one instance of `.input0` and `.input1` tokens each. One program should also be modified so that the following tokens are at its tail: `[.input0, .input1, .intMultiply, .int0, .intMultiply]`
+    // 1. creates a collection of 20 random individuals of ~40 instructions each (built directly from the public language introspection, no genome layer). The programs should all contain at least one instance of `.input0` and `.input1` tokens each. One program should also be modified so that the following tokens are at its tail: `[.input0, .input1, .intMultiply, .constant0, .intMultiply]`
     // 2. sets up a collection of 10 training cases, where there are 2 integer inputs x1 = `input0` and x2 = `input1`, with values drawn uniformly from (-100...100), and an expected value of 1964 + 8 * x1 + 11 * x1 * x2
     // 3. set up one set of constants where all 10 .double and .int constants are defined, but none of the thers
     // 4. use 3 Recorders for each evaluation: One that watches the top `.int` item on that stack, one which counts the number of `ErrorItem` entries on the `.error` stack at each step, and one which reports the total number of steps executed running the program (either the number of actual steps, or the time at which the stepLimit triggered). Set the first two to fill in any missing readings with the final state of the program, if it terminates before the limit is triggered, but obviously not the step counter
@@ -54,11 +54,11 @@ struct RunnerAcceptanceTests {
         let pool = Runner().definedInstructions
         var programs: [[any Item]] = (0..<20).map { _ in
             var program: [any Item] = (0..<38).map { _ in InstructionItem(pool.randomElement()!) as any Item }
-            program.append(InstructionItem(.input0))
-            program.append(InstructionItem(.input1))
+            program.append(InstructionItem(.input(0)))
+            program.append(InstructionItem(.input(1)))
             return program
         }
-        let tail: [PushInstruction] = [.input0, .input1, .intMultiply, .int0, .intMultiply]
+        let tail: [PushInstruction] = [.input(0), .input(1), .intMultiply, .constant(0), .intMultiply]
         programs[0] += tail.map { InstructionItem($0) }
 
         // 3. one shared constant set: all ten .int and .double slots (no scalar
@@ -66,8 +66,8 @@ struct RunnerAcceptanceTests {
         var intConstants: [PushInstruction: any Item] = [:]
         var doubleConstants: [PushInstruction: any Item] = [:]
         for i in 0..<10 {
-            intConstants[PushInstruction(rawValue: "int\(i)")!] = IntItem(RandomCode.randomInt(50))
-            doubleConstants[PushInstruction(rawValue: "double\(i)")!] = DoubleItem(RandomCode.randomDouble(50))
+            intConstants[PushInstruction.constant(i)] = IntItem(RandomCode.randomInt(50))
+            doubleConstants[PushInstruction.constant(10 + i)] = DoubleItem(RandomCode.randomDouble(50))
         }
         let constants = merged(intConstants, doubleConstants)
 
@@ -83,7 +83,7 @@ struct RunnerAcceptanceTests {
             let x1 = RandomCode.randomInt(100)
             let x2 = RandomCode.randomInt(100)
             let id = "case\(c)"
-            cases.append(TrainingCase(id: id, inputs: bindings([.input0: x1, .input1: x2])))
+            cases.append(TrainingCase(id: id, inputs: bindings([.input(0): x1, .input(1): x2])))
             expected[id] = 1964 + 8 * x1 + 11 * x1 * x2
         }
 

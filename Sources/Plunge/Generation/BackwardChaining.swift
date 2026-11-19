@@ -102,7 +102,11 @@ nonisolated struct BackwardChainer: Sendable {
         var producers: [PushStack: [ChainEdge]] = [:]
         for (name, behavior) in Interpreter.language.sorted(by: { $0.key.rawValue < $1.key.rawValue })
         where !excluding.contains(name) && (cruxOnly || !behavior.tags.contains(.cruxOnly)) {
-            if constants, case .deferred(let stack) = behavior.produces {
+            // A constant has no type of its own; random code fills the listed ones
+            // by convention (ten ints, then ten doubles, …), so each is a leaf of
+            // its conventional type.
+            if constants, behavior.produces == .constant, let slot = name.slot,
+               let stack = PushInstruction.conventionalStack(ofConstantSlot: slot) {
                 leaves[stack, default: []].append(name)
                 continue
             }

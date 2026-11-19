@@ -57,7 +57,7 @@ struct StackFlowProbe {
         var constants: [PushInstruction: any Item] = [:]
         for s in [PushStack.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool] {
             for i in 0..<10 {
-                if let n = PushInstruction(rawValue: "\(s)\(i)") { constants[n] = sample(for: s, i) }
+                if let n = PushInstruction.conventionalConstant(s, i) { constants[n] = sample(for: s, i) }
             }
         }
 

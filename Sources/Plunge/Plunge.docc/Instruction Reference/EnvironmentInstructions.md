@@ -8,8 +8,88 @@ These instructions read the program's environment: its inputs and the interprete
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
+| `.constant0` | Pushes the run's constant 0, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant1` | Pushes the run's constant 1, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant10` | Pushes the run's constant 10, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant11` | Pushes the run's constant 11, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant12` | Pushes the run's constant 12, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant13` | Pushes the run's constant 13, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant14` | Pushes the run's constant 14, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant15` | Pushes the run's constant 15, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant16` | Pushes the run's constant 16, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant17` | Pushes the run's constant 17, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant18` | Pushes the run's constant 18, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant19` | Pushes the run's constant 19, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant2` | Pushes the run's constant 2, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant20` | Pushes the run's constant 20, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant21` | Pushes the run's constant 21, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant22` | Pushes the run's constant 22, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant23` | Pushes the run's constant 23, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant24` | Pushes the run's constant 24, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant25` | Pushes the run's constant 25, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant26` | Pushes the run's constant 26, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant27` | Pushes the run's constant 27, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant28` | Pushes the run's constant 28, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant29` | Pushes the run's constant 29, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant3` | Pushes the run's constant 3, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant30` | Pushes the run's constant 30, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant31` | Pushes the run's constant 31, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant32` | Pushes the run's constant 32, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant33` | Pushes the run's constant 33, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant34` | Pushes the run's constant 34, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant35` | Pushes the run's constant 35, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant36` | Pushes the run's constant 36, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant37` | Pushes the run's constant 37, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant38` | Pushes the run's constant 38, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant39` | Pushes the run's constant 39, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant4` | Pushes the run's constant 4, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant40` | Pushes the run's constant 40, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant41` | Pushes the run's constant 41, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant42` | Pushes the run's constant 42, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant43` | Pushes the run's constant 43, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant44` | Pushes the run's constant 44, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant45` | Pushes the run's constant 45, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant46` | Pushes the run's constant 46, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant47` | Pushes the run's constant 47, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant48` | Pushes the run's constant 48, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant49` | Pushes the run's constant 49, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant5` | Pushes the run's constant 5, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant50` | Pushes the run's constant 50, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant51` | Pushes the run's constant 51, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant52` | Pushes the run's constant 52, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant53` | Pushes the run's constant 53, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant54` | Pushes the run's constant 54, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant55` | Pushes the run's constant 55, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant56` | Pushes the run's constant 56, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant57` | Pushes the run's constant 57, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant58` | Pushes the run's constant 58, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant59` | Pushes the run's constant 59, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant6` | Pushes the run's constant 6, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant60` | Pushes the run's constant 60, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant61` | Pushes the run's constant 61, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant62` | Pushes the run's constant 62, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant63` | Pushes the run's constant 63, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant64` | Pushes the run's constant 64, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant65` | Pushes the run's constant 65, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant66` | Pushes the run's constant 66, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant67` | Pushes the run's constant 67, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant68` | Pushes the run's constant 68, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant69` | Pushes the run's constant 69, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant7` | Pushes the run's constant 7, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant70` | Pushes the run's constant 70, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant71` | Pushes the run's constant 71, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant72` | Pushes the run's constant 72, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant73` | Pushes the run's constant 73, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant74` | Pushes the run's constant 74, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant75` | Pushes the run's constant 75, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant76` | Pushes the run's constant 76, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant77` | Pushes the run's constant 77, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant78` | Pushes the run's constant 78, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant79` | Pushes the run's constant 79, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant8` | Pushes the run's constant 8, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
+| `.constant9` | Pushes the run's constant 9, of whatever type it is, by way of `.exec`; refuses when the run assigns none. | — | the constant's type |
 | `.errorMissingArgCount` | Pushes how many instructions so far found too few arguments to run. | — | `int` |
-| `.errorMissingConstantCount` | Pushes how many constant reads (`.int3` and the like) so far found no constant assigned. | — | `int` |
+| `.errorMissingConstantCount` | Pushes how many constant reads (`.constant3` and the like) so far found no constant assigned. | — | `int` |
 | `.errorMissingInputCount` | Pushes how many input reads so far found no input supplied. | — | `int` |
 | `.errorPreviousStep` | Pushes whether the step just before this one recorded an error. | — | `bool` |
 | `.errorStackDepth` | Pushes how many errors the run has recorded on `.error`. | — | `int` |

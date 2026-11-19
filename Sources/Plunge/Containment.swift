@@ -83,7 +83,7 @@ nonisolated enum Containment {
 /// computed 5), or position `j` of the container the element was born in (a
 /// constant, a literal, a computed vector). The extraction instructions then hand
 /// back the item that went in, exactly as `.codeEmitNthRoot` hands back a code block's
-/// content, or the element's address in its **source**: `.vecInt3 2 .vecIntNth`,
+/// content, or the element's address in its **source**: `.constant43 2 .vecIntNth`,
 /// not the address in whatever concatenation it ended up in.
 ///
 /// **A piece table.** Most elements come from a few sources, in runs (a

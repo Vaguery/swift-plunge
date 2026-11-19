@@ -10,9 +10,9 @@ follow four more forms, each a step more abstract, and each still a program
 that runs:
 
 ```
-program    .input0 .double0 .double1 .doubleMultiply .doubleMultiply true .boolNot
+program    .input0 .constant0 .constant1 .doubleMultiply .doubleMultiply true .boolNot
            2.0 3.0 .doubleAdd 7 .intDup .intAdd .input1 .doubleMultiply .doubleAdd
-crux       ( .input0 .double0 .double1 .doubleMultiply .doubleMultiply
+crux       ( .input0 .constant0 .constant1 .doubleMultiply .doubleMultiply
              2.0 3.0 .doubleAdd .input1 .doubleMultiply .doubleAdd )
 distilled  ( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply
              «distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )
@@ -22,8 +22,8 @@ tunable    «fn (dbl, dbl, dbl, dbl, dbl, dbl) -> dbl: .input0 $0 .doubleMultipl
 skeleton   «fn (dbl, dbl, dbl, dbl) -> dbl: $0 $1 .doubleMultiply $2 $3 .doubleMultiply .doubleAdd»
 ```
 
-Here `.input0` is 4.0 (call it x), `.input1` is 10.0 (y), `.double0` is 0.5 and
-`.double1` is 3.0, and every form gives 56.0: x·(0.5·3) + (2 + 3)·y.
+Here `.input0` is 4.0 (call it x), `.input1` is 10.0 (y), `.constant0` is 0.5 and
+`.constant1` is 3.0, and every form gives 56.0: x·(0.5·3) + (2 + 3)·y.
 
 | Form | Made by | What it keeps | What it is for |
 |---|---|---|---|
@@ -96,8 +96,8 @@ structure found by search informs better constants, and the fitted program is
 simpler code congruent with the original. Filled with
 ``AbstractCrux/originalFillers``, it gives back the crux's value.
 
-Constant slots of one type are interchangeable: reading `.double3` instead of
-`.double0` gives the same abstract crux, and so the same
+Constant slots are interchangeable: reading `.constant3` instead of
+`.constant0` gives the same abstract crux, and so the same
 ``AbstractCrux/key``. Which input is read is not interchangeable. With
 ``AbstractCrux/Reading/perDistinct`` a slot used twice is one hole; with
 ``AbstractCrux/Reading/perUse`` each use is its own.

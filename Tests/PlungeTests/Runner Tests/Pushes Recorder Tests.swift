@@ -19,7 +19,7 @@ struct PushesRecorderTests {
         var settings = InterpreterSettings()
         settings.recordsProvenance = provenance
         return evaluateOne(individual: Individual(id: "p", program: program, constants: [:]),
-                           trainingCase: TrainingCase(id: "c", inputs: [.input0: IntItem(input)]),
+                           trainingCase: TrainingCase(id: "c", inputs: [.input(0): IntItem(input)]),
                            configuration: RunnerConfiguration(settings: settings, recorders: recorders))
     }
 
@@ -32,7 +32,7 @@ struct PushesRecorderTests {
     static func values(_ items: [any Item]) -> [Int] { items.compactMap { ($0 as? IntItem)?.value } }
 
     /// `input0`, then three passes of `2 .intMultiply`.
-    static let doubling: [any Item] = [InstructionItem(.input0), IntItem(3),
+    static let doubling: [any Item] = [InstructionItem(.input(0)), IntItem(3),
                                        CodeItem([IntItem(2), InstructionItem(.intMultiply)]),
                                        InstructionItem(.execDoTimes)]
 
@@ -45,13 +45,13 @@ struct PushesRecorderTests {
     }
 
     @Test func `copies made by dup are one item, collected once`() {
-        let items = Self.pushed(Self.run([InstructionItem(.input0), InstructionItem(.intDup),
+        let items = Self.pushed(Self.run([InstructionItem(.input(0)), InstructionItem(.intDup),
                                           InstructionItem(.intAdd)]))
         #expect(Self.values(items) == [5, 10])
     }
 
     @Test func `without provenance, each distinct value is collected once`() {
-        let items = Self.pushed(Self.run([InstructionItem(.input0), InstructionItem(.intDup), InstructionItem(.intAdd),
+        let items = Self.pushed(Self.run([InstructionItem(.input(0)), InstructionItem(.intDup), InstructionItem(.intAdd),
                                           IntItem(10)], provenance: false))
         #expect(Self.values(items) == [5, 10])
         #expect(items.allSatisfy { $0.call.isEmpty })
@@ -70,9 +70,9 @@ struct PushesRecorderTests {
     @Test func `a reused interpreter starts each run's collection empty`() {
         let interpreter = Interpreter()
         let spec = RecorderSpec("pushed", observing: .pushes(.int))
-        interpreter.load(inputs: [.input0: IntItem(5)], program: Self.doubling, recorders: [AnyRecorder(spec)])
+        interpreter.load(inputs: [.input(0): IntItem(5)], program: Self.doubling, recorders: [AnyRecorder(spec)])
         interpreter.run()
-        interpreter.load(inputs: [.input0: IntItem(1)], program: [InstructionItem(.input0)],
+        interpreter.load(inputs: [.input(0): IntItem(1)], program: [InstructionItem(.input(0))],
                          recorders: [AnyRecorder(spec)])
         interpreter.run()
         let raw = interpreter.recordedData("pushed")?.first as? [any Item]

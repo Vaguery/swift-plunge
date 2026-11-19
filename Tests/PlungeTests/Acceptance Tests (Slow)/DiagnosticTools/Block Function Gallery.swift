@@ -46,7 +46,7 @@ struct BlockFunctionGallery {
         withFuzzSeed(seed) {
             let constants = Probe.appConstants()
             let inputs = Probe.randomInputs()
-            let pool = RandomCode.allInstructions.filter { !Interpreter.inputSlots.contains($0) || inputs[$0] != nil }
+            let pool = RandomCode.allInstructions.filter { !$0.isInput || inputs[$0] != nil }
             let tokens: [any Item] = (0..<length).map { _ in
                 InstructionItem(pool[Int.random(in: 0..<pool.count, using: &fuzzRNG)])
             }

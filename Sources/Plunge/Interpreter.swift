@@ -308,10 +308,10 @@ nonisolated final class Interpreter {
     /// sub-interpreter by `.vecFromIterator`, returns the top of this stack, "the
     /// last thing it produced". One store per push.
     @exclusivity(unchecked) var lastPush: PushStack?
-    /// The next fresh `.binding` key. Reset at every load to the number
-    /// of input slots, whose keys hold the inputs; advanced by `Behavior.act`
-    /// for each key a context read draws (`ReadContext.freshKey`).
-    @exclusivity(unchecked) var nextRefKey = Interpreter.inputSlots.count
+    /// The next fresh `.binding` key. Set at every load past the keys that hold
+    /// the inputs (`firstFreshKey(after:)`); advanced by `Behavior.act` for each key
+    /// a context read draws (`ReadContext.freshKey`).
+    @exclusivity(unchecked) var nextRefKey = PushInstruction.listedInputCount
     // Step at which the runaway guard last examined the stacks; -1 means never.
     // Throttles the (only-when-a-stack-is-deep) examination. See enforceRunawayGuard.
     @exclusivity(unchecked) var lastRunawayCheck = -1
@@ -341,7 +341,7 @@ nonisolated final class Interpreter {
     /// `.errorPreviousStep` compares it with the step before its own.
     @exclusivity(unchecked) var lastErrorStep = -2
     var inputs: [PushInstruction: any Item] = [:]
-    // Bound constant values, keyed by their constant instruction (e.g. `.int3`),
+    // Bound constant values, keyed by their constant instruction (e.g. `.constant3`),
     // symmetric with `inputs`. A missing key means the constant is unassigned;
     // the constant behavior emits an ErrorItem for that case at runtime, so no
     // pre-seeding of nil slots is needed.
@@ -658,7 +658,7 @@ nonisolated final class Interpreter {
         self.lastRunawayCheck = -1
         self.lastErrorStep = -2
         self.derivations = [:]
-        self.nextRefKey = Self.inputSlots.count
+        self.nextRefKey = PushInstruction.listedInputCount
         for collector in pushCollectors.values { collector.reset() }
         if decisionLog != nil { decisionLog = [] }
 
@@ -691,16 +691,17 @@ nonisolated final class Interpreter {
         self.recomputeLiveWeight()
     }
 
-    /// The input instructions, by slot: `.input0` is slot 0. Derived from the
-    /// instruction set, never written as a count, since the number of slots is
-    /// not fixed.
-    static let inputSlots: [PushInstruction] = PushInstruction.allCases
-        .compactMap { name -> (slot: Int, name: PushInstruction)? in
-            guard name.rawValue.hasPrefix("input"), let slot = Int(name.rawValue.dropFirst(5)) else { return nil }
-            return (slot, name)
-        }
-        .sorted { $0.slot < $1.slot }
-        .map(\.name)
+    /// The listed inputs, `.input(0)` through `.input(9)`, in slot order.
+    static let listedInputs: [PushInstruction] = (0..<PushInstruction.listedInputCount).map(PushInstruction.input)
+
+    /// The first fresh `.binding` key for a run whose inputs are `inputs`: past
+    /// the listed inputs' keys (0 to 9), or past the highest input bound if a
+    /// problem has more, so that no fresh key ever names an input's pair. A run
+    /// with ten inputs or fewer always starts at 10.
+    static func firstFreshKey(after inputs: [PushInstruction: any Item]) -> Int {
+        let highest = inputs.keys.compactMap { $0.isInput ? $0.slot : nil }.max() ?? -1
+        return max(PushInstruction.listedInputCount, highest + 1)
+    }
 
     /// **Binds key *i* to input slot *i*** on `.binding`, for every bound input, in
     /// slot order, so the last slot's pair is on top. `.inputN` stays
@@ -709,7 +710,10 @@ nonisolated final class Interpreter {
     /// `.inputN`, its key marked as minted by that instruction.
     private func bindInputs() {
         let recording = self.recording
-        for (slot, name) in Self.inputSlots.enumerated() {
+        let bound = inputs.keys.compactMap { $0.isInput ? $0.slot : nil }.sorted()
+        nextRefKey = Self.firstFreshKey(after: inputs)
+        for slot in bound {
+            let name = PushInstruction.input(slot)
             guard var bound = inputs[name] else { continue }
             bound.call = recording([InstructionItem(name)])
             let key = IntItem(slot).minted(by: name, recording)

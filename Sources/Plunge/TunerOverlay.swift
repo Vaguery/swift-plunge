@@ -134,7 +134,7 @@ public nonisolated struct TunerOverlay {
     static func inputSlot(of node: any Item) -> PushInstruction? {
         let call = node.call
         guard call.count == 1, let token = call[0].exactly(InstructionItem.self)?.value,
-              token.rawValue.hasPrefix("input") else { return nil }
+              token.isInput else { return nil }
         return token
     }
 

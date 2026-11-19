@@ -531,8 +531,8 @@ struct ExecBehaviorTests {
         #expect(PushInstruction(rawValue: "execEq") == nil)
 
         inty.stacks[.exec]!.prepend(InstructionItem(.codeEq))
-        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input0)]))
-        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input0)]))
+        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input(0))]))
+        inty.stacks[.exec]!.prepend(CodeItem([InstructionItem(.input(0))]))
         while !inty.stacks[.exec]!.isEmpty { inty.step() }
         #expect(stackString(inty, .bool) == "[ true ]")
     }

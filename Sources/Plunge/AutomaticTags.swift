@@ -86,7 +86,7 @@ nonisolated struct AutomaticTagging {
         case .results(let stacks): stacks
         case .alternatives(let options): options.flatMap { $0 }
         case .deferred(let stack), .delivery(let stack), .several(let stack): [stack]
-        case .positions, .continuation, .input, .printed: []
+        case .positions, .continuation, .input, .constant, .printed: []
         }
         self.outputs = outputs
         var touched = Set(taken + looked + outputs).union(needed)
@@ -120,7 +120,7 @@ nonisolated struct AutomaticTagging {
         switch behavior.produces {
         case .results(let stacks): results = stacks.count
         case .alternatives(let options): results = options.map(\.count).max() ?? 0
-        case .deferred, .input: results = 1
+        case .deferred, .input, .constant: results = 1
         case .positions, .continuation, .printed, .delivery, .several: return nil
         }
         return results < taken.count ? .consumer : results == taken.count ? .neutral : .producer

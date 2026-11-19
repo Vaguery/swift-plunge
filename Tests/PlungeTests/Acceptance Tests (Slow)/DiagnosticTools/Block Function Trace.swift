@@ -21,12 +21,12 @@ struct BlockFunctionTrace {
     func `trace one conversion`() {
         var constants: [PushInstruction: any Item] = [:]
         for (i, n) in [4, 9, 7, 2, 6, 1, 8, 3, 5, 0].enumerated() {
-            constants[PushInstruction(rawValue: "int\(i)")!] = IntItem(n)
+            constants[PushInstruction.constant(i)] = IntItem(n)
         }
-        let inputs: [PushInstruction: any Item] = [.input0: StringItem("dog"), .input1: IntItem(10)]
+        let inputs: [PushInstruction: any Item] = [.input(0): StringItem("dog"), .input(1): IntItem(10)]
         let blocks: [[any Item]] = [
-            [InstructionItem(.input3), InstructionItem(.int2), InstructionItem(.intAdd),
-             InstructionItem(.input1), InstructionItem(.intGT), InstructionItem(.boolNot)],
+            [InstructionItem(.input(3)), InstructionItem(.constant(2)), InstructionItem(.intAdd),
+             InstructionItem(.input(1)), InstructionItem(.intGT), InstructionItem(.boolNot)],
             // Bindings: a local variable, a key the parent made, a binding taken apart.
             [InstructionItem(.intRef), InstructionItem(.bindingDeref), InstructionItem(.intAdd)],
             [IntItem(12), InstructionItem(.bindingDeref)],

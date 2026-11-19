@@ -104,7 +104,7 @@ struct CruxRoundTripTests {
         var constants: [PushInstruction: any Item] = [:]
         for stack in [PushStack.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool] {
             for i in 0..<10 {
-                if let name = PushInstruction(rawValue: "\(stack)\(i)"),
+                if let name = PushInstruction.conventionalConstant(stack, i),
                    let value = synthetic(for: stack, i) {
                     constants[name] = value
                 }

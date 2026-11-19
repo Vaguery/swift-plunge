@@ -61,9 +61,9 @@ struct LoopMinimizationTests {
     @Test func `every case given must still hold`() {
         // Count to 50, then take the smaller of that and the input.
         let program = Self.loop(IntItem(0), [IntItem(1), InstructionItem(.intAdd)], 50)
-            + [InstructionItem(.input0), InstructionItem(.intMin)]
-        let five: [PushInstruction: any Item] = [.input0: IntItem(5)]
-        let twelve: [PushInstruction: any Item] = [.input0: IntItem(12)]
+            + [InstructionItem(.input(0)), InstructionItem(.intMin)]
+        let five: [PushInstruction: any Item] = [.input(0): IntItem(5)]
+        let twelve: [PushInstruction: any Item] = [.input(0): IntItem(12)]
         let item = Self.run(program, inputs: five).stacks[.int]!.first!
         // On its own case, five passes are enough.
         let alone = item.minimizingLoops(on: [(five, [:])])!

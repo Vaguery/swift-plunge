@@ -92,8 +92,8 @@ struct TagsTests {
     }
 
     @Test func `the tags hold what their names claim`() {
-        #expect(Interpreter.instructions(role: .constant).contains(.int3))
-        #expect(Interpreter.instructions(role: .input).contains(.input7))
+        #expect(Interpreter.instructions(role: .constant).contains(.constant(3)))
+        #expect(Interpreter.instructions(role: .input).contains(.input(7)))
         #expect(Interpreter.instructions(role: .stackFamily).contains(.intDup))
         #expect(Interpreter.instructions(role: .other).contains(.intAdd))
 
@@ -126,7 +126,7 @@ struct TagsTests {
         #expect(intEaters.contains(.intYank), "its index is an .int")
         #expect(intEaters.contains(.vecIntConstruct), "a dynamic need is still a named stack")
         #expect(!intEaters.contains(.boolAnd))
-        #expect(!intEaters.contains(.int3), "a constant reads a binding; it takes nothing")
+        #expect(!intEaters.contains(.constant(3)), "a constant reads a binding; it takes nothing")
 
         // .int is the most-demanded stack in the language (Stack economics), and
         // this is the structural version of that claim.

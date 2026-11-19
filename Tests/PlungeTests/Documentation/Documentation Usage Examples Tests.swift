@@ -57,11 +57,11 @@ struct DocumentationUsageExamplesTests {
     @Test func `getting started: a starved instruction leaves an error and the run goes on`() async {
         let result = await Self.result(of: program {
             PushInstruction.intMultiply
-            PushInstruction.input0
+            PushInstruction.input(0)
         }, recorders: [
             RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly),
             RecorderSpec("errors", observing: .count(.error), keeping: .finalOnly)
-        ], inputs: [.input0: IntItem(3)])
+        ], inputs: [.input(0): IntItem(3)])
         #expect(Self.last("answer", in: result) == "3")
         #expect(Self.lastInt("errors", in: result) == 1)
     }
@@ -107,52 +107,58 @@ struct DocumentationUsageExamplesTests {
         #expect(runner.signature(of: .intGT)?.reads == [.int: 2])
         #expect(!runner.instructions(producing: .vecBool).isEmpty)
         #expect(runner.instructions(touching: .binding).contains(.intRef))
-        #expect(runner.alwaysSatisfiedInstructions.contains(.input0))
+        #expect(runner.alwaysSatisfiedInstructions.contains(.input(0)))
         #expect(runner.signature(of: .intQuot)?.isPartial == true)
     }
 
     /// *Inputs and Constants*: the examples, and what a missing or mistyped one leaves.
     @Test func `inputs and constants: bind, merge, miss`() async {
         let trainingCase = TrainingCase(id: "case 1", inputs: bindings([
-            .input0: 5,
-            .input1: [1, 2, 3]
+            .input(0): 5,
+            .input(1): [1, 2, 3]
         ]))
         let individual = Individual(
             id: "candidate 1",
-            program: program { PushInstruction.input0; PushInstruction.int0; PushInstruction.intAdd },
-            constants: bindings([.int0: 10]))
+            program: program { PushInstruction.input(0); PushInstruction.constant(0); PushInstruction.intAdd },
+            constants: bindings([.constant(0): 10]))
         let results = await evaluate(request: EvaluationRequest(
             individuals: [individual], trainingCases: [trainingCase],
             pairings: [Pairing(individual: individual.id, trainingCase: trainingCase.id)],
             configuration: RunnerConfiguration(recorders: Self.errorRecorders)))
         #expect(Self.last("answer", in: results[0]) == "15")
-        #expect(trainingCase.inputs[.input1]?.pretty() == "[1, 2, 3]")
+        #expect(trainingCase.inputs[.input(1)]?.pretty() == "[1, 2, 3]")
 
-        let shared = bindings([.int0: 10, .int1: 100, .string0: "seed"])
-        let constants = merged(shared, bindings([.int0: 42]))   // int0 is 42
-        #expect(constants[.int0]?.pretty() == "42" && constants[.int1]?.pretty() == "100")
+        let shared = bindings([.constant(0): 10, .constant(1): 100, .constant(2): "seed"])
+        let constants = merged(shared, bindings([.constant(0): 42]))   // constant0 is 42
+        #expect(constants[.constant(0)]?.pretty() == "42" && constants[.constant(1)]?.pretty() == "100")
 
         // An input with nothing bound, a constant with nothing bound, and a
-        // constant of the wrong type for its slot.
-        let noInput = await Self.result(of: program { PushInstruction.input2 }, recorders: Self.errorRecorders)
+        // constant of a type no slot used to take (a constant has no type).
+        let noInput = await Self.result(of: program { PushInstruction.input(2) }, recorders: Self.errorRecorders)
         #expect(Self.lastError(in: noInput)?.kind == .missingInput)
-        let noConstant = await Self.result(of: program { PushInstruction.int3 }, recorders: Self.errorRecorders)
+        let noConstant = await Self.result(of: program { PushInstruction.constant(3) }, recorders: Self.errorRecorders)
         #expect(Self.lastError(in: noConstant)?.kind == .missingConstant)
-        let wrongType = await Self.result(of: program { PushInstruction.int3 }, recorders: Self.errorRecorders,
-                                          constants: [.int3: StringItem("no")])
-        #expect(Self.lastError(in: wrongType)?.kind == .missingConstant)
+        let aBool = await Self.result(of: program { PushInstruction.constant(3) }, recorders: [
+            RecorderSpec("bool", observing: .top(.bool), keeping: .finalOnly)
+        ], constants: [.constant(3): BoolItem(true)])
+        #expect(Self.last("bool", in: aBool) == "true")
 
         // A block bound to an input comes to rest on `.code`.
-        let block = await Self.result(of: program { PushInstruction.input0 }, recorders: [
+        let block = await Self.result(of: program { PushInstruction.input(0) }, recorders: [
             RecorderSpec("code", observing: .top(.code), keeping: .finalOnly)
-        ], inputs: [.input0: CodeItem([IntItem(1)])])
+        ], inputs: [.input(0): CodeItem([IntItem(1)])])
         #expect(Self.last("code", in: block) == "( 1 )")
 
-        // The slots are whatever the language has; today, ten inputs and eight types of constant.
+        // The language lists ten inputs and eighty constants; any other member
+        // behaves the same way.
         let runner = Runner()
-        #expect(runner.instructions(role: .input).contains(.input0))
-        let constantTypes = Set(runner.instructions(role: .constant).map { String($0.rawValue.dropLast()) })
-        #expect(constantTypes == ["int", "double", "char", "string", "vecInt", "vecDouble", "vecString", "vecBool"])
+        #expect(runner.instructions(role: .input) == (0..<10).map(PushInstruction.input))
+        #expect(runner.instructions(role: .constant).count == 80)
+        #expect(runner.signature(of: .input(25)) == runner.signature(of: .input(0)))
+        let farConstant = await Self.result(of: program { PushInstruction.constant(200) }, recorders: [
+            RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
+        ], constants: [.constant(200): IntItem(7)])
+        #expect(Self.last("answer", in: farConstant) == "7")
     }
 
     /// *Inputs and Constants*, declaring a problem's inputs: types checked, names shown.
@@ -162,23 +168,23 @@ struct DocumentationUsageExamplesTests {
             InputSlot("x1", stack: .vecInt),
             InputSlot("x2", stack: .vecInt)
         ])
-        #expect(configuration.labeled(program { PushInstruction.input1; PushInstruction.input0 })
+        #expect(configuration.labeled(program { PushInstruction.input(1); PushInstruction.input(0) })
                 == ".input-x1 .input-b")
-        #expect(program { PushInstruction.input1 }.map { $0.pretty() } == [".input1"])
-        #expect(configuration.signature(of: .input0)?.produces == .deferred(.int))
+        #expect(program { PushInstruction.input(1) }.map { $0.pretty() } == [".input1"])
+        #expect(configuration.signature(of: .input(0))?.produces == .deferred(.int))
         #expect(configuration.inputSlotIssues.isEmpty)
 
         let runner = Runner(configuration: configuration)
         let refused = await runner.register(trainingCases: [
-            TrainingCase(id: "fits", inputs: bindings([.input0: 10, .input1: [1, 2], .input2: [3]])),
-            TrainingCase(id: "doesn't", inputs: bindings([.input0: "ten"]))
+            TrainingCase(id: "fits", inputs: bindings([.input(0): 10, .input(1): [1, 2], .input(2): [3]])),
+            TrainingCase(id: "doesn't", inputs: bindings([.input(0): "ten"]))
         ])
         #expect(refused.map(\.trainingCase) == ["doesn't"])
         #expect(await runner.trainingCaseCount == 1)
 
         // Mixed types, declared as a binding.
         let mixed = RunnerConfiguration(inputSlots: [InputSlot("v", stack: .binding)])
-        let asString = TrainingCase(id: "s", inputs: [.input0: BindingItem(key: 0, bound: StringItem("four"))])
+        let asString = TrainingCase(id: "s", inputs: [.input(0): BindingItem(key: 0, bound: StringItem("four"))])
         #expect(mixed.mismatches(in: asString).isEmpty)
     }
 
@@ -245,12 +251,12 @@ struct DocumentationUsageExamplesTests {
     /// *Evaluating Programs*: a full grid, a request sent as JSON, a stream.
     @Test func `evaluating programs: runner, request, stream`() async throws {
         let individuals = [
-            Individual(id: "double", program: program { PushInstruction.input0; 2; PushInstruction.intMultiply }),
-            Individual(id: "next", program: program { PushInstruction.input0; 1; PushInstruction.intAdd })
+            Individual(id: "double", program: program { PushInstruction.input(0); 2; PushInstruction.intMultiply }),
+            Individual(id: "next", program: program { PushInstruction.input(0); 1; PushInstruction.intAdd })
         ]
         let trainingCases = [
-            TrainingCase(id: "five", inputs: bindings([.input0: 5])),
-            TrainingCase(id: "ten", inputs: bindings([.input0: 10]))
+            TrainingCase(id: "five", inputs: bindings([.input(0): 5])),
+            TrainingCase(id: "ten", inputs: bindings([.input(0): 10]))
         ]
         let configuration = RunnerConfiguration(recorders: [
             RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)
@@ -379,11 +385,11 @@ extension DocumentationUsageExamplesTests {
         var settings = InterpreterSettings()
         settings.recordsProvenance = true
         let result = await Self.result(of: program {
-            PushInstruction.input0; 10; PushInstruction.intAdd; 99; PushInstruction.input0; PushInstruction.intMultiply
+            PushInstruction.input(0); 10; PushInstruction.intAdd; 99; PushInstruction.input(0); PushInstruction.intMultiply
         }, settings: settings, recorders: [
             RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly),
             RecorderSpec("below", observing: .second(.int), keeping: .finalOnly)
-        ], inputs: [.input0: IntItem(4)])
+        ], inputs: [.input(0): IntItem(4)])
         guard case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil else {
             Issue.record("no answer"); return
         }

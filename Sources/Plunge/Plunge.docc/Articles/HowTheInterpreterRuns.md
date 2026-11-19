@@ -22,7 +22,7 @@ Before the first step, the interpreter:
 
 1. starts with every stack empty and its step count at zero;
 2. binds the training case's inputs and the individual's constants, so that
-   `.input0`, `.int3` and the rest have values to push;
+   `.input(0)`, `.constant(3)` and the rest have values to push;
 3. binds each input on the `.binding` stack under its slot number, so that
    input 3 is also reachable as key 3;
 4. puts the program on `.exec`, its first item on top.

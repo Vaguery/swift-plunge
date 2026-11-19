@@ -12,7 +12,7 @@ import Testing
 @Suite
 struct CruxSharingTests {
 
-    private let bound: [PushInstruction: any Item] = [.input1: IntItem(5), .input2: BoolItem(true)]
+    private let bound: [PushInstruction: any Item] = [.input(1): IntItem(5), .input(2): BoolItem(true)]
 
     private func run(_ program: [any Item], settings: InterpreterSettings? = nil) -> Interpreter {
         let inty = Interpreter.recordingProvenance()
@@ -31,7 +31,7 @@ struct CruxSharingTests {
     }
 
     @Test func `a duplicated value is built once, as the program built it`() {
-        let inty = run([InstructionItem(.input1), InstructionItem(.intDup), InstructionItem(.intAdd)])
+        let inty = run([InstructionItem(.input(1)), InstructionItem(.intDup), InstructionItem(.intAdd)])
         let ten = topItem(inty, .int)
         #expect(stackString(inty, .int) == "[ 10 ]")
         #expect(CodeItem(ten.crux()).pretty() == "( .input1 .intDup .intAdd )")
@@ -43,7 +43,7 @@ struct CruxSharingTests {
     @Test func `a value a non-destructive read left behind is reused, not rebuilt`() {
         // Each `.boolEq` reads the top two and leaves them, so every result is
         // built from the two before it: fib(N) leaves as a tree, N steps as run.
-        let program: [any Item] = [InstructionItem(.input2), InstructionItem(.input2)]
+        let program: [any Item] = [InstructionItem(.input(2)), InstructionItem(.input(2))]
             + Array(repeating: InstructionItem(.boolEq), count: 24)
         let inty = run(program)
         let last = topItem(inty, .bool)
@@ -101,7 +101,7 @@ struct CruxSharingTests {
     @Test func `the push boundary keeps a shared history and weighs it by its crux`() {
         var settings = Interpreter.recordingProvenance().config
         settings.maxCallWeight = 200
-        let program: [any Item] = [InstructionItem(.input2), InstructionItem(.input2)]
+        let program: [any Item] = [InstructionItem(.input(2)), InstructionItem(.input(2))]
             + Array(repeating: InstructionItem(.boolEq), count: 12)
         let inty = run(program, settings: settings)
         let last = topItem(inty, .bool)

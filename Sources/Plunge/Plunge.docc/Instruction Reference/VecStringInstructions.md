@@ -93,16 +93,6 @@ The `.vecString` stack holds vectors of strings: words, lines and lists of names
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.vecString0` | Pushes the run's constant 0 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString1` | Pushes the run's constant 1 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString2` | Pushes the run's constant 2 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString3` | Pushes the run's constant 3 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString4` | Pushes the run's constant 4 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString5` | Pushes the run's constant 5 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString6` | Pushes the run's constant 6 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString7` | Pushes the run's constant 7 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString8` | Pushes the run's constant 8 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
-| `.vecString9` | Pushes the run's constant 9 for vectors of strings, by way of `.exec`; refuses when the run assigns none. | — | `vecString` |
 | `.vecStringLookupContaining` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecString` (read) | `vecString`, `int`; may refuse |
 | `.vecStringLookupContainingFrom` | Reads the top vector of strings as a probe and copies the topmost one below that contains it as a run, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `vecString` (read) | `vecString`, `int`; may refuse |
 | `.vecStringLookupEqual` | Reads the top vector of strings as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `vecString` (read) | `vecString`, `int`; may refuse |

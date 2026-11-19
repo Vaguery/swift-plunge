@@ -68,7 +68,7 @@ struct ErrorTallyTests {
 
     @Test func `the instructions report the tally`() {
         let inty = Interpreter()
-        inty.load(program: [InstructionItem(.intAdd), InstructionItem(.intAdd), InstructionItem(.input3),
+        inty.load(program: [InstructionItem(.intAdd), InstructionItem(.intAdd), InstructionItem(.input(3)),
                             InstructionItem(.errorMissingArgCount), InstructionItem(.errorMissingInputCount),
                             InstructionItem(.boolAnd), InstructionItem(.errorMissingArgCount)])
         inty.run()

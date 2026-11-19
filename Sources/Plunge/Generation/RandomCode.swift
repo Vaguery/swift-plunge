@@ -263,7 +263,7 @@ public nonisolated enum RandomCode {
     /// A flat gene stream: **instruction tokens only.**
     ///
     /// No literals — a Push program made this way has no `5` in it. Every value
-    /// arrives through a constant (`.int3`) or an input (`.input7`) token, which
+    /// arrives through a constant (`.constant3`) or an input (`.input7`) token, which
     /// is what lets a search optimize an individual's constant assignments
     /// independently of its program structure (see `Individual`), and is what the
     /// Plushy generator has always done.
@@ -369,11 +369,13 @@ public nonisolated enum RandomCode {
     }
 
     static func setRandomConstants(in interpreter: Interpreter) {
-        // Slot by slot, each stack in turn and then the input, so the random
-        // draws come in the same order whatever the slot counts are.
-        let slots = Interpreter.constantSlots
-        let inputs = Interpreter.inputSlots
-        let deepest = max(inputs.count, slots.values.map(\.count).max() ?? 0)
+        // Slot by slot: for each index, each type's constant in turn and then the
+        // input, the order the typed constants (`.int0`…`.vecBool9`) were drawn in,
+        // so the same seed gives the same values.
+        let stacks = PushInstruction.conventionalConstantStacks
+        let inputs = (0..<PushInstruction.listedInputCount).map(PushInstruction.input)
+        let perStack = PushInstruction.listedConstantCount / stacks.count
+        let deepest = max(inputs.count, perStack)
         func random(for stack: PushStack) -> (any Item)? {
             switch stack {
             case .int: IntItem(randomInt(100_000))
@@ -388,9 +390,9 @@ public nonisolated enum RandomCode {
             }
         }
         for i in 0..<deepest {
-            for stack in Interpreter.constantStacks {
-                guard let stackSlots = slots[stack], i < stackSlots.count else { continue }
-                interpreter.constants[stackSlots[i]] = random(for: stack)
+            for stack in stacks where i < perStack {
+                guard let constant = PushInstruction.conventionalConstant(stack, i) else { continue }
+                interpreter.constants[constant] = random(for: stack)
             }
             if i < inputs.count { interpreter.inputs[inputs[i]] = randomPushItem() }
         }

@@ -11,7 +11,7 @@ import Testing
 
 @Suite
 struct TunerOverlayTests {
-    static let inputs: [PushInstruction: any Item] = [.input0: DoubleItem(3), .input1: DoubleItem(-2)]
+    static let inputs: [PushInstruction: any Item] = [.input(0): DoubleItem(3), .input(1): DoubleItem(-2)]
 
     static func top(_ program: [any Item], on stack: PushStack = .double,
                     inputs: [PushInstruction: any Item] = inputs) -> any Item {
@@ -41,7 +41,7 @@ struct TunerOverlayTests {
 
     @Test func `each input slot is one site, however often it is read; constants are not sites`() {
         // x·x + y + 2.5
-        let item = Self.top(Self.ins(.input0, .input0, .doubleMultiply, .input1, .doubleAdd) + [DoubleItem(2.5)]
+        let item = Self.top(Self.ins(.input(0), .input(0), .doubleMultiply, .input(1), .doubleAdd) + [DoubleItem(2.5)]
                             + Self.ins(.doubleAdd))
         let overlay = item.distilledCrux().tunerOverlay
         #expect(overlay.sites.map(\.label) == [".input0", ".input1"])
@@ -49,7 +49,7 @@ struct TunerOverlayTests {
     }
 
     @Test func `neutral is the crux itself, and a setting replays to the tuned value`() {
-        let item = Self.top(Self.ins(.input0, .input0, .doubleMultiply, .input1, .doubleAdd))
+        let item = Self.top(Self.ins(.input(0), .input(0), .doubleMultiply, .input(1), .doubleAdd))
         let overlay = item.distilledCrux().tunerOverlay
         #expect(Self.replay(overlay.program) == 7)
         #expect(Self.replay(overlay.program([0: .neutral, 1: .neutral])) == 7)
@@ -62,7 +62,7 @@ struct TunerOverlayTests {
 
     @Test func `a value used twice is tuned once, where it is made`() {
         // ⌊x⌋ dup min: the floor is one node, used twice.
-        let item = Self.top(Self.ins(.input0, .doubleFloor, .doubleDup, .doubleMin))
+        let item = Self.top(Self.ins(.input(0), .doubleFloor, .doubleDup, .doubleMin))
         let overlay = item.distilledCrux().tunerOverlay
         let tuned = overlay.program([0: TunerOverlay.Setting(scale: 2, offset: 0.5)])
         #expect(Self.count(.doubleMultiply, in: tuned) == 1)
@@ -82,7 +82,7 @@ struct TunerOverlayTests {
 
     @Test func `a loop's body is written once, with the tuner where the input is read`() {
         // x, then five passes of `1.5 .doubleMultiply`.
-        let item = Self.top(Self.ins(.input0) + [IntItem(5), CodeItem([DoubleItem(1.5)] + Self.ins(.doubleMultiply))]
+        let item = Self.top(Self.ins(.input(0)) + [IntItem(5), CodeItem([DoubleItem(1.5)] + Self.ins(.doubleMultiply))]
                             + Self.ins(.execDoTimes))
         let overlay = item.distilledCrux().tunerOverlay
         #expect(overlay.sites.map(\.label) == [".input0"])

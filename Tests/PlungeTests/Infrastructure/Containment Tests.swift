@@ -13,7 +13,7 @@ import Testing
 @Suite
 struct ContainmentTests {
 
-    private let bound: [PushInstruction: any Item] = [.input3: CodeItem([IntItem(5), IntItem(6)])]
+    private let bound: [PushInstruction: any Item] = [.input(3): CodeItem([IntItem(5), IntItem(6)])]
 
     /// Runs `program` on a fresh interpreter, with `.input3` bound to `( 5 6 )`.
     private func run(_ program: [any Item], recording: Bool = true) -> Interpreter {
@@ -33,7 +33,7 @@ struct ContainmentTests {
     }
 
     @Test func `a bound block's contents record their address, and replay`() {
-        let inty = run([InstructionItem(.input3), InstructionItem(.codeDo)])
+        let inty = run([InstructionItem(.input(3)), InstructionItem(.codeDo)])
         #expect(stackString(inty, .int) == "[ 6 5 ]")
         let six = topItem(inty, .int)
         let crux = CodeItem(six.crux()).pretty()
@@ -44,15 +44,15 @@ struct ContainmentTests {
     }
 
     @Test func `the address is what the emit instruction records`() {
-        let unwrapped = topItem(run([InstructionItem(.input3), InstructionItem(.codeDo)]), .int)
-        let emitted = topItem(run([InstructionItem(.input3), IntItem(1), InstructionItem(.codeEmitNthRoot)]), .int)
+        let unwrapped = topItem(run([InstructionItem(.input(3)), InstructionItem(.codeDo)]), .int)
+        let emitted = topItem(run([InstructionItem(.input(3)), IntItem(1), InstructionItem(.codeEmitNthRoot)]), .int)
         #expect(callString(emitted) == callString(unwrapped))
-        let walked = run([InstructionItem(.input3), CodeItem([]), InstructionItem(.codeIterateRoot)])
+        let walked = run([InstructionItem(.input(3)), CodeItem([]), InstructionItem(.codeIterateRoot)])
         #expect(callString(topItem(walked, .int)) == callString(unwrapped))
     }
 
     @Test func `a tree walk addresses by pre-order point`() {
-        let inty = run([InstructionItem(.input3), CodeItem([]), InstructionItem(.codeIterateEmit)])
+        let inty = run([InstructionItem(.input(3)), CodeItem([]), InstructionItem(.codeIterateEmit)])
         let six = topItem(inty, .int)
         #expect(six.crux().contains { ($0 as? InstructionItem)?.value == .codeEmitNth })
         #expect(holds(six))
@@ -149,16 +149,16 @@ struct ContainmentTests {
 
     @Test func `a bound constant's element names the constant`() {
         let inty = Interpreter.recordingProvenance()
-        inty.load(inputs: [:], constants: [.vecInt3: VecIntItem([10, 20, 30])],
-                  program: [InstructionItem(.vecInt3), VecIntItem([5]), InstructionItem(.vecIntConcat),
+        inty.load(inputs: [:], constants: [.constant(43): VecIntItem([10, 20, 30])],
+                  program: [InstructionItem(.constant(43)), VecIntItem([5]), InstructionItem(.vecIntConcat),
                             InstructionItem(.vecIntPushAll)])
         inty.run(stepLimit: 1_000)
         #expect(stackString(inty, .int) == "[ 5 30 20 10 ]")
-        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty() == "( .vecInt3 1 .vecIntNth )")
+        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty() == "( .constant43 1 .vecIntNth )")
     }
 
     @Test func `runs merge where positions continue, and lookups cross runs`() {
-        let source = VecIntItem(Array(0..<100), call: [InstructionItem(.vecInt3)])
+        let source = VecIntItem(Array(0..<100), call: [InstructionItem(.constant(43))])
         // Reversed whole: one run, stepping back.
         let reversed = Pieces(source.origins().reversed())
         #expect(reversed.runs.count == 1)
@@ -174,7 +174,7 @@ struct ContainmentTests {
     }
 
     @Test func `with recording off nothing is built`() {
-        let inty = run([InstructionItem(.input3), InstructionItem(.codeDo)], recording: false)
+        let inty = run([InstructionItem(.input(3)), InstructionItem(.codeDo)], recording: false)
         #expect(stackString(inty, .int) == "[ 6 5 ]")
         #expect(inty.stacks[.int]!.allSatisfy { $0.call.isEmpty })
         let vector = run([VecIntItem([])] + five + [InstructionItem(.vecIntConj)], recording: false)

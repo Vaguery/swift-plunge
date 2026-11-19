@@ -23,12 +23,12 @@ struct FunctionOutcomeProbePins {
     }
 
     @Test func `today's rule: a block using input0 depends on the element`() {
-        let s = Self.situation([InstructionItem(.input0), IntItem(2), InstructionItem(.intMultiply)], over: [1, 2, 3])
+        let s = Self.situation([InstructionItem(.input(0)), IntItem(2), InstructionItem(.intMultiply)], over: [1, 2, 3])
         #expect(Probe.classify(.v0, .map, s) == .dependent)
     }
 
     @Test func `a block that only pushes a constant is a constant function`() {
-        let s = Self.situation([InstructionItem(.int3)], over: [1, 2, 3], constants: [.int3: IntItem(5)])
+        let s = Self.situation([InstructionItem(.constant(3))], over: [1, 2, 3], constants: [.constant(3): IntItem(5)])
         #expect(Probe.classify(.v0, .map, s) == .constant)
         #expect(Probe.classify(.v0, .reduce, s) == .constant)
     }
@@ -48,7 +48,7 @@ struct FunctionOutcomeProbePins {
     }
 
     @Test func `the lowest-numbered input is the element under V1`() {
-        let s = Self.situation([InstructionItem(.input7), IntItem(2), InstructionItem(.intMultiply)], over: [1, 2, 3])
+        let s = Self.situation([InstructionItem(.input(7)), IntItem(2), InstructionItem(.intMultiply)], over: [1, 2, 3])
         #expect(Probe.classify(.v0, .map, s) != .dependent)
         #expect(Probe.classify(.v1, .map, s) == .dependent)
     }
@@ -60,12 +60,12 @@ struct FunctionOutcomeProbePins {
     }
 
     @Test func `crux-to-function turns a sum's argument into a hole`() {
-        // An int on the stack made by `.int3 .int4 .intAdd`, recorded: its crux
-        // with the first int argument a hole is `( .input0 .int4 .intAdd )`.
+        // An int on the stack made by `.constant3 .constant4 .intAdd`, recorded: its crux
+        // with the first int argument a hole is `( .input0 .constant4 .intAdd )`.
         let inty = Interpreter()
         inty.config.recordsProvenance = true
-        let constants: [PushInstruction: any Item] = [.int3: IntItem(5), .int4: IntItem(10)]
-        inty.load(constants: constants, program: [InstructionItem(.int3), InstructionItem(.int4),
+        let constants: [PushInstruction: any Item] = [.constant(3): IntItem(5), .constant(4): IntItem(10)]
+        inty.load(constants: constants, program: [InstructionItem(.constant(3)), InstructionItem(.constant(4)),
                                                   InstructionItem(.intAdd)])
         inty.run()
         let s = Self.situation([], over: [1, 2, 3], constants: constants, stacks: Probe.snapshot(inty))
@@ -79,7 +79,7 @@ struct FunctionOutcomeProbePins {
     }
 
     @Test func `typed context gives a binary operation its second argument`() {
-        let s = Self.situation([InstructionItem(.intAdd)], over: [1, 2, 3], constants: [.int0: IntItem(100)])
+        let s = Self.situation([InstructionItem(.intAdd)], over: [1, 2, 3], constants: [.constant(0): IntItem(100)])
         #expect(Probe.classify(.v3, .map, s) == .identity, "an add starves on the element alone")
         #expect(Probe.classify(.v10, .map, s) == .dependent)
     }
@@ -94,7 +94,7 @@ struct FunctionOutcomeProbePins {
     @Test func `the first typed block is found by signature`() {
         let typed = CodeItem([InstructionItem(.intAdd)])
         let s = Self.situation([InstructionItem(.boolNot)], over: [1, 2, 3],
-                               constants: [.int0: IntItem(100)],
+                               constants: [.constant(0): IntItem(100)],
                                stacks: [.code: [CodeItem([InstructionItem(.boolNot)]), typed]])
         #expect(Probe.classify(.v10, .map, s) == .identity)
         #expect(Probe.classify(.v12, .map, s) == .dependent)
@@ -118,10 +118,10 @@ struct FunctionOutcomeProbePins {
     }
 
     @Test func `the hybrid keeps blocks written with input0 working`() {
-        let doubling = Self.situation([InstructionItem(.input0), IntItem(2), InstructionItem(.intMultiply)],
+        let doubling = Self.situation([InstructionItem(.input(0)), IntItem(2), InstructionItem(.intMultiply)],
                                       over: [1, 2, 3])
         #expect(Probe.classify(.v13, .map, doubling) == .dependent)
-        let sum = Self.situation([InstructionItem(.input0), InstructionItem(.input1), InstructionItem(.intAdd)],
+        let sum = Self.situation([InstructionItem(.input(0)), InstructionItem(.input(1)), InstructionItem(.intAdd)],
                                  over: [1, 2, 3])
         #expect(Probe.classify(.v13, .reduce, sum) == .dependent)
         let stackFed = Self.situation([IntItem(2), InstructionItem(.intMultiply)], over: [1, 2, 3])

@@ -62,8 +62,8 @@ struct BehaviorIODeclarationTests {
                   PushStack.defaultStack(for: results[0].item) == stack
             else { return "gave \(got), declared a deferred .\(stack)" }
             return nil
-        case .input:
-            return got == [.exec] ? nil : "gave \(got), declared an input on .exec"
+        case .input, .constant:
+            return got == [.exec] ? nil : "gave \(got), declared an input or a constant on .exec"
         case .delivery(let stack):
             guard got.allSatisfy({ [.exec, .iterator].contains($0) }) else { return "gave \(got), declared a loop" }
             let landed = delivered(by: results)
@@ -170,6 +170,7 @@ struct BehaviorIODeclarationTests {
         case .alternatives: "alternatives"
         case .deferred: "deferred"
         case .input: "input"
+        case .constant: "constant"
         case .delivery: "delivery"
         case .several: "several"
         case .positions: "positions"
@@ -196,8 +197,10 @@ struct BehaviorIODeclarationTests {
             // bindingPrint and functionPrint added. Later the same day: execQuote
             // (one result) and execPrint (printed) gone.
             // 2026-11-15: vecBoolXor and 13 broadcast vector operations, one result each.
+            // 2026-11-19: constants lost their types; the 80 deferred pushes are
+            // now the 80 listed constants, whose type the individual decides.
             "one result": 621, "fixed results": 90, "alternatives": 26,
-            "deferred": 80, "input": 10, "delivery": 7, "several": 1,
+            "constant": 80, "input": 10, "delivery": 7, "several": 1,
             "positions": 183, "continuation": 49, "printed": 13
         ])
     }
@@ -206,7 +209,8 @@ struct BehaviorIODeclarationTests {
         let bools = Set(Interpreter.producers[.bool] ?? [])
         #expect(bools.isSuperset(of: [.intGT, .boolEq, .intStackIsEmpty, .boolAnd]))
         #expect(!bools.contains(.intAdd))
-        #expect(Interpreter.producers[.int]?.contains(.int3) == true, "a constant counts where it rests")
+        #expect(Interpreter.producers.values.allSatisfy { !$0.contains(.constant(3)) },
+                "a constant has no type, so it produces none")
         #expect(Interpreter.producers[.char]?.contains(.stringPushAll) == true,
                 "a delivery counts where it delivers")
         #expect(Interpreter.producers.values.allSatisfy { !$0.contains(.execIf) }, "a continuation produces no type")

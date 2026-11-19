@@ -27,7 +27,7 @@
 /// which made them a fact about code organization: every `…Eq` was once roled
 /// with dup and swap because it sat in the same generator loop.)
 public nonisolated enum InstructionRole: String, Sendable, Codable, Hashable, CaseIterable {
-    /// The 80 environment constants — `int0…int9`, `vecString0…9`, and so on:
+    /// The 80 environment constants — `constant0…constant9`, `constant60…9`, and so on:
     /// everything that produces a deferred literal. They take no arguments, so
     /// they can never starve.
     case constant
@@ -66,7 +66,7 @@ nonisolated extension Interpreter {
     /// derived from the Behaviors' declarations (and the per-stack template)
     /// rather than from where they are registered or what they are named.
     static let roles: [InstructionRole: Set<PushInstruction>] = {
-        let constants = Set(language.filter { if case .deferred = $0.value.produces { true } else { false } }.keys)
+        let constants = Set(language.filter { $0.value.produces == .constant }.keys)
         let inputs = Set(language.filter { $0.value.produces == .input }.keys)
         let stackFamily = Set(stackFamilyBehaviors.keys)
         let comparisons = InstructionTagging.standard.instructions(tagged: .comparison)

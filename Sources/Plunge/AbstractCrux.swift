@@ -18,8 +18,8 @@
 ///   every constant is a hole (each constant slot, derived constant and
 ///   literal), and **the inputs stay where they are**, as instructions. It is
 ///   still a model of the data it came from, with its constants free:
-///   `.input0 .int3 .intAdd` abstracts to `.input0 $0 .intAdd`. Constant slots
-///   of one type are interchangeable: reading `.int5` instead gives the same
+///   `.input0 .constant3 .intAdd` abstracts to `.input0 $0 .intAdd`. Constant slots
+///   of one type are interchangeable: reading `.constant5` instead gives the same
 ///   abstract crux.
 /// - **The tunable crux** (``DistilledCrux/tunable(_:sites:literals:limit:)``):
 ///   the abstract crux with a parametric transform on each input, whose
@@ -27,7 +27,7 @@
 ///   form for search and curve fitting. See ``TunableCrux``.
 /// - **The skeleton crux** (``DistilledCrux/skeleton(_:literals:limit:)``):
 ///   every input is a hole too, so nothing is left but typed holes and the
-///   work between them: `.input0 .int3 .intAdd` and `.input2 .int0 .intAdd`
+///   work between them: `.input0 .constant3 .intAdd` and `.input2 .constant0 .intAdd`
 ///   are both `$0 $1 .intAdd`. It is the form for building new structures
 ///   combinatorially and for telling shapes apart, not for fitting.
 ///

@@ -40,16 +40,6 @@ The `.int` stack holds 64-bit signed integers. Arithmetic never wraps: a result 
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.int0` | Pushes the run's constant 0 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int1` | Pushes the run's constant 1 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int2` | Pushes the run's constant 2 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int3` | Pushes the run's constant 3 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int4` | Pushes the run's constant 4 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int5` | Pushes the run's constant 5 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int6` | Pushes the run's constant 6 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int7` | Pushes the run's constant 7 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int8` | Pushes the run's constant 8 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
-| `.int9` | Pushes the run's constant 9 for ints, by way of `.exec`; refuses when the run assigns none. | — | `int` |
 | `.intLookupEqual` | Reads the top int as a probe and copies the topmost one below that equals it, then its depth + 1 on top of the copy; refuses on a miss. | `int` (read) | `int`, `int`; may refuse |
 | `.intLookupEqualFrom` | Reads the top int as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), then its depth + 1 on top of the copy; refuses on a miss. | `int`, `int` (read) | `int`, `int`; may refuse |
 | `.intLookupNearest` | Reads the top int as a probe and copies the nearest one below it, the topmost on a tie, then its depth + 1 on top of the copy. | `int` (read) | `int`, `int`; may refuse |

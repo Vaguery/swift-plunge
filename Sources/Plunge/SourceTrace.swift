@@ -142,7 +142,6 @@ public nonisolated struct SourceTrace {
         /// Every item noted is held until the trace ends, so no node's storage is
         /// freed and its address reused by a later node.
         var held: [any Item] = []
-        let slotTokens = Set(Interpreter.inputSlots).union(Interpreter.constantInstructionStacks.keys)
 
         /// Places the nodes of `items` not seen before at `step`; returns the items
         /// whose own node is new.
@@ -179,7 +178,7 @@ public nonisolated struct SourceTrace {
             let reach = reach(of: consumed, skipping: new)
             let position = SourceTrace.origin(of: next)
             var slots = reach.slots
-            if let token = next.exactly(InstructionItem.self)?.value, slotTokens.contains(token) {
+            if let token = next.exactly(InstructionItem.self)?.value, token.isInput || token.isConstant {
                 slots.insert(token)
             }
             var sources = reach.positions
@@ -207,7 +206,7 @@ public nonisolated struct SourceTrace {
                     // An instruction leaf a behavior wrote is placed by its node's step.
                     reach.untraced += 1
                 }
-                if let token = next.exactly(InstructionItem.self)?.value, slotTokens.contains(token) {
+                if let token = next.exactly(InstructionItem.self)?.value, token.isInput || token.isConstant {
                     reach.slots.insert(token)
                 }
                 if let block = next.exactly(CodeItem.self) {

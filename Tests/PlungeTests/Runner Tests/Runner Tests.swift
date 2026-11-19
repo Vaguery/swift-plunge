@@ -23,13 +23,13 @@ struct RunnerTests {
 
     @Test func `evaluates a pairing using inputs and constants`() async {
         let runner = Runner(configuration: topIntConfig())
-        // input0 + int0  →  5 + 10 = 15
+        // input0 + constant0  →  5 + 10 = 15
         let individual = Individual(
             id: "add",
-            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-            constants: [.int0: IntItem(10)]
+            program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+            constants: [.constant(0): IntItem(10)]
         )
-        let trainingCase = TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])
+        let trainingCase = TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])
         await runner.register(individuals: [individual])
         await runner.register(trainingCases: [trainingCase])
 
@@ -57,8 +57,8 @@ struct RunnerTests {
         let individuals = (0..<3).map { n in
             Individual(
                 id: "i\(n)",
-                program: [InstructionItem(.int0)],
-                constants: [.int0: IntItem(n * 100)]
+                program: [InstructionItem(.constant(0))],
+                constants: [.constant(0): IntItem(n * 100)]
             )
         }
         await runner.register(individuals: individuals)
@@ -90,11 +90,11 @@ struct RunnerTests {
         let runner = Runner(configuration: config)
         let individual = Individual(
             id: "add",
-            program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-            constants: [.int0: IntItem(10)]
+            program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+            constants: [.constant(0): IntItem(10)]
         )
         await runner.register(individuals: [individual])
-        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])])
+        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])])
 
         let results = await runner.evaluate(pairings: [Pairing(individual: "add", trainingCase: "c1")])
         #expect(lastInt(results[0].traces["topInt"]) == 10)

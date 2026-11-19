@@ -19,7 +19,7 @@ struct RolledCruxTests {
 
     /// `0 ( .input0 .intAdd 12 .intMin ) 50 .execDoTimes`: adds the input (5)
     /// fifty times, never past 12.
-    static let loop: [any Item] = [IntItem(0), CodeItem(ins(.input0, .intAdd) + [IntItem(12)] + ins(.intMin)),
+    static let loop: [any Item] = [IntItem(0), CodeItem(ins(.input(0), .intAdd) + [IntItem(12)] + ins(.intMin)),
                                    IntItem(50), InstructionItem(.execDoTimes)]
 
     static func distilled(_ program: [any Item]) -> DistilledCrux {
@@ -64,18 +64,18 @@ struct RolledCruxTests {
     }
 
     @Test func `repeats written out by hand are rolled too`() {
-        let program: [any Item] = Self.ins(.input0) + [IntItem(1), InstructionItem(.intAdd), IntItem(1),
+        let program: [any Item] = Self.ins(.input(0)) + [IntItem(1), InstructionItem(.intAdd), IntItem(1),
                                                        InstructionItem(.intAdd), IntItem(1), InstructionItem(.intAdd)]
         let abstract = Self.distilled(program).abstracted()!
         #expect(abstract.key == "«fn (int, int) -> int: .input0 ( $0 .intAdd ) $1 .execDoTimes .codePop»")
     }
 
     @Test func `two passes roll when the body is long enough`() {
-        let short: [any Item] = Self.ins(.input0) + [IntItem(1), InstructionItem(.intAdd), IntItem(1),
+        let short: [any Item] = Self.ins(.input(0)) + [IntItem(1), InstructionItem(.intAdd), IntItem(1),
                                                      InstructionItem(.intAdd)]
         #expect(Self.distilled(short).abstracted()!.key == "«fn (int, int) -> int: .input0 $0 .intAdd $1 .intAdd»")
         let pass: [any Item] = [IntItem(2), InstructionItem(.intMultiply), IntItem(1), InstructionItem(.intAdd)]
-        let long = Self.distilled(Self.ins(.input0) + pass + pass).abstracted()!
+        let long = Self.distilled(Self.ins(.input(0)) + pass + pass).abstracted()!
         #expect(long.key
                 == "«fn (int, int, int) -> int: .input0 ( $0 .intMultiply $1 .intAdd ) $2 .execDoTimes .codePop»")
     }

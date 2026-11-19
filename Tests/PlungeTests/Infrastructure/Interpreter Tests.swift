@@ -14,8 +14,8 @@ struct InterpreterTests {
 
     let inty = Interpreter()
 
-    let inputty: [PI: any Item] =
-        [.input0: IntItem(10), .input2: DoubleItem(1.1e17)]
+    let inputty: [PushInstruction: any Item] =
+        [.input(0): IntItem(10), .input(2): DoubleItem(1.1e17)]
 
     let proggy: [any Item] =
         [IntItem(6), InstructionItem(.intAdd), IntItem(2)]
@@ -36,7 +36,7 @@ struct InterpreterTests {
         // Constants are keyed by instruction token (like inputs), so a fresh
         // interpreter has none until they are bound; unassigned tokens read nil.
         #expect(inty.constants.isEmpty)
-        #expect(inty.constants[.int2] == nil)
+        #expect(inty.constants[.constant(2)] == nil)
     }
 
     @Test
@@ -55,8 +55,8 @@ struct InterpreterTests {
         #expect(inty.counter == 0)
 
         // inputs
-        #expect(inty.inputs[.input0]! is IntItem)
-        #expect(inty.inputs[.input2]! is DoubleItem)
+        #expect(inty.inputs[.input(0)]! is IntItem)
+        #expect(inty.inputs[.input(2)]! is DoubleItem)
 
         // initial stack values
         #expect(inty.stacks[.bool]!.count == 1)
@@ -182,14 +182,14 @@ struct InterpreterTests {
 
         let prog: [any Item] = [
             BoolItem(false), BoolItem(true), IntItem(3),
-            InstructionItem(.input0),
-            InstructionItem(.input1),
+            InstructionItem(.input(0)),
+            InstructionItem(.input(1)),
             InstructionItem(.intAdd),
             InstructionItem(.intSwap)
         ]
 
         inty.recorders[topInt.name] = AnyRecorder(topInt)
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                  stacks: [.int: []],
                  program: prog)
         #expect(stackString(inty, .int) == "[ ]")

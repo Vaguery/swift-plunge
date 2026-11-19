@@ -18,12 +18,12 @@ struct CruxMentionsInputTests {
     // MARK: - The walk (relocated from PlungeGP's SearchEngine.mentionsInput test)
 
     @Test func `crux walk finds an input at a leaf, buried in a code block, or nowhere`() {
-        let tokens: Set<PushInstruction> = [.input0, .input1]
+        let tokens: Set<PushInstruction> = [.input(0), .input(1)]
         // Direct leaf.
-        let direct = DoubleItem(3, call: [DoubleItem(1), InstructionItem(.input0), InstructionItem(.doubleAdd)])
+        let direct = DoubleItem(3, call: [DoubleItem(1), InstructionItem(.input(0)), InstructionItem(.doubleAdd)])
         #expect(cruxMentions(direct, anyOf: tokens))
         // Buried inside a CodeItem leaf.
-        let buried = DoubleItem(3, call: [CodeItem([InstructionItem(.input1)]), InstructionItem(.doubleAdd)])
+        let buried = DoubleItem(3, call: [CodeItem([InstructionItem(.input(1))]), InstructionItem(.doubleAdd)])
         #expect(cruxMentions(buried, anyOf: tokens))
         // No inputs anywhere.
         let blind = DoubleItem(3, call: [DoubleItem(1), DoubleItem(2), InstructionItem(.doubleAdd)])
@@ -40,24 +40,24 @@ struct CruxMentionsInputTests {
     }
 
     @Test func `reports true when the result derives from an input`() async {
-        let runner = Runner(configuration: config(cruxInputTokens: [.input0]))
-        // input0 + int0 → the top item's crux references .input0
+        let runner = Runner(configuration: config(cruxInputTokens: [.input(0)]))
+        // input0 + constant0 → the top item's crux references .input0
         let individual = Individual(
-            id: "add", program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-            constants: [.int0: IntItem(10)]
+            id: "add", program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+            constants: [.constant(0): IntItem(10)]
         )
         await runner.register(individuals: [individual])
-        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])])
+        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])])
 
         let results = await runner.evaluate(pairings: [Pairing(individual: "add", trainingCase: "c1")])
         #expect(results[0].cruxMentionsInput["result"] == true)
     }
 
     @Test func `reports false for a constant program that ignores its input`() async {
-        let runner = Runner(configuration: config(cruxInputTokens: [.input0]))
-        let individual = Individual(id: "const", program: [InstructionItem(.int0)], constants: [.int0: IntItem(42)])
+        let runner = Runner(configuration: config(cruxInputTokens: [.input(0)]))
+        let individual = Individual(id: "const", program: [InstructionItem(.constant(0))], constants: [.constant(0): IntItem(42)])
         await runner.register(individuals: [individual])
-        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])])
+        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])])
 
         let results = await runner.evaluate(pairings: [Pairing(individual: "const", trainingCase: "c1")])
         #expect(results[0].cruxMentionsInput["result"] == false)
@@ -66,11 +66,11 @@ struct CruxMentionsInputTests {
     @Test func `stays empty — no crux walked — when no tokens are requested`() async {
         let runner = Runner(configuration: config(cruxInputTokens: []))
         let individual = Individual(
-            id: "add", program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-            constants: [.int0: IntItem(10)]
+            id: "add", program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+            constants: [.constant(0): IntItem(10)]
         )
         await runner.register(individuals: [individual])
-        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])])
+        await runner.register(trainingCases: [TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])])
 
         let results = await runner.evaluate(pairings: [Pairing(individual: "add", trainingCase: "c1")])
         #expect(results[0].cruxMentionsInput.isEmpty)

@@ -229,14 +229,25 @@ nonisolated extension Interpreter {
     /// code block as data) and its key onto `.int` above it; `xRefAs` is its inverse.
     /// The value is the item that was bound (law 1b); the key is made here, and
     /// its crux clears the value away beneath it, as a query's clears what it read.
+    ///
+    /// A value that rests on no stack (a bare instruction, which only an input's
+    /// pair can hold) goes to `.code` as a one-instruction code block, the form
+    /// `.code` holds; its crux is the unpacking with the key cleared away. Before
+    /// 2026-11-19 it was refused by `.code`, while the key's crux still cleared a
+    /// code block that was never there.
     static let bindingUnpack_Behavior =
         Behavior(.bindingUnpack, requires: [.takes(.binding)], tags: [], behaviorClass: .operation,
                  body: .values { args, recording in
                      let pair = args[0] as! BindingItem
                      let resting = PushStack.defaultStack(for: pair.bound) ?? .code
+                     let unpacking: [any Item] = [pair, InstructionItem(.bindingUnpack)]
                      let key = IntItem(pair.key, call: recording(Behavior.reading(
-                        [resting: 1], producing: .int, from: [pair, InstructionItem(.bindingUnpack)])))
-                     return [Router(resting, pair.bound), Router(.int, key)]
+                        [resting: 1], producing: .int, from: unpacking)))
+                     let value: any Item = PushStack.defaultStack(for: pair.bound) == nil
+                         ? CodeItem([pair.bound], call: recording(Behavior.reading(
+                             [.int: 1], producing: .code, from: unpacking)))
+                         : pair.bound
+                     return [Router(resting, value), Router(.int, key)]
                  }, produces: .alternatives(boundStacks.map { [$0, .int] }))
         .described("Takes the top binding apart: its value onto its own stack (a code block as data), then its key " +
             "onto `.int`.")

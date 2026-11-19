@@ -265,7 +265,7 @@ nonisolated extension FunctionItem {
     }
 
     /// Every instruction's bare shape, read once from the language, indexed by
-    /// `PushInstruction.ordinal`: a sieve asks every function on a deep
+    /// `InstructionName.ordinal` (a family's members share one shape): a sieve asks every function on a deep
     /// `.function` stack for its holes, and a dictionary keyed by the instruction
     /// hashed its raw string each time (the soak, seed 17538: 15 ms a compose).
     static let bareShapes = ShapeTable(
@@ -274,13 +274,25 @@ nonisolated extension FunctionItem {
     /// Bare shapes by instruction, without hashing.
     struct ShapeTable: Sendable {
         private let slots: [BareShape?]
+        private let input: BareShape?
+        private let constant: BareShape?
         init(_ shapes: [PushInstruction: BareShape]) {
-            var slots = [BareShape?](repeating: nil, count: PushInstruction.allCases.count)
-            for (instruction, shape) in shapes { slots[instruction.ordinal] = shape }
+            var slots = [BareShape?](repeating: nil, count: InstructionName.allCases.count)
+            for (instruction, shape) in shapes {
+                if let name = instruction.name { slots[name.ordinal] = shape }
+            }
             self.slots = slots
+            self.input = shapes[.input(0)]
+            self.constant = shapes[.constant(0)]
         }
         subscript(instruction: PushInstruction) -> BareShape? {
-            @inline(__always) get { slots[instruction.ordinal] }
+            @inline(__always) get {
+                switch instruction {
+                case .named(let name): slots[name.ordinal]
+                case .input: input
+                case .constant: constant
+                }
+            }
         }
     }
 
@@ -315,7 +327,7 @@ nonisolated extension FunctionItem {
         switch behavior.produces {
         case .results(let stacks): stacks.last
         case .positions(let stack), .deferred(let stack), .delivery(let stack), .several(let stack): stack
-        case .alternatives, .continuation, .input, .printed: nil
+        case .alternatives, .continuation, .input, .constant, .printed: nil
         }
     }
 }

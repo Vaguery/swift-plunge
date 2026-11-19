@@ -99,16 +99,6 @@ The `.string` stack holds text. Indices count characters, not bytes, and an inde
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.string0` | Pushes the run's constant 0 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string1` | Pushes the run's constant 1 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string2` | Pushes the run's constant 2 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string3` | Pushes the run's constant 3 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string4` | Pushes the run's constant 4 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string5` | Pushes the run's constant 5 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string6` | Pushes the run's constant 6 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string7` | Pushes the run's constant 7 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string8` | Pushes the run's constant 8 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
-| `.string9` | Pushes the run's constant 9 for strings, by way of `.exec`; refuses when the run assigns none. | — | `string` |
 | `.stringLookupContaining` | Reads the top string as a probe and copies the topmost one below that contains it, pushing its depth + 1 onto `.int`; refuses on a miss. | `string` (read) | `string`, `int`; may refuse |
 | `.stringLookupContainingFrom` | Reads the top string as a probe and copies the topmost one below that contains it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `string` (read) | `string`, `int`; may refuse |
 | `.stringLookupEqual` | Reads the top string as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `string` (read) | `string`, `int`; may refuse |

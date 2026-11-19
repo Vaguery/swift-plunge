@@ -19,12 +19,12 @@ struct PublicAPITests {
     @Test func `build a program, run it, and read the result — all public`() async {
         // Build a program from the public item types.
         let program: [any Item] = [
-            InstructionItem(.input0),
-            InstructionItem(.int0),
+            InstructionItem(.input(0)),
+            InstructionItem(.constant(0)),
             InstructionItem(.intAdd)
         ]
-        let individual = Individual(id: "add", program: program, constants: [.int0: IntItem(10)])
-        let trainingCase = TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])
+        let individual = Individual(id: "add", program: program, constants: [.constant(0): IntItem(10)])
+        let trainingCase = TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])
 
         var settings = InterpreterSettings()
         settings.stepLimit = 100

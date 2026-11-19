@@ -49,16 +49,6 @@ The `.double` stack holds 64-bit floating-point numbers. No instruction leaves a
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.double0` | Pushes the run's constant 0 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double1` | Pushes the run's constant 1 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double2` | Pushes the run's constant 2 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double3` | Pushes the run's constant 3 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double4` | Pushes the run's constant 4 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double5` | Pushes the run's constant 5 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double6` | Pushes the run's constant 6 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double7` | Pushes the run's constant 7 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double8` | Pushes the run's constant 8 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
-| `.double9` | Pushes the run's constant 9 for doubles, by way of `.exec`; refuses when the run assigns none. | — | `double` |
 | `.doubleLookupEqual` | Reads the top double as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `double` (read) | `double`, `int`; may refuse |
 | `.doubleLookupEqualFrom` | Reads the top double as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `double` (read) | `double`, `int`; may refuse |
 | `.doubleLookupNearest` | Reads the top double as a probe and copies the nearest one below it, the topmost on a tie, pushing its depth + 1 onto `.int`. | `double` (read) | `double`, `int`; may refuse |

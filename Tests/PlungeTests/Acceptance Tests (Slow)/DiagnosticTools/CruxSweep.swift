@@ -37,7 +37,7 @@ import Foundation
 /// or to write it out as a replayable case.
 ///
 /// `inputs` and `constants` are captured per program: a crux naming `.input3` or
-/// `.vecDouble8` only reproduces against the bindings it was recorded under, so
+/// `.constant58` only reproduces against the bindings it was recorded under, so
 /// they travel with the item rather than being re-derived later.
 struct SweptItem {
     var item: any Item

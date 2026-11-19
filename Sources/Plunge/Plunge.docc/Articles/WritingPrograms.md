@@ -121,7 +121,7 @@ library loads, so they can't fall out of step with what the interpreter does.
 ## Programs without literals
 
 A program doesn't have to contain any literals. One made only of instructions
-gets every value it uses from an input or from a constant such as `.int3`, whose
+gets every value it uses from an input or from a constant such as `.constant(3)`, whose
 value belongs to the ``Individual`` and not to the program. That separation
 lets a search change a program's numbers and its structure independently. See
 <doc:InputsAndConstants>.

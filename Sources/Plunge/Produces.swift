@@ -38,13 +38,20 @@ public nonisolated enum Produces: Hashable, Sendable {
     case alternatives([[PushStack]])
 
     /// One literal on `.exec`, which rests on `stack` one step later: a deferred
-    /// push (the constants, `.int0`…`.vecString9`).
+    /// push. No instruction in the language declares it now that constants have no
+    /// type (2026-11-19); a configuration gives it to an input declared with a type
+    /// (``RunnerConfiguration/signature(of:)``).
     case deferred(PushStack)
 
     /// The value bound to the instruction, deferred like a constant. Its stack is
     /// the input's type, which only a problem's training cases fix. (Named `binding`
     /// until 2026-11-09, when that word went to the `.binding` stack.)
     case input
+
+    /// The value an individual binds to a constant slot, deferred like an input.
+    /// Its stack is the value's type, which only the individual fixes: a constant
+    /// slot holds a value of any type (the constants, `.constant(0)` and on).
+    case constant
 
     /// An iterator loop delivering elements to `stack` over the following steps:
     /// a promise, returned as an iterator and `.iteratorPlay`, not the elements
@@ -70,8 +77,8 @@ public nonisolated enum Produces: Hashable, Sendable {
 public nonisolated extension Produces {
 
     /// The stacks this declaration can put a value on, with a deferred push
-    /// counted at the stack it rests on. Empty for `continuation` and `input`,
-    /// whose stacks are not fixed by the definition, and for `printed`, since no
+    /// counted at the stack it rests on. Empty for `continuation`, `input` and
+    /// `constant`, whose stacks are not fixed by the definition, and for `printed`, since no
     /// instruction can take a value from `.print`.
     var valueStacks: Set<PushStack> {
         switch self {
@@ -80,7 +87,7 @@ public nonisolated extension Produces {
         case .deferred(let stack):        [stack]
         case .delivery(let stack):        [stack]
         case .several(let stack):         [stack]
-        case .positions, .continuation, .input, .printed: []
+        case .positions, .continuation, .input, .constant, .printed: []
         }
     }
 }

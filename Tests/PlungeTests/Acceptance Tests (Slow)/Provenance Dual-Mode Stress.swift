@@ -173,7 +173,7 @@ nonisolated enum DualModeStress {
         ]
         for (prefix, make) in typed {
             for i in 0..<10 where Int.random(in: 0..<3, using: &rng) == 0 {
-                if let slot = PushInstruction(rawValue: "\(prefix)\(i)") { constants[slot] = make() }
+                if let stack = PushStack(rawValue: prefix), let slot = PushInstruction.conventionalConstant(stack, i) { constants[slot] = make() }
             }
         }
 

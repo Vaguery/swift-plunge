@@ -23,7 +23,7 @@ extension FunctionOutcome {
     static func appConstants() -> [PushInstruction: any Item] {
         var constants: [PushInstruction: any Item] = [:]
         for slot in 0..<10 {
-            func token(_ type: String) -> PushInstruction { PushInstruction(rawValue: "\(type)\(slot)")! }
+            func token(_ type: String) -> PushInstruction { PushInstruction.conventionalConstant(PushStack(rawValue: type)!, slot)! }
             constants[token("int")] = IntItem(small())
             constants[token("double")] = DoubleItem(real())
             constants[token("string")] = StringItem(word())
@@ -55,9 +55,9 @@ extension FunctionOutcome {
     /// Inputs as a problem binds them: `.input0` up to a uniform 1…10 slots,
     /// low to high, each a random value of a random type.
     static func randomInputs() -> [PushInstruction: any Item] {
-        let count = Int.random(in: 1...Interpreter.inputSlots.count, using: &fuzzRNG)
+        let count = Int.random(in: 1...Interpreter.listedInputs.count, using: &fuzzRNG)
         var inputs: [PushInstruction: any Item] = [:]
-        for slot in Interpreter.inputSlots.prefix(count) { inputs[slot] = randomValue() }
+        for slot in Interpreter.listedInputs.prefix(count) { inputs[slot] = randomValue() }
         return inputs
     }
 
@@ -84,7 +84,7 @@ extension FunctionOutcome {
         let tokens: [any Item]
         switch regime {
         case .everything:
-            let pool = RandomCode.allInstructions.filter { !Interpreter.inputSlots.contains($0) || inputs[$0] != nil }
+            let pool = RandomCode.allInstructions.filter { !Interpreter.listedInputs.contains($0) || inputs[$0] != nil }
             tokens = (0..<150).map { _ in InstructionItem(pool[Int.random(in: 0..<pool.count, using: &fuzzRNG)]) }
         case .equalShares:
             tokens = RandomCode.randomProgram(150, mix: .equalShares)

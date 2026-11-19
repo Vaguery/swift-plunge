@@ -239,7 +239,7 @@ struct ProvenanceTests {
 
         for shuffle in takingAPosition + takingNoArgument {
             var program: [any Item] = [
-                InstructionItem(.input0),
+                InstructionItem(.input(0)),
                 InstructionItem(.intDup),
                 InstructionItem(.intDup)
             ]
@@ -248,7 +248,7 @@ struct ProvenanceTests {
             program.append(InstructionItem(shuffle))
 
             let inty = Interpreter.recordingProvenance()
-            inty.load(inputs: [.input0: IntItem(7)], program: program)
+            inty.load(inputs: [.input(0): IntItem(7)], program: program)
             inty.run()
 
             let top = inty.stacks[.int]!.first!
@@ -260,7 +260,7 @@ struct ProvenanceTests {
 
     @Test func `an unbound input's error records what would reproduce it`() {
         let inty = Interpreter.recordingProvenance()
-        inty.load(program: [InstructionItem(.input3)])   // nothing bound
+        inty.load(program: [InstructionItem(.input(3))])   // nothing bound
         inty.run()
         let failed = inty.stacks[.error]!.first!
         #expect(CodeItem(failed.crux()).pretty() == "( .input3 )")
@@ -277,7 +277,7 @@ struct ProvenanceTests {
         // And that is the point of naming the dependency rather than freezing the
         // outcome: the same source against a bound environment yields the value.
         let bound = Interpreter.recordingProvenance()
-        bound.load(inputs: [.input3: IntItem(42)], program: failed.crux())
+        bound.load(inputs: [.input(3): IntItem(42)], program: failed.crux())
         bound.run()
         #expect((bound.stacks[.int]!.first as? IntItem)?.value == 42)
         #expect(bound.stacks[.error]!.isEmpty)

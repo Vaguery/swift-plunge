@@ -69,28 +69,24 @@ public nonisolated extension RunnerConfiguration {
 
     /// The declaration for `input`, if the configuration has one.
     func inputSlot(for input: PushInstruction) -> InputSlot? {
-        guard let slot = Interpreter.inputSlots.firstIndex(of: input), slot < inputSlots.count else { return nil }
+        guard case .input(let slot) = input, slot >= 0, slot < inputSlots.count else { return nil }
         return inputSlots[slot]
     }
 
     /// The name of each input that has one, keyed by its instruction.
     var inputNames: [PushInstruction: String] {
         var names: [PushInstruction: String] = [:]
-        for (instruction, slot) in zip(Interpreter.inputSlots, inputSlots) {
-            if let name = slot.name { names[instruction] = name }
+        for (slot, declaration) in inputSlots.enumerated() {
+            if let name = declaration.name { names[.input(slot)] = name }
         }
         return names
     }
 
-    /// What is wrong with the declarations, in words: more of them than the
-    /// language has input slots, and names that are empty, contain white space, or
-    /// repeat. Empty when they are fine.
+    /// What is wrong with the declarations, in words: names that are empty,
+    /// contain white space, or repeat. Empty when they are fine. (Any number of
+    /// inputs can be declared: the inputs are a family with no last member.)
     var inputSlotIssues: [String] {
         var issues: [String] = []
-        if inputSlots.count > Interpreter.inputSlots.count {
-            issues.append("\(inputSlots.count) inputs are declared, but the language has "
-                          + "\(Interpreter.inputSlots.count) input slots")
-        }
         var seen = Set<String>()
         for (slot, declaration) in inputSlots.enumerated() {
             guard let name = declaration.name else { continue }
@@ -147,7 +143,8 @@ public nonisolated extension RunnerConfiguration {
     /// An input declared `.code` or `.exec` keeps the language's signature, since a
     /// code block popped off `.exec` runs instead of coming to rest.
     func signature(of instruction: PushInstruction) -> InstructionSignature? {
-        guard let base = Interpreter.signatures[instruction] else { return nil }
+        guard instruction.slot.map({ $0 >= 0 }) ?? true,
+              let base = Interpreter.signatures[instruction.representative] else { return nil }
         guard let stack = inputSlot(for: instruction)?.stack, stack != .code, stack != .exec else { return base }
         return InstructionSignature(consumes: base.consumes, reads: base.reads, needs: base.needs,
                                     variadic: base.variadic, observes: base.observes,

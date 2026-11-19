@@ -3,63 +3,65 @@
 //  Plunge
 //
 //  Created by Bill Tozier on 7/13/26.
+//  Untyped since 2026-11-19: a constant slot holds a value of any type.
 //
 
 nonisolated extension Interpreter {
 
-    /// The stacks that carry constant slots, in the order the constant
-    /// behaviors are generated (see `Interpreter.constantBehaviors`).
-    static let constantStacks: [PushStack] =
-        [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
-
-    /// The constant instructions of each constant stack, by slot: `.int0` is slot
-    /// 0 of `.int`. Derived from the instruction set (a constant's name is its
-    /// stack's name and a slot number), never written as a count, since the number
-    /// of slots is not fixed.
-    static let constantSlots: [PushStack: [PushInstruction]] = {
-        var slots: [PushStack: [(slot: Int, instruction: PushInstruction)]] = [:]
-        for instruction in PushInstruction.allCases {
-            for stack in constantStacks {
-                let name = instruction.rawValue
-                guard name.hasPrefix(stack.rawValue), name.count > stack.rawValue.count,
-                      name.dropFirst(stack.rawValue.count).allSatisfy({ $0.isASCII && $0.isWholeNumber }),
-                      let slot = Int(name.dropFirst(stack.rawValue.count)) else { continue }
-                slots[stack, default: []].append((slot, instruction))
-            }
-        }
-        return slots.mapValues { $0.sorted { $0.slot < $1.slot }.map(\.instruction) }
-    }()
-
-    /// Maps each constant instruction (`.int0` … `.vecBool9`) to the stack whose
-    /// value type it must hold. Constants are *stored* keyed by instruction (like
-    /// `inputs`); this map exists only to validate that a bound value's type
-    /// matches its token.
-    static let constantInstructionStacks: [PushInstruction: PushStack] = {
-        var map: [PushInstruction: PushStack] = [:]
-        for (stack, instructions) in constantSlots {
-            for instruction in instructions { map[instruction] = stack }
-        }
-        return map
-    }()
-
-    /// Binds constant values by their instruction token (e.g. `.int8`), merging
-    /// into `constants`.
+    /// Binds constant values by their instruction (`.constant(3)`), merging into
+    /// `constants`.
     ///
-    /// A token that is not a constant instruction, or whose value type does not
-    /// match the token's stack, is skipped and returned as a validation signal.
-    /// Nothing traps, so malformed external input cannot crash a `Runner` here.
+    /// Any item may be bound to any constant slot: the value goes to its own stack
+    /// when the instruction runs, so the slot has no type to check. Only a key that
+    /// is not a constant (an input, a named instruction, or a negative slot) is
+    /// skipped, and returned as a validation signal. Nothing traps, so malformed
+    /// external input cannot crash a `Runner` here.
     @discardableResult
     func loadConstants(_ newConstants: [PushInstruction: any Item]) -> [PushInstruction] {
         var rejected: [PushInstruction] = []
         for (instruction, value) in newConstants {
-            guard let stack = Interpreter.constantInstructionStacks[instruction],
-                  stack.accepts(value)
-            else {
+            guard case .constant(let slot) = instruction, slot >= 0 else {
                 rejected.append(instruction)
                 continue
             }
             constants[instruction] = value
         }
         return rejected
+    }
+}
+
+
+public nonisolated extension PushInstruction {
+
+    /// The types random code gives the listed constants, ten slots each, in this
+    /// order: `.constant(0…9)` ints, `.constant(10…19)` doubles, then strings,
+    /// characters, and vectors of ints, doubles, strings and Booleans
+    /// (`.constant(70…79)`).
+    ///
+    /// **A convention for random code only.** The language puts no type on a
+    /// constant slot. This is how random individuals have always spread their
+    /// constants across types (it was ten slots per type when each slot had a
+    /// typed name, `.constant0` to `.constant79`), kept so that random code draws the same
+    /// values as before.
+    static let conventionalConstantStacks: [PushStack] =
+        [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
+
+    /// The type random code gives constant `slot`, by
+    /// ``conventionalConstantStacks``: nil past the listed constants, or for a
+    /// slot below 0.
+    static func conventionalStack(ofConstantSlot slot: Int) -> PushStack? {
+        guard slot >= 0, slot < listedConstantCount else { return nil }
+        return conventionalConstantStacks[slot / 10]
+    }
+
+    /// The constant that the typed constant `stack` number `index` became when
+    /// constants lost their types: `.constant3` is `.constant(3)`, `.constant13` is
+    /// `.constant(13)`, `.constant79` is `.constant(79)`. Nil for a stack that had no
+    /// constants, or an index past 9.
+    static func conventionalConstant(_ stack: PushStack, _ index: Int) -> PushInstruction? {
+        guard let position = conventionalConstantStacks.firstIndex(of: stack), (0..<10).contains(index) else {
+            return nil
+        }
+        return .constant(position * 10 + index)
     }
 }

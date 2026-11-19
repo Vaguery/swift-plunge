@@ -149,7 +149,7 @@ A program meets the outside world through two kinds of instruction:
 
 - **Inputs**, such as `.input0`, push the values bound for the current
   ``TrainingCase``. The same program runs once for each training case.
-- **Constants**, such as `.int3` or `.string0`, push values that belong to the
+- **Constants**, such as `.constant(3)`, push values that belong to the
   ``Individual``, so a search can tune them without changing the program's
   structure.
 

@@ -37,11 +37,11 @@ struct RecorderSpecTests {
     // recorded trace is a sequence of `any Item?`; unwrap to compare values.
     @Test func `top spec records the top item each step`() {
         inty.addRecorder(RecorderSpec("topInt", observing: .top(.int)))
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                   stacks: [.int: [IntItem(1), IntItem(2), IntItem(3)]],
                   program: [
-                    InstructionItem(.input0),
-                    InstructionItem(.input1),
+                    InstructionItem(.input(0)),
+                    InstructionItem(.input(1)),
                     InstructionItem(.intAdd),
                     InstructionItem(.intSwap)
                   ])

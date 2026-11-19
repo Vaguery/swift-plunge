@@ -33,7 +33,7 @@ public nonisolated enum ErrorKind: String, Sendable, Codable, CaseIterable {
     case missingArgument
     /// An input instruction, such as `.input2`, ran with no input bound to it.
     case missingInput
-    /// A constant instruction, such as `.int3`, ran with no constant bound to it.
+    /// A constant instruction, such as `.constant3`, ran with no constant bound to it.
     case missingConstant
     /// A push the interpreter would not accept: an item over a size limit, a full
     /// stack, or a sandbox nested too deep.

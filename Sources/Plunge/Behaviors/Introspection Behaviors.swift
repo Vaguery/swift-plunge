@@ -110,10 +110,10 @@ nonisolated extension Interpreter {
         errorCount_Behavior(.errorMissingInputCount, counting: .missingInput)
         .described("Pushes how many input reads so far found no input supplied.")
 
-    /// How many typed-constant reads (`.int3`, `.vecDouble8`) found no binding.
+    /// How many typed-constant reads (`.constant3`, `.constant58`) found no binding.
     static let errorMissingConstantCount_Behavior =
         errorCount_Behavior(.errorMissingConstantCount, counting: .missingConstant)
-        .described("Pushes how many constant reads (`.int3` and the like) so far found no constant assigned.")
+        .described("Pushes how many constant reads (`.constant3` and the like) so far found no constant assigned.")
 
     /// Whether the step just before this one placed an error on `.error`: an
     /// ephemeral state, true for one step only. Lets a program react to a refusal,

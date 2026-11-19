@@ -29,16 +29,6 @@ The `.char` stack holds single characters (Swift `Character`s, so one may be sev
 
 | Instruction | What it does | Takes | Gives |
 |---|---|---|---|
-| `.char0` | Pushes the run's constant 0 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char1` | Pushes the run's constant 1 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char2` | Pushes the run's constant 2 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char3` | Pushes the run's constant 3 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char4` | Pushes the run's constant 4 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char5` | Pushes the run's constant 5 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char6` | Pushes the run's constant 6 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char7` | Pushes the run's constant 7 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char8` | Pushes the run's constant 8 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
-| `.char9` | Pushes the run's constant 9 for chars, by way of `.exec`; refuses when the run assigns none. | — | `char` |
 | `.charLookupEqual` | Reads the top char as a probe and copies the topmost one below that equals it, pushing its depth + 1 onto `.int`; refuses on a miss. | `char` (read) | `char`, `int`; may refuse |
 | `.charLookupEqualFrom` | Reads the top char as a probe and copies the topmost one below that equals it, searching from depth i (at least 1), pushing its depth + 1 onto `.int`; refuses on a miss. | `int`, `char` (read) | `char`, `int`; may refuse |
 | `.charLookupNearest` | Reads the top char as a probe and copies the one below nearest it by code point, the topmost on a tie, pushing its depth + 1 onto `.int`. | `char` (read) | `char`, `int`; may refuse |

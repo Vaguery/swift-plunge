@@ -16,7 +16,7 @@
 ///
 /// - **`input`:** the history reads an input (`.input0`), directly or through
 ///   the input pairs bound on `.binding`.
-/// - **`constant`:** it reads a constant slot (`.int3`).
+/// - **`constant`:** it reads a constant slot (`.constant3`).
 /// - **`context`:** it holds an observed stand-in (provenance law 4b: a stack
 ///   depth, a step count, an error count, a refusal), or it runs a code block or
 ///   function whose contents read the run's state.
@@ -97,18 +97,17 @@ nonisolated extension CruxDependence {
     /// instruction that reads the run's state reads context. An instruction that
     /// runs code inside one step carries `runsCode`.
     static func token(_ instruction: PushInstruction) -> CruxDependence {
-        tokens[instruction] ?? []
+        tokens[instruction.representative] ?? []
     }
 
     /// `token`, built once from the language.
     private static let tokens: [PushInstruction: CruxDependence] = {
         var table: [PushInstruction: CruxDependence] = [:]
-        let inputs = Set(Interpreter.inputSlots)
         for (instruction, behavior) in Interpreter.language {
             var dependence: CruxDependence = []
-            if inputs.contains(instruction) {
+            if instruction.isInput {
                 dependence.insert(.input)
-            } else if Interpreter.constantInstructionStacks[instruction] != nil {
+            } else if instruction.isConstant {
                 dependence.insert(.constant)
             } else if behavior.behaviorClass == .contextRead {
                 dependence.insert(.context)

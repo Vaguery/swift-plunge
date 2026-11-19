@@ -28,7 +28,7 @@ struct Item_tests {
         var foo = StringItem("foo")
         #expect(foo.call.isEmpty)
         #expect( type(of: foo.call) == Array<any Item>.self)
-        let newHistory = [InstructionItem(.input2)]
+        let newHistory = [InstructionItem(.input(2))]
         foo.call = newHistory
     }
 }

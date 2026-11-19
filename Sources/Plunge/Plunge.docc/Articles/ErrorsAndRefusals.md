@@ -102,7 +102,7 @@ was what it was looking for.
 ## When the interpreter steps in
 
 - **Missing inputs and constants.** `.input2` in a run whose training case binds
-  no input 2, or `.int3` for an individual with no int constant 3, leaves an
+  no input 2, or `.constant(3)` for an individual with no constant 3, leaves an
   error and pushes nothing. See <doc:InputsAndConstants>.
 - **Size refusals.** Every result is checked against the size limits before it
   is pushed. One that is too large is dropped and an error left in its place.

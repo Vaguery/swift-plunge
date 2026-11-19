@@ -218,6 +218,7 @@ struct InstructionReferenceTests {
         case .alternatives(let options): options.map(list).joined(separator: " or ")
         case .deferred(let stack): "`\(stack.rawValue)`"
         case .input: "the input's type"
+        case .constant: "the constant's type"
         case .delivery(let stack): "`\(stack.rawValue)`, one per step"
         case .several(let stack): "`\(stack.rawValue)`, any number"
         case .positions(let stack): "`\(stack.rawValue)`, rearranged"

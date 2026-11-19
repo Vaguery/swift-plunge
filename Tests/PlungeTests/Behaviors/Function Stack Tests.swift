@@ -43,7 +43,7 @@ struct FunctionStackTests {
     }
 
     @Test func `misses and unbound inputs are not starvation`() {
-        let inty = Self.run([Self.op(.input3), IntItem(42), Self.op(.bindingDeref)])
+        let inty = Self.run([Self.op(.input(3)), IntItem(42), Self.op(.bindingDeref)])
         #expect(inty.stacks[.function]!.isEmpty)
         let kinds = inty.stacks[.error]!.compactMap { ($0 as? ErrorItem)?.kind }
         #expect(Set(kinds) == [.missingInput, .notFound])

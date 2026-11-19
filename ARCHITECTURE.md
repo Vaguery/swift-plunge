@@ -15,7 +15,9 @@ A library user sees a small surface:
   `InterpreterSettings`, `RecorderSpec`;
 - **the items**: `IntItem`, `CodeItem`, `IteratorItem`, `BindingItem` and the rest,
   with `AnyItem` and `ItemArchive` to encode them;
-- **the language's vocabulary**: `PushInstruction`, `PushStack`, and the
+- **the language's vocabulary**: `PushInstruction` (a named instruction, an
+  `InstructionName`, or a member of the input and constant families, `.input(k)`
+  and `.constant(k)`, which have no last member), `PushStack`, and the
   introspection on `Runner` (`summary(of:)`, `signature(of:)`, roles, tags).
 
 Everything else is internal, the `Interpreter` class included. That is

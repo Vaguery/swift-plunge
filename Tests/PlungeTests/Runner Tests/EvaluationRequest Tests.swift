@@ -23,11 +23,11 @@ struct EvaluationRequestTests {
             individuals: [
                 Individual(
                     id: "add",
-                    program: [InstructionItem(.input0), InstructionItem(.int0), InstructionItem(.intAdd)],
-                    constants: [.int0: IntItem(10)]
+                    program: [InstructionItem(.input(0)), InstructionItem(.constant(0)), InstructionItem(.intAdd)],
+                    constants: [.constant(0): IntItem(10)]
                 )
             ],
-            trainingCases: [TrainingCase(id: "c1", inputs: [.input0: IntItem(5)])],
+            trainingCases: [TrainingCase(id: "c1", inputs: [.input(0): IntItem(5)])],
             pairings: [Pairing(individual: "add", trainingCase: "c1")],
             configuration: RunnerConfiguration(recorders: [RecorderSpec("topInt", observing: .top(.int))])
         )

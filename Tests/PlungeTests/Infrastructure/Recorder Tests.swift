@@ -56,11 +56,11 @@ struct RecorderTests {
 
     @Test func `recorder records`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                  stacks: [.int: [IntItem(1), IntItem(2), IntItem(3)]],
                  program: [
-                    InstructionItem(.input0),
-                    InstructionItem(.input1),
+                    InstructionItem(.input(0)),
+                    InstructionItem(.input(1)),
                     InstructionItem(.intAdd),
                     InstructionItem(.intSwap)
                 ])
@@ -77,12 +77,12 @@ struct RecorderTests {
 
     @Test func `recorder handles nil`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                  stacks: [.int: []],
                  program: [
                     BoolItem(false), BoolItem(true), IntItem(3),
-                    InstructionItem(.input0),
-                    InstructionItem(.input1),
+                    InstructionItem(.input(0)),
+                    InstructionItem(.input(1)),
                     InstructionItem(.intAdd),
                     InstructionItem(.intSwap)
                 ])
@@ -103,15 +103,15 @@ struct RecorderTests {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
         inty.recorders[secondInt.name] = AnyRecorder(secondInt)
 
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                  stacks: [.int: []],
                  program: [
                     BoolItem(false),
                     IntItem(3),
-                    InstructionItem(.input0),
-                    InstructionItem(.input1),
+                    InstructionItem(.input(0)),
+                    InstructionItem(.input(1)),
                     InstructionItem(.intFlush),
-                    InstructionItem(.input1)
+                    InstructionItem(.input(1))
                 ])
         #expect(stackString(inty, .int) == "[ ]")
         #expect(inty.recorderNames == ["secondInt", "topInt"])
@@ -129,12 +129,12 @@ struct RecorderTests {
 
     @Test func `recorder reports all the data taking into account arguments`() {
         inty.recorders[topInt.name] = AnyRecorder(topInt)
-        inty.load(inputs: [.input0: IntItem(4), .input1: IntItem(-11)],
+        inty.load(inputs: [.input(0): IntItem(4), .input(1): IntItem(-11)],
                  stacks: [.int: []],
                  program: [
                     BoolItem(false), BoolItem(true), IntItem(3),
-                    InstructionItem(.input0),
-                    InstructionItem(.input1),
+                    InstructionItem(.input(0)),
+                    InstructionItem(.input(1)),
                     InstructionItem(.intAdd),
                     InstructionItem(.intSwap)
                 ])

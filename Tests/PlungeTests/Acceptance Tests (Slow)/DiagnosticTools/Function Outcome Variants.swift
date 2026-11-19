@@ -35,7 +35,7 @@ extension FunctionOutcome {
         var found: Set<PushInstruction> = []
         func walk(_ items: [any Item]) {
             for item in items {
-                if let token = (item as? InstructionItem)?.value, Interpreter.inputSlots.contains(token) {
+                if let token = (item as? InstructionItem)?.value, Interpreter.listedInputs.contains(token) {
                     found.insert(token)
                 } else if let inner = item as? CodeItem {
                     walk(inner.value)
@@ -43,7 +43,7 @@ extension FunctionOutcome {
             }
         }
         walk(block.value)
-        return Interpreter.inputSlots.filter(found.contains)
+        return Interpreter.listedInputs.filter(found.contains)
     }
 
     /// Binds `holes` to `values` in order, as far as both go.
@@ -70,7 +70,7 @@ extension FunctionOutcome {
             return !(leaf is CodeItem) && PushStack.defaultStack(for: leaf) == elementStack
         }
         var body = crux
-        var holes = Array([PushInstruction.input0, .input1].prefix(holesNeeded))
+        var holes = Array([PushInstruction.input(0), .input(1)].prefix(holesNeeded))
         for index in body.indices where !holes.isEmpty && isArgument(body[index]) {
             body[index] = InstructionItem(holes.removeFirst())
         }
@@ -148,7 +148,7 @@ extension FunctionOutcome {
         if call.variant == .v4 { stacks = s.stacks }
         if call.variant.hasTypedContext { stacks = [elementStack: typedConstants(s, elementStack)] }
         switch call.variant {
-        case .v0, .v7: bind([.input0, .input1], to: args, in: &inputs)
+        case .v0, .v7: bind([.input(0), .input(1)], to: args, in: &inputs)
         case .v1: bind(holes(in: block), to: args.reversed(), in: &inputs)
         default: if call.variant.bindsHoles { bind(holes(in: block), to: args, in: &inputs) }
         }
