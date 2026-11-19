@@ -11,7 +11,8 @@ A library user sees a small surface:
 - **`Runner`** (an actor) and the stateless `evaluate(request:)` and
   `evaluate(streaming:)`, which run programs;
 - **the values they exchange**: `Individual`, `TrainingCase`, `Pairing`,
-  `CaseResult`, `RunnerConfiguration`, `InterpreterSettings`, `RecorderSpec`;
+  `CaseResult`, `RunnerConfiguration` (with its declared `InputSlot`s),
+  `InterpreterSettings`, `RecorderSpec`;
 - **the items**: `IntItem`, `CodeItem`, `IteratorItem`, `BindingItem` and the rest,
   with `AnyItem` and `ItemArchive` to encode them;
 - **the language's vocabulary**: `PushInstruction`, `PushStack`, and the
@@ -25,8 +26,9 @@ behind it can change without breaking callers.
 
 `evaluateOne` (in `Runner/Runner.swift`) is the whole of one evaluation. It makes
 a fresh `Interpreter`, applies the settings and the table of enabled behaviors,
-loads the training case's inputs, the individual's constants and its program,
-runs it, and reads the recorders.
+loads the training case's inputs (less any the configuration's declared input
+slots refuse), the individual's constants and its program, runs it, and reads
+the recorders.
 
 `Interpreter.load` resets the stacks and counters, binds inputs and constants,
 binds each input on `.binding` under its slot number, and puts the program on

@@ -48,6 +48,11 @@ let results = await runner.evaluate(pairings: pairings)
 ```
 
 - Registering an identifier a second time replaces what was there.
+- When the configuration declares its inputs
+  (``RunnerConfiguration/inputSlots``), a training case that binds an
+  undeclared input, or a value of the wrong type, isn't kept.
+  ``Runner/register(trainingCases:)`` returns an ``InputMismatch`` for each
+  such input. See <doc:InputsAndConstants>.
 - Results come back in the order of the pairings, one ``CaseResult`` each.
 - A pairing that names an identifier the runner doesn't have gives a result
   with ``CaseResult/unresolved`` set, and the others are unaffected. One bad
@@ -136,6 +141,13 @@ the language for an evaluation. A program that contains one still runs: the
 instruction leaves an *unknown instruction* error and does nothing else. Most
 searches should leave this empty and run with the whole language; see
 <doc:TaggingInstructions> for when to exclude and how to choose what.
+
+## Declaring the inputs
+
+``RunnerConfiguration/inputSlots`` declares a problem's inputs, in slot order:
+each one's name, for showing programs to people, and its type, which is checked
+against every training case. Declaring nothing, the default, allows any input
+of any type. See <doc:InputsAndConstants>.
 
 ## See Also
 

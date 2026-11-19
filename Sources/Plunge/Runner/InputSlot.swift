@@ -125,7 +125,7 @@ public nonisolated extension RunnerConfiguration {
         return found.sorted { $0.input.rawValue < $1.input.rawValue }
     }
 
-    /// `item` written as ``Item/pretty()`` writes it, with each named input shown
+    /// `item` written as `pretty()` writes it, with each named input shown
     /// by its name: `.input-x1` for `.input0` declared `x1`.
     ///
     /// Only for people. A program's meaning, its crux and its encoding keep the

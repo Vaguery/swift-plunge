@@ -72,6 +72,8 @@ whatever it prints.
 - ``RunnerConfiguration``
 - ``Individual``
 - ``TrainingCase``
+- ``InputSlot``
+- ``InputMismatch``
 - ``Pairing``
 - ``CaseResult``
 - ``EvaluationRequest``

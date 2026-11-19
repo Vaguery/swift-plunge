@@ -107,7 +107,8 @@ These are defined fully in <doc:ErrorsAndRefusals>.
 - term Constant: A value an individual supplies, pushed by an instruction such
   as `.int3`.
 - term Slot: One numbered place for an input or a constant: `.input3` is input
-  slot 3, and `.int3` is int constant slot 3.
+  slot 3, and `.int3` is int constant slot 3. A configuration can declare an
+  input slot's name and type (``InputSlot``).
 - term Recorder: A named request to observe one thing during a run, such as the
   top of a stack. See <doc:ObservingARun>.
 - term Trace: What one recorder collected in one run.
