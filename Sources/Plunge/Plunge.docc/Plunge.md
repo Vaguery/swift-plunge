@@ -48,6 +48,7 @@ whatever it prints.
 
 - <doc:WritingPrograms>
 - <doc:InputsAndConstants>
+- <doc:Genomes>
 - <doc:EvaluatingPrograms>
 - <doc:ObservingARun>
 - <doc:ErrorsAndRefusals>
@@ -71,6 +72,9 @@ whatever it prints.
 - ``Runner``
 - ``RunnerConfiguration``
 - ``Individual``
+- ``Genome``
+- ``GenomePiece``
+- ``GenomeEncoding``
 - ``TrainingCase``
 - ``InputSlot``
 - ``InputMismatch``

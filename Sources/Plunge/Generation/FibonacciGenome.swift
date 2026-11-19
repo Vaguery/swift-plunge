@@ -67,8 +67,13 @@ nonisolated enum FibonacciGenome {
     /// | 500 | 11 | 232 | 46.4% | 89 |
     ///
     /// Note it is not even monotonic: 100 is the *most* blocked and 250 the least.
-    static func blockLengths(forGenomeOf count: Int) -> [Int] {
+    ///
+    /// `codeTarget` replaces the third (2026-11-19): blocks are added while the
+    /// running total is at most `codeTarget × count`. Nil is the third, computed in
+    /// exact integers; 0 or less gives no blocks at all; 1 cuts the whole genome.
+    static func blockLengths(forGenomeOf count: Int, codeTarget: Double? = nil) -> [Int] {
         guard count > 0 else { return [] }
+        if let codeTarget, !(codeTarget > 0) { return [] }   // 0, negative or NaN: no blocks
 
         var lengths: [Int] = []
         var (previous, current) = (0, 1)
@@ -79,8 +84,12 @@ nonisolated enum FibonacciGenome {
         // that passes it is the last one included. Floating point would put the
         // N-divisible-by-3 cliff in a slightly different place depending on
         // rounding, which is the one thing this rule cannot afford to be vague
-        // about.
-        while total * 3 <= count {
+        // about. (A Double third agrees at every length up to 100,000, but the
+        // default stays exact.)
+        func belowTarget() -> Bool {
+            if let codeTarget { Double(total) <= codeTarget * Double(count) } else { total * 3 <= count }
+        }
+        while belowTarget() {
             lengths.append(current)
             total += current
             (previous, current) = (current, previous + current)

@@ -188,6 +188,27 @@ struct DocumentationUsageExamplesTests {
         #expect(mixed.mismatches(in: asString).isEmpty)
     }
 
+    /// *Genomes*: the default plan, an explicit plan, and back from a program.
+    @Test func `genomes: default plan, explicit plan, and back`() {
+        let genome = Genome(tokens: [.intAdd, .intSubtract, .input(0), .constant(0), .intMultiply, .intInc])
+        #expect(genome.translate().map { $0.pretty() }
+                == ["( .intAdd )", "( .intSubtract )", "( .input0 .constant0 )", ".intMultiply", ".intInc"])
+
+        let tokens: [PushInstruction] = [.intAdd, .intSubtract, .intMultiply, .intQuot, .intMod, .intInc, .intDec]
+        let nested = Genome(tokens: tokens, plan: [
+            GenomePiece(start: 2, length: 2, into: 2, at: 1),
+            GenomePiece(start: 2, length: 0, into: 2, at: 2),
+            GenomePiece(start: 1, length: 2, at: 1),
+            GenomePiece(start: 2, length: 1, at: 3)
+        ])
+        #expect(nested.translate().map { $0.pretty() }.joined(separator: " ")
+                == ".intAdd ( .intSubtract ( .intMultiply .intQuot ) ( ) .intMod ) .intInc ( .intDec )")
+
+        let back = Genome(program: nested.translate())
+        #expect(back.translate().map { $0.pretty() } == nested.translate().map { $0.pretty() })
+        #expect(Genome(program: genome.translate()).plan == nil, "the default shape needs no plan")
+    }
+
     /// *Observing a Run*: the recorders, reading a trace, and the two details.
     @Test func `observing a run: recorders and traces`() async {
         let configuration = RunnerConfiguration(recorders: [

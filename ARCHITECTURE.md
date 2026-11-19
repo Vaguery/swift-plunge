@@ -12,6 +12,7 @@ A library user sees a small surface:
   `evaluate(streaming:)`, which run programs;
 - **the values they exchange**: `Individual`, `TrainingCase`, `Pairing`,
   `CaseResult`, `RunnerConfiguration` (with its declared `InputSlot`s),
+  `Genome` (what a search edits, with its plan and its translation),
   `InterpreterSettings`, `RecorderSpec`;
 - **the items**: `IntItem`, `CodeItem`, `IteratorItem`, `BindingItem` and the rest,
   with `AnyItem` and `ItemArchive` to encode them;
