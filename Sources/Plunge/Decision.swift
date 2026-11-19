@@ -47,8 +47,9 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
 }
 
 nonisolated extension Decision {
-    /// The conditionals the log watches.
-    static let conditionals: Set<PushInstruction> = [.execIf, .execWhen, .codeDoIf]
+    /// The conditionals the log watches. A program none of whose instructions is
+    /// one of these never logs a decision.
+    public static let conditionals: Set<PushInstruction> = [.execIf, .execWhen, .codeDoIf]
 
     /// The decision `instruction` is about to make, read from the stacks before
     /// it runs: the top Boolean and the top one or two code blocks; `nil` when
