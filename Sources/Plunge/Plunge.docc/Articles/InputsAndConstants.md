@@ -31,7 +31,8 @@ let individual = Individual(
 
 An input instruction pushes the item its training case binds to it. The item can
 be of any type, so `.input0` may be an int in one problem and a vector of
-strings in another; the instruction is the same. An input reaches its stack by
+strings in another; the instruction is the same. A configuration can declare
+each input's type and name (see *Declaring a problem's inputs*, below). An input reaches its stack by
 way of `.exec`, one step after the instruction runs, exactly as if the value had
 been written in the program at that point. A code block bound to an input
 therefore comes to rest on `.code`, as any code block does.
@@ -45,6 +46,45 @@ Every bound input is also bound on the `.binding` stack when a run starts,
 under its slot number: input 0 under key 0, input 1 under key 1. A program can
 then reach an input through the binding instructions, and can compute which
 input to read. See <doc:Variables>.
+
+## Declaring a problem's inputs
+
+A ``RunnerConfiguration`` can declare a problem's inputs, in slot order, as
+``InputSlot``s. Each may give a name and a type:
+
+```swift
+let configuration = RunnerConfiguration(inputSlots: [
+    InputSlot("b", stack: .int),
+    InputSlot("x1", stack: .vecInt),
+    InputSlot("x2", stack: .vecInt),
+])
+```
+
+**The type is checked.** ``Runner/register(trainingCases:)`` doesn't keep a
+training case that binds an undeclared input, or a value that doesn't rest on
+the declared stack, and returns an ``InputMismatch`` for each such input. A run
+leaves a refused input unbound, so `.inputN` reports it missing. Under this
+configuration, `configuration.signature(of: .input0)` says that `.input0` gives
+an int, where the language alone can't say. Declaring nothing, the default,
+allows any input of any type.
+
+For an input whose values have different types from case to case, declare
+`.binding` and bind each value inside a ``BindingItem``: the slot then has one
+type, whatever the pair holds.
+
+**The name is for people.** `labeled(_:)` writes a program or a crux with each
+named input shown by its name:
+
+```swift
+configuration.labeled(program { PushInstruction.input1; PushInstruction.input0 })
+// ".input-x1 .input-b"
+```
+
+The name never changes what a program means. The program, its crux, its
+encoding and `pretty()` all keep `.input0`, so the same program means the same
+thing whatever problem it runs on. `inputSlotIssues` describes names that are
+empty, contain white space or repeat, and declarations beyond the slots the
+language has.
 
 ## Constants
 
@@ -105,5 +145,6 @@ inputs at all (``RunnerConfiguration/cruxInputTokens``). See <doc:Provenance>.
 - <doc:EvaluatingPrograms>
 - ``TrainingCase``
 - ``Individual``
+- ``InputSlot``
 - ``bindings(_:)``
 - ``merged(_:)``

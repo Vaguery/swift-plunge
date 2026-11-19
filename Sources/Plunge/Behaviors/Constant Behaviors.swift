@@ -10,17 +10,14 @@ import DequeModule
 
 nonisolated extension Interpreter {
 
-    // ten for each of:
-    //    .int, .double, .string, .char, .vecInt, .vecFloat, .vecString, .vecBool
+    // One for each slot (`constantSlots`) of:
+    //    .int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool
 
     static var constantBehaviors: [PushInstruction: Behavior] {
         var result: [PushInstruction: Behavior] = [:]
 
-        let stacks: [PushStack] = [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
-
-        for stack in stacks {
-            for i in 0..<10 {
-                let instructionName = PushInstruction(rawValue: "\(stack)\(i)")!
+        for stack in constantStacks {
+            for (i, instructionName) in (constantSlots[stack] ?? []).enumerated() {
                 result[instructionName] =
                 Behavior.contextRead(instructionName, produces: .deferred(stack)) { _, context in
                         if var v = context.constants[instructionName] {

@@ -12,19 +12,32 @@ nonisolated extension Interpreter {
     static let constantStacks: [PushStack] =
         [.int, .double, .string, .char, .vecInt, .vecDouble, .vecString, .vecBool]
 
+    /// The constant instructions of each constant stack, by slot: `.int0` is slot
+    /// 0 of `.int`. Derived from the instruction set (a constant's name is its
+    /// stack's name and a slot number), never written as a count, since the number
+    /// of slots is not fixed.
+    static let constantSlots: [PushStack: [PushInstruction]] = {
+        var slots: [PushStack: [(slot: Int, instruction: PushInstruction)]] = [:]
+        for instruction in PushInstruction.allCases {
+            for stack in constantStacks {
+                let name = instruction.rawValue
+                guard name.hasPrefix(stack.rawValue), name.count > stack.rawValue.count,
+                      name.dropFirst(stack.rawValue.count).allSatisfy({ $0.isASCII && $0.isWholeNumber }),
+                      let slot = Int(name.dropFirst(stack.rawValue.count)) else { continue }
+                slots[stack, default: []].append((slot, instruction))
+            }
+        }
+        return slots.mapValues { $0.sorted { $0.slot < $1.slot }.map(\.instruction) }
+    }()
+
     /// Maps each constant instruction (`.int0` … `.vecBool9`) to the stack whose
-    /// value type it must hold. Built from the same naming rule the constant
-    /// behaviors use (`"\(stack)\(index)"`). Constants are *stored* keyed by
-    /// instruction (like `inputs`); this map exists only to validate that a
-    /// bound value's type matches its token.
+    /// value type it must hold. Constants are *stored* keyed by instruction (like
+    /// `inputs`); this map exists only to validate that a bound value's type
+    /// matches its token.
     static let constantInstructionStacks: [PushInstruction: PushStack] = {
         var map: [PushInstruction: PushStack] = [:]
-        for stack in constantStacks {
-            for index in 0..<10 {
-                if let instruction = PushInstruction(rawValue: "\(stack)\(index)") {
-                    map[instruction] = stack
-                }
-            }
+        for (stack, instructions) in constantSlots {
+            for instruction in instructions { map[instruction] = stack }
         }
         return map
     }()

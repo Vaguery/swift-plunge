@@ -18,7 +18,9 @@ nonisolated enum NestedRendering {
         case item(any Item)
     }
 
-    static func render(_ root: any Item) -> String {
+    /// `root` written out. An instruction in `labels` is written as its label
+    /// instead of its name (a declared input's name, for people to read).
+    static func render(_ root: any Item, labels: [PushInstruction: String] = [:]) -> String {
         var output = ""
         var pending: [Piece] = [.item(root)]
         while let piece = pending.popLast() {
@@ -63,11 +65,19 @@ nonisolated enum NestedRendering {
                                            .item(pair.bound), .text("»")]
                     pending.append(contentsOf: pieces.reversed())
                 } else {
-                    output += item.pretty()
+                    output += Self.leaf(item, labels: labels)
                 }
             }
         }
         return output
+    }
+
+    /// A leaf: its label, for a labeled instruction, and otherwise `pretty()`.
+    private static func leaf(_ item: any Item, labels: [PushInstruction: String]) -> String {
+        if !labels.isEmpty, let instruction = item as? InstructionItem, let label = labels[instruction.value] {
+            return label
+        }
+        return item.pretty()
     }
 
     /// An iterator's source, in words that name its kind, so two iterators of

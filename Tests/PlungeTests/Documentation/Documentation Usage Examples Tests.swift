@@ -155,6 +155,33 @@ struct DocumentationUsageExamplesTests {
         #expect(constantTypes == ["int", "double", "char", "string", "vecInt", "vecDouble", "vecString", "vecBool"])
     }
 
+    /// *Inputs and Constants*, declaring a problem's inputs: types checked, names shown.
+    @Test func `inputs and constants: declared slots`() async {
+        let configuration = RunnerConfiguration(inputSlots: [
+            InputSlot("b", stack: .int),
+            InputSlot("x1", stack: .vecInt),
+            InputSlot("x2", stack: .vecInt)
+        ])
+        #expect(configuration.labeled(program { PushInstruction.input1; PushInstruction.input0 })
+                == ".input-x1 .input-b")
+        #expect(program { PushInstruction.input1 }.map { $0.pretty() } == [".input1"])
+        #expect(configuration.signature(of: .input0)?.produces == .deferred(.int))
+        #expect(configuration.inputSlotIssues.isEmpty)
+
+        let runner = Runner(configuration: configuration)
+        let refused = await runner.register(trainingCases: [
+            TrainingCase(id: "fits", inputs: bindings([.input0: 10, .input1: [1, 2], .input2: [3]])),
+            TrainingCase(id: "doesn't", inputs: bindings([.input0: "ten"]))
+        ])
+        #expect(refused.map(\.trainingCase) == ["doesn't"])
+        #expect(await runner.trainingCaseCount == 1)
+
+        // Mixed types, declared as a binding.
+        let mixed = RunnerConfiguration(inputSlots: [InputSlot("v", stack: .binding)])
+        let asString = TrainingCase(id: "s", inputs: [.input0: BindingItem(key: 0, bound: StringItem("four"))])
+        #expect(mixed.mismatches(in: asString).isEmpty)
+    }
+
     /// *Observing a Run*: the recorders, reading a trace, and the two details.
     @Test func `observing a run: recorders and traces`() async {
         let configuration = RunnerConfiguration(recorders: [

@@ -35,8 +35,10 @@ nonisolated func evaluateOne(
     // evaluation shares it instead of editing a copy of its own.
     interpreter.behaviors = behaviors ?? behaviorTable(for: configuration)
 
+    // An input the configuration's declarations refuse is left unbound, so
+    // `.inputN` reports it missing instead of handing over a value of the wrong type.
     interpreter.load(
-        inputs: trainingCase.inputs,
+        inputs: configuration.allowedInputs(of: trainingCase),
         constants: individual.constants,
         program: individual.program,
         recorders: configuration.recorders.map(AnyRecorder.init)
@@ -168,8 +170,31 @@ public actor Runner {
 
     /// Adds training cases to the pool. One whose identifier is already registered
     /// replaces the earlier one.
-    public func register(trainingCases newOnes: [TrainingCase]) {
-        for trainingCase in newOnes { trainingCases[trainingCase.id] = trainingCase }
+    ///
+    /// When the configuration declares its inputs (``RunnerConfiguration/inputSlots``),
+    /// a case that binds an undeclared input, or a value of the wrong type, is not
+    /// added.
+    ///
+    /// - Returns: What was wrong with the cases not added; empty when every case
+    ///   was added.
+    @discardableResult
+    public func register(trainingCases newOnes: [TrainingCase]) -> [InputMismatch] {
+        var refused: [InputMismatch] = []
+        for trainingCase in newOnes {
+            let mismatches = configuration.mismatches(in: trainingCase)
+            if mismatches.isEmpty {
+                trainingCases[trainingCase.id] = trainingCase
+            } else {
+                refused.append(contentsOf: mismatches)
+            }
+        }
+        return refused
+    }
+
+    /// `item` written with each declared input shown by its name. See
+    /// `labeled(_:)`.
+    public func labeled(_ item: any Item) -> String {
+        configuration.labeled(item)
     }
 
     /// How many individuals are registered.

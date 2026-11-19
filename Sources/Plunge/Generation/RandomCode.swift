@@ -369,19 +369,30 @@ public nonisolated enum RandomCode {
     }
 
     static func setRandomConstants(in interpreter: Interpreter) {
-        func token(_ name: String) -> PushInstruction { PushInstruction(rawValue: name)! }
-        for i in (0..<10) {
-            interpreter.constants[token("int\(i)")] = IntItem(randomInt(100_000))
-            interpreter.constants[token("double\(i)")] = DoubleItem(randomDouble(100_000.0))
-            interpreter.constants[token("string\(i)")] = StringItem(randomString(20))
-            interpreter.constants[token("char\(i)")] = CharItem(randomChar())
-            interpreter.constants[token("vecInt\(i)")] = VecIntItem(randomVecInt(100_000, 20))
-            interpreter.constants[token("vecDouble\(i)")] = VecDoubleItem(randomVecDouble(100_000.0, 20))
-            interpreter.constants[token("vecString\(i)")] = VecStringItem(randomVecString(20))
-            interpreter.constants[token("vecBool\(i)")] = VecBoolItem(randomVecBool(20))
-            let inputName = "input\(i)"
-            let input = PushInstruction(rawValue: inputName)!
-            interpreter.inputs[input] = randomPushItem()
+        // Slot by slot, each stack in turn and then the input, so the random
+        // draws come in the same order whatever the slot counts are.
+        let slots = Interpreter.constantSlots
+        let inputs = Interpreter.inputSlots
+        let deepest = max(inputs.count, slots.values.map(\.count).max() ?? 0)
+        func random(for stack: PushStack) -> (any Item)? {
+            switch stack {
+            case .int: IntItem(randomInt(100_000))
+            case .double: DoubleItem(randomDouble(100_000.0))
+            case .string: StringItem(randomString(20))
+            case .char: CharItem(randomChar())
+            case .vecInt: VecIntItem(randomVecInt(100_000, 20))
+            case .vecDouble: VecDoubleItem(randomVecDouble(100_000.0, 20))
+            case .vecString: VecStringItem(randomVecString(20))
+            case .vecBool: VecBoolItem(randomVecBool(20))
+            default: nil
+            }
+        }
+        for i in 0..<deepest {
+            for stack in Interpreter.constantStacks {
+                guard let stackSlots = slots[stack], i < stackSlots.count else { continue }
+                interpreter.constants[stackSlots[i]] = random(for: stack)
+            }
+            if i < inputs.count { interpreter.inputs[inputs[i]] = randomPushItem() }
         }
     }
 
