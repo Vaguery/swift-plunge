@@ -146,9 +146,10 @@ struct FlippedDecisionTests {
     }
 }
 
-/// Selections (2026-11-19): a stack instruction that picks by a computed depth
-/// is a choice the crux doesn't see, logged with its options and forced, like a
-/// flipped conditional, for a counterfactual run.
+/// Selections (2026-11-19): a stack instruction that picks by a computed depth, a
+/// lookup by a computed key, or a code point run by a computed index is a choice
+/// the crux doesn't see, logged with its options and forced, like a flipped
+/// conditional, for a counterfactual run.
 @Suite
 struct SelectionLogTests {
 
@@ -216,9 +217,49 @@ struct SelectionLogTests {
         #expect(!log[1].flipped, "a forced choice at a conditional's place forces nothing")
     }
 
+    /// 100 bound to key 7, then 200 to key 8; then the key x, looked up.
+    static let lookup: [any Item] = [IntItem(100), IntItem(7), InstructionItem(.intRefAs), IntItem(200),
+                                     IntItem(8), InstructionItem(.intRefAs), InstructionItem(.input(0)),
+                                     InstructionItem(.bindingDeref)]
+
+    @Test func `a lookup by a computed key logs the keys bound, top first, and the one it took`() throws {
+        let result = Self.run(Self.lookup, input: 8)
+        #expect(Self.answer(result) == "200")
+        let decision = try #require(DecisionLogTests.decisions(result).first)
+        #expect(decision.isSelection && decision.naming == .key)
+        // Key 0 is the input's own binding, below the program's two.
+        #expect(decision.options == [8, 7, 0] && decision.chosen == 0)
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+    }
+
+    @Test func `an unbound key is the option past the last`() throws {
+        let decision = try #require(DecisionLogTests.decisions(Self.run(Self.lookup, input: 9)).first)
+        #expect(decision.chosen == 3 && decision.outcome == 3)
+    }
+
+    @Test func `a forced lookup takes another key, then puts the key back`() throws {
+        let forced = Self.run(Self.lookup, input: 8, forcing: [0: 1])
+        #expect(Self.answer(forced) == "100")
+        #expect(try #require(DecisionLogTests.decisions(forced).first).flipped)
+        // The key is left under the answer: the plain run's, not the forced one.
+        let key = Self.run(Self.lookup + [InstructionItem(.intSwap)], input: 8, forcing: [0: 1])
+        #expect(Self.answer(key) == "8")
+    }
+
+    @Test func `a code point run by a computed index is a selection`() throws {
+        let program: [any Item] = [CodeItem([IntItem(100), IntItem(200), IntItem(300)]), InstructionItem(.input(0)),
+                                   InstructionItem(.codeDoNthRoot)]
+        let plain = Self.run(program, input: 1)
+        #expect(Self.answer(plain) == "200")
+        let decision = try #require(DecisionLogTests.decisions(plain).first)
+        #expect(decision.naming == .position && decision.options == [0, 1, 2] && decision.chosen == 1)
+        #expect(Self.answer(Self.run(program, input: 1, forcing: [0: 2])) == "300")
+    }
+
     @Test func `the selections are the stack instructions that take a depth or count`() {
         #expect(Decision.selections.isSuperset(of: [.intYank, .codeShove, .boolPopItems, .doubleDeleteAtDepth,
                                                     .stringYankDup]))
+        #expect(Decision.selections.isSuperset(of: [.bindingDeref, .bindingDo, .codeDoNth, .codeEmitNthRoot]))
         #expect(Decision.selections.isDisjoint(with: [.intAdd, .intSwap, .intPop, .execIf]))
     }
 }

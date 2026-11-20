@@ -61,14 +61,18 @@ run, and the step. The same conditional reached on different cases gives the
 same blocks, each case's condition, and which way it went. Like `.pushes`, it is
 read once, at the end, and doesn't see inside sandboxes.
 
-A **selection** is logged too: a stack instruction that picks by a computed
-depth or count (`.intYank`, `.codeShove`, `.boolPopItems` and the rest of
-``Decision/selections``). Moving an item records nothing in its history, so the
-depth that picked it is in no crux either. Its ``Decision`` holds the depth,
-history and all, its ``Decision/options`` (the lowest depth for each different
-thing it could do, depths being clamped into the stack), and the one it
-``Decision/chosen``. A depth that could do only one thing is no choice and isn't
-logged. Loops, lookups by key and code picked by index aren't logged yet.
+A **selection** is logged too (``Decision/selections``): a stack instruction
+that picks by a computed depth or count (`.intYank`, `.codeShove`,
+`.boolPopItems` and the rest), a binding looked up by a computed key
+(`.bindingDeref` and kin), or a point of a code block run by a computed index
+(`.codeDoNth` and kin). Moving an item, or running what a key or index found,
+records nothing in any history, so the int that picked is in no crux either.
+Its ``Decision`` holds that int, history and all, its ``Decision/options``, and
+the one it ``Decision/chosen``. Depths and indices are clamped, so an option is
+the lowest position for each different thing it could do; keys are the keys
+bound within reach, top first, and an unbound key (a refusal) is the option past
+the last. A selection that could do only one thing is no choice and isn't
+logged. Loops aren't logged yet.
 
 A **counterfactual run** shows the branch a run didn't take. Name decisions in
 ``InterpreterSettings/flippedDecisions``, by their place among the run's

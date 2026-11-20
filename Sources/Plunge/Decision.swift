@@ -3,14 +3,17 @@
 //  Plunge
 //
 //  A conditional's choice, as the decision log records it (2026-11-17, #57).
-//  Selections by a computed stack depth added 2026-11-19.
+//  Selections by a computed stack depth, binding key or code point added
+//  2026-11-19.
 //
 
 /// One choice a program made during a run, at one step: a **conditional**
 /// (`.execIf`, `.execWhen` or `.codeDoIf`) choosing code by a Boolean, or a
-/// **selection** choosing an item by a computed stack depth (`.intYank`,
-/// `.codeShove` and every other stack instruction that takes a depth or a
-/// count, ``Decision/selections``), reached with its arguments.
+/// **selection** (``Decision/selections``) choosing by an int: an item by a
+/// computed stack depth (`.intYank`, `.codeShove` and every other stack
+/// instruction that takes a depth or a count), a binding by a computed key
+/// (`.bindingDeref` and kin), or a point of a code block by a computed index
+/// (`.codeDoNth` and kin), reached with its arguments.
 ///
 /// A crux follows data, not control: a conditional records nothing in any
 /// item's history, so the Boolean that chose a branch is in no result's crux,
@@ -40,14 +43,28 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
     /// `nil` for `.execWhen` (discarded) and `.codeDoIf` (left on `.code`), which
     /// run nothing when false, and for a selection.
     public let whenFalse: AnyItem?
-    /// A selection's options: for each different thing it could do to its stack,
-    /// the lowest depth that does it, lowest first. Depths are clamped into the
-    /// stack, so a depth below the first option does what the first does, and
-    /// one past the last does what the last does. `nil` for a conditional.
+    /// A selection's options, the values of its deciding int that name them.
+    /// By ``Naming/position`` (a depth or index): for each different thing it
+    /// could do, the lowest position that does it, lowest first; positions are
+    /// clamped, so one below the first option takes the first, and one past the
+    /// last takes the last. By ``Naming/key``: each key bound on `.binding`
+    /// within reach, once, from the top down. `nil` for a conditional.
     public let options: [Int]?
-    /// The option a selection took, as an index into ``options``; `nil` for a
+    /// How ``options`` are named; `nil` for a conditional.
+    public let naming: Naming?
+    /// The option a selection took, as an index into ``options``; for a key
+    /// lookup whose key was unbound (it refused), `options.count`. `nil` for a
     /// conditional.
     public internal(set) var chosen: Int?
+
+    /// How a selection's deciding int names its options.
+    public enum Naming: String, Sendable, Codable {
+        /// A depth or index, clamped into range: each option covers the positions
+        /// from its own up to the next option's.
+        case position
+        /// A key: an option is taken by its own key only.
+        case key
+    }
 
     /// Whether the run took it otherwise than its condition said: a conditional
     /// flipped (`InterpreterSettings/flippedDecisions`), or a selection forced to
@@ -76,13 +93,14 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         self.whenTrue = AnyItem(whenTrue)
         self.whenFalse = whenFalse.map(AnyItem.init)
         self.options = nil
+        self.naming = nil
         self.chosen = nil
     }
 
-    /// A selection's choice: `options` the lowest depth for each different
-    /// effect, and `chosen` the one taken.
+    /// A selection's choice: `options` named by `naming`, and `chosen` the one
+    /// taken.
     public init(step: Int, instruction: PushInstruction, selector: any Item, options: [Int], chosen: Int,
-                forced: Bool = false) {
+                naming: Naming = .position, forced: Bool = false) {
         self.flipped = forced
         self.step = step
         self.instruction = instruction
@@ -90,11 +108,12 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         self.whenTrue = nil
         self.whenFalse = nil
         self.options = options
+        self.naming = naming
         self.chosen = chosen
     }
 
     private enum CodingKeys: String, CodingKey {
-        case step, instruction, condition, whenTrue, whenFalse, options, chosen, flipped
+        case step, instruction, condition, whenTrue, whenFalse, options, naming, chosen, flipped
     }
 
     /// Decodes a decision; one saved before `flipped` existed was not flipped,
@@ -107,6 +126,7 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         whenTrue = try container.decodeIfPresent(AnyItem.self, forKey: .whenTrue)
         whenFalse = try container.decodeIfPresent(AnyItem.self, forKey: .whenFalse)
         options = try container.decodeIfPresent([Int].self, forKey: .options)
+        naming = try container.decodeIfPresent(Naming.self, forKey: .naming) ?? (options == nil ? nil : .position)
         chosen = try container.decodeIfPresent(Int.self, forKey: .chosen)
         flipped = try container.decodeIfPresent(Bool.self, forKey: .flipped) ?? false
     }
@@ -119,13 +139,53 @@ nonisolated extension Decision {
 
     /// The selections the log watches: every stack instruction that takes a
     /// depth or a count from `.int` and moves, copies or removes items by it
-    /// (`.intYank`, `.codeShove`, `.vecIntDeleteAtDepth`, `.boolPopItems`, …). One
-    /// is logged only when the depth could have done more than one thing.
-    public static let selections: Set<PushInstruction> = Set(Interpreter.language.compactMap { entry in
+    /// (`.intYank`, `.codeShove`, `.vecIntDeleteAtDepth`, `.boolPopItems`, …); the
+    /// binding lookups by key; and the code-point runs by index. One is logged
+    /// only when it could have done more than one thing.
+    public static let selections: Set<PushInstruction> = depthSelections.union(keyLookups).union(codePoints)
+
+    /// The stack instructions that pick by a depth or count they take.
+    static let depthSelections: Set<PushInstruction> = Set(Interpreter.language.compactMap { entry in
         guard case .structural = entry.value.body, case .takes(let stack)? = entry.value.requirements.first,
               stack == .int else { return nil }
         return entry.key
     })
+
+    /// The binding lookups: each reads its key from `.int` and leaves it.
+    public static let keyLookups: Set<PushInstruction> = [.bindingDeref, .bindingDerefFrom, .bindingDerefToCode,
+                                                          .bindingDerefToCodeFrom, .bindingDo]
+
+    /// The code-point runs: each reads a code block and an index and leaves them.
+    public static let codePoints: Set<PushInstruction> = [.codeDoNth, .codeDoNthRoot, .codeEmitNth,
+                                                          .codeEmitNthRoot]
+
+    /// A key lookup or code-point run about to choose, read from the stacks
+    /// before it runs: its deciding int and where it is on `.int`, its options,
+    /// and the one it will take; `nil` when it will refuse for want of
+    /// arguments, or has only one thing it could do.
+    static func pendingSelection(_ instruction: PushInstruction, stacks: StackSet)
+        -> (selector: IntItem, at: Int, options: [Int], naming: Naming, chosen: Int)? {
+        if keyLookups.contains(instruction) {
+            // The `From` forms take a starting depth first; the key is below it.
+            let from = instruction == .bindingDerefFrom || instruction == .bindingDerefToCodeFrom
+            guard let key = stacks.item(at: from ? 1 : 0, on: .int)?.exactly(IntItem.self) else { return nil }
+            let start = from ? max(0, stacks.item(at: 0, on: .int)?.exactly(IntItem.self)?.value ?? 0) : 0
+            let pairs = stacks[.binding] ?? []
+            var keys: [Int] = []
+            var seen = Set<Int>()
+            for depth in start..<max(start, pairs.count) {
+                if let bound = (pairs[depth] as? BindingItem)?.key, seen.insert(bound).inserted { keys.append(bound) }
+            }
+            guard !keys.isEmpty else { return nil }
+            return (key, from ? 1 : 0, keys, .key, keys.firstIndex(of: key.value) ?? keys.count)
+        }
+        guard codePoints.contains(instruction), let block = stacks.item(at: 0, on: .code)?.exactly(CodeItem.self),
+              let index = stacks.item(at: 0, on: .int)?.exactly(IntItem.self) else { return nil }
+        let root = instruction == .codeDoNthRoot || instruction == .codeEmitNthRoot
+        let count = root ? block.value.count : block.pointCount
+        guard count > 1 else { return nil }
+        return (index, 0, Array(0..<count), .position, Position.item(index.value, count: count))
+    }
 
     /// The decision `instruction` is about to make, read from the stacks before
     /// it runs: the top Boolean and the top one or two code blocks; `nil` when

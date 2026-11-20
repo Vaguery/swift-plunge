@@ -789,6 +789,9 @@ nonisolated final class Interpreter {
                     if decisionLog != nil || config.flippedDecisions != nil || config.forcedChoices != nil,
                        Decision.conditionals.contains(action) {
                         logDecision(action, behavior)
+                    } else if watchesSelections, Decision.keyLookups.contains(action)
+                                || Decision.codePoints.contains(action) {
+                        logSelection(action, behavior)
                     } else {
                         behavior.act(on: self)
                     }
@@ -926,6 +929,37 @@ nonisolated extension Interpreter {
         if let pending { decisionLog?.append(pending) }
     }
 
+    /// Runs a key lookup or code-point run and logs its choice, when it has more
+    /// than one thing it could do. A choice named in `config.forcedChoices` is
+    /// forced: the deciding int, which the instruction reads and leaves, is
+    /// replaced (history kept) by the forced option's for the instruction alone,
+    /// and put back after it, so nothing else in the run sees the change.
+    func logSelection(_ action: PushInstruction, _ behavior: Behavior) {
+        guard let pending = Decision.pendingSelection(action, stacks: stacks) else {
+            behavior.act(on: self)
+            return
+        }
+        var chosen = pending.chosen
+        var forced: IntItem?
+        if let option = config.forcedChoices?[decisionsMade], pending.options.indices.contains(option),
+           option != chosen {
+            var replaced = IntItem(pending.options[option])
+            replaced.call = pending.selector.call
+            stacks[.int]![pending.at] = replaced
+            chosen = option
+            forced = replaced
+        }
+        behavior.act(on: self)
+        if let forced, let left = stacks.item(at: pending.at, on: .int)?.exactly(IntItem.self),
+           left.value == forced.value {
+            stacks[.int]![pending.at] = pending.selector
+        }
+        decisionLog?.append(Decision(step: counter, instruction: action, selector: pending.selector,
+                                     options: pending.options, chosen: chosen, naming: pending.naming,
+                                     forced: forced != nil))
+        decisionsMade += 1
+    }
+
     /// Whether structural steps should go through ``select(_:_:_:_:)``.
     var watchesSelections: Bool { decisionLog != nil || config.forcedChoices != nil }
 
@@ -939,7 +973,7 @@ nonisolated extension Interpreter {
     /// one option.
     func select(_ name: PushInstruction, _ arguments: [any Item], _ view: StackView,
                 _ step: ([any Item], StackView) -> StructuralStep) -> StructuralStep {
-        guard Decision.selections.contains(name), let depth = arguments.first?.exactly(IntItem.self) else {
+        guard Decision.depthSelections.contains(name), let depth = arguments.first?.exactly(IntItem.self) else {
             return step(arguments, view)
         }
         var options: [Int] = []
