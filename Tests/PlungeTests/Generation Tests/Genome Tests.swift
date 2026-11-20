@@ -3,9 +3,9 @@
 //  PlungeTests
 //
 //  The genome a search edits, and the program it translates to (2026-11-19).
-//  A genome is instruction tokens, constants, a permutation, a code target and
-//  an optional plan. Without a plan, the default (Fibonacci) plan decides where
-//  the code blocks are; with one, the plan does. Any program can be turned back
+//  A genome is instruction tokens, constants, a permutation, a code target (a
+//  third unless set) and an optional plan. Without a plan, the default
+//  (Fibonacci) plan decides where the code blocks are; with one, the plan does. Any program can be turned back
 //  into a genome that gives it again. Each test states one rule.
 //
 
@@ -48,14 +48,15 @@ struct GenomeTests {
 
     @Test func `the default plan, written out`() {
         // 12 tokens: blocks of 1, 1, 2 and 3 are cut from the head (7 tokens, the
-        // first total past a third), and placed ahead of the other 5 in cut order.
-        #expect(Genome.defaultPlan(tokenCount: 12, permutation: [], codeTarget: nil) == [
+        // first total past the default code target's third), and placed ahead of
+        // the other 5 in cut order.
+        #expect(Genome.defaultPlan(tokenCount: 12, permutation: []) == [
             GenomePiece(start: 0, length: 1, at: 0), GenomePiece(start: 0, length: 1, at: 1),
             GenomePiece(start: 0, length: 2, at: 2), GenomePiece(start: 0, length: 3, at: 3)
         ])
         // A permutation changes only where each block is placed: the order its
         // values sort into, here 1, 3, 2, 0.
-        let placed = Genome.defaultPlan(tokenCount: 12, permutation: [0.9, 0.1, 0.5, 0.3], codeTarget: nil)
+        let placed = Genome.defaultPlan(tokenCount: 12, permutation: [0.9, 0.1, 0.5, 0.3])
         #expect(placed.map(\.length) == [1, 1, 2, 3])
         let genome = Genome(tokens: Array(Self.palette.prefix(12)), permutation: [0.9, 0.1, 0.5, 0.3])
         let blocks = genome.translate().prefix(4).map { ($0 as? CodeItem)?.value.count }
@@ -68,10 +69,33 @@ struct GenomeTests {
         #expect(none.allSatisfy { $0 is InstructionItem }, "a target of 0 cuts no blocks")
         let all = Genome(tokens: tokens, codeTarget: 1).translate()
         #expect(all.allSatisfy { $0 is CodeItem }, "a target of 1 cuts every token")
-        // Nil is the third, computed exactly; a third as a number agrees.
+    }
+
+    @Test func `a genome's code target is a third unless it is given another`() {
+        #expect(Genome.defaultCodeTarget == 1.0 / 3.0)
+        #expect(Genome(tokens: [.intAdd]).codeTarget == Genome.defaultCodeTarget)
+        #expect(Genome(tokens: [.intAdd], codeTarget: 0.5).codeTarget == 0.5)
+        // Saying the default aloud changes nothing.
+        let tokens = Array(Self.palette.prefix(30))
+        #expect(Self.text(Genome(tokens: tokens, codeTarget: Genome.defaultCodeTarget).translate())
+                == Self.text(Genome(tokens: tokens).translate()))
+    }
+
+    @Test func `the default code target is compared exactly, where a rounded third is not`() {
+        // 21 tokens: 7 cut is at most a third of 21, so a fifth block is cut. A
+        // rounded 0.333 puts the line at 6.993 and stops at four.
+        #expect(Genome.defaultLengths(tokenCount: 21) == [1, 1, 2, 3, 5])
+        #expect(Genome.defaultLengths(tokenCount: 21, codeTarget: 0.333) == [1, 1, 2, 3])
+        // The exact rule, written out, at every length a genome is likely to have.
         for count in 1...2_000 {
-            #expect(Genome.defaultLengths(tokenCount: count, codeTarget: nil)
-                    == Genome.defaultLengths(tokenCount: count, codeTarget: 1.0 / 3.0))
+            var (lengths, previous, current, total) = ([Int](), 0, 1, 0)
+            while total * 3 <= count, total < count {
+                let size = min(current, count - total)
+                lengths.append(size)
+                total += size
+                (previous, current) = (current, previous + current)
+            }
+            #expect(Genome.defaultLengths(tokenCount: count) == lengths, "\(count) tokens")
         }
     }
 
@@ -163,7 +187,7 @@ struct GenomeTests {
             let program = Genome(tokens: tokens, permutation: permutation).translate()
             let back = Genome(program: program)
             #expect(back.plan == nil)
-            #expect(back.codeTarget == nil, "the default third fits, so none is set")
+            #expect(back.codeTarget == Genome.defaultCodeTarget, "the default fits, so it is kept")
             #expect(Self.text(back.translate()) == Self.text(program))
         }
     }
@@ -177,8 +201,7 @@ struct GenomeTests {
         program += (0..<2_993).map { InstructionItem(Self.palette[$0 % Self.palette.count]) }
         let back = Genome(program: program)
         #expect(back.plan == nil)
-        let target = try? #require(back.codeTarget)
-        #expect(target.map { $0 >= 4.0 / 3_000 && $0 < 7.0 / 3_000 } == true)
+        #expect(back.codeTarget >= 4.0 / 3_000 && back.codeTarget < 7.0 / 3_000)
         #expect(Self.text(back.translate()) == Self.text(program))
     }
 
@@ -229,6 +252,14 @@ struct GenomeTests {
         #expect(restored.permutation == genome.permutation && restored.codeTarget == genome.codeTarget)
         #expect(restored.constants[.constant(2)]?.pretty() == "\"s\"")
         #expect(Self.text(restored.translate()) == Self.example.program)
+
+        // The code target is always written, the default included; a genome saved
+        // without one was at the default.
+        let plain = try JSONEncoder().encode(Genome(tokens: Self.example.tokens))
+        #expect(String(bytes: plain, encoding: .utf8)?.contains("codeTarget") == true)
+        #expect(try JSONDecoder().decode(Genome.self, from: plain).codeTarget == Genome.defaultCodeTarget)
+        let older = Data(#"{"encoding":"fibonacci","tokens":[],"constants":{},"permutation":[]}"#.utf8)
+        #expect(try JSONDecoder().decode(Genome.self, from: older).codeTarget == Genome.defaultCodeTarget)
 
         let individual = Individual(id: "i", genome: genome)
         let back = try JSONDecoder().decode(Individual.self, from: JSONEncoder().encode(individual))

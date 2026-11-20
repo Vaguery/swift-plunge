@@ -38,11 +38,12 @@
 nonisolated enum FibonacciGenome {
 
     /// The code block lengths for a genome of `count` items: 1, 1, 2, 3, 5, 8, …,
-    /// stopping with **the first code block that carries the total past `count / 3`**.
+    /// stopping with **the first code block that carries the total past
+    /// `codeTarget × count`**, which is `count / 3` at the default code target.
     ///
-    /// The last code block is included rather than dropped, so the third is a floor,
-    /// not a target. Two consequences of that rule, both measured and both
-    /// deliberate:
+    /// The last code block is included rather than dropped, so the code target is a
+    /// floor, not a ceiling. Two consequences of that rule at the default third,
+    /// both measured and both deliberate:
     ///
     /// - **The realized code fraction oscillates between ~34% and ~55%**, because
     ///   consecutive Fibonacci sums approach φ; it never settles near a third.
@@ -68,12 +69,16 @@ nonisolated enum FibonacciGenome {
     ///
     /// Note it is not even monotonic: 100 is the *most* blocked and 250 the least.
     ///
-    /// `codeTarget` replaces the third (2026-11-19): blocks are added while the
-    /// running total is at most `codeTarget × count`. Nil is the third, computed in
-    /// exact integers; 0 or less gives no blocks at all; 1 cuts the whole genome.
-    static func blockLengths(forGenomeOf count: Int, codeTarget: Double? = nil) -> [Int] {
+    /// **The third is the code target's default, not part of the rule**
+    /// (2026-11-20): blocks are added while the running total is at most
+    /// `codeTarget × count`, and `codeTarget` is ``Genome/defaultCodeTarget``, a
+    /// third, unless another is given. 0 or less gives no blocks at all; 1 cuts the
+    /// whole genome. At the default the comparison is made in exact integers (see
+    /// below), so the default cuts what it always cut at every length.
+    static func blockLengths(forGenomeOf count: Int, codeTarget: Double = Genome.defaultCodeTarget) -> [Int] {
         guard count > 0 else { return [] }
-        if let codeTarget, !(codeTarget > 0) { return [] }   // 0, negative or NaN: no blocks
+        guard codeTarget > 0 else { return [] }   // 0, negative or NaN: no blocks
+        let isDefault = codeTarget == Genome.defaultCodeTarget
 
         var lengths: [Int] = []
         var (previous, current) = (0, 1)
@@ -84,10 +89,12 @@ nonisolated enum FibonacciGenome {
         // that passes it is the last one included. Floating point would put the
         // N-divisible-by-3 cliff in a slightly different place depending on
         // rounding, which is the one thing this rule cannot afford to be vague
-        // about. (A Double third agrees at every length up to 100,000, but the
-        // default stays exact.)
+        // about. So a code target equal to the default is compared exactly, and
+        // any other as a Double. (The Double comparison agrees with the exact
+        // one at every length up to 100,000; the exact one is kept so that the
+        // default never depends on that.)
         func belowTarget() -> Bool {
-            if let codeTarget { Double(total) <= codeTarget * Double(count) } else { total * 3 <= count }
+            isDefault ? total * 3 <= count : Double(total) <= codeTarget * Double(count)
         }
         while belowTarget() {
             lengths.append(current)

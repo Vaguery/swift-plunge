@@ -12,8 +12,8 @@
 public nonisolated enum GenomeEncoding: String, Sendable, Codable, CaseIterable {
     /// Instruction tokens cut into code blocks by a plan (``GenomePiece``). With no
     /// plan of its own, a genome's plan is the Fibonacci default: blocks of 1, 1,
-    /// 2, 3, 5, … tokens cut from the head, placed in the order its permutation
-    /// gives, ahead of the remaining tokens.
+    /// 2, 3, 5, … tokens cut from the head as far as its code target says, placed
+    /// in the order its permutation gives, ahead of the remaining tokens.
     case fibonacci
 }
 
@@ -62,7 +62,7 @@ public nonisolated struct GenomePiece: Sendable, Hashable, Codable {
 /// - **`permutation`**: numbers whose sorted order is the order the default plan
 ///   places its blocks in. Empty places them in the order they were cut.
 /// - **`codeTarget`**: how much of the genome the default plan cuts into blocks,
-///   from 0 (none) to 1 (all of it). Nil is the long-standing third.
+///   from 0 (none) to 1 (all of it). It starts at ``defaultCodeTarget``, a third.
 /// - **`plan`**: an explicit ``GenomePiece`` list. Nil uses the default, made from
 ///   the length, the code target and the permutation; an explicit plan replaces
 ///   all three.
@@ -75,6 +75,13 @@ public nonisolated struct GenomePiece: Sendable, Hashable, Codable {
 ///
 /// See <doc:Genomes>.
 public nonisolated struct Genome: Sendable {
+    /// The code target a genome has unless it is given another: a third.
+    ///
+    /// The default plan compares this one value in exact integers (three times
+    /// the tokens cut against the genome's length), so a genome at the default is
+    /// cut the same way at every length, whatever rounding would say.
+    public static let defaultCodeTarget: Double = 1.0 / 3.0
+
     /// How the genome becomes a program.
     public var encoding: GenomeEncoding
     /// The instruction tokens, in order.
@@ -85,14 +92,16 @@ public nonisolated struct Genome: Sendable {
     /// these values, ties by position. Fitted to the number of blocks by cycling.
     public var permutation: [Double]
     /// The default plan's share of the genome cut into blocks: blocks are cut
-    /// while the running total is at most this share. Nil is a third, in exact
-    /// integers; 0 or less cuts no blocks; 1 or more cuts every token.
-    public var codeTarget: Double?
+    /// while the running total is at most this share. It starts at
+    /// ``defaultCodeTarget``, a third; 0 or less cuts no blocks; 1 or more cuts
+    /// every token.
+    public var codeTarget: Double
     /// An explicit plan, or nil for the default one.
     public var plan: [GenomePiece]?
 
     public init(tokens: [PushInstruction], constants: [PushInstruction: any Item] = [:], permutation: [Double] = [],
-                codeTarget: Double? = nil, plan: [GenomePiece]? = nil, encoding: GenomeEncoding = .fibonacci) {
+                codeTarget: Double = Genome.defaultCodeTarget, plan: [GenomePiece]? = nil,
+                encoding: GenomeEncoding = .fibonacci) {
         self.encoding = encoding
         self.tokens = tokens
         self.constants = constants
@@ -135,10 +144,10 @@ public nonisolated extension Genome {
 
     /// The default plan for `tokenCount` tokens: blocks of 1, 1, 2, 3, 5, … tokens
     /// cut from the head while the running total is at most `codeTarget` of the
-    /// whole (a third when nil), the last one cut short if the tokens run out, and
-    /// placed at the top level in the order `permutation` sorts into, ahead of the
-    /// tokens left over.
-    static func defaultPlan(tokenCount: Int, permutation: [Double], codeTarget: Double?) -> [GenomePiece] {
+    /// whole, the last one cut short if the tokens run out, and placed at the top
+    /// level in the order `permutation` sorts into, ahead of the tokens left over.
+    static func defaultPlan(tokenCount: Int, permutation: [Double],
+                            codeTarget: Double = Genome.defaultCodeTarget) -> [GenomePiece] {
         let lengths = defaultLengths(tokenCount: tokenCount, codeTarget: codeTarget)
         let order = FibonacciGenome.placementOrder(FibonacciGenome.adjustedPermutation(permutation,
                                                                                      toCount: lengths.count))
@@ -161,8 +170,8 @@ public nonisolated extension Genome {
 
     /// The Fibonacci block lengths for `count` tokens and a code target: 1, 1, 2,
     /// 3, 5, … up to the block that takes the running total past the target's
-    /// share (a third when nil), without cutting the last one short.
-    static func blockLengths(forGenomeOf count: Int, codeTarget: Double? = nil) -> [Int] {
+    /// share, without cutting the last one short.
+    static func blockLengths(forGenomeOf count: Int, codeTarget: Double = Genome.defaultCodeTarget) -> [Int] {
         FibonacciGenome.blockLengths(forGenomeOf: count, codeTarget: codeTarget)
     }
 
@@ -182,7 +191,7 @@ public nonisolated extension Genome {
 
     /// The default plan's block lengths in cut order: the Fibonacci lengths the
     /// code target allows, the last cut short if the tokens run out.
-    internal static func defaultLengths(tokenCount: Int, codeTarget: Double?) -> [Int] {
+    internal static func defaultLengths(tokenCount: Int, codeTarget: Double = Genome.defaultCodeTarget) -> [Int] {
         var lengths: [Int] = []
         var cursor = 0
         for size in FibonacciGenome.blockLengths(forGenomeOf: tokenCount, codeTarget: codeTarget) {
@@ -256,7 +265,9 @@ public nonisolated extension Genome {
     /// - **The default form when it fits.** If the program is shaped as the default
     ///   plan makes programs (code blocks of Fibonacci sizes, none nested, all ahead
     ///   of the other tokens), the genome has no explicit plan: its code target and
-    ///   permutation say the same thing. Otherwise it has an explicit plan.
+    ///   permutation say the same thing. The default code target is kept when it
+    ///   fits; otherwise the one that makes those blocks is recorded. A program of
+    ///   any other shape gets an explicit plan.
     ///
     /// The result depends only on `program` and `constants`, so the same program
     /// always gives the same genome.
@@ -326,15 +337,15 @@ nonisolated extension Genome {
     }
 
     /// A code target that makes the default plan cut blocks of `sizes` (in any
-    /// order) from `tokenCount` tokens: `.some(nil)` when the default third does,
+    /// order) from `tokenCount` tokens: ``defaultCodeTarget`` when that does,
     /// otherwise the middle of the range that does. Nil when none does.
-    static func codeTarget(giving sizes: [Int], tokenCount: Int) -> Double?? {
+    static func codeTarget(giving sizes: [Int], tokenCount: Int) -> Double? {
         let wanted = sizes.sorted()
-        func fits(_ target: Double?) -> Bool {
+        func fits(_ target: Double) -> Bool {
             defaultLengths(tokenCount: tokenCount, codeTarget: target).sorted() == wanted
         }
-        if fits(nil) { return .some(nil) }
-        if sizes.isEmpty { return tokenCount == 0 ? .some(nil) : fits(0) ? .some(0) : nil }
+        if fits(defaultCodeTarget) { return defaultCodeTarget }
+        if sizes.isEmpty { return tokenCount == 0 ? defaultCodeTarget : fits(0) ? 0 : nil }
         // m blocks are cut when the running total after m - 1 blocks is within the
         // target and after m blocks is past it: aim between the two.
         var (previous, current, total, before) = (0, 1, 0, 0)
@@ -344,8 +355,8 @@ nonisolated extension Genome {
             (previous, current) = (current, previous + current)
         }
         let target = min(1, (Double(before) + Double(total)) / 2 / Double(max(tokenCount, 1)))
-        if fits(target) { return .some(target) }
-        return fits(1) ? .some(1) : nil
+        if fits(target) { return target }
+        return fits(1) ? 1 : nil
     }
 
     /// The genome of `program` with an explicit plan. `program` holds only
@@ -418,7 +429,10 @@ extension Genome: Codable {
             constants: ItemBindingCoding.decode(
                 try container.decodeIfPresent([String: AnyItem].self, forKey: .constants) ?? [:]),
             permutation: try container.decodeIfPresent([Double].self, forKey: .permutation) ?? [],
-            codeTarget: try container.decodeIfPresent(Double.self, forKey: .codeTarget),
+            // A genome saved before the code target was always written has none:
+            // it was at the default.
+            codeTarget: try container.decodeIfPresent(Double.self, forKey: .codeTarget)
+                ?? Genome.defaultCodeTarget,
             plan: try container.decodeIfPresent([GenomePiece].self, forKey: .plan),
             encoding: try container.decodeIfPresent(GenomeEncoding.self, forKey: .encoding) ?? .fibonacci)
     }
@@ -429,7 +443,7 @@ extension Genome: Codable {
         try container.encode(tokens, forKey: .tokens)
         try container.encode(ItemBindingCoding.encode(constants), forKey: .constants)
         try container.encode(permutation, forKey: .permutation)
-        try container.encodeIfPresent(codeTarget, forKey: .codeTarget)
+        try container.encode(codeTarget, forKey: .codeTarget)
         try container.encodeIfPresent(plan, forKey: .plan)
     }
 }
