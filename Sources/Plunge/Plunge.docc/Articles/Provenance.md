@@ -113,7 +113,14 @@ nobody could tell how much of a result was really derived.
 A loop that adds 1 a thousand times would leave a crux a thousand steps long.
 The interpreter keeps such histories compact: shared parts are built once, and
 repeated steps fold into a counted loop. ``CruxCompression`` does the same to
-any crux you hand it.
+any crux you hand it, and ``CruxCompression/rolledByIndex(_:)`` also rolls passes
+that differ only by an index (`1 .vecStringNth`, then `2 .vecStringNth`) into a
+counted loop that supplies the index.
+
+However a crux is written, ``Item/fullSize`` says how big its history is with
+nothing compressed: every pass of a loop, and an elided or distilled history at
+the size it had. Two loops of 100 and 300 passes can have cruxes of the same
+length; their full sizes differ threefold.
 
 ## Running a crux
 
