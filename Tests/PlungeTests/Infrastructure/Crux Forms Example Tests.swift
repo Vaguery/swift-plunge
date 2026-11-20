@@ -48,15 +48,16 @@ struct CruxFormsExampleTests {
         let item = Self.result()
         #expect(item.pretty() == "56.0")
         // The crux: only what the value depends on; the bool and int work is gone.
-        #expect(CodeItem(item.crux()).pretty() == "( .input0 .constant10 .constant11 .doubleMultiply .doubleMultiply "
-                + "2.0 3.0 .doubleAdd .input1 .doubleMultiply .doubleAdd )")
+        // Each input and constant shows the value it read.
+        #expect(CodeItem(item.crux()).pretty() == "( «.input0 dbl: 4.0» «.constant10 dbl: 0.5» «.constant11 dbl: 3.0» "
+                + ".doubleMultiply .doubleMultiply 2.0 3.0 .doubleAdd «.input1 dbl: 10.0» .doubleMultiply .doubleAdd )")
         // Distilled: the work on constants alone is its value.
         let distilled = item.distilledCrux()
-        #expect(CodeItem(distilled.program).pretty() == "( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply "
-                + "«distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )")
+        #expect(CodeItem(distilled.program).pretty() == "( «.input0 dbl: 4.0» «distilled .doubleMultiply: 1.5» "
+                + ".doubleMultiply «distilled .doubleAdd: 5.0» «.input1 dbl: 10.0» .doubleMultiply .doubleAdd )")
         #expect(distilled.derived.map(\.slotsRead) == [[.constant(10), .constant(11)], []])
         #expect(distilled.derived.map { CodeItem($0.origin).pretty() }
-                == ["( .constant10 .constant11 .doubleMultiply )", "( 2.0 3.0 .doubleAdd )"])
+                == ["( «.constant10 dbl: 0.5» «.constant11 dbl: 3.0» .doubleMultiply )", "( 2.0 3.0 .doubleAdd )"])
         // Abstract: the derived constants are holes; the inputs stay in place.
         let abstract = distilled.abstracted()!
         #expect(abstract.key

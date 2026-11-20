@@ -38,7 +38,7 @@ struct ContainmentTests {
         let six = topItem(inty, .int)
         let crux = CodeItem(six.crux()).pretty()
         // The address, then the clean-up every non-destructive read records.
-        #expect(crux == "( .input3 1 .codeEmitNthRoot 1 .codePopItems .intSwap .intPop )")
+        #expect(crux == "( «.input3 code: ( 5 6 )» 1 .codeEmitNthRoot 1 .codePopItems .intSwap .intPop )")
         #expect(holds(six))
         #expect(holds(inty.stacks[.int]![1]))
     }
@@ -154,7 +154,8 @@ struct ContainmentTests {
                             InstructionItem(.vecIntPushAll)])
         inty.run(stepLimit: 1_000)
         #expect(stackString(inty, .int) == "[ 5 30 20 10 ]")
-        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty() == "( .constant43 1 .vecIntNth )")
+        #expect(CodeItem(inty.stacks[.int]![2].crux()).pretty()
+                == "( «.constant43 vecInt: [10, 20, 30]» 1 .vecIntNth )")
     }
 
     @Test func `runs merge where positions continue, and lookups cross runs`() {

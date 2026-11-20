@@ -45,7 +45,8 @@ struct DecisionLogTests {
             #expect(decision.instruction == .execIf)
             #expect(decision.tookTrue == expected)
             // Comparisons read their arguments and leave them, so the crux clears them.
-            #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 5 .intGT 2 .intPopItems )")
+            #expect(CodeItem(decision.condition.item.crux()).pretty()
+                    == "( «.input0 int: \(input)» 5 .intGT 2 .intPopItems )")
             #expect(Self.text(decision.whenTrue) == "( \"big\" )")
             #expect(Self.text(decision.whenFalse) == "( \"small\" )")
         }
@@ -121,7 +122,7 @@ struct FlippedDecisionTests {
         #expect(decision.flipped && !decision.tookTrue)
         // The Boolean keeps its value and history: the condition is the plain run's.
         #expect(decision.condition == DecisionLogTests.decisions(plain).first?.condition)
-        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 5 .intGT 2 .intPopItems )")
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( «.input0 int: 7» 5 .intGT 2 .intPopItems )")
     }
 
     @Test func `decisions are counted in the order they are made, and only the named one flips`() {
@@ -185,7 +186,7 @@ struct SelectionLogTests {
         #expect(decision.options == [0, 1, 2])
         #expect(decision.chosen == 1 && decision.outcome == 1 && !decision.flipped)
         #expect(decision.whenTrue == nil && decision.whenFalse == nil)
-        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( «.input0 int: 1» )")
     }
 
     @Test(arguments: [(-4, 0), (0, 0), (2, 2), (99, 2)])
@@ -232,7 +233,7 @@ struct SelectionLogTests {
         #expect(decision.isSelection && decision.naming == .key)
         // Key 0 is the input's own binding, below the program's two.
         #expect(decision.options == [8, 7, 0] && decision.chosen == 0)
-        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( «.input0 int: 8» )")
     }
 
     @Test func `an unbound key is the option past the last`() throws {
@@ -279,7 +280,7 @@ struct SelectionLogTests {
         let decision = try #require(DecisionLogTests.decisions(result).first)
         #expect(decision.naming == .count && decision.instruction == .execDoTimes && decision.isSelection)
         #expect(decision.chosen == 4 && decision.options == [] && decision.rangeStart == nil)
-        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( «.input0 int: 4» )")
         // A count below 1 makes no pass.
         #expect(DecisionLogTests.decisions(Self.run(Self.countedByInput, input: -3)).first?.chosen == 0)
     }
@@ -289,7 +290,7 @@ struct SelectionLogTests {
         #expect(Self.answer(result) == "114")
         let decision = try #require(DecisionLogTests.decisions(result).first)
         #expect(decision.chosen == 7 && decision.flipped)
-        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( «.input0 int: 4» )")
     }
 
     @Test func `a range logs its end and start, and is forced by passes in its direction`() throws {

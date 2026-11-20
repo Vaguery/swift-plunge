@@ -243,7 +243,7 @@ struct DocumentationExamplesTests {
         }
         print(answer.item.pretty(), CodeItem(answer.item.crux()).pretty())
         #expect(answer.item.pretty() == "396")
-        #expect(CodeItem(answer.item.crux()).pretty() == "( 99 .input0 .intMultiply )")
+        #expect(CodeItem(answer.item.crux()).pretty() == "( 99 «.input0 int: 4» .intMultiply )")
     }
 
     /// *Forms of a Crux*: "Getting the forms", on the running example.
@@ -270,8 +270,8 @@ struct DocumentationExamplesTests {
             Issue.record("no answer"); return
         }
         let distilled = answer.item.distilledCrux()
-        #expect(CodeItem(distilled.program).pretty() == "( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply "
-                + "«distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )")
+        #expect(CodeItem(distilled.program).pretty() == "( «.input0 dbl: 4.0» «distilled .doubleMultiply: 1.5» "
+                + ".doubleMultiply «distilled .doubleAdd: 5.0» «.input1 dbl: 10.0» .doubleMultiply .doubleAdd )")
         guard let abstract = distilled.abstracted() else { Issue.record("no abstract crux"); return }
         #expect(abstract.key
                 == "«fn (dbl, dbl) -> dbl: .input0 $0 .doubleMultiply $1 .input1 .doubleMultiply .doubleAdd»")

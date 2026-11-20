@@ -104,7 +104,25 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case type, value, errorKind, errorSource
+        case type, value, errorKind, errorSource, read
+    }
+
+    /// An instruction token, with the value it read when there is one.
+    private static func instruction(from container: KeyedDecodingContainer<CodingKeys>) throws -> InstructionItem {
+        let instruction = try container.decode(PushInstruction.self, forKey: .value)
+        guard let read = try container.decodeIfPresent(AnyItem.self, forKey: .read) else {
+            return InstructionItem(instruction)
+        }
+        return InstructionItem(instruction, read: read.item)
+    }
+
+    /// An instruction token, with the value it read when there is one.
+    private static func encode(_ token: InstructionItem,
+                               into container: inout KeyedEncodingContainer<CodingKeys>) throws {
+        try container.encode(ItemKind.instruction, forKey: .type)
+        try container.encode(token.value, forKey: .value)
+        guard let read = token.readValue else { return }
+        try container.encode(AnyItem(read), forKey: .read)
     }
 
     public init(from decoder: any Decoder) throws {
@@ -128,7 +146,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
         case .double:
             item = DoubleItem(try container.decode(Double.self, forKey: .value))
         case .instruction:
-            item = InstructionItem(try container.decode(PushInstruction.self, forKey: .value))
+            item = try Self.instruction(from: container)
         case .int:
             item = IntItem(try container.decode(Int.self, forKey: .value))
         case .string:
@@ -202,8 +220,7 @@ public nonisolated struct AnyItem: Codable, Sendable, Equatable {
             try container.encode(ItemKind.double, forKey: .type)
             try container.encode(concrete.value, forKey: .value)
         case let concrete as InstructionItem:
-            try container.encode(ItemKind.instruction, forKey: .type)
-            try container.encode(concrete.value, forKey: .value)
+            try Self.encode(concrete, into: &container)
         case let concrete as IntItem:
             try container.encode(ItemKind.int, forKey: .type)
             try container.encode(concrete.value, forKey: .value)

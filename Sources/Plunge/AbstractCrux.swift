@@ -227,7 +227,7 @@ nonisolated extension AbstractCrux {
             if let block = item.exactly(CodeItem.self), block.value.contains(where: { containsMarker($0) }) {
                 return "( \(printed(block.value)) )"
             }
-            return item.pretty()
+            return item.prettyKey()
         }.joined(separator: " ")
     }
 }

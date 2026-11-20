@@ -12,8 +12,10 @@ is the item's **crux**.
 
 ```
 .input0 10 .intAdd 99 .input0 .intMultiply      with input0 = 4  →  .int holds 396 14
-crux of 396:  ( 99 .input0 .intMultiply )
+crux of 396:  ( 99 «.input0 int: 4» .intMultiply )
 ```
+
+`«.input0 int: 4»` is the input token with the value it read on this run.
 
 The program's first three items computed 14 and left it on the stack; the answer
 never used it, so the crux leaves it out. Running a crux on a new interpreter,
@@ -55,7 +57,7 @@ program as an array of items:
 
 ```swift
 if case .items(let answers)? = result.traces["answer"], let answer = answers.last ?? nil {
-    print(CodeItem(answer.item.crux()).pretty())   // ( 99 .input0 .intMultiply )
+    print(CodeItem(answer.item.crux()).pretty())   // ( 99 «.input0 int: 4» .intMultiply )
 }
 ```
 

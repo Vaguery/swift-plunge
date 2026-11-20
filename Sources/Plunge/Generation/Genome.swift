@@ -333,7 +333,7 @@ nonisolated extension Genome {
         let genome = Genome(tokens: tokens, constants: constants, permutation: permutation,
                             codeTarget: codeTarget)
         // A check that costs one translation: the default form must give the program back.
-        return CodeItem(genome.translate()).pretty() == CodeItem(program).pretty() ? genome : nil
+        return CodeItem(genome.translate()).prettyProgram() == CodeItem(program).prettyProgram() ? genome : nil
     }
 
     /// A code target that makes the default plan cut blocks of `sizes` (in any

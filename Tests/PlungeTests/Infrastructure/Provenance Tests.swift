@@ -253,7 +253,7 @@ struct ProvenanceTests {
 
             let top = inty.stacks[.int]!.first!
             #expect((top as! IntItem).value == 7, "\(shuffle) lost the value")
-            #expect(CodeItem(top.crux()).pretty() == "( .input0 )",
+            #expect(CodeItem(top.crux()).pretty() == "( «.input0 int: 7» )",
                     "\(shuffle) recorded a provenance layer for a within-stack move")
         }
     }

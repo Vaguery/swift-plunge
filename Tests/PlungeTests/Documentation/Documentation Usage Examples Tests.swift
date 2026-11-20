@@ -419,7 +419,7 @@ extension DocumentationUsageExamplesTests {
         let data = try JSONEncoder().encode(ItemArchive([answer.item]))
         let restored = try JSONDecoder().decode(ItemArchive.self, from: data).items
         // restored[0].crux() is the crux the original had
-        #expect(CodeItem(restored[0].crux()).pretty() == "( 99 .input0 .intMultiply )")
+        #expect(CodeItem(restored[0].crux()).pretty() == "( 99 «.input0 int: 4» .intMultiply )")
 
         let plain = try JSONDecoder().decode(AnyItem.self, from: try JSONEncoder().encode(answer))
         #expect(CodeItem(plain.item.crux()).pretty() == "( 396 )")

@@ -159,7 +159,8 @@ nonisolated extension CruxCompression {
             let oneCall = one.call, otherCall = other.call
             guard oneCall.count == otherCall.count else { return false }
             if oneCall.isEmpty {
-                guard one.pretty() == other.pretty() else { return false }
+                // As a program would be written: a read value is only a note.
+                guard one.prettyProgram() == other.prettyProgram() else { return false }
                 continue
             }
             if CruxSharing.key(one) == CruxSharing.key(other) { continue }
@@ -172,7 +173,7 @@ nonisolated extension CruxCompression {
     /// Whether two leaf sequences would run the same.
     static func sameLeaves(_ left: [any Item], _ right: [any Item]) -> Bool {
         left.count == right.count
-            && zip(left, right).allSatisfy { type(of: $0) == type(of: $1) && $0.pretty() == $1.pretty() }
+            && zip(left, right).allSatisfy { type(of: $0) == type(of: $1) && $0.prettyProgram() == $1.prettyProgram() }
     }
 
     /// Roughly how many steps running `crux` takes: one per item, and a counted

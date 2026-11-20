@@ -19,8 +19,20 @@ nonisolated enum NestedRendering {
     }
 
     /// `root` written out. An instruction in `labels` is written as its label
-    /// instead of its name (a declared input's name, for people to read).
-    static func render(_ root: any Item, labels: [PushInstruction: String] = [:]) -> String {
+    /// instead of its name (a declared input's name, for people to read). The
+    /// tokens in `readValues` are written with the value they read.
+    /// Which tokens are written with the value they read.
+    enum ReadValues {
+        /// Every input and constant token (`pretty()`).
+        case all
+        /// Constant tokens only (`prettyKey()`): an input's value differs by case.
+        case constants
+        /// None: the program as it would be written.
+        case none
+    }
+
+    static func render(_ root: any Item, labels: [PushInstruction: String] = [:],
+                       readValues: ReadValues = .all) -> String {
         var output = ""
         var pending: [Piece] = [.item(root)]
         while let piece = pending.popLast() {
@@ -65,17 +77,25 @@ nonisolated enum NestedRendering {
                                            .item(pair.bound), .text("»")]
                     pending.append(contentsOf: pieces.reversed())
                 } else {
-                    output += Self.leaf(item, labels: labels)
+                    output += Self.leaf(item, labels: labels, readValues: readValues)
                 }
             }
         }
         return output
     }
 
-    /// A leaf: its label, for a labeled instruction, and otherwise `pretty()`.
-    private static func leaf(_ item: any Item, labels: [PushInstruction: String]) -> String {
-        if !labels.isEmpty, let instruction = item as? InstructionItem, let label = labels[instruction.value] {
-            return label
+    /// A leaf: its label, for a labeled instruction, and otherwise `pretty()`;
+    /// a token with the value it read only as `readValues` says.
+    private static func leaf(_ item: any Item, labels: [PushInstruction: String], readValues: ReadValues) -> String {
+        if let instruction = item as? InstructionItem {
+            let name = labels[instruction.value] ?? ".\(instruction.value)"
+            let shown = switch readValues {
+            case .all: true
+            case .constants: !instruction.value.isInput
+            case .none: false
+            }
+            let read = shown ? instruction.readValue : nil
+            return InstructionItem.printed(name, read: read)
         }
         return item.pretty()
     }
@@ -101,5 +121,21 @@ nonisolated enum NestedRendering {
         case .points(let emission):
             return [.text("\(emission) points of "), origin] + destination
         }
+    }
+}
+
+nonisolated extension Item {
+    /// This item written out to serve as a key: as ``Pretty/pretty()``, but an
+    /// input token in a history without the value it read, which differs from case
+    /// to case, so a crux has one key on every case. A constant token keeps its
+    /// value (`«.constant9 int: 3»`): it is part of what the crux computes.
+    public func prettyKey() -> String {
+        NestedRendering.render(self, readValues: .constants)
+    }
+
+    /// This item written out as a program would be: every input and constant
+    /// token bare, without the value it read.
+    public func prettyProgram() -> String {
+        NestedRendering.render(self, readValues: .none)
     }
 }

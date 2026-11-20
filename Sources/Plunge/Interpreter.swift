@@ -749,7 +749,7 @@ nonisolated final class Interpreter {
         for slot in bound {
             let name = PushInstruction.input(slot)
             guard var bound = inputs[name] else { continue }
-            bound.call = recording([InstructionItem(name)])
+            bound.call = recording([InstructionItem(name, read: bound)])
             let key = IntItem(slot).minted(by: name, recording)
             var pair = BindingItem(key: slot, bound: bound)
             if let rebuilt = BindingItem.rebuilt(binding: bound, to: key) {

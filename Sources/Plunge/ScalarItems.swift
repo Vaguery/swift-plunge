@@ -137,6 +137,10 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
         callStorage.measure.dependence.union(CruxDependence.token(value))
     }
     public var callDepth: Int { Int(callStorage.measure.depth) }
+    /// For an input or constant token in a history: the value it read on that
+    /// run, so a crux shows it (`«.constant9 int: 3»`). Only a note: running the
+    /// token reads its slot again, and equality ignores it. `nil` in a program.
+    public var readValue: (any Item)? { callStorage.readValue }
 
 
     /// Creates an item holding `value`. Leave `call` empty: the interpreter fills
@@ -144,6 +148,15 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
     public init(_ value: PushInstruction, call: [any Item] = []) {
         self.value = value
         self.callStorage = CallStorage(call)
+    }
+
+    /// An input or constant token as a history records it: with the value it read
+    /// (without that value's own history), to be shown, not used.
+    public init(_ value: PushInstruction, read: any Item) {
+        self.value = value
+        var plain = read
+        plain.call = []
+        self.callStorage = CallStorage.reading(plain)
     }
 
     public static func == (lhs: InstructionItem, rhs: InstructionItem) -> Bool {
@@ -154,8 +167,23 @@ public nonisolated struct InstructionItem: Item, Equatable, Comparable, Pretty {
         lhs.value.rawValue < rhs.value.rawValue
     }
 
+    /// `.intAdd`; for a token with a read value, the token, the value's type and
+    /// the value: `«.constant9 int: 3»`, `«.input0 str: "hello"»`.
     public func pretty() -> String {
-        ".\(value)"
+        Self.printed(".\(value)", read: readValue)
+    }
+
+    /// `name`, or with a read value `«name type: value»`: the value's short form,
+    /// or for one whose short form already names its type (an empty vector's
+    /// `«vecInt []»`) what follows the type.
+    static func printed(_ name: String, read: (any Item)?) -> String {
+        guard let read else { return name }
+        let tag = PushStack.defaultStack(for: read)?.tag ?? "inst"
+        var shown = read.pretty()
+        if shown.hasPrefix("«\(tag) "), shown.hasSuffix("»") {
+            shown = String(shown.dropFirst(tag.count + 2).dropLast())
+        }
+        return "«\(name) \(tag): \(shown)»"
     }
 
 }

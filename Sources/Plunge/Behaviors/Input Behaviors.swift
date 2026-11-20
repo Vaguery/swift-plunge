@@ -26,7 +26,7 @@ nonisolated extension Interpreter {
         let instructionName = PushInstruction.input(slot)
         return Behavior.contextRead(instructionName, produces: .input) { _, context in
                 if var v = context.inputs[instructionName] {
-                    v.call = context.recording([InstructionItem(instructionName)])
+                    v.call = context.recording([InstructionItem(instructionName, read: v)])
                     return [Router(.exec, v)]
                 } else {
                     // Records the same `[.inputN]` its success branch does: a

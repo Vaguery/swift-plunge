@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
         let instructionName = PushInstruction.constant(slot)
         return Behavior.contextRead(instructionName, produces: .constant) { _, context in
                 if var v = context.constants[instructionName] {
-                    v.call = context.recording([InstructionItem(instructionName)])
+                    v.call = context.recording([InstructionItem(instructionName, read: v)])
                     return [Router(.exec, v)]
                 } else {
                     // As the `.inputN` errors: records the same `[.constantN]` its

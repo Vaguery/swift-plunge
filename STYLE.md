@@ -80,6 +80,7 @@ Programs are written as the library's `pretty()` function prints them:
 | `«iter 0 to 3 by 1 at 2»` | an iterator |
 | `«err missingArgument: .intAdd»` | an error: its kind, then the instruction that raised it |
 | `«observed .intStackDepth: 4»` | a stand-in (also `elided`, `minted`) |
+| `«.input0 int: 4»` | in a crux, an input or constant token with the value it read on that run |
 
 - A program reads left to right in the order it runs, and an arrow shows what
   it leaves: `3 4 .intAdd  →  .int holds 7`.

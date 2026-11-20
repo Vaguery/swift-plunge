@@ -69,7 +69,7 @@ private nonisolated enum IndexRoller {
             switch self {
             case .number: "#"
             case .block(let inner): "(" + inner.map(\.signature).joined(separator: " ") + ")"
-            case .token(let item): "\(type(of: item)) \(item.pretty())"
+            case .token(let item): "\(type(of: item)) \(item.prettyProgram())"
             }
         }
 

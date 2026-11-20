@@ -34,9 +34,9 @@ struct CruxSharingTests {
         let inty = run([InstructionItem(.input(1)), InstructionItem(.intDup), InstructionItem(.intAdd)])
         let ten = topItem(inty, .int)
         #expect(stackString(inty, .int) == "[ 10 ]")
-        #expect(CodeItem(ten.crux()).pretty() == "( .input1 .intDup .intAdd )")
+        #expect(CodeItem(ten.crux()).pretty() == "( «.input1 int: 5» .intDup .intAdd )")
         // The tree still holds the value twice.
-        #expect(CodeItem(CruxSharing.flattened(ten)).pretty() == "( .input1 .input1 .intAdd )")
+        #expect(CodeItem(CruxSharing.flattened(ten)).pretty() == "( «.input1 int: 5» «.input1 int: 5» .intAdd )")
         #expect(holds(ten))
     }
 

@@ -271,7 +271,10 @@ nonisolated struct ArchiveWriter {
         if let key = CruxSharing.key(item) {
             return withHistory[key]?.first { $0.item.isEqual(to: item) }?.position
         }
-        if let instruction = item.exactly(InstructionItem.self) { return instructions[instruction.value] }
+        // A token that read a value is written each time: the value is part of it.
+        if let instruction = item.exactly(InstructionItem.self) {
+            return instruction.readValue == nil ? instructions[instruction.value] : nil
+        }
         if let int = item.exactly(IntItem.self) { return ints[int.value] }
         return nil
     }
@@ -332,7 +335,7 @@ nonisolated struct ArchiveWriter {
     private mutating func remember(_ item: any Item, at position: Int) {
         if let key = CruxSharing.key(item) {
             withHistory[key, default: []].append((item, position))
-        } else if let instruction = item.exactly(InstructionItem.self) {
+        } else if let instruction = item.exactly(InstructionItem.self), instruction.readValue == nil {
             instructions[instruction.value] = position
         } else if let int = item.exactly(IntItem.self) {
             ints[int.value] = position

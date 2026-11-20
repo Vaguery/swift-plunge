@@ -125,9 +125,9 @@ struct DistilledCruxTests {
 
     @Test func `constant work before an input is replaced by its value`() {
         let item = Self.top([IntItem(2), IntItem(3)] + Self.ins(.intAdd, .input(0), .intMultiply), on: .int)
-        #expect(Self.printed(item.crux()) == "( 2 3 .intAdd .input0 .intMultiply )")
+        #expect(Self.printed(item.crux()) == "( 2 3 .intAdd «.input0 int: 5» .intMultiply )")
         let distilled = item.distilledCrux()
-        #expect(Self.printed(distilled.program) == "( «distilled .intAdd: 5» .input0 .intMultiply )")
+        #expect(Self.printed(distilled.program) == "( «distilled .intAdd: 5» «.input0 int: 5» .intMultiply )")
         #expect(distilled.derived.count == 1)
         #expect(distilled.derived.first?.slotsRead == [])
         #expect(Self.replay(distilled.program, on: .int)?.pretty() == "25")
@@ -136,10 +136,10 @@ struct DistilledCruxTests {
     @Test func `a branch that reads constant slots becomes a derived constant`() {
         let item = Self.top(Self.ins(.constant(0), .constant(1), .intMultiply, .input(0), .intAdd), on: .int)
         let distilled = item.distilledCrux()
-        #expect(Self.printed(distilled.program) == "( «distilled .intMultiply: -14» .input0 .intAdd )")
+        #expect(Self.printed(distilled.program) == "( «distilled .intMultiply: -14» «.input0 int: 5» .intAdd )")
         let derived = distilled.derived.first
         #expect(derived?.slotsRead == [.constant(0), .constant(1)])
-        #expect(Self.printed(derived?.origin ?? []) == "( .constant0 .constant1 .intMultiply )")
+        #expect(Self.printed(derived?.origin ?? []) == "( «.constant0 int: 7» «.constant1 int: -2» .intMultiply )")
         #expect(derived?.position == 0)
     }
 
@@ -147,7 +147,8 @@ struct DistilledCruxTests {
         let item = Self.top(Self.ins(.constant(20), .stringReverse, .constant(20), .stringConcat, .input(1), .stringConcat),
                             on: .string)
         let distilled = item.distilledCrux()
-        #expect(Self.printed(distilled.program) == "( «distilled .stringConcat: \"cbaabc\"» .input1 .stringConcat )")
+        #expect(Self.printed(distilled.program)
+                == "( «distilled .stringConcat: \"cbaabc\"» «.input1 str: \"hello\"» .stringConcat )")
         #expect(Self.replay(distilled.program, on: .string)?.pretty() == item.pretty())
     }
 

@@ -12,10 +12,10 @@ that runs:
 ```
 program    .input0 .constant0 .constant1 .doubleMultiply .doubleMultiply true .boolNot
            2.0 3.0 .doubleAdd 7 .intDup .intAdd .input1 .doubleMultiply .doubleAdd
-crux       ( .input0 .constant0 .constant1 .doubleMultiply .doubleMultiply
-             2.0 3.0 .doubleAdd .input1 .doubleMultiply .doubleAdd )
-distilled  ( .input0 «distilled .doubleMultiply: 1.5» .doubleMultiply
-             «distilled .doubleAdd: 5.0» .input1 .doubleMultiply .doubleAdd )
+crux       ( «.input0 dbl: 4.0» «.constant0 dbl: 0.5» «.constant1 dbl: 3.0» .doubleMultiply
+             .doubleMultiply 2.0 3.0 .doubleAdd «.input1 dbl: 10.0» .doubleMultiply .doubleAdd )
+distilled  ( «.input0 dbl: 4.0» «distilled .doubleMultiply: 1.5» .doubleMultiply
+             «distilled .doubleAdd: 5.0» «.input1 dbl: 10.0» .doubleMultiply .doubleAdd )
 abstract   «fn (dbl, dbl) -> dbl: .input0 $0 .doubleMultiply $1 .input1 .doubleMultiply .doubleAdd»
 tunable    «fn (dbl, dbl, dbl, dbl, dbl, dbl) -> dbl: .input0 $0 .doubleMultiply $1 .doubleAdd
              $2 .doubleMultiply $3 .input1 $4 .doubleMultiply $5 .doubleAdd .doubleMultiply .doubleAdd»
@@ -48,6 +48,14 @@ A crux shows the semantic structure a program actually encoded for one item,
 out of everything it did. It keeps enough to replay that item's processing
 explicitly, step by step, so it reads as an explanation and runs as a program.
 In the example the bool and int work is gone: the value never depended on it.
+
+Each input and constant in a crux is written with the value it read on that
+run, its type and its value: `«.input0 dbl: 4.0»`. Only the instruction runs
+when the crux is replayed, reading the slot again, so the crux still works on
+any case. To use a crux as a key, print it with ``Item/prettyKey()``, which
+leaves the inputs bare (their values differ from case to case) and keeps the
+constants' values (they are part of what the crux computes): `( .input0
+«.constant0 dbl: 0.5» … )`. ``Item/prettyProgram()`` leaves both bare.
 
 ## The distilled crux: the work that matters
 

@@ -69,6 +69,9 @@ nonisolated struct CallStorage: Sendable {
         /// The program position this item was loaded from, for a source trace
         /// (`SourceTrace`); -1 when untagged. Set only in a literal's empty box.
         var origin: Int32 = -1
+        /// The value an input or constant token read, for a history to show
+        /// (`InstructionItem.readValue`). Set only in a literal's empty box.
+        var readValue: (any Item)?
         init(call: [any Item], measure: CallMeasure, members: Pieces?) {
             self.call = call; self.measure = measure; self.members = members
         }
@@ -144,6 +147,17 @@ nonisolated struct CallStorage: Sendable {
         box.origin = Int32(clamping: origin)
         return CallStorage(box: box)
     }
+
+    /// A literal token tagged with the value it read (an input or constant token
+    /// in a history). Still a literal to everything else, like `tagged(origin:)`.
+    static func reading(_ value: any Item) -> CallStorage {
+        let box = Box(call: [], measure: .literal, members: nil)
+        box.readValue = value
+        return CallStorage(box: box)
+    }
+
+    /// The value this literal token read, if any.
+    var readValue: (any Item)? { box?.readValue }
 
     /// The program position a source trace tagged this literal with, if any.
     var origin: Int? {
