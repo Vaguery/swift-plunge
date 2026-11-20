@@ -301,7 +301,9 @@ nonisolated final class Behavior: Sendable {
 
         case .structural(let stack, let step):
             let view = StackView(interpreter.stacks[stack] ?? [], recording: interpreter.recording)
-            switch step(arguments, view) {
+            let outcome = interpreter.watchesSelections ? interpreter.select(name, arguments, view, step)
+                : step(arguments, view)
+            switch outcome {
             case .positions(let effect): Behavior.apply(effect, to: stack, in: interpreter); return []
             case .loop(let routers):     return routers
             case .unchanged:             return []

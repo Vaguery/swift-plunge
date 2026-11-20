@@ -145,3 +145,80 @@ struct FlippedDecisionTests {
         #expect(!decoded.flipped && decoded.tookTrue)
     }
 }
+
+/// Selections (2026-11-19): a stack instruction that picks by a computed depth
+/// is a choice the crux doesn't see, logged with its options and forced, like a
+/// flipped conditional, for a counterfactual run.
+@Suite
+struct SelectionLogTests {
+
+    /// `10 20 30`, then the depth `x`, then `.intYank`: the item at depth x
+    /// (clamped into the three left) comes to the top.
+    static let yank: [any Item] = [IntItem(10), IntItem(20), IntItem(30), InstructionItem(.input(0)),
+                                   InstructionItem(.intYank)]
+
+    static func run(_ program: [any Item], input: Int, forcing: [Int: Int]? = nil) -> CaseResult {
+        var settings = InterpreterSettings()
+        settings.recordsProvenance = true
+        settings.forcedChoices = forcing
+        return evaluateOne(individual: Individual(id: "p", program: program, constants: [:]),
+                           trainingCase: TrainingCase(id: "c", inputs: [.input(0): IntItem(input)]),
+                           configuration: RunnerConfiguration(settings: settings, recorders: [
+                               RecorderSpec("decided", observing: .decisions),
+                               RecorderSpec("answer", observing: .top(.int), keeping: .finalOnly)]))
+    }
+
+    static func answer(_ result: CaseResult) -> String? {
+        guard case .items(let readings)? = result.traces["answer"], let last = readings.last else { return nil }
+        return last?.item.pretty()
+    }
+
+    @Test func `a yank by a computed depth logs its depth, its options and the one it took`() throws {
+        let result = Self.run(Self.yank, input: 1)
+        #expect(Self.answer(result) == "20")
+        let decision = try #require(DecisionLogTests.decisions(result).first)
+        #expect(decision.isSelection && decision.instruction == .intYank)
+        #expect(decision.options == [0, 1, 2])
+        #expect(decision.chosen == 1 && decision.outcome == 1 && !decision.flipped)
+        #expect(decision.whenTrue == nil && decision.whenFalse == nil)
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+    }
+
+    @Test(arguments: [(-4, 0), (0, 0), (2, 2), (99, 2)])
+    func `a depth outside the stack takes the option it is clamped to`(_ depth: Int, _ option: Int) throws {
+        let decision = try #require(DecisionLogTests.decisions(Self.run(Self.yank, input: depth)).first)
+        #expect(decision.chosen == option)
+    }
+
+    @Test func `a forced choice picks another option, the depth keeping its history`() throws {
+        let plain = Self.run(Self.yank, input: 1)
+        let forced = Self.run(Self.yank, input: 1, forcing: [0: 2])
+        #expect(Self.answer(forced) == "10")
+        let decision = try #require(DecisionLogTests.decisions(forced).first)
+        #expect(decision.flipped && decision.chosen == 2)
+        #expect(decision.condition == DecisionLogTests.decisions(plain).first?.condition)
+        // Forcing the option it took anyway forces nothing.
+        let same = try #require(DecisionLogTests.decisions(Self.run(Self.yank, input: 1, forcing: [0: 1])).first)
+        #expect(!same.flipped && same.chosen == 1)
+    }
+
+    @Test func `a depth that can do only one thing is not a choice`() {
+        // With nothing on `.bool`, `.boolPopItems` does nothing, whatever the count.
+        let program: [any Item] = [InstructionItem(.input(0)), InstructionItem(.boolPopItems)]
+        #expect(DecisionLogTests.decisions(Self.run(program, input: 3)).isEmpty)
+    }
+
+    @Test func `selections and conditionals share one count of places`() throws {
+        // A yank, then x > 5 deciding: place 0 is the yank, place 1 the conditional.
+        let program = Self.yank + DecisionLogTests.sizing
+        let log = DecisionLogTests.decisions(Self.run(program, input: 7, forcing: [1: 0]))
+        #expect(log.map(\.isSelection) == [true, false])
+        #expect(!log[1].flipped, "a forced choice at a conditional's place forces nothing")
+    }
+
+    @Test func `the selections are the stack instructions that take a depth or count`() {
+        #expect(Decision.selections.isSuperset(of: [.intYank, .codeShove, .boolPopItems, .doubleDeleteAtDepth,
+                                                    .stringYankDup]))
+        #expect(Decision.selections.isDisjoint(with: [.intAdd, .intSwap, .intPop, .execIf]))
+    }
+}

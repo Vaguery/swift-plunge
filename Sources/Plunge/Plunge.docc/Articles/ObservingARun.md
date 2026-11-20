@@ -41,7 +41,7 @@ The **target** (``RecorderTarget``) says what to look at:
 | `.stack(stack)` | every item on a stack, top first | item lists |
 | `.counter` | how many steps the run has taken | ints |
 | `.pushes(stack)` | every distinct item pushed onto a stack during the run, in the order made | one item list |
-| `.decisions` | every choice a conditional made during the run, in order | decisions |
+| `.decisions` | every choice a conditional or a selection made during the run, in order | decisions |
 
 Copying a whole stack after every step is costly, so use `.stack` with
 `.finalOnly` unless you want its history.
@@ -59,8 +59,16 @@ the Boolean that chose a branch is in no result's crux. Each ``Decision`` holds
 that Boolean, history and all (the condition), the code block each way would
 run, and the step. The same conditional reached on different cases gives the
 same blocks, each case's condition, and which way it went. Like `.pushes`, it is
-read once, at the end, and doesn't see inside sandboxes. Loops and other
-choices aren't logged yet.
+read once, at the end, and doesn't see inside sandboxes.
+
+A **selection** is logged too: a stack instruction that picks by a computed
+depth or count (`.intYank`, `.codeShove`, `.boolPopItems` and the rest of
+``Decision/selections``). Moving an item records nothing in its history, so the
+depth that picked it is in no crux either. Its ``Decision`` holds the depth,
+history and all, its ``Decision/options`` (the lowest depth for each different
+thing it could do, depths being clamped into the stack), and the one it
+``Decision/chosen``. A depth that could do only one thing is no choice and isn't
+logged. Loops, lookups by key and code picked by index aren't logged yet.
 
 A **counterfactual run** shows the branch a run didn't take. Name decisions in
 ``InterpreterSettings/flippedDecisions``, by their place among the run's
@@ -69,7 +77,9 @@ as though that Boolean had been the other one. The Boolean keeps its history, so
 the logged decision has the same condition as in the plain run, marked
 ``Decision/flipped``. Run a program plainly and then once with each of its
 decisions flipped, and every branch it reached is seen both ways, even when
-every case went the same way.
+every case went the same way. ``InterpreterSettings/forcedChoices`` does the same
+for a selection, naming the option to take; the depth keeps its history.
+Conditionals and selections share one count of places.
 
 The **policy** (``RecordingPolicy``) says how much to keep:
 

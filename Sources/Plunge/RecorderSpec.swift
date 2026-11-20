@@ -52,11 +52,13 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// provenance, items have no history nodes, so each distinct value is kept
     /// once.
     case pushes(PushStack)
-    /// Every choice a conditional made during the run, in order (`[Decision]`):
-    /// each `.execIf`, `.execWhen` and `.codeDoIf` reached with its arguments,
-    /// with the Boolean that decided (its history the condition) and the code
-    /// each way would run. A crux follows data, not control, so no result's
-    /// history shows these. It is read once, at the end of the run, whatever
+    /// Every choice a conditional or a selection made during the run, in order
+    /// (`[Decision]`): each `.execIf`, `.execWhen` and `.codeDoIf` reached with its
+    /// arguments, with the Boolean that decided (its history the condition) and
+    /// the code each way would run; and each stack instruction that picked by a
+    /// computed depth that could have done more than one thing, with the depth
+    /// and its options. A crux follows data, not control, so no result's history
+    /// shows these. It is read once, at the end of the run, whatever
     /// the policy. Decisions inside a map, function application or iterator
     /// sandbox aren't seen.
     case decisions
