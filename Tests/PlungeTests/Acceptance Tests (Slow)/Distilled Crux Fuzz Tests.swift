@@ -38,7 +38,10 @@ struct DistilledCruxFuzzTests {
     static func replay(_ program: [any Item], inputs: [PushInstruction: any Item],
                        constants: [PushInstruction: any Item], settings: InterpreterSettings,
                        on stack: PushStack) -> (any Item)? {
-        let room = max(settings.stepLimit, program.count * 20)
+        // Sized by the work the program will do: a rolled crux replays every pass
+        // of its loops, which can take more steps than the program that made the
+        // value (swift-plunge #70).
+        let room = max(settings.stepLimit, CruxCompression.replaySteps(program) * 2 + program.count)
         let redo = Interpreter.recordingProvenance()
         redo.config = settings.reconstructing
         redo.config.recordsProvenance = true
