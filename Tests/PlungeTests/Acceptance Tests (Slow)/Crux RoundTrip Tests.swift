@@ -279,7 +279,7 @@ struct CruxFuzzTests {
     /// else makes random programs fold loops. A single seed is not
     /// enough to see a rare class: the #27 failures ran about 1 in 1,900 claims,
     /// and seed 20_260_715 alone reported zero while a 40-seed sweep found 95.
-    static let seeds: [UInt64] = (0..<40).map { 20_260_715 &+ $0 &* 7919 }
+    static let seeds: [UInt64] = (0..<40).map { 20_260_715 &+ FuzzSeed.shift &+ $0 &* 7919 }  // PUSH_FUZZ_SEED
     // 40 seeds × 5 programs × 4 cases is about 460,000 replayed claims in about
     // 75 s alone (3 cases, before loops ran unclamped: about 250,000 in 47 s).
     // 20 per seed took about 2 minutes with two mixes.

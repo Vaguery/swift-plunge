@@ -27,7 +27,7 @@ nonisolated extension Interpreter {
         guard (stacks[.bool]?.count ?? 0) == bools - 1, pending != nil else { return }
         decisionsMade += 1
         pending?.flipped = flips
-        if let pending { decisionLog?.append(pending) }
+        if let pending { log(pending) }
     }
 
     /// Runs a key lookup or code-point run and logs its choice, when it has more
@@ -55,7 +55,7 @@ nonisolated extension Interpreter {
            left.value == forced.value {
             stacks[.int]![pending.at] = pending.selector
         }
-        decisionLog?.append(Decision(step: counter, instruction: action, selector: pending.selector,
+        log(Decision(step: counter, instruction: action, selector: pending.selector,
                                      options: pending.options, chosen: chosen, naming: pending.naming,
                                      forced: forced != nil))
         decisionsMade += 1
@@ -99,11 +99,25 @@ nonisolated extension Interpreter {
             made = passes(value)
             forced = true
         }
-        decisionLog?.append(Decision(step: counter, instruction: action, count: end, passes: made,
+        log(Decision(step: counter, instruction: action, count: end, passes: made,
                                      rangeStart: origin, forced: forced))
         decisionsMade += 1
         behavior.act(on: self)
     }
+
+    /// Adds `decision` to the log, unless the log already holds
+    /// `config.maxLoggedDecisions`: a logged decision keeps its deciding item,
+    /// history and all, so a long loop's log is held to that many. Decisions past
+    /// the limit still count as places (`decisionsMade`), so flips and forcing
+    /// by place are unchanged.
+    func log(_ decision: Decision) {
+        guard let count = decisionLog?.count, count < config.maxLoggedDecisions else { return }
+        decisionLog?.append(decision)
+    }
+
+    /// How many depths from the top a selection's options are probed at, every
+    /// one; deeper, only the depth taken and the stack's bottom are.
+    static let probedDepths = 64
 
     /// Whether structural steps should go through ``select(_:_:_:_:)``.
     var watchesSelections: Bool { decisionLog != nil || config.forcedChoices != nil }
@@ -115,7 +129,8 @@ nonisolated extension Interpreter {
     /// The options are found by asking the step what each depth from 0 to the
     /// stack's count would do: depths are clamped into the stack, so no other
     /// depth does anything new. Neighboring depths that do the same thing are
-    /// one option.
+    /// one option. Past ``probedDepths`` only the depth taken and the bottom are
+    /// asked, so a deep stack's options are not all listed, but the one taken is.
     func select(_ name: PushInstruction, _ arguments: [any Item], _ view: StackView,
                 _ step: ([any Item], StackView) -> StructuralStep) -> StructuralStep {
         guard Decision.depthSelections.contains(name), let depth = arguments.first?.exactly(IntItem.self) else {
@@ -124,7 +139,14 @@ nonisolated extension Interpreter {
         var options: [Int] = []
         var effects: [PositionEffect] = []
         var probe = arguments
-        for value in 0...view.count {
+        // Every depth near the top; past `probedDepths`, only the depth taken
+        // and the bottom. Each probe's effect lists the positions it moves, so
+        // probing every depth of a deep stack cost the square of its size.
+        var depths = Array(0...min(view.count, Self.probedDepths - 1))
+        for far in [min(max(depth.value, 0), view.count), view.count] where far > depths.last ?? 0 {
+            depths.append(far)
+        }
+        for value in depths {
             probe[0] = IntItem(value)
             guard case .positions(let effect) = step(probe, view) else { return step(arguments, view) }
             if effects.last != effect {
@@ -144,7 +166,7 @@ nonisolated extension Interpreter {
         } else {
             probe = arguments
         }
-        decisionLog?.append(Decision(step: counter, instruction: name, selector: depth, options: options,
+        log(Decision(step: counter, instruction: name, selector: depth, options: options,
                                      chosen: taken, forced: forced))
         decisionsMade += 1
         return step(probe, view)

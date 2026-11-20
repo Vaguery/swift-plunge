@@ -201,6 +201,13 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     /// `nil`, the default, forces nothing.
     public var forcedChoices: [Int: Int]?
 
+    /// The most decisions a run's decision log keeps (`RecorderTarget.decisions`):
+    /// each holds its deciding item with its history, so a long loop's log could
+    /// otherwise hold tens of thousands. A log that reaches it is cut off there;
+    /// decisions past it still count as places for ``flippedDecisions`` and
+    /// ``forcedChoices``.
+    public var maxLoggedDecisions = 10_000
+
 
     /// The same policy, relaxed for **reconstruction** — re-running one item's
     /// crux rather than running a population.

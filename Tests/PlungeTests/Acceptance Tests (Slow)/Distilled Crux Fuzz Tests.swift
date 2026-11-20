@@ -53,7 +53,7 @@ struct DistilledCruxFuzzTests {
         let instructions = Runner().definedInstructions
         let loopers = Array(Interpreter.reEntrantInstructions).sorted { $0.rawValue < $1.rawValue }
         var tally = Tally()
-        for seed in 1...UInt64(Self.programs) {
+        for seed in (1...UInt64(Self.programs)).map({ $0 &+ FuzzSeed.shift }) {
             let made = DualModeStress.makeCase(seed: seed, instructions: instructions, loopers: loopers)
             let other = DualModeStress.makeCase(seed: seed &+ 7_777, instructions: instructions, loopers: loopers)
             var settings = made.settings

@@ -72,7 +72,7 @@ struct MemoryGuardFuzz {
 
         var normal = 0, memory = 0, runaway = 0
         var firstMemorySeed: UInt64?
-        let tranches: [UInt64] = [0x1234, 0xBEEF, 0xC0FFEE]
+        let tranches: [UInt64] = [0x1234, 0xBEEF, 0xC0FFEE].map { $0 &+ FuzzSeed.shift }
         let perTranche = 100
 
         for base in tranches {

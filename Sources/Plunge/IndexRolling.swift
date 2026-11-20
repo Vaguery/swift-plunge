@@ -30,9 +30,12 @@
 /// fixed distance from the index), and pops the binding at the end.
 ///
 /// The rewrite keeps every value: each int it replaces is computed as the same
-/// number. A crux whose own work looks up ``loopKey`` would see the binding;
-/// replay the rolled crux to be sure. A run is rolled only when that makes the
-/// crux shorter, and runs are looked for inside code blocks and loop bodies too.
+/// number. A pass that works with iterators (or makes one, as `.codePeekNth`
+/// does) is not rolled, since the loop's own iterator is on `.iterator` while it
+/// runs. A crux whose own work looks up
+/// ``loopKey`` would see the binding; replay the rolled crux to be sure. A run is
+/// rolled only when that makes the crux shorter, and runs are looked for inside
+/// code blocks and loop bodies too.
 nonisolated extension CruxCompression {
 
     /// The key a rolled body binds its index to.
@@ -160,15 +163,22 @@ private nonisolated enum IndexRoller {
         let numbers = units.map(\.numbers)
         let tokens = units.map(\.tokens)
         var best: Run?
+        var matchedBy: [Int: [Int]] = [:]
         for period in 1...min(count / 2, maximumPeriod) {
             // matched[i]: how many units from i on equal the ones a period later.
             var matched = Array(repeating: 0, count: count + 1)
             for index in stride(from: count - period - 1, through: 0, by: -1) {
                 matched[index] = signatures[index] == signatures[index + period] ? matched[index + 1] + 1 : 0
             }
+            matchedBy[period] = matched
+            let divisors = (1..<period).filter { period % $0 == 0 }
             for start in 0...(count - 2 * period) where matched[start] >= period {
                 // Not the middle of a longer run with the same period.
                 if start >= period, matched[start - period] >= period { continue }
+                // Not a pass that repeats a shorter one: rolled by the shorter
+                // period it saves more, and trying every multiple of it made the
+                // search cubic in a repetitive crux.
+                if divisors.contains(where: { (matchedBy[$0]?[start] ?? 0) >= period - $0 }) { continue }
                 let passes = matched[start] / period + 1
                 guard let run = progression(start: start, period: period, passes: passes, numbers: numbers)
                 else { continue }
@@ -222,6 +232,9 @@ private nonisolated enum IndexRoller {
     /// when the pass leaves a code block that looks up the index to run in a
     /// later pass, after the index has moved on.
     static func rolledRun(_ pass: [Unit], _ run: Progression, nested: Bool) -> [Unit]? {
+        // A rolled loop keeps its own iterator on `.iterator` through its passes,
+        // where a pass that works with iterators would find it.
+        guard !touchesIterators(pass) else { return nil }
         let (passes, step, first, varying) = (run.passes, run.step, run.first, run.varying)
         func roll(_ units: [Unit]) -> [Unit] { nested ? Self.roll(units) : units }
         let body: [Unit]
@@ -259,6 +272,28 @@ private nonisolated enum IndexRoller {
             + [.token(InstructionItem(counting ? .execDoCount : .execDoRange)),
                .token(InstructionItem(.codePop))]
     }
+
+    /// Whether any of `units`, at any depth, is an instruction that may put an
+    /// item on `.iterator`, take one from it, or move items within it.
+    static func touchesIterators(_ units: [Unit]) -> Bool {
+        units.contains { unit in
+            switch unit {
+            case .token(let item): (item as? InstructionItem).map { iteratorTouching.contains($0.value) } ?? false
+            case .block(let inner): touchesIterators(inner)
+            case .number: false
+            }
+        }
+    }
+
+    /// The instructions that may put an item on `.iterator`, take or read one
+    /// there, or move items within it: from their behaviors' results and
+    /// requirements. (`.codePeekNth` makes an iterator, for one.)
+    static let iteratorTouching: Set<PushInstruction> = Set(Interpreter.language.compactMap { entry in
+        let behavior = entry.value
+        let makes = behavior.produces.valueStacks.contains(.iterator) || behavior.produces == .positions(.iterator)
+        let uses = behavior.requirements.contains { String(describing: $0).contains("iterator") }
+        return makes || uses || entry.key.rawValue.hasPrefix("iterator") ? entry.key : nil
+    })
 
     /// Whether every code block in `pass` holding an int that changes is followed,
     /// in the pass, by an instruction that could run it: a block left for the
