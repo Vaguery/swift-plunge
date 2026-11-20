@@ -74,6 +74,10 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
     /// so a value whose history was dropped is still known to read an input (or
     /// not), and a distilled value to read constant slots (or not).
     let keptDependence: CruxDependence
+    /// For an elided or distilled stand-in, the ``Item/fullSize`` of the history
+    /// it replaced, so a crux that holds it is still as big as the work it
+    /// stands for; 1 for any other.
+    public let replacedSize: Int
 
     /// Always empty: a stand-in is a literal. Assignment is ignored.
     public var call: [any Item] {
@@ -98,19 +102,27 @@ public nonisolated struct StandInItem: Item, Equatable, Pretty {
     public var nestingDepth: Int { value.nestingDepth }
 
     /// A stand-in for `value`, which is stored without its history.
+    /// For an elided or distilled stand-in, `value`'s history is the one replaced,
+    /// and its ``Item/fullSize`` is kept as ``replacedSize``.
     public init(standingInFor value: any Item, source: PushInstruction?, reason: Reason) {
-        self.init(standingInFor: value, source: source, reason: reason, dependence: value.cruxDependence)
+        let keeps = reason == .elided || reason == .distilled
+        self.init(standingInFor: value, source: source, reason: reason, dependence: value.cruxDependence,
+                  replacedSize: keeps ? value.fullSize : 1)
     }
 
-    /// A stand-in whose dropped history read `dependence`: for rebuilding an
-    /// elided or distilled stand-in, whose value no longer carries its history.
-    init(standingInFor value: any Item, source: PushInstruction?, reason: Reason, dependence: CruxDependence) {
+    /// A stand-in whose dropped history read `dependence` and was `replacedSize`
+    /// in full: for rebuilding an elided or distilled stand-in, whose value no
+    /// longer carries its history.
+    init(standingInFor value: any Item, source: PushInstruction?, reason: Reason, dependence: CruxDependence,
+         replacedSize: Int = 1) {
         var bare = value
         bare.call = []
         self.value = bare
         self.source = source
         self.reason = reason
-        self.keptDependence = reason == .elided || reason == .distilled ? dependence : []
+        let keeps = reason == .elided || reason == .distilled
+        self.keptDependence = keeps ? dependence : []
+        self.replacedSize = keeps ? max(1, replacedSize) : 1
     }
 
     /// Whether this stand-in keeps what its missing history read (elided and

@@ -126,7 +126,8 @@ nonisolated struct ArchiveNode: Codable, Sendable {
         if let iterator { return try iterator.item(resolve) }
         if let standIn {
             return StandInItem(standingInFor: try resolve(standIn.value),
-                               source: standIn.source, reason: standIn.reason, dependence: standIn.dependence ?? .all)
+                               source: standIn.source, reason: standIn.reason, dependence: standIn.dependence ?? .all,
+                               replacedSize: standIn.replacedSize ?? 1)
         }
         if let binding { return BindingItem(key: binding.key, bound: try resolve(binding.bound)) }
         if let function { return try function.item(resolve) }
@@ -188,6 +189,9 @@ nonisolated struct ArchivedStandIn: Codable, Sendable {
     /// What an elided or distilled stand-in's dropped history read; absent in older archives,
     /// when it is taken to read everything.
     var dependence: CruxDependence?
+    /// What an elided or distilled stand-in's dropped history weighed in full; absent in
+    /// older archives, when it is 1.
+    var replacedSize: Int?
 }
 
 /// One run of `Pieces`: an item that went in, or `[source, from, count, step]`.
@@ -303,7 +307,8 @@ nonisolated struct ArchiveWriter {
                 emits: iterator.emits, laps: iterator.laps, burial: iterator.burial)
         } else if let standIn = item.exactly(StandInItem.self) {
             node.standIn = ArchivedStandIn(value: held[0], source: standIn.source, reason: standIn.reason,
-                                           dependence: standIn.keepsDependence ? standIn.cruxDependence : nil)
+                                           dependence: standIn.keepsDependence ? standIn.cruxDependence : nil,
+                                           replacedSize: standIn.keepsDependence ? standIn.replacedSize : nil)
         } else if let pair = item.exactly(BindingItem.self) {
             node.binding = ArchivedBinding(key: pair.key, bound: held[0])
         } else if let function = item.exactly(FunctionItem.self) {
