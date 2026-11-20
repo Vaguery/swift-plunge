@@ -62,6 +62,15 @@ same blocks, each case's condition, and which way it went. Like `.pushes`, it is
 read once, at the end, and doesn't see inside sandboxes. Loops and other
 choices aren't logged yet.
 
+A **counterfactual run** shows the branch a run didn't take. Name decisions in
+``InterpreterSettings/flippedDecisions``, by their place among the run's
+decisions (0 for the first), and each is taken the other way: the program runs
+as though that Boolean had been the other one. The Boolean keeps its history, so
+the logged decision has the same condition as in the plain run, marked
+``Decision/flipped``. Run a program plainly and then once with each of its
+decisions flipped, and every branch it reached is seen both ways, even when
+every case went the same way.
+
 The **policy** (``RecordingPolicy``) says how much to keep:
 
 - `.everyStep`, the default, keeps one reading after each step: the whole

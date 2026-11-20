@@ -33,16 +33,34 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
     /// nothing when false.
     public let whenFalse: AnyItem?
 
-    /// Which way it went: the condition's value.
-    public var tookTrue: Bool { (condition.item as? BoolItem)?.value ?? false }
+    /// Whether the run took it the other way from its condition
+    /// (`InterpreterSettings/flippedDecisions`): a counterfactual decision.
+    public internal(set) var flipped = false
+
+    /// Which way it went: the condition's value, or its negation when flipped.
+    public var tookTrue: Bool { ((condition.item as? BoolItem)?.value ?? false) != flipped }
 
     public init(step: Int, instruction: PushInstruction, condition: any Item, whenTrue: any Item,
-                whenFalse: (any Item)?) {
+                whenFalse: (any Item)?, flipped: Bool = false) {
+        self.flipped = flipped
         self.step = step
         self.instruction = instruction
         self.condition = AnyItem(condition)
         self.whenTrue = AnyItem(whenTrue)
         self.whenFalse = whenFalse.map(AnyItem.init)
+    }
+
+    private enum CodingKeys: String, CodingKey { case step, instruction, condition, whenTrue, whenFalse, flipped }
+
+    /// Decodes a decision; one saved before `flipped` existed was not flipped.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        step = try container.decode(Int.self, forKey: .step)
+        instruction = try container.decode(PushInstruction.self, forKey: .instruction)
+        condition = try container.decode(AnyItem.self, forKey: .condition)
+        whenTrue = try container.decode(AnyItem.self, forKey: .whenTrue)
+        whenFalse = try container.decodeIfPresent(AnyItem.self, forKey: .whenFalse)
+        flipped = try container.decodeIfPresent(Bool.self, forKey: .flipped) ?? false
     }
 }
 

@@ -179,6 +179,16 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     /// Turn it on for the runs you want explained. See <doc:Provenance>.
     public var recordsProvenance = false
 
+    /// Decisions to take the other way, by their place among the run's decisions
+    /// (0 for the first conditional that decides), for a **counterfactual run**:
+    /// what the program would have done had that Boolean been the other one.
+    ///
+    /// Only the conditionals the decision log watches (`Decision.conditionals`)
+    /// count, and only when they decide. The Boolean keeps its history, so the
+    /// logged ``Decision`` has the same condition as in the plain run, marked
+    /// ``Decision/flipped``. `nil`, the default, flips nothing.
+    public var flippedDecisions: Set<Int>?
+
 
     /// The same policy, relaxed for **reconstruction** — re-running one item's
     /// crux rather than running a population.
@@ -370,6 +380,9 @@ nonisolated final class Interpreter {
     /// Every choice a conditional made this run (`Decision`), in order; `nil`
     /// unless a `.decisions` recorder is installed.
     private(set) var decisionLog: [Decision]?
+    /// How many conditionals have decided this run, logged or not: the place of the
+    /// next decision, for `InterpreterSettings.flippedDecisions`.
+    private(set) var decisionsMade = 0
     /// The items pushed onto each stack a `.pushes` recorder watches, gathered as
     /// they are placed. Empty unless such a recorder is installed.
     private(set) var pushCollectors: [PushStack: PushCollector] = [:]
@@ -661,6 +674,7 @@ nonisolated final class Interpreter {
         self.nextRefKey = PushInstruction.listedInputCount
         for collector in pushCollectors.values { collector.reset() }
         if decisionLog != nil { decisionLog = [] }
+        decisionsMade = 0
 
         // inputs and constants (both keyed by instruction token)
         for (key, value) in inputs {
@@ -762,7 +776,8 @@ nonisolated final class Interpreter {
                 self.push(nextItem!, to: .code)
             } else if let action = nextItem?.exactly(InstructionItem.self)?.value {
                 if let behavior = self.behaviors[action] {
-                    if decisionLog != nil, Decision.conditionals.contains(action) {
+                    if decisionLog != nil || config.flippedDecisions != nil,
+                       Decision.conditionals.contains(action) {
                         logDecision(action, behavior)
                     } else {
                         behavior.act(on: self)
@@ -881,10 +896,23 @@ nonisolated extension Interpreter {
 nonisolated extension Interpreter {
     /// Runs a conditional and logs its choice, if it took its arguments: the
     /// Boolean consumed is the sign it decided rather than refused.
+    ///
+    /// A decision named in `config.flippedDecisions` is taken the other way: the
+    /// deciding Boolean is replaced, history and all, by its negation before the
+    /// conditional runs.
     func logDecision(_ action: PushInstruction, _ behavior: Behavior) {
-        let pending = Decision.pending(action, step: counter, stacks: stacks)
+        var pending = Decision.pending(action, step: counter, stacks: stacks)
         let bools = stacks[.bool]?.count ?? 0
+        let flips = pending != nil && config.flippedDecisions?.contains(decisionsMade) == true
+        if flips, let top = stacks.item(at: 0, on: .bool) as? BoolItem {
+            var negated = BoolItem(!top.value)
+            negated.call = top.call
+            stacks[.bool]![0] = negated
+        }
         behavior.act(on: self)
-        if let pending, (stacks[.bool]?.count ?? 0) == bools - 1 { decisionLog?.append(pending) }
+        guard (stacks[.bool]?.count ?? 0) == bools - 1, pending != nil else { return }
+        decisionsMade += 1
+        pending?.flipped = flips
+        if let pending { decisionLog?.append(pending) }
     }
 }

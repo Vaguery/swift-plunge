@@ -7,6 +7,7 @@
 //  2026-11-17).
 //
 
+import Foundation
 @testable import Plunge
 import Testing
 
@@ -83,5 +84,64 @@ struct DecisionLogTests {
         #expect(result.traces["decided"] == nil)
         guard case .items(let readings)? = result.traces["top"] else { Issue.record("no top"); return }
         #expect((readings.last??.item as? StringItem)?.value == "big")
+    }
+}
+
+/// Counterfactual runs (`InterpreterSettings.flippedDecisions`, 2026-11-19): a
+/// decision taken the other way, to see the branch the run did not take.
+@Suite
+struct FlippedDecisionTests {
+
+    static func run(_ program: [any Item], input: Int, flipping: Set<Int>?,
+                    recorders: [RecorderSpec] = [RecorderSpec("decided", observing: .decisions),
+                                                 RecorderSpec("answer", observing: .top(.string),
+                                                              keeping: .finalOnly)]) -> CaseResult {
+        var settings = InterpreterSettings()
+        settings.recordsProvenance = true
+        settings.flippedDecisions = flipping
+        return evaluateOne(individual: Individual(id: "p", program: program, constants: [:]),
+                           trainingCase: TrainingCase(id: "c", inputs: [.input(0): IntItem(input)]),
+                           configuration: RunnerConfiguration(settings: settings, recorders: recorders))
+    }
+
+    static func answer(_ result: CaseResult) -> String? {
+        guard case .items(let readings)? = result.traces["answer"], let last = readings.last else { return nil }
+        return last?.item.pretty()
+    }
+
+    @Test func `a flipped decision runs the other branch and is logged as flipped`() throws {
+        let plain = Self.run(DecisionLogTests.sizing, input: 7, flipping: nil)
+        let flipped = Self.run(DecisionLogTests.sizing, input: 7, flipping: [0])
+        #expect(Self.answer(plain) == "\"big\"")
+        #expect(Self.answer(flipped) == "\"small\"")
+        let decision = try #require(DecisionLogTests.decisions(flipped).first)
+        #expect(decision.flipped && !decision.tookTrue)
+        // The Boolean keeps its value and history: the condition is the plain run's.
+        #expect(decision.condition == DecisionLogTests.decisions(plain).first?.condition)
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 5 .intGT 2 .intPopItems )")
+    }
+
+    @Test func `decisions are counted in the order they are made, and only the named one flips`() {
+        // Two conditionals in a row, both deciding on x > 5.
+        let program = DecisionLogTests.sizing + DecisionLogTests.sizing
+        let log = DecisionLogTests.decisions(Self.run(program, input: 7, flipping: [1]))
+        #expect(log.map(\.tookTrue) == [true, false])
+        #expect(log.map(\.flipped) == [false, true])
+    }
+
+    @Test func `flipping needs no decision recorder`() {
+        let result = Self.run(DecisionLogTests.sizing, input: 3, flipping: [0],
+                              recorders: [RecorderSpec("answer", observing: .top(.string), keeping: .finalOnly)])
+        #expect(Self.answer(result) == "\"big\"")
+    }
+
+    @Test func `a decision saved before flipping existed decodes as not flipped`() throws {
+        let decision = try #require(DecisionLogTests.decisions(Self.run(DecisionLogTests.sizing, input: 7,
+                                                                        flipping: nil)).first)
+        var object = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(decision))
+                                  as? [String: Any])
+        object["flipped"] = nil
+        let decoded = try JSONDecoder().decode(Decision.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(!decoded.flipped && decoded.tookTrue)
     }
 }
