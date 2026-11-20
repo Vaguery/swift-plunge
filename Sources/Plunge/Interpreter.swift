@@ -195,7 +195,10 @@ public nonisolated struct InterpreterSettings: Sendable, Codable {
     /// something else. The depth is replaced by that option's, keeping its
     /// history, and the logged ``Decision`` is marked ``Decision/flipped``. A
     /// place that is a conditional, or an option the selection took anyway or
-    /// doesn't have, forces nothing. `nil`, the default, forces nothing.
+    /// doesn't have, forces nothing. For a counted loop (``Decision/Naming/count``)
+    /// the value is the number of passes to make instead: the count, or a range's
+    /// end, is replaced (keeping its history) by the one that makes that many.
+    /// `nil`, the default, forces nothing.
     public var forcedChoices: [Int: Int]?
 
 
@@ -388,11 +391,11 @@ nonisolated final class Interpreter {
     }
     /// Every choice a conditional or a selection made this run (`Decision`), in
     /// order; `nil` unless a `.decisions` recorder is installed.
-    private(set) var decisionLog: [Decision]?
+    var decisionLog: [Decision]?
     /// How many conditionals and selections have decided this run, logged or
     /// not: the place of the next decision, for
     /// `InterpreterSettings.flippedDecisions` and `forcedChoices`.
-    private(set) var decisionsMade = 0
+    var decisionsMade = 0
     /// The items pushed onto each stack a `.pushes` recorder watches, gathered as
     /// they are placed. Empty unless such a recorder is installed.
     private(set) var pushCollectors: [PushStack: PushCollector] = [:]
@@ -792,6 +795,8 @@ nonisolated final class Interpreter {
                     } else if watchesSelections, Decision.keyLookups.contains(action)
                                 || Decision.codePoints.contains(action) {
                         logSelection(action, behavior)
+                    } else if watchesSelections, Decision.countedLoops.contains(action) {
+                        logCount(action, behavior)
                     } else {
                         behavior.act(on: self)
                     }
@@ -902,106 +907,5 @@ nonisolated extension Interpreter {
         let missing = needed.subtracting(done)
         result += "Missing:\n\(missing)\n"
         return result
-    }
-}
-
-
-nonisolated extension Interpreter {
-    /// Runs a conditional and logs its choice, if it took its arguments: the
-    /// Boolean consumed is the sign it decided rather than refused.
-    ///
-    /// A decision named in `config.flippedDecisions` is taken the other way: the
-    /// deciding Boolean is replaced, history and all, by its negation before the
-    /// conditional runs.
-    func logDecision(_ action: PushInstruction, _ behavior: Behavior) {
-        var pending = Decision.pending(action, step: counter, stacks: stacks)
-        let bools = stacks[.bool]?.count ?? 0
-        let flips = pending != nil && config.flippedDecisions?.contains(decisionsMade) == true
-        if flips, let top = stacks.item(at: 0, on: .bool) as? BoolItem {
-            var negated = BoolItem(!top.value)
-            negated.call = top.call
-            stacks[.bool]![0] = negated
-        }
-        behavior.act(on: self)
-        guard (stacks[.bool]?.count ?? 0) == bools - 1, pending != nil else { return }
-        decisionsMade += 1
-        pending?.flipped = flips
-        if let pending { decisionLog?.append(pending) }
-    }
-
-    /// Runs a key lookup or code-point run and logs its choice, when it has more
-    /// than one thing it could do. A choice named in `config.forcedChoices` is
-    /// forced: the deciding int, which the instruction reads and leaves, is
-    /// replaced (history kept) by the forced option's for the instruction alone,
-    /// and put back after it, so nothing else in the run sees the change.
-    func logSelection(_ action: PushInstruction, _ behavior: Behavior) {
-        guard let pending = Decision.pendingSelection(action, stacks: stacks) else {
-            behavior.act(on: self)
-            return
-        }
-        var chosen = pending.chosen
-        var forced: IntItem?
-        if let option = config.forcedChoices?[decisionsMade], pending.options.indices.contains(option),
-           option != chosen {
-            var replaced = IntItem(pending.options[option])
-            replaced.call = pending.selector.call
-            stacks[.int]![pending.at] = replaced
-            chosen = option
-            forced = replaced
-        }
-        behavior.act(on: self)
-        if let forced, let left = stacks.item(at: pending.at, on: .int)?.exactly(IntItem.self),
-           left.value == forced.value {
-            stacks[.int]![pending.at] = pending.selector
-        }
-        decisionLog?.append(Decision(step: counter, instruction: action, selector: pending.selector,
-                                     options: pending.options, chosen: chosen, naming: pending.naming,
-                                     forced: forced != nil))
-        decisionsMade += 1
-    }
-
-    /// Whether structural steps should go through ``select(_:_:_:_:)``.
-    var watchesSelections: Bool { decisionLog != nil || config.forcedChoices != nil }
-
-    /// A selection's step: `step` run on `arguments` and `view`, with the choice
-    /// logged when the depth (`arguments[0]`) could have done more than one thing,
-    /// and forced to another option when `config.forcedChoices` names this place.
-    ///
-    /// The options are found by asking the step what each depth from 0 to the
-    /// stack's count would do: depths are clamped into the stack, so no other
-    /// depth does anything new. Neighboring depths that do the same thing are
-    /// one option.
-    func select(_ name: PushInstruction, _ arguments: [any Item], _ view: StackView,
-                _ step: ([any Item], StackView) -> StructuralStep) -> StructuralStep {
-        guard Decision.depthSelections.contains(name), let depth = arguments.first?.exactly(IntItem.self) else {
-            return step(arguments, view)
-        }
-        var options: [Int] = []
-        var effects: [PositionEffect] = []
-        var probe = arguments
-        for value in 0...view.count {
-            probe[0] = IntItem(value)
-            guard case .positions(let effect) = step(probe, view) else { return step(arguments, view) }
-            if effects.last != effect {
-                options.append(value)
-                effects.append(effect)
-            }
-        }
-        guard options.count > 1 else { return step(arguments, view) }
-        var taken = options.lastIndex { $0 <= depth.value } ?? 0
-        var forced = false
-        if let option = config.forcedChoices?[decisionsMade], effects.indices.contains(option), option != taken {
-            var replaced = IntItem(options[option])
-            replaced.call = depth.call
-            probe[0] = replaced
-            taken = option
-            forced = true
-        } else {
-            probe = arguments
-        }
-        decisionLog?.append(Decision(step: counter, instruction: name, selector: depth, options: options,
-                                     chosen: taken, forced: forced))
-        decisionsMade += 1
-        return step(probe, view)
     }
 }

@@ -72,7 +72,15 @@ the one it ``Decision/chosen``. Depths and indices are clamped, so an option is
 the lowest position for each different thing it could do; keys are the keys
 bound within reach, top first, and an unbound key (a refusal) is the option past
 the last. A selection that could do only one thing is no choice and isn't
-logged. Loops aren't logged yet.
+logged.
+
+A counted loop's **count** is logged as a selection named
+``Decision/Naming/count``: `.execDoCount`, `.execDoTimes` and `.execDoRange`
+(and the function forms, which run as these). Its ``Decision`` holds the int
+that set the count (for a range, its end, and its start in
+``Decision/rangeStart``), with its history, and the number of passes in
+``Decision/chosen``. Loops that run while a condition holds, and iterators,
+aren't logged yet.
 
 A **counterfactual run** shows the branch a run didn't take. Name decisions in
 ``InterpreterSettings/flippedDecisions``, by their place among the run's
@@ -82,7 +90,8 @@ the logged decision has the same condition as in the plain run, marked
 ``Decision/flipped``. Run a program plainly and then once with each of its
 decisions flipped, and every branch it reached is seen both ways, even when
 every case went the same way. ``InterpreterSettings/forcedChoices`` does the same
-for a selection, naming the option to take; the depth keeps its history.
+for a selection, naming the option to take, and for a count, the number of
+passes to make; the int keeps its history.
 Conditionals and selections share one count of places.
 
 The **policy** (``RecordingPolicy``) says how much to keep:

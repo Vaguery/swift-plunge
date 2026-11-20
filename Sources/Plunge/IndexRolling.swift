@@ -18,8 +18,10 @@
 /// same step, 1 or −1, and writes the run as one pass in a counted loop:
 ///
 /// - With no int changing: `( body ) K .execDoTimes .codePop`.
-/// - Counting from 0 upward: `K ( body ) .execDoCount .codePop`.
-/// - Otherwise: `a b ( body ) .execDoRange .codePop`, counting from `a` toward `b`.
+/// - Counting up: `K ( body ) .execDoCount .codePop`, the ints offset from the
+///   index, which counts from 0 (a count of 0 makes no pass, where a range
+///   whose bounds meet makes one).
+/// - Counting down: `a b ( body ) .execDoRange .codePop`, from `a` toward `b`.
 ///
 /// The loop pushes its index onto `.int` before each pass. When the pass read
 /// the index once, first, the body is the pass without it, so the loop's push
@@ -229,21 +231,28 @@ private nonisolated enum IndexRoller {
             return [.block(body), .number(passes, original: [IntItem(passes)]),
                     .token(InstructionItem(.execDoTimes)), .token(InstructionItem(.codePop))]
         }
+        // Counting up always counts from 0, the ints offset from the index: a
+        // range whose bounds meet still makes one pass, where a count of 0 makes
+        // none, so a count read from the data stays right however small.
+        let counting = step == 1
+        let origin = counting ? 0 : base
         let readFirst: Bool
         if case .number = pass[0] { readFirst = varying[0] && varying.count { $0 } == 1 } else { readFirst = false }
         if readFirst {
-            // Read once, first: the loop's own push is the read.
-            body = roll(Array(pass.dropFirst()))
+            // Read once, first: the loop's own push is the read, moved to where
+            // the pass's int began.
+            let shift: [Unit] = base == origin ? []
+                : [.number(base - origin, original: [IntItem(base - origin)]), .token(InstructionItem(.intAdd))]
+            body = shift + roll(Array(pass.dropFirst()))
         } else {
             guard runsWithin(pass, varying: varying) else { return nil }
             var position = 0
-            let fetched = fetching(pass, first: first, varying: varying, base: base, position: &position)
+            let fetched = fetching(pass, first: first, varying: varying, base: origin, position: &position)
             body = [.number(CruxCompression.loopKey, original: [IntItem(CruxCompression.loopKey)]),
                     .token(InstructionItem(.intRefAs))] + roll(fetched)
                 + [.number(CruxCompression.loopKey, original: [IntItem(CruxCompression.loopKey)]),
                    .token(InstructionItem(.bindingPopKey)), .token(InstructionItem(.intPop))]
         }
-        let counting = step == 1 && base == 0
         let bounds = counting ? [passes] : [base, base &+ step &* passes]
         let loop: [Unit] = bounds.map { Unit.number($0, original: [IntItem($0)]) }
         return loop + [.block(body)]

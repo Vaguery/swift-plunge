@@ -13,7 +13,8 @@
 /// computed stack depth (`.intYank`, `.codeShove` and every other stack
 /// instruction that takes a depth or a count), a binding by a computed key
 /// (`.bindingDeref` and kin), or a point of a code block by a computed index
-/// (`.codeDoNth` and kin), reached with its arguments.
+/// (`.codeDoNth` and kin), reached with its arguments; or a counted loop's
+/// **count** (``Naming/count``), with the number of passes it made.
 ///
 /// A crux follows data, not control: a conditional records nothing in any
 /// item's history, so the Boolean that chose a branch is in no result's crux,
@@ -56,6 +57,10 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
     /// lookup whose key was unbound (it refused), `options.count`. `nil` for a
     /// conditional.
     public internal(set) var chosen: Int?
+    /// For a counted loop over a range (`.execDoRange`), the int it started from,
+    /// with its history (``condition`` is its end); `nil` otherwise. Either
+    /// bound may be the one the data sets.
+    public let rangeStart: AnyItem?
 
     /// How a selection's deciding int names its options.
     public enum Naming: String, Sendable, Codable {
@@ -64,6 +69,10 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         case position
         /// A key: an option is taken by its own key only.
         case key
+        /// A counted loop's count (`Decision.countedLoops`): the deciding int is
+        /// the count, or a range's end, ``chosen`` the number of passes it made,
+        /// and ``options`` empty.
+        case count
     }
 
     /// Whether the run took it otherwise than its condition said: a conditional
@@ -95,6 +104,7 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         self.options = nil
         self.naming = nil
         self.chosen = nil
+        self.rangeStart = nil
     }
 
     /// A selection's choice: `options` named by `naming`, and `chosen` the one
@@ -110,10 +120,28 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         self.options = options
         self.naming = naming
         self.chosen = chosen
+        self.rangeStart = nil
+    }
+
+    /// A counted loop's count: `count` the deciding int (a range's end, for
+    /// `.execDoRange`, which started from `rangeStart`), and `passes` how many
+    /// it made.
+    public init(step: Int, instruction: PushInstruction, count: any Item, passes: Int,
+                rangeStart: (any Item)? = nil, forced: Bool = false) {
+        self.flipped = forced
+        self.step = step
+        self.instruction = instruction
+        self.condition = AnyItem(count)
+        self.whenTrue = nil
+        self.whenFalse = nil
+        self.options = []
+        self.naming = .count
+        self.chosen = passes
+        self.rangeStart = rangeStart.map(AnyItem.init)
     }
 
     private enum CodingKeys: String, CodingKey {
-        case step, instruction, condition, whenTrue, whenFalse, options, naming, chosen, flipped
+        case step, instruction, condition, whenTrue, whenFalse, options, naming, chosen, flipped, rangeStart
     }
 
     /// Decodes a decision; one saved before `flipped` existed was not flipped,
@@ -129,6 +157,7 @@ public nonisolated struct Decision: Sendable, Equatable, Codable {
         naming = try container.decodeIfPresent(Naming.self, forKey: .naming) ?? (options == nil ? nil : .position)
         chosen = try container.decodeIfPresent(Int.self, forKey: .chosen)
         flipped = try container.decodeIfPresent(Bool.self, forKey: .flipped) ?? false
+        rangeStart = try container.decodeIfPresent(AnyItem.self, forKey: .rangeStart)
     }
 }
 
@@ -143,6 +172,12 @@ nonisolated extension Decision {
     /// binding lookups by key; and the code-point runs by index. One is logged
     /// only when it could have done more than one thing.
     public static let selections: Set<PushInstruction> = depthSelections.union(keyLookups).union(codePoints)
+        .union(countedLoops)
+
+    /// The counted loops, whose count is logged as a decision named
+    /// ``Naming/count``: `.execDoCount`, `.execDoTimes` and `.execDoRange` (and the
+    /// function forms, which run as these).
+    public static let countedLoops: Set<PushInstruction> = [.execDoCount, .execDoTimes, .execDoRange]
 
     /// The stack instructions that pick by a depth or count they take.
     static let depthSelections: Set<PushInstruction> = Set(Interpreter.language.compactMap { entry in

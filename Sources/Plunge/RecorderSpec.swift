@@ -58,7 +58,8 @@ public nonisolated enum RecorderTarget: Sendable, Hashable, Codable {
     /// the code each way would run; and each selection (a stack instruction
     /// picking by a computed depth, a binding lookup by key, a code point run by
     /// index) that could have done more than one thing, with the deciding int and
-    /// its options. A crux follows data, not control, so no result's history
+    /// its options; and each counted loop's count, with the passes it made. A
+    /// crux follows data, not control, so no result's history
     /// shows these. It is read once, at the end of the run, whatever
     /// the policy. Decisions inside a map, function application or iterator
     /// sandbox aren't seen.

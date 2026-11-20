@@ -72,7 +72,10 @@ struct DecisionLogTests {
         // Three passes, each deciding on the loop's growing int.
         let body = CodeItem([i(.intDup), IntItem(10), i(.intGT), CodeItem([IntItem(1)]),
                              CodeItem([IntItem(2)]), i(.execIf), i(.intAdd)])
-        let log = Self.decisions(Self.run([i(.input(0)), IntItem(3), body, i(.execDoTimes)], input: 9))
+        let decided = Self.decisions(Self.run([i(.input(0)), IntItem(3), body, i(.execDoTimes)], input: 9))
+        // The loop's count is a decision too, made first.
+        #expect(decided.first?.naming == .count && decided.first?.chosen == 3)
+        let log = decided.filter { $0.naming != .count }
         #expect(log.count == 3)
         #expect(log.map(\.tookTrue) == [false, true, true])
         #expect(log.map(\.step) == log.map(\.step).sorted() && Set(log.map(\.step)).count == 3)
@@ -261,5 +264,43 @@ struct SelectionLogTests {
                                                     .stringYankDup]))
         #expect(Decision.selections.isSuperset(of: [.bindingDeref, .bindingDo, .codeDoNth, .codeEmitNthRoot]))
         #expect(Decision.selections.isDisjoint(with: [.intAdd, .intSwap, .intPop, .execIf]))
+    }
+
+    // MARK: Counted loops
+
+    /// 100, then x passes of `2 .intAdd`, counted by the input.
+    static let countedByInput: [any Item] = [IntItem(100), InstructionItem(.input(0)),
+                                             CodeItem([IntItem(2), InstructionItem(.intAdd)]),
+                                             InstructionItem(.execDoTimes)]
+
+    @Test func `a counted loop logs its count, with the passes it made`() throws {
+        let result = Self.run(Self.countedByInput, input: 4)
+        #expect(Self.answer(result) == "108")
+        let decision = try #require(DecisionLogTests.decisions(result).first)
+        #expect(decision.naming == .count && decision.instruction == .execDoTimes && decision.isSelection)
+        #expect(decision.chosen == 4 && decision.options == [] && decision.rangeStart == nil)
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+        // A count below 1 makes no pass.
+        #expect(DecisionLogTests.decisions(Self.run(Self.countedByInput, input: -3)).first?.chosen == 0)
+    }
+
+    @Test func `a forced count makes that many passes, its count keeping its history`() throws {
+        let result = Self.run(Self.countedByInput, input: 4, forcing: [0: 7])
+        #expect(Self.answer(result) == "114")
+        let decision = try #require(DecisionLogTests.decisions(result).first)
+        #expect(decision.chosen == 7 && decision.flipped)
+        #expect(CodeItem(decision.condition.item.crux()).pretty() == "( .input0 )")
+    }
+
+    @Test func `a range logs its end and start, and is forced by passes in its direction`() throws {
+        // From 10 toward x, adding each index.
+        let program: [any Item] = [IntItem(0), IntItem(10), InstructionItem(.input(0)),
+                                   CodeItem([InstructionItem(.intAdd)]), InstructionItem(.execDoRange)]
+        let plain = try #require(DecisionLogTests.decisions(Self.run(program, input: 13)).first)
+        #expect(plain.instruction == .execDoRange && plain.chosen == 3)
+        #expect((plain.rangeStart?.item as? IntItem)?.value == 10)
+        let downward = Self.run(program, input: 4, forcing: [0: 2])
+        #expect(DecisionLogTests.decisions(downward).first?.chosen == 2)
+        #expect(Self.answer(downward) == "19", "10 + 9, two passes counting down")
     }
 }
