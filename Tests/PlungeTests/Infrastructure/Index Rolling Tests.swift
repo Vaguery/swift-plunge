@@ -34,8 +34,10 @@ struct IndexRollingTests {
     }
 
     @Test func `identical passes roll anywhere in a crux, not only at its end`() {
-        let crux = Self.ins(.input(1)) + [IntItem(3)] + Self.ins(.intAdd) + [IntItem(3)] + Self.ins(.intAdd)
-            + [IntItem(3)] + Self.ins(.intAdd) + [IntItem(5)] + Self.ins(.intMultiply)
+        // Typed literals, not a `+` chain: Linux's type checker times out on the chain.
+        let crux: [any Item] = [InstructionItem(.input(1)), IntItem(3), InstructionItem(.intAdd),
+                                IntItem(3), InstructionItem(.intAdd), IntItem(3), InstructionItem(.intAdd),
+                                IntItem(5), InstructionItem(.intMultiply)]
         let rolled = CruxCompression.rolledByIndex(crux)
         #expect(Self.printed(rolled) == "( .input1 ( 3 .intAdd ) 3 .execDoTimes .codePop 5 .intMultiply )")
         #expect(Self.top(rolled).pretty() == Self.top(crux).pretty())
@@ -100,8 +102,8 @@ struct IndexRollingTests {
     }
 
     @Test func `passes inside a code block roll too`() {
-        let inner = Self.ins(.input(1)) + [IntItem(2)] + Self.ins(.intMultiply) + [IntItem(2)]
-            + Self.ins(.intMultiply) + [IntItem(2)] + Self.ins(.intMultiply) + [IntItem(2)] + Self.ins(.intMultiply)
+        let inner: [any Item] = [InstructionItem(.input(1))]
+            + Array(repeating: [IntItem(2), InstructionItem(.intMultiply)] as [any Item], count: 4).flatMap { $0 }
         let crux: [any Item] = [CodeItem(inner)] + Self.ins(.codeDo)
         let rolled = CruxCompression.rolledByIndex(crux)
         #expect(Self.printed(rolled) == "( ( .input1 ( 2 .intMultiply ) 4 .execDoTimes .codePop ) .codeDo )")
